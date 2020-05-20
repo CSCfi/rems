@@ -41,8 +41,8 @@
   (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
 
 (defn- list-to-maps [lst]
-  {:dependencies (build-index [:from] :to lst set)
-   :reverse-dependencies (build-index [:to] :from lst set)})
+  {:dependencies (build-index {:keys [:from] :value-fn :to :collect-fn set} lst)
+   :reverse-dependencies (build-index {:keys [:to] :value-fn :from :collect-fn set} lst)})
 
 (defn compute-dependencies []
   (-> (list-dependencies)

@@ -48,7 +48,7 @@
           " (" (:resource/ext-id resource) ")"]))])))
 
 (defn- attachment-filenames [application]
-  (build-index [:attachment/id] :attachment/filename (:application/attachments application)))
+  (build-index {:keys [:attachment/id] :value-fn :attachment/filename} (:application/attachments application)))
 
 (defn- render-events [application]
   (let [filenames (attachment-filenames application)
@@ -81,7 +81,7 @@
   (let [value (:field/value field)]
     (case (:field/type field)
       (:option :multiselect)
-      (localized (get (build-index [:key] :label (:field/options field)) value))
+      (localized (get (build-index {:keys [:key] :value-fn :label} (:field/options field)) value))
 
       :attachment
       (if (empty? value)

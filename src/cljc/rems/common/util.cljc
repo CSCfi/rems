@@ -29,9 +29,10 @@
   (vec (reduce #(conj %1 (get m %2 default-value)) [] ks)))
 
 (defn build-index
-  "Index the `coll` with given keys `ks` and map values with given `f`.
+  "Index the `coll` with given keys `:keys` and map values with given
+  `:value-fn` (defaults to `identity`).
 
-  Results is nested map, `(count ks)` levels deep, e.g.
+  Results is nested map, `(count keys)` levels deep, e.g.
     (build-index [:a :b] :c [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
       ==> {1 {\"x\" :a
               \"y\" :b}}
@@ -41,28 +42,39 @@
     (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}
 
-  You can override this behaviour by passing in a `collect-fn`, which
-  is applied to the sequence of values. The default `collect-fn` is
+  You can override this behaviour by passing in a `:collect-fn`, which
+  is applied to the sequence of values. The default `:collect-fn` is
   `first`."
-  [ks f coll & [collect-fn]]
-  (if-let [[k & ks] (seq ks)]
+  [{key-seq :keys
+    value-fn :value-fn
+    collect-fn :collect-fn}
+    coll]
+  (if-let [[k & ks] (seq key-seq)]
     (->> coll
          (group-by k)
-         (map-vals #(build-index ks f % collect-fn)))
-    ((or collect-fn first) (map f coll))))
+         (map-vals #(build-index {:keys ks
+                                  :value-fn value-fn
+                                  :collect-fn collect-fn} %)))
+    ((or collect-fn first) (map (or value-fn identity) coll))))
 
 (deftest test-build-index
   (testing "unique keys"
     (is (= {1 {"x" :a "y" :b}}
-           (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
+           (build-index {:keys [:a :b] :value-fn :c}
+                        [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
     (is (= {"x" {1 :a} "y" {1 :b}}
-           (build-index [:b :a] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
+           (build-index {:keys [:b :a] :value-fn :c}
+                        [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
   (testing "non-unique keys"
-    (is (= {:a 1} (build-index [] identity [{:a 1} {:b 2}])))
-    (is (= {:b 2} (build-index [] identity [{:a 1} {:b 2}] second)))
-    (is (= #{{:a 1} {:b 2}} (build-index [] identity [{:a 1} {:b 2}] set)))
+    (is (= {:a 1} (build-index {:keys []}
+                               [{:a 1} {:b 2}])))
+    (is (= {:b 2} (build-index {:keys [] :collect-fn second}
+                               [{:a 1} {:b 2}])))
+    (is (= #{{:a 1} {:b 2}} (build-index {:keys [] :collect-fn set}
+                                         [{:a 1} {:b 2}])))
     (is (= {1 #{10 11} 2 #{10}}
-           (build-index [:a] :c [{:a 1 :c 10} {:a 1 :c 11} {:a 2 :c 10}] set)))))
+           (build-index {:keys [:a] :value-fn :c :collect-fn set}
+                        [{:a 1 :c 10} {:a 1 :c 11} {:a 2 :c 10}])))))
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
@@ -77,7 +89,7 @@
     (index-by [:a] [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}"
   [ks coll]
-  (build-index ks identity coll))
+  (build-index {:keys ks} coll))
 
 (deftest test-index-by
   (is (= {1 {"x" {:a 1 :b "x"}
