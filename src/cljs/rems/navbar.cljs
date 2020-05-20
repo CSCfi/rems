@@ -62,7 +62,7 @@
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
-        catalogue-is-public (when config (config :catalogue-is-public))]
+        catalogue-is-public (:catalogue-is-public config)]
     [e (into [:div.navbar-nav.mr-auto
               (when-not (:user identity)
                 [nav-link "/" (text :t.navigation/home) :exact])
