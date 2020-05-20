@@ -20,6 +20,7 @@ Changes since v2.12
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
 - There is now an API for querying and creating organizations #2039
+- Workflows can now have forms. Workflow forms apply to all catalogue items that use the workflow. (#2052)
 
 ## v2.12 "Merituulentie" 2020-05-04
 
