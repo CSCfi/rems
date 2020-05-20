@@ -87,19 +87,19 @@
 
 (defn archive-errors
   "Return errors if given item is depended on by non-archived items"
-  [error-key item]
+  [item]
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
                         (mapv add-status-bits)
                         (remove :archived)
                         seq)]
-    [(merge {:type error-key}
+    [(merge {:type :t.administration.errors/in-use-by}
             (format-deps-for-errors users))]))
 
 (defn in-use-errors
   "Returns errors if given item is depended on at all"
-  [error-key item]
+  [item]
   (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
-    [(merge {:type error-key}
+    [(merge {:type :t.administration.errors/in-use-by}
             (format-deps-for-errors users))]))
 
 (defn unarchive-errors

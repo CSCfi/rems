@@ -55,7 +55,7 @@
 (defn set-workflow-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
   (if-let [errors (if archived
-                    (dependencies/archive-errors :t.administration.errors/workflow-in-use {:workflow/id id})
+                    (dependencies/archive-errors {:workflow/id id})
                     (dependencies/unarchive-errors {:workflow/id id}))]
     {:success false
      :errors errors}

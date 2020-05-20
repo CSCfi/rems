@@ -75,7 +75,7 @@
 (defn set-license-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-license id)))
   (if-let [errors (and archived
-                       (dependencies/archive-errors :t.administration.errors/license-in-use {:license/id id}))]
+                       (dependencies/archive-errors {:license/id id}))]
     {:success false
      :errors errors}
     (do

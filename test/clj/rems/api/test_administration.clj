@@ -99,7 +99,7 @@
 
     (testing "can't archive resource if it is part of an active catalogue item"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/resource-in-use"
+              :errors [{:type "t.administration.errors/in-use-by"
                         :catalogue-items [{:id catalogue-id :localizations {}}]}]}
              (resource-archived! true))))
 
@@ -108,11 +108,11 @@
 
     (testing "can't archive a form that's in use"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/form-in-use"
+              :errors [{:type "t.administration.errors/in-use-by"
                         :catalogue-items [{:id catalogue-id :localizations {}}]}]}
              (form-archived! form-id true)))
       (is (= {:success false
-              :errors [{:type "t.administration.errors/form-in-use"
+              :errors [{:type "t.administration.errors/in-use-by"
                         :workflows [{:id workflow-id :title "default workflow"}]}]}
              (form-archived! wf-form-id true))))
 
@@ -121,7 +121,7 @@
 
     (testing "can't archive a workflow that's in use"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/workflow-in-use"
+              :errors [{:type "t.administration.errors/in-use-by"
                         :catalogue-items [{:id catalogue-id :localizations {}}]}]}
              (workflow-archived! true))))
 
@@ -130,7 +130,7 @@
 
     (testing "can't archive a license that's in use"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/license-in-use"
+              :errors [{:type "t.administration.errors/in-use-by"
                         :resources [{:id resource-id :resid "test"}]
                         :workflows [{:id workflow-id :title "default workflow"}]}]}
              (license-archived! true))))

@@ -74,10 +74,7 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:dependencies-archived "Archived dependencies:"
-                            :form-in-use "Form in use:"
-                            :license-in-use "License in use:"
-                            :resource-in-use "Resource in use:"
-                            :workflow-in-use "Workflow in use:"}
+                            :in-use-by "Target in use by:"}
                    :export-applications "Export applications"
                    :form "Form"
                    :forms "Forms"

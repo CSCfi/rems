@@ -16,8 +16,9 @@
             [schema.core :as s])
   (:import rems.InvalidRequestException))
 
+;; TODO get rid of this wrapper
 (defn- form-in-use-error [form-id]
-  (when-let [errors (dependencies/in-use-errors :t.administration.errors/form-in-use {:form/id form-id})]
+  (when-let [errors (dependencies/in-use-errors {:form/id form-id})]
     {:success false
      :errors errors}))
 
@@ -136,7 +137,7 @@
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
   (if-let [errors (when archived
-                    (dependencies/archive-errors :t.administration.errors/form-in-use {:form/id id}))]
+                    (dependencies/archive-errors {:form/id id}))]
     {:success false
      :errors errors}
     (do

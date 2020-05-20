@@ -74,10 +74,7 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
-                            :form-in-use "Lomake on käytössä:"
-                            :license-in-use "Lisenssi on käytössä:"
-                            :resource-in-use "Resurssi on käytössä:"
-                            :workflow-in-use "Työvuo on käytössä:"}
+                            :in-use-by "Kohde on käytössä täällä:"}
                    :export-applications "Vie hakemuksia"
                    :form "Lomake"
                    :forms "Lomakkeet"
