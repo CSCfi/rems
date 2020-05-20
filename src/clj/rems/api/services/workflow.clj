@@ -54,15 +54,11 @@
 
 (defn set-workflow-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
-  (if-let [errors (if archived
-                    (dependencies/archive-errors {:workflow/id id})
-                    (dependencies/unarchive-errors {:workflow/id id}))]
-    {:success false
-     :errors errors}
-    (do
-      (db/set-workflow-archived! {:id id
-                                  :archived archived})
-      {:success true})))
+  (or (dependencies/change-archive-status-error archived {:workflow/id id})
+      (do
+        (db/set-workflow-archived! {:id id
+                                    :archived archived})
+        {:success true})))
 
 (defn- join-dependencies [workflow]
   (when workflow

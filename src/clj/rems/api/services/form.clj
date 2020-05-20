@@ -136,11 +136,8 @@
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
-  (if-let [errors (when archived
-                    (dependencies/archive-errors {:form/id id}))]
-    {:success false
-     :errors errors}
-    (do
-      (db/set-form-template-archived! {:id id
-                                       :archived archived})
-      {:success true})))
+  (or (dependencies/change-archive-status-error archived {:form/id id})
+      (do
+        (db/set-form-template-archived! {:id id
+                                         :archived archived})
+        {:success true})))

@@ -85,15 +85,36 @@
                  (:form/id dep)
                  {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}))))
 
-(defn archive-errors
+(defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
   [item]
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
                         (mapv add-status-bits)
                         (remove :archived)
                         seq)]
-    [(merge {:type :t.administration.errors/in-use-by}
-            (format-deps-for-errors users))]))
+    {:success false
+     :errors [(merge {:type :t.administration.errors/in-use-by}
+                     (format-deps-for-errors users))]}))
+
+(defn- unarchive-errors
+  "Return errors if given item depends on archived items"
+  [item]
+  (when-let [used (->> (get-in (dependencies) [:dependencies item])
+                       (mapv add-status-bits)
+                       (filter :archived)
+                       seq)]
+    {:success false
+     :errors [(merge {:type :t.administration.errors/dependencies-archived}
+                     (format-deps-for-errors used))]}))
+
+(defn change-archive-status-error
+  "Returns an error structure {:success false :errors [...]} if
+    - archived is true and item is used by non-archived items
+    - archived is false and item uses archived items"
+  [archived item]
+  (if archived
+    (archive-errors item)
+    (unarchive-errors item)))
 
 (defn in-use-errors
   "Returns errors if given item is depended on at all"
@@ -101,13 +122,3 @@
   (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
     [(merge {:type :t.administration.errors/in-use-by}
             (format-deps-for-errors users))]))
-
-(defn unarchive-errors
-  "Return errors if given item depends on archived items"
-  [item]
-  (when-let [used (->> (get-in (dependencies) [:dependencies item])
-                       (mapv add-status-bits)
-                       (filter :archived)
-                       seq)]
-    [(merge {:type :t.administration.errors/dependencies-archived}
-            (format-deps-for-errors used))]))

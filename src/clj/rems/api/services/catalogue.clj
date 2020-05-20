@@ -70,13 +70,10 @@
 
 (defn set-catalogue-item-archived! [{:keys [id archived]}]
   (check-allowed-to-edit! id)
-  (if-let [errors (when-not archived
-                    (dependencies/unarchive-errors {:catalogue-item/id id}))]
-    {:success false
-     :errors errors}
-    (do (db/set-catalogue-item-archived! {:id id
-                                          :archived archived})
-        {:success true})))
+  (or (dependencies/change-archive-status-error archived {:catalogue-item/id id})
+      (do (db/set-catalogue-item-archived! {:id id
+                                            :archived archived})
+          {:success true})))
 
 (defn change-form!
   "Changes the form of a catalogue item.

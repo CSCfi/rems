@@ -74,14 +74,11 @@
 
 (defn set-license-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-license id)))
-  (if-let [errors (and archived
-                       (dependencies/archive-errors {:license/id id}))]
-    {:success false
-     :errors errors}
-    (do
-      (db/set-license-archived! {:id id
-                                 :archived archived})
-      {:success true})))
+  (or (dependencies/change-archive-status-error archived  {:license/id id})
+      (do
+        (db/set-license-archived! {:id id
+                                   :archived archived})
+        {:success true})))
 
 (defn get-all-licenses
   "Get all licenses.
