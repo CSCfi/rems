@@ -74,7 +74,7 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:dependencies-archived "Archived dependencies:"
-                            :in-use-by "Target in use by:"}
+                            :in-use-by "It is in use by:"}
                    :export-applications "Export applications"
                    :form "Form"
                    :forms "Forms"

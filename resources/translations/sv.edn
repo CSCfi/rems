@@ -74,7 +74,7 @@
                    :enable "Ta i bruk"
                    :end "Slut"
                    :errors {:dependencies-archived "Arkiverad beroenden:"
-                            :in-use-by "Objekt är aktiv i:"}
+                            :in-use-by "Den är aktiv i:"}
                    :export-applications "exportera ansökningar"
                    :form "Blankett"
                    :forms "Blanketter"
