@@ -33,13 +33,14 @@
   `:value-fn` (defaults to `identity`).
 
   Results is nested map, `(count keys)` levels deep, e.g.
-    (build-index [:a :b] :c [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
+    (build-index {:keys [:a :b] :value-fn :c}
+                 [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
       ==> {1 {\"x\" :a
               \"y\" :b}}
 
   In case of non-unique keys, `build-index` picks the first value, e.g.
 
-    (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
+    (build-index {:keys [:a]} [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}
 
   You can override this behaviour by passing in a `:collect-fn`, which
