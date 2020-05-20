@@ -20,7 +20,7 @@ Changes since v2.12
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
 - There is now an API for querying and creating organizations #2039
-- Possibility to access `/catalogue` without loggin in. Configurable by `:catalogue-is-public` #2120
+- Possibility to access `/catalogue` without logging in. Configurable by `:catalogue-is-public` #2120
 
 ## v2.12 "Merituulentie" 2020-05-04
 
