@@ -116,9 +116,9 @@
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- workflow-organization-field []
   [fields/organization-field {:id "organization-dropdown"
