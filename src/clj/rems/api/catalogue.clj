@@ -1,14 +1,14 @@
 (ns rems.api.catalogue
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util] ; required for route :roles
-            [rems.roles :as roles]
-            [rems.auth.util :refer [throw-forbidden]]
             [rems.api.services.catalogue :as catalogue]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
+            [rems.api.util] ; required for route :roles
+            [rems.api.util :refer [check-roles]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
-            [rems.api.util :refer [check-roles]]))
+            [rems.roles :as roles]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (s/defschema GetCatalogueResponse
   [CatalogueItem])
