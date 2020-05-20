@@ -1,6 +1,6 @@
 (ns rems.api.services.dependencies
   "Tracking dependencies between catalogue items, resources, forms, workflows and licenses."
-  (:require [medley.core :refer [map-vals]]
+  (:require [rems.common.util :refer [build-index]]
             [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
@@ -41,10 +41,8 @@
   (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
 
 (defn- list-to-maps [lst]
-  {:dependencies
-   (map-vals (comp set (partial map :to)) (group-by :from lst))
-   :reverse-dependencies
-   (map-vals (comp set (partial map :from)) (group-by :to lst))})
+  {:dependencies (build-index [:from] :to lst set)
+   :reverse-dependencies (build-index [:to] :from lst set)})
 
 (defn compute-dependencies []
   (-> (list-dependencies)
