@@ -69,7 +69,7 @@
   (reset! dependencies-cache nil))
 
 ;; TODO change format of errors so we can get rid of this conversion
-(defn- format-deps [deps]
+(defn- format-deps-for-errors [deps]
   (apply merge-with concat
          (for [dep deps]
            (cond (:license/id dep)
@@ -95,14 +95,14 @@
                         (remove :archived)
                         seq)]
     [(merge {:type error-key}
-            (format-deps users))]))
+            (format-deps-for-errors users))]))
 
 (defn in-use-errors
   "Returns errors if given item is depended on at all"
   [error-key item]
   (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
     [(merge {:type error-key}
-            (format-deps users))]))
+            (format-deps-for-errors users))]))
 
 (defn unarchive-errors
   "Return errors if given item depends on archived items"
@@ -111,7 +111,7 @@
                        (mapv add-status-bits)
                        (filter :archived)
                        seq)]
-    (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps used)]
+    (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps-for-errors used)]
       (concat
        (when licenses
          [{:type :t.administration.errors/license-archived
