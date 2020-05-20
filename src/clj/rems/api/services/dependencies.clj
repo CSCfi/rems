@@ -7,7 +7,7 @@
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
-(defn enrich-dependency [dep]
+(defn- enrich-dependency [dep]
   (cond
     (:license/id dep) (licenses/get-license (:license/id dep))
     (:resource/id dep) (resource/get-resource (:resource/id dep))
@@ -44,7 +44,7 @@
   {:dependencies (build-index {:keys [:from] :value-fn :to :collect-fn set} lst)
    :reverse-dependencies (build-index {:keys [:to] :value-fn :from :collect-fn set} lst)})
 
-(defn compute-dependencies []
+(defn- compute-dependencies []
   (-> (list-dependencies)
       list-to-maps))
 
@@ -58,7 +58,8 @@
 ;; 500ms with performance test data.
 (def ^:private dependencies-cache (atom nil))
 
-(defn dependencies []
+;; For now, all public uses are via the error helpers below
+(defn- dependencies []
   (when-not @dependencies-cache
     (reset! dependencies-cache (compute-dependencies)))
   @dependencies-cache)
