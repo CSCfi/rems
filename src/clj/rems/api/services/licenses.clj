@@ -25,7 +25,7 @@
                                         :title (:title localization)
                                         :textcontent (:textcontent localization)
                                         :attachmentId (:attachment-id localization)}))
-    ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
+    ;; reset-cache! not strictly necessary since licenses don't depend on anything, but here for consistency
     (dependencies/reset-cache!)
     {:success (not (nil? licid))
      :id licid}))

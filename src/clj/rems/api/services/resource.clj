@@ -33,7 +33,7 @@
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id
                                     :licid licid}))
-    ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
+    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
     (dependencies/reset-cache!)
     {:success true
      :id id}))
