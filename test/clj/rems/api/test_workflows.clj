@@ -59,13 +59,17 @@
             (is (response-is-not-found? (api-response :get (str "/api/workflows/" 666) nil
                                                       "42" user-id)))))
 
-        (testing "create default workflow"
-          (let [body (create-workflow user-id "organization1" :workflow/default [{:form/id 123}])
+        (testing "create default workflow with form"
+          (let [form-id (test-data/create-form! {:form/title "workflow form"
+                                             :form/fields [{:field/type :text
+                                                            :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                            :field/optional true}]})
+                body (create-workflow user-id "organization1" :workflow/default [{:form/id form-id}])
                 id (:id body)]
             (is (< 0 id))
             (sync-with-database-time)
             (testing "and fetch"
-              (is (= (assoc-in expected [:workflow :forms] [{:form/id 123}])
+              (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id :form/title "workflow form"}])
                      (fetch "42" user-id id))))))
 
         (testing "create decider workflow"

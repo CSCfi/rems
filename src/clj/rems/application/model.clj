@@ -499,8 +499,8 @@
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
-        current-answers (build-index [:form :field] :value (first answer-versions))
-        previous-answers (build-index [:form :field] :value (second answer-versions))]
+        current-answers (build-index {:keys [:form :field] :value-fn :value} (first answer-versions))
+        previous-answers (build-index {:keys [:form :field] :value-fn :value} (second answer-versions))]
     (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
          (transform [:application/forms ALL] #(enrich-form-answers % current-answers previous-answers)))))
 
@@ -514,7 +514,7 @@
       application)))
 
 (defn- enrich-form-field-visible [form]
-  (let [field-values (build-index [:field/id] :field/value (:form/fields form))
+  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
         update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
     (transform [:form/fields ALL]
                update-field-visibility

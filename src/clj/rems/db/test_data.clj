@@ -764,7 +764,20 @@
                                               :organization {:organization/id "organization1"}
                                               :title "Owned by organization owner"
                                               :type :workflow/default
-                                              :handlers handlers})]
+                                              :handlers handlers})
+        with-form (create-workflow! {:actor owner
+                                     :organization {:organization/id "nbn"}
+                                     :title "With workflow form"
+                                     :type :workflow/default
+                                     :handlers handlers
+                                     :forms [{:form/id (create-form! {:actor owner
+                                                                      :form/title "Workflow form"
+                                                                      :form/organization {:organization/id "nbn"}
+                                                                      :form/fields [{:field/type :description
+                                                                                     :field/title {:fi "Kuvaus"
+                                                                                                   :en "Description"
+                                                                                                   :sv "Rubrik"}
+                                                                                     :field/optional false}]})}]})]
 
     ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
@@ -786,7 +799,7 @@
                                                 :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
                                                 :sv (apply str (repeat 10 "Licens på svenska. "))}})]
       (doseq [licid [link text]]
-        (doseq [wfid [default decider master auto-approve]]
+        (doseq [wfid [default decider master auto-approve with-form]]
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
     {:default default

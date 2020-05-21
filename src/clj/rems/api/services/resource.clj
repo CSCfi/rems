@@ -1,5 +1,6 @@
 (ns rems.api.services.resource
   (:require [com.rpl.specter :refer [ALL transform]]
+            [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -32,6 +33,8 @@
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id
                                     :licid licid}))
+    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
+    (dependencies/reset-cache!)
     {:success true
      :id id}))
 
@@ -42,25 +45,8 @@
 
 (defn set-resource-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
-  (let [catalogue-items
-        (->> (catalogue/get-localized-catalogue-items {:resource-id id
-                                                       :archived false})
-             (map #(select-keys % [:id :title :localizations])))
-        licenses (licenses/get-resource-licenses id)
-        archived-licenses (filter :archived licenses)]
-    (cond
-      (and archived (seq catalogue-items))
-      {:success false
-       :errors [{:type :t.administration.errors/resource-in-use
-                 :catalogue-items catalogue-items}]}
-
-      (and (not archived) (seq archived-licenses))
-      {:success false
-       :errors [{:type :t.administration.errors/license-archived
-                 :licenses archived-licenses}]}
-
-      :else
+  (or (dependencies/change-archive-status-error archived {:resource/id id})
       (do
         (db/set-resource-archived! {:id id
                                     :archived archived})
-        {:success true}))))
+        {:success true})))

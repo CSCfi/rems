@@ -19,18 +19,22 @@
   (with-user "owner"
     (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
     (testing "default workflow with forms"
-      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
+      (let [form-id (test-data/create-form! {:form/title "workflow form"
+                                             :form/fields [{:field/type :text
+                                                            :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                            :field/optional true}]})
+            wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/default
                                                :title "the title"
                                                :handlers ["user1" "user2"]
-                                               :forms [{:form/id 123}]})]
+                                               :forms [{:form/id form-id}]})]
         (is (= {:id wf-id
                 :organization {:organization/id "abc" :organization/name "ABC"}
                 :title "the title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms [{:form/id 123}]}
+                           :forms [{:form/id form-id :form/title "workflow form"}]}
                 :licenses []
                 :owneruserid "owner"
                 :modifieruserid "owner"

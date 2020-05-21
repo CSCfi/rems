@@ -7,8 +7,10 @@
     (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
+                :forms [{:form/id 123}]
                 :handlers ["bob"]}]
       (is (not (nil? (build-create-request form))))
+      (is (not (nil? (build-create-request (dissoc form :forms)))))
       (testing "missing organization"
         (is (nil? (build-create-request (assoc form :organization nil)))))
       (testing "missing title"
@@ -22,11 +24,13 @@
     (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
+                :forms [{:form/id 13 :form/title "form title"}]
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
+                :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"
@@ -36,11 +40,13 @@
     (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/decider
+                :forms [{:form/id 13 :form/title "form title"}]
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/decider
+                :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"
@@ -55,6 +61,7 @@
         (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/master
+                :forms []
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"

@@ -125,7 +125,7 @@
                             {:form (:form/id form)
                              :field (:field/id field)
                              :value (:field/value field)})
-                          (build-index [:form :field] :value))]
+                          (build-index {:keys [:form :field] :value-fn :value}))]
     (assoc db ::edit-application {:field-values field-values
                                   :show-diff {}
                                   :validation-errors nil})))

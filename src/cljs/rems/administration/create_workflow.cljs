@@ -24,6 +24,7 @@
                ::editing? (some? workflow-id)
                ::form {:type :workflow/default})
     :dispatch-n [[::actors]
+                 [::forms]
                  (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
@@ -64,7 +65,8 @@
   (let [request (merge
                  {:organization {:organization/id (get-in form [:organization :organization/id])}
                   :title (trim-when-string (:title form))
-                  :type (:type form)}
+                  :type (:type form)
+                  :forms (mapv #(select-keys % [:form/id]) (:forms form))}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -108,6 +110,10 @@
 
 (fetcher/reg-fetcher ::actors "/api/workflows/actors" {:result (partial mapv enrich-user)})
 
+(rf/reg-event-db ::set-forms (fn [db [_ form-ids]] (assoc-in db [::form :forms] form-ids)))
+
+(fetcher/reg-fetcher ::forms "/api/forms")
+
 ;;;; UI
 
 (def ^:private context
@@ -116,9 +122,9 @@
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- workflow-organization-field []
   [fields/organization-field {:id "organization-dropdown"
@@ -184,20 +190,39 @@
        :multi? true
        :on-change #(rf/dispatch [::set-handlers %])}]]))
 
+(defn- workflow-forms-field []
+  (let [all-forms @(rf/subscribe [::forms])
+        selected-form-ids (set (mapv :form/id (:forms @(rf/subscribe [::form]))))
+        id "workflow-forms"]
+    [:div.form-group
+     [:label {:for id} (text :t.administration/forms)]
+     [dropdown/dropdown
+      {:id id
+       :items all-forms
+       :item-key :form/id
+       :item-label :form/title ;; TODO render org like in create-catalogue-item
+       :item-selected? #(contains? selected-form-ids (:form/id %))
+       ;; TODO support ordering multiple forms
+       :multi? true
+       :on-change #(rf/dispatch [::set-forms %])}]]))
+
 (defn default-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/default-workflow-description)]
-   [workflow-handlers-field]])
+   [workflow-handlers-field]
+   [workflow-forms-field]])
 
 (defn decider-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
-   [workflow-handlers-field]])
+   [workflow-handlers-field]
+   [workflow-forms-field]])
 
 (defn master-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/master-workflow-description)]
-   [workflow-handlers-field]])
+   [workflow-handlers-field]
+   [workflow-forms-field]])
 
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
