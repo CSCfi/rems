@@ -89,7 +89,11 @@
    :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
    :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
    :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                  (blacklist/blacklisted? userid resource)))})
+                                                                  (blacklist/blacklisted? userid resource)))
+   ;; TODO: cache these
+   :get-attachment-metadata attachments/get-attachment-metadata
+   :get-catalogue-item-licenses get-catalogue-item-licenses
+   :valid-user? users/user-exists?})
 
 (defn get-application-internal
   "Returns the full application state without any user permission
