@@ -601,8 +601,7 @@
                             :catalogue-item-ids []}))))))
 
 (deftest test-submit
-  (let [injections {:validate-fields form-validation/validate-fields
-                    :get-form-template dummy-get-form-template}
+  (let [injections {:get-form-template dummy-get-form-template}
         created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
@@ -727,8 +726,7 @@
                                      {:type :application.command/return
                                       :actor handler-user-id
                                       :comment "ret"})
-          submit-injections {:validate-fields form-validation/validate-fields
-                             :get-form-template dummy-get-form-template}
+          submit-injections {:get-form-template dummy-get-form-template}
           submit-command {:type :application.command/submit
                           :actor applicant-user-id}]
       (is (= {:event/type :application.event/returned
