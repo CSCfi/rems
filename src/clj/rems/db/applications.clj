@@ -79,7 +79,7 @@
   (swap! workflow-cache empty)
   (swap! blacklist-cache empty))
 
-(def ^:private fetcher-injections
+(def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
    :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
