@@ -47,11 +47,8 @@
 
 (def ^:private command-injections
   (merge applications/fetcher-injections
-         {:valid-user? users/user-exists? ;; TODO move to fetcher-injections
-          :secure-token secure-token
-          :get-catalogue-item-licenses applications/get-catalogue-item-licenses ;; TODO move to fetcher-injections
+         {:secure-token secure-token
           :allocate-application-ids! applications/allocate-application-ids!
-          :get-attachment-metadata attachments/get-attachment-metadata ;; TODO move to fetcher-injections
           :copy-attachment! attachments/copy-attachment!}))
 
 (defn command! [cmd]
