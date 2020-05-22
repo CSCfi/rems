@@ -46,14 +46,13 @@
    (event-notification/queue-notifications! new-events)))
 
 (def ^:private command-injections
-  {:valid-user? users/user-exists?
-   :secure-token secure-token
-   :get-catalogue-item catalogue/get-localized-catalogue-item
-   :get-catalogue-item-licenses applications/get-catalogue-item-licenses
-   :get-workflow workflow/get-workflow
-   :allocate-application-ids! applications/allocate-application-ids!
-   :get-attachment-metadata attachments/get-attachment-metadata
-   :copy-attachment! attachments/copy-attachment!})
+  (merge applications/fetcher-injections
+         {:valid-user? users/user-exists? ;; TODO move to fetcher-injections
+          :secure-token secure-token
+          :get-catalogue-item-licenses applications/get-catalogue-item-licenses ;; TODO move to fetcher-injections
+          :allocate-application-ids! applications/allocate-application-ids!
+          :get-attachment-metadata attachments/get-attachment-metadata ;; TODO move to fetcher-injections
+          :copy-attachment! attachments/copy-attachment!}))
 
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.
