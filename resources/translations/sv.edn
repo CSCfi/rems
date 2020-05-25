@@ -294,7 +294,7 @@
                            :message "Bästa %1,\n\nDu är inbjuden att delta i %2s ansökning %3 om tillgång till material.\n\nDu kan granska ansökningen och godkänna användarvillkoren bakom denna länk: %4"};; < ONKO OIKEIN?
           :regards "\n\nMed vänlig hälsning,\n\nREMS\n"
           :remarked {:subject "Ansökning (%3) kommenterad"
-                     :message "Bästa %1,\n\n%2 har kommenterat ansökning (%3) inlämnad av %4.\n\nDu kan granska ansökningen bakom denna länk: %6"}
+                     :message "Bästa %1,\n\n%2 har kommenterat ansökning (%3) inlämnad av %4.\n\nDu kan se kommentar och granska ansökningen bakom denna länk: %6"}
           :review-requested {:subject "(%3) Begäran om granskning"
                              :message "Bästa %1,\n\n%2 ber dig granska %4s ansökning: %3.\n\nVDu kan granska ansökningen bakom denna länk: %6"}
           :reviewed {:subject "Ansökning %3 granskad"
