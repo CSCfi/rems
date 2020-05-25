@@ -1,8 +1,8 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some]]
-            [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
+            [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
@@ -236,9 +236,9 @@
   (when-not (application-util/is-handler? application actor)
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
-(defn- validation-error [application injections]
+(defn- validation-error [application]
   (let [errors (for [form (:application/forms application)
-                     error ((getx injections :validate-fields) (:form/fields form))]
+                     error (form-validation/validate-fields (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))
@@ -355,7 +355,7 @@
   (or (merge-with concat
                   (disabled-catalogue-items-error application)
                   (licenses-not-accepted-error application (:actor cmd))
-                  (validation-error application injections))
+                  (validation-error application))
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler :application.command/approve
@@ -561,6 +561,10 @@
   (update-present result :events (fn [events]
                                    (mapv #(add-common-event-fields-from-command % cmd) events))))
 
+(defn- application-not-found-error [application cmd]
+  (when (and (:application-id cmd) (not application))
+    {:errors [{:type :application-not-found}]}))
+
 (defn- forbidden-error [application cmd]
   (let [permissions (if application
                       (permissions/user-permissions application (:actor cmd))
@@ -570,9 +574,10 @@
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (let [result (-> cmd
-                   (command-handler application injections)
-                   (finalize-events cmd))]
-    (or (when (:errors result) result) ;; prefer more specific errors
-        (forbidden-error application cmd)
-        result)))
+  (or (application-not-found-error application cmd)
+      (let [result (-> cmd
+                       (command-handler application injections)
+                       (finalize-events cmd))]
+        (or (when (:errors result) result) ;; prefer more specific errors
+            (forbidden-error application cmd)
+            result))))

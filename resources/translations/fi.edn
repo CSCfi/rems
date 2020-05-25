@@ -73,14 +73,8 @@
                    :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
                    :end "Loppu"
-                   :errors {:form-archived "Lomake on arkistoitu:"
-                            :form-in-use "Lomake on käytössä:"
-                            :license-archived "Lisenssi on arkistoitu:"
-                            :license-in-use "Lisenssi on käytössä:"
-                            :resource-archived "Resurssi on arkistoitu:"
-                            :resource-in-use "Resurssi on käytössä:"
-                            :workflow-archived "Työvuo on arkistoitu:"
-                            :workflow-in-use "Työvuo on käytössä:"}
+                   :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
+                            :in-use-by "Se on käytössä täällä:"}
                    :export-applications "Vie hakemuksia"
                    :form "Lomake"
                    :forms "Lomakkeet"

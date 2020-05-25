@@ -20,7 +20,7 @@
   (let [owner "owner"
         form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
-        res-id (test-data/create-resource! {:license-ids [lic-id]})
+        res-id (test-data/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
         workflow-id (test-data/create-workflow! {})
         item-id (test-data/create-catalogue-item! {:resource-id res-id
                                                    :form-id form-id
@@ -116,10 +116,11 @@
       (archive-catalogue-item! true)
       (archive-resource! true)
       (archive-license! true)
-      (let [errors (:errors (archive-catalogue-item! false))]
-        (is (= #{:t.administration.errors/resource-archived
-                 :t.administration.errors/license-archived}
-               (set (mapv :type errors)))))
+      ;; TODO indirect catalogue item -> resource -> license dep not tracked right now
+      (is (= {:success false
+              :errors [{:type :t.administration.errors/dependencies-archived
+                        :resources [{:id res-id :resid "ext"}]}]}
+             (archive-catalogue-item! false)))
       (archive-license! false)
       (archive-resource! false)
       (is (:success (archive-catalogue-item! true))))))

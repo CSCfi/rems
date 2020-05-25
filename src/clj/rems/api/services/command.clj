@@ -47,7 +47,6 @@
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?
-   :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses applications/get-catalogue-item-licenses

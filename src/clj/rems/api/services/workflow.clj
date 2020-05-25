@@ -1,5 +1,6 @@
 (ns rems.api.services.workflow
   (:require [com.rpl.specter :refer [ALL transform]]
+            [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -25,6 +26,7 @@
                                       :title title
                                       :workflow (json/generate-string
                                                  (validate-workflow-body body))}))]
+    (dependencies/reset-cache!)
     {:success (not (nil? id))
      :id id}))
 
@@ -51,39 +53,24 @@
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
-  (let [workflow (workflow/get-workflow id)
-        archived-licenses (seq (filter :archived (:licenses workflow)))
-        archived-forms (->> (get-in workflow [:workflow :forms])
-                            (map (comp form/get-form-template :form/id))
-                            (filter :archived)
-                            (map #(select-keys % [:form/id :form/title]))
-                            seq)
-        catalogue-items (->> (catalogue/get-localized-catalogue-items {:workflow id
-                                                       :archived false})
-                             (map #(select-keys % [:id :title :localizations])))]
-    (util/check-allowed-organization! (:organization workflow))
-    (let [errors (seq
-                  (concat
-                   (when (and archived (seq catalogue-items))
-                     [{:type :t.administration.errors/workflow-in-use
-                       :catalogue-items catalogue-items}])
-                   (when (and (not archived) (seq archived-licenses))
-                     [{:type :t.administration.errors/license-archived
-                       :licenses archived-licenses}])
-                   (when (and (not archived) (seq archived-forms))
-                     [{:type :t.administration.errors/form-archived
-                       :forms archived-forms}])))]
-      (if errors
-        {:success false
-         :errors errors}
-        (do
-          (db/set-workflow-archived! {:id id
-                                      :archived archived})
-          {:success true})))))
+  (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
+  (or (dependencies/change-archive-status-error archived {:workflow/id id})
+      (do
+        (db/set-workflow-archived! {:id id
+                                    :archived archived})
+        {:success true})))
+
+;; TODO more systematic joining for these needed. Now we just add the title for the UI
+(defn- enrich-workflow-form [item]
+  (select-keys (dependencies/enrich-dependency item) [:form/id :form/title]))
+
+(defn- join-workflow-forms [workflow]
+  (update-in workflow [:workflow :forms] (partial mapv enrich-workflow-form)))
 
 (defn- join-dependencies [workflow]
   (when workflow
     (->> workflow
+         join-workflow-forms
          organizations/join-organization
          workflow/join-workflow-licenses
          (transform [:licenses ALL] organizations/join-organization))))

@@ -3,16 +3,28 @@
             [rems.atoms :refer [checkbox]]
             [rems.text :refer [text get-localized-title]]))
 
+;; TODO this should be in some util namespace
+(defn- get-localized-title-for-anything
+  ([item]
+   (get-localized-title-for-anything item @(rf/subscribe [:language])))
+  ([item language]
+   (or (get-localized-title item language)
+       (:resid item)
+       (:form/title item)
+       (:title item))))
+
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled false) [text :t.administration/disable])}
+    :on-click #(on-change (assoc item :enabled false) [:span [text :t.administration/disable]
+                                                       " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled true) [text :t.administration/enable])}
+    :on-click #(on-change (assoc item :enabled true) [:span [text :t.administration/enable]
+                                                      " \""  [get-localized-title-for-anything item] "\""])}
    (text :t.administration/enable)])
 
 ; TODO consider naming enabled-toggle-button
@@ -25,13 +37,15 @@
 (defn- archive-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived true) [text :t.administration/archive])}
+    :on-click #(on-change (assoc item :archived true) [:span [text :t.administration/archive]
+                                                       " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/archive)])
 
 (defn- unarchive-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived false) [text :t.administration/unarchive])}
+    :on-click #(on-change (assoc item :archived false) [:span [text :t.administration/unarchive]
+                                                        " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/unarchive)])
 
 ;; TODO consider naming archived-toggle-button
@@ -82,33 +96,35 @@
               (text :t.administration/catalogue-item) ": "
               [:a {:target :_blank
                    :href (str "/administration/catalogue-items/" (:id ci))}
-               (get-localized-title ci language)]]))
+               (get-localized-title-for-anything ci language)]]))
      (into [:ul]
            (for [f forms]
              [:li
               (text :t.administration/form) ": "
               [:a {:target :_blank
                    :href (str "/administration/forms/" (:id f))}
-               (:form/title f)]]))
+               (get-localized-title-for-anything f language)]]))
      (into [:ul]
            (for [lic licenses]
              [:li
               (text :t.administration/license) ": "
               [:a {:target :_blank
                    :href (str "/administration/licenses/" (:id lic))}
-               (get-localized-title lic language)]]))
+               (get-localized-title-for-anything lic language)]]))
      (into [:ul]
            (for [r resources]
              [:li
               (text :t.administration/resource) ": "
               [:a {:target :_blank
-                   :href (str "/administration/resources/" (:id r))} (:resid r)]]))
+                   :href (str "/administration/resources/" (:id r))}
+               (get-localized-title-for-anything r language)]]))
      (into [:ul]
            (for [w workflows]
              [:li
               (text :t.administration/workflow) ": "
               [:a {:target :_blank
-                   :href (str "/administration/workflows/" (:id w))} (:title w)]]))]))
+                   :href (str "/administration/workflows/" (:id w))}
+               (get-localized-title-for-anything w language)]]))]))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
