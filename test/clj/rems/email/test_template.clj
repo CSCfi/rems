@@ -73,6 +73,8 @@
     "assistant" {:userid "assistant"
                  :name "Amber Assistant"
                  :email "assistant@example.com"}
+    "remarker" {:userid "remarker"
+                :name "Random Remarker"}
     {:userid userid}))
 
 (defn email-recipient [email]
@@ -187,8 +189,18 @@
     (is (= #{"assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "assistant"
             :subject "(2001/3, \"Application title\") Application has been commented"
-            :body "Dear Amber Assistant,\n\nremarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
-           (email-to "assistant" mails)))))
+            :body "Dear Amber Assistant,\n\nRandom Remarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+           (email-to "assistant" mails))))
+  (let [mails (emails base-events {:application/id 7
+                                   :event/type :application.event/remarked
+                                   :event/actor "remarker"
+                                   :application/public true
+                                   :application/comment "remark!"})]
+    (is (= #{"assistant" "handler" "applicant"} (email-recipients mails)))
+    (is (= {:to-user "applicant"
+            :subject "(2001/3, \"Application title\") Application has been commented"
+            :body "Dear Alice Applicant,\n\nRandom Remarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+           (email-to "applicant" mails)))))
 
 (deftest test-members-licenses-approved-closed
   (let [add-member {:application/id 7

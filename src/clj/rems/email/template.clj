@@ -150,7 +150,9 @@
                         :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
-  (emails-to-recipients (handlers application)
+  (emails-to-recipients (concat (handlers application)
+                                (when (:application/public event)
+                                  (application-util/applicant-and-members application)))
                         event application
                         :t.email.remarked/subject
                         :t.email.remarked/message))
