@@ -11,8 +11,7 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [fetch unauthorized!]])
+            [rems.text :refer [text get-localized-title]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
@@ -61,14 +60,15 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])])
- (fn [[catalogue language] _]
+    (rf/subscribe [:language])
+    (rf/subscribe [:logged-in])])
+ (fn [[catalogue language logged-in?] _]
    (map (fn [item]
           {:key (:id item)
            :name {:value (get-localized-title item language)}
            :commands {:td [:td.commands
                            [catalogue-item-more-info item language {}]
-                           [cart/add-to-cart-button item language]]}})
+                           (when logged-in? [cart/add-to-cart-button item language])]}})
         catalogue)))
 
 (defn draft-application-list []
@@ -106,7 +106,9 @@
            @(rf/subscribe [::draft-applications ::fetching?]))
      [spinner/big]
      [:div
-      [draft-application-list]
-      [:h2 (text :t.catalogue/apply-resources)]
-      [cart/cart-list-container]
+      (when @(rf/subscribe [:logged-in])
+        [:<>
+         [draft-application-list]
+         [cart/cart-list-container]
+         [:h2 (text :t.catalogue/apply-resources)]])
       [catalogue-table]])])
