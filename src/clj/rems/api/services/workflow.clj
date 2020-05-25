@@ -16,7 +16,7 @@
   (s/validator workflow/WorkflowBody))
 
 (defn invalid-forms-error [forms]
-  (let [invalid (seq (filter (comp nil? form/get-form-template :form/id) forms))]
+  (let [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
     (when invalid
       {:success false
        :errors [{:type :invalid-form
