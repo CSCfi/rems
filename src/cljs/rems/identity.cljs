@@ -1,5 +1,6 @@
 (ns rems.identity
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [rems.roles :as roles]))
 
 ;;; subscriptions
 
@@ -17,6 +18,11 @@
  :roles
  (fn [db _]
    (get-in db [:identity :roles])))
+
+(rf/reg-sub
+ :logged-in
+ (fn [db _]
+   (roles/is-logged-in? (get-in db [:identity :roles]))))
 
 ;;; handlers
 

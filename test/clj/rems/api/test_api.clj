@@ -56,10 +56,10 @@
     (testing "> api key with whitelist can only impersonate given users >"
       (doseq [user ["alice" "malice"]]
         (testing user
-          (is (response-is-ok? (api-response :get "/api/catalogue/" nil
-                                             "44" user)))))
-      (is (response-is-unauthorized? (api-response :get "/api/catalogue/" nil
-                                                   "44" "owner")))))
+          (is (response-is-ok? (api-response :get "/api/my-applications/" nil
+                                             "44" user)))
+          (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
+                                                       "44" "owner")))))))
   (testing "api key path whitelist"
     (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
     (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
@@ -70,8 +70,9 @@
                                                                :path "/api/c.*"}
                                                               {:method "get"
                                                                :path "/api/users/.*"}]})
+
     (testing "> api key without whitelist can access any path >"
-      (doseq [path ["/api/applications" "/api/my-applications" "/api/catalogue"]]
+      (doseq [path ["/api/applications" "/api/my-applications"]]
         (testing path
           (is (response-is-ok? (api-response :get path nil
                                              "45" "owner"))))))
@@ -80,7 +81,7 @@
         (testing path
           (is (response-is-ok? (api-response :get path nil
                                              "46" "owner")))))
-      (is (response-is-unauthorized? (api-response :get "/api/catalogue" nil
+      (is (response-is-unauthorized? (api-response :get "/api/catalogue-items" nil
                                                    "46" "owner"))))
     (testing "> api key with whitelist can access only matching paths >"
       (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]

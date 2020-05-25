@@ -223,6 +223,16 @@
    {}))
 
 ;;;; Pages
+(defn login-intro []
+  [:div
+   [:div.row.justify-content-center
+    [flash-message/component :top]]
+   [:div.row.justify-content-center
+    [:div.col-md-6.row
+     (text :t.login/intro)]]
+   [:div.row.justify-content-center
+    [:div.col-md-6.row
+     [auth/login-component]]]])
 
 (defn home-page []
   (if @(rf/subscribe [:user])
@@ -235,15 +245,7 @@
       (when-let [redirect-url (-> (js/URLSearchParams. js/window.location.search)
                                   (.get "redirect"))]
         (.setItem js/sessionStorage "rems-redirect-url" redirect-url))
-      [:div
-       [:div.row.justify-content-center
-        [flash-message/component :top]]
-       [:div.row.justify-content-center
-        [:div.col-md-6.row
-         (text :t.login/intro)]]
-       [:div.row.justify-content-center
-        [:div.col-md-6.row
-         [auth/login-component]]]])))
+      [login-intro])))
 
 (defn unauthorized-page []
   [:div

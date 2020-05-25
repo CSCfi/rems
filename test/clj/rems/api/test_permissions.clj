@@ -67,11 +67,7 @@
     (let [api-key "42"]
       (testing "when permissions api is disabled"
         (let [response (-> (request :get "/api/permissions/alice")
-                       (authenticate api-key "handler")
-                       handler)
+                           (authenticate api-key "handler")
+                           handler)
               body (read-body response)]
           (is (= "permissions api not implemented" body)))))))
-
-
-
-

@@ -11,21 +11,16 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [fetch unauthorized!]])
+            [rems.text :refer [text get-localized-title]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (dissoc db ::catalogue ::draft-applications)
-      :dispatch-n [[::full-catalogue]
-                   [::draft-applications]
-                   [:rems.table/reset]]}
-     (do
-       (unauthorized!)
-       {}))))
+   {:db (dissoc db ::catalogue ::draft-applications)
+    :dispatch-n [[::full-catalogue]
+                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
+                 [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
 
@@ -59,20 +54,21 @@
                          (get-localized-title item language)
                          ", "
                          (text :t.link/opens-in-new-window))}
-        [external-link] " " (text :t.catalogue/more-info)])))
+       [external-link] " " (text :t.catalogue/more-info)])))
 
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])])
- (fn [[catalogue language] _]
+    (rf/subscribe [:language])
+    (rf/subscribe [:logged-in])])
+ (fn [[catalogue language logged-in?] _]
    (map (fn [item]
           {:key (:id item)
            :name {:value (get-localized-title item language)}
            :commands {:td [:td.commands
                            [catalogue-item-more-info item language {}]
-                           [cart/add-to-cart-button item language]]}})
+                           (when logged-in? [cart/add-to-cart-button item language])]}})
         catalogue)))
 
 (defn draft-application-list []
@@ -110,7 +106,9 @@
            @(rf/subscribe [::draft-applications ::fetching?]))
      [spinner/big]
      [:div
-      [draft-application-list]
-      [:h2 (text :t.catalogue/apply-resources)]
-      [cart/cart-list-container]
+      (when @(rf/subscribe [:logged-in])
+        [:<>
+         [draft-application-list]
+         [cart/cart-list-container]
+         [:h2 (text :t.catalogue/apply-resources)]])
       [catalogue-table]])])

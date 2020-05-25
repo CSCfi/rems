@@ -22,6 +22,7 @@
   {:authentication s/Keyword
    :alternative-login-url (s/maybe s/Str)
    :application-id-column (s/enum :id :external-id)
+   :catalogue-is-public s/Bool
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
@@ -55,6 +56,7 @@
       (ok (select-keys env [:alternative-login-url
                             :application-id-column
                             :authentication
+                            :catalogue-is-public
                             :default-language
                             :dev
                             :extra-pages

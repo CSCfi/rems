@@ -28,4 +28,5 @@
                                     :filename "about-sv.md"}}}]
  :extra-pages-path "./test-data/extra-pages"
  :application-deadline-days 4
- :enable-pdf-api true}
+ :enable-pdf-api true
+ :catalogue-is-public false}

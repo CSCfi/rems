@@ -19,15 +19,14 @@
       (is (some #(str/starts-with? (:resid %) "urn:") data)))))
 
 (deftest catalogue-api-security-test
-  (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/catalogue"))
-                       handler)
-          body (read-body response)]
-      (is (response-is-unauthorized? response))
-      (is (= "unauthorized" body))))
-  (testing "listing with wrong API-Key"
-    (is (= "unauthorized"
-           (-> (request :get (str "/api/catalogue"))
-               (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-               handler
-               (read-body))))))
+  (testing "catalogue-is-public true"
+    (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public true)]
+      (is (api-call :get "/api/catalogue" nil nil nil) "should work without authentication")
+      (is (api-call :get "/api/catalogue" nil "42" nil) "should work with api key even without a user")
+      (is (api-call :get "/api/catalogue" nil "42" "alice") "should work for a regular user")))
+  (testing "catalogue-is-public false"
+    (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
+      (is (api-call :get "/api/catalogue" nil "42" "alice") "should work for a regular user")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil nil nil))) "should be forbidden without authentication")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))) "should not work with wrong api key")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "42" nil))) "should not work without a user"))))

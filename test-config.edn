@@ -9,4 +9,6 @@
  :search-index-path "target/search-index-test"
  :authentication :fake
  :languages [:en :fi :sv]
- :enable-pdf-api true}
+ :enable-pdf-api true
+ :catalogue-is-public false}
+
