@@ -10,5 +10,5 @@
  :authentication :fake
  :languages [:en :fi :sv]
  :enable-pdf-api true
- :catalogue-is-public true}
+ :catalogue-is-public false}
 
