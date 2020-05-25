@@ -296,7 +296,7 @@
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :regards "\n\nKind regards,\n\nREMS\n"
           :remarked {:subject "(%3) Application has been commented"
-                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can review the application at %6"}
+                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can view the comment and the application at %6"}
           :review-requested {:subject "(%3) Review request"
                              :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :reviewed {:subject "(%3) Application has been reviewed"
