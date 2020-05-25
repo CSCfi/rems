@@ -3,7 +3,6 @@
             [rems.api.schema :refer :all]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.util] ; required for route :roles
-            [rems.api.util :refer [check-roles]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.roles :as roles]
