@@ -22,11 +22,19 @@
        :errors [{:type :invalid-form
                  :forms invalid}]})))
 
+(defn invalid-users-error [userids]
+  (let [invalid (seq (remove users/user-exists? userids))]
+    (when invalid
+      {:success false
+       :errors [{:type :invalid-user
+                 :users invalid}]})))
+
 (defn create-workflow! [{:keys [user-id organization type title handlers forms]}]
   (util/check-allowed-organization! organization)
-  (or (invalid-forms-error forms)
+  (or (invalid-users-error handlers)
+      (invalid-forms-error forms)
       (let [body {:type type
-                  :handlers handlers ;; TODO missing validation for handlers, see #2182
+                  :handlers handlers
                   :forms forms}
             id (:id (db/create-workflow! {:organization (:organization/id organization)
                                           :owneruserid user-id

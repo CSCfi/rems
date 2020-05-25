@@ -11,6 +11,7 @@
 (defn- create-users []
   (test-data/create-user! {:eppn "user1" :commonName "User 1" :mail "user1@example.com"})
   (test-data/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"})
+  (test-data/create-user! {:eppn "user3" :commonName "User 3" :mail "user3@example.com"})
   (test-data/create-user! {:eppn "owner" :commonName "owner" :mail "owner@example.com"} :owner))
 
 (deftest test-create-workflow
@@ -128,20 +129,20 @@
     (let [simplify #(map :userid %)
           wf1 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
-                                           :handlers ["handler1"
-                                                      "handler2"]})
+                                           :handlers ["user1"
+                                                      "user2"]})
           wf2 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
-                                           :handlers ["handler2"
-                                                      "handler3"]})]
+                                           :handlers ["user2"
+                                                      "user3"]})]
 
       (testing "returns distinct handlers from all workflows"
-        (is (= ["handler1" "handler2" "handler3"]
+        (is (= ["user1" "user2" "user3"]
                (simplify (workflow/get-handlers)))))
 
       (testing "ignores disabled workflows"
         (workflow/set-workflow-enabled! {:id wf1 :enabled false})
-        (is (= ["handler2" "handler3"]
+        (is (= ["user2" "user3"]
                (simplify (workflow/get-handlers)))))
 
       (testing "ignores archived workflows"
