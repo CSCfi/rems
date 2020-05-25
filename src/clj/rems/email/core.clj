@@ -87,7 +87,10 @@
                      :from (:mail-from env)
                      :to (or (:to email-spec)
                              (:notification-email (user-settings/get-user-settings (:to-user email-spec)))
-                             (:email (users/get-user (:to-user email-spec)))))
+                             (:email (users/get-user (:to-user email-spec))))
+                     ;; https://tools.ietf.org/html/rfc3834
+                     ;; postal turns extra keys into headers
+                     "Auto-Submitted" "auto-generated")
         to-error (validate-address (:to email))]
     (when (:to email)
       (log/info "sending email:" (pr-str email))
