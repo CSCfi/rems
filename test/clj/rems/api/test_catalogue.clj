@@ -21,19 +21,12 @@
 (deftest catalogue-api-security-test
   (testing "catalogue-is-public true"
     (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public true)]
-      (testing "with no authentification"
-        (is (api-call :get "/api/catalogue" nil nil nil)))
-      (testing "with authentification by api key"
-        (is (api-call :get "/api/catalogue" nil "42" "handler")))
-      (testing "with authentification by api key and username"
-        (is (api-call :get "/api/catalogue" nil "42" "alice")))))
+      (is (api-call :get "/api/catalogue" nil nil nil) "should work without authentication")
+      (is (api-call :get "/api/catalogue" nil "42" nil) "should work with api key even without a user")
+      (is (api-call :get "/api/catalogue" nil "42" "alice") "should work for a regular user")))
   (testing "catalogue-is-public false"
     (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
-      (testing "should return forbidden without authentification"
-        (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil nil nil)))))
-      (testing "with authentification should return catalogue pt.1"
-        (is (api-call :get "/api/catalogue" nil "42" "handler")))
-      (testing "with authentification should return catalogue pt.2"
-        (is (api-call :get "/api/catalogue" nil "42" "alice")))
-      (testing "with wrong api key should return forbidden"
-        (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))))))))
+      (is (api-call :get "/api/catalogue" nil "42" "alice") "should work for a regular user")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil nil nil))) "should be forbidden without authentication")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))) "should not work with wrong api key")
+      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "42" nil))) "should not work without a user"))))
