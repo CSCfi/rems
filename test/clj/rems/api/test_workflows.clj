@@ -72,6 +72,11 @@
               (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id :form/title "workflow form"}])
                      (fetch "42" user-id id))))))
 
+        (testing "create default workflow with invalid form"
+          (is (= {:success false
+                  :errors [{:type "invalid-form" :forms [{:form/id 999999}]}]}
+                 (create-workflow user-id "organization1" :workflow/default [{:form/id 999999}]))))
+
         (testing "create decider workflow"
           (let [body (create-workflow user-id "organization1" :workflow/decider [])
                 id (:id body)]
