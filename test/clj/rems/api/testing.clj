@@ -129,7 +129,8 @@
 
 (defn api-response [method api & [body api-key user-id]]
   (cond-> (request method api)
-    (and api-key user-id) (authenticate api-key user-id)
+    api-key (assoc-in [:headers "x-rems-api-key"] api-key)
+    user-id (assoc-in [:headers "x-rems-user-id"] user-id)
     body (json-body body)
     true handler))
 
