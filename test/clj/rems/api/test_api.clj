@@ -52,14 +52,14 @@
       (doseq [user ["owner" "alice" "malice"]]
         (testing user
           (is (response-is-ok? (api-response :get "/api/catalogue/" nil
-                                             "43" user)))))))
-  (testing "> api key with whitelist can only impersonate given users >"
-    (doseq [user ["alice" "malice"]]
-      (testing user
-        (is (response-is-ok? (api-response :get "/api/my-applications/" nil
-                                           "44" user)))
-        (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
-                                                     "44" "owner"))))))
+                                             "43" user))))))
+    (testing "> api key with whitelist can only impersonate given users >"
+      (doseq [user ["alice" "malice"]]
+        (testing user
+          (is (response-is-ok? (api-response :get "/api/my-applications/" nil
+                                             "44" user)))
+          (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
+                                                       "44" "owner")))))))
   (testing "api key path whitelist"
     (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
     (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
