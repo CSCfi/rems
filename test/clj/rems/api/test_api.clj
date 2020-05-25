@@ -80,9 +80,9 @@
       (doseq [path ["/api/applications" "/api/my-applications"]]
         (testing path
           (is (response-is-ok? (api-response :get path nil
-                                             "46" "owner")))
-          (is (response-is-unauthorized? (api-response :get "/api/catalogue-items" nil
-                                                       "46" "owner"))))))
+                                             "46" "owner")))))
+      (is (response-is-unauthorized? (api-response :get "/api/catalogue-items" nil
+                                                   "46" "owner"))))
     (testing "> api key with whitelist can access only matching paths >"
       (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]
         (testing path
