@@ -72,6 +72,21 @@
               (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id :form/title "workflow form"}])
                      (fetch "42" user-id id))))))
 
+        (testing "create default workflow with invalid form"
+          (is (= {:success false
+                  :errors [{:type "invalid-form" :forms [{:form/id 999999}]}]}
+                 (create-workflow user-id "organization1" :workflow/default [{:form/id 999999}]))))
+
+        (testing "create default workflow with invalid handlers"
+          (is (= {:success false
+                  :errors [{:type "invalid-user" :users ["nonexisting" "ghost"]}]}
+                 (api-call :post "/api/workflows/create"
+                           {:organization {:organization/id "organization1"}
+                            :title "workflow title"
+                            :type :workflow/default
+                            :handlers ["handler" "nonexisting" "ghost"]}
+                           "42" user-id))))
+
         (testing "create decider workflow"
           (let [body (create-workflow user-id "organization1" :workflow/decider [])
                 id (:id body)]
