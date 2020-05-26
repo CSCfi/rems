@@ -547,7 +547,7 @@
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (select-option "Organization" "nbn")
-      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " EN") {:index 1})
+      (fill-form-field "Name" (btu/context-get :catalogue-item-name) {:index 1})
       (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
       (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
       (select-option "Workflow" (btu/context-get :workflow-name))
@@ -560,7 +560,7 @@
       (btu/screenshot (io/file btu/reporting-dir "created-catalogue-item.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title (EN)" (str (btu/context-get :catalogue-item-name) " EN")
+              "Title (EN)" (btu/context-get :catalogue-item-name)
               "Title (FI)" (str (btu/context-get :catalogue-item-name) " FI")
               "Title (SV)" (str (btu/context-get :catalogue-item-name) " SV")
               "More info (EN)" ""
@@ -573,16 +573,26 @@
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
                      "Start")))
-      (btu/scroll-and-click {:fn/text "Enable"})
-      (btu/wait-page-loaded)
-      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (go-to-admin "Catalogue items")
       (is (some #(= {"workflow" (btu/context-get :workflow-name)
                      "resource" (btu/context-get :resid)
                      "form" (btu/context-get :form-name)
-                     "name" (str (btu/context-get :catalogue-item-name) " EN")}
+                     "name" (btu/context-get :catalogue-item-name)}
                     (select-keys % ["resource" "workflow" "form" "name"]))
                 (slurp-rows :catalogue))))))
+
+(defn enable-catalogue-item [item-name]
+  (go-to-admin "Catalogue items")
+  (btu/wait-page-loaded)
+  ;; incidentally test search while we're at it
+  (btu/fill-human :catalogue-search item-name)
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "about-to-enable-catalogue-item.png"))
+  (btu/scroll-and-click {:tag :button :fn/text "Enable"})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
+  (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -598,11 +608,16 @@
       (create-form)
       (create-workflow)
       (create-catalogue-item))
+    (testing "check that catalogue item is not visible before enabling"
+      (go-to-catalogue)
+      (is (not (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))
+    (testing "enable catalogue item"
+      (enable-catalogue-item (btu/context-get :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"
       (logout)
       (login-as "alice")
       (go-to-catalogue)
-      (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))
+      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
 
 (deftest test-form-editor
   (btu/with-postmortem {:dir btu/reporting-dir}
