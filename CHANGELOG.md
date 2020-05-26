@@ -21,7 +21,7 @@ Changes since v2.12
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
 - There is now an API for querying and creating organizations #2039
 - Workflows can now have forms. Workflow forms apply to all catalogue items that use the workflow. (#2052)
-- Applicants and members now get emails when a public remark is added to an application. (#2190)
+- Applicants now get emails when a public remark is added to an application. (#2190)
 - All emails sent by REMS now have the Auto-Submitted header set. (#2175)
 
 ## v2.12 "Merituulentie" 2020-05-04
