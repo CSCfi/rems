@@ -152,7 +152,8 @@
 (defmethod event-to-emails :application.event/remarked [event application]
   (emails-to-recipients (concat (handlers application)
                                 (when (:application/public event)
-                                  (application-util/applicant-and-members application)))
+                                  ;; no need to email members on non-actionable things
+                                  [(:application/applicant application)]))
                         event application
                         :t.email.remarked/subject
                         :t.email.remarked/message))
