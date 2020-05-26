@@ -623,76 +623,81 @@
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
     (go-to-admin "Forms")
-    (btu/scroll-and-click :create-form)
-    (btu/wait-visible {:tag :h1 :fn/text "Create form"})
-    (select-option "Organization" "nbn")
-    (fill-form-field "Form name" "Form editor test")
-    (btu/scroll-and-click {:class :add-form-field})
-    ;; using ids to fill the fields because the label structure is complicated
-    (btu/wait-visible :fields-0-title-en)
-    (btu/fill-human :fields-0-title-en "Text area (EN)")
-    (btu/fill-human :fields-0-title-fi "Text area (FI)")
-    (btu/fill-human :fields-0-title-sv "Text area (SV)")
-    (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
-    (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
-    (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
-    (btu/scroll-and-click :fields-0-type-texta)
-    (btu/scroll-and-click :fields-0-optional)
-    (btu/fill-human :fields-0-max-length "127")
 
-    (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-    (btu/wait-visible :fields-1-title-en)
-    (btu/fill-human :fields-1-title-en "Option list (EN)")
-    (btu/fill-human :fields-1-title-fi "Option list (FI)")
-    (btu/fill-human :fields-1-title-sv "Option list (SV)")
-    (btu/scroll-and-click :fields-1-type-option)
-    (btu/scroll-and-click {:class :add-option})
-    (btu/wait-visible :fields-1-options-0-key)
-    (btu/fill-human :fields-1-options-0-key "true")
-    (btu/fill-human :fields-1-options-0-label-en "Yes")
-    (btu/fill-human :fields-1-options-0-label-fi "Kyllä")
-    (btu/fill-human :fields-1-options-0-label-sv "Ja")
-    (btu/scroll-and-click {:class :add-option})
-    (btu/wait-visible :fields-1-options-1-key)
-    (btu/fill-human :fields-1-options-1-key "false")
-    (btu/fill-human :fields-1-options-1-label-en "No")
-    (btu/fill-human :fields-1-options-1-label-fi "Ei")
-    (btu/fill-human :fields-1-options-1-label-sv "Nej")
+    (testing "create form"
+      (btu/scroll-and-click :create-form)
+      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Form name" "Form editor test")
+      (btu/scroll-and-click {:class :add-form-field})
+      ;; using ids to fill the fields because the label structure is complicated
+      (btu/wait-visible :fields-0-title-en)
+      (btu/fill-human :fields-0-title-en "Text area (EN)")
+      (btu/fill-human :fields-0-title-fi "Text area (FI)")
+      (btu/fill-human :fields-0-title-sv "Text area (SV)")
+      (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
+      (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
+      (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
+      (btu/scroll-and-click :fields-0-type-texta)
+      (btu/scroll-and-click :fields-0-optional)
+      (btu/fill-human :fields-0-max-length "127")
 
-    ;; TODO create all field types?
-    ;; TODO test validations?
+      (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+      (btu/wait-visible :fields-1-title-en)
+      (btu/fill-human :fields-1-title-en "Option list (EN)")
+      (btu/fill-human :fields-1-title-fi "Option list (FI)")
+      (btu/fill-human :fields-1-title-sv "Option list (SV)")
+      (btu/scroll-and-click :fields-1-type-option)
+      (btu/scroll-and-click {:class :add-option})
+      (btu/wait-visible :fields-1-options-0-key)
+      (btu/fill-human :fields-1-options-0-key "true")
+      (btu/fill-human :fields-1-options-0-label-en "Yes")
+      (btu/fill-human :fields-1-options-0-label-fi "Kyllä")
+      (btu/fill-human :fields-1-options-0-label-sv "Ja")
+      (btu/scroll-and-click {:class :add-option})
+      (btu/wait-visible :fields-1-options-1-key)
+      (btu/fill-human :fields-1-options-1-key "false")
+      (btu/fill-human :fields-1-options-1-label-en "No")
+      (btu/fill-human :fields-1-options-1-label-fi "Ei")
+      (btu/fill-human :fields-1-options-1-label-sv "Nej")
 
-    (btu/scroll-and-click :save)
-    (btu/wait-visible {:tag :h1 :fn/text "Form"})
-    (btu/wait-page-loaded)
+      ;; TODO create all field types?
+      ;; TODO test validations?
 
-    (is (= {"Organization" "NBN"
-            "Title" "Form editor test"
-            "Active" ""}
-           (slurp-fields :form)))
-    ;; the text is split into multiple DOM nodes so we need to get fancy
-    (let [text-area-label (btu/query {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"})]
-      (is text-area-label)
-      (is (btu/visible-el? text-area-label))
-      (is (= "Text area (EN) (max 127 characters) (optional)" (btu/get-element-text-el text-area-label))))
-    (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+      (btu/scroll-and-click :save))
 
-    (btu/scroll-and-click {:fn/has-class :edit-form})
-    (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+    (testing "view form"
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (btu/wait-page-loaded)
+      (is (= {"Organization" "NBN"
+              "Title" "Form editor test"
+              "Active" ""}
+             (slurp-fields :form)))
+      (testing "preview"
+        ;; the text is split into multiple DOM nodes so we need to get fancy
+        (let [text-area-label (btu/query {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"})]
+          (is text-area-label)
+          (is (btu/visible-el? text-area-label))
+          (is (= "Text area (EN) (max 127 characters) (optional)" (btu/get-element-text-el text-area-label))))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
 
-    ;; add one field to the beginning
-    (btu/scroll-and-click {:class :add-form-field})
-    (btu/scroll-and-click :fields-0-type-description)
-    (btu/fill-human :fields-0-title-en "Description (EN)")
-    (btu/fill-human :fields-0-title-fi "Description (FI)")
-    (btu/fill-human :fields-0-title-sv "Description (SV)")
+    (testing "edit form"
+      (btu/scroll-and-click {:fn/has-class :edit-form})
+      (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
 
-    (btu/scroll-and-click :save)
-    (btu/wait-visible {:tag :h1 :fn/text "Form"})
-    (btu/wait-page-loaded)
-    (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+      (testing "add description field"
+        (btu/scroll-and-click {:class :add-form-field})
+        (btu/scroll-and-click :fields-0-type-description)
+        (btu/fill-human :fields-0-title-en "Description (EN)")
+        (btu/fill-human :fields-0-title-fi "Description (FI)")
+        (btu/fill-human :fields-0-title-sv "Description (SV)")
 
-    (testing "fetch via api"
+        (btu/scroll-and-click :save)
+        (btu/wait-visible {:tag :h1 :fn/text "Form"})
+        (btu/wait-page-loaded)
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+
+    (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
                 :form/organization {:organization/id "nbn" :organization/name "NBN"}
