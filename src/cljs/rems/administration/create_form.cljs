@@ -459,6 +459,7 @@
 (defn- save-form-button [on-click]
   [:button.btn.btn-primary
    {:type :button
+    :id :save
     :on-click (fn []
                 (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
@@ -625,6 +626,7 @@
          [:div.col-lg
           [collapsible/component
            {:id "create-form"
+            :class "fields"
             :title (page-title edit-form?)
             :always [:div
                      [form-organization-field]
