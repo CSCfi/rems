@@ -6,6 +6,23 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
+(s/defschema Language
+  (rjs/field s/Keyword
+             {:description "A language code"
+              :example "en"}))
+
+(s/defschema LocalizedString
+  (rjs/field {Language s/Str}
+             {:example {:fi "text in Finnish"
+                        :en "text in English"}
+              :description "Text values keyed by languages"}))
+
+(s/defschema LocalizedInt
+  (rjs/field {Language s/Int}
+             {:example {:fi 1
+                        :en 2}
+              :description "Integers keyed by languages"}))
+
 (def UserId s/Str)
 (s/defschema User {:userid UserId})
 (s/defschema OrganizationId {:organization/id s/Str})
@@ -19,14 +36,14 @@
 
 (s/defschema OrganizationOverview
   (merge OrganizationId
-         {:organization/name s/Str}))
+         {:organization/name LocalizedString}))
 
 (s/defschema OrganizationFull
   (merge OrganizationOverview
          {(s/optional-key :organization/modifier) User
           (s/optional-key :organization/last-modified) DateTime
           (s/optional-key :organization/owners) [User]
-          (s/optional-key :organization/review-emails) [{:name s/Str
+          (s/optional-key :organization/review-emails) [{:name LocalizedString
                                                          :email s/Str}]}))
 
 (s/defschema CatalogueItemLocalizations
@@ -107,23 +124,6 @@
 (s/defschema SuccessResponse
   {:success s/Bool
    (s/optional-key :errors) [s/Any]})
-
-(s/defschema Language
-  (rjs/field s/Keyword
-             {:description "A language code"
-              :example "en"}))
-
-(s/defschema LocalizedString
-  (rjs/field {Language s/Str}
-             {:example {:fi "text in Finnish"
-                        :en "text in English"}
-              :description "Text values keyed by languages"}))
-
-(s/defschema LocalizedInt
-  (rjs/field {Language s/Int}
-             {:example {:fi 1
-                        :en 2}
-              :description "Integers keyed by languages"}))
 
 (s/defschema V2Resource
   {:resource/id s/Int
