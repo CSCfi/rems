@@ -18,7 +18,7 @@
   (create-users)
 
   (with-user "owner"
-    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
+    (test-data/create-organization! {:organization/id "abc" :organization/name {:en "ABC"}})
     (testing "default workflow with forms"
       (let [form-id (test-data/create-form! {:form/title "workflow form"
                                              :form/fields [{:field/type :text
@@ -85,7 +85,7 @@
   (create-users)
 
   (with-user "owner"
-    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
+    (test-data/create-organization! {:organization/id "abc" :organization/name {:en "ABC"}})
     (testing "change title"
       (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
