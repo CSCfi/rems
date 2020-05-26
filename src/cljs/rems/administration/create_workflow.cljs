@@ -157,6 +157,7 @@
                   (build-create-request form))]
     [:button.btn.btn-primary
      {:type :button
+      :id :save
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
                   (if id
@@ -242,7 +243,7 @@
        :title title
        :always (if loading?
                  [:div#workflow-loader [spinner/big]]
-                 [:div#workflow-editor
+                 [:div#workflow-editor.fields
                   [workflow-organization-field]
                   [workflow-title-field]
                   [workflow-type-field]

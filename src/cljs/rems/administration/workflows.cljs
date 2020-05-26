@@ -60,7 +60,7 @@
    {}))
 
 (defn- to-create-workflow []
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:class "btn btn-primary" :id :create-workflow}
    "/administration/workflows/create"
    (text :t.administration/create-workflow)])
 

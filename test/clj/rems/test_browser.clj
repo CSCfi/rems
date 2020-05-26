@@ -78,6 +78,12 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "administration-forms-page.png")))
 
+(defn go-to-admin-workflows []
+  (click-administration-menu "Workflows")
+  (btu/wait-visible {:tag :h1 :fn/text "Workflows"})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "administration-workflows-page.png")))
+
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -391,8 +397,9 @@
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :row}])
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
-                   v (btu/get-element-text-el (btu/child row {:css ".form-control"}))]]
-         [k (str/trim v)])
+                   [value-el] (btu/children row {:css ".form-control"})]
+             :when value-el]
+         [k (str/trim (btu/get-element-text-el value-el))])
        (into {})))
 
 (defn slurp-rows [& selectors]
@@ -517,14 +524,39 @@
               "Active" ""}
              (slurp-fields :form))))))
 
+(defn create-workflow []
+  (testing "create workflow"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin-workflows)
+      (btu/scroll-and-click :create-workflow)
+      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Title" (btu/context-get :workflow-name))
+      ;; Default workflow is already checked
+      (select-option "Handlers" "handler")
+      ;; No form
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-workflow.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-workflow.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" (btu/context-get :workflow-name)
+              "Type" "Default workflow"
+              "Handlers" "Hannah Handler (handler@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow))))))
+
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
     (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
                         :resid (str "browser.testing.resource/" (btu/get-seed))
-                        :form-name (str "Browser Test Form " (btu/get-seed)))
+                        :form-name (str "Browser Test Form " (btu/get-seed))
+                        :workflow-name (str "Browser Test Workflow " (btu/get-seed)))
     (create-license)
     (create-resource)
     (create-form)
-    (testing "create workflow") ; TODO
+    (create-workflow)
     (testing "create catalogue item"))) ; TODO
