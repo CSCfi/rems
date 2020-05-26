@@ -72,6 +72,12 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "administration-resources-page.png")))
 
+(defn go-to-admin-forms []
+  (click-administration-menu "Forms")
+  (btu/wait-visible {:tag :h1 :fn/text "Forms"})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "administration-forms-page.png")))
+
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -491,13 +497,34 @@
       (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
              (btu/get-element-text [:licenses {:class :license-title}]))))))
 
+(defn create-form []
+  (testing "create form"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin-forms)
+      (btu/scroll-and-click :create-form)
+      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Form name" (btu/context-get :form-name))
+      ;; TODO: create fields
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-form.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-form.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" (btu/context-get :form-name)
+              "Active" ""}
+             (slurp-fields :form))))))
+
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
     (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
-                        :resid (str "browser.testing.resource/" (btu/get-seed)))
+                        :resid (str "browser.testing.resource/" (btu/get-seed))
+                        :form-name (str "Browser Test Form " (btu/get-seed)))
     (create-license)
     (create-resource)
-    (testing "create form") ; TODO
+    (create-form)
     (testing "create workflow") ; TODO
     (testing "create catalogue item"))) ; TODO
