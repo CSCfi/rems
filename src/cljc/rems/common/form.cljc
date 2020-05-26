@@ -4,7 +4,8 @@
   Includes functions for both forms and form templates."
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
-             [medley.core :refer [find-first]]
+             [com.rpl.specter :refer [ALL select transform]]
+             [medley.core :refer [assoc-some find-first]]
              [rems.common.util :refer [parse-int remove-empty-keys]]))
 
 (defn supports-optional? [field]
@@ -213,6 +214,21 @@
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
+
+(defn enrich-form-answers [form current-answers previous-answers]
+  (let [form-id (:form/id form)
+        current-answers (get current-answers form-id)
+        previous-answers (get previous-answers form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (if (not-empty fields)
+      (assoc form :form/fields fields)
+      form)))
 
 (deftest validate-form-template-test
   (let [form {:form/organization {:organization/id "abc"}
