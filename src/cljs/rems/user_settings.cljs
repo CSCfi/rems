@@ -16,7 +16,7 @@
     (.set goog.net.cookies language-cookie-name (name language) year-in-seconds "/")))
 
 
-(defn get-language [db]
+(defn- get-current-language [db]
   (let [available-languages (set (:languages (:config db)))
         validate (fn [language]
                    (when (contains? available-languages language)
@@ -28,7 +28,8 @@
 (rf/reg-sub
  :language
  (fn [db _]
-   (get-language db)))
+   (get-current-language db)))
+
 
 (rf/reg-sub
  :languages
@@ -88,7 +89,7 @@
    (let [user-id (get-in db [:identity :user :userid])]
      (when user-id
        (put! "/api/user-settings"
-             {:params {:language (get-language db)}
+             {:params {:language (get-current-language db)}
               :handler fetch-user-settings!
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
      {})))
