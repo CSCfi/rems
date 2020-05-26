@@ -63,6 +63,8 @@
 
 
 (defn go-to-admin [link-text]
+  (click-navigation-menu "Administration")
+  (btu/wait-page-loaded)
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
