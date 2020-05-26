@@ -676,11 +676,11 @@
               "Active" ""}
              (slurp-fields :form)))
       (testing "preview"
-        ;; the text is split into multiple DOM nodes so we need to get fancy
-        (let [text-area-label (btu/query {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"})]
-          (is text-area-label)
-          (is (btu/visible-el? text-area-label))
-          (is (= "Text area (EN) (max 127 characters) (optional)" (btu/get-element-text-el text-area-label))))
+        ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
+        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                           "(max 127 characters)"))
+        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                           "(optional)"))
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
 
     (testing "edit form"

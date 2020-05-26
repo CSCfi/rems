@@ -126,6 +126,7 @@
 (def displayed-el? (wrap-etaoin et/displayed-el?))
 (defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
+(def has-text? (wrap-etaoin et/has-text?))
 ;; TODO add more of etaoin here
 
 
