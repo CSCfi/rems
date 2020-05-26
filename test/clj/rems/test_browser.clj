@@ -508,7 +508,10 @@
               "Active" ""}
              (slurp-fields :resource)))
       (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
-             (btu/get-element-text [:licenses {:class :license-title}]))))))
+             (btu/get-element-text [:licenses {:class :license-title}])))
+      (go-to-admin-resources)
+      (is (some #(= (btu/context-get :resid) (get % "title"))
+                (slurp-rows :resources))))))
 
 (defn create-form []
   (testing "create form"
@@ -528,7 +531,10 @@
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :form-name)
               "Active" ""}
-             (slurp-fields :form))))))
+             (slurp-fields :form)))
+      (go-to-admin-forms)
+      (is (some #(= (btu/context-get :form-name) (get % "title"))
+                (slurp-rows :forms))))))
 
 (defn create-workflow []
   (testing "create workflow"
@@ -552,7 +558,10 @@
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
               "Active" ""}
-             (slurp-fields :workflow))))))
+             (slurp-fields :workflow)))
+      (go-to-admin-workflows)
+      (is (some #(= (btu/context-get :workflow-name) (get % "title"))
+                (slurp-rows :workflows))))))
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
@@ -588,7 +597,14 @@
                      "Start")))
       (btu/scroll-and-click {:fn/text "Enable"})
       (btu/wait-page-loaded)
-      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (go-to-admin-catalogue)
+      (is (some #(= {"workflow" (btu/context-get :workflow-name)
+                     "resource" (btu/context-get :resid)
+                     "form" (btu/context-get :form-name)
+                     "name" (str (btu/context-get :catalogue-item-name) " EN")}
+                    (select-keys % ["resource" "workflow" "form" "name"]))
+                (slurp-rows :catalogue))))))
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
