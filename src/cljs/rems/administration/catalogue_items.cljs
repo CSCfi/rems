@@ -74,7 +74,7 @@
    (::selected-items db)))
 
 (defn- create-catalogue-item-button []
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:class "btn btn-primary" :id :create-catalogue-item}
    "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
 
