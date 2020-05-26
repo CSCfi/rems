@@ -22,6 +22,8 @@ Changes since v2.12
 - There is now an API for querying and creating organizations #2039
 - Possibility to access `/catalogue` without logging in. Configurable by `:catalogue-is-public` #2120
 - Workflows can now have forms. Workflow forms apply to all catalogue items that use the workflow. (#2052)
+- Applicants now get emails when a public remark is added to an application. (#2190)
+- All emails sent by REMS now have the Auto-Submitted header set. (#2175)
 
 ## v2.12 "Merituulentie" 2020-05-04
 

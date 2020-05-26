@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.config]
-            [rems.email.core :refer [send-email!]]))
+            [rems.email.core :refer [send-email!]])
+  (:import [com.icegreen.greenmail.util GreenMail ServerSetup]))
 
 (use-fixtures
   :once
@@ -27,7 +28,8 @@
         (is (= {:to "foo@example.com"
                 :subject "ding"
                 :body "boing"
-                :from "rems@rems.rems"}
+                :from "rems@rems.rems"
+                "Auto-Submitted" "auto-generated"}
                @message-atom))
         (reset! message-atom nil))
 
@@ -37,7 +39,8 @@
                 :to-user "user"
                 :subject "x"
                 :body "y"
-                :from "rems@rems.rems"}
+                :from "rems@rems.rems"
+                "Auto-Submitted" "auto-generated"}
                @message-atom))
         (reset! message-atom nil))
 
@@ -48,7 +51,8 @@
                 :to-user "user"
                 :subject "x"
                 :body "y"
-                :from "rems@rems.rems"}
+                :from "rems@rems.rems"
+                "Auto-Submitted" "auto-generated"}
                @message-atom))
         (reset! message-atom nil))
 
@@ -76,3 +80,25 @@
               "should skip the message quietly"))
         (is (nil? @message-atom))
         (reset! message-atom nil)))))
+
+(deftest test-send-email!-mock-smtp
+  ;; run one case with an smtp server to make sure the Auto-Submitted header is set
+  (let [port 3025
+        server (GreenMail. (ServerSetup. port nil ServerSetup/PROTOCOL_SMTP))]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :smtp-host "localhost"
+                                         :smtp-port port
+                                         :mail-from "test@example.com")]
+      (try
+        (.start server)
+        (send-email! {:to "target@example.com"
+                      :subject "Test subject"
+                      :body "Test email body."})
+        (let [messages (.getReceivedMessages server)
+              message (first messages)]
+          (is (= 1 (count messages)))
+          (is (= "Test subject" (.getSubject message)))
+          (is (= ["target@example.com"] (map str (.getAllRecipients message))))
+          (is (= ["auto-generated"] (vec (.getHeader message "Auto-Submitted")))))
+        (finally
+          (.stop server))))))
