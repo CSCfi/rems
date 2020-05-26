@@ -112,7 +112,7 @@
             {:command command :result result})
     result))
 
-(defn- transpose-localizations [m]
+(defn- transpose-localizations [m] ; TODO could get rid of?
   (->> m
        (mapcat (fn [[k1 v]]
                  (map (fn [[k2 v]]
@@ -147,7 +147,7 @@
   (let [actor (or actor (create-owner!))
         result (organizations/add-organization! actor
                                                 {:organization/id (or id "default")
-                                                 :organization/name (or name "The Default Organization")
+                                                 :organization/name (or name {:en "The Default Organization"})
                                                  :organization/owners (or owners
                                                                           (if users
                                                                             [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
@@ -966,7 +966,7 @@
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
         _perf (organizations/add-organization! owner {:organization/id "perf"
-                                                      :organization/name "Performance Test Organization"
+                                                      :organization/name {:en "Performance Test Organization"}
                                                       :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
                                                       :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
@@ -1074,31 +1074,31 @@
         ;; Create organizations
         default (create-organization! {:actor owner :users users})
         hus (organizations/add-organization! owner {:organization/id "hus"
-                                                    :organization/name "HUS"
+                                                    :organization/name {:en "HUS"}
                                                     :organization/owners [{:userid organization-owner1}]
                                                     :organization/review-emails []})
         thl (organizations/add-organization! owner {:organization/id "thl"
-                                                    :organization/name "THL"
+                                                    :organization/name {:en "THL"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         nbn (organizations/add-organization! owner {:organization/id "nbn"
-                                                    :organization/name "NBN"
+                                                    :organization/name {:en "NBN"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         abc (organizations/add-organization! owner {:organization/id "abc"
-                                                    :organization/name "ABC"
+                                                    :organization/name {:en "ABC"}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         csc (organizations/add-organization! owner {:organization/id "csc"
-                                                    :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
+                                                    :organization/name {:en "CSC – IT CENTER FOR SCIENCE LTD."}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         organization1 (organizations/add-organization! owner {:organization/id "organization1"
-                                                              :organization/name "Organization 1"
+                                                              :organization/name {:en "Organization 1"}
                                                               :organization/owners [{:userid organization-owner1}]
                                                               :organization/review-emails []})
         organization2 (organizations/add-organization! owner {:organization/id "organization2"
-                                                              :organization/name "Organization 2"
+                                                              :organization/name {:en "Organization 2"}
                                                               :organization/owners [{:userid organization-owner2}]
                                                               :organization/review-emails []})
 
