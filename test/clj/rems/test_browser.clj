@@ -45,9 +45,6 @@
 (defn click-navigation-menu [link-text]
   (btu/scroll-and-click [:big-navbar {:tag :a :fn/text link-text}]))
 
-(defn click-administration-menu [link-text]
-  (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
-
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
@@ -60,35 +57,16 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
 
-(defn go-to-admin-licenses []
-  (click-administration-menu "Licenses")
-  (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
-  (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-licenses-page.png")))
 
-(defn go-to-admin-resources []
-  (click-administration-menu "Resources")
-  (btu/wait-visible {:tag :h1 :fn/text "Resources"})
-  (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-resources-page.png")))
+(defn click-administration-menu [link-text]
+  (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
-(defn go-to-admin-forms []
-  (click-administration-menu "Forms")
-  (btu/wait-visible {:tag :h1 :fn/text "Forms"})
-  (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-forms-page.png")))
 
-(defn go-to-admin-workflows []
-  (click-administration-menu "Workflows")
-  (btu/wait-visible {:tag :h1 :fn/text "Workflows"})
+(defn go-to-admin [link-text]
+  (click-administration-menu link-text)
+  (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-workflows-page.png")))
-
-(defn go-to-admin-catalogue []
-  (click-administration-menu "Catalogue items")
-  (btu/wait-visible {:tag :h1 :fn/text "Catalogue items"})
-  (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-catalogue-page.png")))
+  (btu/screenshot (io/file btu/reporting-dir (str "administration-page-" (str/replace link-text " " "-") ".png"))))
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -438,7 +416,7 @@
 (defn create-license []
   (testing "create license"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-licenses)
+      (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
       (select-option "Organization" "nbn")
@@ -465,7 +443,7 @@
               "External link (SV)" "https://www.csc.fi/home"
               "Active" ""}
              (slurp-fields :license)))
-      (go-to-admin-licenses)
+      (go-to-admin "Licenses")
       (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
       (is (some #{{"organization" "NBN"
                    "title" (str (btu/context-get :license-name) " EN")
@@ -491,7 +469,7 @@
 (defn create-resource []
   (testing "create resource"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-resources)
+      (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
       (select-option "Organization" "nbn")
@@ -509,14 +487,14 @@
              (slurp-fields :resource)))
       (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
              (btu/get-element-text [:licenses {:class :license-title}])))
-      (go-to-admin-resources)
+      (go-to-admin "Resources")
       (is (some #(= (btu/context-get :resid) (get % "title"))
                 (slurp-rows :resources))))))
 
 (defn create-form []
   (testing "create form"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-forms)
+      (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
       (select-option "Organization" "nbn")
@@ -532,14 +510,14 @@
               "Title" (btu/context-get :form-name)
               "Active" ""}
              (slurp-fields :form)))
-      (go-to-admin-forms)
+      (go-to-admin "Forms")
       (is (some #(= (btu/context-get :form-name) (get % "title"))
                 (slurp-rows :forms))))))
 
 (defn create-workflow []
   (testing "create workflow"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-workflows)
+      (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
       (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
       (select-option "Organization" "nbn")
@@ -559,14 +537,14 @@
               "Handlers" "Hannah Handler (handler@example.com)"
               "Active" ""}
              (slurp-fields :workflow)))
-      (go-to-admin-workflows)
+      (go-to-admin "Workflows")
       (is (some #(= (btu/context-get :workflow-name) (get % "title"))
                 (slurp-rows :workflows))))))
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-catalogue)
+      (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (select-option "Organization" "nbn")
       (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " EN") {:index 1})
@@ -598,7 +576,7 @@
       (btu/scroll-and-click {:fn/text "Enable"})
       (btu/wait-page-loaded)
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (go-to-admin-catalogue)
+      (go-to-admin "Catalogue items")
       (is (some #(= {"workflow" (btu/context-get :workflow-name)
                      "resource" (btu/context-get :resid)
                      "form" (btu/context-get :form-name)
@@ -629,7 +607,7 @@
 (deftest test-form-editor
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
-    (go-to-admin-forms)
+    (go-to-admin "Forms")
     (btu/scroll-and-click :create-form)
     (btu/wait-visible {:tag :h1 :fn/text "Create form"})
     (select-option "Organization" "nbn")
