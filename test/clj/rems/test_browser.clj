@@ -625,3 +625,108 @@
       (login-as "alice")
       (go-to-catalogue)
       (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))
+
+(deftest test-form-editor
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "owner")
+    (go-to-admin-forms)
+    (btu/scroll-and-click :create-form)
+    (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+    (select-option "Organization" "nbn")
+    (fill-form-field "Form name" "Form editor test")
+    (btu/scroll-and-click {:class :add-form-field})
+    ;; using ids to fill the fields because the label structure is complicated
+    (btu/wait-visible :fields-0-title-en)
+    (btu/fill-human :fields-0-title-en "Text area (EN)")
+    (btu/fill-human :fields-0-title-fi "Text area (FI)")
+    (btu/fill-human :fields-0-title-sv "Text area (SV)")
+    (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
+    (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
+    (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
+    (btu/scroll-and-click :fields-0-type-texta)
+    (btu/scroll-and-click :fields-0-optional)
+    (btu/fill-human :fields-0-max-length "127")
+
+    (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+    (btu/wait-visible :fields-1-title-en)
+    (btu/fill-human :fields-1-title-en "Option list (EN)")
+    (btu/fill-human :fields-1-title-fi "Option list (FI)")
+    (btu/fill-human :fields-1-title-sv "Option list (SV)")
+    (btu/scroll-and-click :fields-1-type-option)
+    (btu/scroll-and-click {:class :add-option})
+    (btu/wait-visible :fields-1-options-0-key)
+    (btu/fill-human :fields-1-options-0-key "true")
+    (btu/fill-human :fields-1-options-0-label-en "Yes")
+    (btu/fill-human :fields-1-options-0-label-fi "Kyllä")
+    (btu/fill-human :fields-1-options-0-label-sv "Ja")
+    (btu/scroll-and-click {:class :add-option})
+    (btu/wait-visible :fields-1-options-1-key)
+    (btu/fill-human :fields-1-options-1-key "false")
+    (btu/fill-human :fields-1-options-1-label-en "No")
+    (btu/fill-human :fields-1-options-1-label-fi "Ei")
+    (btu/fill-human :fields-1-options-1-label-sv "Nej")
+
+    ;; TODO create all field types?
+    ;; TODO test validations?
+
+    (btu/scroll-and-click :save)
+    (btu/wait-visible {:tag :h1 :fn/text "Form"})
+    (btu/wait-page-loaded)
+
+    (is (= {"Organization" "NBN"
+            "Title" "Form editor test"
+            "Active" ""}
+           (slurp-fields :form)))
+    ;; the text is split into multiple DOM nodes so we need to get fancy
+    (let [text-area-label (btu/query {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"})]
+      (is text-area-label)
+      (is (btu/visible-el? text-area-label))
+      (is (= "Text area (EN) (max 127 characters) (optional)" (btu/get-element-text-el text-area-label))))
+    (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+
+    (btu/scroll-and-click {:fn/has-class :edit-form})
+    (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+
+    ;; add one field to the beginning
+    (btu/scroll-and-click {:class :add-form-field})
+    (btu/scroll-and-click :fields-0-type-description)
+    (btu/fill-human :fields-0-title-en "Description (EN)")
+    (btu/fill-human :fields-0-title-fi "Description (FI)")
+    (btu/fill-human :fields-0-title-sv "Description (SV)")
+
+    (btu/scroll-and-click :save)
+    (btu/wait-visible {:tag :h1 :fn/text "Form"})
+    (btu/wait-page-loaded)
+    (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+
+    (testing "fetch via api"
+      (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
+        (is (= {:form/id form-id
+                :form/organization {:organization/id "nbn" :organization/name "NBN"}
+                :form/title "Form editor test"
+                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
+                               :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                               :field/type "description"
+                               :field/id "fld3"
+                               :field/max-length nil
+                               :field/optional false}
+                              {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
+                               :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
+                               :field/type "texta"
+                               :field/id "fld1"
+                               :field/max-length 127
+                               :field/optional true}
+                              {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
+                               :field/type "option"
+                               :field/id "fld2"
+                               :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
+                                               {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
+                               :field/optional false}]
+                :form/errors nil
+                :enabled true
+                :archived false}
+               (:body
+                (http/get (str (btu/get-server-url) "/api/forms/" form-id)
+                          {:as :json
+                           :headers {"x-rems-api-key" "42"
+                                     "x-rems-user-id" "handler"}}))))))))

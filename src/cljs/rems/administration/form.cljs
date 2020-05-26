@@ -50,7 +50,7 @@
    {}))
 
 (defn edit-button [id]
-  [:button.btn.btn-primary
+  [:button.btn.btn-primary.edit-form
    {:type :button
     :on-click (fn []
                 (rf/dispatch [:rems.spa/user-triggered-navigation])
