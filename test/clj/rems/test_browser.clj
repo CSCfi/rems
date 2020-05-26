@@ -84,6 +84,12 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "administration-workflows-page.png")))
 
+(defn go-to-admin-catalogue []
+  (click-administration-menu "Catalogue items")
+  (btu/wait-visible {:tag :h1 :fn/text "Catalogue items"})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "administration-catalogue-page.png")))
+
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -548,15 +554,58 @@
               "Active" ""}
              (slurp-fields :workflow))))))
 
+(defn create-catalogue-item []
+  (testing "create catalogue item"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin-catalogue)
+      (btu/scroll-and-click :create-catalogue-item)
+      (select-option "Organization" "nbn")
+      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " EN") {:index 1})
+      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
+      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
+      (select-option "Workflow" (btu/context-get :workflow-name))
+      (select-option "Resource" (btu/context-get :resid))
+      (select-option "Form" (btu/context-get :form-name))
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-catalogue-item.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-catalogue-item.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title (EN)" (str (btu/context-get :catalogue-item-name) " EN")
+              "Title (FI)" (str (btu/context-get :catalogue-item-name) " FI")
+              "Title (SV)" (str (btu/context-get :catalogue-item-name) " SV")
+              "More info (EN)" ""
+              "More info (FI)" ""
+              "More info (SV)" ""
+              "Workflow" (btu/context-get :workflow-name)
+              "Resource" (btu/context-get :resid)
+              "Form" (btu/context-get :form-name)
+              "Active" ""
+              "End" ""}
+             (dissoc (slurp-fields :catalogue-item)
+                     "Start")))
+      (btu/scroll-and-click {:fn/text "Enable"})
+      (btu/wait-page-loaded)
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))))
+
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
-    (login-as "owner")
-    (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
-                        :resid (str "browser.testing.resource/" (btu/get-seed))
-                        :form-name (str "Browser Test Form " (btu/get-seed))
-                        :workflow-name (str "Browser Test Workflow " (btu/get-seed)))
-    (create-license)
-    (create-resource)
-    (create-form)
-    (create-workflow)
-    (testing "create catalogue item"))) ; TODO
+    (testing "create objects"
+      (login-as "owner")
+      (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
+                          :resid (str "browser.testing.resource/" (btu/get-seed))
+                          :form-name (str "Browser Test Form " (btu/get-seed))
+                          :workflow-name (str "Browser Test Workflow " (btu/get-seed))
+                          :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed)))
+      (create-license)
+      (create-resource)
+      (create-form)
+      (create-workflow)
+      (create-catalogue-item))
+    (testing "check that catalogue item is visible for applicants"
+      (logout)
+      (login-as "alice")
+      (go-to-catalogue)
+      (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))

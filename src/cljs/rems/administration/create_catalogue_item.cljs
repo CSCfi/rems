@@ -237,6 +237,7 @@
   (let [request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
+      :id :save
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
                   (if editing?
@@ -263,7 +264,7 @@
        :always [:div
                 (if loading?
                   [:div#catalogue-item-loader [spinner/big]]
-                  [:div#catalogue-item-editor
+                  [:div#catalogue-item-editor.fields
                    [catalogue-item-organization-field]
                    (for [language languages]
                      [:<> {:key language}
