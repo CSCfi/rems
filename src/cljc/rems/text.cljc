@@ -1,17 +1,14 @@
 (ns rems.text
-  #?(:clj (:require [clj-time.core :as time]
-                    [clj-time.format :as format]
-                    [clojure.string :as str]
-                    [rems.common.application-util :as application-util]
-                    [rems.context :as context]
-                    [rems.locales :as locales]
-                    [taoensso.tempura :refer [tr]])
-     :cljs (:require [cljs-time.core :as time]
-                     [cljs-time.format :as format]
-                     [clojure.string :as str]
-                     [re-frame.core :as rf]
-                     [rems.common.application-util :as application-util]
-                     [taoensso.tempura :refer [tr]])))
+  (:require #?(:clj [clj-time.core :as time]
+               :cljs [cljs-time.core :as time])
+            #?(:clj [clj-time.format :as format]
+               :cljs [cljs-time.format :as format])
+            [clojure.string :as str]
+            #?(:cljs [re-frame.core :as rf])
+            [rems.common.application-util :as application-util]
+            #?(:clj [rems.context :as context])
+            #?(:clj [rems.locales :as locales])
+            [taoensso.tempura :refer [tr]]))
 
 (defn with-language [lang f]
   (assert (keyword? lang) {:lang lang})
