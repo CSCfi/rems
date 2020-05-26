@@ -128,7 +128,7 @@
                                                    :translations-directory "translations/"
                                                    :theme-path "./example-theme/theme.edn"}))]
     (testing "extra translations override translations"
-      (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
+      (is (= "Display archived. Lorem ipsum." (getx-in translations [:en :t :administration :display-archived])))
       (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
     (testing "extra translations don't override keys that are not defined in extras"
       (is (= "Active" (getx-in translations [:en :t :administration :active]))))
@@ -146,4 +146,4 @@
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
                                                    :theme-path "./foo/bar/theme.edn"})]
-      (is (= "Catalogue items" (getx-in translations [:en :t :administration :catalogue-items]))))))
+      (is (= "Display archived" (getx-in translations [:en :t :administration :display-archived]))))))
