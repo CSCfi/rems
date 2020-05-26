@@ -294,7 +294,7 @@
                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
           :regards "\n\nYstävällisin terveisin,\n\nREMS\n"
           :remarked {:subject "(%3) Hakemusta kommentoitu"
-                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit nähdä kommentin ja tarkastella hakemusta osoitteessa %6"}
           :review-requested {:subject "(%3) Katselmointipyyntö"
                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :reviewed {:subject "(%3) Hakemus katselmoitu"
