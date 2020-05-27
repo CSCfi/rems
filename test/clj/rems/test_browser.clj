@@ -769,6 +769,7 @@
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
+      (is (btu/disabled? :workflow-forms))
       ;; TODO check that form field is disabled
       ;; TODO check that organization field is disabled
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))

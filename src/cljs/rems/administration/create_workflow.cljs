@@ -199,7 +199,6 @@
   (let [all-forms @(rf/subscribe [::forms])
         selected-form-ids (set (mapv :form/id (:forms @(rf/subscribe [::form]))))
         id "workflow-forms"]
-    ;; TODO make readonly when editing
     [:div.form-group
      [:label {:for id} (text :t.administration/forms)]
      [dropdown/dropdown
@@ -210,6 +209,7 @@
        :item-selected? #(contains? selected-form-ids (:form/id %))
        ;; TODO support ordering multiple forms
        :multi? true
+       :disabled? @(rf/subscribe [::editing?])
        :on-change #(rf/dispatch [::set-forms %])}]]))
 
 (defn default-workflow-form []
