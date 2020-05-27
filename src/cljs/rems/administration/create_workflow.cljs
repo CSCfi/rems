@@ -36,14 +36,16 @@
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(defn- fetch-workflow-success [db [_ {:keys [title organization workflow]}]]
-  (update db ::form merge {:title title
-                           :organization organization
-                           :type (:type workflow)
-                           :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}))
+(rf/reg-event-db
+ ::fetch-workflow-success
+ (fn [db [_ {:keys [title organization workflow]}]]
+   (update db ::form merge {:title title
+                            :organization organization
+                            :type (:type workflow)
+                            :handlers (get workflow :handlers)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
-                                                      :on-success fetch-workflow-success})
+                                                      :on-success #(rf/dispatch [::fetch-workflow-success %])})
 
 ;;; form submit
 

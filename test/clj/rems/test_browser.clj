@@ -730,3 +730,56 @@
                           {:as :json
                            :headers {"x-rems-api-key" "42"
                                      "x-rems-user-id" "handler"}}))))))))
+
+(deftest test-workflow-create-edit
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "owner")
+    (go-to-admin "Workflows")
+    (testing "create workflow"
+      (btu/scroll-and-click :create-workflow)
+      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (btu/wait-page-loaded)
+      (select-option "Organization" "nbn")
+      (fill-form-field "Title" "test-workflow-create-edit")
+      (btu/scroll-and-click :type-decider)
+      (select-option "Handlers" "handler")
+      (select-option "Handlers" "carl")
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-1.png"))
+      ;; TODO set form
+      (btu/scroll-and-click :save))
+    (testing "view workflow"
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-2.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" "test-workflow-create-edit"
+              "Type" "Decider workflow"
+              "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow))))
+    (testing "edit workflow"
+      (btu/scroll-and-click {:fn/has-class :edit-workflow})
+      (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
+      (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
+      (is (btu/disabled? :type-default)) ;; can't change type
+      ;; removing an item is hard to script reliably, so let's just add one
+      (select-option "Handlers" "reporter")
+      ;; TODO check that form field is disabled
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
+      (btu/scroll-and-click :save))
+    (testing "view workflow again"
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-5.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" "test-workflow-create-edit"
+              "Type" "Decider workflow"
+              "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow))))
+    (testing "disable & archive" ;; TODO
+      )))
