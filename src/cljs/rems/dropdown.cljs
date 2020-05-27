@@ -16,10 +16,11 @@
   `:item-selected?` is this item currently selected?
   `:hide-selected?` should the items that are selected be shown in the dropdown, defaults: false for single value, true for a multiple choice
   `:item-disabled?` is this item currently disabled?
+  `:disabled?` is the whole input disabled?
   `:multi?` is this a multiple choice dropdown?
   `:clearable?` should there be a clear selection button?
   `:on-change` called each time the value changes, one or seq"
-  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
+  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change disabled?]
     :or {item-key identity
          item-label identity
          hide-selected? multi?
@@ -33,6 +34,7 @@
                  :inputId id
                  :isMulti multi?
                  :isClearable clearable?
+                 :isDisabled disabled?
                  :isOptionDisabled #(item-disabled? %)
                  :maxMenuHeight 200
                  :noOptionsMessage #(text :t.dropdown/no-results)
@@ -63,6 +65,7 @@
                          :item-label :name
                          :item-selected? #(= "Bob" (:name %))
                          :on-change on-change}])
+
      (example "dropdown menu, multi-choice, several values selected"
               [dropdown {:items items
                          :item-key :id
@@ -70,7 +73,15 @@
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
                          :on-change on-change}])
-     (example "dropdown menu, multi-choice, several values selected"
+     (example "disabled dropdown menu, multi-choice, several values selected"
+              [dropdown {:items items
+                         :item-key :id
+                         :item-label :name
+                         :item-selected? #(contains? #{1 3 5} (% :id))
+                         :multi? true
+                         :disabled? true
+                         :on-change on-change}])
+     (example "dropdown menu, multi-choice, several values selected, hide selected"
               [dropdown {:items items
                          :item-key :id
                          :item-label :name
