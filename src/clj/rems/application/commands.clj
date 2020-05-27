@@ -4,6 +4,7 @@
             [medley.core :refer [assoc-some]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
+            [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
@@ -353,7 +354,8 @@
   [cmd application _injections]
   (let [forms (:application/forms application)
         answers (:field-values cmd)
-        new-forms (transform [ALL] #(form/enrich-form-answers % answers nil) forms)]
+        answers-formatted (build-index {:keys [:form :field] :value-fn :value} answers)
+        new-forms (transform [ALL] #(form/enrich-form-answers % answers-formatted nil) forms)]
     (or (merge-with concat (validation-errors-for-draft new-forms))
         (ok {:event/type               :application.event/draft-saved
              :application/field-values (:field-values cmd)}))))
