@@ -4,12 +4,12 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx

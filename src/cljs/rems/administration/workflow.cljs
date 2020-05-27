@@ -5,14 +5,14 @@
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
+            [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title text text-format]]
-            [rems.util :refer [navigate! fetch]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page

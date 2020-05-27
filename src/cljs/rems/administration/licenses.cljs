@@ -7,7 +7,7 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title]]
+            [rems.text :refer [get-localized-title text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx

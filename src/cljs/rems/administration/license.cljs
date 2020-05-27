@@ -9,8 +9,8 @@
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [navigate! fetch]]))
+            [rems.text :refer [get-localized-title text text-format]]
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
