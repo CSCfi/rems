@@ -72,11 +72,12 @@
 (rf/reg-sub
  ::workflows-table-rows
  (fn [_ _]
-   [(rf/subscribe [::workflows])])
- (fn [[workflows] _]
+   [(rf/subscribe [::workflows])
+    (rf/subscribe [:language])])
+ (fn [[workflows language] _]
    (map (fn [workflow]
           {:key (:id workflow)
-           :organization {:value (get-in workflow [:organization :organization/name])}
+           :organization {:value (get-in workflow [:organization :organization/name language])}
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
