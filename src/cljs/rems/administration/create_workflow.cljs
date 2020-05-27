@@ -42,6 +42,7 @@
    (update db ::form merge {:title title
                             :organization organization
                             :type (:type workflow)
+                            :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
                             :handlers (get workflow :handlers)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
@@ -129,6 +130,7 @@
 (rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- workflow-organization-field []
+  ;; TODO make read-only when editing
   [fields/organization-field {:id "organization-dropdown"
                               :value @(rf/subscribe [::selected-organization])
                               :on-change #(rf/dispatch [::set-selected-organization %])}])
@@ -197,6 +199,7 @@
   (let [all-forms @(rf/subscribe [::forms])
         selected-form-ids (set (mapv :form/id (:forms @(rf/subscribe [::form]))))
         id "workflow-forms"]
+    ;; TODO make readonly when editing
     [:div.form-group
      [:label {:for id} (text :t.administration/forms)]
      [dropdown/dropdown

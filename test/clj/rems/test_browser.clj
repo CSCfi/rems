@@ -744,8 +744,8 @@
       (btu/scroll-and-click :type-decider)
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
+      (select-option "Forms" "Simple form")
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-1.png"))
-      ;; TODO set form
       (btu/scroll-and-click :save))
     (testing "view workflow"
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
@@ -757,7 +757,9 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Active" ""}
-             (slurp-fields :workflow))))
+             (slurp-fields :workflow)))
+      ;; slurp-fields doesn't get the form because it's in a slightly different format
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
     (testing "edit workflow"
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
@@ -768,6 +770,7 @@
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       ;; TODO check that form field is disabled
+      ;; TODO check that organization field is disabled
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
       (btu/scroll-and-click :save))
     (testing "view workflow again"
@@ -776,10 +779,11 @@
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-5.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title" "test-workflow-create-edit"
+              "Title" "test-workflow-create-edit-v2"
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Active" ""}
-             (slurp-fields :workflow))))
+             (slurp-fields :workflow)))
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
     (testing "disable & archive" ;; TODO
       )))
