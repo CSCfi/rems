@@ -354,8 +354,7 @@
   [cmd application _injections]
   (let [forms (:application/forms application)
         answers (:field-values cmd)
-        answers-formatted (build-index {:keys [:form :field] :value-fn :value} answers)
-        new-forms (transform [ALL] #(form/enrich-form-answers % answers-formatted nil) forms)]
+        new-forms (transform [ALL] #(form/enrich-form-answers % answers nil) forms)]
     (or (merge-with concat (validation-errors-for-draft new-forms))
         (ok {:event/type               :application.event/draft-saved
              :application/field-values (:field-values cmd)}))))

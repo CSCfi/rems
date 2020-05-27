@@ -6,7 +6,7 @@
              [clojure.test :refer [deftest is testing]]
              [com.rpl.specter :refer [ALL select transform]]
              [medley.core :refer [assoc-some find-first]]
-             [rems.common.util :refer [parse-int remove-empty-keys]]))
+             [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))
@@ -208,6 +208,9 @@
   (when-not (empty? m)
     m))
 
+(defn- raw-answers->formatted [raw-answers]
+  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
+
 (defn validate-form-template [form languages]
   (-> (merge (validate-organization-field form)
              (validate-text-field form :form/title)
@@ -215,10 +218,10 @@
       remove-empty-keys
       nil-if-empty))
 
-(defn enrich-form-answers [form current-answers previous-answers]
+(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
   (let [form-id (:form/id form)
-        current-answers (get current-answers form-id)
-        previous-answers (get previous-answers form-id)
+        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
+        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
         fields (for [field (:form/fields form)
                      :let [field-id (:field/id field)
                            current-value (get current-answers field-id)
