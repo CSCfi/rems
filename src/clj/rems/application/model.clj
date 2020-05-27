@@ -1,11 +1,11 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [assoc-some find-first map-vals update-existing]]
+            [medley.core :refer [find-first map-vals update-existing]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
-            [rems.common.form :refer [field-visible?]]
+            [rems.common.form :as form]
             [rems.common.util :refer [build-index getx]]
             [rems.permissions :as permissions]
             [rems.util :refer [conj-vec]]))
@@ -482,27 +482,14 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn- enrich-form-answers [form current-answers previous-answers]
-  (let [form-id (:form/id form)
-        current-answers (get current-answers form-id)
-        previous-answers (get previous-answers form-id)
-        fields (for [field (:form/fields form)
-                     :let [field-id (:field/id field)
-                           current-value (get current-answers field-id)
-                           previous-value (get previous-answers field-id)]]
-                 (assoc-some field
-                             :field/value current-value
-                             :field/previous-value previous-value))]
-    (assoc form :form/fields fields)))
-
 (defn enrich-answers [application]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
-        current-answers (build-index {:keys [:form :field] :value-fn :value} (first answer-versions))
-        previous-answers (build-index {:keys [:form :field] :value-fn :value} (second answer-versions))]
+        current-answers (first answer-versions)
+        previous-answers (second answer-versions)]
     (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
-         (transform [:application/forms ALL] #(enrich-form-answers % current-answers previous-answers)))))
+         (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers)))))
 
 (defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
@@ -515,7 +502,7 @@
 
 (defn- enrich-form-field-visible [form]
   (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
-        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
+        update-field-visibility (fn [field] (assoc field :field/visible (form/field-visible? field field-values)))]
     (transform [:form/fields ALL]
                update-field-visibility
                form)))

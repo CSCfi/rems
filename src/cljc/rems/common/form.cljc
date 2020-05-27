@@ -4,8 +4,9 @@
   Includes functions for both forms and form templates."
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
-             [medley.core :refer [find-first]]
-             [rems.common.util :refer [parse-int remove-empty-keys]]))
+             [com.rpl.specter :refer [ALL select transform]]
+             [medley.core :refer [assoc-some find-first]]
+             [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))
@@ -207,12 +208,30 @@
   (when-not (empty? m)
     m))
 
+(defn- raw-answers->formatted [raw-answers]
+  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
+
 (defn validate-form-template [form languages]
   (-> (merge (validate-organization-field form)
              (validate-text-field form :form/title)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
+
+(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
+  (let [form-id (:form/id form)
+        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
+        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (if (not-empty fields)
+      (assoc form :form/fields fields)
+      form)))
 
 (deftest validate-form-template-test
   (let [form {:form/organization {:organization/id "abc"}

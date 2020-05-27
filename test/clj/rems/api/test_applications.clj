@@ -587,8 +587,9 @@
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
 
-    (testing "set non-existing value of option list goes through on save-draft"
-      (is (= {:success true}
+    (testing "save-draft fails with non-existing value of option list"
+      (is (= {:success false
+              :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
              (send-command user-id {:type           :application.command/save-draft
                                     :application-id app-id
                                     :field-values   [{:form form-id :field "opt1" :value "opt"}
@@ -596,12 +597,6 @@
                                                      {:form form-id2 :field "opt2" :value "opt"}
                                                      {:form form-id2 :field "req2" :value "req"}
                                                      {:form form-id2 :field "optionlist" :value "foobar"}]}))))
-
-    (testing "submit fails with non-existing value of option list"
-      (is (= {:success false
-              :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
-             (send-command user-id {:type :application.command/submit
-                                    :application-id app-id}))))
 
     (testing "set existing value of option list"
       (is (= {:success true}
