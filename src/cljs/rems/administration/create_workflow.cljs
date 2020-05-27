@@ -130,9 +130,9 @@
 (rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- workflow-organization-field []
-  ;; TODO make read-only when editing
   [fields/organization-field {:id "organization-dropdown"
                               :value @(rf/subscribe [::selected-organization])
+                              :readonly @(rf/subscribe [::editing?])
                               :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- workflow-title-field []
