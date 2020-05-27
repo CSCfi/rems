@@ -325,18 +325,19 @@
 
 (defn organization-field [{:keys [id value on-change readonly]}]
   (let [organizations @(rf/subscribe [:owned-organizations])
+        language @(rf/subscribe [:language])
         item-selected? #(= (:organization/id %) (:organization/id value))
         disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
      [:label {:for id} (text :t.administration/organization)]
      (if (or readonly disallowed)
        [readonly-field {:id id
-                        :value (:organization/name value)}]
+                        :value (get-in value [:organization/name language])}]
        [dropdown/dropdown
         {:id id
          :items organizations
          :item-key :organization/id
-         :item-label :organization/name
+         :item-label (comp language :organization/name)
          :item-selected? item-selected?
          :on-change on-change}])]))
 

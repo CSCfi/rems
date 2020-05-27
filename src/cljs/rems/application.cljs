@@ -597,7 +597,8 @@
         other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))]
+                    :else (text :t.applicant-info/invited-member))
+        language @(rf/subscribe [:language])]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -615,7 +616,7 @@
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
                        (when-let [organizations (:organizations attributes)]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map :organization/name organizations)) {:inline? true}])]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map (comp language :organization/name) organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]

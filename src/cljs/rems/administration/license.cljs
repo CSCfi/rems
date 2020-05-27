@@ -41,7 +41,7 @@
     {:id "license"
      :title [:span (get-localized-title license language)]
      :always (into [:div#license
-                    [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name])]]
+                    [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name language])]]
                    (concat
                     (for [[langcode localization] (:localizations license)]
                       [inline-info-field (str (text :t.administration/title)

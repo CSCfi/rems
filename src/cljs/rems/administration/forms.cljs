@@ -82,11 +82,12 @@
 (rf/reg-sub
  ::forms-table-rows
  (fn [_ _]
-   [(rf/subscribe [::forms])])
- (fn [[forms] _]
+   [(rf/subscribe [::forms])
+    (rf/subscribe [:language])])
+ (fn [[forms language] _]
    (map (fn [form]
           {:key (:form/id form)
-           :organization {:value (get-in form [:form/organization :organization/name])}
+           :organization {:value (get-in form [:form/organization :organization/name language])}
            :title {:value (:form/title form)}
            :active (let [checked? (status-flags/active? form)]
                      {:td [:td.active
