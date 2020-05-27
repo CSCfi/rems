@@ -486,8 +486,8 @@
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
-        current-answers (build-index {:keys [:form :field] :value-fn :value} (first answer-versions))
-        previous-answers (build-index {:keys [:form :field] :value-fn :value} (second answer-versions))]
+        current-answers (first answer-versions)
+        previous-answers (second answer-versions)]
     (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
          (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers)))))
 
