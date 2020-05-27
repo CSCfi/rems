@@ -62,7 +62,7 @@
    {}))
 
 (defn- to-create-form []
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:class "btn btn-primary" :id :create-form}
    "/administration/forms/create"
    (text :t.administration/create-form)])
 

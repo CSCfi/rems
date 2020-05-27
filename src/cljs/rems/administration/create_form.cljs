@@ -262,10 +262,10 @@
                        :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-field-option-button [field-index]
-  [:a {:href "#"
-       :on-click (fn [event]
-                   (.preventDefault event)
-                   (rf/dispatch [::add-form-field-option field-index]))}
+  [:a.add-option {:href "#"
+                  :on-click (fn [event]
+                              (.preventDefault event)
+                              (rf/dispatch [::add-form-field-option field-index]))}
    (text :t.create-form/add-option)])
 
 (defn- remove-form-field-option-button [field-index option-index]
@@ -441,10 +441,10 @@
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-field-button [index]
-  [:a {:href "#"
-       :on-click (fn [event]
-                   (.preventDefault event)
-                   (rf/dispatch [::add-form-field index]))}
+  [:a.add-form-field {:href "#"
+                      :on-click (fn [event]
+                                  (.preventDefault event)
+                                  (rf/dispatch [::add-form-field index]))}
    (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
@@ -459,6 +459,7 @@
 (defn- save-form-button [on-click]
   [:button.btn.btn-primary
    {:type :button
+    :id :save
     :on-click (fn []
                 (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
@@ -625,6 +626,7 @@
          [:div.col-lg
           [collapsible/component
            {:id "create-form"
+            :class "fields"
             :title (page-title edit-form?)
             :always [:div
                      [form-organization-field]

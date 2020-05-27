@@ -1,5 +1,5 @@
 {:t
- {:administration {:catalogue-items "Catalogue"}
+ {:administration {:display-archived "Display archived. Lorem ipsum."}
   ;; the extra %1 and the :unused-key are for rems.test-locales
   :create-license {:license-text "Text %1"}
   :unused-key "Unused"}}

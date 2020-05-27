@@ -45,9 +45,6 @@
 (defn click-navigation-menu [link-text]
   (btu/scroll-and-click [:big-navbar {:tag :a :fn/text link-text}]))
 
-(defn click-administration-menu [link-text]
-  (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
-
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
@@ -60,17 +57,18 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
 
-(defn go-to-admin-licenses []
-  (click-administration-menu "Licenses")
-  (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
-  (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-licenses-page.png")))
 
-(defn go-to-admin-resources []
-  (click-administration-menu "Resources")
-  (btu/wait-visible {:tag :h1 :fn/text "Resources"})
+(defn click-administration-menu [link-text]
+  (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
+
+
+(defn go-to-admin [link-text]
+  (click-navigation-menu "Administration")
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "administration-resources-page.png")))
+  (click-administration-menu link-text)
+  (btu/wait-visible {:tag :h1 :fn/text link-text})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir (str "administration-page-" (str/replace link-text " " "-") ".png"))))
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -385,8 +383,9 @@
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :row}])
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
-                   v (btu/get-element-text-el (btu/child row {:css ".form-control"}))]]
-         [k (str/trim v)])
+                   [value-el] (btu/children row {:css ".form-control"})]
+             :when value-el]
+         [k (str/trim (btu/get-element-text-el value-el))])
        (into {})))
 
 (defn slurp-rows [& selectors]
@@ -419,7 +418,7 @@
 (defn create-license []
   (testing "create license"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-licenses)
+      (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
       (select-option "Organization" "nbn")
@@ -446,7 +445,7 @@
               "External link (SV)" "https://www.csc.fi/home"
               "Active" ""}
              (slurp-fields :license)))
-      (go-to-admin-licenses)
+      (go-to-admin "Licenses")
       (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
       (is (some #{{"organization" "NBN"
                    "title" (str (btu/context-get :license-name) " EN")
@@ -472,7 +471,7 @@
 (defn create-resource []
   (testing "create resource"
     (btu/with-postmortem {:dir btu/reporting-dir}
-      (go-to-admin-resources)
+      (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
       (select-option "Organization" "nbn")
@@ -489,15 +488,245 @@
               "Active" ""}
              (slurp-fields :resource)))
       (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
-             (btu/get-element-text [:licenses {:class :license-title}]))))))
+             (btu/get-element-text [:licenses {:class :license-title}])))
+      (go-to-admin "Resources")
+      (is (some #(= (btu/context-get :resid) (get % "title"))
+                (slurp-rows :resources))))))
+
+(defn create-form []
+  (testing "create form"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin "Forms")
+      (btu/scroll-and-click :create-form)
+      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Form name" (btu/context-get :form-name))
+      ;; TODO: create fields
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-form.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-form.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" (btu/context-get :form-name)
+              "Active" ""}
+             (slurp-fields :form)))
+      (go-to-admin "Forms")
+      (is (some #(= (btu/context-get :form-name) (get % "title"))
+                (slurp-rows :forms))))))
+
+(defn create-workflow []
+  (testing "create workflow"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin "Workflows")
+      (btu/scroll-and-click :create-workflow)
+      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Title" (btu/context-get :workflow-name))
+      ;; Default workflow is already checked
+      (select-option "Handlers" "handler")
+      ;; No form
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-workflow.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-workflow.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" (btu/context-get :workflow-name)
+              "Type" "Default workflow"
+              "Handlers" "Hannah Handler (handler@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow)))
+      (go-to-admin "Workflows")
+      (is (some #(= (btu/context-get :workflow-name) (get % "title"))
+                (slurp-rows :workflows))))))
+
+(defn create-catalogue-item []
+  (testing "create catalogue item"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin "Catalogue items")
+      (btu/scroll-and-click :create-catalogue-item)
+      (select-option "Organization" "nbn")
+      (fill-form-field "Name" (btu/context-get :catalogue-item-name) {:index 1})
+      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
+      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
+      (select-option "Workflow" (btu/context-get :workflow-name))
+      (select-option "Resource" (btu/context-get :resid))
+      (select-option "Form" (btu/context-get :form-name))
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-catalogue-item.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-catalogue-item.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title (EN)" (btu/context-get :catalogue-item-name)
+              "Title (FI)" (str (btu/context-get :catalogue-item-name) " FI")
+              "Title (SV)" (str (btu/context-get :catalogue-item-name) " SV")
+              "More info (EN)" ""
+              "More info (FI)" ""
+              "More info (SV)" ""
+              "Workflow" (btu/context-get :workflow-name)
+              "Resource" (btu/context-get :resid)
+              "Form" (btu/context-get :form-name)
+              "Active" ""
+              "End" ""}
+             (dissoc (slurp-fields :catalogue-item)
+                     "Start")))
+      (go-to-admin "Catalogue items")
+      (is (some #(= {"workflow" (btu/context-get :workflow-name)
+                     "resource" (btu/context-get :resid)
+                     "form" (btu/context-get :form-name)
+                     "name" (btu/context-get :catalogue-item-name)}
+                    (select-keys % ["resource" "workflow" "form" "name"]))
+                (slurp-rows :catalogue))))))
+
+(defn enable-catalogue-item [item-name]
+  (go-to-admin "Catalogue items")
+  (btu/wait-page-loaded)
+  ;; incidentally test search while we're at it
+  (btu/fill-human :catalogue-search item-name)
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "about-to-enable-catalogue-item.png"))
+  (btu/scroll-and-click {:tag :button :fn/text "Enable"})
+  (btu/wait-page-loaded)
+  (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
+  (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
+    (testing "create objects"
+      (login-as "owner")
+      (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
+                          :resid (str "browser.testing.resource/" (btu/get-seed))
+                          :form-name (str "Browser Test Form " (btu/get-seed))
+                          :workflow-name (str "Browser Test Workflow " (btu/get-seed))
+                          :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed)))
+      (create-license)
+      (create-resource)
+      (create-form)
+      (create-workflow)
+      (create-catalogue-item))
+    (testing "check that catalogue item is not visible before enabling"
+      (go-to-catalogue)
+      (is (not (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))
+    (testing "enable catalogue item"
+      (enable-catalogue-item (btu/context-get :catalogue-item-name)))
+    (testing "check that catalogue item is visible for applicants"
+      (logout)
+      (login-as "alice")
+      (go-to-catalogue)
+      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
+
+(deftest test-form-editor
+  (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
-    (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
-                        :resid (str "browser.testing.resource/" (btu/get-seed)))
-    (create-license)
-    (create-resource)
-    (testing "create form") ; TODO
-    (testing "create workflow") ; TODO
-    (testing "create catalogue item"))) ; TODO
+    (go-to-admin "Forms")
+
+    (testing "create form"
+      (btu/scroll-and-click :create-form)
+      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Form name" "Form editor test")
+      (btu/scroll-and-click {:class :add-form-field})
+      ;; using ids to fill the fields because the label structure is complicated
+      (btu/wait-visible :fields-0-title-en)
+      (btu/fill-human :fields-0-title-en "Text area (EN)")
+      (btu/fill-human :fields-0-title-fi "Text area (FI)")
+      (btu/fill-human :fields-0-title-sv "Text area (SV)")
+      (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
+      (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
+      (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
+      (btu/scroll-and-click :fields-0-type-texta)
+      (btu/scroll-and-click :fields-0-optional)
+      (btu/fill-human :fields-0-max-length "127")
+
+      (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+      (btu/wait-visible :fields-1-title-en)
+      (btu/fill-human :fields-1-title-en "Option list (EN)")
+      (btu/fill-human :fields-1-title-fi "Option list (FI)")
+      (btu/fill-human :fields-1-title-sv "Option list (SV)")
+      (btu/scroll-and-click :fields-1-type-option)
+      (btu/scroll-and-click {:class :add-option})
+      (btu/wait-visible :fields-1-options-0-key)
+      (btu/fill-human :fields-1-options-0-key "true")
+      (btu/fill-human :fields-1-options-0-label-en "Yes")
+      (btu/fill-human :fields-1-options-0-label-fi "Kyllä")
+      (btu/fill-human :fields-1-options-0-label-sv "Ja")
+      (btu/scroll-and-click {:class :add-option})
+      (btu/wait-visible :fields-1-options-1-key)
+      (btu/fill-human :fields-1-options-1-key "false")
+      (btu/fill-human :fields-1-options-1-label-en "No")
+      (btu/fill-human :fields-1-options-1-label-fi "Ei")
+      (btu/fill-human :fields-1-options-1-label-sv "Nej")
+
+      ;; TODO create all field types?
+      ;; TODO test validations?
+
+      (btu/scroll-and-click :save))
+
+    (testing "view form"
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (btu/wait-page-loaded)
+      (is (= {"Organization" "NBN"
+              "Title" "Form editor test"
+              "Active" ""}
+             (slurp-fields :form)))
+      (testing "preview"
+        ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
+        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                           "(max 127 characters)"))
+        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                           "(optional)"))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+
+    (testing "edit form"
+      (btu/scroll-and-click {:fn/has-class :edit-form})
+      (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+
+      (testing "add description field"
+        (btu/scroll-and-click {:class :add-form-field})
+        (btu/scroll-and-click :fields-0-type-description)
+        (btu/fill-human :fields-0-title-en "Description (EN)")
+        (btu/fill-human :fields-0-title-fi "Description (FI)")
+        (btu/fill-human :fields-0-title-sv "Description (SV)")
+
+        (btu/scroll-and-click :save)
+        (btu/wait-visible {:tag :h1 :fn/text "Form"})
+        (btu/wait-page-loaded)
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+
+    (testing "fetch form via api"
+      (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
+        (is (= {:form/id form-id
+                :form/organization {:organization/id "nbn" :organization/name "NBN"}
+                :form/title "Form editor test"
+                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
+                               :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                               :field/type "description"
+                               :field/id "fld3"
+                               :field/max-length nil
+                               :field/optional false}
+                              {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
+                               :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
+                               :field/type "texta"
+                               :field/id "fld1"
+                               :field/max-length 127
+                               :field/optional true}
+                              {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
+                               :field/type "option"
+                               :field/id "fld2"
+                               :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
+                                               {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
+                               :field/optional false}]
+                :form/errors nil
+                :enabled true
+                :archived false}
+               (:body
+                (http/get (str (btu/get-server-url) "/api/forms/" form-id)
+                          {:as :json
+                           :headers {"x-rems-api-key" "42"
+                                     "x-rems-user-id" "handler"}}))))))))
