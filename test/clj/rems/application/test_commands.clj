@@ -63,7 +63,8 @@
   (getx {1 {:form/id 1
             :form/fields [{:field/id "1"
                            :field/optional true
-                           :field/type :options
+                           :field/visible true
+                           :field/type :option
                            :field/options [{:key "foo" :label "Foo"}
                                            {:key "bar" :label "Bar"}]}
                           {:field/id "2"
@@ -315,6 +316,14 @@
                           :actor applicant-user-id
                           :field-values [{:form 1 :field "1" :value "foo"}
                                          {:form 1 :field "2" :value "bar"}]}))))
+
+    (testing "does not save a draft when validations fail"
+      (is (= {:errors [{:field-id "1", :type :t.form.validation/invalid-value :form-id 1}]}
+             (fail-command application
+                         {:type :application.command/save-draft
+                          :actor applicant-user-id
+                          :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
@@ -337,7 +346,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values [{:form 1 :field "1" :value "updated"}]})))))
+                              :field-values [{:form 1 :field "1" :value "bar"}]})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -353,11 +362,11 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id
-                :application/field-values [{:form 1 :field "1" :value "updated"}]}
+                :application/field-values [{:form 1 :field "1" :value "bar"}]}
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "updated"}]})))))))
+                            :field-values [{:form 1 :field "1" :value "bar"}]})))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
