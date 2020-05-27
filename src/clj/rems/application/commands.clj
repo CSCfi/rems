@@ -1,7 +1,9 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
+            [com.rpl.specter :refer [ALL transform]]
             [medley.core :refer [assoc-some]]
             [rems.common.application-util :as application-util]
+            [rems.common.form :as form]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
@@ -236,6 +238,13 @@
   (when-not (application-util/is-handler? application actor)
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
+(defn- validation-errors-for-draft [forms]
+  (let [errors (for [form forms
+                     error (form-validation/validate-fields-for-draft (:form/fields form))]
+                 (assoc error :form-id (:form/id form)))]
+    (when (seq errors)
+      {:errors errors})))
+
 (defn- validation-error [application]
   (let [errors (for [form (:application/forms application)
                      error (form-validation/validate-fields-for-submit (:form/fields form))]
@@ -341,9 +350,13 @@
                         [event]))))))
 
 (defmethod command-handler :application.command/save-draft
-  [cmd _application _injections]
-  (ok {:event/type :application.event/draft-saved
-       :application/field-values (:field-values cmd)}))
+  [cmd application _injections]
+  (let [forms (:application/forms application)
+        answers (:field-values cmd)
+        new-forms (transform [ALL] #(form/enrich-form-answers % answers nil) forms)]
+    (or (merge-with concat (validation-errors-for-draft new-forms))
+        (ok {:event/type               :application.event/draft-saved
+             :application/field-values (:field-values cmd)}))))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
