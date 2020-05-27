@@ -785,6 +785,4 @@
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Active" ""}
              (slurp-fields :workflow)))
-      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
-    (testing "disable & archive" ;; TODO
-      )))
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
