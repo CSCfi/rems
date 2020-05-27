@@ -97,14 +97,17 @@
    (:theme db)))
 
 (rf/reg-sub
- :organizations
- (fn [db _]
-   (sort-by :organization/name (vals (:organizations-by-id db)))))
-
-(rf/reg-sub
  :organizations-by-id
  (fn [db _]
    (:organizations-by-id db)))
+
+(rf/reg-sub
+ :organizations
+ (fn [_db _]
+   [(rf/subscribe [:organizations-by-id])
+    (rf/subscribe [:language])])
+ (fn [[organizations-by-id language]]
+   (sort-by (comp language :organization/name) (vals organizations-by-id))))
 
 (rf/reg-sub
  :owned-organizations
