@@ -323,15 +323,15 @@
   (let [title (localized (:field/title opts))]
     [non-field-wrapper opts [:h3 title]]))
 
-(defn organization-field [{:keys [id value on-change]}]
+(defn organization-field [{:keys [id value on-change readonly]}]
   (let [organizations @(rf/subscribe [:owned-organizations])
         item-selected? #(= (:organization/id %) (:organization/id value))
-        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
+        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
      [:label {:for id} (text :t.administration/organization)]
-     (if readonly
+     (if (or readonly disallowed)
        [readonly-field {:id id
-                               :value value}]
+                        :value (:organization/name value)}]
        [dropdown/dropdown
         {:id id
          :items organizations

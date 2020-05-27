@@ -765,13 +765,13 @@
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
+      ;; cant use btu/disabled? for the organization field so we check it's a div instead of an input
+      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown})))
       (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (btu/disabled? :workflow-forms))
-      ;; TODO check that form field is disabled
-      ;; TODO check that organization field is disabled
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
       (btu/scroll-and-click :save))
     (testing "view workflow again"
