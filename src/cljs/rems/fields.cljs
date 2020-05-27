@@ -1,15 +1,14 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
-            [cljs-time.core :as time]
             [re-frame.core :as rf]
-            [rems.atoms :refer [add-symbol attachment-link close-symbol file-download textarea success-symbol]]
+            [rems.atoms :refer [add-symbol attachment-link close-symbol textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [getx]]
             [rems.dropdown :as dropdown]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.roles :as roles]
-            [rems.text :refer [localized text text-format localize-time]]
+            [rems.text :refer [localized text text-format]]
             [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

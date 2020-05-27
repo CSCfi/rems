@@ -72,11 +72,12 @@
 (rf/reg-sub
  ::resources-table-rows
  (fn [_ _]
-   [(rf/subscribe [::resources])])
- (fn [[resources] _]
+   [(rf/subscribe [::resources])
+    (rf/subscribe [:language])])
+ (fn [[resources language] _]
    (map (fn [resource]
           {:key (:id resource)
-           :organization {:value (get-in resource [:organization :organization/name])}
+           :organization {:value (get-in resource [:organization :organization/name language])}
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
