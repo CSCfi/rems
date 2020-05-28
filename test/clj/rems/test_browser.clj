@@ -300,54 +300,53 @@
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
 (deftest test-handling
-  (let [applicant "alice"
-        handler "developer"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
-                                                        :field/optional false
-                                                        :field/type :description}]})
-        catalogue-id (test-data/create-catalogue-item! {:form-id form-id})
-        application-id (test-data/create-draft! applicant
-                                                [catalogue-id]
-                                                "test-handling")]
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                         :field/optional false
+                                                                         :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+                                                                 [(btu/context-get :catalogue-id)]
+                                                                 "test-handling"))
     (test-data/command! {:type :application.command/submit
-                         :application-id application-id
-                         :actor applicant})
-    (btu/with-postmortem {:dir btu/reporting-dir}
-      (login-as handler)
-      (testing "handler should see todos on logging in"
-        (btu/wait-visible :todo-applications))
-      (testing "handler should see description of application"
-        (btu/wait-visible {:class :application-description :fn/text "test-handling"}))
-      (let [app-button {:tag :a :href (str "/application/" application-id)}]
-        (testing "handler should see view button for application"
-          (btu/wait-visible app-button))
-        (btu/scroll-and-click app-button))
-      (testing "handler should see application after clicking on View"
-        (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
-      (testing "open the approve form"
-        (btu/scroll-and-click :approve-reject-action-button))
-      (testing "add a comment and two attachments"
-        (btu/wait-visible :comment-approve-reject)
-        (btu/fill-human :comment-approve-reject "this is a comment")
-        (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
-        (btu/wait-visible [{:css "a.attachment-link"}])
-        (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
-        (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                                (get-attachments))))
-      (testing "add and remove a third attachment"
-        (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-        (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                                (get-attachments)))
-        (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
-          (btu/click-el (last buttons)))
-        (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                                (get-attachments))))
-      (testing "approve"
-        (btu/scroll-and-click :approve)
-        (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
-      (testing "attachments visible in eventlog"
-        (is (= ["test.txt" "test-fi.txt"]
-               (get-attachments {:css "div.event a.attachment-link"})))))))
+                         :application-id (btu/context-get :application-id)
+                         :actor "alice"}))
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "developer")
+    (testing "handler should see todos on logging in"
+      (btu/wait-visible :todo-applications))
+    (testing "handler should see description of application"
+      (btu/wait-visible {:class :application-description :fn/text "test-handling"}))
+    (let [app-button {:tag :a :href (str "/application/" (btu/context-get :application-id))}]
+      (testing "handler should see view button for application"
+        (btu/wait-visible app-button))
+      (btu/scroll-and-click app-button))
+    (testing "handler should see application after clicking on View"
+      (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
+    (testing "open the approve form"
+      (btu/scroll-and-click :approve-reject-action-button))
+    (testing "add a comment and two attachments"
+      (btu/wait-visible :comment-approve-reject)
+      (btu/fill-human :comment-approve-reject "this is a comment")
+      (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
+      (btu/wait-visible [{:css "a.attachment-link"}])
+      (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
+      (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
+                              (get-attachments))))
+    (testing "add and remove a third attachment"
+      (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
+      (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                              (get-attachments)))
+      (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
+        (btu/click-el (last buttons)))
+      (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
+                              (get-attachments))))
+    (testing "approve"
+      (btu/scroll-and-click :approve)
+      (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
+    (testing "attachments visible in eventlog"
+      (is (= ["test.txt" "test-fi.txt"]
+             (get-attachments {:css "div.event a.attachment-link"}))))))
 
 (deftest test-guide-page
   (btu/with-postmortem {:dir btu/reporting-dir}
