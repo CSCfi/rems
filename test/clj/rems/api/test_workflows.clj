@@ -211,7 +211,8 @@
                                            :userid "owner"}
                                           {:email "alice@example.com"
                                            :name "Alice Applicant"
-                                           :userid "alice"}]})
+                                           :userid "alice"
+                                           :organizations [{:organization/id "default"}]}]})
              (fetch api-key user-id wfid))))
 
     (testing "edit as organization-owner"
