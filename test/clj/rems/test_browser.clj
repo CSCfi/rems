@@ -204,18 +204,25 @@
             description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
             attachment-field (get-in application [:application/forms 0 :form/fields 7])
-            attachment-field-selector (keyword (str "upload-form-" form-id "-field-" (:field/id attachment-field) "-input"))]
+            attachment-field-id (str "form-" form-id "-field-" (:field/id attachment-field))
+            attachment-field-upload-selector (keyword (str "upload-" attachment-field-id "-input"))]
         (is (= "attachment" (:field/type attachment-field))) ;; sanity check
 
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
         (fill-form-field "Text area" "Test2")
         (set-date "Date field" "2050-01-02")
+
         (fill-form-field "Email field" "user@example.com")
-        (btu/upload-file attachment-field-selector "test-data/test.txt")
-        (btu/wait-predicate #(= ["test.txt"] (get-attachments)))
-        (btu/upload-file attachment-field-selector "test-data/test-fi.txt")
-        (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-attachments)))
+
+        (testing "upload three attachments, then remove one"
+          (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
+          (btu/wait-predicate #(= ["test.txt"] (get-attachments)))
+          (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
+          (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-attachments)))
+          (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
+          (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-attachments)))
+          (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
 
         (is (not (btu/field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
