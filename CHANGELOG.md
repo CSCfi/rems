@@ -16,6 +16,7 @@ Changes since v2.12
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
 - Automated browser testing has been improved in implementation and also in the coverage of the administration side
 - Form API create & edit requests are validated (#2098). This was meant to be added in 2.7 but the validation wasn't active by mistake.
+- Validate application via api on save-draft and validate option list values (#2117)
 
 ### Fixes
 - Various fixes in workflow editor UI
