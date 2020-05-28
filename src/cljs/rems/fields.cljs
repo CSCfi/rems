@@ -285,39 +285,42 @@
       ": "
       attachment-types/allowed-extensions-string]]))
 
+(defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
+  [:div.form-group
+   (into [:<>]
+         (for [attachment attachments]
+           [:div.flex-row.d-flex.flex-wrap.mb-2
+            [attachment-link attachment]
+            [:button.btn.btn-outline-secondary.mr-2
+             {:class (str "remove-attachment-" key)
+              :type :button
+              :on-click (fn [event]
+                          (on-remove-attachment (:attachment/id attachment)))}
+             [close-symbol]
+             " "
+             (text :t.form/attachment-remove)]]))
+   [upload-button (str "upload-" key) on-attach]])
+
+(defn attachment-row [attachments]
+  (into [:div.flex-row.d-flex.flex-wrap]
+        (for [att attachments]
+          [attachment-link att])))
+
 (defn attachment-field
-  [{:keys [validation on-set-attachment on-remove-attachment success] :as opts}]
-  (let [title (localized (:field/title opts))
-        value (:field/value opts)
-        filename (get-in opts [:field/attachment :attachment/filename])
-        upload-field-id (str (field-name opts) "-input")
-        upload-field [upload-button
-                      (field-name opts)
-                      (fn [data]
-                        (on-set-attachment data title))]
-        remove-button [:button.btn.btn-outline-secondary.mr-2
-                       {:type :button
-                        :on-click (fn [event]
-                                    (on-remove-attachment))}
-                       [close-symbol]
-                       " "
-                       (text :t.form/attachment-remove)]]
-    [field-wrapper (assoc opts
-                          :readonly-component (attachment-link (:field/attachment opts))
-                          :diff-component [:div {:style {:display :flex}}
-                                           [:div
-                                            (text :t.form/previous-value) ": "
-                                            (attachment-link (:field/previous-attachment opts))]
-                                           [:div
-                                            (text :t.form/current-value) ": "
-                                            (attachment-link (:field/attachment opts))]])
-     [:div.flex-row.d-flex.align-items-center
-      (attachment-link (:field/attachment opts))
-      (if (empty? value)
-        upload-field
-        remove-button)
-      (when success
-        [success-symbol])]]))
+  [{:keys [validation on-attach on-remove-attachment success] :as opts}]
+  [field-wrapper (assoc opts
+                        :readonly-component [attachment-row (:field/attachments opts)]
+                        :diff-component [:div {:style {:display :flex}}
+                                         [:div
+                                          (text :t.form/previous-value) ": "
+                                          [attachment-row (:field/previous-attachments opts)]]
+                                         [:div
+                                          (text :t.form/current-value) ": "
+                                          [attachment-row (:field/attachments opts)]]])
+   [multi-attachment-view {:key (field-name opts)
+                           :attachments (:field/attachments opts)
+                           :on-attach on-attach
+                           :on-remove-attachment on-remove-attachment}]])
 
 (defn header-field [opts]
   (let [title (localized (:field/title opts))]
@@ -368,6 +371,21 @@
 
 (defn guide []
   [:div
+   (component-info multi-attachment-view)
+   (example "no attachments"
+            [multi-attachment-view {:key "action-guide-example-1"
+                                     :attachment nil
+                                     :on-attach (fn [_] nil)}])
+   (example "multiple attachments"
+            [multi-attachment-view {:key "action-guide-example-1"
+                                     :attachments [{:attachment/filename "attachment.xlsx"}
+                                                   {:attachment/filename "data.pdf"}]
+                                     :on-attach (fn [_] nil)}])
+   (example "multiple attachments, long filenames"
+            [multi-attachment-view {:key "action-guide-example-1"
+                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
+                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
+                                     :on-attach (fn [_] nil)}])
    (component-info field)
    (example "field of type \"text\""
             [field {:form/id 1
@@ -487,15 +505,17 @@
                     :field/id "6"
                     :field/type :attachment
                     :field/title {:en "Title"}}])
-   (example "field of type \"attachment\", file uploaded"
+   (example "field of type \"attachment\", two files uploaded"
             [field {:app-id 5
                     :form/id 16
                     :field/id "6"
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :field/value "123"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "test.txt"}}])
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "test.txt"}
+                                        {:attachment/id 456
+                                         :attachment/filename "second.pdf"}]}])
    (example "field of type \"attachment\", file uploaded, long filename"
             [field {:app-id 5
                     :form/id 16
@@ -503,8 +523,8 @@
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :field/value "123"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}}])
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]}])
    (example "field of type \"attachment\", file uploaded, success indicator"
             [field {:app-id 5
                     :form/id 17
@@ -512,8 +532,8 @@
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :field/value "123"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "test.txt"}
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "test.txt"}]
                     :success true}])
    (example "field of type \"attachment\", previous and new file uploaded, diff shown"
             [field {:app-id 5
@@ -523,10 +543,12 @@
                     :field/title {:en "Title"}
                     :field/value "123"
                     :field/previous-value "456"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "new.txt"}
-                    :field/previous-attachment {:attachment/id 456
-                                                :attachment/filename "old.txt"}
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "new.txt"}
+                                        {:attachment/id 456
+                                         :attachment/filename "new2.txt"}]
+                    :field/previous-attachments [{:attachment/id 789
+                                                  :attachment/filename "old.txt"}]
                     :diff true}])
    (example "field of type \"attachment\", previous and new file uploaded, diff hidden"
             [field {:app-id 5
@@ -536,10 +558,25 @@
                     :field/title {:en "Title"}
                     :field/value "123"
                     :field/previous-value "456"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "new.txt"}
-                    :field/previous-attachment {:attachment/id 456
-                                                :attachment/filename "old.txt"}}])
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "new.txt"}
+                                        {:attachment/id 456
+                                         :attachment/filename "new2.txt"}]
+                    :field/previous-attachment [{:attachment/id 456
+                                                 :attachment/filename "old.txt"}]}])
+   (example "field of type \"attachment\", lots of files, diff shown"
+            [field {:app-id 5
+                    :form/id 18
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/previous-value "456"
+                    :field/attachments (repeat 20 {:attachment/id 123
+                                                   :attachment/filename "new.txt"})
+                    :field/previous-attachments (repeat 20 {:attachment/id 789
+                                                            :attachment/filename "old.txt"})
+                    :diff true}])
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
             [field {:app-id 5
                     :form/id 20
@@ -547,8 +584,8 @@
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :field/previous-value "456"
-                    :field/previous-attachment {:attachment/id 456
-                                                :attachment/filename "old.txt"}
+                    :field/previous-attachments [{:attachment/id 456
+                                                  :attachment/filename "old.txt"}]
                     :diff true}])
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff hidden"
             [field {:app-id 5
@@ -557,8 +594,8 @@
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :field/previous-value "456"
-                    :field/previous-attachment {:attachment/id 456
-                                                :attachment/filename "old.txt"}}])
+                    :field/previous-attachments [{:attachment/id 456
+                                                  :attachment/filename "old.txt"}]}])
    (example "non-editable field of type \"attachment\""
             [field {:app-id 5
                     :form/id 22
@@ -566,7 +603,7 @@
                     :field/type :attachment
                     :field/title {:en "Title"}
                     :readonly true}])
-   (example "non-editable field of type \"attachment\", file uploaded"
+   (example "non-editable field of type \"attachment\", files uploaded"
             [field {:app-id 5
                     :form/id 23
                     :field/id "6"
@@ -574,8 +611,20 @@
                     :field/title {:en "Title"}
                     :readonly true
                     :field/value "123"
-                    :field/attachment {:attachment/id 123
-                                       :attachment/filename "test.txt"}}])
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "test.txt"}
+                                        {:attachment/id 456
+                                         :attachment/filename "second.pdf"}]}])
+   (example "non-editable field of type \"attachment\", many many files"
+            [field {:app-id 5
+                    :form/id 23
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :readonly true
+                    :field/value "123"
+                    :field/attachments (repeat 100 {:attachment/id 123
+                                         :attachment/filename "test.txt"})}])
    (example "field of type \"date\""
             [field {:form/id 24
                     :field/id "1"

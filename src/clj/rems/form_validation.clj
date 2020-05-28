@@ -1,6 +1,7 @@
 (ns rems.form-validation
   "Pure functions for form validation logic"
   (:require [clojure.string :as str]
+            [rems.common.form :as form]
             [rems.util :as util]))
 
 (defn- required? [field]
@@ -26,6 +27,11 @@
   (and (= (:field/type field) :option)
        (not (option-value-valid? field))))
 
+;; TODO: validate that attachments are actually valid?
+(defn- invalid-attachment-value? [field]
+  (and (= (:field/type field) :attachment)
+       (not (every? number? (form/parse-attachment-ids (:field/value field))))))
+
 (defn- validate-field-content [field]
   (cond
     (invalid-email-address? field) {:field-id (:field/id field)
@@ -33,7 +39,9 @@
     (too-long? field) {:field-id (:field/id field)
                        :type     :t.form.validation/toolong}
     (invalid-option-value? field) {:field-id (:field/id field)
-                                   :type     :t.form.validation/invalid-value}))
+                                   :type     :t.form.validation/invalid-value}
+    (invalid-attachment-value? field) {:field-id (:field/id field)
+                                       :type     :t.form.validation/invalid-value}))
 
 (defn- validate-field-submit [field]
   (if (required? field)

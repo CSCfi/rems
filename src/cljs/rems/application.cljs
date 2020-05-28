@@ -25,7 +25,7 @@
             [rems.atoms :refer [attachment-link external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
-            [rems.common.form :refer [field-visible?]]
+            [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -103,7 +103,7 @@
  (fn [{:keys [db]} [_ id]]
    {:db (-> db
             (assoc ::application-id (parse-int id))
-            (dissoc ::application ::edit-application ::attachment-success))
+            (dissoc ::application ::edit-application))
     :dispatch [::fetch-application id true]}))
 
 (rf/reg-event-fx
@@ -215,8 +215,10 @@
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
-(defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
-  (let [application-id (get-in db [::application :data :application/id])]
+(defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
+  (let [application-id (get-in db [::application :data :application/id])
+        current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
+        description [text :t.form/upload]]
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id}
             :body file
@@ -228,8 +230,8 @@
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
-                        (rf/dispatch [::set-field-value form-id field-id (str (:id response))])
-                        (rf/dispatch [::set-attachment-success field-id])
+                        (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                          (conj current-attachments (:id response)))])
                         (rf/dispatch [::save-application description])))
             :error-handler (fn [response]
                              (if (= 415 (:status response))
@@ -245,18 +247,17 @@
 (rf/reg-event-fx ::save-attachment save-attachment)
 
 (rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ form-id field-id attachment-id]]
+   (update-in db [::edit-application :field-values form-id field-id]
+              (comp form/unparse-attachment-ids
+                    (partial remove #{attachment-id})
+                    form/parse-attachment-ids))))
+
+(rf/reg-event-db
  ::set-field-value
  (fn [db [_ form-id field-id value]]
    (assoc-in db [::edit-application :field-values form-id field-id] value)))
-
-(rf/reg-event-db
- ::set-attachment-success
- (fn [db [_ field-id]]
-   (assoc db ::attachment-success field-id)))
-
-(rf/reg-sub
- ::attachment-success
- (fn [db] (::attachment-success db)))
 
 (rf/reg-event-db
  ::toggle-diff
@@ -360,7 +361,7 @@
                    :text (text :t.form/copy-as-new)
                    :on-click #(rf/dispatch [::copy-as-new-application])}])
 
-(defn- application-fields [application edit-application attachment-success]
+(defn- application-fields [application edit-application]
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:form-id :field-id] (:validation-errors edit-application))
@@ -378,23 +379,24 @@
               :always (into [:div.fields]
                             (for [field (:form/fields form)
                                   :let [field-id (:field/id field)]
-                                  :when (and (field-visible? field (get field-values form-id))
+                                  :when (and (form/field-visible? field (get field-values form-id))
                                              (not (:field/private field)))] ; private fields will have empty value anyway
                               [fields/field (assoc field
                                                    :form/id form-id
                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
-                                                   :on-set-attachment #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                                                   :on-remove-attachment #(do
-                                                                            (rf/dispatch [::set-field-value form-id field-id ""])
-                                                                            (rf/dispatch [::set-attachment-success field-id]))
+                                                   :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                                   :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
-                                                   :field/attachment (when (= :attachment (:field/type field))
-                                                                       (get attachments (parse-int (get-in field-values [form-id field-id]))))
-                                                   :field/previous-attachment (when (= :attachment (:field/type field))
-                                                                                (when-let [prev (:field/previous-value field)]
-                                                                                  (get attachments (parse-int prev))))
-                                                   :success (= attachment-success field-id)
+                                                   :field/attachments (when (= :attachment (:field/type field))
+                                                                        (->> (get-in field-values [form-id field-id])
+                                                                             form/parse-attachment-ids
+                                                                             (mapv attachments)))
+                                                   :field/previous-attachments (when (= :attachment (:field/type field))
+                                                                                 (when-let [prev (:field/previous-value field)]
+                                                                                   (->> prev
+                                                                                       form/parse-attachment-ids
+                                                                                       (mapv attachments))))
                                                    :diff (get show-diff field-id)
                                                    :validation (get-in field-validations [form-id field-id])
                                                    :readonly readonly?
@@ -472,9 +474,7 @@
     (when comment
       [:div comment])
     (when-let [attachments (seq attachments)]
-      (into [:div.d-flex.flex-row.flex-wrap]
-            (for [a attachments]
-              [attachment-link a])))]])
+      [fields/attachment-row attachments])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
@@ -771,7 +771,7 @@
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
-(defn- render-application [{:keys [application edit-application attachment-success config userid]}]
+(defn- render-application [{:keys [application edit-application config userid]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
@@ -784,7 +784,7 @@
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
-     [:div.mt-3 [application-fields application edit-application attachment-success]]]
+     [:div.mt-3 [application-fields application edit-application]]]
     [:div.col-lg-4
      [:div#float-actions.mb-3
       [flash-message/component :actions]
@@ -799,7 +799,6 @@
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
-        attachment-success @(rf/subscribe [::attachment-success])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
@@ -814,7 +813,6 @@
      (when application
        [render-application {:application application
                             :edit-application edit-application
-                            :attachment-success attachment-success
                             :config config
                             :userid userid}])
      ;; Located after the application to avoid re-rendering the application
