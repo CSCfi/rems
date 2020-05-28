@@ -171,7 +171,7 @@
      [:div.form-group.row
       [:div.col-sm-1]
       [:div.col-sm-6
-       [:button.btn.btn-primary
+       [:button#blacklist-add.btn.btn-primary
         {:type :submit}
         (text :t.administration/add)]]]]))
 
