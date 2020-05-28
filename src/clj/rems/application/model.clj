@@ -615,8 +615,8 @@
                           field (getx form :form/fields)
                           :when (= :attachment (:field/type field))
                           value [(:field/value field) (:field/previous-value field)]
-                          :when (not (empty? value))]
-                      (Integer/parseInt value))]
+                          attachment (form/parse-attachment-ids value)]
+                      attachment)]
     (set (concat from-events from-fields))))
 
 (deftest test-visible-attachment-ids
@@ -625,12 +625,12 @@
                                                                {:attachment/id 3}]}
                                           {:event/type :application.event/bar}]
                      :application/forms [{:form/fields [{:field/type :attachment
-                                                         :field/value "5" :field/previous-value "7"}]}
+                                                         :field/value "5" :field/previous-value "7,15"}]}
                                          {:form/fields [{:field/type :text
                                                          :field/value "2" :field/previous-vaule "2"}
                                                         {:field/type :attachment
-                                                         :field/value "9"}]}]}]
-    (is (= #{1 3 5 7 9} (visible-attachment-ids application)))))
+                                                         :field/value "9,11,13"}]}]}]
+    (is (= #{1 3 5 7 9 11 13 15} (visible-attachment-ids application)))))
 
 (defn- hide-attachments [application]
   (let [visible-ids (visible-attachment-ids application)

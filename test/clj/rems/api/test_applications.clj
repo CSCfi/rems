@@ -846,39 +846,60 @@
                              (authenticate api-key "carl")
                              handler)]
             (is (response-is-forbidden? response))))
-        (testing "and using it in a field"
-          (is (= {:success true}
-                 (send-command user-id {:type :application.command/save-draft
-                                        :application-id app-id
-                                        :field-values [{:form form-id :field "attach" :value (str id)}]}))))
-        (testing "and submitting"
-          (is (= {:success true}
-                 (send-command user-id {:type :application.command/submit
-                                        :application-id app-id})))
-          (testing "and accessing it as handler"
-            (let [response (-> (read-request id)
-                               (authenticate api-key handler-id)
-                               handler
-                               assert-response-is-ok)]
-              (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
-              (is (= (slurp testfile) (slurp (:body response)))))))
-        (testing "and copying the application"
-          (let [response (send-command user-id {:type :application.command/copy-as-new
-                                                :application-id app-id})
-                new-app-id (:application-id response)]
-            (is (:success response))
-            (is (number? new-app-id))
-            (testing "and fetching the copied attachent"
-              (let [new-app (get-application-for-user new-app-id user-id)
-                    new-id (get-in new-app [:application/attachments 0 :attachment/id])]
-                (is (number? new-id))
-                (is (not= id new-id))
-                (let [response (-> (read-request new-id)
-                                   (authenticate api-key user-id)
-                                   handler
-                                   assert-response-is-ok)]
-                  (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
-                  (is (= (slurp testfile) (slurp (:body response)))))))))))
+        (testing "and uploading a second attachment"
+          (let [body2 (-> (upload-request (assoc filecontent :filename "second.txt"))
+                          (authenticate api-key user-id)
+                          handler
+                          read-ok-body)
+                id2 (:id body2)]
+            (is (:success body2))
+            (is (number? id2))
+            (testing "and using them in a field"
+              (is (= {:success true}
+                     (send-command user-id {:type :application.command/save-draft
+                                            :application-id app-id
+                                            :field-values [{:form form-id :field "attach" :value (str id "," id2)}]}))))
+            (testing "and submitting"
+              (is (= {:success true}
+                     (send-command user-id {:type :application.command/submit
+                                            :application-id app-id}))))
+            (testing "and accessing the attachments as handler"
+              (let [response (-> (read-request id)
+                                 (authenticate api-key handler-id)
+                                 handler
+                                 assert-response-is-ok)]
+                (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
+                (is (= (slurp testfile) (slurp (:body response)))))
+              (let [response (-> (read-request id2)
+                                 (authenticate api-key handler-id)
+                                 handler
+                                 assert-response-is-ok)]
+                (is (= "attachment;filename=\"second.txt\"" (get-in response [:headers "Content-Disposition"])))
+                (is (= (slurp testfile) (slurp (:body response))))))
+            (testing "and copying the application"
+              (let [response (send-command user-id {:type :application.command/copy-as-new
+                                                    :application-id app-id})
+                    new-app-id (:application-id response)]
+                (is (:success response))
+                (is (number? new-app-id))
+                (testing "and fetching the copied attachent"
+                  (let [new-app (get-application-for-user new-app-id user-id)
+                        [new-id new-id2] (mapv :attachment/id (get new-app :application/attachments))]
+                    (is (number? new-id))
+                    (is (number? new-id2))
+                    (is (not= #{id id2} #{new-id new-id2}))
+                    (let [response (-> (read-request new-id)
+                                       (authenticate api-key user-id)
+                                       handler
+                                       assert-response-is-ok)]
+                      (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
+                      (is (= (slurp testfile) (slurp (:body response)))))
+                    (let [response (-> (read-request new-id2)
+                                       (authenticate api-key user-id)
+                                       handler
+                                       assert-response-is-ok)]
+                      (is (= "attachment;filename=\"second.txt\"" (get-in response [:headers "Content-Disposition"])))
+                      (is (= (slurp testfile) (slurp (:body response)))))))))))))
     (testing "retrieving nonexistent attachment"
       (let [response (-> (read-request 999999999999999)
                          (authenticate api-key "carl")
@@ -1119,15 +1140,17 @@
                                            :field-values [{:form form-id :field "attach1" :value (str id)}]})))))
     (testing "save a new draft"
       (let [blue-id (add-attachment applicant-id (file "blue.txt"))
+            green-id (add-attachment applicant-id (file "green.txt"))
             red-id (add-attachment applicant-id (file "red.txt"))]
         (is (= {:success true}
                (send-command applicant-id {:type :application.command/save-draft
                                            :application-id app-id
-                                           :field-values [{:form form-id :field "attach1" :value (str blue-id)}
+                                           :field-values [{:form form-id :field "attach1" :value (str blue-id "," green-id)}
                                                           {:form form-id :field "attach2" :value (str red-id)}]})))))
     (testing "fetch zip as applicant"
       (is (= {"blue.txt" (slurp testfile)
-              "red.txt" (slurp testfile)}
+              "red.txt" (slurp testfile)
+              "green.txt" (slurp testfile)}
              (fetch-zip applicant-id))))
     (testing "submit"
       (is (= {:success true}
@@ -1146,6 +1169,7 @@
       (testing "fetch zip as applicant, handler and reporter"
         (is (= {"blue.txt" (slurp testfile)
                 "red.txt" (slurp testfile)
+                "green.txt" (slurp testfile)
                 "blue (1).txt" (slurp testfile)
                 "yellow.txt" (slurp testfile)}
                (fetch-zip applicant-id)
