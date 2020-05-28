@@ -597,7 +597,11 @@
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))
         organization-by-id @(rf/subscribe [:organization-by-id])
-        language @(rf/subscribe [:language])]
+        language @(rf/subscribe [:language])
+        organization-name-if-known (fn [organization]
+                                     (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
+                                       (get-in known-organization [:organization/name language])
+                                       (:organization/id organization)))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -614,8 +618,8 @@
                          [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
-                       (when-let [organizations (:organizations attributes)]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map (comp language :organization/name organization-by-id :organization/id) organizations)) {:inline? true}])]
+                       (when-let [organizations (seq (:organizations attributes))]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]
