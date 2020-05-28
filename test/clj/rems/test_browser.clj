@@ -743,6 +743,7 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Title" "test-workflow-create-edit")
       (btu/scroll-and-click :type-decider)
+      (btu/wait-page-loaded)
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
