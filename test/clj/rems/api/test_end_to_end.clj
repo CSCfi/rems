@@ -54,7 +54,7 @@
           (testing "create organization"
             (api-call :post "/api/organizations/create"
                       {:organization/id "e2e"
-                       :organization/name "End-to-end"
+                       :organization/name {:fi "Päästä loppuun -testi" :en "End-to-end"}
                        :organization/owners []
                        :organization/review-emails []}
                       api-key owner-id))

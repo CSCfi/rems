@@ -17,7 +17,7 @@
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
-  {:organization {:organization/id "organization1" :organization/name "Organization 1"}
+  {:organization {:organization/id "organization1" :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
    :title "workflow title"
    :workflow {:type "workflow/default"
               :forms []

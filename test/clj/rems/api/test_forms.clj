@@ -104,7 +104,7 @@
                     (is (= (-> command
                                (select-keys [:form/organization :form/title])
                                (assoc-in
-                                [:form/organization :organization/name] "Organization 1"))
+                                [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
                            (select-keys form-template [:form/organization :form/title])))
                     (is (= (:form/fields command)
                            (mapv fixup-field-to-match-command (:form/fields form-template)))))))))
@@ -120,7 +120,7 @@
                   (testing "result matches input"
                     (is (= (-> command-with-given-field-id
                                (select-keys [:form/organization :form/title])
-                               (assoc-in [:form/organization :organization/name] "Organization 1"))
+                               (assoc-in [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
                            (select-keys form-template [:form/organization :form/title])))
                     (is (= (mapv #(dissoc % :field/id) (:form/fields command-with-given-field-id))
                            (mapv fixup-field-to-match-command (:form/fields form-template))))
@@ -197,7 +197,7 @@
                          read-ok-body)]
             (is (= (-> form-spec
                        (select-keys [:form/organization :form/title])
-                       (assoc-in [:form/organization :organization/name] "Organization 1"))
+                       (assoc-in [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
                    (select-keys form [:form/organization :form/title])))
             (is (= (:form/fields form-spec)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
@@ -304,7 +304,7 @@
                                      api-key user-id))))
       (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
         (is (= {:organization/id "abc"
-                :organization/name "ABC"}
+                :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}}
                (:form/organization form)))
         (is (= "I am owner" (:form/title form)))))))
 
@@ -544,7 +544,7 @@
                                  api-key user-id)]
               (is (= (-> command
                          (select-keys [:form/organization :form/title])
-                         (assoc-in [:form/organization :organization/name] "ABC"))
+                         (assoc-in [:form/organization :organization/name] {:fi "ABC" :en "ABC" :sv "ABC"}))
                      (select-keys form [:form/organization :form/title])))
               (is (= [{:field/id "fld1"
                        :field/type "option"
@@ -613,7 +613,7 @@
                                                      :field/options [{:key "opt"
                                                                       :label {:sv "Swedish label"}}]}]}))]
     (is (= {:form/id id
-            :form/organization {:organization/id "default" :organization/name "The Default Organization"}
+            :form/organization {:organization/id "default" :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"}}
             :form/title "invalid form"
             :form/fields [{:field/placeholder {:en "Placeholder"}
                            :field/title {:fi "Title in Finnish"}
