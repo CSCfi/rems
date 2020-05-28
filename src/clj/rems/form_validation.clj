@@ -35,6 +35,10 @@
     (invalid-option-value? field) {:field-id (:field/id field)
                                    :type     :t.form.validation/invalid-value}))
 
+;; TODO: validation for attachment fields
+;; a) validate that answer is sequence of numbers
+;; b) check that numbers are valid? (needs injection / side effect!)
+
 (defn- validate-field-submit [field]
   (if (required? field)
     {:field-id (:field/id field)
