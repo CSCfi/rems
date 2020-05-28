@@ -99,7 +99,7 @@
 (rf/reg-sub
  :organization-by-id
  (fn [db _]
-   (:organization-by-id db)))
+   (:organization-by-id db {})))
 
 (rf/reg-sub
  :organizations
