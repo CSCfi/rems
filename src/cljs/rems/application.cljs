@@ -288,7 +288,7 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
       :target :_blank}
-      [external-link] " PDF"]))
+     [external-link] " PDF"]))
 
 (defn- attachment-zip-button [application]
   (when-not (empty? (:application/attachments application))

@@ -11,9 +11,7 @@
             [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures
-  :each
-  api-fixture)
+(use-fixtures :each api-fixture)
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
