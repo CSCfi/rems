@@ -474,9 +474,7 @@
     (when comment
       [:div comment])
     (when-let [attachments (seq attachments)]
-      (into [:div.d-flex.flex-row.flex-wrap]
-            (for [a attachments]
-              [attachment-link a])))]])
+      [fields/attachment-row attachments])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]

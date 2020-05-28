@@ -301,22 +301,22 @@
              (text :t.form/attachment-remove)]]))
    [upload-button (str "upload-" key) on-attach]])
 
-(defn- link-attachments [attachments]
-  (into [:div.flex-row.d-flex.align-items-center]
+(defn attachment-row [attachments]
+  (into [:div.flex-row.d-flex.flex-wrap]
         (for [att attachments]
           [attachment-link att])))
 
 (defn attachment-field
   [{:keys [validation on-attach on-remove-attachment success] :as opts}]
   [field-wrapper (assoc opts
-                        :readonly-component [link-attachments (:field/attachments opts)]
+                        :readonly-component [attachment-row (:field/attachments opts)]
                         :diff-component [:div {:style {:display :flex}}
                                          [:div
                                           (text :t.form/previous-value) ": "
-                                          [link-attachments (:field/previous-attachments opts)]]
+                                          [attachment-row (:field/previous-attachments opts)]]
                                          [:div
                                           (text :t.form/current-value) ": "
-                                          [link-attachments (:field/attachments opts)]]])
+                                          [attachment-row (:field/attachments opts)]]])
    [multi-attachment-view {:key (field-name opts)
                            :attachments (:field/attachments opts)
                            :on-attach on-attach
@@ -564,6 +564,19 @@
                                          :attachment/filename "new2.txt"}]
                     :field/previous-attachment [{:attachment/id 456
                                                  :attachment/filename "old.txt"}]}])
+   (example "field of type \"attachment\", lots of files, diff shown"
+            [field {:app-id 5
+                    :form/id 18
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/previous-value "456"
+                    :field/attachments (repeat 20 {:attachment/id 123
+                                                   :attachment/filename "new.txt"})
+                    :field/previous-attachments (repeat 20 {:attachment/id 789
+                                                            :attachment/filename "old.txt"})
+                    :diff true}])
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
             [field {:app-id 5
                     :form/id 20
@@ -602,6 +615,16 @@
                                          :attachment/filename "test.txt"}
                                         {:attachment/id 456
                                          :attachment/filename "second.pdf"}]}])
+   (example "non-editable field of type \"attachment\", many many files"
+            [field {:app-id 5
+                    :form/id 23
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :readonly true
+                    :field/value "123"
+                    :field/attachments (repeat 100 {:attachment/id 123
+                                         :attachment/filename "test.txt"})}])
    (example "field of type \"date\""
             [field {:form/id 24
                     :field/id "1"
