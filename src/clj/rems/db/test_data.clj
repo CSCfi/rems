@@ -147,7 +147,7 @@
   (let [actor (or actor (create-owner!))
         result (organizations/add-organization! actor
                                                 {:organization/id (or id "default")
-                                                 :organization/name (or name {:en "The Default Organization"})
+                                                 :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
                                                  :organization/owners (or owners
                                                                           (if users
                                                                             [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
@@ -966,7 +966,7 @@
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
         _perf (organizations/add-organization! owner {:organization/id "perf"
-                                                      :organization/name {:en "Performance Test Organization"}
+                                                      :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
                                                       :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
                                                       :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
@@ -1074,31 +1074,31 @@
         ;; Create organizations
         default (create-organization! {:actor owner :users users})
         hus (organizations/add-organization! owner {:organization/id "hus"
-                                                    :organization/name {:en "HUS"}
+                                                    :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
                                                     :organization/owners [{:userid organization-owner1}]
                                                     :organization/review-emails []})
         thl (organizations/add-organization! owner {:organization/id "thl"
-                                                    :organization/name {:en "THL"}
+                                                    :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         nbn (organizations/add-organization! owner {:organization/id "nbn"
-                                                    :organization/name {:en "NBN"}
+                                                    :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         abc (organizations/add-organization! owner {:organization/id "abc"
-                                                    :organization/name {:en "ABC"}
+                                                    :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         csc (organizations/add-organization! owner {:organization/id "csc"
-                                                    :organization/name {:en "CSC – IT CENTER FOR SCIENCE LTD."}
+                                                    :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         organization1 (organizations/add-organization! owner {:organization/id "organization1"
-                                                              :organization/name {:en "Organization 1"}
+                                                              :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
                                                               :organization/owners [{:userid organization-owner1}]
                                                               :organization/review-emails []})
         organization2 (organizations/add-organization! owner {:organization/id "organization2"
-                                                              :organization/name {:en "Organization 2"}
+                                                              :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
                                                               :organization/owners [{:userid organization-owner2}]
                                                               :organization/review-emails []})
 

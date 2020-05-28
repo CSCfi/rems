@@ -30,7 +30,7 @@
                                                :handlers ["user1" "user2"]
                                                :forms [{:form/id form-id}]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -49,7 +49,7 @@
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -68,7 +68,7 @@
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}

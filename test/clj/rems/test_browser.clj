@@ -715,7 +715,7 @@
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
-                :form/organization {:organization/id "nbn" :organization/name "NBN"}
+                :form/organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
