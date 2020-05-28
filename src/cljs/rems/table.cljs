@@ -19,7 +19,7 @@
   (:require [clojure.string :as str]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
-            [rems.atoms :refer [checkbox close-symbol search-symbol sort-symbol]]
+            [rems.atoms :refer [checkbox sort-symbol]]
             [rems.focus :as focus]
             [rems.search :as search]
             [rems.text :refer [text text-format]]
