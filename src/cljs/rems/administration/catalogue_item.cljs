@@ -4,12 +4,12 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -46,7 +46,7 @@
     {:id "catalogue-item"
      :title [:span (get-localized-title catalogue-item language)]
      :always (into [:div
-                    [inline-info-field (text :t.administration/organization) (get-in catalogue-item [:organization :organization/name])]]
+                    [inline-info-field (text :t.administration/organization) (get-in catalogue-item [:organization :organization/name language])]]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
                       (let [suffix (str " (" (str/upper-case (name langcode)) ")")]

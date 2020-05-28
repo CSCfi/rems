@@ -1,6 +1,5 @@
 (ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
-            [clojure.set :as set]
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -11,10 +10,9 @@
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
+            [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
   (find-first #(= (id-key %) id) items))
@@ -166,7 +164,8 @@
   (let [workflows @(rf/subscribe [::workflows])
         editing? @(rf/subscribe [::editing?])
         selected-workflow @(rf/subscribe [::selected-workflow])
-        item-selected? #(= (:id %) (:id selected-workflow))]
+        item-selected? #(= (:id %) (:id selected-workflow))
+        language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
      (if editing?
@@ -179,7 +178,7 @@
          :item-key :id
          :item-label #(str (:title %)
                            " (org: "
-                           (get-in % [:organization :organization/name])
+                           (get-in % [:organization :organization/name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
@@ -188,7 +187,8 @@
   (let [resources @(rf/subscribe [::resources])
         editing? @(rf/subscribe [::editing?])
         selected-resource @(rf/subscribe [::selected-resource])
-        item-selected? #(= (:id %) (:id selected-resource))]
+        item-selected? #(= (:id %) (:id selected-resource))
+        language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
      (if editing?
@@ -201,7 +201,7 @@
          :item-key :id
          :item-label #(str (:resid %)
                            " (org: "
-                           (get-in % [:organization :organization/name])
+                           (get-in % [:organization :organization/name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
@@ -210,7 +210,8 @@
   (let [forms @(rf/subscribe [::forms])
         editing? @(rf/subscribe [::editing?])
         selected-form @(rf/subscribe [::selected-form])
-        item-selected? #(= (:form/id %) (:form/id selected-form))]
+        item-selected? #(= (:form/id %) (:form/id selected-form))
+        language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
      (if editing?
@@ -223,7 +224,7 @@
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
-                           (get-in % [:form/organization :organization/name])
+                           (get-in % [:form/organization :organization/name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))

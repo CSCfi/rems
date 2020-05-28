@@ -11,13 +11,11 @@
             [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures
-  :each
-  api-fixture)
+(use-fixtures :each api-fixture)
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
-  {:organization {:organization/id "organization1" :organization/name "Organization 1"}
+  {:organization {:organization/id "organization1" :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
    :title "workflow title"
    :workflow {:type "workflow/default"
               :forms []
@@ -211,7 +209,8 @@
                                            :userid "owner"}
                                           {:email "alice@example.com"
                                            :name "Alice Applicant"
-                                           :userid "alice"}]})
+                                           :userid "alice"
+                                           :organizations [{:organization/id "default"}]}]})
              (fetch api-key user-id wfid))))
 
     (testing "edit as organization-owner"

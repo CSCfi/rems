@@ -62,13 +62,13 @@
    (str "/administration/forms/create/" id)
    (text :t.administration/copy-as-new)])
 
-(defn form-view [form]
+(defn form-view [form language]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (get-in form [:form/organization :organization/name]) "/") (:form/title form)]
+     :title [:span (andstr (get-in form [:form/organization :organization/name language]) "/") (:form/title form)]
      :always [:div
-              [inline-info-field (text :t.administration/organization) (get-in form [:form/organization :organization/name])]
+              [inline-info-field (text :t.administration/organization) (get-in form [:form/organization :organization/name language])]
               [inline-info-field (text :t.administration/title) (:form/title form)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
@@ -88,11 +88,12 @@
 
 (defn form-page []
   (let [form @(rf/subscribe [::form])
-        loading? @(rf/subscribe [::loading?])]
+        loading? @(rf/subscribe [::loading?])
+        language @(rf/subscribe [:language])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/form)]
      [flash-message/component :top]
      (if loading?
        [spinner/big]
-       [form-view form])]))
+       [form-view form language])]))

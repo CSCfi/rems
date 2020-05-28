@@ -7,7 +7,7 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title]]
+            [rems.text :refer [get-localized-title text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -79,7 +79,7 @@
           {:key (:id license)
            :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
-           :organization {:value (get-in license [:organization :organization/name])}
+           :organization {:value (get-in license [:organization :organization/name language])}
            :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]

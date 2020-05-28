@@ -22,7 +22,8 @@
         check-alice-entitlement (fn [x]
                                   (is (= {:user {:userid "alice"
                                                  :email "alice@example.com"
-                                                 :name "Alice Applicant"}
+                                                 :name "Alice Applicant"
+                                                 :organizations [{:organization/id "default"}]}
                                           :resource "urn:nbn:fi:lb-201403262"
                                           :end nil
                                           :mail "alice@example.com"}
@@ -31,7 +32,8 @@
         check-alice-expired-entitlement (fn [x]
                                           (is (= {:user {:userid "alice"
                                                          :email "alice@example.com"
-                                                         :name "Alice Applicant"}
+                                                         :name "Alice Applicant"
+                                                         :organizations [{:organization/id "default"}]}
                                                   :resource "urn:nbn:fi:lb-201403262"
                                                   :mail "alice@example.com"}
                                                  (dissoc x :start :end :application-id)))

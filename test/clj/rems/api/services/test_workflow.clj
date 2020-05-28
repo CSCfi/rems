@@ -18,7 +18,7 @@
   (create-users)
 
   (with-user "owner"
-    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
+    (test-data/create-organization! {:organization/id "abc" :organization/name {:en "ABC"}})
     (testing "default workflow with forms"
       (let [form-id (test-data/create-form! {:form/title "workflow form"
                                              :form/fields [{:field/type :text
@@ -30,7 +30,7 @@
                                                :handlers ["user1" "user2"]
                                                :forms [{:form/id form-id}]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -49,7 +49,7 @@
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -68,7 +68,7 @@
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization {:organization/id "abc" :organization/name "ABC"}
+                :organization {:organization/id "abc" :organization/name {:en "ABC"}}
                 :title "the title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -85,7 +85,7 @@
   (create-users)
 
   (with-user "owner"
-    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
+    (test-data/create-organization! {:organization/id "abc" :organization/name {:en "ABC"}})
     (testing "change title"
       (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master

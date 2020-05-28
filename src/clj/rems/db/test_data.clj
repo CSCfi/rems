@@ -47,7 +47,7 @@
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
-   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
+   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant" :organizations [{:organization/id "default"}]}
    "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
@@ -112,7 +112,7 @@
             {:command command :result result})
     result))
 
-(defn- transpose-localizations [m]
+(defn- transpose-localizations [m] ; TODO could get rid of?
   (->> m
        (mapcat (fn [[k1 v]]
                  (map (fn [[k2 v]]
@@ -147,7 +147,7 @@
   (let [actor (or actor (create-owner!))
         result (organizations/add-organization! actor
                                                 {:organization/id (or id "default")
-                                                 :organization/name (or name "The Default Organization")
+                                                 :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
                                                  :organization/owners (or owners
                                                                           (if users
                                                                             [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
@@ -966,7 +966,7 @@
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
         _perf (organizations/add-organization! owner {:organization/id "perf"
-                                                      :organization/name "Performance Test Organization"
+                                                      :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
                                                       :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
                                                       :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
@@ -1074,31 +1074,31 @@
         ;; Create organizations
         default (create-organization! {:actor owner :users users})
         hus (organizations/add-organization! owner {:organization/id "hus"
-                                                    :organization/name "HUS"
+                                                    :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
                                                     :organization/owners [{:userid organization-owner1}]
                                                     :organization/review-emails []})
         thl (organizations/add-organization! owner {:organization/id "thl"
-                                                    :organization/name "THL"
+                                                    :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         nbn (organizations/add-organization! owner {:organization/id "nbn"
-                                                    :organization/name "NBN"
+                                                    :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         abc (organizations/add-organization! owner {:organization/id "abc"
-                                                    :organization/name "ABC"
+                                                    :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         csc (organizations/add-organization! owner {:organization/id "csc"
-                                                    :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
+                                                    :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         organization1 (organizations/add-organization! owner {:organization/id "organization1"
-                                                              :organization/name "Organization 1"
+                                                              :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
                                                               :organization/owners [{:userid organization-owner1}]
                                                               :organization/review-emails []})
         organization2 (organizations/add-organization! owner {:organization/id "organization2"
-                                                              :organization/name "Organization 2"
+                                                              :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
                                                               :organization/owners [{:userid organization-owner2}]
                                                               :organization/review-emails []})
 

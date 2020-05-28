@@ -32,11 +32,9 @@
             [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
-            [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]]
-            [rems.common.application-util :as application-util])
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -291,7 +289,7 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
       :target :_blank}
-      [external-link] " PDF"]))
+     [external-link] " PDF"]))
 
 (defn- attachment-zip-button [application]
   (when-not (empty? (:application/attachments application))
@@ -597,7 +595,13 @@
         other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))]
+                    :else (text :t.applicant-info/invited-member))
+        organization-by-id @(rf/subscribe [:organization-by-id])
+        language @(rf/subscribe [:language])
+        organization-name-if-known (fn [organization]
+                                     (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
+                                       (get-in known-organization [:organization/name language])
+                                       (:organization/id organization)))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -614,8 +618,8 @@
                          [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
-                       (when-let [organizations (:organizations attributes)]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map :organization/name organizations)) {:inline? true}])]
+                       (when-let [organizations (seq (:organizations attributes))]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]

@@ -88,7 +88,7 @@
        :item-key :id
        :item-label #(str (get-localized-title % language)
                          " (org: "
-                         (get-in % [:organization :organization/name])
+                         (get-in % [:organization :organization/name language])
                          ")")
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

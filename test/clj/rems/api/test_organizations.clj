@@ -28,10 +28,12 @@
     (testing "create organization"
       (let [data (api-call :post "/api/organizations/create"
                            {:organization/id "organizations-api-test-org"
-                            :organization/name "Organizations API Test ORG"
+                            :organization/name {:fi "Organisaatiot API Test ORG"
+                                                :en "Organizations API Test ORG"}
                             :organization/owners [{:userid org-owner}]
                             :organization/review-emails [{:email "test@organization.test.org"
-                                                          :name "Organizations API Test ORG Reviewers"}]}
+                                                          :name {:fi "Organisaatiot API Test ORG Katselmoijat"
+                                                                 :en "Organizations API Test ORG Reviewers"}}]}
                            api-key owner)]
         (is (= "organizations-api-test-org" (:organization/id data)))
 
@@ -41,12 +43,14 @@
                                api-key org-owner)]
             (is (contains? (set (map :organization/id data)) "organizations-api-test-org"))
             (is (= {:organization/id "organizations-api-test-org"
-                    :organization/name "Organizations API Test ORG"
+                    :organization/name {:fi "Organisaatiot API Test ORG"
+                                        :en "Organizations API Test ORG"}
                     :organization/owners [{:userid org-owner}]
                     :organization/last-modified test-time
                     :organization/modifier {:userid owner}
                     :organization/review-emails [{:email "test@organization.test.org"
-                                                  :name "Organizations API Test ORG Reviewers"}]}
+                                                  :name {:fi "Organisaatiot API Test ORG Katselmoijat"
+                                                         :en "Organizations API Test ORG Reviewers"}}]}
                    (-> (find-first (comp #{"organizations-api-test-org"} :organization/id) data)
                        (update :organization/last-modified parse-date))))))
 
@@ -66,7 +70,8 @@
     (testing "create"
       (let [response (api-response :post "/api/organizations/create"
                                    {:organization/id "test-organization"
-                                    :organization/name "Test Organization"
+                                    :organization/name {:fi "Testiorganisaatio"
+                                                        :en "Test Organization"}
                                     :organization/owners []
                                     :organization/review-emails []})]
         (is (response-is-unauthorized? response))
@@ -84,7 +89,8 @@
     (testing "create"
       (let [response (api-response :post "/api/organizations/create"
                                    {:organization/id "test-organization"
-                                    :organization/name "Test Organization"
+                                    :organization/name {:fi "Testiorganisaatio"
+                                                        :en "Test Organization"}
                                     :organization/owners []
                                     :organization/review-emails []}
                                    "42" "alice")]

@@ -9,8 +9,8 @@
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [navigate! fetch]]))
+            [rems.text :refer [get-localized-title text text-format]]
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -41,7 +41,7 @@
     {:id "license"
      :title [:span (get-localized-title license language)]
      :always (into [:div#license
-                    [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name])]]
+                    [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name language])]]
                    (concat
                     (for [[langcode localization] (:localizations license)]
                       [inline-info-field (str (text :t.administration/title)
