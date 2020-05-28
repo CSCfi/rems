@@ -308,35 +308,23 @@
 
 (defn attachment-field
   [{:keys [validation on-set-attachment on-remove-attachment success] :as opts}]
-  (let [title (localized (:field/title opts))
-        value (:field/value opts)
-        upload-field-id (str (field-name opts) "-input")
-        upload-field [upload-button
-                      (field-name opts)
-                      (fn [data]
-                        (on-set-attachment data title))]
-        remove-button [:button.btn.btn-outline-secondary.mr-2
-                       {:type :button
-                        :on-click (fn [event]
-                                    (on-remove-attachment))}
-                       [close-symbol]
-                       " "
-                       (text :t.form/attachment-remove)]]
-    [field-wrapper (assoc opts
-                          :readonly-component [link-attachments (:field/attachments opts)]
-                          :diff-component [:div {:style {:display :flex}}
-                                           [:div
-                                            (text :t.form/previous-value) ": "
-                                            [link-attachments (:field/previous-attachments opts)]]
-                                           [:div
-                                            (text :t.form/current-value) ": "
-                                            [link-attachments (:field/attachments opts)]]])
-     [:div.flex-row.d-flex.align-items-center
-      [link-attachments (:field/attachments opts)]
-      upload-field
-      #_remove-button ; TODO!
-      (when success
-        [success-symbol])]]))
+  [field-wrapper (assoc opts
+                        :readonly-component [link-attachments (:field/attachments opts)]
+                        :diff-component [:div {:style {:display :flex}}
+                                         [:div
+                                          (text :t.form/previous-value) ": "
+                                          [link-attachments (:field/previous-attachments opts)]]
+                                         [:div
+                                          (text :t.form/current-value) ": "
+                                          [link-attachments (:field/attachments opts)]]])
+   [:<>
+    [multi-attachment-view {:key (field-name opts)
+                            :attachments (:field/attachments opts)
+                            :on-attach on-set-attachment
+                            :on-remove-attachment on-remove-attachment}]
+    ;; TODO nicer success symbol
+    (when success
+      [success-symbol])]])
 
 (defn header-field [opts]
   (let [title (localized (:field/title opts))]

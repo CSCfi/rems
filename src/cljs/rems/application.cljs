@@ -247,6 +247,14 @@
 (rf/reg-event-fx ::save-attachment save-attachment)
 
 (rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ form-id field-id attachment-id]]
+   (update-in db [::edit-application :field-values form-id field-id]
+              (comp form/unparse-attachment-ids
+                    (partial remove #{attachment-id})
+                    form/parse-attachment-ids))))
+
+(rf/reg-event-db
  ::set-field-value
  (fn [db [_ form-id field-id value]]
    (assoc-in db [::edit-application :field-values form-id field-id] value)))
@@ -386,9 +394,7 @@
                                                    :form/id form-id
                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
                                                    :on-set-attachment #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                                                   :on-remove-attachment #(do
-                                                                            (rf/dispatch [::set-field-value form-id field-id ""])
-                                                                            (rf/dispatch [::set-attachment-success field-id]))
+                                                   :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
                                                    :field/attachments (when (= :attachment (:field/type field))
