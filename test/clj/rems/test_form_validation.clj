@@ -226,6 +226,19 @@
                                         :field/visible    true
                                         :field/value      "abcdef"}]))))
 
+  (testing "attachment field"
+    (let [field {:field/id         "fld1"
+                 :field/type       :attachment
+                 :field/visible    true}]
+      (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+             (validate-fields-for-draft [(assoc field :field/value "1;2")])))
+      (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+             (validate-fields-for-draft [(assoc field :field/value "1 2")])))
+      (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+             (validate-fields-for-draft [(assoc field :field/value "1,a,2")])))
+      (is (nil? (validate-fields-for-draft [(assoc field :field/value "1")])))
+      (is (nil? (validate-fields-for-draft [(assoc field :field/value "1,2,3")])))))
+
   (testing "error: field input selected option is invalid"
     (is (= [{:type :t.form.validation/invalid-value :field-id "1"}]
            (validate-fields-for-draft [{:field/id       "1"

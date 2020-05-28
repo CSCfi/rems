@@ -812,6 +812,14 @@
                          (authenticate api-key handler-id)
                          handler)]
         (is (response-is-forbidden? response))))
+    (testing "invalid value for attachment field"
+      (is (= {:success false
+              :errors [{:form-id form-id
+                        :field-id "attach"
+                        :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "attach" :value "1,a"}]}))))
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
