@@ -531,7 +531,9 @@
                ""
 
                :else
-               (str (copy-attachment! new-application-id (Integer/parseInt value))))})))
+               (->> (form/parse-attachment-ids value)
+                    (mapv (partial copy-attachment! new-application-id))
+                    form/unparse-attachment-ids))})))
 
 (defmethod command-handler :application.command/copy-as-new
   [cmd application injections]

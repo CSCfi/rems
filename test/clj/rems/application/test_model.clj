@@ -1510,7 +1510,7 @@
                      :application/forms [{:form/fields [{:field/type :attachment
                                                          :field/value "1" :field/previous-value "2"}]}
                                          {:form/fields [{:field/type :text
-                                                         :field/value "3" :field/previous-value "4"}]}]
+                                                         :field/value "3,4"}]}]
                      :application/events [{:event/type :application.event/remarked
                                            :application/comment "4"
                                            :event/attachments [{:attachment/id 5}

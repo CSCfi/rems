@@ -409,3 +409,18 @@
           (is (empty? (validate-visible {:visibility/type :only-if
                                          :visibility/field {:field/id "fld1"}
                                          :visibility/values ["yes"]}))))))))
+
+(defn parse-attachment-ids [string]
+  (mapv parse-int (when-not (empty? string)
+                    (str/split string #","))))
+
+(defn unparse-attachment-ids [ids]
+  (str/join "," ids))
+
+(deftest test-parse-unparse-attachment-ids
+  (is (= [] (parse-attachment-ids "")))
+  (is (= "" (unparse-attachment-ids [])))
+  (is (= [1] (parse-attachment-ids "1")))
+  (is (= "1" (unparse-attachment-ids [1])))
+  (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
+  (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
