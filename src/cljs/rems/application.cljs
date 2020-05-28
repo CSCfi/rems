@@ -25,7 +25,7 @@
             [rems.atoms :refer [attachment-link external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
-            [rems.common.form :refer [field-visible?]]
+            [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -216,7 +216,8 @@
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
-  (let [application-id (get-in db [::application :data :application/id])]
+  (let [application-id (get-in db [::application :data :application/id])
+        current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))]
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id}
             :body file
@@ -228,7 +229,8 @@
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
-                        (rf/dispatch [::set-field-value form-id field-id (str (:id response))])
+                        (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                          (conj current-attachments (:id response)))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
             :error-handler (fn [response]
@@ -378,7 +380,7 @@
               :always (into [:div.fields]
                             (for [field (:form/fields form)
                                   :let [field-id (:field/id field)]
-                                  :when (and (field-visible? field (get field-values form-id))
+                                  :when (and (form/field-visible? field (get field-values form-id))
                                              (not (:field/private field)))] ; private fields will have empty value anyway
                               [fields/field (assoc field
                                                    :form/id form-id
@@ -389,11 +391,15 @@
                                                                             (rf/dispatch [::set-attachment-success field-id]))
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
-                                                   :field/attachment (when (= :attachment (:field/type field))
-                                                                       (get attachments (parse-int (get-in field-values [form-id field-id]))))
-                                                   :field/previous-attachment (when (= :attachment (:field/type field))
-                                                                                (when-let [prev (:field/previous-value field)]
-                                                                                  (get attachments (parse-int prev))))
+                                                   :field/attachments (when (= :attachment (:field/type field))
+                                                                        (->> (get-in field-values [form-id field-id])
+                                                                             form/parse-attachment-ids
+                                                                             (mapv attachments)))
+                                                   :field/previous-attachments (when (= :attachment (:field/type field))
+                                                                                 (when-let [prev (:field/previous-value field)]
+                                                                                   (->> prev
+                                                                                       form/parse-attachment-ids
+                                                                                       (mapv attachments))))
                                                    :success (= attachment-success field-id)
                                                    :diff (get show-diff field-id)
                                                    :validation (get-in field-validations [form-id field-id])
