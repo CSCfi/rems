@@ -97,6 +97,41 @@
 
 ;;; application page
 
+(defn slurp-fields [selector]
+  (->> (for [row (btu/query-all [selector {:fn/has-class :row}])
+             :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
+                   [value-el] (btu/children row {:css ".form-control"})]
+             :when value-el]
+         [k (str/trim (btu/get-element-text-el value-el))])
+       (into {})))
+
+(defn slurp-rows [& selectors]
+  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
+    (->> (for [td (btu/children row {:css "td"})
+               :let [k (str/trim (btu/get-element-attr-el td "class"))
+                     v (btu/get-element-text-el td)]]
+           [k (str/trim v)])
+         (into {}))))
+
+(defn find-rows [table-selectors child-selector]
+  (for [row (btu/query-all (vec (concat table-selectors [{:css "tr"}])))
+        :when (seq (btu/children row child-selector))]
+    row))
+
+(defn click-row-action [table-selectors child-selector button-selector]
+  (let [rows (seq (find-rows table-selectors child-selector))]
+    (is (= 1 (count rows)))
+    (btu/scroll-and-click-el
+     (btu/child (first rows)
+                button-selector))))
+
+(defn- select-button-by-label [label]
+  {:css ".btn" :fn/text label})
+
+(comment
+  (find-rows [:licenses]
+             {:fn/text (str (btu/context-get :license-name) " EN")}))
+
 (defn fill-form-field
   "Fills a form field named by `label` with `text`.
 
@@ -391,41 +426,6 @@
       (change-language :en)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
-
-(defn slurp-fields [selector]
-  (->> (for [row (btu/query-all [selector {:fn/has-class :row}])
-             :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
-                   [value-el] (btu/children row {:css ".form-control"})]
-             :when value-el]
-         [k (str/trim (btu/get-element-text-el value-el))])
-       (into {})))
-
-(defn slurp-rows [& selectors]
-  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
-    (->> (for [td (btu/children row {:css "td"})
-               :let [k (str/trim (btu/get-element-attr-el td "class"))
-                     v (btu/get-element-text-el td)]]
-           [k (str/trim v)])
-         (into {}))))
-
-(defn find-rows [table-selectors child-selector]
-  (for [row (btu/query-all (vec (concat table-selectors [{:css "tr"}])))
-        :when (seq (btu/children row child-selector))]
-    row))
-
-(defn click-row-action [table-selectors child-selector button-selector]
-  (let [rows (seq (find-rows table-selectors child-selector))]
-    (is (= 1 (count rows)))
-    (btu/scroll-and-click-el
-     (btu/child (first rows)
-                button-selector))))
-
-(defn- select-button-by-label [label]
-  {:css ".btn" :fn/text label})
-
-(comment
-  (find-rows [:licenses]
-             {:fn/text (str (btu/context-get :license-name) " EN")}))
 
 (defn create-license []
   (testing "create license"
