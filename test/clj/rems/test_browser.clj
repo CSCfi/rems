@@ -16,6 +16,7 @@
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
+            [rems.db.users :as users]
             [rems.standalone]
             [rems.browser-test-util :as btu]))
 
@@ -786,3 +787,52 @@
               "Active" ""}
              (slurp-fields :workflow)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
+
+(deftest test-blacklist
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (testing "set up resource & user"
+      (test-data/create-resource! {:resource-ext-id "blacklist-test"})
+      (users/add-user! "baddie" {:eppn "baddie" :commonName "Bruce Baddie" :mail "bruce@example.com"}))
+    (testing "add blacklist entry via resource page"
+      (login-as "owner")
+      (go-to-admin "Resources")
+      (click-row-action [:resources] {:fn/text "blacklist-test"}
+                        (select-button-by-label "View"))
+      (btu/wait-visible {:tag :h1 :fn/text "Resource"})
+      (btu/wait-page-loaded)
+      (is (= [{}] (slurp-rows :blacklist)))
+      (btu/fill-human :blacklist-user "baddie\n")
+      (btu/fill-human :blacklist-comment "This is a test.")
+      (btu/screenshot (io/file btu/reporting-dir "test-blacklist-1.png"))
+      (btu/scroll-and-click :blacklist-add)
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+    (testing "check entry on resource page"
+      (is (= [{} ;; TODO remove the header row in slurp-rows
+              {"resource" "blacklist-test"
+               "user" "Bruce Baddie"
+               "userid" "baddie"
+               "email" "bruce@example.com"
+               "added-by" "Owner"
+               "comment" "This is a test."
+               "commands" "Remove"}]
+             (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
+    (testing "check entry on blacklist page"
+      (go-to-admin "Blacklist")
+      (btu/wait-visible {:tag :h1 :fn/text "Blacklist"})
+      (btu/wait-page-loaded)
+      (is (= [{}
+              {"resource" "blacklist-test"
+               "user" "Bruce Baddie"
+               "userid" "baddie"
+               "email" "bruce@example.com"
+               "added-by" "Owner"
+               "comment" "This is a test."
+               "commands" "Remove"}]
+             (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
+    (testing "remove entry"
+      (click-row-action [:blacklist] {:fn/text "baddie"}
+                        (select-button-by-label "Remove"))
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= [{}] (slurp-rows :blacklist))))))
