@@ -97,24 +97,24 @@
    (:theme db)))
 
 (rf/reg-sub
- :organizations-by-id
+ :organization-by-id
  (fn [db _]
-   (:organizations-by-id db)))
+   (:organization-by-id db)))
 
 (rf/reg-sub
  :organizations
  (fn [_db _]
-   [(rf/subscribe [:organizations-by-id])
+   [(rf/subscribe [:organization-by-id])
     (rf/subscribe [:language])])
- (fn [[organizations-by-id language]]
-   (sort-by (comp language :organization/name) (vals organizations-by-id))))
+ (fn [[organization-by-id language]]
+   (sort-by (comp language :organization/name) (vals organization-by-id))))
 
 (rf/reg-sub
  :owned-organizations
  (fn [db _]
    (let [roles (get-in db [:identity :roles])
          userid (get-in db [:identity :user :userid])]
-     (for [org (vals (:organizations-by-id db))
+     (for [org (vals (:organization-by-id db))
            :let [owners (set (map :userid (:organization/owners org)))]
            :when (or (contains? roles :owner)
                      (contains? owners userid))]
@@ -157,7 +157,7 @@
 (rf/reg-event-db
  :loaded-organizations
  (fn [db [_ organizations]]
-   (assoc db :organizations-by-id (index-by [:organization/id] organizations))))
+   (assoc db :organization-by-id (index-by [:organization/id] organizations))))
 
 (rf/reg-event-fx
  :unauthorized!
