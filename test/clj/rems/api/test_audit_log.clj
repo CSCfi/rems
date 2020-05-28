@@ -32,6 +32,7 @@
               (is (response-is-ok? (-> (request :get "/api/users/active")
                                        (authenticate "42" "owner")
                                        handler))))
+            (Thread/sleep 2)
             (reset! time-a (time/now))
             (testing "> application"
               (is (response-is-ok? (-> (request :get (str "/api/applications/" app-id))
