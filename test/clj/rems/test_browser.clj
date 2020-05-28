@@ -808,7 +808,7 @@
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
     (testing "check entry on resource page"
-      (is (= [{}
+      (is (= [{} ;; TODO remove the header row in slurp-rows
               {"resource" "blacklist-test"
                "user" "Bruce Baddie"
                "userid" "baddie"
