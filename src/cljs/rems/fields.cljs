@@ -307,7 +307,7 @@
           [attachment-link att])))
 
 (defn attachment-field
-  [{:keys [validation on-set-attachment on-remove-attachment success] :as opts}]
+  [{:keys [validation on-attach on-remove-attachment success] :as opts}]
   [field-wrapper (assoc opts
                         :readonly-component [link-attachments (:field/attachments opts)]
                         :diff-component [:div {:style {:display :flex}}
@@ -319,7 +319,7 @@
                                           [link-attachments (:field/attachments opts)]]])
    [multi-attachment-view {:key (field-name opts)
                            :attachments (:field/attachments opts)
-                           :on-attach on-set-attachment
+                           :on-attach on-attach
                            :on-remove-attachment on-remove-attachment}]])
 
 (defn header-field [opts]

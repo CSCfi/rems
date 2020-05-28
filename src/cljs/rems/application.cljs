@@ -384,7 +384,7 @@
                               [fields/field (assoc field
                                                    :form/id form-id
                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
-                                                   :on-set-attachment #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                                   :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
                                                    :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
