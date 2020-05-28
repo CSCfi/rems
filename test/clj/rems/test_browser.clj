@@ -358,6 +358,14 @@
       (btu/scroll-and-click app-button))
     (testing "handler should see application after clicking on View"
       (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
+    (testing "handler should see the applicant info"
+      (btu/scroll-and-click :applicant-info-more-link)
+      (is (= {"Name" "Alice Applicant"
+              "Accepted terms of use" ""
+              "Username" "alice"
+              "Email (from identity provider)" "alice@example.com"
+              "Organization" "The Default Organization"}
+             (slurp-fields :applicant-info))))
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))
     (testing "add a comment and two attachments"
