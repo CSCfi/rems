@@ -730,3 +730,59 @@
                           {:as :json
                            :headers {"x-rems-api-key" "42"
                                      "x-rems-user-id" "handler"}}))))))))
+
+(deftest test-workflow-create-edit
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "owner")
+    (go-to-admin "Workflows")
+    (testing "create workflow"
+      (btu/scroll-and-click :create-workflow)
+      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (btu/wait-page-loaded)
+      (select-option "Organization" "nbn")
+      (fill-form-field "Title" "test-workflow-create-edit")
+      (btu/scroll-and-click :type-decider)
+      (select-option "Handlers" "handler")
+      (select-option "Handlers" "carl")
+      (select-option "Forms" "Simple form")
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-1.png"))
+      (btu/scroll-and-click :save))
+    (testing "view workflow"
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-2.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" "test-workflow-create-edit"
+              "Type" "Decider workflow"
+              "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow)))
+      ;; slurp-fields doesn't get the form because it's in a slightly different format
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
+    (testing "edit workflow"
+      (btu/scroll-and-click {:fn/has-class :edit-workflow})
+      (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
+      ;; cant use btu/disabled? for the organization field so we check it's a div instead of an input
+      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown})))
+      (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
+      (is (btu/disabled? :type-default)) ;; can't change type
+      ;; removing an item is hard to script reliably, so let's just add one
+      (select-option "Handlers" "reporter")
+      (is (btu/disabled? :workflow-forms))
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
+      (btu/scroll-and-click :save))
+    (testing "view workflow again"
+      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-5.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "NBN"
+              "Title" "test-workflow-create-edit-v2"
+              "Type" "Decider workflow"
+              "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
+              "Active" ""}
+             (slurp-fields :workflow)))
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))))

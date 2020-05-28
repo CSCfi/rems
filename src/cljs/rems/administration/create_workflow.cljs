@@ -36,14 +36,17 @@
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(defn- fetch-workflow-success [db [_ {:keys [title organization workflow]}]]
-  (update db ::form merge {:title title
-                           :organization organization
-                           :type (:type workflow)
-                           :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}))
+(rf/reg-event-db
+ ::fetch-workflow-success
+ (fn [db [_ {:keys [title organization workflow]}]]
+   (update db ::form merge {:title title
+                            :organization organization
+                            :type (:type workflow)
+                            :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
+                            :handlers (get workflow :handlers)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
-                                                      :on-success fetch-workflow-success})
+                                                      :on-success #(rf/dispatch [::fetch-workflow-success %])})
 
 ;;; form submit
 
@@ -129,6 +132,7 @@
 (defn- workflow-organization-field []
   [fields/organization-field {:id "organization-dropdown"
                               :value @(rf/subscribe [::selected-organization])
+                              :readonly @(rf/subscribe [::editing?])
                               :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- workflow-title-field []
@@ -205,6 +209,7 @@
        :item-selected? #(contains? selected-form-ids (:form/id %))
        ;; TODO support ordering multiple forms
        :multi? true
+       :disabled? @(rf/subscribe [::editing?])
        :on-change #(rf/dispatch [::set-forms %])}]]))
 
 (defn default-workflow-form []
