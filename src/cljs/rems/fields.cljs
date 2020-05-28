@@ -317,14 +317,10 @@
                                          [:div
                                           (text :t.form/current-value) ": "
                                           [link-attachments (:field/attachments opts)]]])
-   [:<>
-    [multi-attachment-view {:key (field-name opts)
-                            :attachments (:field/attachments opts)
-                            :on-attach on-set-attachment
-                            :on-remove-attachment on-remove-attachment}]
-    ;; TODO nicer success symbol
-    (when success
-      [success-symbol])]])
+   [multi-attachment-view {:key (field-name opts)
+                           :attachments (:field/attachments opts)
+                           :on-attach on-set-attachment
+                           :on-remove-attachment on-remove-attachment}]])
 
 (defn header-field [opts]
   (let [title (localized (:field/title opts))]

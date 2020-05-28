@@ -103,7 +103,7 @@
  (fn [{:keys [db]} [_ id]]
    {:db (-> db
             (assoc ::application-id (parse-int id))
-            (dissoc ::application ::edit-application ::attachment-success))
+            (dissoc ::application ::edit-application))
     :dispatch [::fetch-application id true]}))
 
 (rf/reg-event-fx
@@ -215,9 +215,10 @@
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
-(defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
+(defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
   (let [application-id (get-in db [::application :data :application/id])
-        current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))]
+        current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
+        description [text :t.form/upload]]
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id}
             :body file
@@ -231,7 +232,6 @@
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                           (conj current-attachments (:id response)))])
-                        (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
             :error-handler (fn [response]
                              (if (= 415 (:status response))
@@ -258,15 +258,6 @@
  ::set-field-value
  (fn [db [_ form-id field-id value]]
    (assoc-in db [::edit-application :field-values form-id field-id] value)))
-
-(rf/reg-event-db
- ::set-attachment-success
- (fn [db [_ field-id]]
-   (assoc db ::attachment-success field-id)))
-
-(rf/reg-sub
- ::attachment-success
- (fn [db] (::attachment-success db)))
 
 (rf/reg-event-db
  ::toggle-diff
@@ -370,7 +361,7 @@
                    :text (text :t.form/copy-as-new)
                    :on-click #(rf/dispatch [::copy-as-new-application])}])
 
-(defn- application-fields [application edit-application attachment-success]
+(defn- application-fields [application edit-application]
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:form-id :field-id] (:validation-errors edit-application))
@@ -406,7 +397,6 @@
                                                                                    (->> prev
                                                                                        form/parse-attachment-ids
                                                                                        (mapv attachments))))
-                                                   :success (= attachment-success field-id)
                                                    :diff (get show-diff field-id)
                                                    :validation (get-in field-validations [form-id field-id])
                                                    :readonly readonly?
@@ -783,7 +773,7 @@
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
-(defn- render-application [{:keys [application edit-application attachment-success config userid]}]
+(defn- render-application [{:keys [application edit-application config userid]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
@@ -796,7 +786,7 @@
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
-     [:div.mt-3 [application-fields application edit-application attachment-success]]]
+     [:div.mt-3 [application-fields application edit-application]]]
     [:div.col-lg-4
      [:div#float-actions.mb-3
       [flash-message/component :actions]
@@ -811,7 +801,6 @@
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
-        attachment-success @(rf/subscribe [::attachment-success])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
@@ -826,7 +815,6 @@
      (when application
        [render-application {:application application
                             :edit-application edit-application
-                            :attachment-success attachment-success
                             :config config
                             :userid userid}])
      ;; Located after the application to avoid re-rendering the application
