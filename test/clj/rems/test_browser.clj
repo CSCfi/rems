@@ -204,7 +204,7 @@
             description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
             attachment-field (get-in application [:application/forms 0 :form/fields 7])
-            attachment-field-selector (keyword (str "form-" form-id "-field-" (:field/id attachment-field) "-input"))]
+            attachment-field-selector (keyword (str "upload-form-" form-id "-field-" (:field/id attachment-field) "-input"))]
         (is (= "attachment" (:field/type attachment-field))) ;; sanity check
 
         (fill-form-field "Application title field" "Test name")
