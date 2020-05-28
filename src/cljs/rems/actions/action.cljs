@@ -80,27 +80,11 @@
                                ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
-  [:div.form-group
-   (into [:<>]
-         (for [attachment attachments]
-           [:div.flex-row.d-flex.flex-wrap.mb-2
-            [attachment-link attachment]
-            [:button.btn.btn-outline-secondary.mr-2
-             {:class (str "remove-attachment-" key)
-              :type :button
-              :on-click (fn [event]
-                          (on-remove-attachment (:attachment/id attachment)))}
-             [close-symbol]
-             " "
-             (text :t.form/attachment-remove)]]))
-   [fields/upload-button (str "upload-" key) on-attach]])
-
 (defn action-attachment [{:keys [application-id key]}]
-  [action-attachment-view {:key key
-                           :attachments @(rf/subscribe [::attachments-with-filenames key])
-                           :on-attach #(rf/dispatch [::save-attachment application-id key %])
-                           :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
+  [fields/multi-attachment-view {:key key
+                                 :attachments @(rf/subscribe [::attachments-with-filenames key])
+                                 :on-attach #(rf/dispatch [::save-attachment application-id key %])
+                                 :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.
@@ -146,19 +130,4 @@
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (defn guide []
-  [:div
-   (component-info action-attachment-view)
-   (example "action attachment, no attachment"
-            [action-attachment-view {:key "action-guide-example-1"
-                                     :attachment nil
-                                     :on-attach (fn [_] nil)}])
-   (example "action attachment, multiple attachments"
-            [action-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "attachment.xlsx"}
-                                                   {:attachment/filename "data.pdf"}]
-                                     :on-attach (fn [_] nil)}])
-      (example "action attachment, multiple attachments, long filenames"
-            [action-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
-                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
-                                     :on-attach (fn [_] nil)}])])
+  [:div])
