@@ -127,6 +127,7 @@
 (defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
+(def has-class? (wrap-etaoin et/has-class?))
 (def disabled? (wrap-etaoin et/disabled?))
 ;; TODO add more of etaoin here
 

@@ -46,6 +46,9 @@
 (defn click-navigation-menu [link-text]
   (btu/scroll-and-click [:big-navbar {:tag :a :fn/text link-text}]))
 
+(defn selected-navigation-menu? [link-text]
+  (btu/has-class? [:big-navbar {:tag :a :fn/text link-text}] "active"))
+
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
@@ -62,10 +65,10 @@
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
-
 (defn go-to-admin [link-text]
-  (click-navigation-menu "Administration")
-  (btu/wait-page-loaded)
+  (when-not (selected-navigation-menu? "Administration")
+    (click-navigation-menu "Administration")
+    (btu/wait-page-loaded))
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
