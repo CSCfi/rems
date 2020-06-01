@@ -13,12 +13,13 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
-            [rems.browser-test-util :as btu]))
+            [rems.text :as text]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
