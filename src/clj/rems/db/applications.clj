@@ -24,7 +24,7 @@
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [atom? getx conj-set]])
+            [rems.util :refer [conj-set]])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications
