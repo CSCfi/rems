@@ -184,6 +184,14 @@
                                  :for)]
     (btu/fill {:id id} (str option "\n"))))
 
+;; TODO  see if the select-option could be combined
+(defn select-option*
+  "Version of `select-option` that does not limit to .fields."
+  [label option]
+  (let [id (btu/get-element-attr [{:tag :label :fn/has-text label}]
+                                 :for)]
+    (btu/fill {:id id} (str option "\n"))))
+
 (defn accept-licenses []
   (btu/scroll-and-click :accept-licenses-button)
   (btu/wait-visible :has-accepted-licenses))
@@ -859,3 +867,43 @@
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= [{}] (slurp-rows :blacklist))))))
+
+(deftest test-report
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (testing "set up form and submit an application using it"
+      (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
+      (btu/context-assoc! :form-id (test-data/create-form! {:form/title (btu/context-get :form-title)
+                                                            :form/fields [{:field/id "desc"
+                                                                           :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                           :field/optional false
+                                                                           :field/type :description}]}))
+      (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+
+      (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+                                                                   [(btu/context-get :catalogue-id)]
+                                                                   "test-reporting"))
+      (test-data/command! {:type :application.command/save-draft
+                           :application-id (btu/context-get :application-id)
+                           :field-values [{:form (btu/context-get :form-id)
+                                           :field "desc"
+                                           :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/submit
+                           :application-id (btu/context-get :application-id)
+                           :actor "alice"}))
+    (testing "open report"
+      (login-as "owner")
+      (go-to-admin "Reports")
+      (btu/scroll-and-click :export-applications-button)
+      (btu/wait-page-loaded)
+      (select-option* "Form" (btu/context-get :form-title))
+      (btu/scroll-and-click :export-applications-button))
+    (btu/wait-page-loaded)
+    (testing "check report CSV"
+      (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
+               "1018,\"2020/1018\",\"Alice Applicant\",\"2020-06-01 13:16\",\"Applied\",\"\",\"Tämä on monimutkainen arvo skandein varusteltuna!\""]
+             (->> #"applications_.*\.csv"
+                  btu/downloaded-files
+                  first
+                  slurp
+                  str/split-lines))))))
