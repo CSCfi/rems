@@ -58,6 +58,14 @@
          " "
          (mod-nth ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"] (mod t 123)))))
 
+(defn- enable-downloads! [driver]
+  (et/execute {:driver driver
+               :method :post
+               :path [:session (:session @driver) "chromium/send_command"]
+               :data {:cmd "Page.setDownloadBehavior"
+                      :params {:behavior "allow"
+                               :downloadPath (.getAbsolutePath download-dir)}}}))
+
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
@@ -71,12 +79,16 @@
          assoc-some
          :driver (et/boot-driver browser-id
                                  {:args ["--lang=en-US"]
-                                  :prefs {"intl.accept_languages" "en-US"}
+                                  :prefs {:intl.accept_languages "en-US"
+                                          :download.directory_upgrade true
+                                          :safebrowsing.enabled false
+                                          :safebrowsing.disable_download_protection true}
                                   :download-dir (.getAbsolutePath download-dir)
                                   :headless (not= :development mode)})
          :url url
          :mode mode
          :seed (random-seed))
+  (enable-downloads! (get-driver))
   (et/delete-cookies (get-driver))) ; start with a clean slate
 
 (defn fixture-driver
@@ -201,5 +213,4 @@
   (scroll-and-click [{:css (str "input[value='" value "']")}]))
 
 (defn wait-for-downloads [string-or-regex]
-  (while (empty? (downloaded-files string-or-regex))
-    (Thread/sleep 100)))
+  (wait-predicate #(seq (downloaded-files string-or-regex))))
