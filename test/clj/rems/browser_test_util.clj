@@ -35,6 +35,18 @@
     (.mkdirs)
     (delete-files)))
 
+(def download-dir
+  (doto (io/file "browsertest-downloads")
+    (.mkdirs)
+    (delete-files)))
+
+(defn downloaded-files [name-or-regex]
+  (if (string? name-or-regex)
+    [(io/file download-dir name-or-regex)]
+    (for [file (.listFiles download-dir)
+          :when (re-matches name-or-regex (.getName file))]
+      file)))
+
 (defn- mod-nth [coll i]
   (nth coll (mod (int i) (count coll))))
 
@@ -60,6 +72,7 @@
          :driver (et/boot-driver browser-id
                                  {:args ["--lang=en-US"]
                                   :prefs {"intl.accept_languages" "en-US"}
+                                  :download-dir (.getAbsolutePath download-dir)
                                   :headless (not= :development mode)})
          :url url
          :mode mode
