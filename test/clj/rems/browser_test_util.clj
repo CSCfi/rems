@@ -199,3 +199,7 @@
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
   (scroll-and-click [{:css (str "input[value='" value "']")}]))
+
+(defn wait-for-downloads [string-or-regex]
+  (while (empty? (downloaded-files string-or-regex))
+    (Thread/sleep 100)))

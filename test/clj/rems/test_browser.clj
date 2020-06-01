@@ -892,14 +892,16 @@
       (test-data/command! {:type :application.command/submit
                            :application-id (btu/context-get :application-id)
                            :actor "alice"}))
+
     (testing "open report"
       (login-as "owner")
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
       (select-option* "Form" (btu/context-get :form-title))
-      (btu/scroll-and-click :export-applications-button))
-    (btu/wait-page-loaded)
+      (btu/scroll-and-click :export-applications-button)
+      (btu/wait-for-downloads #"applications_.*\.csv"))
+
     (testing "check report CSV"
       (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
                "1018,\"2020/1018\",\"Alice Applicant\",\"2020-06-01 13:16\",\"Applied\",\"\",\"Tämä on monimutkainen arvo skandein varusteltuna!\""]
