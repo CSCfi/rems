@@ -878,11 +878,12 @@
                                                                            :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                            :field/optional false
                                                                            :field/type :description}]}))
-      (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+      (btu/context-assoc! :workflow-id (test-data/create-workflow! {:handlers ["handler"]}))
+      (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
 
       (btu/context-assoc! :application-id (test-data/create-draft! "alice"
                                                                    [(btu/context-get :catalogue-id)]
-                                                                   "test-reporting"))
+                                                                   (str "test-reporting " (btu/get-seed))))
       (test-data/command! {:type :application.command/save-draft
                            :application-id (btu/context-get :application-id)
                            :field-values [{:form (btu/context-get :form-id)
@@ -903,10 +904,19 @@
       (btu/wait-for-downloads #"applications_.*\.csv"))
 
     (testing "check report CSV"
-      (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
-               "1018,\"2020/1018\",\"Alice Applicant\",\"2020-06-01 13:16\",\"Applied\",\"\",\"Tämä on monimutkainen arvo skandein varusteltuna!\""]
-             (->> #"applications_.*\.csv"
-                  btu/downloaded-files
-                  first
-                  slurp
-                  str/split-lines))))))
+      (let [application (get-application-from-api (btu/context-get :application-id))
+            q (fn [s] (str "\"" s "\""))]
+        (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
+                (str/join ","
+                          [(:application/id application)
+                           (q (:application/external-id application))
+                           (q (get-in application [:application/applicant :name]))
+                           (q (text/localize-time (get-in application [:application/first-submitted])))
+                           (q "Applied")
+                           (q "")
+                           (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
+               (->> #"applications_.*\.csv"
+                    btu/downloaded-files
+                    first
+                    slurp
+                    str/split-lines)))))))
