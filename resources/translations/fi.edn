@@ -353,6 +353,7 @@
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]]
+          :intro2 ""
           :login "Kirjaudu sisään"
           :oidc-text ""
           :oidc-title ""
