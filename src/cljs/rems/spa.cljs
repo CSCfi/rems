@@ -235,7 +235,10 @@
      (text :t.login/intro)]]
    [:div.row.justify-content-center
     [:div.col-md-6.row
-     [auth/login-component]]]])
+     [auth/login-component]]]
+   [:div.row.justify-content-center
+    [:div.col-md-6.row
+     (text :t.login/intro2)]]])
 
 (defn home-page []
   (if @(rf/subscribe [:user])

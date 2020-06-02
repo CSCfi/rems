@@ -355,6 +355,7 @@
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "/extra-pages/about"} "About"] " page."]]
+          :intro2 ""
           :login "Login"
           :oidc-text ""
           :oidc-title ""
