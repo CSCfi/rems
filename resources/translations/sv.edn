@@ -7,8 +7,6 @@
             :add-member "Lägg till medlem"
             :approve "Godkänn"
             :approve-reject "Godkänn eller avslå"
-            :assign-external-id "Ange externt id" ;; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
-            :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera, att endast resurser som har samma ansökningsblankett och samma arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
