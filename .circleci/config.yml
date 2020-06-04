@@ -86,6 +86,8 @@ jobs:
           path: target/test-results
       - store_artifacts:
           path: browsertest-errors
+      - store_artifacts:
+          path: browsertest-downloads
 
   doo:
     <<: *defaults

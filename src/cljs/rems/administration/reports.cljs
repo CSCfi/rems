@@ -12,7 +12,8 @@
    {:dispatch [:rems.administration.administration/remember-current-page]}))
 
 (defn- export-applications-button []
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:id :export-applications-button
+               :class "btn btn-primary"}
    "/administration/reports/export-applications"
    (text :t.administration/export-applications)])
 

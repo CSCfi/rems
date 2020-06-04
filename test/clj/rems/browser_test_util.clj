@@ -35,6 +35,18 @@
     (.mkdirs)
     (delete-files)))
 
+(def download-dir
+  (doto (io/file "browsertest-downloads")
+    (.mkdirs)
+    (delete-files)))
+
+(defn downloaded-files [name-or-regex]
+  (if (string? name-or-regex)
+    [(io/file download-dir name-or-regex)]
+    (for [file (.listFiles download-dir)
+          :when (re-matches name-or-regex (.getName file))]
+      file)))
+
 (defn- mod-nth [coll i]
   (nth coll (mod (int i) (count coll))))
 
@@ -45,6 +57,14 @@
          (mod-nth ["amusing" "comic" "funny" "laughable" "hilarious" "witty" "jolly" "silly" "ludicrous" "wacky"] (/ t 1000))
          " "
          (mod-nth ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"] (mod t 123)))))
+
+(defn- enable-downloads! [driver]
+  (et/execute {:driver driver
+               :method :post
+               :path [:session (:session @driver) "chromium/send_command"]
+               :data {:cmd "Page.setDownloadBehavior"
+                      :params {:behavior "allow"
+                               :downloadPath (.getAbsolutePath download-dir)}}}))
 
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
@@ -59,11 +79,16 @@
          assoc-some
          :driver (et/boot-driver browser-id
                                  {:args ["--lang=en-US"]
-                                  :prefs {"intl.accept_languages" "en-US"}
+                                  :prefs {:intl.accept_languages "en-US"
+                                          :download.directory_upgrade true
+                                          :safebrowsing.enabled false
+                                          :safebrowsing.disable_download_protection true}
+                                  :download-dir (.getAbsolutePath download-dir)
                                   :headless (not= :development mode)})
          :url url
          :mode mode
          :seed (random-seed))
+  (enable-downloads! (get-driver))
   (et/delete-cookies (get-driver))) ; start with a clean slate
 
 (defn fixture-driver
@@ -127,6 +152,7 @@
 (defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
+(def has-class? (wrap-etaoin et/has-class?))
 (def disabled? (wrap-etaoin et/disabled?))
 ;; TODO add more of etaoin here
 
@@ -185,3 +211,6 @@
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
   (scroll-and-click [{:css (str "input[value='" value "']")}]))
+
+(defn wait-for-downloads [string-or-regex]
+  (wait-predicate #(seq (downloaded-files string-or-regex))))

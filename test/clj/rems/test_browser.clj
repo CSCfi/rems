@@ -13,12 +13,13 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
-            [rems.browser-test-util :as btu]))
+            [rems.text :as text]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -46,6 +47,9 @@
 (defn click-navigation-menu [link-text]
   (btu/scroll-and-click [:big-navbar {:tag :a :fn/text link-text}]))
 
+(defn selected-navigation-menu? [link-text]
+  (btu/has-class? [:big-navbar {:tag :a :fn/text link-text}] "active"))
+
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
@@ -62,10 +66,10 @@
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
-
 (defn go-to-admin [link-text]
-  (click-navigation-menu "Administration")
-  (btu/wait-page-loaded)
+  (when-not (selected-navigation-menu? "Administration")
+    (click-navigation-menu "Administration")
+    (btu/wait-page-loaded))
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
@@ -178,6 +182,14 @@
 (defn select-option [label option]
   (let [id (btu/get-element-attr [{:css ".fields"}
                                   {:tag :label :fn/has-text label}]
+                                 :for)]
+    (btu/fill {:id id} (str option "\n"))))
+
+;; TODO  see if the select-option could be combined
+(defn select-option*
+  "Version of `select-option` that does not limit to .fields."
+  [label option]
+  (let [id (btu/get-element-attr [{:tag :label :fn/has-text label}]
                                  :for)]
     (btu/fill {:id id} (str option "\n"))))
 
@@ -856,3 +868,57 @@
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= [{}] (slurp-rows :blacklist))))))
+
+(deftest test-report
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (testing "set up form and submit an application using it"
+      (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
+      (btu/context-assoc! :form-id (test-data/create-form! {:form/title (btu/context-get :form-title)
+                                                            :form/fields [{:field/id "desc"
+                                                                           :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                           :field/optional false
+                                                                           :field/type :description}]}))
+      (btu/context-assoc! :workflow-id (test-data/create-workflow! {:handlers ["handler"]}))
+      (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
+
+      (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+                                                                   [(btu/context-get :catalogue-id)]
+                                                                   (str "test-reporting " (btu/get-seed))))
+      (test-data/command! {:type :application.command/save-draft
+                           :application-id (btu/context-get :application-id)
+                           :field-values [{:form (btu/context-get :form-id)
+                                           :field "desc"
+                                           :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/submit
+                           :application-id (btu/context-get :application-id)
+                           :actor "alice"}))
+
+    (testing "open report"
+      (login-as "owner")
+      (go-to-admin "Reports")
+      (btu/scroll-and-click :export-applications-button)
+      (btu/wait-page-loaded)
+      (select-option* "Form" (btu/context-get :form-title))
+      (btu/scroll-and-click :export-applications-button)
+      #_(btu/wait-for-downloads #"applications_.*\.csv"))
+
+    ;; TODO disabled until chromedriver 83 is available and has bugfix for downloading in other tab (target blank)
+    (is true)
+    #_(testing "check report CSV"
+      (let [application (get-application-from-api (btu/context-get :application-id))
+            q (fn [s] (str "\"" s "\""))]
+        (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
+                (str/join ","
+                          [(:application/id application)
+                           (q (:application/external-id application))
+                           (q (get-in application [:application/applicant :name]))
+                           (q (text/localize-time (get-in application [:application/first-submitted])))
+                           (q "Applied")
+                           (q "")
+                           (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
+               (->> #"applications_.*\.csv"
+                    btu/downloaded-files
+                    first
+                    slurp
+                    str/split-lines)))))))
