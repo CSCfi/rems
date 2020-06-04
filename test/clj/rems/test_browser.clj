@@ -904,6 +904,7 @@
       #_(btu/wait-for-downloads #"applications_.*\.csv"))
 
     ;; TODO disabled until chromedriver 83 is available and has bugfix for downloading in other tab (target blank)
+    (is true)
     #_(testing "check report CSV"
       (let [application (get-application-from-api (btu/context-get :application-id))
             q (fn [s] (str "\"" s "\""))]
