@@ -61,7 +61,7 @@
                  [org.webjars.npm/popper.js "1.16.1"]
                  [org.webjars/bootstrap "4.4.1-1"]
                  [org.webjars/font-awesome "5.12.0"]
-                 [org.webjars/jquery "3.4.1"]
+                 [org.webjars/jquery "3.5.1"]
                  [prismatic/schema-generators "0.1.3"]
                  [px0/beautify-web "0.1.1"]
                  [re-frame "0.11.0"]
