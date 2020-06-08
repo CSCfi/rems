@@ -83,6 +83,7 @@
                    :licenses "Licenses"
                    :no-licenses "No licenses"
                    :organization "Organization"
+                   :organizations "Organizations"
                    :preview "Preview"
                    :remove "Remove"
                    :reports "Reports"

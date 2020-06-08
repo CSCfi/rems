@@ -83,6 +83,7 @@
                    :licenses "Lisenssit"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
+                   :organizations "Organisaatiot"
                    :preview "Esikatselu"
                    :remove "Poista"
                    :reports "Raportit"

@@ -83,6 +83,7 @@
                    :licenses "Licenser"
                    :no-licenses "Inga licenser"
                    :organization "Organisation"
+                   :organizations "Organisationer"
                    :preview "Förhandsvisning"
                    :remove "Radera"
                    :reports "Rapporter"
