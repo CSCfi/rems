@@ -532,7 +532,9 @@
                :margin-top (u/em 1)}
       [:a :a:hover {:color footer-text-color
                     :font-weight (button-navbar-font-weight)}]
-      [:.dev-reload-button {:float "right"}]])
+      [:.dev-reload-button {:position :fixed
+                            :bottom 0
+                            :right (u/px 140)}]])
 
    ;; Logo, login, etc.
    [:.logo {:height (u/px 140)
