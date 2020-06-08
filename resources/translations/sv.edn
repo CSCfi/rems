@@ -59,6 +59,7 @@
                    :create-catalogue-item "Ny katalogpost"
                    :create-form "Ny blankett"
                    :create-license "Ny licens"
+                   :create-organization "Ny organisation"
                    :create-resource "Ny resurs"
                    :create-workflow "Nytt arbetsflöde"
                    :created "Skapad"

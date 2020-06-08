@@ -59,6 +59,7 @@
                    :create-catalogue-item "Create catalogue item"
                    :create-form "Create form"
                    :create-license "Create license"
+                   :create-organization "Create organization"
                    :create-resource "Create resource"
                    :create-workflow "Create workflow"
                    :created "Created"
