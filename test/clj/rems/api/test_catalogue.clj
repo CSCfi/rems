@@ -27,6 +27,6 @@
   (testing "catalogue-is-public false"
     (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
       (is (api-call :get "/api/catalogue" nil "42" "alice") "should work for a regular user")
-      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil nil nil))) "should be forbidden without authentication")
-      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))) "should not work with wrong api key")
-      (is (= "forbidden" (read-body (api-response :get "/api/catalogue" nil "42" nil))) "should not work without a user"))))
+      (is (= "unauthorized" (read-body (api-response :get "/api/catalogue" nil nil nil))) "should be unauthorized without authentication")
+      (is (= "unauthorized" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))) "should not work with wrong api key")
+      (is (= "unauthorized" (read-body (api-response :get "/api/catalogue" nil "42" nil))) "should not work without a user"))))
