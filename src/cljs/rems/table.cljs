@@ -181,6 +181,11 @@
         ;;       (or then we could just not validate these internal row representations)
         (s/validate Rows))))
 
+(defn- normal-sort [sorting option1 option2]
+  (case (:sort-order sorting)
+    :desc (compare option2 option1)
+    :asc (compare option1 option2)))
+
 (rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
@@ -188,10 +193,9 @@
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
-        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
-                 (case (:sort-order sorting)
-                   :desc #(compare %2 %1)
-                   #(compare %1 %2))))))
+        (sort-by (fn [row]
+                   (get-in row [(:sort-column sorting) :sort-value]))
+                 #(normal-sort sorting %1 %2)))))
 
 (defn- sortable? [column]
   (:sortable? column true))

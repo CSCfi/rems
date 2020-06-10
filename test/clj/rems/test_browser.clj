@@ -906,19 +906,19 @@
     ;; TODO disabled until chromedriver 83 is available and has bugfix for downloading in other tab (target blank)
     (is true)
     #_(testing "check report CSV"
-      (let [application (get-application-from-api (btu/context-get :application-id))
-            q (fn [s] (str "\"" s "\""))]
-        (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
-                (str/join ","
-                          [(:application/id application)
-                           (q (:application/external-id application))
-                           (q (get-in application [:application/applicant :name]))
-                           (q (text/localize-time (get-in application [:application/first-submitted])))
-                           (q "Applied")
-                           (q "")
-                           (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
-               (->> #"applications_.*\.csv"
-                    btu/downloaded-files
-                    first
-                    slurp
-                    str/split-lines)))))))
+        (let [application (get-application-from-api (btu/context-get :application-id))
+              q (fn [s] (str "\"" s "\""))]
+          (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
+                  (str/join ","
+                            [(:application/id application)
+                             (q (:application/external-id application))
+                             (q (get-in application [:application/applicant :name]))
+                             (q (text/localize-time (get-in application [:application/first-submitted])))
+                             (q "Applied")
+                             (q "")
+                             (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
+                 (->> #"applications_.*\.csv"
+                      btu/downloaded-files
+                      first
+                      slurp
+                      str/split-lines)))))))
