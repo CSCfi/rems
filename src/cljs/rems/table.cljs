@@ -336,27 +336,28 @@
                  [sort-symbol (:sort-order sorting)]))]))))
 
 (defn- table-row [row table]
-  (into [:tr {:data-row (:key row)
-              :class (when (:selectable? table)
-                       [:clickable
-                        (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
+  (js/console.log "number" (:key row))
+  (sort-by :key (into [:tr {:data-row (:key row)
+                            :class (when (:selectable? table)
+                                     [:clickable
+                                      (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
-              :style {:display (if (::display-row? row)
-                                 "table-row"
-                                 "none")}
-              :on-click (when (:selectable? table)
-                          #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
-                             (rf/dispatch [::toggle-row-selection table (:key row)])))}
-         (when (:selectable? table)
-           [:td.selection
-            [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
-                       :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
-        (for [column (:columns table)]
-          (let [cell (get row (:key column))]
-            (assert cell {:error "the row is missing a column"
-                          :column (:key column)
-                          :row row})
-            (:td cell)))))
+                            :style {:display (if (::display-row? row)
+                                               "table-row"
+                                               "none")}
+                            :on-click (when (:selectable? table)
+                                        #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
+                                           (rf/dispatch [::toggle-row-selection table (:key row)])))}
+                       (when (:selectable? table)
+                         [:td.selection
+                          [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
+                                     :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
+                      (for [column (:columns table)]
+                        (let [cell (get row (:key column))]
+                          (assert cell {:error "the row is missing a column"
+                                        :column (:key column)
+                                        :row row})
+                          (:td cell))))))
 
 (defn table
   "A filterable and sortable table component.
