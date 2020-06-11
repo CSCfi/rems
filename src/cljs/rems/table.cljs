@@ -207,10 +207,10 @@
                  ;; if "external-id", sort using different approach
                  (case (:sort-order sorting)
                    :desc (fn [option1 option2]
-                          ;;  (js/console.log "these are the values we compare" option1 option2 (= "external-id"  (:sort-column sorting)))
+                           ;; (js/console.log "these are the values we compare" (js/parseInt (get (str/split option2 #"/") 1)))
                            (case  (:sort-column sorting)
-                             :external-id (js/console.log "works")
-                             (compare (get (str/split option2 #"/") 1) (get (str/split option1 #"/") 1)))
+                             :external-id (compare (js/parseInt (get (str/split option2 #"/") 1)) (js/parseInt (get (str/split option1 #"/") 1))))
+                             (compare (js/parseInt (get (str/split option2 #"/") 1)) (js/parseInt (get (str/split option1 #"/") 1))))
                            (compare option2 option1))
                    #(compare %1 %2)))
   ;; sort here by the :key 
