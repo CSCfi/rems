@@ -126,16 +126,20 @@
                         :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails :application.event/submitted [event application]
-  (if (= (:event/time event)
-         (:application/first-submitted application))
-    (emails-to-recipients (handlers application)
-                          event application
-                          :t.email.application-submitted/subject
-                          :t.email.application-submitted/message)
-    (emails-to-recipients (handlers application)
-                          event application
-                          :t.email.application-resubmitted/subject
-                          :t.email.application-resubmitted/message)))
+  (concat (emails-to-recipients [(:application/applicant application)]
+                                event application
+                                :t.email.application-submitted/subject-to-applicant
+                                :t.email.application-submitted/message-to-applicant)
+           (if (= (:event/time event)
+                  (:application/first-submitted application))
+             (emails-to-recipients (handlers application)
+                                   event application
+                                   :t.email.application-submitted/subject-to-handler
+                                   :t.email.application-submitted/message-to-handler)
+             (emails-to-recipients (handlers application)
+                                   event application
+                                   :t.email.application-resubmitted/subject-to-handler
+                                   :t.email.application-resubmitted/message-to-handler))))
 
 (defmethod event-to-emails :application.event/review-requested [event application]
   (emails-to-recipients (:application/reviewers event)

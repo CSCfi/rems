@@ -106,7 +106,6 @@
  (fn [db [_ table sort-column]]
    (update-in db [::sorting (:id table)]
               (fn [sorting]
-                (js/console.log  "this is when sorting happens" (:sort-column sorting) (get-in sorting [:sort-order]))
                 (-> sorting
                     (assoc :sort-column sort-column)
                     (assoc :sort-order (change-sort-order (:sort-column sorting)
@@ -122,7 +121,7 @@
         :sort-column (or (:default-sort-column table)
                          (-> table :columns first :key))})))
 
-(rf/reent-db
+(rf/reg-event-db
  ::set-filtering
  (fn [db [_ table filtering]]
    (assoc-in db [::filtering (:id table)] filtering)))
@@ -189,23 +188,10 @@
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
-        (sort-by (fn [row]
-                  ;;  (js/console.log "we need to get that sorting value" (:sort-column sorting))
-                   (get-in row [(:sort-column sorting) :sort-value]))
-                 ;; if "external-id", sort using different approach
+        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
                  (case (:sort-order sorting)
-                   :desc (fn [option1 option2]
-                           ;; (js/console.log "these are the values we compare" (js/parseInt (get (str/split option2 #"/") 1)))
-                           (case  (:sort-column sorting)
-                             :external-id (compare (js/parseInt (get (str/split option2 #"/") 1)) (js/parseInt (get (str/split option1 #"/") 1))))
-                             (compare (js/parseInt (get (str/split option2 #"/") 1)) (js/parseInt (get (str/split option1 #"/") 1))))
-                           (compare option2 option1))
-                   #(compare %1 %2)))
-  ;; sort here by the :key 
-  ;;  (case (:sort-order sorting)
-  ;;    :desc (sort-by :key rows)
-  ;;    :asc (reverse (sort-by :key rows)))
-        )))
+                   :desc #(compare %2 %1)
+                   #(compare %1 %2))))))
 
 (defn- sortable? [column]
   (:sortable? column true))
@@ -309,7 +295,6 @@
 (defn- selection-toggle-all
   "A checkbox-like component useful for a selection toggle in the table header."
   [table]
-  (js/console.log table)
   (let [selection-state @(rf/subscribe [::row-selection-state table])
         visible-rows @(rf/subscribe [::displayed-rows table])
         on-change (case selection-state
@@ -380,7 +365,6 @@
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
-  ;; (sort-by :key
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table]) ; TODO refactor to use ::displayed-rows
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
@@ -395,7 +379,6 @@
       [:thead
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
-       ;; (sort-by :key rows) to sort from 1 - 11
        (for [row (take max-rows rows)]
          ^{:key (:key row)} [table-row row table])]
       (when (< max-rows (count rows))

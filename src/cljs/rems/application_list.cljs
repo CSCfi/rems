@@ -70,6 +70,7 @@
           threshold (time/plus start seconds)]
       (time/after? (time/now) threshold))))
 
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
