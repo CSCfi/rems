@@ -96,6 +96,12 @@
     :desc :asc
     :desc))
 
+(defn- sort-by-key [order row]
+  (case order
+    :desc (reverse (sort-by :key row))
+    :asc  (sort-by :key row)))
+
+
 (defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
     (flip old-order)
@@ -106,6 +112,7 @@
  (fn [db [_ table sort-column]]
    (update-in db [::sorting (:id table)]
               (fn [sorting]
+                (js/console.log  "this is when sorting happens" (:sort-column sorting) (get-in sorting [:sort-order]))
                 (-> sorting
                     (assoc :sort-column sort-column)
                     (assoc :sort-order (change-sort-order (:sort-column sorting)
@@ -181,6 +188,12 @@
         ;;       (or then we could just not validate these internal row representations)
         (s/validate Rows))))
 
+
+(defn- sort-function [m k make-default]
+  (if (contains? m k)
+    m
+    (assoc m k (make-default m))))
+
 (rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
@@ -188,10 +201,23 @@
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
-        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
+        (sort-by (fn [row]
+                  ;;  (js/console.log "we need to get that sorting value" (:sort-column sorting))
+                   (get-in row [(:sort-column sorting) :sort-value]))
+                 ;; if "external-id", sort using different approach
                  (case (:sort-order sorting)
-                   :desc #(compare %2 %1)
-                   #(compare %1 %2))))))
+                   :desc (fn [option1 option2]
+                          ;;  (js/console.log "these are the values we compare" option1 option2 (= "external-id"  (:sort-column sorting)))
+                           (case  (:sort-column sorting)
+                             :external-id (js/console.log "works")
+                             (compare (get (str/split option2 #"/") 1) (get (str/split option1 #"/") 1)))
+                           (compare option2 option1))
+                   #(compare %1 %2)))
+  ;; sort here by the :key 
+  ;;  (case (:sort-order sorting)
+  ;;    :desc (sort-by :key rows)
+  ;;    :asc (reverse (sort-by :key rows)))
+        )))
 
 (defn- sortable? [column]
   (:sortable? column true))
@@ -295,6 +321,7 @@
 (defn- selection-toggle-all
   "A checkbox-like component useful for a selection toggle in the table header."
   [table]
+  (js/console.log table)
   (let [selection-state @(rf/subscribe [::row-selection-state table])
         visible-rows @(rf/subscribe [::displayed-rows table])
         on-change (case selection-state
@@ -336,28 +363,27 @@
                  [sort-symbol (:sort-order sorting)]))]))))
 
 (defn- table-row [row table]
-  (js/console.log "number" (:key row))
-  (sort-by :key (into [:tr {:data-row (:key row)
-                            :class (when (:selectable? table)
-                                     [:clickable
-                                      (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
+  (into [:tr {:data-row (:key row)
+              :class (when (:selectable? table)
+                       [:clickable
+                        (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
-                            :style {:display (if (::display-row? row)
-                                               "table-row"
-                                               "none")}
-                            :on-click (when (:selectable? table)
-                                        #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
-                                           (rf/dispatch [::toggle-row-selection table (:key row)])))}
-                       (when (:selectable? table)
-                         [:td.selection
-                          [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
-                                     :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
-                      (for [column (:columns table)]
-                        (let [cell (get row (:key column))]
-                          (assert cell {:error "the row is missing a column"
-                                        :column (:key column)
-                                        :row row})
-                          (:td cell))))))
+              :style {:display (if (::display-row? row)
+                                 "table-row"
+                                 "none")}
+              :on-click (when (:selectable? table)
+                          #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
+                             (rf/dispatch [::toggle-row-selection table (:key row)])))}
+         (when (:selectable? table)
+           [:td.selection
+            [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
+                       :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
+        (for [column (:columns table)]
+          (let [cell (get row (:key column))]
+            (assert cell {:error "the row is missing a column"
+                          :column (:key column)
+                          :row row})
+            (:td cell)))))
 
 (defn table
   "A filterable and sortable table component.
@@ -366,6 +392,7 @@
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
+  ;; (sort-by :key
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table]) ; TODO refactor to use ::displayed-rows
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
@@ -380,6 +407,7 @@
       [:thead
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
+       ;; (sort-by :key rows) to sort from 1 - 11
        (for [row (take max-rows rows)]
          ^{:key (:key row)} [table-row row table])]
       (when (< max-rows (count rows))
