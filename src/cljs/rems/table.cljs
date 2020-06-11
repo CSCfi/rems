@@ -96,12 +96,6 @@
     :desc :asc
     :desc))
 
-(defn- sort-by-key [order row]
-  (case order
-    :desc (reverse (sort-by :key row))
-    :asc  (sort-by :key row)))
-
-
 (defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
     (flip old-order)
@@ -128,7 +122,7 @@
         :sort-column (or (:default-sort-column table)
                          (-> table :columns first :key))})))
 
-(rf/reg-event-db
+(rf/reent-db
  ::set-filtering
  (fn [db [_ table filtering]]
    (assoc-in db [::filtering (:id table)] filtering)))
@@ -187,12 +181,6 @@
         ;; TODO: this second validation could be done with a schema where s/optional-key is not used
         ;;       (or then we could just not validate these internal row representations)
         (s/validate Rows))))
-
-
-(defn- sort-function [m k make-default]
-  (if (contains? m k)
-    m
-    (assoc m k (make-default m))))
 
 (rf/reg-sub
  ::sorted-rows
