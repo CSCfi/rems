@@ -600,3 +600,8 @@ SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE 
 
 -- :name add-organization! :!
 INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);
+
+-- :name set-organization! :!
+UPDATE organization
+SET data = :data::jsonb
+WHERE id = :id;

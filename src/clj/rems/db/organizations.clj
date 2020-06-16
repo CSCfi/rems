@@ -12,7 +12,10 @@
   (db/add-organization! {:id (:organization/id org)
                          :user userid
                          :time (DateTime.)
-                         :data (json/generate-string (dissoc org :organization/id))})
+                         :data (json/generate-string (-> org
+                                                         (assoc :organization/enabled true
+                                                                :organization/archived false)
+                                                         (dissoc :organization/id)))})
   {:success true
    :organization/id (:organization/id org)})
 
@@ -34,7 +37,7 @@
        (map parse-organization)
        (map coerce-organization-full)))
 
-(defn- getx-organization-by-id [id]
+(defn getx-organization-by-id [id]
   (assert id)
   (let [organization (-> (db/get-organization-by-id {:id id}) parse-organization)]
     (assert (:organization/id organization) {:error "organization does not exist" :organization/id id :found organization})
@@ -52,3 +55,11 @@
     (-> x
         (update-existing :organization (fn [_] organization-overview))
         (update-existing :form/organization (fn [_] organization-overview)))))
+
+(defn set-organization! [organization]
+  (db/set-organization! {:id (:organization/id organization) :data (json/generate-string organization)}))
+
+(defn update-organization! [id update-fn]
+  (let [id (:organization/id id id)
+        organization (getx-organization-by-id id)]
+    (set-organization! (update-fn organization))))

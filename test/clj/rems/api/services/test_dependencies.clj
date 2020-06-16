@@ -34,21 +34,35 @@
 
     (testing "dependencies"
       (is (= {:dependencies
-              {{:resource/id res-1} #{{:license/id shared-license}
-                                      {:license/id shared-resource-license}}
+              {{:license/id shared-license} #{{:organization/id "default"}}
+               {:license/id shared-resource-license} #{{:organization/id "default"}}
+               {:license/id resource-license} #{{:organization/id "default"}}
+               {:license/id unused-license} #{{:organization/id "default"}}
+               {:form/id shared-form} #{{:organization/id "default"}}
+               {:form/id wf-form} #{{:organization/id "default"}}
+               {:form/id cat-form} #{{:organization/id "default"}}
+               {:form/id unused-form} #{{:organization/id "default"}}
+               {:resource/id res-1} #{{:license/id shared-license}
+                                      {:license/id shared-resource-license}
+                                      {:organization/id "default"}}
                {:resource/id res-2} #{{:license/id shared-license}
                                       {:license/id shared-resource-license}
-                                      {:license/id resource-license}}
-               {:workflow/id wf-1} #{{:form/id shared-form}}
+                                      {:license/id resource-license}
+                                      {:organization/id "default"}}
+               {:workflow/id wf-1} #{{:form/id shared-form}
+                                     {:organization/id "default"}}
                {:workflow/id wf-2} #{{:form/id shared-form}
                                      {:form/id wf-form}
-                                     {:license/id shared-license}}
+                                     {:license/id shared-license}
+                                     {:organization/id "default"}}
                {:catalogue-item/id cat-1} #{{:resource/id res-1}
                                             {:form/id cat-form}
-                                            {:workflow/id wf-1}}
+                                            {:workflow/id wf-1}
+                                            {:organization/id "default"}}
                {:catalogue-item/id cat-2} #{{:resource/id res-1}
                                             {:form/id shared-form}
-                                            {:workflow/id wf-2}}}
+                                            {:workflow/id wf-2}
+                                            {:organization/id "default"}}}
               :reverse-dependencies
               {{:license/id shared-license} #{{:resource/id res-1}
                                               {:resource/id res-2}
@@ -64,7 +78,21 @@
                {:form/id cat-form} #{{:catalogue-item/id cat-1}}
                {:form/id wf-form} #{{:workflow/id wf-2}}
                {:workflow/id wf-1} #{{:catalogue-item/id cat-1}}
-               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}}}}
+               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}}
+               {:organization/id "default"} #{{:catalogue-item/id cat-1}
+                                              {:catalogue-item/id cat-2}
+                                              {:form/id shared-form}
+                                              {:form/id wf-form}
+                                              {:form/id cat-form}
+                                              {:form/id unused-form}
+                                              {:resource/id res-1}
+                                              {:resource/id res-2}
+                                              {:license/id shared-license}
+                                              {:license/id shared-resource-license}
+                                              {:license/id resource-license}
+                                              {:license/id unused-license}
+                                              {:workflow/id wf-1}
+                                              {:workflow/id wf-2}}}}
              (#'dependencies/dependencies))))
 
     (testing "enrich-dependency"
