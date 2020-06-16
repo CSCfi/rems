@@ -11,7 +11,7 @@
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
             :close "Stäng ansökan"
-            :close-intro [:div.intro [:p "Notera, att när du en gång stängt ansökan, kan den inte öppnas igen."]]
+            :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :comment "Kommentar"
             :decide "Avgör"
             :errors {:already-member "Användare är redan medlem."

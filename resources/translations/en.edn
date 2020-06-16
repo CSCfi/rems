@@ -11,7 +11,7 @@
             :cancel "Cancel"
             :change-resources "Change resources"
             :close "Close application"
-            :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
+            :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
             :comment "Comment"
             :decide "Decide"
             :errors {:already-member "User is already a member of this application"
