@@ -1,4 +1,4 @@
-(ns rems.api.services.test-organizations
+(ns ^:integration rems.api.services.test-organizations
   (:require [clojure.test :refer :all]
             [rems.api.services.organizations :as organizations]
             [rems.db.test-data :as test-data]
