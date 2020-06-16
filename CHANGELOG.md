@@ -18,6 +18,7 @@ Changes since v2.12
 - Form API create & edit requests are validated (#2098). This was meant to be added in 2.7 but the validation wasn't active by mistake.
 - Validate application via api on save-draft and validate option list values (#2117)
 - Remove assign external id -button from UI
+- Clearer help message for close action
 
 ### Fixes
 - Various fixes in workflow editor UI
