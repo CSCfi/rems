@@ -11,7 +11,7 @@
             :cancel "Peruuta"
             :change-resources "Muuta resursseja"
             :close "Sulje hakemus"
-            :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
+            :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voi enää muokata tai lähettää."]]
             :comment "Kommentti"
             :decide "Päätä"
             :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
