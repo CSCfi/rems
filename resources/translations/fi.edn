@@ -261,11 +261,11 @@
                                  :subject-to-handler "(%3) Hakemus on hylätty"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
           :application-closed {:subject-to-applicant "Hakemuksesi %3 on suljettu"
-                               :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit tarkastella hakemusta: %6"
+                               :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit yhä tarkastella hakemusta: %6"
                                :subject-to-handler "(%3) Hakemus on suljettu"
                                :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
           :application-returned {:subject-to-applicant "Hakemuksesi %3 vaatii täydentämistä"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella hakemusta osoitteessa %6"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella ja muokata hakemusta osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on palautettu"
                                  :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-revoked {:subject-to-applicant "Hakemukseesi %3 liittyvät käyttöoikeudet on peruttu"
