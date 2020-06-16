@@ -4,6 +4,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
+            [rems.db.organizations :as organizations]
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
@@ -14,28 +15,43 @@
     (:workflow/id dep) (workflow/get-workflow (:workflow/id dep))
     (:catalogue-item/id dep) (catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
     (:form/id dep) (form/get-form-template (:form/id dep))
+    (:organization/id dep) (organizations/getx-organization-by-id (:organization/id dep))
     :else (assert false dep)))
 
 (defn- list-dependencies []
   (concat
 
+   (for [lic (licenses/get-all-licenses nil)
+         dep [{:organization/id (:organization lic)}]]
+     {:from {:license/id (:id lic)} :to dep})
+
+   (for [form (form/get-form-templates nil)
+         dep [(:form/organization form)]]
+     {:from {:form/id (:form/id form)} :to dep})
+
    (for [res (resource/get-resources {})
-         license (licenses/get-resource-licenses (:id res))]
-     {:from {:resource/id (:id res)} :to {:license/id (:id license)}})
+         dep (concat
+              (mapv (fn [license] {:license/id (:id license)}) (licenses/get-resource-licenses (:id res)))
+              [{:organization/id (:organization res)}])]
+     {:from {:resource/id (:id res)} :to dep})
 
    (for [cat (catalogue/get-localized-catalogue-items {:archived true})
-         dep [{:form/id (:formid cat)} {:resource/id (:resource-id cat)} {:workflow/id (:wfid cat)}]]
+         dep [{:form/id (:formid cat)}
+              {:resource/id (:resource-id cat)}
+              {:workflow/id (:wfid cat)}
+              {:organization/id (:organization cat)}]]
      {:from {:catalogue-item/id (:id cat)} :to dep})
 
    (for [workflow (workflow/get-workflows {})
          dep (concat
               (mapv (fn [lic] {:license/id (:id lic)}) (:licenses workflow))
-              (:forms (:workflow workflow)))]
+              (:forms (:workflow workflow))
+              [(:organization workflow)])]
      {:from {:workflow/id (:id workflow)} :to dep})))
 
 (defn- add-status-bits [dep]
   (merge dep
-         (select-keys (enrich-dependency dep) [:archived :enabled])))
+         (select-keys (enrich-dependency dep) [:archived :enabled :organization/archived :organization/enabled])))
 
 (defn- only-id [item]
   (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
@@ -84,7 +100,10 @@
                  {:catalogue-items [(select-keys (enrich-dependency dep) [:id :localizations])]}
 
                  (:form/id dep)
-                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}))))
+                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}
+
+                 (:organization/id dep)
+                 {:organizations [(select-keys (enrich-dependency dep) [:organization/id :organization/name])]}))))
 
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
@@ -92,6 +111,7 @@
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
                         (mapv add-status-bits)
                         (remove :archived)
+                        (remove :organization/archived)
                         seq)]
     {:success false
      :errors [(merge {:type :t.administration.errors/in-use-by}
@@ -102,7 +122,7 @@
   [item]
   (when-let [used (->> (get-in (dependencies) [:dependencies item])
                        (mapv add-status-bits)
-                       (filter :archived)
+                       (filter #(or (:archived %) (:organization/archived %)))
                        seq)]
     {:success false
      :errors [(merge {:type :t.administration.errors/dependencies-archived}
