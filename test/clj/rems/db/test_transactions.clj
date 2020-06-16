@@ -69,7 +69,10 @@
         wrapped-handle-command (fn [cmd application injections]
                                  (mark-observed-app-version (old-handle-command cmd application injections)
                                                             application))]
-    (with-redefs [commands/handle-command wrapped-handle-command]
+    (with-redefs [commands/handle-command wrapped-handle-command
+                  rems.config/env (assoc rems.config/env
+                                         :database-lock-timeout "4s"
+                                          :database-idle-in-transaction-session-timeout "8s")]
       (let [write-event (fn [app-id]
                           (try
                             (conman/with-transaction [db/*db* {:isolation :serializable}]
