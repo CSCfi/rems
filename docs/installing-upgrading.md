@@ -15,7 +15,7 @@ Some pointers for common tasks:
 
 - API keys for HTTP API access can be added with the command
 
-        java -Drems.config=path/to/your/rems/config -jar rems.jar add-api-key <key>
+        java -Drems.config=path/to/your/rems/config -jar rems.jar api-key add <key>
 
   See [using-the-api.md](using-the-api.md) for more info.
 - Users don't usually need to be added manually as they are automatically created when logging in.
