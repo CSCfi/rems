@@ -8,7 +8,7 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localized text]]
+            [rems.text :refer [text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -22,7 +22,9 @@
  (fn [db]
    (let [description [text :t.administration/organizations]]
      (fetch "/api/organizations"
-            {:handler #(rf/dispatch [::fetch-organizations-result %])
+            {:url-params {:disabled true
+                          :archived (status-flags/display-archived? db)}
+             :handler #(rf/dispatch [::fetch-organizations-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
 
@@ -40,7 +42,7 @@
  ::set-organization-archived
  (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/organizations/archived"
-         {:params (select-keys item [:id :archived])
+         {:params (select-keys item [:organization/id :archived])
           :handler (flash-message/status-update-handler
                     :top description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler :top description)})
@@ -50,7 +52,7 @@
  ::set-organization-enabled
  (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/organizations/enabled"
-         {:params (select-keys item [:id :enabled])
+         {:params (select-keys item [:organization/id :enabled])
           :handler (flash-message/status-update-handler
                     :top description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler :top description)})

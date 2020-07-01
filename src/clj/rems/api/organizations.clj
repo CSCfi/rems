@@ -22,10 +22,14 @@
     (GET "/" []
       :summary "Get organizations. Returns more information for owners and handlers."
       :roles #{:logged-in}
-      :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}]
+      :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}
+                     {disabled :- (describe s/Bool "whether to include disabled organizations") false}
+                     {archived :- (describe s/Bool "whether to include archived organizations") false}]
       :return [OrganizationFull]
-      (ok (organizations/get-organizations (getx-user-id) owner)))
-
+      (ok (organizations/get-organizations (merge {:userid (getx-user-id)
+                                                   :owner owner}
+                                                  (when-not disabled {:enabled true})
+                                                  (when-not archived {:archived false})))))
     (POST "/create" []
       :summary "Create organization"
       :roles #{:owner}

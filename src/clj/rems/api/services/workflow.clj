@@ -3,7 +3,6 @@
             [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.applications :as applications]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.organizations :as organizations]
