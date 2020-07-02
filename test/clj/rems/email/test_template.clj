@@ -189,7 +189,7 @@
     (is (= #{"assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "assistant"
             :subject "(2001/3, \"Application title\") Application has been commented"
-            :body "Dear Amber Assistant,\n\nRandom Remarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the comment and the application at http://example.com/application/7"}
+            :body "Dear Amber Assistant,\n\nRandom Remarker has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
            (email-to "assistant" mails))))
   (let [mails (emails base-events {:application/id 7
                                    :event/type :application.event/remarked
@@ -199,7 +199,7 @@
     (is (= #{"assistant" "handler" "applicant"} (email-recipients mails)))
     (is (= {:to-user "applicant"
             :subject "(2001/3, \"Application title\") Application has been commented"
-            :body "Dear Alice Applicant,\n\nRandom Remarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the comment and the application at http://example.com/application/7"}
+            :body "Dear Alice Applicant,\n\nRandom Remarker has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
            (email-to "applicant" mails)))))
 
 (deftest test-members-licenses-approved-closed
@@ -224,7 +224,7 @@
         (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
         (is (= {:to-user "applicant"
                 :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
-                :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can review the application and approve the changed the terms of use at http://example.com/application/7"}
+                :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can view the application and approve the changed terms of use at http://example.com/application/7"}
                (email-to "applicant" mails)))))
     (testing "approved"
       (let [mails (emails member-events {:application/id 7
@@ -250,7 +250,7 @@
         (is (= #{"applicant" "member" "somebody" "handler"} (email-recipients mails)))
         (is (= {:to-user "applicant"
                 :subject "Your application 2001/3, \"Application title\" has been closed"
-                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application at http://example.com/application/7"}
+                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can still view the application at http://example.com/application/7"}
                (email-to "applicant" mails)))
         (is (= {:to-user "handler"
                 :subject "(2001/3, \"Application title\") Application has been closed"
@@ -356,7 +356,7 @@
                   :event/actor "applicant"}]
     (is (= [{:to-user "applicant"
              :subject "Your application 2001/3, \"Application title\" needs to be amended"
-             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at http://example.com/application/7"}
+             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can view and edit the application at http://example.com/application/7"}
             {:to-user "assistant"
              :subject "(2001/3, \"Application title\") Application has been returned to applicant"
              :body "Dear Amber Assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/application/7"}]

@@ -263,11 +263,11 @@
                                  :subject-to-handler "(%3) Application has been rejected"
                                  :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nYou can view the application and the decision at %6"}
           :application-closed {:subject-to-applicant "Your application %3 has been closed"
-                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can view the application at %6"
+                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can still view the application at %6"
                                :subject-to-handler "(%3) Application has been closed"
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application at %6"}
           :application-returned {:subject-to-applicant "Your application %3 needs to be amended"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at %6"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can view and edit the application at %6"
                                  :subject-to-handler "(%3) Application has been returned to applicant"
                                  :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application at %6"}
           :application-revoked {:subject-to-applicant "Entitlements related to your application %3 have been revoked"
@@ -275,7 +275,7 @@
                                 :subject-to-handler "(%3) Entitlements have been revoked"
                                 :message-to-handler "Dear %1,\n\n%2 has revoked the entitlements related to application %3 from %4.\n\nYou can view the application at %6"}
           :application-licenses-added {:subject "Your application's %3 terms of use have changed"
-                                       :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can review the application and approve the changed the terms of use at %6"}
+                                       :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can view the application and approve the changed terms of use at %6"}
           :application-resubmitted {:subject "(%3) Application has been resubmitted"
                                     :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can review the application at %6"}
           :application-submitted {:subject "(%3) A new application has been submitted"
@@ -294,7 +294,7 @@
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :regards "\n\nKind regards,\n\nREMS\n"
           :remarked {:subject "(%3) Application has been commented"
-                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can view the comment and the application at %6"}
+                     :message "Dear %1,\n\n%2 has commented your application %3, submitted by %4.\n\nYou can view the application and the comment at %6"}
           :review-requested {:subject "(%3) Review request"
                              :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :reviewed {:subject "(%3) Application has been reviewed"
