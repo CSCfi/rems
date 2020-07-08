@@ -98,7 +98,7 @@
                                         :sortable? false
                                         :filterable? false}]
                              :rows [::organizations-table-rows]
-                             :default-sort-column :title}]
+                             :default-sort-column :name}]
     [:div.mt-3
      [table/search organizations-table]
      [table/table organizations-table]]))
