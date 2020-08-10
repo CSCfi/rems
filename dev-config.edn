@@ -1,8 +1,6 @@
 {:dev true
  :nrepl-port 7000
  :database-url "postgresql://localhost/rems?user=rems"
- :database-lock-timeout "4s"
- :database-idle-in-transaction-session-timeout "8s"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-dev"
  :theme-path "example-theme/theme.edn"
