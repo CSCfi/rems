@@ -31,4 +31,18 @@
       :roles #{:owner}
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
-      (ok (organizations/add-organization! (getx-user-id) command)))))
+      (ok (organizations/add-organization! (getx-user-id) command)))
+
+    (PUT "/archived" []
+      :summary "Archive or unarchive the organization"
+      :roles #{:owner}
+      :body [command OrganizationArchivedCommand]
+      :return SuccessResponse
+      (ok (organizations/set-organization-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable the organization"
+      :roles #{:owner}
+      :body [command OrganizationEnabledCommand]
+      :return SuccessResponse
+      (ok (organizations/set-organization-enabled! command)))))

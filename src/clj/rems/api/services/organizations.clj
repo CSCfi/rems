@@ -1,5 +1,7 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
+            [medley.core :refer [find-first]]
+            [rems.api.services.dependencies :as dependencies]
             [rems.db.applications :as applications]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]))
@@ -32,5 +34,19 @@
   (->> (organizations/get-organizations-raw)
        (organization-filters userid owner)))
 
+(defn get-organization [organization]
+  (->> (organizations/get-organizations-raw)
+       (find-first (comp #{(:organization/id organization)} :organization/id))))
+
 (defn add-organization! [userid org]
   (organizations/add-organization! userid org))
+
+(defn set-organization-enabled! [{:keys [id enabled]}]
+  (organizations/update-organization! id (fn [organization] (assoc organization :organization/enabled enabled)))
+  {:success true})
+
+(defn set-organization-archived! [{:keys [id archived]}]
+  (or (dependencies/change-archive-status-error archived  {:organization/id id})
+      (do
+        (organizations/update-organization! id (fn [organization] (assoc organization :organization/archived archived)))
+        {:success true})))
