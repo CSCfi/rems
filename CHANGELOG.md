@@ -19,6 +19,7 @@ Changes since v2.12
 - Validate application via api on save-draft and validate option list values (#2117)
 - Remove assign external id -button from UI
 - Clearer help message for close action
+- Preserve the white-space in an event comment (#2232)
 
 ### Fixes
 - Various fixes in workflow editor UI
