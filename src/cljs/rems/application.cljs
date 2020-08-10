@@ -469,7 +469,7 @@
     (when decision
       [:div decision])
     (when comment
-      [:div comment])
+      [:div.event-comment comment])
     (when-let [attachments (seq attachments)]
       [fields/attachment-row attachments])]])
 
