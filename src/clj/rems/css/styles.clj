@@ -676,8 +676,8 @@
    [:.new-form-field {:text-align "center"}]
 
    [:.form-field-visibility (assoc dashed-form-group
-                               :margin-left 0
-                               :margin-right 0)]
+                                   :margin-left 0
+                                   :margin-right 0)]
    [:.form-field-option (assoc dashed-form-group
                                :margin-left 0
                                :margin-right 0)]

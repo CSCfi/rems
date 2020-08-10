@@ -392,8 +392,8 @@
                                                    :field/previous-attachments (when (= :attachment (:field/type field))
                                                                                  (when-let [prev (:field/previous-value field)]
                                                                                    (->> prev
-                                                                                       form/parse-attachment-ids
-                                                                                       (mapv attachments))))
+                                                                                        form/parse-attachment-ids
+                                                                                        (mapv attachments))))
                                                    :diff (get show-diff field-id)
                                                    :validation (get-in field-validations [form-id field-id])
                                                    :readonly readonly?
