@@ -11,8 +11,7 @@
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text get-localized-title]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.text :refer [text get-localized-title]]))
 
 (rf/reg-event-fx
  ::enter-page
