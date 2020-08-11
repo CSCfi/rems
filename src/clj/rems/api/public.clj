@@ -60,8 +60,7 @@
                             :default-language
                             :dev
                             :extra-pages
-                            :languages
-                            :organizations])))
+                            :languages])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
