@@ -34,9 +34,9 @@
   #?(:clj (Integer/parseInt s)
      :cljs (js/parseInt s 10)))
 
-(defn- printToConsole [s]
-  #?(:clj (println s)
-     :cljs (js/console.log s)))
+;; (defn- printToConsole [s]
+;;   #?(:clj (println s)
+;;      :cljs (js/console.log s)))
 
 (defn parse-sortable-external-id [external-id]
   ;; the idea is to parse all numbers from the string, then add them up to form an external id - 
@@ -49,4 +49,5 @@
 (deftest test-parse-sortable-external-id
   (is (= 2030 (parse-sortable-external-id "2020/10")))
   (is (= 2092 (parse-sortable-external-id "THL/54/14.01.00/2002-rems/21")))
-  (is (= "abGtmk" (parse-sortable-external-id "abGtmk"))))
+  (is (= "abGtmk" (parse-sortable-external-id "abGtmk")))
+  (is (= nil (parse-sortable-external-id nil))))
