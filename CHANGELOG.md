@@ -33,6 +33,7 @@ Changes since v2.12
 - OIDC access tokens are now revoked on logout if the OIDC server provides a `revocation_endpoint`. (#2176)
 - Application attachment fields now accept multiple attachments. (#2122)
 - It's now possible to add a text to the login page after the login button using extra translations (:t.login/intro2) (#2214)
+- Indicate which items are in shopping cart by changing add button to remove (#2228)
 
 ## v2.12 "Merituulentie" 2020-05-04
 
