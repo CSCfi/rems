@@ -61,15 +61,20 @@
  (fn [_ _]
    [(rf/subscribe [::catalogue])
     (rf/subscribe [:language])
-    (rf/subscribe [:logged-in])])
- (fn [[catalogue language logged-in?] _]
-   (map (fn [item]
-          {:key (:id item)
-           :name {:value (get-localized-title item language)}
-           :commands {:td [:td.commands
-                           [catalogue-item-more-info item language {}]
-                           (when logged-in? [cart/add-to-cart-button item language])]}})
-        catalogue)))
+    (rf/subscribe [:logged-in])
+    (rf/subscribe [:rems.cart/cart])])
+ (fn [[catalogue language logged-in? cart] _]
+   (let [cart-item-ids (set (map :id cart))]
+     (map (fn [item]
+            {:key (:id item)
+             :name {:value (get-localized-title item language)}
+             :commands {:td [:td.commands
+                             [catalogue-item-more-info item language {}]
+                             (when logged-in?
+                               (if (contains? cart-item-ids (:id item))
+                                 [cart/remove-from-cart-button item language]
+                                 [cart/add-to-cart-button item language]))]}})
+          catalogue))))
 
 (defn draft-application-list []
   (let [applications ::draft-applications]
