@@ -637,6 +637,8 @@
     [(s/> "*:not(:last-child)")
      {:margin-right (u/em 0.5)}]]
 
+   [:.event-comment {:white-space :pre}]
+
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
    [:.form-group {:text-align "initial"}
@@ -674,8 +676,8 @@
    [:.new-form-field {:text-align "center"}]
 
    [:.form-field-visibility (assoc dashed-form-group
-                               :margin-left 0
-                               :margin-right 0)]
+                                   :margin-left 0
+                                   :margin-right 0)]
    [:.form-field-option (assoc dashed-form-group
                                :margin-left 0
                                :margin-right 0)]
