@@ -469,9 +469,8 @@
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event
-     {:class (when-let [highlighted @(rf/subscribe [::highlight-request-id])]
-               (when (= highlighted request-id)
-                 "border rounded border-primary"))}
+     {:class (when (:highlight event)
+               "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.col-form-label event-text
@@ -549,11 +548,14 @@
     (for [event (:application/events application)]
       (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
 
-(defn- application-state [application config]
+(defn- application-state [application config highlight-request-id]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
+                    (map #(assoc % :highlight
+                                 (and highlight-request-id
+                                      (= (:application/request-id %) highlight-request-id))))
                     reverse)
         [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
@@ -780,14 +782,14 @@
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
-(defn- render-application [{:keys [application edit-application config userid]}]
+(defn- render-application [{:keys [application edit-application config userid highlight-request-id]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config]
+     [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      (when (contains? (:application/permissions application) :see-everything)
@@ -808,6 +810,7 @@
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
+        highlight-request-id @(rf/subscribe [::highlight-request-id])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
@@ -823,7 +826,8 @@
        [render-application {:application application
                             :edit-application edit-application
                             :config config
-                            :userid userid}])
+                            :userid userid
+                            :highlight-request-id highlight-request-id}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
      (when reloading?
