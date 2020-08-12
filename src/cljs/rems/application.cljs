@@ -452,44 +452,40 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- format-event [event]
-  {:user (get-member-name (:event/actor-attributes event))
-   :event (localize-event event)
-   :decision (when (= (:event/type event) :application.event/decided)
-               (localize-decision event))
-   :comment (case (:event/type event)
-              :application.event/copied-from
-              [application-link (:application/copied-from event) (text :t.applications/application)]
+(defn- event-view [event]
+  (let [event-text (localize-event event)
+        decision (when (= (:event/type event) :application.event/decided)
+                   (localize-decision event))
+        comment (case (:event/type event)
+                  :application.event/copied-from
+                  [application-link (:application/copied-from event) (text :t.applications/application)]
 
-              :application.event/copied-to
-              [application-link (:application/copied-to event) (text :t.applications/application)]
+                  :application.event/copied-to
+                  [application-link (:application/copied-to event) (text :t.applications/application)]
 
-              (let [comment (:application/comment event)]
-                (when (not (empty? comment))
-                  comment)))
-   :request-id (:application/request-id event)
-   :attachments (:event/attachments event)
-   :time (localize-time (:event/time event))})
-
-(defn- event-view [{:keys [request-id time event comment decision attachments]}]
-  [:div.row.event
-   {:class (when (= request-id @(rf/subscribe [::highlight-request-id]))
-             "border rounded border-primary")}
-   [:label.col-sm-2.col-form-label time]
-   [:div.col-sm-10
-    [:div.col-form-label event
-     (when request-id
-       [:a {:href "#"
-            :on-click (fn [e]
-                        (rf/dispatch [::highlight-request-id request-id])
-                        false)}
-        " Highlight related events."])]
-    (when decision
-      [:div decision])
-    (when comment
-      [:div.event-comment comment])
-    (when-let [attachments (seq attachments)]
-      [fields/attachment-row attachments])]])
+                  (when (not (empty? (:application/comment event)))
+                    (:application/comment event)))
+        request-id (:application/request-id event)
+        attachments (:event/attachments event)
+        time (localize-time (:event/time event))]
+    [:div.row.event
+     {:class (when (= request-id @(rf/subscribe [::highlight-request-id]))
+               "border rounded border-primary")}
+     [:label.col-sm-2.col-form-label time]
+     [:div.col-sm-10
+      [:div.col-form-label event-text
+       (when request-id
+         [:a {:href "#"
+              :on-click (fn [e]
+                          (rf/dispatch [::highlight-request-id request-id])
+                          false)}
+          " Highlight related events."])]
+      (when decision
+        [:div decision])
+      (when comment
+        [:div.event-comment comment])
+      (when-let [attachments (seq attachments)]
+        [fields/attachment-row attachments])]]))
 
 (defn- render-events [events]
   (for [e events]
@@ -557,8 +553,7 @@
         last-activity (:application/last-activity application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
-                    reverse
-                    (map format-event))
+                    reverse)
         [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
      {:id "header"
@@ -1051,21 +1046,27 @@
 
    (component-info event-view)
    (example "simple event"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Alice Applicant submitted the application"}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/submitted
+                         :event/actor-attributes {:userid "alice" :name "Alice Applicant"}}])
    (example "event with comment & decision"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler has made a decision on the application"
-                         :decision "Rejected"
-                         :comment "This application is bad."}])
-   (example "event with attachment"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler attached some things"
-                         :attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/decided
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :application/decision :rejected
+                         :event/comment "This application is bad."}])
+   (example "event with comment & attachment"
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/remarked
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :event/comment "See attached file."
+                         :application/request-id "request-id-1234"
+                         :event/attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
    (example "event with many attachments"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler attached some things"
-                         :attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/approved
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :event/attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
 
    (component-info application-copy-notice)
    (example "no copies"
