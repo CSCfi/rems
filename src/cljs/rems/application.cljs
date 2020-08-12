@@ -469,8 +469,9 @@
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event
-     {:class (when (= request-id @(rf/subscribe [::highlight-request-id]))
-               "border rounded border-primary")}
+     {:class (when-let [highlighted @(rf/subscribe [::highlight-request-id])]
+               (when (= highlighted request-id)
+                 "border rounded border-primary"))}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.col-form-label event-text
