@@ -167,9 +167,6 @@
      {:color "#000"}]
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
-   [:#event-table
-    {:white-space "pre-wrap"}
-    [:.date {:min-width "160px"}]]
    [:.table-border {:padding 0
                     :margin "1em 0"
                     :border (get-theme-attribute :table-border "1px solid #ccc")
