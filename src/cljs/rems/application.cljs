@@ -281,6 +281,16 @@
      :searching? searching?
      nil (filterv #(not= application-id (:application/id %)) data))))
 
+(rf/reg-event-db
+ ::highlight-request-id
+ (fn [db [_ request-id]]
+   (assoc db ::highlight-request-id request-id)))
+
+(rf/reg-sub
+ ::highlight-request-id
+ (fn [db _]
+   (::highlight-request-id db)))
+
 ;;;; UI components
 
 (defn- pdf-button [app-id]
@@ -461,11 +471,19 @@
    :attachments (:event/attachments event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time event comment decision attachments]}]
+(defn- event-view [{:keys [request-id time event comment decision attachments]}]
   [:div.row.event
+   {:class (when (= request-id @(rf/subscribe [::highlight-request-id]))
+             "border rounded border-primary")}
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
-    [:div.col-form-label event]
+    [:div.col-form-label event
+     (when request-id
+       [:a {:href "#"
+            :on-click (fn [e]
+                        (rf/dispatch [::highlight-request-id request-id])
+                        false)}
+        " Highlight related events."])]
     (when decision
       [:div decision])
     (when comment
