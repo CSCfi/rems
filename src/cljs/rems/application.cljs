@@ -475,9 +475,10 @@
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
-    (into [:div.event-group]
-          (for [e group]
-            [event-view e]))))
+    [:div.event-group.card.mt-3
+     (into [:div.card-body
+            (for [e group]
+              [event-view e])])]))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
