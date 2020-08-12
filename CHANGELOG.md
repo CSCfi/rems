@@ -20,6 +20,8 @@ Changes since v2.12
 - Remove assign external id -button from UI
 - Clearer help message for close action
 - Preserve the white-space in an event comment (#2232)
+- Application events are now presented in chronological order instead of grouping requests and responses together.
+  In addition there is now a possibility to highlight related events. (#2233)
 
 ### Fixes
 - Various fixes in workflow editor UI
