@@ -148,6 +148,7 @@
                           :resources "Resurser"
                           :state "Tillstånd"}
                  :handlers "Handläggare"
+                 :highlight-related-events "Visa relaterade händelser."
                  :id "id"
                  :intro [:div.intro [:p "Fyll i ansökningen och skicka den för behandling. Du kan bjuda in andra som medlemmar i din ansökning. Alla medlemmar måste godkänna användarvillkoren senast när ansökningen godkänts."]]
                  :last-activity "Ändrat"
