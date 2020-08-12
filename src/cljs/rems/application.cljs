@@ -1060,12 +1060,18 @@
                          :event/actor-attributes {:name "Hannah Handler"}
                          :application/decision :rejected
                          :event/comment "This application is bad."}])
+   (example "event with comment & decision, highlighted"
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/decided
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :application/decision :rejected
+                         :event/comment "This application is bad."
+                         :highlight true}])
    (example "event with comment & attachment"
             [event-view {:event/time #inst "2020-01-01T08:35"
                          :event/type :application.event/remarked
                          :event/actor-attributes {:name "Hannah Handler"}
                          :event/comment "See attached file."
-                         :application/request-id "request-id-1234"
                          :event/attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
    (example "event with many attachments"
             [event-view {:event/time #inst "2020-01-01T08:35"
