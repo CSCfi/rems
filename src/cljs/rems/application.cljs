@@ -473,12 +473,9 @@
     (when-let [attachments (seq attachments)]
       [fields/attachment-row attachments])]])
 
-(defn- render-event-groups [event-groups]
-  (for [group event-groups]
-    [:div.event-group.card.mt-3
-     (into [:div.card-body
-            (for [e group]
-              [event-view e])])]))
+(defn- render-events [events]
+  (for [e events]
+    [event-view e]))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
@@ -540,16 +537,11 @@
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
-        event-groups (->> (events-with-attachments application)
-                          (group-by #(or (:application/request-id %)
-                                         (:event/id %)))
-                          vals
-                          (map (partial sort-by :event/time))
-                          (map reverse)
-                          (sort-by #(:event/time (first %)))
-                          reverse
-                          (map #(map format-event %)))
-        [event-groups-show-always event-groups-collapse] (split-at 3 event-groups)]
+        events (->> (events-with-attachments application)
+                    (sort-by :event/time)
+                    reverse
+                    (map format-event))
+        [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
      {:id "header"
       :title (text :t.applications/state)
@@ -574,12 +566,12 @@
                       (text :t.applications/latest-activity)
                       (localize-time last-activity)
                       {:inline? true}]]
-                    (when (seq event-groups-show-always)
+                    (when (seq events-show-always)
                       (into [[:h3 (text :t.form/events)]]
-                            (render-event-groups event-groups-show-always))))
-      :collapse (when (seq event-groups-collapse)
+                            (render-events events-show-always))))
+      :collapse (when (seq events-collapse)
                   (into [:div]
-                        (render-event-groups event-groups-collapse)))}]))
+                        (render-events events-collapse)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
