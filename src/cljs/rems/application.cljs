@@ -479,7 +479,7 @@
               :on-click (fn [e]
                           (rf/dispatch [::highlight-request-id request-id])
                           false)}
-          " Highlight related events."])]
+          " " (text :t.applications/highlight-related-events)])]
       (when decision
         [:div decision])
       (when comment
