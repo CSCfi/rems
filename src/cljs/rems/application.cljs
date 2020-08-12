@@ -545,6 +545,7 @@
                                          (:event/id %)))
                           vals
                           (map (partial sort-by :event/time))
+                          (map reverse)
                           (sort-by #(:event/time (first %)))
                           reverse
                           (map #(map format-event %)))
