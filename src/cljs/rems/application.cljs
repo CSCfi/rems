@@ -456,7 +456,7 @@
 
               (let [comment (:application/comment event)]
                 (when (not (empty? comment))
-                  (str (text :t.actions/comment) ": " (:application/comment event)))))
+                  comment)))
    :request-id (:application/request-id event)
    :attachments (:event/attachments event)
    :time (localize-time (:event/time event))})
