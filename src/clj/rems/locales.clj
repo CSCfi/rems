@@ -1,5 +1,5 @@
 (ns rems.locales
-  {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn"]}
+  {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn" "translations/sv.edn"]}
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.tools.logging :as log]
