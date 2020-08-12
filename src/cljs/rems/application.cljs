@@ -473,7 +473,7 @@
                "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
-      [:div.col-form-label event-text
+      [:div.col-form-label.event-description event-text
        (when request-id
          [:a {:href "#"
               :on-click (fn [e]
@@ -481,7 +481,7 @@
                           false)}
           " " (text :t.applications/highlight-related-events)])]
       (when decision
-        [:div decision])
+        [:div.event-decision decision])
       (when comment
         [:div.event-comment comment])
       (when-let [attachments (seq attachments)]
