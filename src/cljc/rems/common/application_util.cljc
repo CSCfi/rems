@@ -38,16 +38,17 @@
 ;;   #?(:clj (println s)
 ;;      :cljs (js/console.log s)))
 
-(defn parse-sortable-external-id [external-id]
-  ;; the idea is to parse all numbers from the string, then add them up to form an external id - 
-  ;; comes from a theory that it is somehow tied to the date or the numbers are created in sequence
-  (cond
-    (if (seq (re-seq #"\d+" external-id)) "true" "false") (reduce + (map (fn [str] (str-to-int str)) (re-seq #"\d+" external-id)))
-    :else external-id))
+(defn parse-sortable-external-id
+  "The idea is to parse all numbers from the string to vector and then compare the values in the vector"
+  [external-id]
+  (cond (nil? external-id) nil
+        :else (when-let [number-sequence  (seq (re-seq #"\d+" external-id))]
+                (vec (map str-to-int
+                          number-sequence)))))
 
-;; put test here
 (deftest test-parse-sortable-external-id
-  (is (= 2030 (parse-sortable-external-id "2020/10")))
-  (is (= 2092 (parse-sortable-external-id "THL/54/14.01.00/2002-rems/21")))
-  (is (= "abGtmk" (parse-sortable-external-id "abGtmk")))
+  (is (= [2020 10] (parse-sortable-external-id "2020/10")))
+  (is (= [54 14 01 00 2002 21] (parse-sortable-external-id "THL/54/14.01.00/2002-rems/21")))
+  (is (= [2000 1] (parse-sortable-external-id "ABC/2000.1")))
+  (is (= nil (parse-sortable-external-id "abGtmk")))
   (is (= nil (parse-sortable-external-id nil))))
