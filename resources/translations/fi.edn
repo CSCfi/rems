@@ -276,7 +276,7 @@
           :application-licenses-added {:subject "Hakemuksen %3 käyttöehdot ovat muuttuneet"
                                        :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi muuttuneille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä muuttuneet käyttöehdot osoitteessa %6"}
           :application-resubmitted {:subject-to-handler "(%3) Hakemus lähetetty uudelleen"
-                                    :message-to-handler "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+                                    :message-to-handler "Hyvä %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-submitted {:subject-to-applicant "Hakemus %3 vastaanotettu"
                                   :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on vastaanotettu käsiteltäväksi. Saat sähköpostiviestin kun hakemuksesi on käsitelty.\n\nVoit tarkastella hakemusta osoitteessa %6"
                                   :subject-to-handler "(%3) Uusi hakemus"
