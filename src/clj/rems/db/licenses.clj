@@ -1,8 +1,7 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [rems.common.util :refer [distinct-by]]
-            [rems.db.core :as db]
-            [rems.db.organizations :as organizations]))
+            [rems.db.core :as db]))
 
 (defn- format-license [license]
   {:id (:id license)
