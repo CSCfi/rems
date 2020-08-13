@@ -277,10 +277,12 @@
                                 :message-to-handler "Dear %1,\n\n%2 has revoked the entitlements related to application %3 from %4.\n\nYou can view the application at %6"}
           :application-licenses-added {:subject "Your application's %3 terms of use have changed"
                                        :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can view the application and approve the changed terms of use at %6"}
-          :application-resubmitted {:subject "(%3) Application has been resubmitted"
-                                    :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can review the application at %6"}
-          :application-submitted {:subject "(%3) A new application has been submitted"
-                                  :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
+          :application-resubmitted {:subject-to-handler "(%3) Application has been resubmitted"
+                                    :message-to-handler "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can review the application at %6"}
+          :application-submitted {:subject-to-applicant "Your application %3 has been submitted"
+                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at %6"
+                                  :subject-to-handler "(%3) A new application has been submitted"
+                                  :message-to-handler "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :decision-requested {:subject "(%3) Decision request"

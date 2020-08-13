@@ -275,10 +275,12 @@
                                 :message-to-handler "Hyvä %1,\n\n%2 on perunut käyttäjän %4 hakemukseen %3 liittyvät käyttöoikeudet.\n\nVoit tarkastella hakemusta: %6"}
           :application-licenses-added {:subject "Hakemuksen %3 käyttöehdot ovat muuttuneet"
                                        :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi muuttuneille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä muuttuneet käyttöehdot osoitteessa %6"}
-          :application-resubmitted {:subject "(%3) Hakemus lähetetty uudelleen"
-                                    :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :application-submitted {:subject "(%3) Uusi hakemus"
-                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :application-resubmitted {:subject-to-handler "(%3) Hakemus lähetetty uudelleen"
+                                    :message-to-handler "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :application-submitted {:subject-to-applicant "Hakemus %3 vastaanotettu"
+                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on vastaanotettu käsiteltäväksi. Saat sähköpostiviestin kun hakemuksesi on käsitelty.\n\nVoit tarkastella hakemusta osoitteessa %6"
+                                  :subject-to-handler "(%3) Uusi hakemus"
+                                  :message-to-handler "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decided {:subject "(%3) Päätös lähetetty"
                     :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decision-requested {:subject "(%3) Päätöspyyntö"
