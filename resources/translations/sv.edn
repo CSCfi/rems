@@ -254,7 +254,7 @@
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
   :email {:application-approved {:subject-to-applicant "Din ansökning %3 är godkänd"
-                                 :message-to-applicant "Bästa  %1,\n\nDIn ansökning %3 är godkänd.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"
+                                 :message-to-applicant "Bästa %1,\n\nDin ansökning %3 är godkänd.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"
                                  :subject-to-handler "(%3) Ansökningen är godkänd"
                                  :message-to-handler "Bästa %1,\n\n%2 har godkänt ansökning %3 av %4.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"}
           :application-rejected {:subject-to-applicant "Din ansökning %3 har fått avslag"
@@ -262,7 +262,7 @@
                                  :subject-to-handler "(%3) Ansökningen avslagen"
                                  :message-to-handler "Bästa %1,\n\n%2 har avslagit %4s ansökning %3.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"}
           :application-closed {:subject-to-applicant "Din ansökning %3 har stängts"
-                               :message-to-applicant "Bästa %1,\n\nDin nsökning %3 har stängts.\n\nDu kan granska ansökningen bakom denna länk: %6"
+                               :message-to-applicant "Bästa %1,\n\nDin ansökning %3 har stängts.\n\nDu kan granska ansökningen bakom denna länk: %6"
                                :subject-to-handler "Ansökning (%3)har stängts"
                                :message-to-handler "Bästa %1,\n\n%2 har stängt ansökning %3 av %4.\n\nDu kan granska ansökningen bakom denna länk: %6"}
           :application-returned {:subject-to-applicant "Din ansökning %3 kräver komplettering"
