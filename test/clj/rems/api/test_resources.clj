@@ -35,8 +35,8 @@
   (let [api-key "42"
         owner "owner"
         org-owner "organization-owner1"
-        licid-org1 (test-data/create-license! {:license/organization {:organization/id "organization1"}})
-        licid-org2 (test-data/create-license! {:license/organization {:organization/id "organization2"}})
+        licid-org1 (test-data/create-license! {:organization {:organization/id "organization1"}})
+        licid-org2 (test-data/create-license! {:organization {:organization/id "organization2"}})
         resid "resource-api-test"]
 
     (doseq [user-id [owner org-owner]]
