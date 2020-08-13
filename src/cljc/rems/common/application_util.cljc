@@ -41,10 +41,10 @@
 (defn parse-sortable-external-id
   "The idea is to parse all numbers from the string to vector and then compare the values in the vector"
   [external-id]
-  (cond (nil? external-id) nil
-        :else (when-let [number-sequence  (seq (re-seq #"\d+" external-id))]
-                (vec (map str-to-int
-                          number-sequence)))))
+  (when external-id
+    (when-let [number-sequence  (seq (re-seq #"\d+" external-id))]
+      (vec (map str-to-int
+                number-sequence)))))
 
 (deftest test-parse-sortable-external-id
   (is (= [2020 10] (parse-sortable-external-id "2020/10")))
