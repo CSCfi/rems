@@ -68,7 +68,8 @@
 
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
-  (let [title (linkify (localized (:field/title opts)))
+  (let [raw-title (localized (:field/title opts))
+        title (linkify raw-title)
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
@@ -117,7 +118,7 @@
          ;;      but that doesn't work with checkbox groups nor attachments, and we anyways
          ;;      don't need the feature of hiding this div with CSS when it has no content.
          :style {:display "block"}}
-        (text-format (:type validation) title)])]))
+        (text-format (:type validation) raw-title)])]))
 
 (defn- non-field-wrapper [opts children]
   [:div.form-group
@@ -400,11 +401,11 @@
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
                     :field/max-length 10}])
-   (example "field of type \"text\" with validation error"
+   (example "field of type \"text\" with validation error and link in title"
             [field {:form/id 3
                     :field/id "1"
                     :field/type :text
-                    :field/title {:en "Title"}
+                    :field/title {:en "Title http://google.com"}
                     :field/placeholder {:en "placeholder"}
                     :validation {:type :t.form.validation/required}}])
    (example "non-editable field of type \"text\" without text"
