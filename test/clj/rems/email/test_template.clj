@@ -138,7 +138,11 @@
 
 (deftest test-submitted
   (let [mails (emails created-events submit-event)]
-    (is (= #{"assistant" "handler"} (email-recipients mails)))
+    (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
+    (is (= {:to-user "applicant"
+            :subject "Your application 2001/3, \"Application title\" has been submitted"
+            :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
+           (email-to "applicant" mails)))
     (is (= {:to-user "assistant"
             :subject "(2001/3, \"Application title\") A new application has been submitted"
             :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
@@ -362,7 +366,11 @@
              :body "Dear Amber Assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/application/7"}]
            (emails added return)))
     (let [mails (emails returned-events resubmit)]
-      (is (= #{"assistant" "handler"} (email-recipients mails)))
+      (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
+      (is (= {:to-user "applicant"
+              :subject "Your application 2001/3, \"Application title\" has been submitted",
+              :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
+             (email-to "applicant" mails)))
       (is (= {:to-user "assistant"
               :subject "(2001/3, \"Application title\") Application has been resubmitted"
               :body "Dear Amber Assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
@@ -373,7 +381,7 @@
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:fi :t :email :regards] "")]
     (testing "submitted"
       (let [mails (emails :fi created-events submit-event)]
-        (is (= #{"assistant" "handler"} (email-recipients mails)))
+        (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "handler"
                 :subject "(2001/3, \"Application title\") Uusi hakemus"
                 :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
