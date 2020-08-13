@@ -51,8 +51,8 @@
                     :organization/review-emails [{:email "test@organization.test.org"
                                                   :name {:fi "Organisaatiot API Test ORG Katselmoijat"
                                                          :en "Organizations API Test ORG Reviewers"}}]
-                    :organization/enabled true
-                    :organization/archived false}
+                    :enabled true
+                    :archived false}
                    (-> (find-first (comp #{"organizations-api-test-org"} :organization/id) data)
                        (update :organization/last-modified parse-date))))))
 

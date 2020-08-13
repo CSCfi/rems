@@ -42,11 +42,11 @@
   (organizations/add-organization! userid org))
 
 (defn set-organization-enabled! [{:keys [id enabled]}]
-  (organizations/update-organization! id (fn [organization] (assoc organization :organization/enabled enabled)))
+  (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
   {:success true})
 
 (defn set-organization-archived! [{:keys [id archived]}]
   (or (dependencies/change-archive-status-error archived  {:organization/id id})
       (do
-        (organizations/update-organization! id (fn [organization] (assoc organization :organization/archived archived)))
+        (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
         {:success true})))

@@ -13,8 +13,8 @@
                          :user userid
                          :time (DateTime.)
                          :data (json/generate-string (-> org
-                                                         (assoc :organization/enabled true
-                                                                :organization/archived false)
+                                                         (assoc :enabled true
+                                                                :archived false)
                                                          (dissoc :organization/id)))})
   {:success true
    :organization/id (:organization/id org)})
