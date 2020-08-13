@@ -43,8 +43,8 @@
   [external-id]
   (when external-id
     (when-let [number-sequence  (seq (re-seq #"\d+" external-id))]
-      (vec (map str-to-int
-                number-sequence)))))
+      (mapv str-to-int
+            number-sequence))))
 
 (deftest test-parse-sortable-external-id
   (is (= [2020 10] (parse-sortable-external-id "2020/10")))
