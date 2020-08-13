@@ -46,8 +46,7 @@
 (defn join-organization [x]
   ;; TODO alternatively we could pass in the organization key
   ;; TODO alternatively we could decide which layer transforms db string into {:organization/id "string"} and which layer joins the rest https://github.com/CSCfi/rems/issues/2179
-  (let [organization (or (:organization x)
-                         (:organization x))
+  (let [organization (:organization x)
         organization-id (if (string? organization) organization (:organization/id organization))
         organization-overview (-> organization-id
                                   getx-organization-by-id
