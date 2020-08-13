@@ -182,7 +182,7 @@
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
          :header "%1 aineistoa korissa"
          :intro [:div.intro [:p "Hae käyttöoikeuksia lisäämällä resursseja koriin. Samaa hakemusta käyttävät resurssit yhdistyvät korissa yhdeksi hakemukseksi."]]
-         :remove "Poista"}
+         :remove "Poista korista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
               :intro [:p "Allaolevien resurssien käyttöoikeudet ovat haettavissa."]

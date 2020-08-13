@@ -184,7 +184,7 @@
          :apply-for-bundle "Apply for %1 resources as a bundle "
          :header "%1 resources in the cart"
          :intro [:div.intro [:p "Apply for access rights by adding resources to the cart. Resources using the same application are bundled together in the cart."]]
-         :remove "Remove"}
+         :remove "Remove from cart"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
               :intro [:p "Access to the following resources can be applied for."]
