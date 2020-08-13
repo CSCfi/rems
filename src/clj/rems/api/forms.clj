@@ -11,10 +11,10 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:form/id :form/organization :form/title :form/errors :enabled :archived]))))
+     (select-keys form [:form/id :organization :form/title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
-  {:form/organization OrganizationId
+  {:organization OrganizationId
    :form/title s/Str
    :form/fields [NewFieldTemplate]})
 

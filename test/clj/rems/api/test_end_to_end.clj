@@ -83,7 +83,7 @@
                 wf-form-id
                 (testing "create workflow form"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
+                   (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
                                                         :form/title "e2e wf"
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
@@ -96,7 +96,7 @@
                 form-id
                 (testing "create form"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
+                   (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
                                                         :form/title "e2e"
                                                         :form/fields [{:field/type :text
                                                                        :field/title {:en "text field"
@@ -108,7 +108,7 @@
                 form-id2
                 (testing "create form 2"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
+                   (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
                                                         :form/title "e2e 2"
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
@@ -378,7 +378,7 @@
           form-id
           (testing "create form"
             (extract-id
-             (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
+             (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
                                                   :form/title "e2e"
                                                   :form/fields [{:field/type :text
                                                                  :field/title {:en "text field"

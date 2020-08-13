@@ -161,8 +161,8 @@
                       (:id existing-default-organization)
                       (create-organization! {}))})
 
-(defn create-license! [{:keys [actor]
-                        :license/keys [type title link organization text attachment-id]
+(defn create-license! [{:keys [actor organization]
+                        :license/keys [type title link text attachment-id]
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
@@ -176,8 +176,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-attachment-license! [{:keys [actor]
-                                   :license/keys [organization]}]
+(defn create-attachment-license! [{:keys [actor organization]}]
   (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
                                                            :filename "license-fi.txt"
                                                            :type "text/plain"
@@ -189,18 +188,18 @@
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
-                        :license/organization (or organization (default-organization))
+                        :organization (or organization (default-organization))
                         :license/title {:fi "Liitelisenssi" :en "Attachment license"}
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
-(defn create-form! [{:keys [actor]
-                     :form/keys [organization title fields]
+(defn create-form! [{:keys [actor organization]
+                     :form/keys [title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization (default-organization))
+                                    {:organization (or organization (default-organization))
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -244,7 +243,7 @@
         result (with-user actor
                  (catalogue/create-catalogue-item!
                   {:resid (or resource-id (create-resource! {:organization organization}))
-                   :form (or form-id (create-form! {:form/organization organization}))
+                   :form (or form-id (create-form! {:organization organization}))
                    :organization (or organization {:organization/id "default"})
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]
@@ -324,15 +323,14 @@
 (defn- create-archived-form! [actor]
   (with-user actor
     (let [id (create-form! {:actor actor
-                            :form/organization {:organization/id "nbn"}
+                            :organization {:organization/id "nbn"}
                             :form/title "Archived form, should not be seen by applicants"})]
       (form/set-form-archived! {:id id :archived true}))))
 
-(defn- create-disabled-license! [{:keys [actor]
-                                  :license/keys [organization]}]
+(defn- create-disabled-license! [{:keys [actor organization]}]
   (let [id (create-license! {:actor actor
                              :license/type "link"
-                             :license/organization organization
+                             :organization organization
                              :license/title {:en "Disabled license"
                                              :fi "Käytöstä poistettu lisenssi"}
                              :license/link {:en "http://disabled"
@@ -471,7 +469,7 @@
   [actor organization title]
   (create-form!
    {:actor actor
-    :form/organization organization
+    :organization organization
     :form/title title
     :form/fields all-field-types-example}))
 
@@ -480,7 +478,7 @@
   [users]
   (create-form!
    {:actor (users :owner)
-    :form/organization {:organization/id "thl"}
+    :organization {:organization/id "thl"}
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"
@@ -772,7 +770,7 @@
                                      :handlers handlers
                                      :forms [{:form/id (create-form! {:actor owner
                                                                       :form/title "Workflow form"
-                                                                      :form/organization {:organization/id "nbn"}
+                                                                      :organization {:organization/id "nbn"}
                                                                       :form/fields [{:field/type :description
                                                                                      :field/title {:fi "Kuvaus"
                                                                                                    :en "Description"
@@ -782,7 +780,7 @@
     ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
                                  :license/type :link
-                                 :license/organization {:organization/id "nbn"}
+                                 :organization {:organization/id "nbn"}
                                  :license/title {:en "CC Attribution 4.0"
                                                  :fi "CC Nimeä 4.0"
                                                  :sv "CC Erkännande 4.0"}
@@ -791,7 +789,7 @@
                                                 :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
           text (create-license! {:actor owner
                                  :license/type :text
-                                 :license/organization {:organization/id "nbn"}
+                                 :organization {:organization/id "nbn"}
                                  :license/title {:en "General Terms of Use"
                                                  :fi "Yleiset käyttöehdot"
                                                  :sv "Allmänna villkor"}
@@ -975,7 +973,7 @@
                                        :handlers handlers})
         form-id (create-form!
                  {:actor owner
-                  :form/organization {:organization/id "perf"}
+                  :organization {:organization/id "perf"}
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"
@@ -997,7 +995,7 @@
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
-                                     :license/organization {:organization/id "perf"}
+                                     :organization {:organization/id "perf"}
                                      :license/title {:en "Performance License"
                                                      :fi "Suorituskykylisenssi"
                                                      :sv "Licens för prestand"}
@@ -1106,7 +1104,7 @@
         ;; Create licenses
         license1 (create-license! {:actor owner
                                    :license/type :link
-                                   :license/organization {:organization/id "nbn"}
+                                   :organization {:organization/id "nbn"}
                                    :license/title {:en "Demo license"
                                                    :fi "Demolisenssi"
                                                    :sv "Demolicens"}
@@ -1115,7 +1113,7 @@
                                                   :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         extra-license (create-license! {:actor owner
                                         :license/type :link
-                                        :license/organization {:organization/id "nbn"}
+                                        :organization {:organization/id "nbn"}
                                         :license/title {:en "Extra license"
                                                         :fi "Ylimääräinen lisenssi"
                                                         :sv "Extra licens"}
@@ -1124,7 +1122,7 @@
                                                        :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         license-organization-owner (create-license! {:actor organization-owner1
                                                      :license/type :link
-                                                     :license/organization {:organization/id "organization1"}
+                                                     :organization {:organization/id "organization1"}
                                                      :license/title {:en "License owned by organization owner"
                                                                      :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
                                                                      :sv "Licens som ägs av organisationägare"}
@@ -1132,9 +1130,9 @@
                                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         _ (create-disabled-license! {:actor owner
-                                     :license/organization {:organization/id "nbn"}})
+                                     :organization {:organization/id "nbn"}})
         attachment-license (create-attachment-license! {:actor owner
-                                                        :license/organization {:organization/id "nbn"}})
+                                                        :organization {:organization/id "nbn"}})
 
         ;; Create resources
         res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
@@ -1163,7 +1161,7 @@
 
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types")
         form-private-thl (create-form! {:actor owner
-                                        :form/organization {:organization/id "thl"}
+                                        :organization {:organization/id "thl"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
@@ -1173,7 +1171,7 @@
                                                        :field/max-length 100
                                                        :field/privacy :private}]})
         form-private-hus (create-form! {:actor owner
-                                        :form/organization {:organization/id "hus"}
+                                        :organization {:organization/id "hus"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"

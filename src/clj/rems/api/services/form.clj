@@ -83,7 +83,7 @@
      :errors [error-map]}))
 
 (defn create-form! [user-id form]
-  (let [organization (:form/organization form)]
+  (let [organization (:organization form)]
     (util/check-allowed-organization! organization)
     (or (validation-error form)
         (let [form-id (:id (db/save-form-template! {:organization (:organization/id organization)
@@ -110,9 +110,9 @@
 
 (defn edit-form! [user-id form]
   (let [form-id (:form/id form)
-        organization (:form/organization form)]
+        organization (:organization form)]
     ;; need to check both previous and new organization
-    (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
+    (util/check-allowed-organization! (:organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
     (or (dependencies/in-use-error {:form/id form-id})
         (validation-error form)
@@ -124,12 +124,12 @@
             {:success true}))))
 
 (defn set-form-enabled! [{:keys [id enabled]}]
-  (util/check-allowed-organization! (:form/organization (get-form-template id)))
+  (util/check-allowed-organization! (:organization (get-form-template id)))
   (db/set-form-template-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-form-archived! [{:keys [id archived]}]
-  (util/check-allowed-organization! (:form/organization (get-form-template id)))
+  (util/check-allowed-organization! (:organization (get-form-template id)))
   (or (dependencies/change-archive-status-error archived {:form/id id})
       (do
         (db/set-form-template-archived! {:id id

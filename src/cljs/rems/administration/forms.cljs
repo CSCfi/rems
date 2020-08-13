@@ -87,7 +87,7 @@
  (fn [[forms language] _]
    (map (fn [form]
           {:key (:form/id form)
-           :organization {:value (get-in form [:form/organization :organization/name language])}
+           :organization {:value (get-in form [:organization :organization/name language])}
            :title {:value (:form/title form)}
            :active (let [checked? (status-flags/active? form)]
                      {:td [:td.active

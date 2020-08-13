@@ -224,7 +224,7 @@
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
-                           (get-in % [:form/organization :organization/name language])
+                           (get-in % [:organization :organization/name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
