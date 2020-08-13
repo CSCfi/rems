@@ -150,7 +150,7 @@
                           :resources "Resources"
                           :state "State"}
                  :handlers "Handlers"
-                 :highlight-related-events "Highlight related events."
+                 :highlight-related-events "Show related events."
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"
