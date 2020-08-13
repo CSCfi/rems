@@ -1068,11 +1068,11 @@
                          :application/decision :rejected
                          :application/comment "This application is bad."
                          :highlight true}])
-   (example "event with comment & attachment"
+   (example "event with long comment & attachment"
             [event-view {:event/time #inst "2020-01-01T08:35"
                          :event/type :application.event/remarked
                          :event/actor-attributes {:name "Hannah Handler"}
-                         :application/comment "See attached file."
+                         :application/comment (str lipsum "\n\nA final line.")
                          :event/attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
    (example "event with many attachments"
             [event-view {:event/time #inst "2020-01-01T08:35"
