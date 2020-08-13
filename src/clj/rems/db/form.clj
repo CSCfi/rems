@@ -18,12 +18,12 @@
   (-> row
       (update :fields deserialize-fields)
       (->> (map-keys {:id :form/id
-                      :organization :form/organization
+                      :organization :organization
                       :title :form/title
                       :fields :form/fields
                       :enabled :enabled
                       :archived :archived}))
-      (update :form/organization (fn [o] {:organization/id o}))))
+      (update :organization (fn [o] {:organization/id o}))))
 
 (defn- add-validation-errors [template]
   (assoc template :form/errors (common-form/validate-form-template template (:languages env))))

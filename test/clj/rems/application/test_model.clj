@@ -18,7 +18,7 @@
 
 (def ^:private get-form-template
   {40 {:form/id 40
-       :form/organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
        :form/title "form title"
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
@@ -43,7 +43,7 @@
        :enabled true
        :archived false}
    41 {:form/id 41
-       :form/organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
        :form/title "form title 2"
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}

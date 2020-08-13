@@ -194,13 +194,13 @@
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
-(defn create-form! [{:keys [actor]
-                     :form/keys [organization title fields]
+(defn create-form! [{:keys [actor organization]
+                     :form/keys [title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization (default-organization))
+                                    {:organization (or organization (default-organization))
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -244,7 +244,7 @@
         result (with-user actor
                  (catalogue/create-catalogue-item!
                   {:resid (or resource-id (create-resource! {:organization organization}))
-                   :form (or form-id (create-form! {:form/organization organization}))
+                   :form (or form-id (create-form! {:organization organization}))
                    :organization (or organization {:organization/id "default"})
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]
@@ -324,7 +324,7 @@
 (defn- create-archived-form! [actor]
   (with-user actor
     (let [id (create-form! {:actor actor
-                            :form/organization {:organization/id "nbn"}
+                            :organization {:organization/id "nbn"}
                             :form/title "Archived form, should not be seen by applicants"})]
       (form/set-form-archived! {:id id :archived true}))))
 
@@ -471,7 +471,7 @@
   [actor organization title]
   (create-form!
    {:actor actor
-    :form/organization organization
+    :organization organization
     :form/title title
     :form/fields all-field-types-example}))
 
@@ -480,7 +480,7 @@
   [users]
   (create-form!
    {:actor (users :owner)
-    :form/organization {:organization/id "thl"}
+    :organization {:organization/id "thl"}
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"
@@ -772,7 +772,7 @@
                                      :handlers handlers
                                      :forms [{:form/id (create-form! {:actor owner
                                                                       :form/title "Workflow form"
-                                                                      :form/organization {:organization/id "nbn"}
+                                                                      :organization {:organization/id "nbn"}
                                                                       :form/fields [{:field/type :description
                                                                                      :field/title {:fi "Kuvaus"
                                                                                                    :en "Description"
@@ -975,7 +975,7 @@
                                        :handlers handlers})
         form-id (create-form!
                  {:actor owner
-                  :form/organization {:organization/id "perf"}
+                  :organization {:organization/id "perf"}
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"
@@ -1163,7 +1163,7 @@
 
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types")
         form-private-thl (create-form! {:actor owner
-                                        :form/organization {:organization/id "thl"}
+                                        :organization {:organization/id "thl"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
@@ -1173,7 +1173,7 @@
                                                        :field/max-length 100
                                                        :field/privacy :private}]})
         form-private-hus (create-form! {:actor owner
-                                        :form/organization {:organization/id "hus"}
+                                        :organization {:organization/id "hus"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"

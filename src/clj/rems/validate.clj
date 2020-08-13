@@ -37,7 +37,7 @@
   (let [organizations (->> (organizations/get-organizations-raw) (map :organization/id) set)
         valid-organization? (fn [organization] (contains? organizations (:organization/id organization)))]
     (doseq [form (form/get-form-templates {})]
-      (when-not (valid-organization? (:form/organization form))
+      (when-not (valid-organization? (:organization form))
         (log/warn "Unrecognized organization in form:" (pr-str form))))
     (doseq [resource (resources/get-resources nil)]
       (when-not (valid-organization? (:organization resource))
