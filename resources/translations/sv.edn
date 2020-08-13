@@ -176,12 +176,12 @@
                  :view "Visa"
                  :view-application-with-description "Visa ansökning %1: %2"
                  :view-application-without-description "Visa ansökning %1 för resurser: %2"}
-  :cart {:add "Lägg i varukorgen"
+  :cart {:add "Lägg i korgen"
          :apply "Ansök"
          :apply-for-bundle "Ansök %1 resurser tillsammans"
          :header "%1 katalogposter i varukorgen"
          :intro [:div.intro [:p "Ansök om användningsrätt genom att lägga resurser i varukorgen. Alla resurser i korgen samlas till en ansökan."]]
-         :remove "Ta bort"}
+         :remove "Ta bort från korgen"}
   :catalogue {:catalogue "Katalog"
               :header "Katalog"
               :intro [:p "Användningsrätt kan ansökas till resurserna nedan."]
