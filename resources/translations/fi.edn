@@ -148,6 +148,7 @@
                           :resources "Resurssit"
                           :state "Tila"}
                  :handlers "Käsittelijät"
+                 :highlight-related-events "Näytä liittyvät tapahtumat."
                  :id "Tunniste"
                  :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"

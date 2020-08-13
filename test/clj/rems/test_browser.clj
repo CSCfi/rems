@@ -399,6 +399,8 @@
     (testing "approve"
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
+    (testing "event visible in eventlog"
+      (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
       (is (= ["test.txt" "test-fi.txt"]
              (get-attachments {:css "div.event a.attachment-link"}))))))

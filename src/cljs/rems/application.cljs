@@ -281,6 +281,16 @@
      :searching? searching?
      nil (filterv #(not= application-id (:application/id %)) data))))
 
+(rf/reg-event-db
+ ::highlight-request-id
+ (fn [db [_ request-id]]
+   (assoc db ::highlight-request-id request-id)))
+
+(rf/reg-sub
+ ::highlight-request-id
+ (fn [db _]
+   (::highlight-request-id db)))
+
 ;;;; UI components
 
 (defn- pdf-button [app-id]
@@ -442,42 +452,45 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- format-event [event]
-  {:user (get-member-name (:event/actor-attributes event))
-   :event (localize-event event)
-   :decision (when (= (:event/type event) :application.event/decided)
-               (localize-decision event))
-   :comment (case (:event/type event)
-              :application.event/copied-from
-              [application-link (:application/copied-from event) (text :t.applications/application)]
+(defn- event-view [event]
+  (let [event-text (localize-event event)
+        decision (when (= (:event/type event) :application.event/decided)
+                   (localize-decision event))
+        comment (case (:event/type event)
+                  :application.event/copied-from
+                  [application-link (:application/copied-from event) (text :t.applications/application)]
 
-              :application.event/copied-to
-              [application-link (:application/copied-to event) (text :t.applications/application)]
+                  :application.event/copied-to
+                  [application-link (:application/copied-to event) (text :t.applications/application)]
 
-              (let [comment (:application/comment event)]
-                (when (not (empty? comment))
-                  (str (text :t.actions/comment) ": " (:application/comment event)))))
-   :request-id (:application/request-id event)
-   :attachments (:event/attachments event)
-   :time (localize-time (:event/time event))})
+                  (when (not (empty? (:application/comment event)))
+                    (:application/comment event)))
+        request-id (:application/request-id event)
+        attachments (:event/attachments event)
+        time (localize-time (:event/time event))]
+    [:div.row.event
+     {:class (when (:highlight event)
+               "border rounded border-primary")}
+     [:label.col-sm-2.col-form-label time]
+     [:div.col-sm-10
+      [:div.col-form-label.event-description [:b event-text]
+       (when request-id
+         [:div.float-right
+          [:a {:href "#"
+               :on-click (fn [e]
+                           (rf/dispatch [::highlight-request-id request-id])
+                           false)}
+           " " (text :t.applications/highlight-related-events)]])]
+      (when decision
+        [:div.event-decision decision])
+      (when comment
+        [:div.form-control.event-comment comment])
+      (when-let [attachments (seq attachments)]
+        [fields/attachment-row attachments])]]))
 
-(defn- event-view [{:keys [time event comment decision attachments]}]
-  [:div.row.event
-   [:label.col-sm-2.col-form-label time]
-   [:div.col-sm-10
-    [:div.col-form-label event]
-    (when decision
-      [:div decision])
-    (when comment
-      [:div.event-comment comment])
-    (when-let [attachments (seq attachments)]
-      [fields/attachment-row attachments])]])
-
-(defn- render-event-groups [event-groups]
-  (for [group event-groups]
-    (into [:div.event-group]
-          (for [e group]
-            [event-view e]))))
+(defn- render-events [events]
+  (for [e events]
+    [event-view e]))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
@@ -536,18 +549,16 @@
     (for [event (:application/events application)]
       (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
 
-(defn- application-state [application config]
+(defn- application-state [application config highlight-request-id]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
-        event-groups (->> (events-with-attachments application)
-                          (group-by #(or (:application/request-id %)
-                                         (:event/id %)))
-                          vals
-                          (map (partial sort-by :event/time))
-                          (sort-by #(:event/time (first %)))
-                          reverse
-                          (map #(map format-event %)))
-        [event-groups-show-always event-groups-collapse] (split-at 3 event-groups)]
+        events (->> (events-with-attachments application)
+                    (sort-by :event/time)
+                    (map #(assoc % :highlight
+                                 (and highlight-request-id
+                                      (= (:application/request-id %) highlight-request-id))))
+                    reverse)
+        [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
      {:id "header"
       :title (text :t.applications/state)
@@ -572,12 +583,12 @@
                       (text :t.applications/latest-activity)
                       (localize-time last-activity)
                       {:inline? true}]]
-                    (when (seq event-groups-show-always)
+                    (when (seq events-show-always)
                       (into [[:h3 (text :t.form/events)]]
-                            (render-event-groups event-groups-show-always))))
-      :collapse (when (seq event-groups-collapse)
+                            (render-events events-show-always))))
+      :collapse (when (seq events-collapse)
                   (into [:div]
-                        (render-event-groups event-groups-collapse)))}]))
+                        (render-events events-collapse)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -772,14 +783,14 @@
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
-(defn- render-application [{:keys [application edit-application config userid]}]
+(defn- render-application [{:keys [application edit-application config userid highlight-request-id]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config]
+     [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      (when (contains? (:application/permissions application) :see-everything)
@@ -800,6 +811,7 @@
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
+        highlight-request-id @(rf/subscribe [::highlight-request-id])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
@@ -815,7 +827,8 @@
        [render-application {:application application
                             :edit-application edit-application
                             :config config
-                            :userid userid}])
+                            :userid userid
+                            :highlight-request-id highlight-request-id}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
      (when reloading?
@@ -1039,21 +1052,33 @@
 
    (component-info event-view)
    (example "simple event"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Alice Applicant submitted the application"}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/submitted
+                         :event/actor-attributes {:userid "alice" :name "Alice Applicant"}}])
    (example "event with comment & decision"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler has made a decision on the application"
-                         :decision "Rejected"
-                         :comment "This application is bad."}])
-   (example "event with attachment"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler attached some things"
-                         :attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/decided
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :application/decision :rejected
+                         :application/comment "This application is bad."}])
+   (example "event with comment & decision, highlighted"
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/decided
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :application/decision :rejected
+                         :application/comment "This application is bad."
+                         :highlight true}])
+   (example "event with long comment & attachment"
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/remarked
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :application/comment (str lipsum "\n\nA final line.")
+                         :event/attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
    (example "event with many attachments"
-            [event-view {:time "2020-01-01 08:35"
-                         :event "Hannah Handler attached some things"
-                         :attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
+            [event-view {:event/time #inst "2020-01-01T08:35"
+                         :event/type :application.event/approved
+                         :event/actor-attributes {:name "Hannah Handler"}
+                         :event/attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
 
    (component-info application-copy-notice)
    (example "no copies"
