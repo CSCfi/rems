@@ -45,8 +45,8 @@
           (s/optional-key :organization/owners) [User]
           (s/optional-key :organization/review-emails) [{:name LocalizedString
                                                          :email s/Str}]
-          (s/optional-key :organization/enabled) s/Bool
-          (s/optional-key :organization/archived) s/Bool}))
+          (s/optional-key :enabled) s/Bool
+          (s/optional-key :archived) s/Bool}))
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
@@ -125,11 +125,11 @@
 
 (s/defschema OrganizationEnabledCommand
   (merge OrganizationId
-         {:organization/enabled s/Bool}))
+         {:enabled s/Bool}))
 
 (s/defschema OrganizationArchivedCommand
   (merge OrganizationId
-         {:organization/archived s/Bool}))
+         {:archived s/Bool}))
 
 (s/defschema SuccessResponse
   {:success s/Bool

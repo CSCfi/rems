@@ -51,7 +51,7 @@
 
 (defn- add-status-bits [dep]
   (merge dep
-         (select-keys (enrich-dependency dep) [:archived :enabled :organization/archived :organization/enabled])))
+         (select-keys (enrich-dependency dep) [:archived :enabled])))
 
 (defn- only-id [item]
   (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
@@ -111,7 +111,6 @@
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
                         (mapv add-status-bits)
                         (remove :archived)
-                        (remove :organization/archived)
                         seq)]
     {:success false
      :errors [(merge {:type :t.administration.errors/in-use-by}
@@ -122,7 +121,7 @@
   [item]
   (when-let [used (->> (get-in (dependencies) [:dependencies item])
                        (mapv add-status-bits)
-                       (filter #(or (:archived %) (:organization/archived %)))
+                       (filter :archived)
                        seq)]
     {:success false
      :errors [(merge {:type :t.administration.errors/dependencies-archived}
