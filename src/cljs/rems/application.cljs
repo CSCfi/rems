@@ -473,17 +473,18 @@
                "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
-      [:div.col-form-label.event-description event-text
+      [:div.col-form-label.event-description [:b event-text]
        (when request-id
-         [:a {:href "#"
-              :on-click (fn [e]
-                          (rf/dispatch [::highlight-request-id request-id])
-                          false)}
-          " " (text :t.applications/highlight-related-events)])]
+         [:div.float-right
+          [:a {:href "#"
+               :on-click (fn [e]
+                           (rf/dispatch [::highlight-request-id request-id])
+                           false)}
+           " " (text :t.applications/highlight-related-events)]])]
       (when decision
         [:div.event-decision decision])
       (when comment
-        [:div.event-comment comment])
+        [:div.form-control.event-comment comment])
       (when-let [attachments (seq attachments)]
         [fields/attachment-row attachments])]]))
 
@@ -1059,19 +1060,19 @@
                          :event/type :application.event/decided
                          :event/actor-attributes {:name "Hannah Handler"}
                          :application/decision :rejected
-                         :event/comment "This application is bad."}])
+                         :application/comment "This application is bad."}])
    (example "event with comment & decision, highlighted"
             [event-view {:event/time #inst "2020-01-01T08:35"
                          :event/type :application.event/decided
                          :event/actor-attributes {:name "Hannah Handler"}
                          :application/decision :rejected
-                         :event/comment "This application is bad."
+                         :application/comment "This application is bad."
                          :highlight true}])
    (example "event with comment & attachment"
             [event-view {:event/time #inst "2020-01-01T08:35"
                          :event/type :application.event/remarked
                          :event/actor-attributes {:name "Hannah Handler"}
-                         :event/comment "See attached file."
+                         :application/comment "See attached file."
                          :event/attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
    (example "event with many attachments"
             [event-view {:event/time #inst "2020-01-01T08:35"
