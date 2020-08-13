@@ -19,9 +19,9 @@
                                   api-key user-id))
         resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization {:organization/id "abc"} :licenses [license-id]}
                                    api-key user-id))
-        form-id (:id (api-call :post "/api/forms/create" {:form/organization {:organization/id "abc"} :form/title "form update test" :form/fields []}
+        form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "abc"} :form/title "form update test" :form/fields []}
                                api-key user-id))
-        wf-form-id (:id (api-call :post "/api/forms/create" {:form/organization {:organization/id "abc"} :form/title "workflow form update test" :form/fields []}
+        wf-form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "abc"} :form/title "workflow form update test" :form/fields []}
                                   api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization {:organization/id "abc"} :title "default workflow"

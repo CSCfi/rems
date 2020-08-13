@@ -14,7 +14,7 @@
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/title "form name" :form/organization {:organization/id "organization1"}})
+        form-id (test-data/create-form! {:form/title "form name" :organization {:organization/id "organization1"}})
         ;; can create catalogue items with mixed organizations:
         wf-id (test-data/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
         res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
@@ -74,7 +74,7 @@
   (let [api-key "42"
         owner "owner"
         user "alice"
-        form-id (test-data/create-form! {:form/organization {:organization/id "organization1"}})
+        form-id (test-data/create-form! {:organization {:organization/id "organization1"}})
         wf-id (test-data/create-workflow! {:organization {:organization/id "organization1"}})
         res-id (test-data/create-resource! {:organization {:organization/id "organization1"}})]
     (testing "create"
@@ -224,9 +224,9 @@
   (let [api-key "42"
         resource-id (test-data/create-resource! {:organization {:organization/id "organization1"}})
         old-form-id (test-data/create-form! {:form/title "old form"
-                                             :form/organization {:organization/id "organization1"}})
+                                             :organization {:organization/id "organization1"}})
         new-form-id (test-data/create-form! {:form/title "new form"
-                                             :form/organization {:organization/id "organization1"}})
+                                             :organization {:organization/id "organization1"}})
         old-catalogue-item-id (test-data/create-catalogue-item!
                                {:organization {:organization/id "organization1"}
                                 :title {:en "change-form-test catalogue item en"
@@ -269,7 +269,7 @@
         (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
     (testing "can change to form that's in another organization"
       (let [form-id (test-data/create-form! {:form/title "wrong organization"
-                                             :form/organization {:organization/id "organization2"}})
+                                             :organization {:organization/id "organization2"}})
             response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate api-key "owner")
                          (json-body {:form form-id})

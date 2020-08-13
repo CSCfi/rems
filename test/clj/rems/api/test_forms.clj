@@ -30,7 +30,7 @@
         org-owner "organization-owner1"
         owner "owner"
 
-        command {:form/organization {:organization/id "organization1"}
+        command {:organization {:organization/id "organization1"}
                  :form/title (str "form title " (UUID/randomUUID))
                  :form/fields [{:field/title {:en "en title"
                                               :fi "fi title"
@@ -68,7 +68,7 @@
                                                             command-with-invalid-max-length
                                                             api-key user-id)))))
             (testing "duplicate field ids"
-              (let [command-with-duplicated-field-ids {:form/organization {:organization/id "organization1"}
+              (let [command-with-duplicated-field-ids {:organization {:organization/id "organization1"}
                                                        :form/title (str "form title " (UUID/randomUUID))
                                                        :form/fields [{:field/id "abc"
                                                                       :field/title {:en "en title"
@@ -102,10 +102,10 @@
                                               api-key user-id)]
                   (testing "result matches input"
                     (is (= (-> command
-                               (select-keys [:form/organization :form/title])
+                               (select-keys [:organization :form/title])
                                (assoc-in
-                                [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
-                           (select-keys form-template [:form/organization :form/title])))
+                                [:organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
+                           (select-keys form-template [:organization :form/title])))
                     (is (= (:form/fields command)
                            (mapv fixup-field-to-match-command (:form/fields form-template)))))))))
           (testing "valid create with given field id"
@@ -119,16 +119,16 @@
                                               api-key user-id)]
                   (testing "result matches input"
                     (is (= (-> command-with-given-field-id
-                               (select-keys [:form/organization :form/title])
-                               (assoc-in [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
-                           (select-keys form-template [:form/organization :form/title])))
+                               (select-keys [:organization :form/title])
+                               (assoc-in [:organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
+                           (select-keys form-template [:organization :form/title])))
                     (is (= (mapv #(dissoc % :field/id) (:form/fields command-with-given-field-id))
                            (mapv fixup-field-to-match-command (:form/fields form-template))))
                     (is (= (get-in command-with-given-field-id [:form/fields 0 :field/id]) ; field/id "not" in previous comparison
                            (get-in form-template [:form/fields 0 :field/id])))))))))))
     (testing "create as organization owner with incorrect organization"
       (let [response (api-response :post "/api/forms/create"
-                                   (assoc command :form/organization {:organization/id "organization2"})
+                                   (assoc command :organization {:organization/id "organization2"})
                                    api-key "organization-owner1")]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization2\"" (read-body response)))))))
@@ -137,7 +137,7 @@
   (let [api-key "42"
         user-id "owner"
         localized {:en "en" :fi "fi" :sv "sv"}
-        form-spec {:form/organization {:organization/id "organization1"}
+        form-spec {:organization {:organization/id "organization1"}
                    :form/title "all field types test"
                    :form/fields [{:field/type :text
                                   :field/title localized
@@ -196,9 +196,9 @@
                          handler
                          read-ok-body)]
             (is (= (-> form-spec
-                       (select-keys [:form/organization :form/title])
-                       (assoc-in [:form/organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
-                   (select-keys form [:form/organization :form/title])))
+                       (select-keys [:organization :form/title])
+                       (assoc-in [:organization :organization/name] {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}))
+                   (select-keys form [:organization :form/title])))
             (is (= (:form/fields form-spec)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
@@ -206,7 +206,7 @@
   (let [api-key "42"
         user-id "owner"]
     (let [form-id (:id (api-call :post "/api/forms/create"
-                                 {:form/organization {:organization/id "organization1"}
+                                 {:organization {:organization/id "organization1"}
                                   :form/title "form editable test"
                                   :form/fields []}
                                  api-key user-id))]
@@ -237,7 +237,7 @@
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))
     (let [form-id (:id (api-call :post "/api/forms/create"
-                                 {:form/organization {:organization/id "organization1"}
+                                 {:organization {:organization/id "organization1"}
                                   :form/title "form editable test 2"
                                   :form/fields []}
                                  api-key user-id))]
@@ -267,7 +267,7 @@
   (let [api-key "42"
         user-id "owner"
         form-id (:id (api-call :post "/api/forms/create"
-                               {:form/organization {:organization/id "organization1"}
+                               {:organization {:organization/id "organization1"}
                                 :form/title "form edit test"
                                 :form/fields []}
                                api-key user-id))]
@@ -275,7 +275,7 @@
       (testing "can edit title in own organization"
         (is (true? (:success (api-call :put "/api/forms/edit"
                                        {:form/id form-id
-                                        :form/organization {:organization/id "organization1"}
+                                        :organization {:organization/id "organization1"}
                                         :form/title "changed title"
                                         :form/fields []}
                                        api-key "organization-owner1"))))
@@ -284,35 +284,35 @@
       (testing "can't edit title in another organization"
         (is (response-is-forbidden? (api-response :put "/api/forms/edit"
                                                   {:form/id form-id
-                                                   :form/organization {:organization/id "organization1"}
+                                                   :organization {:organization/id "organization1"}
                                                    :form/title "changed title more"
                                                    :form/fields []}
                                                   api-key "organization-owner2"))))
       (testing "can't change organization"
         (is (response-is-forbidden? (api-response :put "/api/forms/edit"
                                                   {:form/id form-id
-                                                   :form/organization {:organization/id "organization2"}
+                                                   :organization {:organization/id "organization2"}
                                                    :form/title "changed title"
                                                    :form/fields []}
                                                   api-key "organization-owner1")))))
     (testing "owner can change title and organization"
       (is (true? (:success (api-call :put "/api/forms/edit"
                                      {:form/id form-id
-                                      :form/organization {:organization/id "abc"}
+                                      :organization {:organization/id "abc"}
                                       :form/title "I am owner"
                                       :form/fields []}
                                      api-key user-id))))
       (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
         (is (= {:organization/id "abc"
                 :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}}
-               (:form/organization form)))
+               (:organization form)))
         (is (= "I am owner" (:form/title form)))))))
 
 (deftest form-enabled-archived-test
   (let [api-key "42"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key "owner")
-                    (json-body {:form/organization {:organization/id "organization1"}
+                    (json-body {:organization {:organization/id "organization1"}
                                 :form/title "form update test"
                                 :form/fields []})
                     handler
@@ -359,7 +359,7 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "create"
-      (let [command {:form/organization {:organization/id "abc"}
+      (let [command {:organization {:organization/id "abc"}
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
                                                   :fi "fi title"
@@ -398,7 +398,7 @@
   (let [api-key "42"
         user-id "owner"
         localized {:en "en" :fi "fi" :sv "sv"}
-        command {:form/organization {:organization/id "abc"}
+        command {:organization {:organization/id "abc"}
                  :form/title "form fields with privacy"
                  :form/fields [{:field/id "header"
                                 :field/type :header
@@ -459,7 +459,7 @@
   (let [api-key "42"
         user-id "owner"
         localized {:en "en" :fi "fi" :sv "sv"}
-        command {:form/organization {:organization/id "abc"}
+        command {:organization {:organization/id "abc"}
                  :form/title "text fields that depend on a field"
                  :form/fields [{:field/id "fld1"
                                 :field/type :option
@@ -543,9 +543,9 @@
             (let [form (api-call :get (str "/api/forms/" form-id) nil
                                  api-key user-id)]
               (is (= (-> command
-                         (select-keys [:form/organization :form/title])
-                         (assoc-in [:form/organization :organization/name] {:fi "ABC" :en "ABC" :sv "ABC"}))
-                     (select-keys form [:form/organization :form/title])))
+                         (select-keys [:organization :form/title])
+                         (assoc-in [:organization :organization/name] {:fi "ABC" :en "ABC" :sv "ABC"}))
+                     (select-keys form [:organization :form/title])))
               (is (= [{:field/id "fld1"
                        :field/type "option"
                        :field/title localized
@@ -613,7 +613,7 @@
                                                      :field/options [{:key "opt"
                                                                       :label {:sv "Swedish label"}}]}]}))]
     (is (= {:form/id id
-            :form/organization {:organization/id "default" :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"}}
+            :organization {:organization/id "default" :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"}}
             :form/title "invalid form"
             :form/fields [{:field/placeholder {:en "Placeholder"}
                            :field/title {:fi "Title in Finnish"}
@@ -649,7 +649,7 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:form/organization {:organization/id "abc"}
+                         (json-body {:organization {:organization/id "abc"}
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
@@ -667,7 +667,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:form/organization {:organization/id "abc"}
+                         (json-body {:organization {:organization/id "abc"}
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]

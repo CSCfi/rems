@@ -13,7 +13,7 @@
               :resource {:id 456
                          :organization {:organization/id "organization1"}}
               :form {:form/id 789
-                     :form/organization {:organization/id "organization1"}}}
+                     :organization {:organization/id "organization1"}}}
         languages [:en :fi]]
 
     (testing "valid form"

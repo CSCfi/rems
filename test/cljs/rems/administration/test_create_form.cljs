@@ -165,7 +165,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:form/organization {:organization/id "abc"}
+  (let [form {:organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/index 0
@@ -179,7 +179,7 @@
         languages [:en :fi]]
 
     (testing "basic form"
-      (is (= {:form/organization {:organization/id "abc"}
+      (is (= {:organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -192,7 +192,7 @@
              (build-request form languages))))
 
     (testing "trim strings"
-      (is (= {:form/organization {:organization/id "abc"}
+      (is (= {:organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -205,14 +205,14 @@
              (build-request (assoc form :form/title " the title\t\n") languages))))
 
     (testing "zero fields"
-      (is (= {:form/organization {:organization/id "abc"}
+      (is (= {:organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields []}
              (build-request (assoc-in form [:form/fields] []) languages))))
 
     (testing "date fields"
       (let [form (assoc-in form [:form/fields 0 :field/type] :date)]
-        (is (= {:form/organization {:organization/id "abc"}
+        (is (= {:organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
@@ -249,7 +249,7 @@
                                                                 {:key "no"
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}]))]
-        (is (= {:form/organization {:organization/id "abc"}
+        (is (= {:organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
@@ -273,7 +273,7 @@
                                                                 {:key "bacon"
                                                                  :label {:en "Bacon"
                                                                          :fi "Pekonia"}}]))]
-        (is (= {:form/organization {:organization/id "abc"}
+        (is (= {:organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"

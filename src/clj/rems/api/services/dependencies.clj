@@ -26,7 +26,7 @@
      {:from {:license/id (:id lic)} :to dep})
 
    (for [form (form/get-form-templates nil)
-         dep [(:form/organization form)]]
+         dep [(:organization form)]]
      {:from {:form/id (:form/id form)} :to dep})
 
    (for [res (resource/get-resources {})

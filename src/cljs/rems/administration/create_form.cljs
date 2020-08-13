@@ -158,7 +158,7 @@
                                              [:visibility/type :visibility/field :visibility/values])}))))
 
 (defn build-request [form languages]
-  {:form/organization {:organization/id (get-in form [:form/organization :organization/id])}
+  {:organization {:organization/id (get-in form [:organization :organization/id])}
    :form/title (trim-when-string (:form/title form))
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
@@ -236,9 +236,9 @@
    :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :form/organization])))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
 
 (defn- form-organization-field []
   [fields/organization-field {:id "organization-dropdown"
@@ -515,9 +515,9 @@
 (defn format-validation-errors [form-errors form lang]
   ;; TODO: deduplicate with field definitions
   (into [:ul
-         (when (:form/organization form-errors)
+         (when (:organization form-errors)
            [:li [:a {:href "#" :on-click (focus-input-field "organization")}
-                 (text-format (:form/organization form-errors) (text :t.administration/organization))]])
+                 (text-format (:organization form-errors) (text :t.administration/organization))]])
 
          (when (:form/title form-errors)
            [:li [:a {:href "#" :on-click (focus-input-field "title")}
