@@ -277,8 +277,8 @@
                                        :message "Bästa %1,\n\n%2 begär ditt godkännande för de förändrade användarvillkoren för ansökning %3.\n\nDu kan granska ansökningen och godkänna de förändrade användarvillkoren bakom denna länk: %6"}
           :application-resubmitted {:subject-to-handler "(%3) Ansökningen har lämnats in igen"
                                     :message-to-handler "Bästa %1,\n\n%4 har lämnat in ansökning %3 igen.\n\nDu kan granska ansökan bakom denna länk: %6"}
-          :application-submitted {:subject-to-applicant "TODO %3"
-                                  :message-to-applicant "TODO %1 %3 %6"
+          :application-submitted {:subject-to-applicant "Din ansökning %3 har mottagits" ;; TODO check translation
+                                  :message-to-applicant "Bästä %1,\n\nDin ansökning %3 har mottagits och ska behandlas. Du får e-post när ansökningen har behandlats.\n\nDu kan granska ansökningen bakom denna länk: %6" ;; TODO check translation
                                   :subject-to-handler "(%3) Ny ansökan"
                                   :message-to-handler "Bästa %1,\n\n%4 har lämnat in ansökning %3 om användningsrätt till följande resurs(er) %5.\n\nDu kan granska ansökningen bakom denna länk: %6"}
           :decided {:subject "(%3) Beslut skickat"
