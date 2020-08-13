@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
-            [rems.common.util :refer [select-vals]]
             [rems.text :refer [text text-format get-localized-title]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
