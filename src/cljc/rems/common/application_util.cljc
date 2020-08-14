@@ -30,25 +30,24 @@
 (defn is-handler? [application user]
   (contains? (workflow-handlers application) user))
 
+(defn- is-parsable-to-int? [s]
+  (re-matches #"\d+" s))
+
 (defn- str-to-int [s]
   #?(:clj (Integer/parseInt s)
      :cljs (js/parseInt s 10)))
-
-;; (defn- printToConsole [s]
-;;   #?(:clj (println s)
-;;      :cljs (js/console.log s)))
 
 (defn parse-sortable-external-id
   "The idea is to parse all numbers from the string to vector and then compare the values in the vector"
   [external-id]
   (when external-id
-    (when-let [number-sequence  (seq (re-seq #"\d+" external-id))]
-      (mapv str-to-int
+    (when-let [number-sequence (seq (re-seq #"\d+|[^\d]+" external-id))]
+      (mapv (fn [str] (str-to-int (is-parsable-to-int? str)))
             number-sequence))))
 
 (deftest test-parse-sortable-external-id
   (is (= [2020 10] (parse-sortable-external-id "2020/10")))
-  (is (= [54 14 01 00 2002 21] (parse-sortable-external-id "THL/54/14.01.00/2002-rems/21")))
+  (is (= ["THL/" "54" "/" "14" "." "01" "." "00" "/" "2002" "-rems/" "21"] (parse-sortable-external-id "THL/54/14.01.00/2002-rems/21")))
   (is (= [2000 1] (parse-sortable-external-id "ABC/2000.1")))
   (is (= nil (parse-sortable-external-id "abGtmk")))
   (is (= nil (parse-sortable-external-id nil))))
