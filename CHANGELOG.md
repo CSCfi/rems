@@ -38,6 +38,7 @@ Changes since v2.12
 - It's now possible to add a text to the login page after the login button using extra translations (:t.login/intro2) (#2214)
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
+- Organizations have an initial UI (#2039)
 
 ## v2.12 "Merituulentie" 2020-05-04
 
