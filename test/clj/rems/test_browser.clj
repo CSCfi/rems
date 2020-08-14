@@ -455,6 +455,7 @@
       (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
+      (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
       (fill-form-field "License name" (str (btu/context-get :license-name) " EN") {:index 1})
@@ -508,6 +509,7 @@
       (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
+      (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-get :resid))
       (select-option "License" (str (btu/context-get :license-name) " EN"))
@@ -533,6 +535,7 @@
       (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Form name" (btu/context-get :form-name))
       ;; TODO: create fields
@@ -556,6 +559,7 @@
       (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
       (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-get :workflow-name))
       ;; Default workflow is already checked
@@ -582,6 +586,8 @@
     (btu/with-postmortem {:dir btu/reporting-dir}
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
+      (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
+      (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Name" (btu/context-get :catalogue-item-name) {:index 1})
       (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
