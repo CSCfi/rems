@@ -30,8 +30,8 @@
                            " \""  [get-localized-title-for-anything item] "\""])}
    (text :t.administration/enable)])
 
-                                        ; TODO consider naming enabled-toggle-button
-(defn enabled-toggle [item on-change]
+
+(defn enabled-toggle [item on-change] ; TODO consider naming enabled-toggle-button
   (if (:enabled item)
     [disable-button item on-change]
     [enable-button item on-change]))
