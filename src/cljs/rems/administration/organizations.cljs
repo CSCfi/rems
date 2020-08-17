@@ -75,19 +75,18 @@
    [(rf/subscribe [::organizations])
     (rf/subscribe [:language])])
  (fn [[organizations language] _]
-   (map (fn [organization]
-          {:key (:organization/id organization)
-           :name {:value (get-in organization [:organization/name language])}
-           :active (let [checked? (status-flags/active? organization)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
-                      :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
-                           #_[to-view-organization (:id organization)] ; TODO hidden until it works
-                           [roles/when roles/show-admin-edit-buttons?
-                            [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
-                            [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})
-        organizations)))
+   (for [organization organizations]
+     {:key (:organization/id organization)
+      :name {:value (get-in organization [:organization/name language])}
+      :active (let [checked? (status-flags/active? organization)]
+                {:td [:td.active
+                      [readonly-checkbox {:value checked?}]]
+                 :sort-value (if checked? 1 2)})
+      :commands {:td [:td.commands
+                      #_[to-view-organization (:id organization)] ; TODO hidden until it works
+                      [roles/when roles/show-admin-edit-buttons?
+                       [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
+                       [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})))
 
 (defn- organizations-list []
   (let [organizations-table {:id ::organizations
