@@ -32,7 +32,7 @@
 
                                         ; TODO consider naming enabled-toggle-button
 (defn enabled-toggle [item on-change]
-  (if (or (:enabled item) (:enabled item))
+  (if (:enabled item)
     [disable-button item on-change]
     [enable-button item on-change]))
 
@@ -55,7 +55,7 @@
 
 ;; TODO consider naming archived-toggle-button
 (defn archived-toggle [item on-change]
-  (if (or (:archived item) (:archived item))
+  (if (:archived item)
     [unarchive-button item on-change]
     [archive-button item on-change]))
 
