@@ -25,47 +25,47 @@
                (status-flags org-id1))))
 
       ;; reset all to false for the following tests
-      (organizations/set-organization-enabled! {:id org-id1
+      (organizations/set-organization-enabled! {:organization/id org-id1
                                                 :enabled false})
-      (organizations/set-organization-archived! {:id org-id1
+      (organizations/set-organization-archived! {:organization/id org-id1
                                                  :archived false})
 
       (testing "enable"
-        (organizations/set-organization-enabled! {:id org-id1
+        (organizations/set-organization-enabled! {:organization/id org-id1
                                                   :enabled true})
         (is (= {:enabled true
                 :archived false}
                (status-flags org-id1))))
 
       (testing "disable"
-        (organizations/set-organization-enabled! {:id org-id1
+        (organizations/set-organization-enabled! {:organization/id org-id1
                                                   :enabled false})
         (is (= {:enabled false
                 :archived false}
                (status-flags org-id1))))
 
       (testing "archive"
-        (organizations/set-organization-archived! {:id org-id1
+        (organizations/set-organization-archived! {:organization/id org-id1
                                                    :archived true})
         (is (= {:enabled false
                 :archived true}
                (status-flags org-id1))))
 
       (testing "unarchive"
-        (organizations/set-organization-archived! {:id org-id1
+        (organizations/set-organization-archived! {:organization/id org-id1
                                                    :archived false})
         (is (= {:enabled false
                 :archived false}
                (status-flags org-id1))))
 
       (testing "does not affect unrelated organizations"
-        (organizations/set-organization-enabled! {:id org-id1
+        (organizations/set-organization-enabled! {:organization/id org-id1
                                                   :enabled true})
-        (organizations/set-organization-archived! {:id org-id1
+        (organizations/set-organization-archived! {:organization/id org-id1
                                                    :archived true})
-        (organizations/set-organization-enabled! {:id org-id2
+        (organizations/set-organization-enabled! {:organization/id org-id2
                                                   :enabled false})
-        (organizations/set-organization-archived! {:id org-id2
+        (organizations/set-organization-archived! {:organization/id org-id2
                                                    :archived false})
         (is (= {:enabled true
                 :archived true}
@@ -74,9 +74,9 @@
                 :archived false}
                (status-flags org-id2)))
 
-        (is (:success (organizations/set-organization-archived! {:id org-id1
+        (is (:success (organizations/set-organization-archived! {:organization/id org-id1
                                                                  :archived false})))
-        (is (:success (organizations/set-organization-archived! {:id org-id2
+        (is (:success (organizations/set-organization-archived! {:organization/id org-id2
                                                                  :archived true})))
 
         (is (= {:enabled true

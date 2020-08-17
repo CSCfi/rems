@@ -1,7 +1,6 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
-            [rems.fetcher :as fetcher]
             [rems.navbar :as navbar]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -27,7 +26,8 @@
    [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]
    [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
    [navbar/nav-link "/administration/reports" (text :t.administration/reports)]
-   [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]])
+   [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]
+   [navbar/nav-link "/administration/organizations" (text :t.administration/organizations)]])
 
 (defn guide []
   [:div

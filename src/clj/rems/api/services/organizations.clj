@@ -1,8 +1,9 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
-            [medley.core :refer [find-first]]
+            [medley.core :refer [assoc-some find-first]]
             [rems.api.services.dependencies :as dependencies]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]))
 
@@ -30,9 +31,12 @@
        (filter (partial owner-filter-match? owner))
        (doall)))
 
-(defn get-organizations [& [userid owner]]
+(defn get-organizations [& [{:keys [userid owner enabled archived]}]]
   (->> (organizations/get-organizations-raw)
-       (organization-filters userid owner)))
+       (organization-filters userid owner)
+       (db/apply-filters (assoc-some {}
+                                     :enabled enabled
+                                     :archived archived))))
 
 (defn get-organization [organization]
   (->> (organizations/get-organizations-raw)
@@ -41,11 +45,11 @@
 (defn add-organization! [userid org]
   (organizations/add-organization! userid org))
 
-(defn set-organization-enabled! [{:keys [id enabled]}]
+(defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
   (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
   {:success true})
 
-(defn set-organization-archived! [{:keys [id archived]}]
+(defn set-organization-archived! [{:organization/keys [id] :keys [archived]}]
   (or (dependencies/change-archive-status-error archived  {:organization/id id})
       (do
         (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
