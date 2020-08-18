@@ -461,3 +461,108 @@
               (is (= [{:blacklist/user applicant-attributes
                        :blacklist/resource {:resource/ext-id resource-ext-id}}]
                      (:application/blacklist application))))))))))
+
+(deftest test-blacklisting
+  (let [api-key "42"
+        owner-id "owner"
+        handler-id "e2e-handler"
+        handler-attributes {:userid handler-id
+                            :name "E2E Handler"
+                            :email "handler@example.com"}
+        applicant-id "e2e-applicant"
+        applicant-attributes {:userid applicant-id
+                              :name "E2E Applicant"
+                              :email "applicant@example.com"}
+        rejecter-attributes {:userid rejecter-bot/bot-userid
+                             :email nil
+                             :name "rejecter"}]
+    (testing "create users"
+      (api-call :post "/api/users/create" handler-attributes api-key owner-id)
+      (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
+      (api-call :post "/api/users/create" rejecter-attributes api-key owner-id))
+
+    (let [resource-ext-id "e2e-resource"
+          resource-id
+          (testing "create resource"
+            (extract-id
+             (api-call :post "/api/resources/create" {:resid resource-ext-id
+                                                      :organization {:organization/id "e2e"}
+                                                      :licenses []}
+                       api-key owner-id)))
+          form-id
+          (testing "create form"
+            (extract-id
+             (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
+                                                  :form/title "e2e"
+                                                  :form/fields [{:field/type :text
+                                                                 :field/title {:en "text field"
+                                                                               :fi "tekstikenttä"
+                                                                               :sv "textfält"}
+                                                                 :field/optional true}]}
+                       api-key owner-id)))
+          workflow-id
+          (testing "create workflow"
+            (extract-id
+             (api-call :post "/api/workflows/create" {:organization {:organization/id "e2e"}
+                                                      :title "e2e workflow"
+                                                      :type :workflow/default
+                                                      :handlers [handler-id
+                                                                 rejecter-bot/bot-userid]}
+                       api-key owner-id)))
+          catalogue-item-id
+          (testing "create catalogue item"
+            (extract-id
+             (api-call :post "/api/catalogue-items/create" {:organization {:organization/id "e2e"}
+                                                            :resid resource-id
+                                                            :form form-id
+                                                            :wfid workflow-id
+                                                            :localizations {:en {:title "e2e catalogue item"}}}
+                       api-key owner-id)))
+          app-1 (testing "create first application"
+                  (:application-id
+                   (assert-success
+                    (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                              api-key applicant-id))))
+          app-2 (testing "create application"
+                  (:application-id
+                   (assert-success
+                    (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                              api-key applicant-id))))]
+      (testing "submit first application"
+        (assert-success
+         (api-call :post "/api/applications/submit" {:application-id app-1}
+                   api-key applicant-id)))
+      (testing "second application"
+        (testing "submit"
+          (assert-success
+           (api-call :post "/api/applications/submit" {:application-id app-2}
+                     api-key applicant-id)))
+        (testing "approve"
+          (assert-success
+           (api-call :post "/api/applications/approve" {:application-id app-2}
+                     api-key handler-id)))
+        (testing "revoke"
+          (assert-success
+           (api-call :post "/api/applications/revoke" {:application-id app-2
+                                                       :comment "revoke"}
+                     api-key handler-id))))
+      (testing "user blacklisted"
+        (let [[entry & _] (api-call :get (str "/api/blacklist?user=" applicant-id "&resource=" resource-ext-id) nil
+                                    api-key handler-id)]
+          (is (= {:resource/ext-id resource-ext-id} (:blacklist/resource entry)))
+          (is (= applicant-id (:userid (:blacklist/user entry))))))
+      (testing "first application rejected"
+        (let [application (api-call :get (str "/api/applications/" app-1) nil
+                                    api-key applicant-id)]
+          (is (= "application.state/rejected" (:application/state application)))))
+      (testing "new applications gets automatically rejected"
+        (let [app-3 (:application-id
+                     (assert-success
+                      (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                                api-key applicant-id)))]
+          (assert-success
+           (api-call :post "/api/applications/submit" {:application-id app-3}
+                     api-key applicant-id))
+          (let [application (api-call :get (str "/api/applications/" app-3) nil
+                                      api-key applicant-id)]
+            (is (= "application.state/rejected" (:application/state application)))))))))
