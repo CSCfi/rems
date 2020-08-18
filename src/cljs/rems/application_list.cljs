@@ -70,6 +70,7 @@
           threshold (time/plus start seconds)]
       (time/after? (time/now) threshold))))
 
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
@@ -81,7 +82,8 @@
    (map (fn [app]
           {:key (:application/id app)
            :id {:value (:application/id app)}
-           :external-id {:value (:application/external-id app)}
+           :external-id {:value (:application/external-id app)
+                         :sort-value (application-util/parse-sortable-external-id (:application/external-id app))}
            :description {:value (:application/description app)
                          :td [:td.description (format-description app)]}
            :resource {:value (format-catalogue-items app)}
@@ -121,6 +123,7 @@
                              :display-value (localize-time value)})
            :view {:td [:td.view [view-button app]]}})
         apps)))
+
 
 (defn list [{:keys [id applications visible-columns default-sort-column default-sort-order]
              :or {visible-columns (constantly true)}}]

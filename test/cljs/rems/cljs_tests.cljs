@@ -6,6 +6,7 @@
             rems.administration.test-create-resource
             rems.administration.test-create-workflow
             rems.administration.test-items
+            rems.common.application-util
             rems.common.form
             rems.common.util
             rems.common.test-util
@@ -20,6 +21,7 @@
            'rems.administration.test-create-resource
            'rems.administration.test-create-workflow
            'rems.administration.test-items
+           'rems.common.application-util
            'rems.common.form
            'rems.common.util
            'rems.common.test-util
