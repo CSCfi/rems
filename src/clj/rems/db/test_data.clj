@@ -1086,7 +1086,7 @@
         abc (organizations/add-organization! owner {:organization/id "abc"
                                                     :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
                                                     :organization/owners []
-                                                    :organization/review-emails []})
+                                                    :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
         csc (organizations/add-organization! owner {:organization/id "csc"
                                                     :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
                                                     :organization/owners []

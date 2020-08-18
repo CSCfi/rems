@@ -21,6 +21,7 @@
             [rems.administration.forms :refer [forms-page]]
             [rems.administration.license :refer [license-page]]
             [rems.administration.licenses :refer [licenses-page]]
+            [rems.administration.organization :refer [organization-page]]
             [rems.administration.organizations :refer [organizations-page]]
             [rems.administration.reports :refer [reports-page]]
             [rems.administration.resource :refer [resource-page]]
@@ -297,6 +298,7 @@
    :rems.administration/forms forms-page
    :rems.administration/license license-page
    :rems.administration/licenses licenses-page
+   :rems.administration/organization organization-page
    :rems.administration/organizations organizations-page
    :rems.administration/reports reports-page
    :rems.administration/resource resource-page
@@ -406,6 +408,11 @@
 
 (secretary/defroute "/administration" []
   (replace-url! "/administration/catalogue-items"))
+
+
+(secretary/defroute "/administration/organizations/:organization-id" [organization-id]
+  (rf/dispatch [:rems.administration.organization/enter-page organization-id])
+  (rf/dispatch [:set-active-page :rems.administration/organization]))
 
 (secretary/defroute "/administration/organizations" []
   (rf/dispatch [:rems.administration.organizations/enter-page])

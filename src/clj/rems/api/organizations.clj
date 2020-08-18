@@ -30,6 +30,14 @@
                                                    :owner owner}
                                                   (when-not disabled {:enabled true})
                                                   (when-not archived {:archived false})))))
+
+    (GET "/:organization-id" []
+      :summary "Get an organization. Returns more information for owners and handlers."
+      :roles #{:logged-in}
+      :path-params [organization-id :- (describe s/Str "organization id")]
+      :return OrganizationFull
+      (ok (organizations/get-organization (getx-user-id) {:organization/id organization-id})))
+
     (POST "/create" []
       :summary "Create organization"
       :roles #{:owner}
