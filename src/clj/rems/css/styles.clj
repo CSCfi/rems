@@ -72,13 +72,13 @@
 
 (defn- generate-form-placeholder-styles []
   (list
-   [".form-control::placeholder" {:color "#ccc"}] ; Standard
-   [".form-control::-webkit-input-placeholder" {:color "#ccc"}] ; WebKit, Blink, Edge
-   [".form-control:-moz-placeholder" {:color "#ccc"
+   [".form-control::placeholder" {:color "#555"}] ; Standard
+   [".form-control::-webkit-input-placeholder" {:color "#555"}] ; WebKit, Blink, Edge
+   [".form-control:-moz-placeholder" {:color "#555"
                                       :opacity 1}] ; Mozilla Firefox 4 to 18
-   [".form-control::-moz-placeholder" {:color "#ccc"
+   [".form-control::-moz-placeholder" {:color "#555"
                                        :opacity 1}] ; Mozilla Firefox 19+
-   [".form-control:-ms-input-placeholder" {:color "#ccc"}])) ; Internet Explorer 10-11
+   [".form-control:-ms-input-placeholder" {:color "#555"}])) ; Internet Explorer 10-11
 
 (defn- generate-media-queries []
   (list
@@ -800,6 +800,9 @@
       :outline "0"
       :outline-offset "-2px"
       :box-shadow "0 0 0 0.2rem rgba(0,123,255,.25)"})]
+   [:.dropdown-select__placeholder
+    (make-important
+     {:color "#555"})]
 
    (generate-phase-styles)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
