@@ -25,20 +25,17 @@
     (entitlements/update-entitlements-for-event event))
   [])
 
+;; TODO should this be in the revoke command handler instead?
 (defn- revokes-to-blacklist [new-events]
-  (apply concat
-         (for [event new-events
-               :when (= :application.event/revoked (:event/type event))
-               :let [application (applications/get-application-internal (:application/id event))]
-               user (application-util/applicant-and-members application)]
-           (do
-             (doseq [resource (:application/resources application)]
-               (blacklist/add-user-to-blacklist! (:event/actor event)
-                                                 {:blacklist/user {:userid (:userid user)}
-                                                  :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
-                                                  :comment (:application/comment event)}))
-             ;; TODO in the case of multiple applicants this can generate redundant reject commands
-             (rejecter-bot/reject-all-applications-by (:userid user))))))
+  (doseq [event new-events
+          :when (= :application.event/revoked (:event/type event))
+          :let [application (applications/get-application-internal (:application/id event))]
+          user (application-util/applicant-and-members application)
+          resource (:application/resources application)]
+    (blacklist/add-user-to-blacklist! (:event/actor event)
+                                      {:blacklist/user {:userid (:userid user)}
+                                       :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
+                                       :comment (:application/comment event)})))
 
 (defn run-process-managers [new-events]
   (concat

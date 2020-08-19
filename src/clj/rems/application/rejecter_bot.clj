@@ -28,13 +28,23 @@
   (when (= :application.event/submitted (:event/type event)) ;; rejecter bot only reacts to fresh applications
     (consider-rejecting application)))
 
-(defn run-rejecter-bot [new-events]
-  (doall (mapcat #(generate-commands % (applications/get-application (:application/id %)))
-                 new-events)))
-
 (defn reject-all-applications-by
   "Go through all applications by the given user-id and reject any if necessary. Returns sequence of commands."
   [user-id]
-  (let [apps (mapv #(applications/get-application-internal (:application/id %))
+  (let [apps (mapv #(applications/get-application-internal (:application/id %)) ;; TODO shouldn't need -internal
                    (applications/get-my-applications user-id))]
     (mapcat consider-rejecting apps)))
+
+(defn run-rejecter-bot [new-events]
+  (let [by-type (group-by :event/type new-events)
+        submissions (get by-type :application.event/submitted)
+        submitted-applications (mapv #(applications/get-application (:application/id %)) submissions)
+        revokes (get by-type :application.event/revoked)
+        revoked-users (distinct (for [event revokes
+                                      member (application-util/applicant-and-members (applications/get-application (:application/id event)))]
+                                  (:userid member)))]
+    (doall
+     (concat
+      (mapcat consider-rejecting submitted-applications)
+      ;; TODO if revoked-users share applications, they will possibly get revoked multiple times
+      (mapcat reject-all-applications-by revoked-users)))))
