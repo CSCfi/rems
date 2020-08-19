@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.tools.logging :as log]
             [rems.common.application-util :as application-util]
+            [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.permissions :as permissions]))
 
@@ -46,5 +47,5 @@
     (doall
      (concat
       (mapcat consider-rejecting submitted-applications)
-      ;; TODO if revoked-users share applications, they will possibly get revoked multiple times
-      (mapcat reject-all-applications-by revoked-users)))))
+      ;; TODO hacky removal of duplicate rejects
+      (distinct-by :application-id (mapcat reject-all-applications-by revoked-users))))))
