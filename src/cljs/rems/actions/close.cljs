@@ -44,7 +44,7 @@
     (when show-comment-field?
       [:<>
        [action-comment {:id action-form-id
-                        :label (text :t.form/add-comments-not-shown-to-applicant)
+                        :label (text :t.form/add-comments-shown-to-applicant)
                         :comment comment
                         :on-comment on-set-comment}]
        [action-attachment {:application-id application-id
