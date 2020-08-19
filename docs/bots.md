@@ -23,4 +23,16 @@ handle the application.
 User id: `rejecter-bot`
 
 The rejecter bot complements the approver bot. It rejects applications
-where a member is blacklisted for an applied resource.
+where a member is blacklisted for an applied resource. This can happen
+in three ways:
+
+1. An applicant who is already blacklisted for a resource submits a
+   new application for that resource. Rejecter bot rejects the
+   application.
+2. An approved application is revoked. This adds the applicant and the
+   members to the blacklist for the applied resources. Rejecter bot
+   then rejects any open applications these users have for the
+   resources in question.
+3. A user is added to a resource blacklist manually (via the
+   administration UI or the API). Rejecter bot then rejects any open
+   applications this user has for the resource in question.

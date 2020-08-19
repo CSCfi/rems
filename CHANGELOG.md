@@ -22,6 +22,7 @@ Changes since v2.12
 - Preserve the white-space in an event comment (#2232)
 - Application events are now presented in chronological order instead of grouping requests and responses together.
   In addition there is now a possibility to highlight related events. (#2233)
+- Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
 
 ### Fixes
 - Various fixes in workflow editor UI
