@@ -77,7 +77,7 @@
  (fn [[workflows language] _]
    (map (fn [workflow]
           {:key (:id workflow)
-           :organization {:value (get-in workflow [:organization :organization/name language])}
+           :organization {:value (get-in workflow [:organization :organization/short-name language])}
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active

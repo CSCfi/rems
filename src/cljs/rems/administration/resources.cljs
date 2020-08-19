@@ -77,7 +77,7 @@
  (fn [[resources language] _]
    (map (fn [resource]
           {:key (:id resource)
-           :organization {:value (get-in resource [:organization :organization/name language])}
+           :organization {:value (get-in resource [:organization :organization/short-name language])}
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active

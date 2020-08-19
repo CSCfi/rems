@@ -51,7 +51,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "resource"
-     :title [:span (andstr (:domain resource) "/") (:resid resource)]
+     :title [:span (andstr (get-in resource [:organization :organization/short-name language]) "/") (:resid resource)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (get-in resource [:organization :organization/name language])]
               [inline-info-field (text :t.administration/resource) (:resid resource)]

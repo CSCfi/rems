@@ -36,7 +36,8 @@
 
 (s/defschema OrganizationOverview
   (merge OrganizationId
-         {:organization/name LocalizedString}))
+         {:organization/short-name LocalizedString
+          :organization/name LocalizedString}))
 
 (s/defschema OrganizationFull
   (merge OrganizationOverview

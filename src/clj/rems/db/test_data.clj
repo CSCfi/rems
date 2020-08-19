@@ -142,12 +142,13 @@
   "owner")
 
 (defn create-organization! [{:keys [actor users]
-                             :organization/keys [id name owners review-emails]
+                             :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
         result (organizations/add-organization! actor
                                                 {:organization/id (or id "default")
                                                  :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
+                                                 :organization/short-name (or short-name {:fi "Oletus" :en "Default" :sv "Standard"})
                                                  :organization/owners (or owners
                                                                           (if users
                                                                             [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
@@ -965,6 +966,7 @@
         owner (+fake-users+ :owner)
         _perf (organizations/add-organization! owner {:organization/id "perf"
                                                       :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
+                                                      :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
                                                       :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
                                                       :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
@@ -1073,30 +1075,37 @@
         default (create-organization! {:actor owner :users users})
         hus (organizations/add-organization! owner {:organization/id "hus"
                                                     :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
+                                                    :organization/short-name {:fi "HUS" :en "HUS" :sv "HUS"}
                                                     :organization/owners [{:userid organization-owner1}]
                                                     :organization/review-emails []})
         thl (organizations/add-organization! owner {:organization/id "thl"
                                                     :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
+                                                    :organization/short-name {:fi "THL" :en "THL" :sv "THL"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         nbn (organizations/add-organization! owner {:organization/id "nbn"
                                                     :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                                    :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
         abc (organizations/add-organization! owner {:organization/id "abc"
                                                     :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
+                                                    :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}
                                                     :organization/owners []
                                                     :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
         csc (organizations/add-organization! owner {:organization/id "csc"
                                                     :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
+                                                    :organization/short-name {:fi "CSC" :en "CSC" :sv "CSC"}
                                                     :organization/owners []
                                                     :organization/review-emails []})
         organization1 (organizations/add-organization! owner {:organization/id "organization1"
                                                               :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                                              :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
                                                               :organization/owners [{:userid organization-owner1}]
                                                               :organization/review-emails []})
         organization2 (organizations/add-organization! owner {:organization/id "organization2"
                                                               :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
+                                                              :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
                                                               :organization/owners [{:userid organization-owner2}]
                                                               :organization/review-emails []})
 

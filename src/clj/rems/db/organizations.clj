@@ -50,7 +50,7 @@
         organization-id (if (string? organization) organization (:organization/id organization))
         organization-overview (-> organization-id
                                   getx-organization-by-id
-                                  (select-keys [:organization/id :organization/name]))]
+                                  (select-keys [:organization/id :organization/name :organization/short-name]))]
     (-> x
         (update-existing :organization (fn [_] organization-overview))
         (update-existing :organization (fn [_] organization-overview)))))

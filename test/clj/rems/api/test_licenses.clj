@@ -60,7 +60,8 @@
                 (is (= {:id id
                         :licensetype "link"
                         :organization {:organization/id "organization1"
-                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
+                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                       :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                         :localizations {:en {:title "en title"
                                              :textcontent "http://example.com/license/en"
                                              :attachment-id nil}
@@ -92,7 +93,8 @@
                 (is (= {:id id
                         :licensetype "text"
                         :organization {:organization/id "organization1"
-                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
+                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                       :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                         :localizations {:en {:title "en title"
                                              :textcontent "en text"
                                              :attachment-id nil}
@@ -157,7 +159,8 @@
                 (is (= {:id license-id
                         :licensetype "text"
                         :organization {:organization/id "organization1"
-                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
+                                       :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                       :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                         :localizations {:en {:title "en title"
                                              :textcontent "en text"
                                              :attachment-id attachment-id}

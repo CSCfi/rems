@@ -376,7 +376,7 @@
               "Accepted terms of use" ""
               "Username" "alice"
               "Email (from identity provider)" "alice@example.com"
-              "Organization" "The Default Organization"}
+              "Organization" "Default"}
              (slurp-fields :applicant-info))))
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))
@@ -742,7 +742,7 @@
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
-                :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}}
+                :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}

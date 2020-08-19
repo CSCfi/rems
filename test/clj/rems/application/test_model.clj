@@ -18,7 +18,7 @@
 
 (def ^:private get-form-template
   {40 {:form/id 40
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organisation"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :form/title "form title"
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
@@ -43,7 +43,7 @@
        :enabled true
        :archived false}
    41 {:form/id 41
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :form/title "form title 2"
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
@@ -61,7 +61,7 @@
        :resid "urn:11"
        :wfid 50
        :formid 40
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :localizations {:en {:id 10
                             :langcode :en
                             :title "en title"
@@ -80,7 +80,7 @@
        :resid "urn:21"
        :wfid 50
        :formid 40
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"
@@ -99,7 +99,7 @@
        :resid "urn:31"
        :wfid 50
        :formid 40
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"
@@ -118,7 +118,7 @@
        :resid "urn:31"
        :wfid 50
        :formid 41
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"
@@ -138,7 +138,7 @@
 
 (def ^:private get-license
   {30 {:id 30
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :licensetype "link"
        :localizations {:en {:title "en title"
                             :textcontent "http://en-license-link"}
@@ -147,7 +147,7 @@
        :enabled true
        :archived false}
    31 {:id 31
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :licensetype "text"
        :localizations {:en {:title "en title"
                             :textcontent "en license text"}
@@ -156,7 +156,7 @@
        :enabled true
        :archived false}
    32 {:id 32
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -167,7 +167,7 @@
        :enabled true
        :archived false}
    33 {:id 33
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -178,7 +178,7 @@
        :enabled true
        :archived false}
    34 {:id 34
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -212,7 +212,7 @@
 
 (def ^:private get-workflow
   {50 {:id 50
-       :organization {:organization/id "org" :organization/name {:fi "ORG" :en "ORG"}}
+       :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
                   :handlers [{:userid "handler"

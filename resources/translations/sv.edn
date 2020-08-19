@@ -96,6 +96,7 @@
                    :resources "Resurser"
                    :review-emails "E-postaddresser för granskning"
                    :save "Spara"
+                   :short-name "Kort namn"
                    :start "Början"
                    :title "Namn"
                    :type "Typ"

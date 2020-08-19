@@ -178,7 +178,7 @@
          :item-key :id
          :item-label #(str (:title %)
                            " (org: "
-                           (get-in % [:organization :organization/name language])
+                           (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
@@ -201,7 +201,7 @@
          :item-key :id
          :item-label #(str (:resid %)
                            " (org: "
-                           (get-in % [:organization :organization/name language])
+                           (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
@@ -224,7 +224,7 @@
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
-                           (get-in % [:organization :organization/name language])
+                           (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))

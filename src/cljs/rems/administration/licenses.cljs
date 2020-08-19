@@ -79,7 +79,7 @@
           {:key (:id license)
            :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
-           :organization {:value (get-in license [:organization :organization/name language])}
+           :organization {:value (get-in license [:organization :organization/short-name language])}
            :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]

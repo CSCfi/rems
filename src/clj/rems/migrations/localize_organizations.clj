@@ -23,6 +23,13 @@ UPDATE organization SET data = :data::jsonb WHERE id = :id;
       organization
       (assoc-in organization [:data :organization/name] (into {} (for [language languages] [language organization-name]))))))
 
+(defn- migrate-organization-short-name [organization languages]
+  (let [organization-short-name (get-in organization [:data :organization/short-name])
+        organization-name (get-in organization [:data :organization/name])]
+    (if (map? organization-short-name)
+      organization
+      (assoc-in organization [:data :organization/short-name] organization-name)))) ; :name is migrated already
+
 (defn- migrate-organization-review-email [email languages]
   (let [email-name (:name email)]
     (if (map? email-name)
@@ -35,12 +42,15 @@ UPDATE organization SET data = :data::jsonb WHERE id = :id;
 (defn- migrate-organization [organization languages]
   (-> organization
       (migrate-organization-name languages)
+      (migrate-organization-short-name languages)
       (migrate-organization-review-emails languages)))
 
 (deftest test-migrate-organization
   (is (= {:id "csc" :data {:something 42
                            :organization/name {:fi "CSC"
                                                :en "CSC"}
+                           :organization/short-name {:fi "CSC"
+                                                     :en "CSC"}
                            :organization/review-emails [{:name {:fi "CSC Office"
                                                                 :en "CSC Office"}
                                                          :email "csc-office@csc.fi"}]}}

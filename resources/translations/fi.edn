@@ -96,6 +96,7 @@
                    :resources "Resurssit"
                    :review-emails "Katselmointisähköpostit"
                    :save "Tallenna"
+                   :short-name "Lyhenne"
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"
