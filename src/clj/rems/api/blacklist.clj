@@ -2,7 +2,9 @@
   (:require [clj-time.core :as time]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
+            [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
+            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
@@ -56,6 +58,8 @@
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (blacklist/add-user-to-blacklist! (getx-user-id) command)
+      (doseq [cmd (rejecter-bot/reject-all-applications-by (get-in command [:blacklist/user :userid]))]
+        (command/command! cmd))
       (ok {:success true}))
 
     (POST "/remove" []

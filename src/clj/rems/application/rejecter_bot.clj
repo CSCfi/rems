@@ -1,5 +1,6 @@
 (ns rems.application.rejecter-bot
   (:require [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.permissions :as permissions]))
@@ -16,6 +17,7 @@
   (when (and (application-util/is-handler? application bot-userid)
              (should-reject? application)
              (can-reject? application))
+    (log/info "Rejecter bot rejecting application" (:application/id application) "based on blacklist" (:application/blacklist application))
     [{:type :application.command/reject
       :application-id (:application/id application)
       :time (time/now)

@@ -523,7 +523,7 @@
                    (assert-success
                     (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
                               api-key applicant-id))))
-          app-2 (testing "create application"
+          app-2 (testing "create second application"
                   (:application-id
                    (assert-success
                     (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
@@ -565,4 +565,32 @@
                      api-key applicant-id))
           (let [application (api-call :get (str "/api/applications/" app-3) nil
                                       api-key applicant-id)]
-            (is (= "application.state/rejected" (:application/state application)))))))))
+            (is (= "application.state/rejected" (:application/state application))))))
+      (testing "remove blacklist entry"
+        (assert-success
+         (api-call :post "/api/blacklist/remove" {:blacklist/user {:userid applicant-id}
+                                                  :blacklist/resource {:resource/ext-id resource-ext-id}
+                                                  :comment "good"}
+                   api-key handler-id)))
+      (let [app-3 (testing "create third application"
+                    (:application-id
+                     (assert-success
+                      (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                                api-key applicant-id))))]
+        (testing "submit third application"
+          (assert-success
+           (api-call :post "/api/applications/submit" {:application-id app-3}
+                     api-key applicant-id))
+          (testing "and it doesn't get rejected"
+            (is (= "application.state/submitted" (:application/state (api-call :get (str "/api/applications/" app-3) nil
+                                                                               api-key applicant-id))))))
+        (testing "blacklist user again"
+          (assert-success
+           (api-call :post "/api/blacklist/add" {:blacklist/user {:userid applicant-id}
+                                                 :blacklist/resource {:resource/ext-id resource-ext-id}
+                                                 :comment "bad"}
+                     api-key handler-id)))
+        (testing "third application gets rejected"
+          (testing "and it doesn't get rejected"
+            (is (= "application.state/rejected" (:application/state (api-call :get (str "/api/applications/" app-3) nil
+                                                                              api-key applicant-id))))))))))
