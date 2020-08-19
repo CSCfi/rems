@@ -52,6 +52,8 @@
           :allocate-application-ids! applications/allocate-application-ids!
           :copy-attachment! attachments/copy-attachment!}))
 
+(def ^:dynamic *fail-on-process-manager-errors* false)
+
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.
   ;; Serializable isolation level will already avoid anomalies, but produces
@@ -80,6 +82,9 @@
         (doseq [cmd2 (run-process-managers events-from-db)]
           (let [result (command! cmd2)]
             (when (:errors result)
-              (log/error "process manager command failed"
-                         (pr-str {:cmd cmd2 :result result :parent-cmd cmd})))))))
+              (if *fail-on-process-manager-errors*
+                (assert false
+                        (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))
+                (log/error "process manager command failed"
+                           (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))))
     result))
