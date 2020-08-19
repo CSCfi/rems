@@ -24,10 +24,6 @@
       :comment ""
       :actor bot-userid}]))
 
-(defn- generate-commands [event application]
-  (when (= :application.event/submitted (:event/type event)) ;; rejecter bot only reacts to fresh applications
-    (consider-rejecting application)))
-
 (defn reject-all-applications-by
   "Go through all applications by the given user-ids and reject any if necessary. Returns sequence of commands."
   [& user-ids]
