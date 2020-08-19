@@ -23,15 +23,4 @@
                             (assoc :event/type :blacklist.event/remove)))
   (applications/reload-cache!))
 
-;; TODO: Could unify API with add-user-to-blacklist!
-(defn add-users-to-blacklist! [{:keys [users actor comment] :as params}]
-  (doseq [user users]
-    (blacklist/add-event! {:event/type :blacklist.event/add
-                           :event/actor actor
-                           :event/time (time/now)
-                           :userid (:userid user)
-                           :resource/ext-id (:resource/ext-id params)
-                           :event/comment comment}))
-  (applications/reload-cache!))
-
 (defn get-blacklist [params] (blacklist/get-blacklist params))
