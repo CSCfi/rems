@@ -31,7 +31,7 @@
 (defn reject-all-applications-by
   "Go through all applications by the given user-id and reject any if necessary. Returns sequence of commands."
   [user-id]
-  (let [apps (mapv #(applications/get-application-internal (:application/id %)) ;; TODO shouldn't need -internal
+  (let [apps (mapv #(applications/get-application (:application/id %))
                    (applications/get-my-applications user-id))]
     (mapcat consider-rejecting apps)))
 
