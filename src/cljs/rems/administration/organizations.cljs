@@ -83,7 +83,7 @@
                       [readonly-checkbox {:value checked?}]]
                  :sort-value (if checked? 1 2)})
       :commands {:td [:td.commands
-                      #_[to-view-organization (:id organization)] ; TODO hidden until it works
+                      [to-view-organization (:organization/id organization)]
                       [roles/when roles/show-admin-edit-buttons?
                        [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
                        [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})))

@@ -38,9 +38,13 @@
                                      :enabled enabled
                                      :archived archived))))
 
-(defn get-organization [organization]
+(defn get-organization-raw [org]
   (->> (organizations/get-organizations-raw)
-       (find-first (comp #{(:organization/id organization)} :organization/id))))
+       (find-first (comp #{(:organization/id org)} :organization/id))))
+
+(defn get-organization [userid org]
+  (->> (get-organizations {:userid userid})
+       (find-first (comp #{(:organization/id org)} :organization/id))))
 
 (defn add-organization! [userid org]
   (organizations/add-organization! userid org))

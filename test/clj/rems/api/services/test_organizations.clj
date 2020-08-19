@@ -10,7 +10,7 @@
 
 (defn- status-flags [id]
   (with-user "owner"
-    (-> (organizations/get-organization {:organization/id id})
+    (-> (organizations/get-organization-raw {:organization/id id})
         (select-keys [:enabled :archived]))))
 
 (deftest organization-enabled-archived-test

@@ -3,7 +3,7 @@
             [komponentit.autosize :as autosize]
             [reagent.core :as reagent]
             [rems.guide-functions]
-            [rems.text :refer [text]])
+            [rems.text :refer [text localized]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []
@@ -129,6 +129,11 @@
                                 (:userid user))
                             (when (:email user)
                               (str " (" (:email user) ")")))))
+
+(defn enrich-email [email]
+  (assoc email :display [:a {:href (str "mailto:" (:email email))}
+                         (str (localized (:name email))
+                              " <" (:email email) ">")]))
 
 (defn set-document-title! [title]
   (set! (.-title js/document)
