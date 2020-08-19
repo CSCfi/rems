@@ -26,6 +26,7 @@ Changes since v2.12
 ### Fixes
 - Various fixes in workflow editor UI
 - Form field placeholders now fulfil accessibility contrast ratio requirements (#2229)
+- UI for the close action erroneously claimed the comment is not shown to the applicant. (#2212)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
