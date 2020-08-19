@@ -30,13 +30,14 @@
          (for [event new-events
                :when (= :application.event/revoked (:event/type event))
                :let [application (applications/get-application-internal (:application/id event))]
-               resource (:application/resources application)
                user (application-util/applicant-and-members application)]
            (do
-             (blacklist/add-user-to-blacklist! (:event/actor event)
-                                               {:blacklist/user {:userid (:userid user)}
-                                                :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
-                                                :comment (:application/comment event)})
+             (doseq [resource (:application/resources application)]
+               (blacklist/add-user-to-blacklist! (:event/actor event)
+                                                 {:blacklist/user {:userid (:userid user)}
+                                                  :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
+                                                  :comment (:application/comment event)}))
+             ;; TODO in the case of multiple applicants this can generate redundant reject commands
              (rejecter-bot/reject-all-applications-by (:userid user))))))
 
 (defn run-process-managers [new-events]
