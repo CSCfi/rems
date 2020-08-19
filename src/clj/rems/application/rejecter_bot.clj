@@ -2,7 +2,6 @@
   (:require [clj-time.core :as time]
             [clojure.tools.logging :as log]
             [rems.common.application-util :as application-util]
-            [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.permissions :as permissions]))
 
@@ -30,22 +29,24 @@
     (consider-rejecting application)))
 
 (defn reject-all-applications-by
-  "Go through all applications by the given user-id and reject any if necessary. Returns sequence of commands."
-  [user-id]
-  (let [apps (mapv #(applications/get-application (:application/id %))
-                   (applications/get-my-applications user-id))]
-    (mapcat consider-rejecting apps)))
+  "Go through all applications by the given user-ids and reject any if necessary. Returns sequence of commands."
+  [& user-ids]
+  (->> (mapcat applications/get-my-applications user-ids)
+       (mapv :application/id)
+       distinct
+       (mapv applications/get-application)
+       (mapcat consider-rejecting)))
 
 (defn run-rejecter-bot [new-events]
   (let [by-type (group-by :event/type new-events)
         submissions (get by-type :application.event/submitted)
         submitted-applications (mapv #(applications/get-application (:application/id %)) submissions)
         revokes (get by-type :application.event/revoked)
-        revoked-users (distinct (for [event revokes
-                                      member (application-util/applicant-and-members (applications/get-application (:application/id event)))]
-                                  (:userid member)))]
+        revoked-users (->> revokes
+                           (map (comp applications/get-application :application/id))
+                           (mapcat application-util/applicant-and-members)
+                           (map :userid))]
     (doall
      (concat
       (mapcat consider-rejecting submitted-applications)
-      ;; TODO hacky removal of duplicate rejects
-      (distinct-by :application-id (mapcat reject-all-applications-by revoked-users))))))
+      (apply reject-all-applications-by revoked-users)))))
