@@ -24,3 +24,8 @@ other parts of the system.
 ## Unanswered questions
 
 What to do about circular dependencies between services?
+
+For example after #2261, `rems.api.blacklist` calls
+`rems.api.services.command` and `rems.api.services.blacklist`. This is
+because `services.command` already calls `services.blacklist`, so we
+can't have `services.blacklist` call `services.command`.
