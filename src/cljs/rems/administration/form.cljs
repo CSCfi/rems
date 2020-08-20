@@ -66,7 +66,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (get-in form [:organization :organization/name language]) "/") (:form/title form)]
+     :title [:span (andstr (get-in form [:organization :organization/short-name language]) "/") (:form/title form)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (get-in form [:organization :organization/name language])]
               [inline-info-field (text :t.administration/title) (:form/title form)]

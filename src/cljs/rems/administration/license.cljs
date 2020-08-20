@@ -5,6 +5,7 @@
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [license-attachment-link external-link readonly-checkbox document-title]]
+            [rems.common.util :refer [andstr]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -39,7 +40,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "license"
-     :title [:span (get-localized-title license language)]
+     :title [:span (andstr (get-in license [:organization :organization/short-name language]) "/") (get-localized-title license language)]
      :always (into [:div#license
                     [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name language])]]
                    (concat

@@ -610,7 +610,7 @@
         language @(rf/subscribe [:language])
         organization-name-if-known (fn [organization]
                                      (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
-                                       (get-in known-organization [:organization/name language])
+                                       (get-in known-organization [:organization/short-name language])
                                        (:organization/id organization)))]
     [collapsible/minimal
      {:id (str element-id "-info")

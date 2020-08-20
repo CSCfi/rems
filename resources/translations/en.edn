@@ -96,6 +96,7 @@
                    :resources "Resources"
                    :review-emails "Review emails"
                    :save "Save"
+                   :short-name "Short name"
                    :start "Start"
                    :title "Title"
                    :type "Type"

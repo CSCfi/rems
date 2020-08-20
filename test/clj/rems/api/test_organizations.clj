@@ -30,6 +30,7 @@
                            {:organization/id "organizations-api-test-org"
                             :organization/name {:fi "Organisaatiot API Test ORG"
                                                 :en "Organizations API Test ORG"}
+                            :organization/short-name {:fi "ORG" :en "ORG"}
                             :organization/owners [{:userid org-owner}]
                             :organization/review-emails [{:email "test@organization.test.org"
                                                           :name {:fi "Organisaatiot API Test ORG Katselmoijat"
@@ -45,6 +46,7 @@
             (is (= {:organization/id "organizations-api-test-org"
                     :organization/name {:fi "Organisaatiot API Test ORG"
                                         :en "Organizations API Test ORG"}
+                    :organization/short-name {:fi "ORG" :en "ORG"}
                     :organization/owners [{:userid org-owner}]
                     :organization/last-modified test-time
                     :organization/modifier {:userid owner}
@@ -74,6 +76,8 @@
                                    {:organization/id "test-organization"
                                     :organization/name {:fi "Testiorganisaatio"
                                                         :en "Test Organization"}
+                                    :organization/short-name {:fi "ORG"
+                                                              :en "ORG"}
                                     :organization/owners []
                                     :organization/review-emails []})]
         (is (response-is-unauthorized? response))
@@ -93,6 +97,8 @@
                                    {:organization/id "test-organization"
                                     :organization/name {:fi "Testiorganisaatio"
                                                         :en "Test Organization"}
+                                    :organization/short-name {:fi "ORG"
+                                                              :en "ORG"}
                                     :organization/owners []
                                     :organization/review-emails []}
                                    "42" "alice")]

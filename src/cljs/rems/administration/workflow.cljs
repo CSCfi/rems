@@ -51,7 +51,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "workflow"
-     :title [:span (andstr (get-in workflow [:organization :organization/name language]) "/") (:title workflow)]
+     :title [:span (andstr (get-in workflow [:organization :organization/short-name language]) "/") (:title workflow)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (get-in workflow [:organization :organization/name language])]
               [inline-info-field (text :t.administration/title) (:title workflow)]

@@ -77,7 +77,7 @@
  (fn [[organizations language] _]
    (for [organization organizations]
      {:key (:organization/id organization)
-      :name {:value (get-in organization [:organization/name language])}
+      :name {:value (get-in organization [:organization/short-name language])}
       :active (let [checked? (status-flags/active? organization)]
                 {:td [:td.active
                       [readonly-checkbox {:value checked?}]]

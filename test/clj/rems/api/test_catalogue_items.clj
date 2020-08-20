@@ -49,7 +49,7 @@
                       :workflow-name "workflow name"
                       :form-name "form name"
                       :resource-name "resource ext id"
-                      :organization {:organization/id "organization1" :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}}
+                      :organization {:organization/id "organization1" :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"} :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                       :localizations {}}
                      (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
           (testing "and fetch non-existing item"
