@@ -36,3 +36,6 @@ in three ways:
 3. A user is added to a resource blacklist manually (via the
    administration UI or the API). Rejecter bot then rejects any open
    applications this user has for the resource in question.
+
+NB! The rejecter bot can only reject applications for which it is a
+handler.
