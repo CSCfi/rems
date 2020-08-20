@@ -1,5 +1,6 @@
 (ns rems.api.blacklist
   (:require [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
@@ -59,7 +60,10 @@
       :return schema/SuccessResponse
       (blacklist/add-user-to-blacklist! (getx-user-id) command)
       (doseq [cmd (rejecter-bot/reject-all-applications-by (get-in command [:blacklist/user :userid]))]
-        (command/command! cmd))
+        (let [result (command/command! cmd)]
+          (when (:errors result)
+            (log/error "Failure when running rejecter bot commands:" {:cmd cmd :result result}))))
+
       (ok {:success true}))
 
     (POST "/remove" []
