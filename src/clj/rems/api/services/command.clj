@@ -20,11 +20,6 @@
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
 
-(defn- run-entitlements [new-events]
-  (doseq [event new-events]
-    (entitlements/update-entitlements-for-event event))
-  [])
-
 ;; TODO should this be in the revoke command handler instead?
 (defn- revokes-to-blacklist [new-events]
   (doseq [event new-events
@@ -41,7 +36,7 @@
   (concat
    (revokes-to-blacklist new-events)
    (email/generate-event-emails! new-events)
-   (run-entitlements new-events)
+   (entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
    (event-notification/queue-notifications! new-events)))
