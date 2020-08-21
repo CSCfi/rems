@@ -22,6 +22,12 @@ If only the resource ID is known, this will find out which catalogue item matche
 https://rems-demo.rahtiapp.fi/apply-for?resource=urn:nbn:fi:lb-123456789
 ```
 
+Multiple resources can also be specified:
+
+```
+https://rems-demo.rahtiapp.fi/apply-for?resource=urn:nbn:fi:lb-123456789&resource=urn:other&resource=urn:third
+```
+
 ## Linking into an existing application
 
 ```
