@@ -9,7 +9,7 @@
   If application does not live at '/',
   then this is the path before application relative paths."} *root-path*)
 
-(def ^:dynamic ^{:doc "User data available from request."} *user*)
+(def ^:dynamic ^{:doc "User data available from request. These are raw user attributes (see rems.db.users)."} *user*)
 
 (def ^:dynamic ^{:doc "Set of roles for user (or nil)"} *roles*)
 
