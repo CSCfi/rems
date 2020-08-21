@@ -1,17 +1,18 @@
 (ns rems.db.users
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
+            [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.user-settings :as user-settings]
             [rems.json :as json]))
 
-;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
   (merge {:userid (:eppn u)
           :name (or (:commonName u)
                     (:displayName u)) ;; some shibboleth idps don't send commonName
           :email (:mail u)}
-         (select-keys u [:organizations :notification-email])))
+         (select-keys u [:organizations :notification-email])
+         (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (defn- unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"

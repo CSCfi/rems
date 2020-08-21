@@ -42,6 +42,13 @@
  :oidc-domain nil
  :oidc-client-id nil
  :oidc-client-secret nil
+ ;; List of additional attributes to read from oidc claims.
+ ;;
+ ;; Example:
+ ;;
+ ;;   :oidc-extra-attributes [{:attribute "groups"}
+ ;;                           {:attribute "employeeNumber"}]
+ :oidc-extra-attributes []
 
  ;; Sending email.
  :smtp-host nil

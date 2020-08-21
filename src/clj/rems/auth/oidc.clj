@@ -22,16 +22,16 @@
 
 (defn oidc-callback [request]
   (let [response (-> (http/post (:token_endpoint oidc-configuration)
-                                        ; NOTE Some IdPs don't support client id and secret in form params,
-                                        ;      and require us to use HTTP basic auth
+                                ;; NOTE Some IdPs don't support client id and secret in form params,
+                                ;;      and require us to use HTTP basic auth
                                 {:basic-auth [(getx env :oidc-client-id)
                                               (getx env :oidc-client-secret)]
                                  :form-params {:grant_type "authorization_code"
                                                :code (get-in request [:params :code])
                                                :redirect_uri (str (getx env :public-url) "oidc-callback")}})
-                                        ; FIXME Complains about Invalid cookie header in logs
-                                        ; TODO Unhandled responses for token endpoint:
-                                        ;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
+                     ;; FIXME Complains about Invalid cookie header in logs
+                     ;; TODO Unhandled responses for token endpoint:
+                     ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
                      (:body)
                      (json/parse-string))
         access-token (:access_token response)
@@ -39,22 +39,24 @@
         issuer (:issuer oidc-configuration)
         audience (getx env :oidc-client-id)
         now (Instant/now)
-        id-data (jwt/validate id-token issuer audience now)]
-    ;; id-data has keys:
-    ; sub – unique ID
-    ; name - non-unique name
-    ; locale – could be used to set preferred lang on first login
-    ; email – non-unique (!) email
+        ;; id-data has keys:
+        ;; sub – unique ID
+        ;; name - non-unique name
+        ;; locale – could be used to set preferred lang on first login
+        ;; email – non-unique (!) email
+        id-data (jwt/validate id-token issuer audience now)
+        identity-base {:eppn (:sub id-data)
+                       ;; need to maintain a fallback list of name attributes since identity
+                       ;; providers differ in what they give us
+                       :commonName (some id-data [:name :unique_name :family_name])
+                       :mail (:email id-data)}
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data))
     (-> (redirect "/") ; TODO Could redirect with state param
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] {:eppn (:sub id-data)
-                                        ;; need to maintain a fallback list of name attributes since identity
-                                        ;; providers differ in what they give us
-                                        :commonName (some id-data [:name :unique_name :family_name])
-                                        :mail (:email id-data)}))))
+        (assoc-in [:session :identity] (merge identity-base extra-attributes)))))
 
 (defn- oidc-revoke [token]
   (when token
