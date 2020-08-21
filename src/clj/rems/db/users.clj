@@ -43,6 +43,9 @@
   (assert userattrs)
   (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
 
+(defn add-user! [user]
+  (add-user-raw! (:userid user) (unformat-user user)))
+
 (defn get-raw-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
 

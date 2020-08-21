@@ -18,7 +18,7 @@
 
 (defn- create-dummy-user []
   (let [user-id "user"]
-    (users/add-user-raw! user-id {:eppn user-id})
+    (users/add-user! {:userid user-id})
     user-id))
 
 (defn- transaction-conflict? [^Exception e]

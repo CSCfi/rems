@@ -832,7 +832,7 @@
   (btu/with-postmortem {:dir btu/reporting-dir}
     (testing "set up resource & user"
       (test-data/create-resource! {:resource-ext-id "blacklist-test"})
-      (users/add-user-raw! "baddie" {:eppn "baddie" :commonName "Bruce Baddie" :mail "bruce@example.com"}))
+      (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
     (testing "add blacklist entry via resource page"
       (login-as "owner")
       (go-to-admin "Resources")

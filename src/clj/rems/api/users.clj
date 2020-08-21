@@ -16,9 +16,6 @@
    :email (s/maybe s/Str)
    (s/optional-key :organizations) [OrganizationId]})
 
-(defn create-user [user-data]
-  (users/add-user-raw! (:userid user-data) (users/unformat-user user-data)))
-
 (def users-api
   (context "/users" []
     :tags ["users"]
@@ -28,7 +25,7 @@
       :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
       :return SuccessResponse
-      (create-user command)
+      (users/add-user! command)
       (ok {:success true}))
 
     (GET "/active" []
