@@ -17,7 +17,7 @@
           body (read-body response)]
       (is (= "unauthorized" body))))
   ;; zero malice's email to test the api with nil emails
-  (users/add-user! "malice" {:eppn "malice" :commonName "Malice Applicant"})
+  (users/add-user-raw! "malice" {:eppn "malice" :commonName "Malice Applicant"})
   (let [api-key "42"
         check-alice-entitlement (fn [x]
                                   (is (= {:user {:userid "alice"
@@ -122,7 +122,7 @@
             (check-alice-entitlement x))))
 
       (testing "without entitlements"
-        (users/add-user! "allison" {})
+        (users/add-user-raw! "allison" {})
         (let [body (-> (request :get (str "/api/entitlements"))
                        (authenticate api-key "allison")
                        handler

@@ -38,14 +38,14 @@
     (or (str/blank? (:userid user))
         (str/blank? (:name user)))))
 
-(defn add-user! [user userattrs]
+(defn add-user-raw! [user userattrs]
   (assert user)
   (assert userattrs)
   (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
 
 (defn add-user-if-logged-in! [user userattrs]
   (when user
-    (add-user! user userattrs)))
+    (add-user-raw! user userattrs)))
 
 (defn get-raw-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.

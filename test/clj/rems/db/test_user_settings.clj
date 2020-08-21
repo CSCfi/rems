@@ -9,8 +9,8 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-user-settings
-  (users/add-user! "user" {:eppn "user"})
-  (users/add-user! "unrelated" {:eppn "unrelated"})
+  (users/add-user-raw! "user" {:eppn "user"})
+  (users/add-user-raw! "unrelated" {:eppn "unrelated"})
 
   (testing "default settings for a new user"
     (is (= {:language :en
@@ -89,7 +89,7 @@
            (user-settings/validate-new-settings {:notification-email nil})))))
 
 (deftest test-notification-email-visible
-  (users/add-user! "pekka" {:eppn "pekka" :commonName "Pekka" :mail "pekka@example.com"})
+  (users/add-user-raw! "pekka" {:eppn "pekka" :commonName "Pekka" :mail "pekka@example.com"})
   (testing "before setting notifcation email"
     (testing "get-user returns email from user attributes"
       (is (= {:userid "pekka"

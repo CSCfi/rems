@@ -17,7 +17,7 @@
    (s/optional-key :organizations) [OrganizationId]})
 
 (defn create-user [user-data]
-  (users/add-user! (:userid user-data) (users/unformat-user user-data)))
+  (users/add-user-raw! (:userid user-data) (users/unformat-user user-data)))
 
 (def users-api
   (context "/users" []
