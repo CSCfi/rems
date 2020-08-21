@@ -20,7 +20,8 @@
   (merge {:eppn (:userid u)
           :commonName (:name u)
           :mail (:email u)}
-         (select-keys u [:organizations])))
+         (select-keys u [:organizations])
+         (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (deftest test-format-unformat
   (let [api-user {:userid "foo" :name "bar" :email "a@b"}
