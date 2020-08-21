@@ -8,7 +8,7 @@
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-test"
  :authentication :fake
+ :oidc-extra-attributes [{:attribute "nickname"}]
  :languages [:en :fi :sv]
  :enable-pdf-api true
  :catalogue-is-public false}
-

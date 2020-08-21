@@ -23,6 +23,7 @@
                                   (is (= {:user {:userid "alice"
                                                  :email "alice@example.com"
                                                  :name "Alice Applicant"
+                                                 :nickname "In Wonderland"
                                                  :organizations [{:organization/id "default"}]}
                                           :resource "urn:nbn:fi:lb-201403262"
                                           :end nil
@@ -33,6 +34,7 @@
                                           (is (= {:user {:userid "alice"
                                                          :email "alice@example.com"
                                                          :name "Alice Applicant"
+                                                         :nickname "In Wonderland"
                                                          :organizations [{:organization/id "default"}]}
                                                   :resource "urn:nbn:fi:lb-201403262"
                                                   :mail "alice@example.com"}

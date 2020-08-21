@@ -211,6 +211,7 @@
                                            :userid "owner"}
                                           {:email "alice@example.com"
                                            :name "Alice Applicant"
+                                           :nickname "In Wonderland"
                                            :userid "alice"
                                            :organizations [{:organization/id "default"}]}]})
              (fetch api-key user-id wfid))))
