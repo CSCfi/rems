@@ -56,12 +56,12 @@
           _ (test-data/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
                        handler)]
-      (is (= 404 (:status response)))
+      (is (= 400 (:status response)))
       (is (= "Resource ID is not unique" (read-body response)))
       (testing "even if multiple resources are specified"
         (let [response (-> (request :get "/apply-for?resource=urn:two-matching-resources&resource=urn:one-matching-resource")
                            handler)]
-          (is (= 404 (:status response)))
+          (is (= 400 (:status response)))
           (is (= "Resource ID is not unique" (read-body response)))))))
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"

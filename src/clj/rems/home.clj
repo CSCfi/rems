@@ -12,7 +12,7 @@
             [rems.layout :as layout]
             [rems.util :refer [getx-user-id]]
             [ring.util.codec :refer [url-encode]]
-            [ring.util.response :refer [content-type not-found redirect response]])
+            [ring.util.response :refer [content-type not-found bad-request redirect response]])
   (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
@@ -28,7 +28,7 @@
     (cond
       (some #{:not-found} items) (-> (not-found "Resource not found")
                                      (content-type "text/plain"))
-      (some #{:not-unique} items) (-> (not-found "Resource ID is not unique")
+      (some #{:not-unique} items) (-> (bad-request "Resource ID is not unique")
                                       (content-type "text/plain"))
       :else (redirect (str "/application?items=" (str/join "," items))))))
 
