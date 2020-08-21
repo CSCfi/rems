@@ -20,12 +20,7 @@
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
 
-(defn- run-entitlements [new-events]
-  (doseq [event new-events]
-    (entitlements/update-entitlements-for-event event))
-  [])
-
-;; TODO should this be in the revoke command handler instead?
+;; TODO should this process manager be in its own ns?
 (defn- revokes-to-blacklist [new-events]
   (doseq [event new-events
           :when (= :application.event/revoked (:event/type event))
@@ -37,11 +32,13 @@
                                        :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
                                        :comment (:application/comment event)})))
 
+;; Process managers react to events with side effects & new commands.
+;; See docs/architecture/002-event-side-effects.md
 (defn run-process-managers [new-events]
   (concat
    (revokes-to-blacklist new-events)
    (email/generate-event-emails! new-events)
-   (run-entitlements new-events)
+   (entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
    (event-notification/queue-notifications! new-events)))

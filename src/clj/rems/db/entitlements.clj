@@ -192,3 +192,9 @@
                    (:event/type event))
     (let [application (applications/get-application-internal (:application/id event))]
       (update-entitlements-for-application application (:event/actor event)))))
+
+(defn update-entitlements-for-events [events]
+  (doseq [event events]
+    (update-entitlements-for-event event))
+  ;; this is used as a process manager, so return an explicit empty vector of commands
+  [])
