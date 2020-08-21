@@ -38,12 +38,16 @@
     (or (str/blank? (:userid user))
         (str/blank? (:name user)))))
 
-(defn add-user-raw! [user userattrs]
-  (assert user)
+(defn add-user-raw!
+  "Create or update a user given a userid and a map of raw user attributes."
+  [userid userattrs]
+  (assert userid)
   (assert userattrs)
-  (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
+  (db/add-user! {:user userid :userattrs (json/generate-string userattrs)}))
 
-(defn add-user! [user]
+(defn add-user!
+  "Create or update a user given formatted user attributes."
+  [user]
   (add-user-raw! (:userid user) (unformat-user user)))
 
 (defn get-raw-user-attributes
