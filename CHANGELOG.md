@@ -42,6 +42,7 @@ Changes since v2.12
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
 - Organizations have an initial UI (#2039)
+- The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
 
 ## v2.12 "Merituulentie" 2020-05-04
 

@@ -28,11 +28,27 @@
       (is (= 302 (:status response)))
       (is (= (str "https://public.url/application?items=" catid) (get-in response [:headers "Location"])))))
 
+  (testing "specifying multiple resources works"
+    (let [resid-1 (test-data/create-resource! {:resource-ext-id "urn:multiple1"})
+          catid-1 (test-data/create-catalogue-item! {:resource-id resid-1})
+          resid-2 (test-data/create-resource! {:resource-ext-id "urn:multiple2"})
+          catid-2 (test-data/create-catalogue-item! {:resource-id resid-2})
+          response (-> (request :get "/apply-for?resource=urn:multiple1&resource=urn:multiple2")
+                       handler)]
+      (is (= 302 (:status response)))
+      (is (= (str "https://public.url/application?items=" catid-1 "," catid-2)
+             (get-in response [:headers "Location"])))))
+
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
                        handler)]
       (is (= 404 (:status response)))
-      (is (= "Resource not found" (read-body response)))))
+      (is (= "Resource not found" (read-body response))))
+    (testing "even if multiple resources specified"
+      (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource&resource=urn:one-matching-resource")
+                         handler)]
+        (is (= 404 (:status response)))
+        (is (= "Resource not found" (read-body response))))))
 
   (testing "fails if more than one catalogue item is found"
     (let [resid (test-data/create-resource! {:resource-ext-id "urn:two-matching-resources"})
@@ -41,7 +57,12 @@
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
                        handler)]
       (is (= 404 (:status response)))
-      (is (= "Resource ID is not unique" (read-body response)))))
+      (is (= "Resource ID is not unique" (read-body response)))
+      (testing "even if multiple resources are specified"
+        (let [response (-> (request :get "/apply-for?resource=urn:two-matching-resources&resource=urn:one-matching-resource")
+                           handler)]
+          (is (= 404 (:status response)))
+          (is (= "Resource ID is not unique" (read-body response)))))))
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
     (let [resid (test-data/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})

@@ -1,5 +1,6 @@
 (ns rems.home
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [mount.core :as mount]
             [compojure.core :refer [GET defroutes routes]]
             [rems.api.services.attachment :as attachment]
@@ -14,15 +15,22 @@
             [ring.util.response :refer [content-type not-found redirect response]])
   (:import [rems.auth UnauthorizedException]))
 
-(defn- apply-for-resource [resource]
+(defn- resource-to-item [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
                    (filter :enabled))]
     (cond
-      (= 0 (count items)) (-> (not-found "Resource not found")
-                              (content-type "text/plain"))
-      (< 1 (count items)) (-> (not-found "Resource ID is not unique")
-                              (content-type "text/plain"))
-      :else (redirect (str "/application?items=" (:id (first items)))))))
+      (= 0 (count items)) :not-found
+      (< 1 (count items)) :not-unique
+      :else (:id (first items)))))
+
+(defn- apply-for-resources [resources]
+  (let [items (map resource-to-item resources)]
+    (cond
+      (some #{:not-found} items) (-> (not-found "Resource not found")
+                                     (content-type "text/plain"))
+      (some #{:not-unique} items) (-> (not-found "Resource ID is not unique")
+                                      (content-type "text/plain"))
+      :else (redirect (str "/application?items=" (str/join "," items))))))
 
 (defn render-css
   "Helper function for rendering styles that has parameters for
@@ -40,11 +48,15 @@
   (GET "/" []
     (layout/home-page))
 
+  ;; TODO should these redirects have swagger documentation?
+
   (GET "/accept-invitation" [token]
     (redirect (str "/application/accept-invitation/" token)))
 
-  (GET "/apply-for" [resource]
-    (apply-for-resource resource))
+  (GET "/apply-for" [resource] ;; can specify multiple resources
+    (if (vector? resource)
+      (apply-for-resources resource)
+      (apply-for-resources [resource])))
 
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
