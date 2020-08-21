@@ -13,7 +13,7 @@
           :email (:mail u)}
          (select-keys u [:organizations :notification-email])))
 
-(defn unformat-user
+(defn- unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"
   [u]
   (merge {:eppn (:userid u)
