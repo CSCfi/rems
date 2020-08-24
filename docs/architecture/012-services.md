@@ -19,10 +19,12 @@ was reached.
 ## Decision
 
 Each service represents the public API for a specific part of REMS that is easy to call
-and handles dependencies to other items:
-- resource, workflow, ... structure
-- joining related items
-- process manager and async actions
+so it must handle any dependencies etc:
+- creating a resource, workflow etc.
+- fetching a complete representation of a resource, workflow etc.
+- business actions like enabling a resource, workflow etc.
+- joining related items like the organization of a resource, ...
+- process manager and async actions of a command
 
 This public API can be used to easily implement the HTTP API, 
 but also from called from other parts of the system 
