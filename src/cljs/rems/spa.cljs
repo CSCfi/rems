@@ -14,6 +14,7 @@
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.create-form :refer [create-form-page]]
             [rems.administration.create-license :refer [create-license-page]]
+            [rems.administration.create-organization :refer [create-organization-page]]
             [rems.administration.create-resource :refer [create-resource-page]]
             [rems.administration.create-workflow :refer [create-workflow-page]]
             [rems.administration.export-applications :refer [export-applications-page]]
@@ -291,6 +292,7 @@
    :rems.administration/create-catalogue-item create-catalogue-item-page
    :rems.administration/create-form create-form-page
    :rems.administration/create-license create-license-page
+   :rems.administration/create-organization create-organization-page
    :rems.administration/create-resource create-resource-page
    :rems.administration/create-workflow create-workflow-page
    :rems.administration/export-applications export-applications-page
@@ -409,6 +411,13 @@
 (secretary/defroute "/administration" []
   (replace-url! "/administration/catalogue-items"))
 
+(secretary/defroute "/administration/organizations/create" []
+  (rf/dispatch [:rems.administration.create-organization/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-organization]))
+
+(secretary/defroute "/administration/organizations/edit/:organization-id" [organization-id]
+  (rf/dispatch [:rems.administration.create-organization/enter-page organization-id])
+  (rf/dispatch [:set-active-page :rems.administration/create-organization]))
 
 (secretary/defroute "/administration/organizations/:organization-id" [organization-id]
   (rf/dispatch [:rems.administration.organization/enter-page organization-id])

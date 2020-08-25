@@ -5,7 +5,8 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.organizations :as organizations]
-            [rems.db.roles :as roles]))
+            [rems.db.roles :as roles]
+            [rems.db.users :as users]))
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
@@ -58,3 +59,5 @@
       (do
         (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
         {:success true})))
+
+(defn get-available-owners [] (users/get-users))
