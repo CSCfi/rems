@@ -11,6 +11,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
@@ -23,8 +24,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
-            [rems.scheduler :as scheduler]
-            [rems.util :refer [conj-set]])
+            [rems.scheduler :as scheduler])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications

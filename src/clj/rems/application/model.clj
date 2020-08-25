@@ -6,9 +6,8 @@
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index getx]]
-            [rems.permissions :as permissions]
-            [rems.util :refer [conj-vec]]))
+            [rems.common.util :refer [build-index conj-vec getx]]
+            [rems.permissions :as permissions]))
 
 ;;;; Application
 
