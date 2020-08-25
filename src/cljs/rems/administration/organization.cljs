@@ -47,14 +47,16 @@
      :title (get-in organization [:organization/name language])
      :always [:div
               [inline-info-field (text :t.administration/id) (:organization/id organization)]
-              (for [[langcode localization] (:organization/short-name organization)]
-                [inline-info-field (str (text :t.administration/short-name)
-                                        " (" (str/upper-case (name langcode)) ")")
-                 localization])
-              (for [[langcode localization] (:organization/name organization)]
-                [inline-info-field (str (text :t.administration/title)
-                                        " (" (str/upper-case (name langcode)) ")")
-                 localization])
+              (doall (for [[langcode localization] (:organization/short-name organization)]
+                       ^{:key (str "short-name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/short-name)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
+              (doall (for [[langcode localization] (:organization/name organization)]
+                       ^{:key (str "name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/title)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
               [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
                                                                       (map enrich-user)
                                                                       (map :display)
