@@ -10,7 +10,10 @@ architecture for the backend.
 ### The API Layer
 
 The API layer takes in a HTTP request and transforms it into ideally
-one call of the service layer.
+one call of the service layer. The API layer is also responsible for
+- coarse-grained access control (API `:roles`)
+- API schemas
+- swagger documentation
 
 The API layer lives in the `rems.api.` namespaces.
 
@@ -38,8 +41,9 @@ but no clear conclusion was reached.
 ### The DB Layer
 
 The purpose of the DB layer is to handle serializing and deserializing
-data into the database. A single namespace in the DB layer should
-handle one concept (for example `rems.db.licenses`). The DB layer can
+data into the database. This can involve schema coersions (see
+`rems.db.events`) or renaming keys (see `rems.db.form`). A single
+namespace in the DB layer should handle one concept. The DB layer can
 also contain simple domain logic (for example `rems.db.attachments`
 has checking for allowed attachment types). Namespaces in the DB layer
 should not depend on each other. Depending on the common
