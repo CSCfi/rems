@@ -254,7 +254,7 @@
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Decider workflow"
-                    :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has. Applications cannot be closed."
+                    :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
                     :default-workflow-description "The handler is in full control of the application process. The handler may request reviews and decisions from others as needed."
                     :handlers "Handlers"

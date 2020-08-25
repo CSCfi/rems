@@ -252,7 +252,7 @@
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Päättäjätyövuo"
-                    :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on. Hakemusta ei voi sulkea."
+                    :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on."
                     :default-workflow "Oletustyövuo"
                     :default-workflow-description "Hakemus on täysin käsittelijän hallinnassa. Käsittelijä voi pyytää toisilta katselmointeja ja päätöksiä tarpeen mukaan."
                     :handlers "Käsittelijät"
