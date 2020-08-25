@@ -116,6 +116,9 @@ Notable pieces of code that don't fit into the API-Services-DB layering (and don
 - The application model in `rems.application.*` is pure code that
   implements the domain model. This can be safely called from
   anywhere.
+- The `rems.common.*` namespaces are code shared by the UI and
+  backend. See for example `rems.common.form` which contains form
+  template validation.
 - Various utility and configuration namespaces like `rems.api.util`,
   `rems.config` and `rems.context`
 - Database migrations (`rems.migrations.*`)
