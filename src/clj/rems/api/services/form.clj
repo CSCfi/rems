@@ -20,7 +20,7 @@
   (or (dependencies/in-use-error {:form/id form-id})
       {:success true}))
 
-(defn validate-given-ids
+(defn- validate-given-ids
   "Check that `:field/id` values are distinct, not empty (or not given)."
   [fields]
   (let [fields-with-given-ids (filter #(contains? % :field/id) fields)
