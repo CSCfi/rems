@@ -8,8 +8,7 @@
             [rems.db.organizations :as organizations]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.json :as json]
-            [schema.core :as s]))
+            [rems.json :as json]))
 
 (defn invalid-forms-error [forms]
   (let [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
@@ -25,7 +24,7 @@
        :errors [{:type :invalid-user
                  :users invalid}]})))
 
-(defn create-workflow! [{:keys [user-id organization type title handlers forms] :as cmd}]
+(defn create-workflow! [{:keys [organization handlers forms] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)

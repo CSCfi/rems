@@ -1,6 +1,6 @@
 (ns rems.api.services.todos
   (:require [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]
+            [clojure.test :refer [deftest is]]
             [rems.application.commands :as commands]
             [rems.db.applications :as applications]))
 

@@ -53,9 +53,6 @@
   (merge dep
          (select-keys (enrich-dependency dep) [:archived :enabled])))
 
-(defn- only-id [item]
-  (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
-
 (defn- list-to-maps [lst]
   {:dependencies (build-index {:keys [:from] :value-fn :to :collect-fn set} lst)
    :reverse-dependencies (build-index {:keys [:to] :value-fn :from :collect-fn set} lst)})

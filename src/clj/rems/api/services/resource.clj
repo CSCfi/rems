@@ -2,12 +2,10 @@
   (:require [com.rpl.specter :refer [ALL transform]]
             [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource])
-  (:import (org.postgresql.util PSQLException)))
+            [rems.db.resource :as resource]))
 
 (defn- join-dependencies [resource]
   (when resource
@@ -24,7 +22,7 @@
   (->> (resource/get-resources filters)
        (mapv join-dependencies)))
 
-(defn create-resource! [{:keys [resid organization licenses] :as command} user-id]
+(defn create-resource! [{:keys [resid organization licenses]} user-id]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-resource! {:resid resid
                                       :organization (:organization/id organization)

@@ -2,14 +2,12 @@
   "Serving licenses for API."
   (:require [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
-            [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
-            [rems.db.resource :as resource]
-            [rems.db.workflow :as workflow]
-            [rems.db.organizations :as organizations])
+            [rems.db.organizations :as organizations]
+            [clojure.java.io])
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]

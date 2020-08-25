@@ -8,15 +8,11 @@
             [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.entitlements :as entitlements]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
-            [rems.form-validation :as form-validation]
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
 
