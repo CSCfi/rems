@@ -224,7 +224,7 @@
     [:div.form-group
      [:label {:for :review-emails} (text :t.administration/review-emails)]
      (for [[field-index _review-email] (indexed (:organization/review-emails form))]
-       [organization-review-email-field field-index])
+       ^{:key field-index} [organization-review-email-field field-index])
      [:div.dashed-group.text-center
       [:a.add-form-field {:href "#"
                           :on-click (fn [event]
