@@ -1,17 +1,12 @@
 (ns rems.api.services.form
   (:require [clojure.test :refer :all]
-            [com.rpl.specter :refer [ALL transform]]
             [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
-            [rems.api.services.workflow :as workflow]
-            [rems.api.schema :refer [FieldTemplate]]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
-            [rems.db.organizations :as organizations]
-            [rems.json :as json]))
+            [rems.db.organizations :as organizations]))
 
 (defn form-editable [form-id]
   (or (dependencies/in-use-error {:form/id form-id})
