@@ -11,9 +11,6 @@
             [rems.json :as json]
             [schema.core :as s]))
 
-(def ^:private validate-workflow-body
-  (s/validator workflow/WorkflowBody))
-
 (defn invalid-forms-error [forms]
   (let [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
     (when invalid
@@ -28,19 +25,11 @@
        :errors [{:type :invalid-user
                  :users invalid}]})))
 
-(defn create-workflow! [{:keys [user-id organization type title handlers forms]}]
+(defn create-workflow! [{:keys [user-id organization type title handlers forms] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)
-      (let [body {:type type
-                  :handlers handlers
-                  :forms forms}
-            id (:id (db/create-workflow! {:organization (:organization/id organization)
-                                          :owneruserid user-id
-                                          :modifieruserid user-id
-                                          :title title
-                                          :workflow (json/generate-string
-                                                     (validate-workflow-body body))}))]
+      (let [id (workflow/create-workflow! cmd)]
         (dependencies/reset-cache!)
         {:success (not (nil? id))
          :id id})))
