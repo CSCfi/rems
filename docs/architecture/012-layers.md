@@ -7,6 +7,44 @@ architecture for the backend.
 
 ## Layers
 
+```
+
+HTTP               /api/licenses/*      /api/workflows/*  ...
+
+
+                   +----------+         +----------+
+API layer          | license  |         | workflow |      ...
+                   +----------+         +----------+
+                        |                    |
+                        |                    |
+                        v                    v
+                   +----------+         +----------+
+Service layer      | license  |         | workflow |      ...
+                   +----------+         +----------+
+                        |      \             |
+                        |       '--------+   |
+                        |                |   |
+                        v                v   v
+                   +----------+         +----------+
+DB layer           | license  |         | workflow |
+                   +----------+         +----------+
+                             |           |
+                             v           v
+                           +--------------+
+                           | rems.db.core |
+                           +--------------+
+                                  |
+                                  v
+                                .----.
+                               /      \
+                              |\      /|
+                              | '----' |
+                              |postgres|
+                              |        |
+                               \      /
+                                '----'
+```
+
 ### The API Layer
 
 The API layer takes in a HTTP request and transforms it into ideally
