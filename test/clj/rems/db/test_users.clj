@@ -9,10 +9,10 @@
 
 (deftest test-users
   ;; TODO: enforce that userid and eppn must be same?
-  (users/add-user! "user1" {:eppn "whatever"
-                            :commonName "What Ever"
-                            :some-attr "some value"})
-  (users/add-user! "user-with-org" {:eppn "user-with-org"
+  (users/add-user-raw! "user1" {:eppn "whatever"
+                                :commonName "What Ever"
+                                :some-attr "some value"})
+  (users/add-user-raw! "user-with-org" {:eppn "user-with-org"
                                     :commonName "User Org"
                                     :mail "user@org"
                                     :organizations [{:organization/id "org"}]})
@@ -54,12 +54,21 @@
     (is (= ["user1"] (users/get-users-with-role :owner)))
     (is (= [] (users/get-users-with-role :reporter))))
 
-  (testing "update user"
-    (users/add-user! "user1" {:eppn "user1"
-                              :commonName "new name"})
+  (testing "update user with add-user-raw!"
+    (users/add-user-raw! "user1" {:eppn "user1"
+                                  :commonName "new name"})
     (is (= {:userid "user1"
             :name "new name"
             :email nil}
+           (users/get-user "user1"))))
+
+  (testing "update user with add-user!"
+    (users/add-user! {:userid "user1"
+                      :name "newer name"
+                      :email "foo@example.com"})
+    (is (= {:userid "user1"
+            :name "newer name"
+            :email "foo@example.com"}
            (users/get-user "user1")))))
 
 (deftest test-nonexistent-user

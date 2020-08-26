@@ -132,7 +132,7 @@
 
 (defn create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
-    (users/add-user! user user-attributes)
+    (users/add-user-raw! user user-attributes)
     (doseq [role roles]
       (roles/add-role! user role))
     user))
@@ -1021,9 +1021,9 @@
                        (for [n (range-1 user-count)]
                          (fn []
                            (let [user-id (str "perftester" n)]
-                             (users/add-user! user-id {:eppn user-id
-                                                       :mail (str user-id "@example.com")
-                                                       :commonName (str "Performance Tester " n)})
+                             (users/add-user-raw! user-id {:eppn user-id
+                                                           :mail (str user-id "@example.com")
+                                                           :commonName (str "Performance Tester " n)})
                              user-id)))))]
     (in-parallel
      (for [n (range-1 application-count)]

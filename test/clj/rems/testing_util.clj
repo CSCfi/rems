@@ -45,6 +45,6 @@
                                (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
 
 (defmacro with-user [user & body]
-  `(binding [context/*user* (users/get-user ~user)
+  `(binding [context/*user* (users/get-raw-user-attributes ~user)
              context/*roles* (roles/get-roles ~user)]
      ~@body))

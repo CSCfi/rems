@@ -78,7 +78,7 @@
         (is (= "forbidden" (read-body response))))))
 
   (testing "user with user-owner role"
-    (users/add-user! "user-owner" {:eppn "user-owner"})
+    (users/add-user! {:userid "user-owner"})
     (roles/add-role! "user-owner" :user-owner)
     (-> (request :post (str "/api/users/create"))
         (json-body {:userid "test1"
