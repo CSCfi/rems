@@ -565,14 +565,26 @@
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))
 
+(defn- censor-users-in-event [event]
+  (-> event
+      (update-existing :event/actor-attributes censor-user)
+      (update-existing :application/member censor-user)
+      ;; deciders and reviewers occur only in events removed by
+      ;; hide-sensitive-events, but keeping the code here for
+      ;; completeness
+      (update-existing :application/deciders (partial mapv censor-user))
+      (update-existing :application/reviewers (partial mapv censor-user))))
+
 (defn- hide-extra-user-attributes [application]
   ;; To catch all the places that might have user attributes, grep this file for uses of the get-user injection.
   (-> application
       (update :application/applicant censor-user)
       (update :application/members (comp set (partial mapv censor-user)))
+      ;; hide-sensitive-information has already dissoced the
+      ;; blacklist, so this is unnecessary. Keeping it here for
+      ;; completeness anyway.
       (update :application/blacklist (partial mapv #(update % :blacklist/user censor-user)))
-      ;; TODO other event fields!
-      (update :application/events (partial mapv #(update-existing % :event/actor-attributes censor-user)))))
+      (update :application/events (partial mapv censor-users-in-event))))
 
 (defn- hide-sensitive-information [application]
   (-> application

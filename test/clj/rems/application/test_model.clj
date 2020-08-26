@@ -892,32 +892,35 @@
                                        :application/todo nil})]
       (is (= expected-application (recreate expected-application))))))
 
+(def review-request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298"))
+
+(def review-requested-event {:event/type :application.event/review-requested
+                             :event/time (DateTime. 4000)
+                             :event/actor "handler"
+                             :application/id 1
+                             :application/request-id review-request-id
+                             :application/reviewers ["reviewer"]
+                             :application/comment "please comment"})
+
+(def reviewed-event {:event/type :application.event/reviewed
+                     :event/time (DateTime. 5000)
+                     :event/actor "reviewer"
+                     :application/id 1
+                     :application/request-id review-request-id
+                     :application/comment "looks good"})
+
 (deftest test-application-view-reviewing
   (testing "> review requested"
-    (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-          new-event {:event/type :application.event/review-requested
-                     :event/time (DateTime. 4000)
-                     :event/actor "handler"
-                     :application/id 1
-                     :application/request-id request-id
-                     :application/reviewers ["reviewer"]
-                     :application/comment "please comment"}
-          events (conj (:application/events submitted-application) new-event)
+    (let [events (conj (:application/events submitted-application) review-requested-event)
           expected-application (deep-merge submitted-application
                                            {:application/last-activity (DateTime. 4000)
                                             :application/events events
                                             :application/todo :waiting-for-review
-                                            ::model/latest-review-request-by-user {"reviewer" request-id}})]
+                                            ::model/latest-review-request-by-user {"reviewer" review-request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> reviewed"
-        (let [new-event {:event/type :application.event/reviewed
-                         :event/time (DateTime. 5000)
-                         :event/actor "reviewer"
-                         :application/id 1
-                         :application/request-id request-id
-                         :application/comment "looks good"}
-              events (conj events new-event)
+        (let [events (conj events reviewed-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
@@ -925,33 +928,36 @@
                                            ::model/latest-review-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
+(def decision-request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49"))
+
+(def decision-requested-event {:event/type :application.event/decision-requested
+                               :event/time (DateTime. 4000)
+                               :event/actor "handler"
+                               :application/id 1
+                               :application/request-id decision-request-id
+                               :application/deciders ["decider"]
+                               :application/comment "please decide"})
+
+(def decided-event {:event/type :application.event/decided
+                    :event/time (DateTime. 5000)
+                    :event/actor "decider"
+                    :application/id 1
+                    :application/request-id decision-request-id
+                    :application/decision :approved
+                    :application/comment "I approve this"})
+
 (deftest test-application-view-deciding
   (testing "> decision requested"
-    (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
-          new-event {:event/type :application.event/decision-requested
-                     :event/time (DateTime. 4000)
-                     :event/actor "handler"
-                     :application/id 1
-                     :application/request-id request-id
-                     :application/deciders ["decider"]
-                     :application/comment "please decide"}
-          events (conj (:application/events submitted-application) new-event)
+    (let [events (conj (:application/events submitted-application) decision-requested-event)
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
                                        :application/todo :waiting-for-decision
-                                       :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
+                                       :rems.application.model/latest-decision-request-by-user {"decider" decision-request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> decided"
-        (let [new-event {:event/type :application.event/decided
-                         :event/time (DateTime. 5000)
-                         :event/actor "decider"
-                         :application/id 1
-                         :application/request-id request-id
-                         :application/decision :approved
-                         :application/comment "I approve this"}
-              events (conj events new-event)
+        (let [events (conj events decided-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
@@ -1377,7 +1383,48 @@
     (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
     (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
-;; TODO more comprehensive test for hide-sensitive-information
+(deftest test-hide-sensitive-information
+  (let [base (reduce model/application-view nil
+                     [created-event
+                      submitted-event
+                      review-requested-event
+                      reviewed-event
+                      decision-requested-event
+                      decided-event
+                      {:event/type :application.event/member-added
+                       :event/time (DateTime. 7000)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/member {:userid "member"}}
+                      approved-event])
+        enriched (model/enrich-with-injections base injections)
+        redacted (#'model/hide-sensitive-information enriched)]
+    (testing "blacklist removed"
+      (is (seq (:application/blacklist enriched)))
+      (is (empty? (:application/blacklist redacted))))
+    (testing "handlers removed"
+      (is (get-in enriched [:application/workflow :workflow.dynamic/handlers]))
+      (is (not (get-in redacted [:application/workflow :workflow.dynamic/handlers]))))
+    (testing "events removed"
+      (is (= [:application.event/created
+              :application.event/submitted
+              :application.event/member-added
+              :application.event/approved]
+             (mapv :event/type (:application/events redacted)))))
+    (testing "extra user attributes removed from events"
+      (is (:secret (:event/actor-attributes (last (:application/events enriched)))))
+      (is (not (:secret (:event/actor-attributes (last (:application/events redacted)))))))
+    (testing "extra applicant attributes hidden"
+      (is (:secret (:application/applicant enriched)))
+      (is (not (:secret (:application/applicant redacted)))))
+    (testing "extra member attributes hidden"
+      (is (= ["secret"] (mapv :secret (:application/members enriched))))
+      (is (= [nil] (mapv :secret (:application/members redacted))))
+      (testing "in events"
+        (is (:secret (get-in enriched [:application/events 6 :application/member])))
+        (is (not (:secret (get-in redacted [:application/events 6 :application/member]))))))
+    (testing "no missed extra user attributes"
+      (is (not (str/includes? (pr-str redacted) "secret"))))))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
