@@ -1377,56 +1377,67 @@
     (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
     (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
+;; TODO more comprehensive test for hide-sensitive-information
+
 (deftest test-apply-user-permissions
-  ;; TODO enrich with injections first, check that secret user attribute is removed
   (let [application (-> (model/application-view nil {:event/type :application.event/created
                                                      :event/actor "applicant"
-                                                     :workflow/type :workflow/default})
-                        (assoc-in [:application/workflow :workflow.dynamic/handlers] [{:userid "handler"}])
+                                                     :workflow/type :workflow/default
+                                                     :workflow/id 50})
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/update-role-permissions {:role-1 #{}
-                                                              :role-2 #{:foo :bar}}))]
+                                                              :role-2 #{:foo :bar}}))
+        enriched (model/enrich-with-injections application injections)]
     (testing "users with a role can see the application"
-      (is (not (nil? (model/apply-user-permissions application "user-1")))))
+      (is (not (nil? (model/apply-user-permissions enriched "user-1")))))
     (testing "users without a role cannot see the application"
-      (is (nil? (model/apply-user-permissions application "user-3"))))
+      (is (nil? (model/apply-user-permissions enriched "user-3"))))
     (testing "lists the user's permissions"
-      (is (= #{} (:application/permissions (model/apply-user-permissions application "user-1"))))
-      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions application "user-2")))))
+      (is (= #{} (:application/permissions (model/apply-user-permissions enriched "user-1"))))
+      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions enriched "user-2")))))
     (testing "lists the user's roles"
-      (is (= #{:role-1} (:application/roles (model/apply-user-permissions application "user-1"))))
-      (is (= #{:role-2} (:application/roles (model/apply-user-permissions application "user-2")))))
+      (is (= #{:role-1} (:application/roles (model/apply-user-permissions enriched "user-1"))))
+      (is (= #{:role-2} (:application/roles (model/apply-user-permissions enriched "user-2")))))
 
-    (let [all-events [{:event/type :application.event/created}
-                      {:event/type :application.event/submitted}
-                      {:event/type :application.event/review-requested}
-                      {:event/type :application.event/remarked
+    (let [all-events [{:event/id 10
+                       :event/type :application.event/created}
+                      {:event/id 11
+                       :event/type :application.event/submitted}
+                      {:event/id 12
+                       :event/type :application.event/review-requested}
+                      {:event/id 13
+                       :event/type :application.event/remarked
                        :application/public true}
-                      {:event/type :application.event/remarked
+                      {:event/id 14
+                       :event/type :application.event/remarked
                        :application/public false}]
-          restricted-events [{:event/type :application.event/created}
-                             {:event/type :application.event/submitted}
-                             {:event/type :application.event/remarked
-                              :application/public true}]
-          application (-> application
-                          (assoc :application/events all-events)
-                          (permissions/update-role-permissions {:role-1 #{:see-everything}}))]
+          restricted-event-ids [10 11 13]
+          enriched (-> application
+                       (assoc :application/events all-events)
+                       (permissions/update-role-permissions {:role-1 #{:see-everything}})
+                       (model/enrich-with-injections injections))]
       (testing "privileged users"
-        (let [application (model/apply-user-permissions application "user-1")]
+        (let [application (model/apply-user-permissions enriched "user-1")]
           (testing "see all events"
-            (is (= all-events
-                   (:application/events application))))
+            (is (= (mapv :event/id all-events)
+                   (mapv :event/id (:application/events application)))))
+          (testing "see all applicant attributes"
+            (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+                   (:application/applicant application))))
           (testing "see dynamic workflow handlers"
-            (is (= [{:userid "handler"}]
+            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}]
                    (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
 
       (testing "normal users"
-        (let [application (model/apply-user-permissions application "user-2")]
+        (let [application (model/apply-user-permissions enriched "user-2")]
           (testing "see only some events"
-            (is (= restricted-events
-                   (:application/events application))))
+            (is (= restricted-event-ids
+                   (mapv :event/id (:application/events application)))))
+          (testing "see only limited applicant attributes"
+            (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                   (:application/applicant application))))
           (testing "don't see dynamic workflow handlers"
             (is (= nil
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
@@ -1435,28 +1446,31 @@
       (let [application (model/application-view application {:event/type :application.event/member-invited
                                                              :application/member {:name "member"
                                                                                   :email "member@example.com"}
-                                                             :invitation/token "secret"})]
+                                                             :invitation/token "secret"})
+            enriched (model/enrich-with-injections application injections)]
         (testing "- original"
-          (is (= #{"secret" nil} (set (map :invitation/token (:application/events application)))))
+          (is (= #{"secret" nil} (set (map :invitation/token (:application/events enriched)))))
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
-                 (:application/invitation-tokens application)))
+                 (:application/invitation-tokens enriched)))
           (is (= nil
-                 (:application/invited-members application))))
+                 (:application/invited-members enriched))))
         (doseq [user-id ["applicant" "handler"]]
           (testing (str "- as user " user-id)
-            (let [application (model/apply-user-permissions application user-id)]
-              (is (= #{nil} (set (map :invitation/token (:application/events application)))))
+            (let [limited (model/apply-user-permissions enriched user-id)]
+              (is (= #{nil} (set (map :invitation/token (:application/events limited)))))
               (is (= nil
-                     (:application/invitation-tokens application)))
+                     (:application/invitation-tokens limited)))
               (is (= #{{:name "member"
                         :email "member@example.com"}}
-                     (:application/invited-members application))))))))
+                     (:application/invited-members limited))))))))
 
     (testing "personalized waiting for your review"
-      (let [application (model/application-view application {:event/type :application.event/review-requested
-                                                             :event/actor "handler"
-                                                             :application/reviewers ["reviewer1"]})]
+      (let [application (-> application
+                            (model/application-view {:event/type :application.event/review-requested
+                                                     :event/actor "handler"
+                                                     :application/reviewers ["reviewer1"]})
+                            (model/enrich-with-injections injections))]
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
@@ -1465,9 +1479,11 @@
             "as seen by reviewer")))
 
     (testing "personalized waiting for your decision"
-      (let [application (model/application-view application {:event/type :application.event/decision-requested
-                                                             :event/actor "handler"
-                                                             :application/deciders ["decider1"]})]
+      (let [application (-> application
+                            (model/application-view {:event/type :application.event/decision-requested
+                                                     :event/actor "handler"
+                                                     :application/deciders ["decider1"]})
+                            (model/enrich-with-injections injections))]
         (is (= :waiting-for-decision
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
