@@ -1,10 +1,7 @@
 (ns rems.api.services.blacklist
   (:require [clj-time.core :as time]
-            [rems.application.events :as events]
             [rems.db.applications :as applications]
-            [rems.db.blacklist :as blacklist]
-            [rems.json :as json]
-            [schema.core :as s]))
+            [rems.db.blacklist :as blacklist]))
 
 (defn- command->event [command actor]
   {:event/actor actor

@@ -2,7 +2,6 @@
   (:require [clojure.set :as set]
             [clojure.tools.logging :as log]
             [rems.application.commands :as commands]
-            [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]

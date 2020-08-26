@@ -1,15 +1,10 @@
 (ns rems.api.services.catalogue
   (:require [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
-            [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource]
-            [rems.db.workflow :as workflow]))
+            [rems.db.organizations :as organizations]))
 
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
@@ -51,7 +46,7 @@
       :organization
       util/check-allowed-organization!))
 
-(defn edit-catalogue-item! [{:keys [id localizations] :as command}]
+(defn edit-catalogue-item! [{:keys [id localizations]}]
   (check-allowed-to-edit! id)
   (doseq [[langcode localization] localizations]
     (db/upsert-catalogue-item-localization!
