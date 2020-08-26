@@ -1512,31 +1512,37 @@
                         :email "member@example.com"}}
                      (:application/invited-members limited))))))))
 
-    (testing "personalized waiting for your review"
-      (let [application (-> application
-                            (model/application-view {:event/type :application.event/review-requested
-                                                     :event/actor "handler"
-                                                     :application/reviewers ["reviewer1"]})
-                            (model/enrich-with-injections injections))]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/review-requested
+                                                   :event/actor "handler"
+                                                   :application/reviewers ["reviewer1"]})
+                          (model/enrich-with-injections injections))]
+      (testing "personalized waiting for your review"
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
         (is (= :waiting-for-your-review
                (:application/todo (model/apply-user-permissions application "reviewer1")))
-            "as seen by reviewer")))
+            "as seen by reviewer"))
+      (testing "reviewer sees all applicant attributes"
+        (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+               (:application/applicant application)))))
 
-    (testing "personalized waiting for your decision"
-      (let [application (-> application
-                            (model/application-view {:event/type :application.event/decision-requested
-                                                     :event/actor "handler"
-                                                     :application/deciders ["decider1"]})
-                            (model/enrich-with-injections injections))]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/decision-requested
+                                                   :event/actor "handler"
+                                                   :application/deciders ["decider1"]})
+                          (model/enrich-with-injections injections))]
+      (testing "personalized waiting for your decision"
         (is (= :waiting-for-decision
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
         (is (= :waiting-for-your-decision
                (:application/todo (model/apply-user-permissions application "decider1")))
-            "as seen by decider")))))
+            "as seen by decider"))
+      (testing "decider sees all applicant attributes"
+        (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+               (:application/applicant application)))))))
 
 (deftest test-apply-privacy
   (letfn [(answers [application & roles]
