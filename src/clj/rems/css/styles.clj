@@ -202,7 +202,9 @@
    [:.outer-cart {:border [[(u/px 1) :solid (get-theme-attribute :color1)]]
                   :border-radius (u/rem 0.4)}]
    [:.cart-title {:margin-left (u/em 1)
+                  :margin-right (u/em 1)
                   :font-weight "bold"}]
+   [:.fa-shopping-cart {:margin-right (u/em 0.5)}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
    ;; TODO: Change naming of :color3? It is used as text color here,
