@@ -6,7 +6,8 @@
   :dependencies [[buddy/buddy-sign "3.1.0"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
-                 [clj-http "3.10.0"] ;; TODO 3.10.2 breaks - introduces strict http parsing
+                 [clj-http "3.10.2"]
+                 [cheshire "5.10.0"] ;; clj-http uses cheshire's json parsing
                  [clj-pdf "2.5.4"]
                  [clj-time "0.15.2"]
                  [cljs-ajax "0.8.0"]
