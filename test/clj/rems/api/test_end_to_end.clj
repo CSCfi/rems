@@ -33,6 +33,7 @@
                                            :smtp-port 25
                                            :languages [:en]
                                            :mail-from "rems@rems.rems"
+                                           :oidc-extra-attributes [{:attribute "ssn"}]
                                            :entitlements-target {:add (str (:uri entitlements-server) "/add")
                                                                  :remove (str (:uri entitlements-server) "/remove")}
                                            :event-notification-targets [{:url (str (:uri event-server) "/event")
@@ -45,11 +46,13 @@
               handler-id "e2e-handler"
               handler-attributes {:userid handler-id
                                   :name "E2E Handler"
-                                  :email "handler@example.com"}
+                                  :email "handler@example.com"
+                                  :ssn "111111-2222"}
               applicant-id "e2e-applicant"
               applicant-attributes {:userid applicant-id
                                     :name "E2E Applicant"
-                                    :email "applicant@example.com"}]
+                                    :email "applicant@example.com"
+                                    :ssn "012345-0123"}]
 
           (testing "create organization"
             (api-call :post "/api/organizations/create"
@@ -229,7 +232,13 @@
                              field (:form/fields form)]
                          (:field/value field))))
                 (is (= [license-id] (get-in application [:application/accepted-licenses (keyword applicant-id)]))
-                    application)))
+                    application)
+                (testing ": can see extra attributes for applicant"
+                  (is (= {:userid "e2e-applicant"
+                          :name "E2E Applicant"
+                          :email "applicant@example.com"
+                          :ssn "012345-0123"}
+                         (:application/applicant application))))))
 
             (testing "approve application"
               (assert-success
@@ -309,7 +318,10 @@
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
-                (is (= "application.state/closed" (:application/state application)))))
+                (is (= "application.state/closed" (:application/state application)))
+                (testing "can't see handler extra attributes"
+                  (is (= {:userid "e2e-handler" :name "E2E Handler" :email "handler@example.com"}
+                         (:event/actor-attributes (last (:application/events application))))))))
 
             (event-notification/process-outbox!)
 
