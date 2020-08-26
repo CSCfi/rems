@@ -551,7 +551,7 @@
 
 ;;;; Authorization
 
-(defn hide-sensitive-events [events]
+(defn- hide-sensitive-events [events]
   (->> events
        (remove (comp #{:application.event/review-requested
                        :application.event/reviewed
@@ -562,11 +562,24 @@
                         (:event/type %))
                      (not (:application/public %))))))
 
+(defn- censor-user [user]
+  (select-keys user [:userid :name :email :organizations :notification-email]))
+
+(defn- hide-extra-user-attributes [application]
+  ;; To catch all the places that might have user attributes, grep this file for uses of the get-user injection.
+  (-> application
+      (update :application/applicant censor-user)
+      (update :application/members (comp set (partial mapv censor-user)))
+      (update :application/blacklist (partial mapv #(update % :blacklist/user censor-user)))
+      ;; TODO other event fields!
+      (update :application/events (partial mapv #(update-existing % :event/actor-attributes censor-user)))))
+
 (defn- hide-sensitive-information [application]
   (-> application
       (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)))
+      (update :application/workflow dissoc :workflow.dynamic/handlers)
+      hide-extra-user-attributes))
 
 (defn- hide-invitation-tokens [application]
   (-> application

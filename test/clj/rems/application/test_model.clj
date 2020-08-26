@@ -192,19 +192,24 @@
 (def ^:private get-user
   {"applicant" {:userid "applicant"
                 :email "applicant@example.com"
-                :name "Applicant"}
+                :name "Applicant"
+                :secret "secret"}
    "reviewer" {:userid "reviewer"
                :email "reviewer@example.com"
-               :name "Reviewer"}
+               :name "Reviewer"
+               :secret "secret"}
    "decider" {:userid "decider"
               :email "decider@example.com"
-              :name "Decider"}
+              :name "Decider"
+              :secret "secret"}
    "handler" {:userid "handler"
               :email "handler@example.com"
-              :name "Handler"}
+              :name "Handler"
+              :secret "secret"}
    "member" {:userid "member"
              :email "member@example.com"
-             :name "Member"}})
+             :name "Member"
+             :secret "secret"}})
 
 (def ^:private get-users-with-role
   {:owner ["owner1"]
@@ -215,9 +220,7 @@
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
-                  :handlers [{:userid "handler"
-                              :name "Handler"
-                              :email "handler@example.com"}]}
+                  :handlers [(get-user "handler")]}
        :licenses nil
        :owneruserid "owner"
        :modifieruserid "owner"
@@ -1047,13 +1050,15 @@
           :application/deadline (.plusDays (DateTime. 3000) 1)
           :application/applicant {:userid "applicant"
                                   :email "applicant@example.com"
-                                  :name "Applicant"}
+                                  :name "Applicant"
+                                  :secret "secret"}
           :application/members #{}
           :application/past-members #{}
           :application/invitation-tokens {}
           :application/blacklist [{:blacklist/user {:userid "applicant"
                                                     :email "applicant@example.com"
-                                                    :name "Applicant"}
+                                                    :name "Applicant"
+                                                    :secret "secret"}
                                    :blacklist/resource {:resource/ext-id "urn:11"}}]
           :application/resources [{:catalogue-item/id 10
                                    :resource/id 11
@@ -1108,7 +1113,7 @@
                                 :application/id 1
                                 :event/actor "applicant"
                                 :application/external-id "extid"
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                                 :event/time (DateTime. 1000)
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
@@ -1124,24 +1129,24 @@
                                                            {:form 40 :field "42" :value "bar"}
                                                            {:form 40 :field "43" :value "private answer"}
                                                            {:form 40 :field "field-does-not-exist" :value "something"}]
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
                                 :event/time (DateTime. 2500)
                                 :event/actor "applicant"
                                 :application/accepted-licenses #{30 31 32}
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/submitted
                                 :application/id 1
                                 :event/time (DateTime. 3000)
                                 :event/actor "applicant"
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/approved
                                 :application/id 1
                                 :event/time (DateTime. 4000)
                                 :event/actor "handler"
                                 :application/comment "looks good"
-                                :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
+                                :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}}]
           :application/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
           :application/role-permissions nil
           :application/description "foo"
@@ -1179,6 +1184,7 @@
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
                                                               :email "handler@example.com"
+                                                              :secret "secret"
                                                               :handler/active? true}]}}
          (model/enrich-with-injections approved-application injections))))
 
@@ -1187,7 +1193,7 @@
     (is (= {:event/type :application.event/resources-changed
             :event/time (DateTime. 1)
             :event/actor "applicant"
-            :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+            :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
             :application/id 1
             :application/resources [{:catalogue-item/id 10
                                      :resource/id 11
@@ -1222,10 +1228,10 @@
     (is (= {:event/type :application.event/decision-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
+                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
            (model/enrich-event {:event/type :application.event/decision-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1236,10 +1242,10 @@
     (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
+                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
            (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1250,9 +1256,9 @@
     (is (= {:event/type :application.event/member-added
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+            :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-added
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1263,9 +1269,9 @@
     (is (= {:event/type :application.event/member-removed
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+            :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-removed
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1372,6 +1378,7 @@
     (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
 (deftest test-apply-user-permissions
+  ;; TODO enrich with injections first, check that secret user attribute is removed
   (let [application (-> (model/application-view nil {:event/type :application.event/created
                                                      :event/actor "applicant"
                                                      :workflow/type :workflow/default})
