@@ -376,7 +376,8 @@
               "Accepted terms of use" ""
               "Username" "alice"
               "Email (from identity provider)" "alice@example.com"
-              "Organization" "Default"}
+              "Organization" "Default"
+              "Nickname" "In Wonderland"}
              (slurp-fields :applicant-info))))
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))

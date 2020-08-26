@@ -26,6 +26,8 @@
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
+   :oidc-extra-attributes [{:attribute s/Str
+                            s/Keyword s/Any}]
    :dev s/Bool})
 
 (def translations-api
@@ -60,7 +62,8 @@
                             :default-language
                             :dev
                             :extra-pages
-                            :languages])))
+                            :languages
+                            :oidc-extra-attributes])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
