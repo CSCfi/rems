@@ -726,6 +726,59 @@
       (is (blacklist/blacklisted? member-id ext1))
       (is (blacklist/blacklisted? member-id ext2)))))
 
+(deftest test-hiding-sensitive-information
+  (let [applicant-id "alice"
+        member-id "developer"
+        handler-id "handler"
+        api-key "42"
+        wfid (test-data/create-workflow! {:handlers [handler-id]})
+        cat1 (test-data/create-catalogue-item! {:workflow-id wfid})
+        ;; TODO blacklist?
+        app-id (test-data/create-application! {:actor applicant-id :catalogue-item-ids [cat1]})]
+    (testing "set up approved application with multiple members"
+      (is (= {:success true}
+             (send-command applicant-id {:type :application.command/submit
+                                         :application-id app-id})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/add-member
+                                       :application-id app-id
+                                       :member {:userid member-id}})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/approve
+                                       :application-id app-id
+                                       :comment ""}))))
+    (testing "handler can see extra user attributes"
+      (let [application (api-call :get (str "/api/applications/" app-id) nil
+                                  api-key handler-id)]
+        (is (= {:userid "alice"
+                :name "Alice Applicant"
+                :email "alice@example.com"
+                :organizations [{:organization/id "default"}]
+                :nickname "In Wonderland"}
+               (:application/applicant application)
+               (get-in application [:application/events 0 :event/actor-attributes])))
+        (is (= {:userid "developer"
+                :name "Developer"
+                :email "developer@example.com"
+                :nickname "The Dev"}
+               (first (:application/members application))
+               (get-in application [:application/events 2 :application/member])))))
+    (doseq [user [applicant-id member-id]]
+      (testing (str user " can't see extra user attributes")
+        (let [application (api-call :get (str "/api/applications/" app-id) nil
+                                    api-key user)]
+          (is (= {:userid "alice"
+                  :name "Alice Applicant"
+                  :email "alice@example.com"
+                  :organizations [{:organization/id "default"}]}
+                 (:application/applicant application)
+                 (get-in application [:application/events 0 :event/actor-attributes])))
+          (is (= {:userid "developer"
+                  :name "Developer"
+                  :email "developer@example.com"}
+                 (first (:application/members application))
+                 (get-in application [:application/events 2 :application/member]))))))))
+
 (deftest test-application-export
   (let [applicant "alice"
         handler "handler"
