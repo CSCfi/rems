@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd rems
-
 [ -z "$COMMANDS" ] && COMMANDS="run"
 
 certfile=$(ls /rems/certs)
