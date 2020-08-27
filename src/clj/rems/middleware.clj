@@ -239,7 +239,7 @@
       wrap-user
       wrap-api-key-or-csrf-token
       auth/wrap-auth
-      wrap-webjars
+      wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
       wrap-internal-error
       wrap-formats
