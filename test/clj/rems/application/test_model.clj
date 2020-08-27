@@ -192,19 +192,24 @@
 (def ^:private get-user
   {"applicant" {:userid "applicant"
                 :email "applicant@example.com"
-                :name "Applicant"}
+                :name "Applicant"
+                :secret "secret"}
    "reviewer" {:userid "reviewer"
                :email "reviewer@example.com"
-               :name "Reviewer"}
+               :name "Reviewer"
+               :secret "secret"}
    "decider" {:userid "decider"
               :email "decider@example.com"
-              :name "Decider"}
+              :name "Decider"
+              :secret "secret"}
    "handler" {:userid "handler"
               :email "handler@example.com"
-              :name "Handler"}
+              :name "Handler"
+              :secret "secret"}
    "member" {:userid "member"
              :email "member@example.com"
-             :name "Member"}})
+             :name "Member"
+             :secret "secret"}})
 
 (def ^:private get-users-with-role
   {:owner ["owner1"]
@@ -215,9 +220,7 @@
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
-                  :handlers [{:userid "handler"
-                              :name "Handler"
-                              :email "handler@example.com"}]}
+                  :handlers [(get-user "handler")]}
        :licenses nil
        :owneruserid "owner"
        :modifieruserid "owner"
@@ -889,32 +892,35 @@
                                        :application/todo nil})]
       (is (= expected-application (recreate expected-application))))))
 
+(def review-request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298"))
+
+(def review-requested-event {:event/type :application.event/review-requested
+                             :event/time (DateTime. 4000)
+                             :event/actor "handler"
+                             :application/id 1
+                             :application/request-id review-request-id
+                             :application/reviewers ["reviewer"]
+                             :application/comment "please comment"})
+
+(def reviewed-event {:event/type :application.event/reviewed
+                     :event/time (DateTime. 5000)
+                     :event/actor "reviewer"
+                     :application/id 1
+                     :application/request-id review-request-id
+                     :application/comment "looks good"})
+
 (deftest test-application-view-reviewing
   (testing "> review requested"
-    (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-          new-event {:event/type :application.event/review-requested
-                     :event/time (DateTime. 4000)
-                     :event/actor "handler"
-                     :application/id 1
-                     :application/request-id request-id
-                     :application/reviewers ["reviewer"]
-                     :application/comment "please comment"}
-          events (conj (:application/events submitted-application) new-event)
+    (let [events (conj (:application/events submitted-application) review-requested-event)
           expected-application (deep-merge submitted-application
                                            {:application/last-activity (DateTime. 4000)
                                             :application/events events
                                             :application/todo :waiting-for-review
-                                            ::model/latest-review-request-by-user {"reviewer" request-id}})]
+                                            ::model/latest-review-request-by-user {"reviewer" review-request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> reviewed"
-        (let [new-event {:event/type :application.event/reviewed
-                         :event/time (DateTime. 5000)
-                         :event/actor "reviewer"
-                         :application/id 1
-                         :application/request-id request-id
-                         :application/comment "looks good"}
-              events (conj events new-event)
+        (let [events (conj events reviewed-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
@@ -922,33 +928,36 @@
                                            ::model/latest-review-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
+(def decision-request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49"))
+
+(def decision-requested-event {:event/type :application.event/decision-requested
+                               :event/time (DateTime. 4000)
+                               :event/actor "handler"
+                               :application/id 1
+                               :application/request-id decision-request-id
+                               :application/deciders ["decider"]
+                               :application/comment "please decide"})
+
+(def decided-event {:event/type :application.event/decided
+                    :event/time (DateTime. 5000)
+                    :event/actor "decider"
+                    :application/id 1
+                    :application/request-id decision-request-id
+                    :application/decision :approved
+                    :application/comment "I approve this"})
+
 (deftest test-application-view-deciding
   (testing "> decision requested"
-    (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
-          new-event {:event/type :application.event/decision-requested
-                     :event/time (DateTime. 4000)
-                     :event/actor "handler"
-                     :application/id 1
-                     :application/request-id request-id
-                     :application/deciders ["decider"]
-                     :application/comment "please decide"}
-          events (conj (:application/events submitted-application) new-event)
+    (let [events (conj (:application/events submitted-application) decision-requested-event)
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
                                        :application/todo :waiting-for-decision
-                                       :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
+                                       :rems.application.model/latest-decision-request-by-user {"decider" decision-request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> decided"
-        (let [new-event {:event/type :application.event/decided
-                         :event/time (DateTime. 5000)
-                         :event/actor "decider"
-                         :application/id 1
-                         :application/request-id request-id
-                         :application/decision :approved
-                         :application/comment "I approve this"}
-              events (conj events new-event)
+        (let [events (conj events decided-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
@@ -1047,13 +1056,15 @@
           :application/deadline (.plusDays (DateTime. 3000) 1)
           :application/applicant {:userid "applicant"
                                   :email "applicant@example.com"
-                                  :name "Applicant"}
+                                  :name "Applicant"
+                                  :secret "secret"}
           :application/members #{}
           :application/past-members #{}
           :application/invitation-tokens {}
           :application/blacklist [{:blacklist/user {:userid "applicant"
                                                     :email "applicant@example.com"
-                                                    :name "Applicant"}
+                                                    :name "Applicant"
+                                                    :secret "secret"}
                                    :blacklist/resource {:resource/ext-id "urn:11"}}]
           :application/resources [{:catalogue-item/id 10
                                    :resource/id 11
@@ -1108,7 +1119,7 @@
                                 :application/id 1
                                 :event/actor "applicant"
                                 :application/external-id "extid"
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                                 :event/time (DateTime. 1000)
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
@@ -1124,24 +1135,24 @@
                                                            {:form 40 :field "42" :value "bar"}
                                                            {:form 40 :field "43" :value "private answer"}
                                                            {:form 40 :field "field-does-not-exist" :value "something"}]
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
                                 :event/time (DateTime. 2500)
                                 :event/actor "applicant"
                                 :application/accepted-licenses #{30 31 32}
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/submitted
                                 :application/id 1
                                 :event/time (DateTime. 3000)
                                 :event/actor "applicant"
-                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}}
                                {:event/type :application.event/approved
                                 :application/id 1
                                 :event/time (DateTime. 4000)
                                 :event/actor "handler"
                                 :application/comment "looks good"
-                                :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
+                                :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}}]
           :application/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
           :application/role-permissions nil
           :application/description "foo"
@@ -1179,6 +1190,7 @@
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
                                                               :email "handler@example.com"
+                                                              :secret "secret"
                                                               :handler/active? true}]}}
          (model/enrich-with-injections approved-application injections))))
 
@@ -1187,7 +1199,7 @@
     (is (= {:event/type :application.event/resources-changed
             :event/time (DateTime. 1)
             :event/actor "applicant"
-            :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+            :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
             :application/id 1
             :application/resources [{:catalogue-item/id 10
                                      :resource/id 11
@@ -1222,10 +1234,10 @@
     (is (= {:event/type :application.event/decision-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
+                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
            (model/enrich-event {:event/type :application.event/decision-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1236,10 +1248,10 @@
     (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
+                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
            (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1250,9 +1262,9 @@
     (is (= {:event/type :application.event/member-added
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+            :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-added
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1263,9 +1275,9 @@
     (is (= {:event/type :application.event/member-removed
             :event/time (DateTime. 1)
             :event/actor "handler"
-            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
             :application/id 1
-            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+            :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-removed
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
@@ -1371,55 +1383,108 @@
     (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
     (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
+(deftest test-hide-sensitive-information
+  (let [base (reduce model/application-view nil
+                     [created-event
+                      submitted-event
+                      review-requested-event
+                      reviewed-event
+                      decision-requested-event
+                      decided-event
+                      {:event/type :application.event/member-added
+                       :event/time (DateTime. 7000)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/member {:userid "member"}}
+                      approved-event])
+        enriched (model/enrich-with-injections base injections)
+        redacted (#'model/hide-sensitive-information enriched)]
+    (testing "blacklist removed"
+      (is (seq (:application/blacklist enriched)))
+      (is (empty? (:application/blacklist redacted))))
+    (testing "handlers removed"
+      (is (get-in enriched [:application/workflow :workflow.dynamic/handlers]))
+      (is (not (get-in redacted [:application/workflow :workflow.dynamic/handlers]))))
+    (testing "events removed"
+      (is (= [:application.event/created
+              :application.event/submitted
+              :application.event/member-added
+              :application.event/approved]
+             (mapv :event/type (:application/events redacted)))))
+    (testing "extra user attributes removed from events"
+      (is (:secret (:event/actor-attributes (last (:application/events enriched)))))
+      (is (not (:secret (:event/actor-attributes (last (:application/events redacted)))))))
+    (testing "extra applicant attributes hidden"
+      (is (:secret (:application/applicant enriched)))
+      (is (not (:secret (:application/applicant redacted)))))
+    (testing "extra member attributes hidden"
+      (is (= ["secret"] (mapv :secret (:application/members enriched))))
+      (is (= [nil] (mapv :secret (:application/members redacted))))
+      (testing "in events"
+        (is (:secret (get-in enriched [:application/events 6 :application/member])))
+        (is (not (:secret (get-in redacted [:application/events 6 :application/member]))))))
+    (testing "no missed extra user attributes"
+      (is (not (str/includes? (pr-str redacted) "secret"))))))
+
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
                                                      :event/actor "applicant"
-                                                     :workflow/type :workflow/default})
-                        (assoc-in [:application/workflow :workflow.dynamic/handlers] [{:userid "handler"}])
+                                                     :workflow/type :workflow/default
+                                                     :workflow/id 50})
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/update-role-permissions {:role-1 #{}
-                                                              :role-2 #{:foo :bar}}))]
+                                                              :role-2 #{:foo :bar}}))
+        enriched (model/enrich-with-injections application injections)]
     (testing "users with a role can see the application"
-      (is (not (nil? (model/apply-user-permissions application "user-1")))))
+      (is (not (nil? (model/apply-user-permissions enriched "user-1")))))
     (testing "users without a role cannot see the application"
-      (is (nil? (model/apply-user-permissions application "user-3"))))
+      (is (nil? (model/apply-user-permissions enriched "user-3"))))
     (testing "lists the user's permissions"
-      (is (= #{} (:application/permissions (model/apply-user-permissions application "user-1"))))
-      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions application "user-2")))))
+      (is (= #{} (:application/permissions (model/apply-user-permissions enriched "user-1"))))
+      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions enriched "user-2")))))
     (testing "lists the user's roles"
-      (is (= #{:role-1} (:application/roles (model/apply-user-permissions application "user-1"))))
-      (is (= #{:role-2} (:application/roles (model/apply-user-permissions application "user-2")))))
+      (is (= #{:role-1} (:application/roles (model/apply-user-permissions enriched "user-1"))))
+      (is (= #{:role-2} (:application/roles (model/apply-user-permissions enriched "user-2")))))
 
-    (let [all-events [{:event/type :application.event/created}
-                      {:event/type :application.event/submitted}
-                      {:event/type :application.event/review-requested}
-                      {:event/type :application.event/remarked
+    (let [all-events [{:event/id 10
+                       :event/type :application.event/created}
+                      {:event/id 11
+                       :event/type :application.event/submitted}
+                      {:event/id 12
+                       :event/type :application.event/review-requested}
+                      {:event/id 13
+                       :event/type :application.event/remarked
                        :application/public true}
-                      {:event/type :application.event/remarked
+                      {:event/id 14
+                       :event/type :application.event/remarked
                        :application/public false}]
-          restricted-events [{:event/type :application.event/created}
-                             {:event/type :application.event/submitted}
-                             {:event/type :application.event/remarked
-                              :application/public true}]
-          application (-> application
-                          (assoc :application/events all-events)
-                          (permissions/update-role-permissions {:role-1 #{:see-everything}}))]
+          restricted-event-ids [10 11 13]
+          enriched (-> application
+                       (assoc :application/events all-events)
+                       (permissions/update-role-permissions {:role-1 #{:see-everything}})
+                       (model/enrich-with-injections injections))]
       (testing "privileged users"
-        (let [application (model/apply-user-permissions application "user-1")]
+        (let [application (model/apply-user-permissions enriched "user-1")]
           (testing "see all events"
-            (is (= all-events
-                   (:application/events application))))
+            (is (= (mapv :event/id all-events)
+                   (mapv :event/id (:application/events application)))))
+          (testing "see all applicant attributes"
+            (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+                   (:application/applicant application))))
           (testing "see dynamic workflow handlers"
-            (is (= [{:userid "handler"}]
+            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}]
                    (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
 
       (testing "normal users"
-        (let [application (model/apply-user-permissions application "user-2")]
+        (let [application (model/apply-user-permissions enriched "user-2")]
           (testing "see only some events"
-            (is (= restricted-events
-                   (:application/events application))))
+            (is (= restricted-event-ids
+                   (mapv :event/id (:application/events application)))))
+          (testing "see only limited applicant attributes"
+            (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                   (:application/applicant application))))
           (testing "don't see dynamic workflow handlers"
             (is (= nil
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
@@ -1428,45 +1493,56 @@
       (let [application (model/application-view application {:event/type :application.event/member-invited
                                                              :application/member {:name "member"
                                                                                   :email "member@example.com"}
-                                                             :invitation/token "secret"})]
+                                                             :invitation/token "secret"})
+            enriched (model/enrich-with-injections application injections)]
         (testing "- original"
-          (is (= #{"secret" nil} (set (map :invitation/token (:application/events application)))))
+          (is (= #{"secret" nil} (set (map :invitation/token (:application/events enriched)))))
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
-                 (:application/invitation-tokens application)))
+                 (:application/invitation-tokens enriched)))
           (is (= nil
-                 (:application/invited-members application))))
+                 (:application/invited-members enriched))))
         (doseq [user-id ["applicant" "handler"]]
           (testing (str "- as user " user-id)
-            (let [application (model/apply-user-permissions application user-id)]
-              (is (= #{nil} (set (map :invitation/token (:application/events application)))))
+            (let [limited (model/apply-user-permissions enriched user-id)]
+              (is (= #{nil} (set (map :invitation/token (:application/events limited)))))
               (is (= nil
-                     (:application/invitation-tokens application)))
+                     (:application/invitation-tokens limited)))
               (is (= #{{:name "member"
                         :email "member@example.com"}}
-                     (:application/invited-members application))))))))
+                     (:application/invited-members limited))))))))
 
-    (testing "personalized waiting for your review"
-      (let [application (model/application-view application {:event/type :application.event/review-requested
-                                                             :event/actor "handler"
-                                                             :application/reviewers ["reviewer1"]})]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/review-requested
+                                                   :event/actor "handler"
+                                                   :application/reviewers ["reviewer1"]})
+                          (model/enrich-with-injections injections))]
+      (testing "personalized waiting for your review"
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
         (is (= :waiting-for-your-review
                (:application/todo (model/apply-user-permissions application "reviewer1")))
-            "as seen by reviewer")))
+            "as seen by reviewer"))
+      (testing "reviewer sees all applicant attributes"
+        (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+               (:application/applicant application)))))
 
-    (testing "personalized waiting for your decision"
-      (let [application (model/application-view application {:event/type :application.event/decision-requested
-                                                             :event/actor "handler"
-                                                             :application/deciders ["decider1"]})]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/decision-requested
+                                                   :event/actor "handler"
+                                                   :application/deciders ["decider1"]})
+                          (model/enrich-with-injections injections))]
+      (testing "personalized waiting for your decision"
         (is (= :waiting-for-decision
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
         (is (= :waiting-for-your-decision
                (:application/todo (model/apply-user-permissions application "decider1")))
-            "as seen by decider")))))
+            "as seen by decider"))
+      (testing "decider sees all applicant attributes"
+        (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
+               (:application/applicant application)))))))
 
 (deftest test-apply-privacy
   (letfn [(answers [application & roles]

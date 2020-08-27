@@ -608,6 +608,7 @@
                     :else (text :t.applicant-info/invited-member))
         organization-by-id @(rf/subscribe [:organization-by-id])
         language @(rf/subscribe [:language])
+        extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))
         organization-name-if-known (fn [organization]
                                      (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
                                        (get-in known-organization [:organization/short-name language])
@@ -631,7 +632,9 @@
                        (when-let [organizations (seq (:organizations attributes))]
                          [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
-                        [info-field k v {:inline? true}]))
+                        (let [title (or (localized (get-in extra-attributes [(name k) :name]))
+                                        k)]
+                          [info-field title v {:inline? true}])))
       :footer (let [element-id (str element-id "-remove-member")]
                 [:div {:id element-id}
                  (when can-remove?

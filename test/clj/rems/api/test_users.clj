@@ -39,12 +39,13 @@
               :email "new email"
               :name "new name"} (users/get-user userid)))))
 
-  (testing "create user with organization, without email"
+  (testing "create user with organization and nickname, without email"
     (let [userid "user-with-org"]
       (is (= nil (:name (users/get-user userid))))
       (-> (request :post (str "/api/users/create"))
           (json-body {:userid userid
                       :name "User Org"
+                      :nickname "Orger"
                       :email nil
                       :organizations [{:organization/id "abc"}]})
           (authenticate "42" "owner")
@@ -53,6 +54,7 @@
       (is (= {:userid userid
               :email nil
               :name "User Org"
+              :nickname "Orger"
               :organizations [{:organization/id "abc"}]} (users/get-user userid))))))
 
 (deftest users-api-security-test

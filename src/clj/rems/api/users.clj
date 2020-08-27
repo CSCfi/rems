@@ -14,7 +14,8 @@
   {:userid UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organizations) [OrganizationId]})
+   (s/optional-key :organizations) [OrganizationId]
+   s/Keyword s/Any})
 
 (def users-api
   (context "/users" []

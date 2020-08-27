@@ -726,6 +726,59 @@
       (is (blacklist/blacklisted? member-id ext1))
       (is (blacklist/blacklisted? member-id ext2)))))
 
+(deftest test-hiding-sensitive-information
+  (let [applicant-id "alice"
+        member-id "developer"
+        handler-id "handler"
+        api-key "42"
+        wfid (test-data/create-workflow! {:handlers [handler-id]})
+        cat1 (test-data/create-catalogue-item! {:workflow-id wfid})
+        ;; TODO blacklist?
+        app-id (test-data/create-application! {:actor applicant-id :catalogue-item-ids [cat1]})]
+    (testing "set up approved application with multiple members"
+      (is (= {:success true}
+             (send-command applicant-id {:type :application.command/submit
+                                         :application-id app-id})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/add-member
+                                       :application-id app-id
+                                       :member {:userid member-id}})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/approve
+                                       :application-id app-id
+                                       :comment ""}))))
+    (testing "handler can see extra user attributes"
+      (let [application (api-call :get (str "/api/applications/" app-id) nil
+                                  api-key handler-id)]
+        (is (= {:userid "alice"
+                :name "Alice Applicant"
+                :email "alice@example.com"
+                :organizations [{:organization/id "default"}]
+                :nickname "In Wonderland"}
+               (:application/applicant application)
+               (get-in application [:application/events 0 :event/actor-attributes])))
+        (is (= {:userid "developer"
+                :name "Developer"
+                :email "developer@example.com"
+                :nickname "The Dev"}
+               (first (:application/members application))
+               (get-in application [:application/events 2 :application/member])))))
+    (doseq [user [applicant-id member-id]]
+      (testing (str user " can't see extra user attributes")
+        (let [application (api-call :get (str "/api/applications/" app-id) nil
+                                    api-key user)]
+          (is (= {:userid "alice"
+                  :name "Alice Applicant"
+                  :email "alice@example.com"
+                  :organizations [{:organization/id "default"}]}
+                 (:application/applicant application)
+                 (get-in application [:application/events 0 :event/actor-attributes])))
+          (is (= {:userid "developer"
+                  :name "Developer"
+                  :email "developer@example.com"}
+                 (first (:application/members application))
+                 (get-in application [:application/events 2 :application/member]))))))))
+
 (deftest test-application-export
   (let [applicant "alice"
         handler "handler"
@@ -1471,9 +1524,6 @@
                                                   :resource-id res-id
                                                   :workflow-id workflow-id})
         app-id (test-data/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
-    (test-data/create-user! {:eppn applicant :mail "alice@example.com" :commonName "Alice Applicant"})
-    (test-data/create-user! {:eppn handler :mail "handler@example.com" :commonName "Hannah Handler"})
-    (test-data/create-user! {:eppn reporter :mail "reporter@example.com" :commonName "Robbie Reporter"})
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
                                                 api-key applicant))))
@@ -1509,7 +1559,7 @@
               :application/blacklist []
               :application/id app-id
               :application/todo nil
-              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :organizations [{:organization/id "default"}]}
+              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}]}
               :application/members []
               :application/resources [{:catalogue-item/start "REDACTED"
                                        :catalogue-item/end nil
@@ -1534,7 +1584,7 @@
                                    :form/title "notifications"
                                    :form/id form-id}]
               :application/events [{:application/external-id "2010/1"
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
                                     :application/id app-id
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :workflow/type "workflow/default"
@@ -1550,14 +1600,14 @@
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}]}
                                    {:event/id 100
                                     :event/type "application.event/licenses-accepted"
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
                                     :application/accepted-licenses []}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)

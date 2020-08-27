@@ -42,6 +42,16 @@
  :oidc-domain nil
  :oidc-client-id nil
  :oidc-client-secret nil
+ ;; List of additional attributes to read from OIDC claims. Each attribute can have keys:
+ ;;   :attribute (mandatory) - the name of the attribute as in the OIDC claim, a string
+ ;;   :name (optional) - a map with languages as keys and the localized name for the attribute as values
+ ;;
+ ;; Example:
+ ;;
+ ;;   :oidc-extra-attributes [{:attribute "groups"
+ ;;                            :name {:en "Groups" :fi "Ryhmät"}}
+ ;;                           {:attribute "employeeNumber"}]
+ :oidc-extra-attributes []
 
  ;; Sending email.
  :smtp-host nil

@@ -13,6 +13,9 @@
  :oidc-domain "remsdev.eu.auth0.com"
  :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
  :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
+ ;; some attributes that google oauth returns:
+ :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
+                         {:attribute "picture"}]
 
  :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
