@@ -47,8 +47,9 @@ Build the image and initialize the database:
     lein uberjar
     docker-compose build
     docker-compose up -d db
-    docker-compose run --rm app migrate
-    docker-compose run --rm app test-data
+    docker-compose run --rm -e COMMANDS="migrate test-data" app
+
+You can kill the last command with control-C once you see `"CONTAINER STARTUP FINISHED"`.
 
 Start the application:
 
