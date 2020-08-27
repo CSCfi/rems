@@ -159,23 +159,23 @@
    :dev [:project/dev :profiles/dev]
    :test [:project/dev :project/test :profiles/test]
 
-   :project/dev {:dependencies [[binaryage/devtools "1.0.0"]
-                                [cider/piggieback "0.4.2"]
-                                [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
-                                [criterium "0.4.5"]
+   :project/dev {:dependencies [[binaryage/devtools "1.0.2"]
+                                [cider/piggieback "0.5.1"]
+                                [com.clojure-goes-fast/clj-memory-meter "0.1.3"]
+                                [criterium "0.4.6"]
                                 [doo "0.1.11"]
-                                [lambdaisland/kaocha "1.0-612"]
-                                [lambdaisland/kaocha-junit-xml "0.0-70"]
-                                [etaoin "0.3.6"]
-                                [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
-                                [re-frisk "0.5.4.1"]
+                                [lambdaisland/kaocha "1.0.669"]
+                                [lambdaisland/kaocha-junit-xml "0.0.76"]
+                                [etaoin "0.3.6"] ;; TODO 0.3.10 breaks browser tests for some reason
+                                [figwheel-sidecar "0.5.20" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
+                                [re-frisk "1.0.0"] ;; coupled to the reagent version
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.8"]
-                                [com.icegreen/greenmail "1.5.13"]]
+                                [se.haleby/stub-http "0.2.9"]
+                                [com.icegreen/greenmail "1.6.0"]]
 
                  :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]
-                           [lein-figwheel "0.5.19"]]
+                           [lein-figwheel "0.5.20"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
