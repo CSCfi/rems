@@ -69,6 +69,7 @@
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
+                   :edit-organization "Ändra organisation"
                    :edit-workflow "Ändra arbetsflöde"
                    :email "E-postaddress"
                    :enable "Ta i bruk"

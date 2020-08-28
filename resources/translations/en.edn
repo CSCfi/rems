@@ -69,6 +69,7 @@
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"
+                   :edit-organization "Edit organization"
                    :edit-workflow "Edit workflow"
                    :email "Email"
                    :enable "Enable"

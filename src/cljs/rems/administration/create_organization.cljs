@@ -82,12 +82,17 @@
       request)))
 
 (defn- valid-edit-request? [request languages]
-  (and (every? valid-owner? (:organization/owners request))
+  (and (= (set languages)
+          (set (keys (:organization/short-name request)))
+          (set (keys (:organization/name request))))
+       (every? valid-owner? (:organization/owners request))
        (every? (partial valid-review-email? languages) (:organization/review-emails request))))
 
 (defn build-edit-request [id form languages]
   (let [request {:organization/id (:organization/id form)
-                 :organization/owners (mapv :userid (:organization/owners form))
+                 :organization/short-name (map-vals trim-when-string (:organization/short-name form))
+                 :organization/name (map-vals trim-when-string (:organization/name form))
+                 :organization/owners (mapv #(select-keys % [:userid]) (:organization/owners form))
                  :organization/review-emails (mapv build-review-email (:organization/review-emails form))}]
     (when (valid-edit-request? request languages)
       request)))
@@ -110,7 +115,7 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(navigate! (str "/administration/organizations/" (:id request))))
+                      :top description #(navigate! (str "/administration/organizations/" (:organization/id request))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -140,7 +145,8 @@
 
 (defn- organization-id-field []
   [text-field context {:keys [:organization/id]
-                       :label (text :t.administration/id)}])
+                       :label (text :t.administration/id)
+                       :readonly @(rf/subscribe [::editing?])}])
 
 (defn- organization-short-name-field []
   [localized-text-field context {:keys [:organization/short-name]

@@ -69,6 +69,7 @@
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
+                   :edit-organization "Muokkaa organisaatiota"
                    :edit-workflow "Muokkaa työvuota"
                    :email "Sähköposti"
                    :enable "Ota käyttöön"

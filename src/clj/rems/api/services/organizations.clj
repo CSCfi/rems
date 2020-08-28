@@ -50,6 +50,15 @@
 (defn add-organization! [userid org]
   (organizations/add-organization! userid org))
 
+(defn edit-organization! [userid org]
+  (organizations/update-organization! (:organization/id org)
+                                      (fn [db-organization]
+                                        (if (contains? (set (map :userid (:organization/owners db-organization))) userid)
+                                          (merge db-organization org (select-keys [:organization/id :organization/owners] db-organization)) ; org owner can't update owners
+                                          (merge db-organization org (select-keys [:organization/id] db-organization)))))
+  {:success true
+   :organization/id (:organization/id org)})
+
 (defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
   (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
   {:success true})

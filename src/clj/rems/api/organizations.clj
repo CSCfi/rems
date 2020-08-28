@@ -15,6 +15,14 @@
    (s/optional-key :organization/id) s/Str
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema EditOrganizationCommand
+  OrganizationFull)
+
+(s/defschema EditOrganizationResponse
+  {:success s/Bool
+   :organization/id s/Str
+   (s/optional-key :errors) [s/Any]})
+
 ;; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableOwner UserWithAttributes)
 (s/defschema AvailableOwners [AvailableOwner])
@@ -41,6 +49,13 @@
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
       (ok (organizations/add-organization! (getx-user-id) command)))
+
+    (PUT "/edit" []
+      :summary "Edit organization"
+      :roles #{:owner}
+      :body [command EditOrganizationCommand]
+      :return EditOrganizationResponse
+      (ok (organizations/edit-organization! (getx-user-id) command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive the organization"
