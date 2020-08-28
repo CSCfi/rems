@@ -60,6 +60,10 @@
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
   (check-allowed-to-edit! id)
+  ;; Clear endt in case it has been set in the db. Otherwise we might
+  ;; end up with an enabled item that's not active and can't be made
+  ;; active via the UI.
+  (db/set-catalogue-item-endt! {:id id :end nil})
   (db/set-catalogue-item-enabled! {:id id :enabled enabled})
   {:success true})
 
