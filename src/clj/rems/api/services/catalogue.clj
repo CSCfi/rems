@@ -96,10 +96,9 @@
       ;; Reset cache so that next call to get localizations will get these ones.
       (catalogue/reset-cache!)
 
-      ;; end the old catalogue item
+      ;; hide the old catalogue item
       (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
       (db/set-catalogue-item-archived! {:id (:id item) :archived true})
-      (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
 
       ;; New dependencies introduced
       (dependencies/reset-cache!)
