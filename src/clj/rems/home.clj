@@ -21,16 +21,18 @@
     (cond
       (= 0 (count items)) :not-found
       (< 1 (count items)) :not-unique
-      :else (:id (first items)))))
+      :else (first items))))
 
 (defn- apply-for-resources [resources]
   (let [items (map resource-to-item resources)]
     (cond
       (some #{:not-found} items) (-> (not-found "Resource not found")
                                      (content-type "text/plain"))
-      (some #{:not-unique} items) (-> (bad-request "Resource ID is not unique")
+      (some #{:not-unique} items) (-> (bad-request "Catalogue item is not unique")
                                       (content-type "text/plain"))
-      :else (redirect (str "/application?items=" (str/join "," items))))))
+      (not (apply = (mapv :wfid items))) (-> (bad-request "Unbundlable catalogue items: workflows don't match")
+                                             (content-type "text/plain"))
+      :else (redirect (str "/application?items=" (str/join "," (mapv :id items)))))))
 
 (defn render-css
   "Helper function for rendering styles that has parameters for
