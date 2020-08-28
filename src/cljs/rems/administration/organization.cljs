@@ -4,7 +4,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [document-title enrich-user enrich-email readonly-checkbox]]
+            [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -40,6 +40,15 @@
    (str "/administration/organizations/edit/" id)
    (text :t.administration/edit)])
 
+(defn- display-localized-review-email [review-email]
+  [:div
+   (doall (for [[langcode localization] (:name review-email)]
+            ^{:key (str "review-email-" (name langcode))}
+            [inline-info-field (str (text :t.administration/name)
+                                    " (" (str/upper-case (name langcode)) ")")
+             localization]))
+   [inline-info-field (text :t.administration/email) (:email review-email)]])
+
 (defn organization-view [organization language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -62,8 +71,7 @@
                                                                       (map :display)
                                                                       (interpose [:br]))]
               [inline-info-field (text :t.administration/review-emails) (->> (:organization/review-emails organization)
-                                                                             (map enrich-email)
-                                                                             (map :display)
+                                                                             (map display-localized-review-email)
                                                                              (interpose [:br]))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
