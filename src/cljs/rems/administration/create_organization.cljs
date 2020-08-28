@@ -176,7 +176,9 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/administration/organizations"
+   (if @(rf/subscribe [::editing?])
+     (str "/administration/organizations/" @(rf/subscribe [::organization-id]))
+     "/administration/organizations")
    (text :t.administration/cancel)])
 
 (defn- organization-owners-field []
