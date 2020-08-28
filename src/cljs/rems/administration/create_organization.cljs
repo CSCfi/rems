@@ -241,8 +241,7 @@
        (text :t.administration/add)]]]))
 
 (defn create-organization-page []
-  (let [form @(rf/subscribe [::form])
-        loading? (or @(rf/subscribe [::available-owners :fetching?])
+  (let [loading? (or @(rf/subscribe [::available-owners :fetching?])
                      @(rf/subscribe [::organization :fetching?]))
         editing? @(rf/subscribe [::editing?])
         title (if editing?
