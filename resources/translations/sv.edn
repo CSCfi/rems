@@ -16,6 +16,7 @@
             :decide "Avgör"
             :errors {:already-member "Användare är redan medlem."
                      :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
+                     :duplicate-id "Id är redan i bruk."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har into godkänt användarvillkoren."
                      :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}

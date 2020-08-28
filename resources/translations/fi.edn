@@ -16,6 +16,7 @@
             :decide "Päätä"
             :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
                      :disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
+                     :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}

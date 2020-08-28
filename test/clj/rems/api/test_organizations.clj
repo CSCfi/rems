@@ -104,3 +104,33 @@
                                    "42" "alice")]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))
+
+(deftest organization-duplicate-key-test
+  (let [api-key "42"
+        owner "owner"
+        org-owner "organization-owner1"]
+
+    (testing "trying to create a duplicate fails" ; separate test because it will leave the transaction in an errored state
+      (let [_response1 (api-call :post "/api/organizations/create"
+                                 {:organization/id "duplicate-organizations-api-test-org"
+                                  :organization/name {:fi "Duplikaatti Organisaatiot API Test ORG"
+                                                      :en "Duplicate Organizations API Test ORG"}
+                                  :organization/short-name {:fi "DUPORG" :en "DUPORG"}
+                                  :organization/owners [{:userid org-owner}]
+                                  :organization/review-emails [{:email "test@organization.test.org"
+                                                                :name {:fi "Duplikaatti Organisaatiot API Test ORG Katselmoijat"
+                                                                       :en "Duplicate Organizations API Test ORG Reviewers"}}]}
+                                 api-key owner)
+            response2 (api-call :post "/api/organizations/create"
+                                {:organization/id "duplicate-organizations-api-test-org"
+                                 :organization/name {:fi "Duplikaatti Organisaatiot API Test ORG"
+                                                     :en "Duplicate Organizations API Test ORG"}
+                                 :organization/short-name {:fi "DUPORG" :en "DUPORG"}
+                                 :organization/owners [{:userid org-owner}]
+                                 :organization/review-emails [{:email "test@organization.test.org"
+                                                               :name {:fi "Duplikaatti Organisaatiot API Test ORG Katselmoijat"
+                                                                      :en "Duplicate Organizations API Test ORG Reviewers"}}]}
+                                api-key owner)]
+        (is (= {:success false
+                :errors [{:type "t.actions.errors/duplicate-id"}]}
+               response2))))))

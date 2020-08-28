@@ -1,5 +1,6 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
+            [clojure.string :as str]
             [medley.core :refer [assoc-some find-first]]
             [rems.api.services.dependencies :as dependencies]
             [rems.db.applications :as applications]
@@ -48,7 +49,18 @@
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
 (defn add-organization! [userid org]
-  (organizations/add-organization! userid org))
+  (try
+    (organizations/add-organization! userid org)
+    {:success true
+     :organization/id (:organization/id org)}
+    (catch Exception ex
+      {:success false}
+      (if (and (.getCause ex)
+               (str/includes? (.getMessage (.getCause ex))
+                              "duplicate key value violates unique constraint"))
+        {:success false
+         :errors [{:type :t.actions.errors/duplicate-id}]}
+        {:success false})))) ; unkown error
 
 (defn edit-organization! [userid org]
   (organizations/update-organization! (:organization/id org)
