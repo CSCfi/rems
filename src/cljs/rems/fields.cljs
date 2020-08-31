@@ -138,6 +138,9 @@
      [:input.form-control {:type "text"
                            :id (field-name opts)
                            :name (field-name opts)
+                           :data-toggle "tooltip"
+                           :data-placement "top"
+                           :title "Tooltip"
                            :placeholder placeholder
                            :required (not optional)
                            :aria-invalid (when validation true)
@@ -146,10 +149,12 @@
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :value value
-                           :on-change (comp on-change event-value)}]]))
+                           :on-change (comp on-change event-value)
+                           :other "test"}]]))
+
 
 (defn texta-field
-  [{:keys [validation on-change] :as opts}]
+  [{:keys [validation on-change]  :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -157,6 +162,9 @@
     [field-wrapper opts
      [textarea {:id (field-name opts)
                 :name (field-name opts)
+                :data-toggle "tooltip"
+                :data-placement "top"
+                :title "Tooltip"
                 :placeholder placeholder
                 :required (not optional)
                 :aria-invalid (when validation true)
@@ -375,18 +383,18 @@
    (component-info multi-attachment-view)
    (example "no attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachment nil
-                                     :on-attach (fn [_] nil)}])
+                                    :attachment nil
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "attachment.xlsx"}
-                                                   {:attachment/filename "data.pdf"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "attachment.xlsx"}
+                                                  {:attachment/filename "data.pdf"}]
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments, long filenames"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
-                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
+                                                  {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
+                                    :on-attach (fn [_] nil)}])
    (component-info field)
    (example "field of type \"text\""
             [field {:form/id 1
@@ -625,7 +633,7 @@
                     :readonly true
                     :field/value "123"
                     :field/attachments (repeat 100 {:attachment/id 123
-                                         :attachment/filename "test.txt"})}])
+                                                    :attachment/filename "test.txt"})}])
    (example "field of type \"date\""
             [field {:form/id 24
                     :field/id "1"

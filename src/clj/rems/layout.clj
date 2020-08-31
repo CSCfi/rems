@@ -20,6 +20,13 @@ window.rems = {
 };
 "])
 
+(defn initialize-tooltips []
+  [:script {:type "text/javascript"}
+   (str "$(function () {
+     $().tooltip()
+    })")])
+
+
 (defn- css-filename [language]
   (str "/css/" (name language) "/screen.css"))
 
@@ -50,6 +57,7 @@ window.rems = {
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (initialize-hooks)
+           (initialize-tooltips)
            (for [extra-script (get-in env [:extra-scripts :files])]
              (include-js extra-script))
            content]]))
