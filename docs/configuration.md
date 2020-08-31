@@ -29,7 +29,22 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-domain` – the openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
 * `:oidc-client-id`
 * `:oidc-client-secret`
+* `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
+
+#### User attributes
+
+By default, REMS reads the following attributes from the OIDC id token:
+
+* `sub` - the username
+* `name`, `unique_name` or `family_name` – looked up in this order to decide the display name for the user
+* `email` - user email
+
+You can configure additional properties to read via the
+`:oidc-extra-attributes` configuration key. The additional attributes
+are only shown to users handling the application, and super-users like
+the owner and reporter. In praticular, application members cannot see
+the additional user properties of each other.
 
 ### Development login (`:fake`)
 
