@@ -20,7 +20,9 @@
                 :organization/last-modified
                 :organization/modifier
                 :organization/review-emails
-                :organization/owners)))))
+                :organization/owners
+                :enabled
+                :archived)))))
 
 (defn- owner-filter-match? [owner org]
   (or (nil? owner) ; return all when not specified
