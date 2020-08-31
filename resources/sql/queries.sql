@@ -603,5 +603,5 @@ INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user,
 
 -- :name set-organization! :!
 UPDATE organization
-SET data = :data::jsonb
+SET data = :data::jsonb, modified = :time, modifierUserId = :user
 WHERE id = :id;

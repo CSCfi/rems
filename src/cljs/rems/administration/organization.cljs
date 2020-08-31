@@ -75,7 +75,7 @@
                                                                              (interpose [:br]))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
-              [inline-info-field (text :t.administration/modifier) (:organization/modifer organization)]]}]
+              [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]
    (let [id (:organization/id organization)]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]

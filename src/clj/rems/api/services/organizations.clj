@@ -63,7 +63,8 @@
         {:success false})))) ; unkown error
 
 (defn edit-organization! [userid org]
-  (organizations/update-organization! (:organization/id org)
+  (organizations/update-organization! userid
+                                      (:organization/id org)
                                       (fn [db-organization]
                                         (if (contains? (set (map :userid (:organization/owners db-organization))) userid)
                                           (merge db-organization org (select-keys [:organization/id :organization/owners] db-organization)) ; org owner can't update owners
@@ -71,14 +72,14 @@
   {:success true
    :organization/id (:organization/id org)})
 
-(defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
-  (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
+(defn set-organization-enabled! [userid {:organization/keys [id] :keys [enabled]}]
+  (organizations/update-organization! userid id (fn [organization] (assoc organization :enabled enabled)))
   {:success true})
 
-(defn set-organization-archived! [{:organization/keys [id] :keys [archived]}]
+(defn set-organization-archived! [userid {:organization/keys [id] :keys [archived]}]
   (or (dependencies/change-archive-status-error archived  {:organization/id id})
       (do
-        (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
+        (organizations/update-organization! userid id (fn [organization] (assoc organization :archived archived)))
         {:success true})))
 
 (defn get-available-owners [] (users/get-users))

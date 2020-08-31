@@ -3,7 +3,8 @@
             [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
             [rems.db.core :as db]
             [rems.json :as json]
-            [schema.coerce :as coerce])
+            [schema.coerce :as coerce]
+            [clj-time.core :as time-core])
   (:import [org.joda.time DateTime]))
 
 (def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
@@ -55,10 +56,13 @@
         (update-existing :organization (fn [_] organization-overview))
         (update-existing :organization (fn [_] organization-overview)))))
 
-(defn set-organization! [organization]
-  (db/set-organization! {:id (:organization/id organization) :data (json/generate-string organization)}))
+(defn set-organization! [userid organization]
+  (db/set-organization! {:id (:organization/id organization)
+                         :data (json/generate-string organization)
+                         :user userid
+                         :time (time-core/now)}))
 
-(defn update-organization! [id update-fn]
+(defn update-organization! [userid id update-fn]
   (let [id (:organization/id id id)
         organization (getx-organization-by-id id)]
-    (set-organization! (update-fn organization))))
+    (set-organization! userid (update-fn organization))))

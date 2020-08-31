@@ -62,14 +62,14 @@
       :roles #{:owner}
       :body [command OrganizationArchivedCommand]
       :return SuccessResponse
-      (ok (organizations/set-organization-archived! command)))
+      (ok (organizations/set-organization-archived! (getx-user-id) command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable the organization"
       :roles #{:owner}
       :body [command OrganizationEnabledCommand]
       :return SuccessResponse
-      (ok (organizations/set-organization-enabled! command)))
+      (ok (organizations/set-organization-enabled! (getx-user-id) command)))
 
     (GET "/available-owners" []
       :summary "List of available owners"
