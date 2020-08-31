@@ -29,6 +29,7 @@ Changes since v2.12
 - Form field placeholders now fulfil accessibility contrast ratio requirements (#2229)
 - UI for the close action erroneously claimed the comment is not shown to the applicant. (#2212)
 - Description of the Decider workflow erroneously claimed that application can not be closed.
+- Fixed enabling a catalogue item after changing its form. (#2283)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
@@ -68,7 +69,6 @@ Changes since v2.12
 - Long attachment filenames are now truncated in the UI (#2118)
 - `/api/applications/export` now doesn't blow up when an application has multiple forms. Instead only answers for the requested form are returned. (#2153)
 - Sort applications based on the application external id by sequence (#2183)
-- Re-enabling a catalogue item after its form was changed now works. (#2283)
 
 ### Additions
 - Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
