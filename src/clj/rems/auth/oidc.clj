@@ -45,7 +45,7 @@
         ;; locale – could be used to set preferred lang on first login
         ;; email – non-unique (!) email
         id-data (jwt/validate id-token issuer audience now)
-        identity-base {:eppn (:sub id-data)
+        identity-base {:eppn (get id-data (keyword (getx env :oidc-userid-attribute)))
                        ;; need to maintain a fallback list of name attributes since identity
                        ;; providers differ in what they give us
                        :commonName (some id-data [:name :unique_name :family_name])
