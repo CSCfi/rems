@@ -53,7 +53,7 @@
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data))
-    (-> (redirect "/") ; TODO Could redirect with state param
+    (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
         (assoc-in [:session :identity] (merge identity-base extra-attributes)))))
