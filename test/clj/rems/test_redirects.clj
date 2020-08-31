@@ -28,16 +28,25 @@
       (is (= 302 (:status response)))
       (is (= (str "https://public.url/application?items=" catid) (get-in response [:headers "Location"])))))
 
-  (testing "specifying multiple resources works"
-    (let [resid-1 (test-data/create-resource! {:resource-ext-id "urn:multiple1"})
-          catid-1 (test-data/create-catalogue-item! {:resource-id resid-1})
+  (testing "specifying multiple resources"
+    (let [wf (test-data/create-workflow! {})
+          resid-1 (test-data/create-resource! {:resource-ext-id "urn:multiple1"})
+          catid-1 (test-data/create-catalogue-item! {:resource-id resid-1 :workflow-id wf})
           resid-2 (test-data/create-resource! {:resource-ext-id "urn:multiple2"})
-          catid-2 (test-data/create-catalogue-item! {:resource-id resid-2})
-          response (-> (request :get "/apply-for?resource=urn:multiple1&resource=urn:multiple2")
-                       handler)]
-      (is (= 302 (:status response)))
-      (is (= (str "https://public.url/application?items=" catid-1 "," catid-2)
-             (get-in response [:headers "Location"])))))
+          catid-2 (test-data/create-catalogue-item! {:resource-id resid-2 :workflow-id wf})
+          resid-3 (test-data/create-resource! {:resource-ext-id "urn:multiple3"})
+          catid-3 (test-data/create-catalogue-item! {:resource-id resid-3 :workflow-id nil})] ;; create fresh workflow
+      (testing "works when workflows match"
+        (let [response (-> (request :get "/apply-for?resource=urn:multiple1&resource=urn:multiple2")
+                           handler)]
+          (is (= 302 (:status response)))
+          (is (= (str "https://public.url/application?items=" catid-1 "," catid-2)
+                 (get-in response [:headers "Location"])))))
+      (testing "fails if workflows differ"
+        (let [response (-> (request :get "/apply-for?resource=urn:multiple1&resource=urn:multiple2&resource=urn:multiple3")
+                           handler)]
+          (is (= 400 (:status response)))
+          (is (.startsWith (read-body response) "Unbundlable"))))))
 
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
@@ -57,12 +66,12 @@
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
                        handler)]
       (is (= 400 (:status response)))
-      (is (= "Resource ID is not unique" (read-body response)))
+      (is (= "Catalogue item is not unique" (read-body response)))
       (testing "even if multiple resources are specified"
         (let [response (-> (request :get "/apply-for?resource=urn:two-matching-resources&resource=urn:one-matching-resource")
                            handler)]
           (is (= 400 (:status response)))
-          (is (= "Resource ID is not unique" (read-body response)))))))
+          (is (= "Catalogue item is not unique" (read-body response)))))))
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
     (let [resid (test-data/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})
