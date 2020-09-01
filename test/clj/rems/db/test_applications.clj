@@ -78,3 +78,25 @@
     (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
     (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
     (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
+
+(deftest test-delete-application!
+  (let [app-id (test-data/create-application! {:actor "applicant"})]
+    (is (applications/get-application app-id))
+    (applications/delete-application! app-id)
+    (testing "deleted draft is gone"
+      (is (not (applications/get-application app-id))))
+    (testing "events are gone"
+      (is (empty? (db-events/get-application-events app-id))))
+    (testing "db entry for application is gone"
+      (is (not (contains? (set (db/get-application-ids {})) app-id)))))
+  (let [app-id (test-data/create-application! {:actor "applicant"})]
+    (test-data/command! {:application-id app-id
+                         :type :application.command/submit
+                         :actor "applicant"})
+    (testing "can't delete submitted application"
+      (is (thrown? AssertionError (applications/delete-application! app-id))))
+    (test-data/command! {:application-id app-id
+                         :type :application.command/return
+                         :actor "developer"})
+    (testing "can't delete returned application"
+      (is (thrown? AssertionError (applications/delete-application! app-id))))))
