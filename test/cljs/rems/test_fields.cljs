@@ -1,5 +1,6 @@
 (ns rems.test-fields
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
+            ;; [npm.axe-core :as axe]
             [re-frame.core :as rf]
             [rems.fields :refer [field-wrapper toggle-diff-button]]
             [rems.atoms :refer [textarea]]
@@ -7,12 +8,12 @@
             [rems.text :refer [text]]))
 
 (use-fixtures
- :once
- (fn [f]
+  :once
+  (fn [f]
    ;; TODO: load translations file
-   (rf/dispatch [:initialize-db])
-   (rf/dispatch [:loaded-translations {}])
-   (f)))
+    (rf/dispatch [:initialize-db])
+    (rf/dispatch [:loaded-translations {}])
+    (f)))
 
 (defn contains-hiccup? [needle haystack]
   (some #(= % needle) (tree-seq vector? identity haystack)))
