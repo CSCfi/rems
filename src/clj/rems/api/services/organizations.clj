@@ -37,10 +37,10 @@
 
 (defn get-organizations [& [{:keys [userid owner enabled archived]}]]
   (->> (organizations/get-organizations-raw)
-       (organization-filters userid owner)
        (db/apply-filters (assoc-some {}
                                      :enabled enabled
-                                     :archived archived))))
+                                     :archived archived))
+       (organization-filters userid owner)))
 
 (defn get-organization-raw [org]
   (->> (organizations/get-organizations-raw)

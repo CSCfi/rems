@@ -15,6 +15,7 @@
 
 (deftest organizations-api-test
   (let [api-key "42"
+        user "alice"
         owner "owner"
         org-owner "organization-owner1"]
 
@@ -57,6 +58,17 @@
                     :archived false}
                    (-> (find-first (comp #{"organizations-api-test-org"} :organization/id) data)
                        (update :organization/last-modified parse-date))))))
+
+        (testing "a normal user can see it"
+          (let [data (api-call :get (str "/api/organizations")
+                               nil
+                               api-key user)]
+            (is (contains? (set (map :organization/id data)) "organizations-api-test-org"))
+            (is (= {:organization/id "organizations-api-test-org"
+                    :organization/name {:fi "Organisaatiot API Test ORG"
+                                        :en "Organizations API Test ORG"}
+                    :organization/short-name {:fi "ORG" :en "ORG"}}
+                   (find-first (comp #{"organizations-api-test-org"} :organization/id) data)))))
 
         (testing "organization owner owns it"
           (let [data (api-call :get (str "/api/organizations?owner=" org-owner)
