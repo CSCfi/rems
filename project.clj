@@ -114,6 +114,8 @@
                           [karma-junit-reporter "2.0.1"]
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]
+                          ;; a11y testing
+                          [axe-core "4.0.1"]
                           ;; printing to pdf
                           [puppeteer "2.0.0"]]}
 
@@ -198,7 +200,11 @@
                                              :compiler {:output-to "target/cljsbuild/test/test.js"
                                                         :output-dir "target/cljsbuild/test/out"
                                                         :main rems.cljs-tests
-                                                        :optimizations :none}}}}}
+                                                        :optimizations :none
+                                                        ;; imported as suggested in https://gist.github.com/pbostrom/87500c8c3fa43b23cd3ccd764ef767d5
+                                                        :foreign-libs [{:file "resources/public/js/npm-deps.js"
+                                                                        :provides ["npm.axe-core"]
+                                                                        :global-exports {axe-core Axe}}]}}}}}
    :project/test {:jvm-opts ["-Drems.config=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
