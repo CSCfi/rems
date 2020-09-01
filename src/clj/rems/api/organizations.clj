@@ -51,8 +51,8 @@
       (ok (organizations/add-organization! (getx-user-id) command)))
 
     (PUT "/edit" []
-      :summary "Edit organization"
-      :roles #{:owner}
+      :summary "Edit organization. Organization owners cannot change the owners."
+      :roles #{:owner :organization-owner}
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse
       (ok (organizations/edit-organization! (getx-user-id) command)))
@@ -73,7 +73,7 @@
 
     (GET "/available-owners" []
       :summary "List of available owners"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :return AvailableOwners
       (ok (organizations/get-available-owners)))
 

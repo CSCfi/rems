@@ -1,7 +1,7 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
             [clojure.string :as str]
-            [medley.core :refer [assoc-some find-first]]
+            [medley.core :refer [assoc-some find-first remove-keys]]
             [rems.api.services.dependencies :as dependencies]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -68,9 +68,13 @@
   (organizations/update-organization! userid
                                       (:organization/id org)
                                       (fn [db-organization]
-                                        (if (contains? (set (map :userid (:organization/owners db-organization))) userid)
-                                          (merge db-organization org (select-keys [:organization/id :organization/owners] db-organization)) ; org owner can't update owners
-                                          (merge db-organization org (select-keys [:organization/id] db-organization)))))
+                                        (let [organization-owners (set (map :userid (:organization/owners db-organization)))
+                                              organization-owner? (contains? organization-owners userid)]
+                                          (merge db-organization
+                                                 (remove-keys (if organization-owner?
+                                                                #{:organization/id :organization/owners} ; org owner can't update owners
+                                                                #{:organization/id})
+                                                              org)))))
   {:success true
    :organization/id (:organization/id org)})
 

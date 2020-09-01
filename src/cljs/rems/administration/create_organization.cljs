@@ -194,6 +194,7 @@
        :item-label :display
        :item-selected? #(contains? selected-owners (% :userid))
        :multi? true
+       :disabled? (some #{:organization-owner} @(rf/subscribe [:roles]))
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
