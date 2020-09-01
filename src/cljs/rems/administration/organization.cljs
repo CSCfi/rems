@@ -88,11 +88,10 @@
   (let [organization (rf/subscribe [::organization])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
-    (fn []
-      [:div
-       [administration/navigator]
-       [document-title (text :t.administration/organization)]
-       [flash-message/component :top]
-       (if @loading?
-         [spinner/big]
-         [organization-view @organization @language])])))
+    [:div
+     [administration/navigator]
+     [document-title (text :t.administration/organization)]
+     [flash-message/component :top]
+     (if @loading?
+       [spinner/big]
+       [organization-view @organization @language])]))
