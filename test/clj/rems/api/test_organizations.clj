@@ -11,7 +11,7 @@
 (def test-time3 (DateTime. 30000 DateTimeZone/UTC))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fixed-time-fixture test-time1))
 
