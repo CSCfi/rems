@@ -4,7 +4,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
+            [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -70,9 +70,13 @@
                                                                       (map enrich-user)
                                                                       (map :display)
                                                                       (interpose [:br]))]
-              [inline-info-field (text :t.administration/review-emails) (->> (:organization/review-emails organization)
-                                                                             (map display-localized-review-email)
-                                                                             (interpose [:br]))]
+              [info-field
+               (text :t.administration/review-emails)
+               (->> (:organization/review-emails organization)
+                    (map display-localized-review-email)
+                    (interpose [:br]))
+               {:box? false
+                :solid? true}]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
               [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]
