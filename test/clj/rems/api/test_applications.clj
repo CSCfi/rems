@@ -469,6 +469,38 @@
                 "application.event/submitted"]
                (map :event/type (get submitted :application/events))))))))
 
+(deftest test-application-delete
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"]
+    (let [app-id (test-data/create-application! {:actor applicant})]
+      (testing "can't delete draft as other user"
+        (is (response-is-forbidden?
+             (api-response :post "/api/applications/delete" {:application-id app-id}
+                           api-key handler))))
+      (testing "can delete draft as applicant"
+        (is (:success (api-call :post "/api/applications/delete" {:application-id app-id}
+                                api-key applicant))))
+      (testing "deleted application is gone"
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/" app-id) nil
+                           api-key applicant)))))
+    (let [app-id (test-data/create-application! {:actor applicant})]
+      (test-data/command! {:application-id app-id
+                           :type :application.command/submit
+                           :actor applicant})
+      (testing "can't delete submitted application"
+        (is (response-is-forbidden?
+             (api-response :post "/api/applications/delete" {:application-id app-id}
+                           api-key applicant))))
+      (test-data/command! {:application-id app-id
+                           :type :application.command/return
+                           :actor handler})
+      (testing "can't delete returned application"
+        (is (response-is-forbidden?
+             (api-response :post "/api/applications/delete" {:application-id app-id}
+                           api-key applicant)))))))
+
 (deftest test-application-close
   (let [user-id "alice"
         application-id (test-data/create-application! {:actor user-id})]

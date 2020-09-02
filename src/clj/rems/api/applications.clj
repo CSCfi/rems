@@ -213,13 +213,32 @@
         (catch rems.InvalidRequestException e
           (unsupported-media-type))))
 
-
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
       :roles #{:logged-in}
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
       (ok (accept-invitation invitation-token)))
+
+    (POST "/delete" []
+      :summary "Delete an application permanently. Only drafts can be deleted."
+      :roles #{:logged-in}
+      :body [request {:application-id (describe s/Int "application id")}]
+      :return SuccessResponse
+      (let [application-id (:application-id request)
+            application (applications/get-application application-id)]
+        (prn :APPLICATION)
+        (clojure.pprint/pprint application)
+        (cond
+          (not application)
+          (api-util/not-found-json-response)
+          (not= (getx-user-id) (:userid (:application/applicant application)))
+          (throw-forbidden)
+          (not= :application.state/draft (:application/state application))
+          (throw-forbidden)
+          :else
+          (do (applications/delete-application! application-id)
+              (ok {:success true})))))
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
