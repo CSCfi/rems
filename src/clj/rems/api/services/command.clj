@@ -43,7 +43,8 @@
   (merge applications/fetcher-injections
          {:secure-token secure-token
           :allocate-application-ids! applications/allocate-application-ids!
-          :copy-attachment! attachments/copy-attachment!}))
+          :copy-attachment! attachments/copy-attachment!
+          :delete-application! applications/delete-application!}))
 
 (def ^:dynamic *fail-on-process-manager-errors* false)
 

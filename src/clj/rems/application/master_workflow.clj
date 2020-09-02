@@ -60,7 +60,8 @@
         :application.command/request-decision))
 
 (def ^:private created-permissions
-  {:applicant submittable-application-commands
+  {:applicant (conj submittable-application-commands
+                    :application.command/delete)
    :member #{:application.command/accept-licenses
              :application.command/copy-as-new}
    :reporter #{:see-everything}

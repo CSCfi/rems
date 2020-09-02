@@ -220,26 +220,6 @@
       :return AcceptInvitationResult
       (ok (accept-invitation invitation-token)))
 
-    (POST "/delete" []
-      :summary "Delete an application permanently. Only drafts can be deleted."
-      :roles #{:logged-in}
-      :body [request {:application-id (describe s/Int "application id")}]
-      :return SuccessResponse
-      (let [application-id (:application-id request)
-            application (applications/get-application application-id)]
-        (prn :APPLICATION)
-        (clojure.pprint/pprint application)
-        (cond
-          (not application)
-          (api-util/not-found-json-response)
-          (not= (getx-user-id) (:userid (:application/applicant application)))
-          (throw-forbidden)
-          (not= :application.state/draft (:application/state application))
-          (throw-forbidden)
-          :else
-          (do (applications/delete-application! application-id)
-              (ok {:success true})))))
-
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
     (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
@@ -249,6 +229,7 @@
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
+    (command-endpoint :application.command/delete commands/DeleteCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)

@@ -475,12 +475,21 @@
         handler "developer"]
     (let [app-id (test-data/create-application! {:actor applicant})]
       (testing "can't delete draft as other user"
-        (is (response-is-forbidden?
-             (api-response :post "/api/applications/delete" {:application-id app-id}
-                           api-key handler))))
+        (is (not (contains? (-> (get-application-for-user app-id handler)
+                                :application/permissions
+                                set)
+                            :application.command/delete)))
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key handler))))
       (testing "can delete draft as applicant"
-        (is (:success (api-call :post "/api/applications/delete" {:application-id app-id}
-                                api-key applicant))))
+        (is (contains? (-> (get-application-for-user app-id applicant)
+                           :application/permissions
+                           set)
+                       "application.command/delete"))
+        (is (= {:success true}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant))))
       (testing "deleted application is gone"
         (is (response-is-not-found?
              (api-response :get (str "/api/applications/" app-id) nil
@@ -490,16 +499,16 @@
                            :type :application.command/submit
                            :actor applicant})
       (testing "can't delete submitted application"
-        (is (response-is-forbidden?
-             (api-response :post "/api/applications/delete" {:application-id app-id}
-                           api-key applicant))))
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant))))
       (test-data/command! {:application-id app-id
                            :type :application.command/return
                            :actor handler})
       (testing "can't delete returned application"
-        (is (response-is-forbidden?
-             (api-response :post "/api/applications/delete" {:application-id app-id}
-                           api-key applicant)))))))
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant)))))))
 
 (deftest test-application-close
   (let [user-id "alice"
@@ -659,6 +668,7 @@
                "application.command/change-resources"
                "application.command/close"
                "application.command/copy-as-new"
+               "application.command/delete"
                "application.command/invite-member"
                "application.command/remove-member"
                "application.command/save-draft"
@@ -1578,6 +1588,7 @@
                            "application.command/remove-member"
                            "application.command/accept-licenses"
                            "application.command/uninvite-member"
+                           "application.command/delete"
                            "application.command/save-draft"
                            "application.command/close"
                            "application.command/change-resources"]}

@@ -1598,6 +1598,33 @@
                           :actor applicant-user-id}
                          injections))))))
 
+(deftest test-delete
+  (let [draft-application (apply-events nil [dummy-created-event])
+        submitted-application (apply-events draft-application [{:event/type :application.event/submitted
+                                                                :event/time test-time
+                                                                :event/actor applicant-user-id
+                                                                :application/id app-id}])]
+    (testing "delete-application! is not called if command is forbidden"
+      (let [injections (assoc injections
+                              :delete-application! (fn [_] (assert false)))]
+        (is (= {:errors [{:type :forbidden}]} (fail-command draft-application
+                                                            {:type :application.command/delete
+                                                             :actor handler-user-id}
+                                                            injections)))
+        (is (= {:errors [{:type :forbidden}]} (fail-command submitted-application
+                                                            {:type :application.command/delete
+                                                             :actor applicant-user-id}
+                                                            injections)))))
+    (testing "delete-application! gets called if command succeeds"
+      (let [deleted (atom nil)
+            injections (assoc injections
+                              :delete-application! (fn [id] (reset! deleted id)))]
+        (is (= [] (ok-command draft-application
+                              {:type :application.command/delete
+                               :actor applicant-user-id}
+                              injections)))
+        (is (= (:application/id draft-application) @deleted))))))
+
 (deftest test-handle-command
   (let [application (model/application-view nil {:event/type :application.event/created
                                                  :event/actor "applicant"

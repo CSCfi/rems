@@ -233,6 +233,7 @@
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/decide}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
@@ -259,6 +260,7 @@
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
