@@ -148,6 +148,7 @@
                                                    :pretty-print false
                                                    :closure-warnings {:externs-validation :off
                                                                       :non-standard-jsdoc :off}
+                                                   :warnings {:munged-namespace false} ;; for rems.actions.delete
                                                    :infer-externs :true ;; for window.rems.hooks to work
                                                    :externs ["react/externs/react.js"]}}}}
              :aot :all

@@ -14,6 +14,8 @@
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :comment "Kommentar"
             :decide "Avgör"
+            :delete "TODO"
+            :delete-intro [:div.intro [:p "TODO"]]
             :errors {:already-member "Användare är redan medlem."
                      :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
