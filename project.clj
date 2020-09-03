@@ -179,7 +179,8 @@
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
-                            "-XX:-OmitStackTraceInFastThrow"]
+                            "-XX:-OmitStackTraceInFastThrow"
+                            "-Xmx6g"]
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems
