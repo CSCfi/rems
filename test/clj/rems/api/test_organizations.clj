@@ -217,7 +217,17 @@
                                     :organization/review-emails []}
                                    "42" "alice")]
         (is (response-is-forbidden? response))
-        (is (= "forbidden" (read-body response)))))
+        (is (= "forbidden" (read-body response))))
+
+      (api-call :post "/api/organizations/create"
+              {:organization/id "test-organization"
+               :organization/name {:fi "Testiorganisaatio"
+                                   :en "Test Organization"}
+               :organization/short-name {:fi "ORG"
+                                         :en "ORG"}
+               :organization/owners []
+               :organization/review-emails []}
+              "42" "owner"))
     (testing "edit"
       (let [response (api-response :put "/api/organizations/edit"
                                    {:organization/id "test-organization"
@@ -229,7 +239,37 @@
                                     :organization/review-emails []}
                                    "42" "alice")]
         (is (response-is-forbidden? response))
-        (is (= "forbidden" (read-body response)))))))
+        (is (= "forbidden" (read-body response))))
+      (let [response (api-response :put "/api/organizations/edit"
+                                   {:organization/id "test-organization"
+                                    :organization/name {:fi "Testiorganisaatio"
+                                                        :en "Test Organization"}
+                                    :organization/short-name {:fi "ORG"
+                                                              :en "ORG"}
+                                    :organization/owners []
+                                    :organization/review-emails []}
+                                   "42" "organization-owner")]
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response))))
+      (testing "success after rights given"
+        (api-call :put "/api/organizations/edit"
+                  {:organization/id "test-organization"
+                   :organization/name {:fi "Testiorganisaatio"
+                                       :en "Test Organization"}
+                   :organization/short-name {:fi "ORG"
+                                             :en "ORG"}
+                   :organization/owners [{:userid "organization-owner1"}]
+                   :organization/review-emails []}
+                  "42" "owner")
+        (api-call :put "/api/organizations/edit"
+                  {:organization/id "test-organization"
+                   :organization/name {:fi "Testiorganisaatio"
+                                       :en "Test Organization"}
+                   :organization/short-name {:fi "ORG"
+                                             :en "ORG"}
+                   :organization/owners [{:userid "organization-owner1"}]
+                   :organization/review-emails []}
+                  "42" "organization-owner1")))))
 
 (deftest organization-duplicate-key-test
   (let [api-key "42"
