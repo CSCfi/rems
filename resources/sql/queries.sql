@@ -598,8 +598,10 @@ SELECT id, modifierUserId, modified, data::text as data FROM organization;
 -- :name get-organization-by-id :? :1
 SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
 
--- :name add-organization! :!
-INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);
+-- :name add-organization! :insert
+INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
+ON CONFLICT (id) DO NOTHING
+RETURNING id;
 
 -- :name set-organization! :!
 UPDATE organization

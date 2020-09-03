@@ -10,15 +10,13 @@
 (def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
 
 (defn add-organization! [userid org]
-  (db/add-organization! {:id (:organization/id org)
-                         :user userid
-                         :time (DateTime.)
-                         :data (json/generate-string (-> org
-                                                         (assoc :enabled true
-                                                                :archived false)
-                                                         (dissoc :organization/id)))})
-  {:success true
-   :organization/id (:organization/id org)})
+  (:id (db/add-organization! {:id (:organization/id org)
+                              :user userid
+                              :time (DateTime.)
+                              :data (json/generate-string (-> org
+                                                              (assoc :enabled true
+                                                                     :archived false)
+                                                              (dissoc :organization/id)))})))
 
 (def ^:private coerce-organization-overview
   (coerce/coercer! OrganizationOverview json/coercion-matcher))

@@ -51,18 +51,12 @@
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
 (defn add-organization! [userid org]
-  (try
-    (organizations/add-organization! userid org)
+  (if-let [id (organizations/add-organization! userid org)]
     {:success true
-     :organization/id (:organization/id org)}
-    (catch Exception ex
-      {:success false}
-      (if (and (.getCause ex)
-               (str/includes? (.getMessage (.getCause ex))
-                              "duplicate key value violates unique constraint"))
-        {:success false
-         :errors [{:type :t.actions.errors/duplicate-id}]}
-        {:success false})))) ; unkown error
+     :organization/id id}
+    {:success false
+     :errors [{:type :t.actions.errors/duplicate-id
+               :organization/id (:organization/id org)}]}))
 
 (defn edit-organization! [userid org]
   (organizations/update-organization! userid

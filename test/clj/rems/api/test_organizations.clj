@@ -258,5 +258,6 @@
                                                                       :en "Duplicate Organizations API Test ORG Reviewers"}}]}
                                 api-key owner)]
         (is (= {:success false
-                :errors [{:type "t.actions.errors/duplicate-id"}]}
+                :errors [{:type "t.actions.errors/duplicate-id"
+                          :organization/id "duplicate-organizations-api-test-org"}]}
                response2))))))
