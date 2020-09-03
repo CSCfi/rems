@@ -18,12 +18,12 @@
 (defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
   [:<> [:a.info-button.btn.btn-link
         {:data-toggle "collapse"
-         :href (str "#" info-id)
+         :href (str "#" (str info-id "-collapse"))
          :aria-label aria-label-text
          :aria-expanded "false"
-         :aria-controls info-id}
+         :aria-controls (str info-id "-collapse")}
         [:i.fa.fa-info-circle]]
-   [:div.field-info.collapse {:id info-id
+   [:div.field-info.collapse {:id (str info-id "-collapse")
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
     body-text]])
@@ -78,9 +78,11 @@
   :diff-component - HTML, custom component for rendering a diff
   :validation - validation errors
   :fieldset - boolean, true if the field should be wrapped in a fieldset
+  :info-text - text for collapsable info field
+  :collapse-aria-label - text for aria-label of info button
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
+  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset info-text collapse-aria-label] :as opts} editor-component]
   (let [raw-title (localized (:field/title opts))
         title (linkify raw-title)
         optional (:field/optional opts)
@@ -110,7 +112,13 @@
       " "
       (if optional
         (text :t.form/optional)
-        (text :t.form/required))]
+        (text :t.form/required))
+      (when info-text
+        [collapse
+         (field-name opts)
+         collapse-aria-label
+         focus-when-collapse-opened
+         info-text])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -142,17 +150,12 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change collapse-info-btn collapse-aria-label info-text] :as opts}]
+  [{:keys [validation on-change collapse-aria-label info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
-     (when collapse-info-btn [collapse
-                              (field-name opts)
-                              (str collapse-aria-label)
-                              focus-when-collapse-opened
-                              [:span (str info-text)]])
      [:input.form-control {:type "text"
                            :id (field-name opts)
                            :name (field-name opts)
@@ -412,7 +415,6 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :collapse-info-btn true
                     :collapse-aria-label "Collapse aria lebel"
                     :info-text "Extra information"}])
    (example "field of type \"text\" with maximum length"
