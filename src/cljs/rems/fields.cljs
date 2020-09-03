@@ -22,7 +22,7 @@
            :aria-label info-text
            :aria-expanded "false"
            :aria-controls info-id}
-          [:i.fa.fa-question-circle]]
+          [:i.fa.fa-info-circle]]
    [:div.field-info.collapse {:id info-id
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
@@ -262,8 +262,6 @@
                                           :on-change on-change}]
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
-
-
 
 (defn upload-button [id on-upload]
   (let [upload-id (str id "-input")
