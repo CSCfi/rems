@@ -307,8 +307,6 @@
   (doseq [attr (vals attrs)]
     (create-user! attr))
   (roles/add-role! (users :owner) :owner)
-  (roles/add-role! (users :organization-owner1) :organization-owner)
-  (roles/add-role! (users :organization-owner2) :organization-owner)
   (roles/add-role! (users :reporter) :reporter))
 
 (defn create-test-users-and-roles! []

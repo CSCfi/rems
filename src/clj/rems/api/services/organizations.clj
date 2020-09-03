@@ -11,6 +11,7 @@
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
+                              (organizations/get-all-organization-roles userid)
                               (applications/get-all-application-roles userid))
         can-see-all? (some? (some #{:owner :organization-owner :handler} user-roles))]
     (for [org organizations]
