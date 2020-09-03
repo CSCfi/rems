@@ -30,6 +30,7 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-client-id`
 * `:oidc-client-secret`
 * `:oidc-userid-attribute` – which id-token attribute to use as the REMS userid. Defaults to `"sub"`.
+* `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
 

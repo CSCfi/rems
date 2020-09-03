@@ -48,6 +48,8 @@ Changes since v2.12
 - The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
 - REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. See [docs/configuration.md](docs/configuration.md). (#2130)
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
+- The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
+
 
 ## v2.12 "Merituulentie" 2020-05-04
 
