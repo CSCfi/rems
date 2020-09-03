@@ -1,6 +1,5 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
-            [clojure.string :as str]
             [medley.core :refer [assoc-some find-first remove-keys]]
             [rems.api.services.dependencies :as dependencies]
             [rems.db.applications :as applications]
