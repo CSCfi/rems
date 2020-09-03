@@ -15,6 +15,19 @@
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
+(defn collapse [info-id info-text focus-when-collapse-opened body-text]
+  [:span [:a.info-button.btn.btn-link
+          {:data-toggle "collapse"
+           :href (str "#" info-id)
+           :aria-label info-text
+           :aria-expanded "false"
+           :aria-controls info-id}
+          [:i.fa.fa-question-circle]]
+   [:div.field-info.collapse {:id info-id
+                              :ref focus-when-collapse-opened
+                              :tab-index "-1"}
+    body-text]])
+
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
         diff (.diff_main dmp
@@ -250,6 +263,8 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
+
+
 (defn upload-button [id on-upload]
   (let [upload-id (str id "-input")
         info-id (str id "-info")]
@@ -271,19 +286,13 @@
       [add-symbol]
       " "
       (text :t.form/upload)]
-     [:a.upload-info-button.btn.btn-link
-      {:data-toggle "collapse"
-       :href (str "#" info-id)
-       :aria-label (text :t.form/upload-extensions)
-       :aria-expanded "false"
-       :aria-controls info-id}
-      [:i.fa.fa-question-circle]]
-     [:div.upload-info.collapse {:id info-id
-                                 :ref focus-when-collapse-opened
-                                 :tab-index "-1"}
-      [text :t.form/upload-extensions]
-      ": "
-      attachment-types/allowed-extensions-string]]))
+     [collapse
+      info-id
+      (text :t.form/upload-extensions)
+      focus-when-collapse-opened
+      [:span [text :t.form/upload-extensions]
+       ": "
+       attachment-types/allowed-extensions-string]]]))
 
 (defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group
@@ -375,18 +384,18 @@
    (component-info multi-attachment-view)
    (example "no attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachment nil
-                                     :on-attach (fn [_] nil)}])
+                                    :attachment nil
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "attachment.xlsx"}
-                                                   {:attachment/filename "data.pdf"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "attachment.xlsx"}
+                                                  {:attachment/filename "data.pdf"}]
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments, long filenames"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
-                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
+                                                  {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
+                                    :on-attach (fn [_] nil)}])
    (component-info field)
    (example "field of type \"text\""
             [field {:form/id 1
@@ -625,7 +634,7 @@
                     :readonly true
                     :field/value "123"
                     :field/attachments (repeat 100 {:attachment/id 123
-                                         :attachment/filename "test.txt"})}])
+                                                    :attachment/filename "test.txt"})}])
    (example "field of type \"date\""
             [field {:form/id 24
                     :field/id "1"
