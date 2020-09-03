@@ -142,18 +142,18 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change collapse-info info-text] :as opts}]
+  [{:keys [validation on-change collapse-info-btn collapse-aria-lebel info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:<>
-      (if collapse-info [collapse
-                         (field-name opts)
-                         (str "some text")
-                         focus-when-collapse-opened
-                         [:span (str info-text)]])
+      (when collapse-info-btn [collapse
+                               (field-name opts)
+                               (str collapse-aria-lebel)
+                               focus-when-collapse-opened
+                               [:span (str info-text)]])
       [:input.form-control {:type "text"
                             :id (field-name opts)
                             :name (field-name opts)
@@ -412,7 +412,10 @@
                     :field/id "1"
                     :field/type :text
                     :field/title {:en "Title"}
-                    :field/placeholder {:en "placeholder"}}])
+                    :field/placeholder {:en "placeholder"}
+                    :field/collapse-info-btn true
+                    :field/collapse-aria-lebel "Collapse aria lebel"
+                    :info-text "Extra information"}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
                     :field/id "1"
