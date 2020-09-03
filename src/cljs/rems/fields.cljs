@@ -16,13 +16,13 @@
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
 (defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
-  [:span [:a.info-button.btn.btn-link
-          {:data-toggle "collapse"
-           :href (str "#" info-id)
-           :aria-label aria-label-text
-           :aria-expanded "false"
-           :aria-controls info-id}
-          [:i.fa.fa-info-circle]]
+  [:<> [:a.info-button.btn.btn-link
+        {:data-toggle "collapse"
+         :href (str "#" info-id)
+         :aria-label aria-label-text
+         :aria-expanded "false"
+         :aria-controls info-id}
+        [:i.fa.fa-info-circle]]
    [:div.field-info.collapse {:id info-id
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
@@ -142,30 +142,29 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change collapse-info-btn collapse-aria-lebel info-text] :as opts}]
+  [{:keys [validation on-change collapse-info-btn collapse-aria-label info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
-     [:<>
-      (when collapse-info-btn [collapse
-                               (field-name opts)
-                               (str collapse-aria-lebel)
-                               focus-when-collapse-opened
-                               [:span (str info-text)]])
-      [:input.form-control {:type "text"
-                            :id (field-name opts)
-                            :name (field-name opts)
-                            :placeholder placeholder
-                            :required (not optional)
-                            :aria-invalid (when validation true)
-                            :aria-describedby (when validation
-                                                (str (field-name opts) "-error"))
-                            :max-length max-length
-                            :class (when validation "is-invalid")
-                            :value value
-                            :on-change (comp on-change event-value)}]]]))
+     (when collapse-info-btn [collapse
+                              (field-name opts)
+                              (str collapse-aria-label)
+                              focus-when-collapse-opened
+                              [:span (str info-text)]])
+     [:input.form-control {:type "text"
+                           :id (field-name opts)
+                           :name (field-name opts)
+                           :placeholder placeholder
+                           :required (not optional)
+                           :aria-invalid (when validation true)
+                           :aria-describedby (when validation
+                                               (str (field-name opts) "-error"))
+                           :max-length max-length
+                           :class (when validation "is-invalid")
+                           :value value
+                           :on-change (comp on-change event-value)}]]))
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
@@ -414,7 +413,7 @@
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
                     :collapse-info-btn true
-                    :collapse-aria-lebel "Collapse aria lebel"
+                    :collapse-aria-label "Collapse aria lebel"
                     :info-text "Extra information"}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
