@@ -15,11 +15,11 @@
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
-(defn collapse [info-id info-text focus-when-collapse-opened body-text]
+(defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
   [:span [:a.info-button.btn.btn-link
           {:data-toggle "collapse"
            :href (str "#" info-id)
-           :aria-label info-text
+           :aria-label aria-label-text
            :aria-expanded "false"
            :aria-controls info-id}
           [:i.fa.fa-info-circle]]
@@ -142,24 +142,30 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change] :as opts}]
+  [{:keys [validation on-change collapse-info info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
-     [:input.form-control {:type "text"
-                           :id (field-name opts)
-                           :name (field-name opts)
-                           :placeholder placeholder
-                           :required (not optional)
-                           :aria-invalid (when validation true)
-                           :aria-describedby (when validation
-                                               (str (field-name opts) "-error"))
-                           :max-length max-length
-                           :class (when validation "is-invalid")
-                           :value value
-                           :on-change (comp on-change event-value)}]]))
+     [:<>
+      (if collapse-info [collapse
+                         (field-name opts)
+                         (str "some text")
+                         focus-when-collapse-opened
+                         [:span (str info-text)]])
+      [:input.form-control {:type "text"
+                            :id (field-name opts)
+                            :name (field-name opts)
+                            :placeholder placeholder
+                            :required (not optional)
+                            :aria-invalid (when validation true)
+                            :aria-describedby (when validation
+                                                (str (field-name opts) "-error"))
+                            :max-length max-length
+                            :class (when validation "is-invalid")
+                            :value value
+                            :on-change (comp on-change event-value)}]]]))
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
@@ -396,6 +402,12 @@
                                     :on-attach (fn [_] nil)}])
    (component-info field)
    (example "field of type \"text\""
+            [field {:form/id 1
+                    :field/id "1"
+                    :field/type :text
+                    :field/title {:en "Title"}
+                    :field/placeholder {:en "placeholder"}}])
+   (example "field of type \"text\" with info field "
             [field {:form/id 1
                     :field/id "1"
                     :field/type :text
