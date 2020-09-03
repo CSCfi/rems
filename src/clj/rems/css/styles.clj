@@ -227,13 +227,7 @@
    :margin 0
    :padding (u/rem 1)
    :padding-right (u/rem 2)
-   :border-radius (u/rem 0.4)
-   ;; :padding (u/px 10)
-   ;; :padding-right (u/px 25)
-   ;; :padding-bottom 0
-   ;; :margin-top 0
-   ;; :margin-bottom (u/px 0)
-   })
+   :border-radius (u/rem 0.4)})
 
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
