@@ -206,7 +206,7 @@
 
            (testing "entitlements removed from db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]}
-                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "removed entitlements were POSTed to callback"
              (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
                       {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
@@ -226,7 +226,7 @@
 
            (testing "entitlements changed in db"
              (is (= #{[applicant "resource1"] [applicant "resource3"]}
-                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "entitlement changes POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    remove-paths (requests-for-paths server "/remove")
@@ -250,7 +250,7 @@
            (entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
-             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+             (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
            (testing "ended entitlements POSTed to callback"
              (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
                       {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
@@ -283,7 +283,7 @@
            (entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
-             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+             (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
            (testing "ended entitlements POSTed to callback"
              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
                     (get-requests server))))))))))
