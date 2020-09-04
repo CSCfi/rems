@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-entitlements
-  (:require [clojure.test :refer :all]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
@@ -51,7 +52,8 @@
                            :actor "malice"})
       (test-data/command! {:type :application.command/approve
                            :application-id malice-app-id
-                           :actor "developer"})))
+                           :actor "developer"
+                           :entitlement-end (time/date-time 2100 01 01)})))
 
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))
@@ -84,7 +86,7 @@
                                                   :email nil
                                                   :name "Malice Applicant"}
                                            :resource "urn:nbn:fi:lb-201403262"
-                                           :end nil
+                                           :end "2100-01-01T00:00:00.000Z"
                                            :mail nil}
                                           (dissoc x :start :application-id)))
                                    (is (valid-date? (:start x))))]
