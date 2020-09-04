@@ -217,9 +217,10 @@
                                     :organization/review-emails []}
                                    "42" "alice")]
         (is (response-is-forbidden? response))
-        (is (= "forbidden" (read-body response))))
+        (is (= "forbidden" (read-body response))))))
 
-      (api-call :post "/api/organizations/create"
+  (testing "given an organization"
+    (api-call :post "/api/organizations/create"
               {:organization/id "test-organization"
                :organization/name {:fi "Testiorganisaatio"
                                    :en "Test Organization"}
@@ -227,7 +228,7 @@
                                          :en "ORG"}
                :organization/owners []
                :organization/review-emails []}
-              "42" "owner"))
+              "42" "owner")
     (testing "edit"
       (let [response (api-response :put "/api/organizations/edit"
                                    {:organization/id "test-organization"
@@ -251,7 +252,7 @@
                                    "42" "organization-owner")]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response))))
-      (testing "success after rights given"
+      (testing "given organization-owner role"
         (api-call :put "/api/organizations/edit"
                   {:organization/id "test-organization"
                    :organization/name {:fi "Testiorganisaatio"
