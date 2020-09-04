@@ -22,7 +22,6 @@
 (def ^:private submittable-application-commands
   #{:application.command/save-draft
     :application.command/submit
-    :application.command/close
     :application.command/remove-member
     :application.command/invite-member
     :application.command/uninvite-member
@@ -85,7 +84,8 @@
                    :application.command/remark}})
 
 (def ^:private returned-permissions
-  {:applicant submittable-application-commands
+  {:applicant (conj submittable-application-commands
+                    :application.command/close)
    :handler (conj handler-returned-commands :see-everything)
    :decider #{:see-everything
               :application.command/remark

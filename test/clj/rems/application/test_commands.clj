@@ -824,15 +824,47 @@
                                     :event/actor handler-user-id
                                     :application/id app-id
                                     :application/comment ""}])]
-    (is (= {:event/type :application.event/closed
-            :event/time test-time
-            :event/actor handler-user-id
-            :application/id app-id
-            :application/comment "outdated"}
-           (ok-command application
-                       {:type :application.command/close
-                        :actor handler-user-id
-                        :comment "outdated"})))))
+    (testing "handler can close approved application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor handler-user-id
+                          :comment "outdated"})))))
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id}
+                                   {:event/type :application.event/returned
+                                    :event/time test-time
+                                    :event/actor handler-user-id
+                                    :application/id app-id
+                                    :application/comment ""}])]
+    (testing "applicant can close returned application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor applicant-user-id
+                          :comment "outdated"}))))
+    (testing "handler can close returned application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor handler-user-id
+                          :comment "outdated"}))))))
 
 (deftest test-revoke
   (let [application (apply-events nil [dummy-created-event

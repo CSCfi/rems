@@ -115,7 +115,6 @@
             <!-- role: applicant -->
             <div>accept‑licenses</div>
             <div>change‑resources</div>
-            <div>close</div>
             <div>copy‑as‑new</div>
             <div>delete</div>
             <div>invite‑member</div>
