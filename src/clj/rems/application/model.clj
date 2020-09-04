@@ -8,7 +8,9 @@
             [rems.common.form :as form]
             [rems.common.util :refer [build-index getx]]
             [rems.permissions :as permissions]
-            [rems.util :refer [conj-vec]]))
+            [rems.roles :refer [has-roles?]]
+            [rems.util :refer [conj-vec]]
+            [rems.db.users :as users]))
 
 ;;;; Application
 
@@ -663,7 +665,10 @@
     (update application :application/attachments #(filterv visible? %))))
 
 (defn see-application? [application user-id]
-  (not= #{:everyone-else} (permissions/user-roles application user-id)))
+  (let [permissions (permissions/user-roles application user-id)]
+    (if (and (= :application.state/draft (:application/state application)) (contains? permissions :reporter))
+      false
+      (not= #{:everyone-else} permissions))))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)

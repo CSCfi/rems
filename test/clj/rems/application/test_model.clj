@@ -1432,11 +1432,15 @@
                                                      :workflow/type :workflow/default
                                                      :workflow/id 50})
                         (permissions/give-role-to-users :handler ["handler"])
+                        (permissions/give-role-to-users :reporter ["reporter"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/update-role-permissions {:role-1 #{}
-                                                              :role-2 #{:foo :bar}}))
+                                                              :role-2 #{:foo :bar}
+                                                              :reporter #{:see-everything}}))
         enriched (model/enrich-with-injections application injections)]
+    (testing "reporter can't see draft application"
+      (is (nil? (model/apply-user-permissions enriched "reporter"))))
     (testing "users with a role can see the application"
       (is (not (nil? (model/apply-user-permissions enriched "user-1")))))
     (testing "users without a role cannot see the application"
