@@ -259,6 +259,32 @@
                       {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
                     (set (get-requests server)))))))))
 
+    (testing "approve with end time"
+      (let [end (time/date-time 2100 01 01)
+            app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
+        (test-data/command! {:type :application.command/accept-licenses
+                             :application-id app-id
+                             :accepted-licenses [lic-id1 lic-id2]
+                             :actor applicant})
+        (test-data/command! {:type :application.command/submit
+                             :application-id app-id
+                             :actor applicant})
+        (test-data/command! {:type :application.command/approve
+                             :application-id app-id
+                             :actor admin
+                             :entitlement-end end
+                             :comment ""})
+
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (entitlements/process-outbox!)
+
+           (is (= [{:resid "resource1" :userid applicant :end (time/date-time 2100 01 01)}]
+                  (mapv #(select-keys % [:resid :userid :end]) (db/get-entitlements {:application app-id}))))
+           (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end "2100-01-01T00:00:00.000Z"}]}]
+                  (requests-for-paths server "/add")))))))
+
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-data/command! {:type :application.command/accept-licenses
                            :application-id app-id

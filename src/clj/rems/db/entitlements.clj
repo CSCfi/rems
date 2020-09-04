@@ -183,7 +183,7 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids actor nil))
+        (grant-entitlements! application-id userid resource-ids actor (:entitlement/end application)))
       (doseq [[userid resource-ids] entitlements-to-remove]
         ;; TODO should get the time from the event
         (revoke-entitlements! application-id userid resource-ids actor (time/now))))))

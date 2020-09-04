@@ -432,6 +432,22 @@
           (is (not= application-id (:application-id result))
               "should create a new application"))))))
 
+(deftest test-approve-with-end
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"
+        app-id (test-data/create-application! {:actor applicant})]
+    (test-data/command! {:type :application.command/submit
+                         :application-id app-id
+                         :actor applicant})
+    (is (= {:success true} (send-command handler {:type :application.command/approve
+                                                  :application-id app-id
+                                                  :comment ""
+                                                  :entitlement-end "2100-01-01T00:00:00.000Z"})))
+    (let [app (get-application-for-user app-id applicant)]
+      (is (= "application.state/approved" (:application/state app)))
+      (is (= "2100-01-01T00:00:00.000Z" (:entitlement/end app))))))
+
 (deftest test-application-create
   (let [api-key "42"
         user-id "alice"
