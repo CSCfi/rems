@@ -433,6 +433,11 @@ VALUES (:user, :role)
 ON CONFLICT (userId, role)
 DO NOTHING;
 
+-- :name remove-role! :!
+DELETE FROM roles
+WHERE userId = :user
+  AND role = :role;
+
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
