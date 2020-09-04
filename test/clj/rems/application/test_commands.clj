@@ -801,6 +801,18 @@
                          {:type :application.command/approve
                           :actor handler-user-id
                           :comment "fine"}))))
+    (testing "approved with end-date"
+      (is (= {:event/type :application.event/approved
+              :event/time test-time
+              :event/actor handler-user-id
+              :entitlement/end (DateTime. 1234)
+              :application/id app-id
+              :application/comment "fine"}
+             (ok-command application
+                         {:type :application.command/approve
+                          :actor handler-user-id
+                          :entitlement-end (DateTime. 1234)
+                          :comment "fine"}))))
     (testing "rejected successfully"
       (is (= {:event/type :application.event/rejected
               :application/comment "bad"

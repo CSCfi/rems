@@ -30,7 +30,8 @@
          ;; single-value enums are supported by swagger, unlike s/eq.
          ;; we don't yet generate swagger for events but we might in
          ;; the future
-         :event/type (s/enum :application.event/approved)))
+         :event/type (s/enum :application.event/approved)
+         (s/optional-key :entitlement/end) DateTime))
 (s/defschema ClosedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/closed)))

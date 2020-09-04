@@ -49,7 +49,8 @@
   (assoc CommandBase
          :member {:userid UserId}))
 (s/defschema ApproveCommand
-  CommandWithComment)
+  (assoc CommandWithComment
+         (s/optional-key :entitlement-end) DateTime))
 (s/defschema AssignExternalIdCommand
   (assoc CommandBase
          :external-id s/Str))
@@ -378,7 +379,9 @@
 (defmethod command-handler :application.command/approve
   [cmd application injections]
   (add-comment-and-attachments cmd injections
-                               {:event/type :application.event/approved}))
+                               (merge {:event/type :application.event/approved}
+                                      (when-let [end (:entitlement-end cmd)]
+                                        {:entitlement/end end}))))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
