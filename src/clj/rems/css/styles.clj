@@ -221,6 +221,14 @@
    :margin-top 0
    :margin-bottom (u/px 16)})
 
+(def ^:private solid-form-group
+  {:position "relative"
+   :border "2px solid #eee"
+   :margin 0
+   :padding (u/rem 1)
+   :padding-right (u/rem 2)
+   :border-radius (u/rem 0.4)})
+
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
   [obj]
@@ -652,6 +660,7 @@
    [:.readonly-checkbox {:background-color "#ccc"}]
 
    [:.dashed-group dashed-form-group]
+   [:.solid-group solid-form-group]
 
    ;; workflow editor
    [:.workflow-round dashed-form-group

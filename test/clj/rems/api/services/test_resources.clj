@@ -17,7 +17,8 @@
 (deftest resource-enabled-archived-test
   (test-data/create-user! {:eppn "owner"} :owner)
   (with-user "owner"
-    (let [lic-id (test-data/create-license! {})
+    (let [_org (test-data/create-organization! {})
+          lic-id (test-data/create-license! {})
           res-id (test-data/create-resource! {:license-ids [lic-id]})
           res-id2 (test-data/create-resource! {})
 

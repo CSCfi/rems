@@ -17,7 +17,7 @@
                 (str "SET lock_timeout TO '" (:database-lock-timeout env) "';"))
               (when (:database-idle-in-transaction-session-timeout env)
                 (str "SET idle_in_transaction_session_timeout TO '" (:database-idle-in-transaction-session-timeout env) "';"))])})
-        
+
 
 (defstate ^:dynamic *db*
   :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge (hikaricp-settings)

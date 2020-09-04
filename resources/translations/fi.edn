@@ -16,6 +16,7 @@
             :decide "Päätä"
             :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
                      :disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
+                     :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}
@@ -69,7 +70,9 @@
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
+                   :edit-organization "Muokkaa organisaatiota"
                    :edit-workflow "Muokkaa työvuota"
+                   :email "Sähköposti"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
@@ -85,6 +88,7 @@
                    :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :modifier "Muokkaaja"
+                   :name "Nimi"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
                    :organizations "Organisaatiot"
@@ -94,6 +98,7 @@
                    :reports "Raportit"
                    :resource "Resurssi"
                    :resources "Resurssit"
+                   :review-email-n "Katselmointisähköposti %1"
                    :review-emails "Katselmointisähköpostit"
                    :save "Tallenna"
                    :short-name "Lyhenne"
