@@ -28,6 +28,12 @@
                                        :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
                                        :comment (:application/comment event)})))
 
+(defn- delete-applications [new-events]
+  (doseq [event new-events]
+    (when (= :application.event/deleted (:event/type event))
+      (applications/delete-application! (:application/id event))))
+  [])
+
 ;; Process managers react to events with side effects & new commands.
 ;; See docs/architecture/002-event-side-effects.md
 (defn run-process-managers [new-events]
@@ -37,14 +43,14 @@
    (entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
-   (event-notification/queue-notifications! new-events)))
+   (event-notification/queue-notifications! new-events)
+   (delete-applications new-events)))
 
 (def ^:private command-injections
   (merge applications/fetcher-injections
          {:secure-token secure-token
           :allocate-application-ids! applications/allocate-application-ids!
-          :copy-attachment! attachments/copy-attachment!
-          :delete-application! applications/delete-application!}))
+          :copy-attachment! attachments/copy-attachment!}))
 
 (def ^:dynamic *fail-on-process-manager-errors* false)
 

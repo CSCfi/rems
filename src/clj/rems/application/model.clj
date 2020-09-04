@@ -20,6 +20,7 @@
     :application.state/returned
     :application.state/revoked
     :application.state/submitted})
+;; TODO deleted state?
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -207,6 +208,10 @@
 (defmethod event-type-specific-application-view :application.event/external-id-assigned
   [application event]
   (assoc application :application/external-id (:application/external-id event)))
+
+(defmethod event-type-specific-application-view :application.event/deleted
+  [application _event]
+  application)
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"

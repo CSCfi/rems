@@ -135,6 +135,7 @@
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
                           :decision-requested "%1 requested a decision from %2."
+                          :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."

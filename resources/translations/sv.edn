@@ -132,6 +132,7 @@
                           :copied-to "%1 kopierade ansökning som ny ansökning."
                           :created "%1 skapade ny ansökning."
                           :decided "%1 behandlade ansökning."
+                          :deleted "%1 raderade utkastet."
                           :decision-requested "%1 begärde beslut från användare %2."
                           :draft-saved "%1 sparade utkast för ansökning."
                           :external-id-assigned "%1 lade till externt id %2."

@@ -578,14 +578,7 @@
 
 (defmethod command-handler :application.command/delete
   [cmd application injections]
-  ;; Just like in :application.command/create, we need to avoid
-  ;; accidental side-effects here. handle-command runs the
-  ;; command-handler even if the command is forbidden, so we duplicate
-  ;; the access control here.
-  (or (forbidden-error application cmd)
-      (do
-        ((getx injections :delete-application!) (:application-id cmd))
-        (ok))))
+  (ok {:event/type :application.event/deleted}))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

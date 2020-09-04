@@ -133,6 +133,7 @@
                           :created "%1 loi uuden hakemuksen."
                           :decided "%1 teki päätöksen hakemukselle."
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
+                          :deleted "%1 poisti luonnoksen."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
                           :external-id-assigned "%1 lisäsi tunnisteen %2."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
