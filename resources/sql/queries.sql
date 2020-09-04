@@ -440,6 +440,11 @@ VALUES (:user, :role)
 ON CONFLICT (userId, role)
 DO NOTHING;
 
+-- :name remove-role! :!
+DELETE FROM roles
+WHERE userId = :user
+  AND role = :role;
+
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
@@ -609,10 +614,12 @@ SELECT id, modifierUserId, modified, data::text as data FROM organization;
 -- :name get-organization-by-id :? :1
 SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
 
--- :name add-organization! :!
-INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);
+-- :name add-organization! :insert
+INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
+ON CONFLICT (id) DO NOTHING
+RETURNING id;
 
 -- :name set-organization! :!
 UPDATE organization
-SET data = :data::jsonb
+SET data = :data::jsonb, modified = :time, modifierUserId = :user
 WHERE id = :id;

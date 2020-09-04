@@ -20,6 +20,7 @@
 
 (deftest catalogue-item-enabled-archived-test
   (let [owner "owner"
+        _org (test-data/create-organization! {})
         form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
@@ -146,7 +147,8 @@
       (is (:success (archive-catalogue-item! true))))))
 
 (deftest test-edit-catalogue-item
-  (let [item-id (test-data/create-catalogue-item!
+  (let [_org (test-data/create-organization! {})
+        item-id (test-data/create-catalogue-item!
                  {:title {:en "Old title"
                           :fi "Vanha nimi"}})
         old-item (first (catalogue/get-localized-catalogue-items))
@@ -164,6 +166,7 @@
 
 (deftest test-get-localized-catalogue-items
   (let [owner "owner"
+        _org (test-data/create-organization! {})
         item-id (test-data/create-catalogue-item! {})]
 
     (testing "find all"

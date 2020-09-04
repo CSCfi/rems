@@ -44,6 +44,10 @@
  :oidc-client-secret nil
  ;; Which id-token attribute to use as the rems userid
  :oidc-userid-attribute "sub"
+ ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
+ ;; Example:
+ ;;   :oidc-additional-authorization-parameters "&acr_values=foo&ui_locales=sv"
+ :oidc-additional-authorization-parameters nil
  ;; List of additional attributes to read from OIDC claims. Each attribute can have keys:
  ;;   :attribute (mandatory) - the name of the attribute as in the OIDC claim, a string
  ;;   :name (optional) - a map with languages as keys and the localized name for the attribute as values

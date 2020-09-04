@@ -88,6 +88,7 @@
      \"validate\" -- validate data in db
      \"list-users\" -- list users and roles
      \"grant-role <role> <user>\" -- grant a role to a user
+     \"remove-role <role> <user>\" -- remove a role from a user
      \"api-key get\" -- list all api keys
      \"api-key get <api-key>\" -- get details of api key
      \"api-key add <api-key> [<description>]\" -- add api key to db.
@@ -178,6 +179,14 @@
               (System/exit 1))
           (do (mount/start #'rems.config/env #'rems.db.core/*db*)
               (roles/add-role! user (keyword role)))))
+
+      "remove-role"
+      (let [[_ role user] args]
+        (if (not (and role user))
+          (do (usage)
+              (System/exit 1))
+          (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+              (roles/remove-role! user (keyword role)))))
 
       "validate"
       (do

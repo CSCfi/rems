@@ -3,21 +3,20 @@
             [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
             [rems.db.core :as db]
             [rems.json :as json]
-            [schema.coerce :as coerce])
+            [schema.coerce :as coerce]
+            [clj-time.core :as time-core])
   (:import [org.joda.time DateTime]))
 
 (def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
 
 (defn add-organization! [userid org]
-  (db/add-organization! {:id (:organization/id org)
-                         :user userid
-                         :time (DateTime.)
-                         :data (json/generate-string (-> org
-                                                         (assoc :enabled true
-                                                                :archived false)
-                                                         (dissoc :organization/id)))})
-  {:success true
-   :organization/id (:organization/id org)})
+  (:id (db/add-organization! {:id (:organization/id org)
+                              :user userid
+                              :time (DateTime.)
+                              :data (json/generate-string (-> org
+                                                              (assoc :enabled true
+                                                                     :archived false)
+                                                              (dissoc :organization/id)))})))
 
 (def ^:private coerce-organization-overview
   (coerce/coercer! OrganizationOverview json/coercion-matcher))
@@ -55,10 +54,18 @@
         (update-existing :organization (fn [_] organization-overview))
         (update-existing :organization (fn [_] organization-overview)))))
 
-(defn set-organization! [organization]
-  (db/set-organization! {:id (:organization/id organization) :data (json/generate-string organization)}))
+(defn set-organization! [userid organization]
+  (db/set-organization! {:id (:organization/id organization)
+                         :data (json/generate-string organization)
+                         :user userid
+                         :time (time-core/now)}))
 
-(defn update-organization! [id update-fn]
+(defn update-organization! [userid id update-fn]
   (let [id (:organization/id id id)
         organization (getx-organization-by-id id)]
-    (set-organization! (update-fn organization))))
+    (set-organization! userid (update-fn organization))))
+
+(defn get-all-organization-roles [userid]
+  (when (some #(contains? (set (map :userid (:organization/owners %))) userid)
+              (get-organizations-raw))
+    [:organization-owner]))

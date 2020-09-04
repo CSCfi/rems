@@ -45,9 +45,11 @@ Changes since v2.12
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
 - Organizations have an initial UI (#2039)
+- Organisations can be created and edited in the UI (#2039)
 - The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
 - REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. See [docs/configuration.md](docs/configuration.md). (#2130)
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
+- The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
 
 ## v2.12 "Merituulentie" 2020-05-04
