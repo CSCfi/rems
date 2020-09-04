@@ -12,6 +12,11 @@
 (deftest test-audit-log
   (let [time-a (atom nil)
         app-id (test-data/create-application! {:actor "alice"})]
+
+    (test-data/command! {:type           :application.command/submit
+                         :application-id app-id
+                         :actor          "alice"})
+
     (testing "populate log"
       (testing "> unknown endpoint"
         (testing "> no user"
@@ -100,7 +105,7 @@
                        read-ok-body)))))
     (testing "filtering log by user"
       (is (= [{:userid "alice" :apikey "42" :method "get" :path "/api/users/active" :status "403"}
-              {:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
+              {:apikey "42", :method "get", :path (str "/api/applications/" app-id), :status "200", :userid "alice"}
               {:userid "alice" :apikey "43" :method "post" :path "/api/applications/submit" :status "200"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "400"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "500"}
