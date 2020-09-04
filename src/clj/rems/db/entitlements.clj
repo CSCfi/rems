@@ -70,7 +70,8 @@
       {:application (:catappid e)
        :resource (:resid e)
        :user (:userid e)
-       :mail (:mail e)})))
+       :mail (:mail e)
+       :end (:end e)})))
 
 (defn- post-entitlements! [{:keys [entitlements action] :as params}]
   (when-let [target (get-in env [:entitlements-target action])]
