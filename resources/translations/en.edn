@@ -14,6 +14,8 @@
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
             :comment "Comment"
             :decide "Decide"
+            :delete "Delete draft"
+            :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
             :errors {:already-member "User is already a member of this application"
                      :disabled-catalogue-item "Resource no longer available."
                      :duplicate-id "Id is already in use."
@@ -138,6 +140,7 @@
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
                           :decision-requested "%1 requested a decision from %2."
+                          :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."

@@ -10,6 +10,7 @@
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
+            [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
@@ -704,6 +705,7 @@
                               :application.command/reject [approve-reject-action-button]
                               :application.command/revoke [revoke-action-button]
                               :application.command/close [close-action-button]
+                              :application.command/delete [delete-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
     (concat (distinct (for [[command action] (partition 2 commands-and-actions)
                             :when (contains? (:application/permissions application) command)]
@@ -729,7 +731,9 @@
                 [revoke-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
-                [approve-reject-form app-id reload]]]]
+                [approve-reject-form app-id reload]
+                [delete-form app-id #(do (flash-message/show-default-success! :top [text :t.actions/delete])
+                                         (navigate! "/catalogue"))]]]]
     (when (seq actions)
       [collapsible/component
        {:id "actions"

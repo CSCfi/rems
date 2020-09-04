@@ -469,13 +469,57 @@
                 "application.event/submitted"]
                (map :event/type (get submitted :application/events))))))))
 
+(deftest test-application-delete
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"]
+    (let [app-id (test-data/create-application! {:actor applicant})]
+      (testing "can't delete draft as other user"
+        (is (not (contains? (-> (get-application-for-user app-id handler)
+                                :application/permissions
+                                set)
+                            :application.command/delete)))
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key handler))))
+      (testing "can delete draft as applicant"
+        (is (contains? (-> (get-application-for-user app-id applicant)
+                           :application/permissions
+                           set)
+                       "application.command/delete"))
+        (is (= {:success true}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant))))
+      (testing "deleted application is gone"
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/" app-id) nil
+                           api-key applicant)))))
+    (let [app-id (test-data/create-application! {:actor applicant})]
+      (test-data/command! {:application-id app-id
+                           :type :application.command/submit
+                           :actor applicant})
+      (testing "can't delete submitted application"
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant))))
+      (test-data/command! {:application-id app-id
+                           :type :application.command/return
+                           :actor handler})
+      (testing "can't delete returned application"
+        (is (= {:errors [{:type "forbidden"}] :success false}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant)))))))
+
 (deftest test-application-close
   (let [user-id "alice"
         application-id (test-data/create-application! {:actor user-id})]
+    (test-data/command! {:application-id application-id
+                         :type :application.command/submit
+                         :actor user-id})
     (is (= {:success true}
-           (send-command user-id {:type :application.command/close
-                                  :application-id application-id
-                                  :comment ""})))
+           (send-command "developer" {:type :application.command/close
+                                      :application-id application-id
+                                      :comment ""})))
     (is (= "application.state/closed"
            (:application/state (get-application-for-user application-id user-id))))))
 
@@ -625,8 +669,8 @@
     (testing "applicant's commands for draft"
       (is (= #{"application.command/accept-licenses"
                "application.command/change-resources"
-               "application.command/close"
                "application.command/copy-as-new"
+               "application.command/delete"
                "application.command/invite-member"
                "application.command/remove-member"
                "application.command/save-draft"
@@ -1546,8 +1590,8 @@
                            "application.command/remove-member"
                            "application.command/accept-licenses"
                            "application.command/uninvite-member"
+                           "application.command/delete"
                            "application.command/save-draft"
-                           "application.command/close"
                            "application.command/change-resources"]}
               :application/modified "2010-01-01T00:00:00.000Z"
               :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}

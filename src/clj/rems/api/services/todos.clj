@@ -37,6 +37,7 @@
           :application.command/accept-licenses
           :application.command/copy-as-new
           :application.command/create
+          :application.command/delete
           :application.command/save-draft
           :application.command/submit
           ;; will not change the application's state, so they

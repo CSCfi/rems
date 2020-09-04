@@ -199,6 +199,13 @@ INSERT INTO catalogue_item_application (id)
 VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
 
+-- :name get-application-ids :?
+SELECT id FROM catalogue_item_application;
+
+-- :name delete-application! :!
+DELETE FROM catalogue_item_application
+WHERE id = :application;
+
 -- :name add-entitlement! :!
 INSERT INTO entitlement (catAppId, userId, resId, approvedby)
 VALUES (:application, :user, :resource, :approvedby);
@@ -494,6 +501,10 @@ LIMIT 1;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
+
+-- :name delete-application-events! :!
+DELETE FROM application_event
+WHERE appId = :application;
 
 -- :name upsert-api-key! :insert
 INSERT INTO api_key (apiKey, comment, users, paths)

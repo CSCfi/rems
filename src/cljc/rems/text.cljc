@@ -97,6 +97,7 @@
    :application.event/created :t.applications.events/created
    :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
+   :application.event/deleted :t.applications.events/deleted
    :application.event/draft-saved :t.applications.events/draft-saved
    :application.event/external-id-assigned :t.applications.events/external-id-assigned
    :application.event/licenses-accepted :t.applications.events/licenses-accepted

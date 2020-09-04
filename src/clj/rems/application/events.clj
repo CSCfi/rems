@@ -77,6 +77,9 @@
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
          :application/deciders [s/Str]))
+(s/defschema DeletedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/deleted)))
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
@@ -152,6 +155,7 @@
    :application.event/created CreatedEvent
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
+   :application.event/deleted DeletedEvent
    :application.event/draft-saved DraftSavedEvent
    :application.event/external-id-assigned ExternalIdAssignedEvent
    :application.event/licenses-accepted LicensesAcceptedEvent

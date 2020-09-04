@@ -19,6 +19,7 @@
     :application.state/returned
     :application.state/revoked
     :application.state/submitted})
+;; TODO deleted state?
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -207,6 +208,10 @@
   [application event]
   (assoc application :application/external-id (:application/external-id event)))
 
+(defmethod event-type-specific-application-view :application.event/deleted
+  [application _event]
+  application)
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -232,6 +237,7 @@
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/decide}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
@@ -258,6 +264,7 @@
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
