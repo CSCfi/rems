@@ -23,3 +23,7 @@
 (defn add-role! [user role]
   (db/add-role! {:user user :role (role-to-db role)})
   nil)
+
+(defn remove-role! [user role]
+  (db/remove-role! {:user user :role (role-to-db role)})
+  nil)
