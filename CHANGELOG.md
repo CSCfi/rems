@@ -23,6 +23,7 @@ Changes since v2.12
 - Application events are now presented in chronological order instead of grouping requests and responses together.
   In addition there is now a possibility to highlight related events. (#2233)
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
+- Reporter can't see draft applications (#2268)
 
 ### Fixes
 - Various fixes in workflow editor UI
