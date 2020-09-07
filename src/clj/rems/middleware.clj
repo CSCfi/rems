@@ -113,15 +113,6 @@
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
 
-(defn wrap-formats [handler]
-  (let [wrapped (wrap-restful-format
-                 handler
-                 {:formats [:json-kw :transit-json :transit-msgpack]})]
-    (fn [request]
-      ;; disable wrap-formats for websockets
-      ;; since they're not compatible with this middleware
-      ((if (:websocket? request) handler wrapped) request))))
-
 (defn on-restricted-page [request response]
   (assoc (redirect "/login")
          :session (assoc (:session response) :redirect-to (:uri request))))
@@ -244,5 +235,4 @@
       wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
       wrap-internal-error
-      wrap-formats
       wrap-request-context))
