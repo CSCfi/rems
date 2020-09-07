@@ -282,7 +282,9 @@
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
    :application/roles #{s/Keyword}
    :application/permissions Permissions
-   :application/attachments [ApplicationAttachment]})
+   :application/attachments [ApplicationAttachment]
+   ;; TODO :application/end instead?
+   (s/optional-key :entitlement/end) (s/maybe DateTime)})
 
 (s/defschema ApplicationRaw
   (-> Application

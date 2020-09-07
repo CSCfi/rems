@@ -36,7 +36,8 @@
                                       user-or-nil
                                       (getx-user-id))
                               :resource-ext-id resource-or-nil
-                              :is-active? (not expired?)})))
+                              :active-at (when-not expired?
+                                           (time/now))})))
 
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
   (let [start-datetime (DateTime. start)]
@@ -46,11 +47,13 @@
                :by (str approvedby)
                :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
+;; TODO should this send the end time also if we know it?
 (defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
   {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
                         (db/get-entitlements {:user user
                                               :resource-ext-id resource-or-nil
-                                              :is-active? (not expired?)}))})
+                                              :active-at (when-not expired?
+                                                           (time/now))}))})
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
@@ -67,7 +70,8 @@
       {:application (:catappid e)
        :resource (:resid e)
        :user (:userid e)
-       :mail (:mail e)})))
+       :mail (:mail e)
+       :end (:end e)})))
 
 (defn- post-entitlements! [{:keys [entitlements action] :as params}]
   (when-let [target (get-in env [:entitlements-target action])]
@@ -113,28 +117,30 @@
                 :outbox/entitlement-post {:action action
                                           :entitlements entitlements}}))
 
-(defn- grant-entitlements! [application-id user-id resource-ids actor]
-  (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids)
+(defn- grant-entitlements! [application-id user-id resource-ids actor end]
+  (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids "until" end)
   (doseq [resource-id (sort resource-ids)]
     (db/add-entitlement! {:application application-id
                           :user user-id
                           :resource resource-id
-                          :approvedby actor})
+                          :approvedby actor
+                          :end end})
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))
     (add-to-outbox! :ga4gh (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
-(defn- revoke-entitlements! [application-id user-id resource-ids actor]
-  (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids)
+(defn- revoke-entitlements! [application-id user-id resource-ids actor end]
+  (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids "at" end)
   (doseq [resource-id (sort resource-ids)]
     (db/end-entitlements! {:application application-id
                            :user user-id
                            :resource resource-id
-                           :revokedby actor})
+                           :revokedby actor
+                           :end end})
     (add-to-outbox! :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn- get-entitlements-by-user [application-id]
-  (->> (db/get-entitlements {:application application-id :is-active? true})
+  (->> (db/get-entitlements {:application application-id :active-at (time/now)})
        (group-by :userid)
        (map (fn [[userid rows]]
               [userid (set (map :resourceid rows))]))
@@ -177,9 +183,10 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids actor))
+        (grant-entitlements! application-id userid resource-ids actor (:entitlement/end application)))
       (doseq [[userid resource-ids] entitlements-to-remove]
-        (revoke-entitlements! application-id userid resource-ids actor)))))
+        ;; TODO should get the time from the event
+        (revoke-entitlements! application-id userid resource-ids actor (time/now))))))
 
 (defn update-entitlements-for-event [event]
   ;; performance improvement: filter events which may affect entitlements

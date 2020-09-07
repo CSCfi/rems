@@ -207,12 +207,14 @@ DELETE FROM catalogue_item_application
 WHERE id = :application;
 
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId, approvedby)
-VALUES (:application, :user, :resource, :approvedby);
+INSERT INTO entitlement (catAppId, userId, resId, approvedby, endt)
+VALUES (:application, :user, :resource, :approvedby,
+/*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
+);
 
 -- :name end-entitlements! :!
 UPDATE entitlement
-SET (endt, revokedby) = (current_timestamp, :revokedby)
+SET (endt, revokedby) = (:end, :revokedby)
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
@@ -228,7 +230,7 @@ WHERE catAppId = :application
 --   :application -- application id to limit select to
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
---   :is-active? -- entitlement is without end date
+--   :active-at -- only return entitlements with start<=active-at<end (or end undefined)
 SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail,
 entitlement.approvedby FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
@@ -246,8 +248,8 @@ WHERE 1=1
 /*~ (when (:resource-ext-id params) */
   AND res.resid = :resource-ext-id
 /*~ ) ~*/
-/*~ (when (:is-active? params) */
-  AND entitlement.endt IS NULL
+/*~ (when (:active-at params) */
+  AND entitlement.start <= :active-at AND (entitlement.endt is NULL OR :active-at < entitlement.endt)
 /*~ ) ~*/
 ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 

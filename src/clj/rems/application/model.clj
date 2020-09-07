@@ -161,9 +161,10 @@
   application)
 
 (defmethod event-type-specific-application-view :application.event/approved
-  [application _event]
+  [application event]
   (-> application
       (assoc :application/state :application.state/approved)
+      (merge (select-keys event [:entitlement/end]))
       (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/rejected

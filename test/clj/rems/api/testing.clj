@@ -32,12 +32,15 @@
    #'rems.middleware/session-store
    #'rems.handler/handler))
 
-(def api-fixture
+(def api-fixture-without-data
   (join-fixtures [test-db-fixture
                   rollback-db-fixture
                   handler-fixture
                   search-index-fixture
-                  caches-fixture
+                  caches-fixture]))
+
+(def api-fixture
+  (join-fixtures [api-fixture-without-data
                   test-data-fixture]))
 
 (defn authenticate [request api-key user-id]
