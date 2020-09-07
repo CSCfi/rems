@@ -18,12 +18,20 @@ else
 fi
 
 docker build --pull \
+    --tag rems:${tag1} \
+    --tag rems:${tag2} \
     --tag docker-registry.rahti.csc.fi/rems/rems:${tag1} \
     --tag docker-registry.rahti.csc.fi/rems/rems:${tag2} .
 
 docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
 docker push docker-registry.rahti.csc.fi/rems/rems:${tag1}
 docker push docker-registry.rahti.csc.fi/rems/rems:${tag2}
+
+if [ "${tag1}" == "release" ] ; then
+    docker login -u rahtipush -p ${dockerhub}
+    docker push rems:${tag1}
+    docker push rems:${tag2}
+fi
 
 CONTAINER=$(curl -k -s \
     -H "Authorization: Bearer ${token}" \
