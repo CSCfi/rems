@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [mount.core :as mount]
+            [muuntaja.core :as muuntaja]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [rems.middleware]
@@ -120,11 +121,30 @@
 (defn coll-is-not-empty? [data]
   (not (coll-is-empty? data)))
 
-(defn read-body [{body :body}]
+(defn transit-body [request body-value]
+  (-> request
+      (content-type "application/transit+json")
+      (body (let [t (slurp (muuntaja/encode json/muuntaja "application/transit+json" body-value))]
+              (prn :TRANSIT t)
+              t))
+      (header "Accept" "application/transit+json")))
+
+(defn ensure-string [val]
   (cond
-    (nil? body) body
-    (string? body) body
-    true (parse-stream (clojure.java.io/reader body) true)))
+    (instance? java.io.InputStream val) (slurp val)
+    :else val))
+
+(defn read-body [{body :body :as response}]
+  (let [content-type (get-in response [:headers "Content-Type"])]
+    (cond
+      (.startsWith content-type "application/json") ;; might be "application/json; charset=utf-8"
+      (json/parse-string (ensure-string body))
+
+      (.startsWith content-type "application/transit+json")
+      (muuntaja/decode json/muuntaja "application/transit+json" (ensure-string body))
+
+      :else
+      (ensure-string body))))
 
 (defn read-ok-body [response]
   (assert-response-is-ok response)

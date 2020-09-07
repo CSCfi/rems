@@ -29,6 +29,13 @@
       handler
       read-body))
 
+(defn- send-command-transit [actor cmd]
+  (-> (request :post (str "/api/applications/" (name (:type cmd))))
+      (authenticate "42" actor)
+      (transit-body (dissoc cmd :type))
+      handler
+      read-body))
+
 (defn- get-ids [applications]
   (set (map :application/id applications)))
 
@@ -435,18 +442,31 @@
 (deftest test-approve-with-end
   (let [api-key "42"
         applicant "alice"
-        handler "developer"
-        app-id (test-data/create-application! {:actor applicant})]
-    (test-data/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor applicant})
-    (is (= {:success true} (send-command handler {:type :application.command/approve
-                                                  :application-id app-id
-                                                  :comment ""
-                                                  :entitlement-end "2100-01-01T00:00:00.000Z"})))
-    (let [app (get-application-for-user app-id applicant)]
-      (is (= "application.state/approved" (:application/state app)))
-      (is (= "2100-01-01T00:00:00.000Z" (:entitlement/end app))))))
+        handler "developer"]
+    (testing "json"
+      (let [app-id (test-data/create-application! {:actor applicant})]
+        (test-data/command! {:type :application.command/submit
+                             :application-id app-id
+                             :actor applicant})
+        (is (= {:success true} (send-command handler {:type :application.command/approve
+                                                      :application-id app-id
+                                                      :comment ""
+                                                      :entitlement-end "2100-01-01T00:00:00.000Z"})))
+        (let [app (get-application-for-user app-id applicant)]
+          (is (= "application.state/approved" (:application/state app)))
+          (is (= "2100-01-01T00:00:00.000Z" (:entitlement/end app))))))
+    (testing "transit"
+      (let [app-id (test-data/create-application! {:actor applicant})]
+        (test-data/command! {:type :application.command/submit
+                             :application-id app-id
+                             :actor applicant})
+        (is (= {:success true} (send-command-transit handler {:type :application.command/approve
+                                                              :application-id app-id
+                                                              :comment ""
+                                                              :entitlement-end (time/date-time 2100 01 01)})))
+        (let [app (get-application-for-user app-id applicant)]
+          (is (= "application.state/approved" (:application/state app)))
+          (is (= "2100-01-01T00:00:00.000Z" (:entitlement/end app))))))))
 
 (deftest test-application-create
   (let [api-key "42"
@@ -1415,7 +1435,7 @@
                          handler)]
         (is (response-is-not-found? response))
         (is (= "application/json" (get-in response [:headers "Content-Type"])))
-        (is (= {:error "not found"} (rems.json/parse-string (read-body response))))))
+        (is (= {:error "not found"} (read-body response)))))
 
     (testing "fetch deciders without authentication or as non-handler"
       (let [req (request :get "/api/applications/deciders")]
