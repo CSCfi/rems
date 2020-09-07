@@ -18,7 +18,7 @@
 (defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
   [:<> [:a.info-button.btn.btn-link
         {:data-toggle "collapse"
-         :href (str "#" (str info-id "-collapse"))
+         :href (str "#" (str info-id))
          :aria-label aria-label-text
          :aria-expanded "false"
          :aria-controls (str info-id "-collapse")}
@@ -72,23 +72,25 @@
   :field/optional - boolean, true if the field is not required
   :field/value - string, the current value of the field
   :field/previous-value - string, the previously submitted value of the field
+  :field/info-text - text for collapsable info field
+  :field/collapse-aria-label - text for aria-label of info button
   :readonly - boolean, true if the field should not be editable
   :readonly-component - HTML, custom component for a readonly field
   :diff - boolean, true if should show the diff between :value and :previous-value
   :diff-component - HTML, custom component for rendering a diff
   :validation - validation errors
   :fieldset - boolean, true if the field should be wrapped in a fieldset
-  :info-text - text for collapsable info field
-  :collapse-aria-label - text for aria-label of info button
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset info-text collapse-aria-label] :as opts} editor-component]
+  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [raw-title (localized (:field/title opts))
         title (linkify raw-title)
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
-        max-length (:field/max-length opts)]
+        max-length (:field/max-length opts)
+        info-text (localized (:field/info-text opts))
+        collapse-aria-label (localized (:field/collapse-aria-label opts))]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field
@@ -415,8 +417,8 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :collapse-aria-label "Collapse aria lebel"
-                    :info-text "Extra information"}])
+                    :field/collapse-aria-label {:en "Collapse aria lebel"}
+                    :field/info-text {:en "Extra information"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
                     :field/id "1"
