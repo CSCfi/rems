@@ -190,9 +190,10 @@ workflows:
             - build
             - war
           filters:
+            tags:
+              only: /v[0-9]\.[0-9].*/
             branches:
-              only:
-                - dockerhub
+              ignore: /.*/
       - ok:
           requires:
             - build
