@@ -901,7 +901,9 @@
                            :actor "alice"})
       (test-data/command! {:type :application.command/submit
                            :application-id (btu/context-get :application-id)
-                           :actor "alice"}))
+                           :actor "alice"})
+
+      (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
 
     (testing "open report"
       (login-as "owner")
@@ -910,11 +912,9 @@
       (btu/wait-page-loaded)
       (select-option* "Form" (btu/context-get :form-title))
       (btu/scroll-and-click :export-applications-button)
-      #_(btu/wait-for-downloads #"applications_.*\.csv"))
+      (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
-    ;; TODO disabled until chromedriver 83 is available and has bugfix for downloading in other tab (target blank)
-    (is true)
-    #_(testing "check report CSV"
+    (testing "check report CSV"
       (let [application (get-application-from-api (btu/context-get :application-id))
             q (fn [s] (str "\"" s "\""))]
         (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
