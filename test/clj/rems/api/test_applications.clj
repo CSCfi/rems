@@ -453,6 +453,12 @@
                (authenticate api-key "bob")
                handler))))
 
+    (testing "seeing draft application as reporter is forbidden"
+      (is (response-is-forbidden?
+            (-> (request :get (str "/api/applications/" application-id))
+                (authenticate api-key "reporter")
+                handler))))
+
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
@@ -467,7 +473,13 @@
         (is (= "application.state/submitted" (get submitted :application/state)))
         (is (= ["application.event/created"
                 "application.event/submitted"]
-               (map :event/type (get submitted :application/events))))))))
+               (map :event/type (get submitted :application/events))))))
+
+    (testing "seeing submitted application as reporter is allowed"
+      (is (response-is-ok?
+            (-> (request :get (str "/api/applications/" application-id))
+                (authenticate api-key "reporter")
+                handler))))))
 
 (deftest test-application-close
   (let [user-id "alice"
