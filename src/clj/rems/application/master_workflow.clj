@@ -12,10 +12,10 @@
                 {:permission command})
               (sort (keys commands/command-schemas))))))
 
-(defmulti calculate-permissions
+(defmulti application-permissions-view
   (fn [_application event] (:event/type event)))
 
-(defmethod calculate-permissions :default
+(defmethod application-permissions-view :default
   [application _event]
   application)
 
@@ -117,75 +117,75 @@
    :past-decider #{:see-everything}
    :everyone-else #{}})
 
-(defmethod calculate-permissions :application.event/created
+(defmethod application-permissions-view :application.event/created
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
       (permissions/update-role-permissions created-permissions)))
 
-(defmethod calculate-permissions :application.event/member-added
+(defmethod application-permissions-view :application.event/member-added
   [application event]
   (-> application
       (permissions/give-role-to-users :member [(get-in event [:application/member :userid])])))
 
-(defmethod calculate-permissions :application.event/member-joined
+(defmethod application-permissions-view :application.event/member-joined
   [application event]
   (-> application
       (permissions/give-role-to-users :member [(:event/actor event)])))
 
-(defmethod calculate-permissions :application.event/member-removed
+(defmethod application-permissions-view :application.event/member-removed
   [application event]
   (-> application
       (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
 
-(defmethod calculate-permissions :application.event/submitted
+(defmethod application-permissions-view :application.event/submitted
   [application _event]
   (-> application
       (permissions/update-role-permissions submitted-permissions)))
 
-(defmethod calculate-permissions :application.event/returned
+(defmethod application-permissions-view :application.event/returned
   [application _event]
   (-> application
       (permissions/update-role-permissions returned-permissions)))
 
-(defmethod calculate-permissions :application.event/review-requested
+(defmethod application-permissions-view :application.event/review-requested
   [application event]
   (-> application
       (permissions/give-role-to-users :reviewer (:application/reviewers event))))
 
-(defmethod calculate-permissions :application.event/reviewed
+(defmethod application-permissions-view :application.event/reviewed
   [application event]
   (-> application
       (permissions/remove-role-from-user :reviewer (:event/actor event))
       (permissions/give-role-to-users :past-reviewer [(:event/actor event)]))) ; allow to still view the application
 
-(defmethod calculate-permissions :application.event/decision-requested
+(defmethod application-permissions-view :application.event/decision-requested
   [application event]
   (-> application
       (permissions/give-role-to-users :decider (:application/deciders event))))
 
-(defmethod calculate-permissions :application.event/decided
+(defmethod application-permissions-view :application.event/decided
   [application event]
   (-> application
       (permissions/remove-role-from-user :decider (:event/actor event))
       (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
 
-(defmethod calculate-permissions :application.event/approved
+(defmethod application-permissions-view :application.event/approved
   [application _event]
   (-> application
       (permissions/update-role-permissions approved-permissions)))
 
-(defmethod calculate-permissions :application.event/rejected
+(defmethod application-permissions-view :application.event/rejected
   [application _event]
   (-> application
       (permissions/update-role-permissions closed-permissions)))
 
-(defmethod calculate-permissions :application.event/closed
+(defmethod application-permissions-view :application.event/closed
   [application _event]
   (-> application
       (permissions/update-role-permissions closed-permissions)))
 
-(defmethod calculate-permissions :application.event/revoked
+(defmethod application-permissions-view :application.event/revoked
   [application _event]
   (-> application
       (permissions/update-role-permissions closed-permissions)))

@@ -229,8 +229,8 @@
 
 ;; Workflows are defined as whitelists that select a subset of the commands that master-workflow has.
 ;; See also:
-;;  - master-workflow/calculate-permissions - computes the possible commands for master-workflow
-;;  - model/calculate-permissions - applies the whitelist
+;;  - master-workflow/application-permissions-view - computes the possible commands for master-workflow
+;;  - application-permissions-for-workflow-view - applies the whitelist
 
 (def default-workflow
   (permissions/compile-rules
@@ -287,13 +287,13 @@
     {:role :decider :permission :application.command/approve}
     {:role :decider :permission :application.command/reject}]))
 
-(defn- calculate-permissions [application event]
+(defn- application-permissions-for-workflow-view [application event]
   (let [whitelist (case (get-in application [:application/workflow :workflow/type])
                     :workflow/default default-workflow
                     :workflow/decider decider-workflow
                     :workflow/master master-workflow/whitelist)]
     (-> application
-        (master-workflow/calculate-permissions event)
+        (master-workflow/application-permissions-view event)
         (permissions/whitelist whitelist))))
 
 (defn application-view
@@ -303,7 +303,7 @@
   [application event]
   (-> application
       (application-misc-view event)
-      (calculate-permissions event)
+      (application-permissions-for-workflow-view event)
       (assert-same-application-id event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
