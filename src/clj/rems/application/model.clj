@@ -21,11 +21,13 @@
     :application.state/submitted})
 ;; TODO deleted state?
 
-(defmulti ^:private event-type-specific-application-view
-  "See `application-view`"
+(defmulti ^:private application-misc-view
+  "Updates the data in the application based on the given event.
+  Contrast with calculate-permissions which updates permissions based
+  on events. See also application-view."
   (fn [_application event] (:event/type event)))
 
-(defmethod event-type-specific-application-view :application.event/created
+(defmethod application-misc-view :application.event/created
   [application event]
   (-> application
       (assoc :application/id (:application/id event)
@@ -48,18 +50,18 @@
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
-(defmethod event-type-specific-application-view :application.event/draft-saved
+(defmethod application-misc-view :application.event/draft-saved
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))))
 
-(defmethod event-type-specific-application-view :application.event/licenses-accepted
+(defmethod application-misc-view :application.event/licenses-accepted
   [application event]
   (-> application
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
-(defmethod event-type-specific-application-view :application.event/licenses-added
+(defmethod application-misc-view :application.event/licenses-added
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
@@ -70,12 +72,12 @@
                     distinct
                     vec)))))
 
-(defmethod event-type-specific-application-view :application.event/member-invited
+(defmethod application-misc-view :application.event/member-invited
   [application event]
   (-> application
       (update :application/invitation-tokens assoc (:invitation/token event) (:application/member event))))
 
-(defmethod event-type-specific-application-view :application.event/member-uninvited
+(defmethod application-misc-view :application.event/member-uninvited
   [application event]
   (-> application
       (update :application/invitation-tokens (fn [invitations]
@@ -84,24 +86,24 @@
                                                               (= member (:application/member event))))
                                                     (into {}))))))
 
-(defmethod event-type-specific-application-view :application.event/member-joined
+(defmethod application-misc-view :application.event/member-joined
   [application event]
   (-> application
       (update :application/members conj {:userid (:event/actor event)})
       (update :application/invitation-tokens dissoc (:invitation/token event))))
 
-(defmethod event-type-specific-application-view :application.event/member-added
+(defmethod application-misc-view :application.event/member-added
   [application event]
   (-> application
       (update :application/members conj (:application/member event))))
 
-(defmethod event-type-specific-application-view :application.event/member-removed
+(defmethod application-misc-view :application.event/member-removed
   [application event]
   (-> application
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
-(defmethod event-type-specific-application-view :application.event/submitted
+(defmethod application-misc-view :application.event/submitted
   [application event]
   (-> application
       (assoc ::previous-submitted-answers (::submitted-answers application))
@@ -113,7 +115,7 @@
                                  :resubmitted-application
                                  :new-application))))
 
-(defmethod event-type-specific-application-view :application.event/returned
+(defmethod application-misc-view :application.event/returned
   [application _event]
   (-> application
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
@@ -130,50 +132,50 @@
            :else
            :no-pending-requests)))
 
-(defmethod event-type-specific-application-view :application.event/review-requested
+(defmethod application-misc-view :application.event/review-requested
   [application event]
   (-> application
       (update ::latest-review-request-by-user merge (zipmap (:application/reviewers event)
                                                             (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/reviewed
+(defmethod application-misc-view :application.event/reviewed
   [application event]
   (-> application
       (update ::latest-review-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/decision-requested
+(defmethod application-misc-view :application.event/decision-requested
   [application event]
   (-> application
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
                                                               (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/decided
+(defmethod application-misc-view :application.event/decided
   [application event]
   (-> application
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/remarked
+(defmethod application-misc-view :application.event/remarked
   [application _event]
   application)
 
-(defmethod event-type-specific-application-view :application.event/approved
+(defmethod application-misc-view :application.event/approved
   [application event]
   (-> application
       (assoc :application/state :application.state/approved)
       (merge (select-keys event [:entitlement/end]))
       (assoc :application/todo nil)))
 
-(defmethod event-type-specific-application-view :application.event/rejected
+(defmethod application-misc-view :application.event/rejected
   [application _event]
   (-> application
       (assoc :application/state :application.state/rejected)
       (assoc :application/todo nil)))
 
-(defmethod event-type-specific-application-view :application.event/resources-changed
+(defmethod application-misc-view :application.event/resources-changed
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
@@ -182,41 +184,41 @@
       (assoc :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event)))))
 
-(defmethod event-type-specific-application-view :application.event/closed
+(defmethod application-misc-view :application.event/closed
   [application _event]
   (-> application
       (assoc :application/state :application.state/closed)
       (assoc :application/todo nil)))
 
-(defmethod event-type-specific-application-view :application.event/revoked
+(defmethod application-misc-view :application.event/revoked
   [application _event]
   (-> application
       (assoc :application/state :application.state/revoked)
       (assoc :application/todo nil)))
 
-(defmethod event-type-specific-application-view :application.event/copied-from
+(defmethod application-misc-view :application.event/copied-from
   [application event]
   (-> application
       (assoc :application/copied-from (:application/copied-from event))
       (assoc ::submitted-answers (::draft-answers application))))
 
-(defmethod event-type-specific-application-view :application.event/copied-to
+(defmethod application-misc-view :application.event/copied-to
   [application event]
   (-> application
       (update :application/copied-to conj-vec (:application/copied-to event))))
 
-(defmethod event-type-specific-application-view :application.event/external-id-assigned
+(defmethod application-misc-view :application.event/external-id-assigned
   [application event]
   (assoc application :application/external-id (:application/external-id event)))
 
-(defmethod event-type-specific-application-view :application.event/deleted
+(defmethod application-misc-view :application.event/deleted
   [application _event]
   application)
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
-           (set (keys (methods event-type-specific-application-view)))))))
+           (set (keys (methods application-misc-view)))))))
 
 (defn- assert-same-application-id [application event]
   (assert (= (:application/id application)
@@ -295,7 +297,7 @@
   data from other entities."
   [application event]
   (-> application
-      (event-type-specific-application-view event)
+      (application-misc-view event)
       (calculate-permissions event)
       (assert-same-application-id event)
       (assoc :application/last-activity (:event/time event))
