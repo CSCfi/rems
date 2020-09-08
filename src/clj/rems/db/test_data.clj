@@ -22,11 +22,6 @@
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
-;;; do not forget lein run reset, lein run test-data
-;;; fix schema errors 
-;;; fix create_form
-;;; 
-
 ;;; test data definitions
 
 (def +bot-users+
