@@ -16,9 +16,9 @@
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
 (defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
-  [:<> [:a.info-button.btn.btn-link
+  [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
-         :href (str "#" (str info-id))
+         :href (str "#" (str info-id "-collapse"))
          :aria-label aria-label-text
          :aria-expanded "false"
          :aria-controls (str info-id "-collapse")}
@@ -27,6 +27,7 @@
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
     body-text]])
+
 
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
