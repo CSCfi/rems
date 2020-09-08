@@ -56,7 +56,7 @@
   [{key-seq :keys
     value-fn :value-fn
     collect-fn :collect-fn}
-    coll]
+   coll]
   (if-let [[k & ks] (seq key-seq)]
     (->> coll
          (group-by k)
