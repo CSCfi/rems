@@ -175,6 +175,7 @@
 
 (def FieldId s/Str)
 
+;;; asking api for form templete
 (s/defschema FieldTemplate
   {:field/id FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
@@ -191,7 +192,9 @@
                                        {:visibility/type (s/enum :always :only-if)
                                         (s/optional-key :visibility/field) {:field/id FieldId}
                                         (s/optional-key :visibility/values) [s/Str]}
-                                       {:description "Always visible by default"})})
+                                       {:description "Always visible by default"})
+   (s/optional-key :field/info-text) LocalizedString
+   (s/optional-key :field/collapse-aria-label) LocalizedString})
 
 (s/defschema NewFieldTemplate
   (-> FieldTemplate
@@ -220,6 +223,7 @@
 (s/defschema FormTemplateOverview
   (dissoc FormTemplate :form/fields))
 
+;;; instance for form template once filled in by user
 (s/defschema Form
   {:form/id s/Int
    :form/title s/Str
