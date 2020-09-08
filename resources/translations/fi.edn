@@ -224,7 +224,7 @@
                 :field-title "Kentän otsikko"
                 :field-type "Kentän tyyppi"
                 :info-text "Kenttätiedot, ylimääräinen kuvaus, esimerkkejä (valinnainen)"
-                :info-text-aria-lebel "Kenttätiedot aaria-etiketin teksti (valinnainen)"
+                :info-text-aria-label "Kenttätiedot aria-lebel teksti (valinnainen)"
                 :maxlength "Enimmäispituus merkkeinä (ei pakollinen)"
                 :option-key "Tunniste"
                 :option-label "Otsikko"
