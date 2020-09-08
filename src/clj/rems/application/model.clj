@@ -227,6 +227,11 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
+;; Workflows are defined as whitelists that select a subset of the commands that master-workflow has.
+;; See also:
+;;  - master-workflow/calculate-permissions - computes the possible commands for master-workflow
+;;  - model/calculate-permissions - applies the whitelist
+
 (def default-workflow
   (permissions/compile-rules
    [{:permission :see-everything}
