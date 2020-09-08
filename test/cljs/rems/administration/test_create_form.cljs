@@ -223,6 +223,8 @@
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}
+                               :field/info-text {:en "en info text"
+                                                 :fi "fi info text"}
                                :field/optional true
                                :field/type :date}]}
                (build-request form languages)))))
@@ -260,6 +262,8 @@
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}
+                               :field/info-text {:en "en info text"
+                                                 :fi "fi info text"}
                                :field/optional true
                                :field/type :option
                                :field/options [{:key "yes"
@@ -284,6 +288,8 @@
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}
+                               :field/info-text {:en "en info text"
+                                                 :fi "fi info text"}
                                :field/optional true
                                :field/type :multiselect
                                :field/options [{:key "egg"
