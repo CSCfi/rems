@@ -67,7 +67,7 @@
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 0 :foo] "field 0"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 2 :foo] "field 2"])
-      (is (= {:form/fields [{:field/id "fld1" :field/index 0 :field/type :text :foo "field 0" }
+      (is (= {:form/fields [{:field/id "fld1" :field/index 0 :field/type :text :foo "field 0"}
                             {:field/id "fld2" :field/index 1 :field/type :text :foo "field 1"}
                             {:field/id "fld3" :field/index 2 :field/type :text :foo "field 2"}]}
              @form)
@@ -171,6 +171,8 @@
                              :field/index 0
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en "en info text"
+                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length "12"
@@ -184,6 +186,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en "en info text"
+                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length 12
@@ -197,6 +201,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en "en info text"
+                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length 12
@@ -313,6 +319,8 @@
                                                                :fi "fi title additional"}
                                                  :field/optional false
                                                  :field/type :text
+                                                 :field/info-text {:en "en info text"
+                                                                   :fi "fi info text"}
                                                  :field/max-length "12"
                                                  :field/placeholder {:en "en placeholder"
                                                                      :fi "fi placeholder"}}))]
@@ -333,6 +341,8 @@
           (is (= {:field/id "fld2"
                   :field/title {:en "en title additional"
                                 :fi "fi title additional"}
+                  :field/info-text {:en "en info text"
+                                    :fi "fi info text"}
                   :field/optional false
                   :field/type :text
                   :field/max-length 12
