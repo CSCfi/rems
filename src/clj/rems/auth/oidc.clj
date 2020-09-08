@@ -76,9 +76,9 @@
 (defroutes routes
   (GET "/oidc-login" _req (redirect (login-url)))
   (GET "/oidc-logout" req
-       (let [session (get req :session)]
-         (when (:log-authentication-details env)
-           (log/info "logging out" (:identity session)))
-         (oidc-revoke (:access-token session))
-         (assoc (redirect "/") :session (dissoc session :identity :access-token))))
+    (let [session (get req :session)]
+      (when (:log-authentication-details env)
+        (log/info "logging out" (:identity session)))
+      (oidc-revoke (:access-token session))
+      (assoc (redirect "/") :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))
