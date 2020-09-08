@@ -36,7 +36,8 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (defn edit-button [id]
-  [atoms/link {:class "btn btn-primary edit-organization"}
+  [atoms/link {:id "edit-organization"
+               :class "btn btn-primary"}
    (str "/administration/organizations/edit/" id)
    (text :t.administration/edit)])
 
