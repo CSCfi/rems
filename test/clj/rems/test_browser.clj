@@ -992,23 +992,27 @@
       (btu/clear :short-name-sv)
       (btu/fill-human :short-name-sv "SNSV2")
       (btu/scroll-and-click :save)
-      (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
-        (is (= {"Id" (btu/context-get :organization-id)
-                "Short name (FI)" "SNFI2"
-                "Short name (EN)" "SNEN2"
-                "Short name (SV)" "SNSV2"
-                "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                "Owners" "organization-owner1\norganization-owner2"
-                "Name (FI)" "Review mail FI"
-                "Name (SV)" "Review mail SV"
-                "Name (EN)" "Review mail EN"
-                "Email" "review.email@example.com"
-                "Active" ""
-                "Last modified" last-modified
-                "Modifier" "owner"}
-               (slurp-fields :organization)))))
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+      (testing "view after editing"
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI2"
+                  "Short name (EN)" "SNEN2"
+                  "Short name (SV)" "SNSV2"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "organization-owner1\norganization-owner2"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" last-modified
+                  "Modifier" "owner"}
+                 (slurp-fields :organization))))))
 
     (testing "as organization owner"
       (logout)
@@ -1027,6 +1031,7 @@
         (click-row-action [:organizations]
                           {:fn/text (str (btu/context-get :organization-name) " EN")}
                           (select-button-by-label "View"))
+        (btu/wait-page-loaded)
         (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
@@ -1056,20 +1061,22 @@
         (btu/scroll-and-click :save)
         (btu/wait-visible {:css ".alert-success"})
         (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
-          (is (= {"Id" (btu/context-get :organization-id)
-                  "Short name (FI)" "SNFI"
-                  "Short name (EN)" "SNEN"
-                  "Short name (SV)" "SNSV"
-                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "organization-owner1\norganization-owner2"
-                  "Name (FI)" "Review mail FI"
-                  "Name (SV)" "Review mail SV"
-                  "Name (EN)" "Review mail EN"
-                  "Email" "review.email@example.com"
-                  "Active" ""
-                  "Last modified" last-modified
-                  "Modifier" "organization-owner1"}
-                 (slurp-fields :organization))))))))
+
+        (testing "view after editing"
+          (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+            (is (= {"Id" (btu/context-get :organization-id)
+                    "Short name (FI)" "SNFI"
+                    "Short name (EN)" "SNEN"
+                    "Short name (SV)" "SNSV"
+                    "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                    "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                    "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                    "Owners" "organization-owner1\norganization-owner2"
+                    "Name (FI)" "Review mail FI"
+                    "Name (SV)" "Review mail SV"
+                    "Name (EN)" "Review mail EN"
+                    "Email" "review.email@example.com"
+                    "Active" ""
+                    "Last modified" last-modified
+                    "Modifier" "organization-owner1"}
+                   (slurp-fields :organization)))))))))
