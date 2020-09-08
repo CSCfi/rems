@@ -6,10 +6,12 @@
             :add-licenses "Lägg till en licens"
             :add-member "Lägg till medlem"
             :approve "Godkänn"
+            :approve-end-date "TODO"
             :approve-reject "Godkänn eller avslå"
             :bundling-intro [:div.intro [:p "Notera, att endast resurser som har samma ansökningsblankett och samma arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
+            :clear "Töm"
             :close "Stäng ansökan"
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :comment "Kommentar"

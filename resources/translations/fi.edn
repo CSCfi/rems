@@ -6,10 +6,12 @@
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
             :approve "Hyväksy"
+            :approve-end-date "Päivä jolloin pääsyoikeudet vanhenevat (vapaaehtoinen)"
             :approve-reject "Hyväksy tai hylkää"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
             :change-resources "Muuta resursseja"
+            :clear "Tyhjennä"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voi enää muokata tai lähettää."]]
             :comment "Kommentti"
