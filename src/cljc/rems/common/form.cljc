@@ -26,6 +26,9 @@
 (defn supports-visibility? [field]
   true) ; at the moment all field types
 
+(defn supports-collapsable-info-text? [field]
+  (contains? #{:text :texta} (:field/type field)))
+
 (defn- generate-field-ids
   "Generate a set of unique field ids taking into account what have been given already.
 
