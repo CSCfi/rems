@@ -35,7 +35,11 @@ window.rems = {
                      #(text :t.header/title))]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
-           (include-css (css-filename (env :default-language)))]
+           (include-css (css-filename (env :default-language)))
+           [:style "body {scroll-behavior: smooth;}
+                  @media screen and (prefers-reduced-motion: reduce) {
+                     body {scroll-behavior: auto;
+                    }} "]]
           [:body
            [:div#app]
            (include-js "/assets/font-awesome/js/fontawesome.js")
