@@ -424,20 +424,20 @@
     (testing "creating"
       (testing "invalid request"
         (is (not (failure-response? (api-response :post "/api/forms/create"
-                                                 command
-                                                 api-key user-id)))
+                                                  command
+                                                  api-key user-id)))
             "sanity check for failure-response?")
         (is (failure-response? (api-response :post "/api/forms/create"
-                                            (assoc-in command [:form/fields 1 :field/privacy] nil)
-                                            api-key user-id))
+                                             (assoc-in command [:form/fields 1 :field/privacy] nil)
+                                             api-key user-id))
             "invalid value")
         (is (failure-response? (api-response :post "/api/forms/create"
-                                            (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)
-                                            api-key user-id))
+                                             (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)
+                                             api-key user-id))
             "invalid value")
         (is (failure-response? (api-response :post "/api/forms/create"
-                                              (assoc-in command [:form/fields 0 :field/privacy] :private)
-                                              api-key user-id))
+                                             (assoc-in command [:form/fields 0 :field/privacy] :private)
+                                             api-key user-id))
             "privacy not supported"))
       (testing "valid request"
         (let [form-id (:id (api-call :post "/api/forms/create"
@@ -635,17 +635,17 @@
                            :field/id "fld2"
                            :field/options [{:key "opt" :label {:sv "Swedish label"}}]
                            :field/optional false}]
-           :form/errors {:form/fields
-                         {:0 {:field/title {:en "t.form.validation/required"
-                                         :sv "t.form.validation/required"}
-                              :field/placeholder {:fi "t.form.validation/required"
-                                                  :sv "t.form.validation/required"}}
-                          :1 {:field/options
-                              {:0
-                               {:label {:en "t.form.validation/required"
-                                        :fi "t.form.validation/required"}}}}}}
-           :enabled true
-           :archived false}
+            :form/errors {:form/fields
+                          {:0 {:field/title {:en "t.form.validation/required"
+                                             :sv "t.form.validation/required"}
+                               :field/placeholder {:fi "t.form.validation/required"
+                                                   :sv "t.form.validation/required"}}
+                           :1 {:field/options
+                               {:0
+                                {:label {:en "t.form.validation/required"
+                                         :fi "t.form.validation/required"}}}}}}
+            :enabled true
+            :archived false}
            (api-call :get (str "/api/forms/" id) nil
                      "42" "owner")))))
 
