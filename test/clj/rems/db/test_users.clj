@@ -13,9 +13,9 @@
                                 :commonName "What Ever"
                                 :some-attr "some value"})
   (users/add-user-raw! "user-with-org" {:eppn "user-with-org"
-                                    :commonName "User Org"
-                                    :mail "user@org"
-                                    :organizations [{:organization/id "org"}]})
+                                        :commonName "User Org"
+                                        :mail "user@org"
+                                        :organizations [{:organization/id "org"}]})
 
   (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
