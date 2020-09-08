@@ -224,6 +224,7 @@
                 :field-title "Namn på fält"
                 :field-type "Typ av fält"
                 :info-text "Fältinformation, extra beskrivning, exempel (valfritt)"
+                :info-text-aria-lebel "Fältinformation aria-etiketttext (valfritt)"
                 :maxlength "Max antal tecken (valfri begränsning)"
                 :option-key "Id"
                 :option-label "Titel"
