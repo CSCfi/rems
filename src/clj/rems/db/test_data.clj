@@ -357,9 +357,6 @@
     :field/info-text {:en "Explanation of how to fill in text field"
                       :fi "Selitys tekstikentän täyttämisestä"
                       :sv "Förklaring till hur man fyller i textfält"}
-    :field/collapse-aria-label {:en "Explanation of how to fill in text field"
-                                :fi "Selitys tekstikentän täyttämisestä"
-                                :sv "Förklaring till hur man fyller i textfält"}
     :field/placeholder {:en "Placeholder text"
                         :fi "Täyteteksti"
                         :sv "Textexempel"}}

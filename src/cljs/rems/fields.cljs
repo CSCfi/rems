@@ -74,7 +74,6 @@
   :field/value - string, the current value of the field
   :field/previous-value - string, the previously submitted value of the field
   :field/info-text - text for collapsable info field
-  :field/collapse-aria-label - text for aria-label of info button
   :readonly - boolean, true if the field should not be editable
   :readonly-component - HTML, custom component for a readonly field
   :diff - boolean, true if should show the diff between :value and :previous-value
@@ -91,7 +90,7 @@
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
         info-text (localized (:field/info-text opts))
-        collapse-aria-label (localized (:field/collapse-aria-label opts))]
+        collapse-aria-label (str "Info about " title)]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field
@@ -153,7 +152,7 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change collapse-aria-label info-text] :as opts}]
+  [{:keys [validation on-change info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -412,13 +411,12 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}}])
-   (example "field of type \"text\" with info field "
+   (example "field of type \"text\" with info field"
             [field {:form/id 1
                     :field/id "1"
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :field/collapse-aria-label {:en "Collapse aria-lebel"}
                     :field/info-text {:en "Extra information"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2

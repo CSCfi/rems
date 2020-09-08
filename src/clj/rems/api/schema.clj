@@ -193,8 +193,7 @@
                                         (s/optional-key :visibility/field) {:field/id FieldId}
                                         (s/optional-key :visibility/values) [s/Str]}
                                        {:description "Always visible by default"})
-   (s/optional-key :field/info-text) LocalizedString
-   (s/optional-key :field/collapse-aria-label) LocalizedString})
+   (s/optional-key :field/info-text) LocalizedString})
 
 (s/defschema NewFieldTemplate
   (-> FieldTemplate

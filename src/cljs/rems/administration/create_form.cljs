@@ -263,10 +263,6 @@
   [localized-text-field context {:keys [:form/fields field-index :field/info-text]
                                  :label (text :t.create-form/info-text)}])
 
-(defn- form-field-info-text-aria-lebel [field-index]
-  [localized-text-field context {:keys [:form/fields field-index :field/collapse-aria-label]
-                                 :label (text :t.create-form/info-text-aria-lebel)}])
-
 (defn- form-field-max-length-field [field-index]
   [text-field context {:keys [:form/fields field-index :field/max-length]
                        :label (text :t.create-form/maxlength)}])
@@ -565,8 +561,7 @@
             [form-field-title-field index]
             [form-field-type-radio-group index]
             (when (common-form/supports-collapsable-info-text? field)
-              [form-field-info-text index]
-              [form-field-info-text-aria-lebel index])
+              [form-field-info-text index])
             (when (common-form/supports-optional? field)
               [form-field-optional-checkbox index])
             (when (common-form/supports-placeholder? field)
