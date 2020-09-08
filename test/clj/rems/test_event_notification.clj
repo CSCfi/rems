@@ -30,8 +30,7 @@
                   :path "/ok"
                   :body {"content" (json/generate-string body)}}
                  (select-keys req [:method :path :body])))
-          (is (= "value" (get-in req [:headers :additional-header])))
-          ))
+          (is (= "value" (get-in req [:headers :additional-header])))))
       (testing "error code"
         (is (= "failed: 500" (#'event-notification/notify! {:url (str (:uri server) "/broken")}
                                                            body))))
