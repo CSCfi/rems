@@ -47,6 +47,15 @@
           :when (re-matches name-or-regex (.getName file))]
       file)))
 
+(defn delete-downloaded-files! [name-or-regex]
+  (let [files (if (string? name-or-regex)
+                [(io/file download-dir name-or-regex)]
+                (for [file (.listFiles download-dir)
+                      :when (re-matches name-or-regex (.getName file))]
+                  file))]
+    (doseq [file files]
+      (.delete file))))
+
 (defn- mod-nth [coll i]
   (nth coll (mod (int i) (count coll))))
 

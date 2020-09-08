@@ -12,6 +12,7 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -72,6 +73,7 @@
               context/*roles* (set/union
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
+                                            (organizations/get-all-organization-roles (getx-user-id))
                                             (applications/get-all-application-roles (getx-user-id))))
                                (when (:uses-valid-api-key? request)
                                  #{:api-key}))]
@@ -110,15 +112,6 @@
         (error-page {:status 500
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
-
-(defn wrap-formats [handler]
-  (let [wrapped (wrap-restful-format
-                 handler
-                 {:formats [:json-kw :transit-json :transit-msgpack]})]
-    (fn [request]
-      ;; disable wrap-formats for websockets
-      ;; since they're not compatible with this middleware
-      ((if (:websocket? request) handler wrapped) request))))
 
 (defn on-restricted-page [request response]
   (assoc (redirect "/login")
@@ -242,5 +235,4 @@
       wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
       wrap-internal-error
-      wrap-formats
       wrap-request-context))

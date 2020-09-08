@@ -4,7 +4,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [document-title enrich-user enrich-email readonly-checkbox]]
+            [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -40,6 +40,15 @@
    (str "/administration/organizations/edit/" id)
    (text :t.administration/edit)])
 
+(defn- display-localized-review-email [review-email]
+  [:div
+   (doall (for [[langcode localization] (:name review-email)]
+            ^{:key (str "review-email-" (name langcode))}
+            [inline-info-field (str (text :t.administration/name)
+                                    " (" (str/upper-case (name langcode)) ")")
+             localization]))
+   [inline-info-field (text :t.administration/email) (:email review-email)]])
+
 (defn organization-view [organization language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -47,30 +56,35 @@
      :title (get-in organization [:organization/name language])
      :always [:div
               [inline-info-field (text :t.administration/id) (:organization/id organization)]
-              (for [[langcode localization] (:organization/short-name organization)]
-                [inline-info-field (str (text :t.administration/short-name)
-                                        " (" (str/upper-case (name langcode)) ")")
-                 localization])
-              (for [[langcode localization] (:organization/name organization)]
-                [inline-info-field (str (text :t.administration/title)
-                                        " (" (str/upper-case (name langcode)) ")")
-                 localization])
+              (doall (for [[langcode localization] (:organization/short-name organization)]
+                       ^{:key (str "short-name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/short-name)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
+              (doall (for [[langcode localization] (:organization/name organization)]
+                       ^{:key (str "name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/title)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
               [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
                                                                       (map enrich-user)
                                                                       (map :display)
                                                                       (interpose [:br]))]
-              [inline-info-field (text :t.administration/review-emails) (->> (:organization/review-emails organization)
-                                                                             (map enrich-email)
-                                                                             (map :display)
-                                                                             (interpose [:br]))]
+              [info-field
+               (text :t.administration/review-emails)
+               (->> (:organization/review-emails organization)
+                    (map display-localized-review-email)
+                    (interpose [:br]))
+               {:box? false
+                :solid? true}]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
-              [inline-info-field (text :t.administration/modifier) (:organization/modifer organization)]]}]
+              [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]
    (let [id (:organization/id organization)]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
       [roles/when roles/show-admin-edit-buttons?
-       #_[edit-button id] ; TODO hidden until implemented
+       [edit-button id]
        [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])])
 
@@ -78,11 +92,10 @@
   (let [organization (rf/subscribe [::organization])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
-    (fn []
-      [:div
-       [administration/navigator]
-       [document-title (text :t.administration/organization)]
-       [flash-message/component :top]
-       (if @loading?
-         [spinner/big]
-         [organization-view @organization @language])])))
+    [:div
+     [administration/navigator]
+     [document-title (text :t.administration/organization)]
+     [flash-message/component :top]
+     (if @loading?
+       [spinner/big]
+       [organization-view @organization @language])]))

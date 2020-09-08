@@ -8,6 +8,7 @@
             [rems.api.services.command :as command]
             [rems.api.services.form :as form]
             [rems.api.services.licenses :as licenses]
+            [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.application.approver-bot :as approver-bot]
@@ -15,7 +16,6 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.testing-util :refer [with-user]])
@@ -162,18 +162,13 @@
     (assert (:success result) {:command command :result result})
     (:organization/id result)))
 
-(defn- default-organization []
-  {:organization/id (if-let [existing-default-organization (db/get-organization-by-id {:id "default"})]
-                      (:id existing-default-organization)
-                      (create-organization! {}))})
-
 (defn create-license! [{:keys [actor organization]
                         :license/keys [type title link text attachment-id]
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization (default-organization))
+                                            :organization (or organization {:organization/id "default"})
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
@@ -194,7 +189,7 @@
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
-                        :organization (or organization (default-organization))
+                        :organization (or organization {:organization/id "default"})
                         :license/title {:fi "Liitelisenssi" :en "Attachment license"}
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
@@ -205,7 +200,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:organization (or organization (default-organization))
+                                    {:organization (or organization {:organization/id "default"})
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -216,7 +211,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization (default-organization))
+                                             :organization (or organization {:organization/id "default"})
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -312,8 +307,6 @@
   (doseq [attr (vals attrs)]
     (create-user! attr))
   (roles/add-role! (users :owner) :owner)
-  (roles/add-role! (users :organization-owner1) :organization-owner)
-  (roles/add-role! (users :organization-owner2) :organization-owner)
   (roles/add-role! (users :reporter) :reporter))
 
 (defn create-test-users-and-roles! []
@@ -1080,46 +1073,6 @@
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
-        organization-owner2 (users :organization-owner2)
-
-        ;; Create organizations
-        default (create-organization! {:actor owner :users users})
-        hus (organizations/add-organization! owner {:organization/id "hus"
-                                                    :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
-                                                    :organization/short-name {:fi "HUS" :en "HUS" :sv "HUS"}
-                                                    :organization/owners [{:userid organization-owner1}]
-                                                    :organization/review-emails []})
-        thl (organizations/add-organization! owner {:organization/id "thl"
-                                                    :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
-                                                    :organization/short-name {:fi "THL" :en "THL" :sv "THL"}
-                                                    :organization/owners [{:userid organization-owner2}]
-                                                    :organization/review-emails []})
-        nbn (organizations/add-organization! owner {:organization/id "nbn"
-                                                    :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                                    :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                                    :organization/owners [{:userid organization-owner2}]
-                                                    :organization/review-emails []})
-        abc (organizations/add-organization! owner {:organization/id "abc"
-                                                    :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
-                                                    :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}
-                                                    :organization/owners []
-                                                    :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
-        csc (organizations/add-organization! owner {:organization/id "csc"
-                                                    :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
-                                                    :organization/short-name {:fi "CSC" :en "CSC" :sv "CSC"}
-                                                    :organization/owners []
-                                                    :organization/review-emails []})
-        organization1 (organizations/add-organization! owner {:organization/id "organization1"
-                                                              :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                                                              :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                                                              :organization/owners [{:userid organization-owner1}]
-                                                              :organization/review-emails []})
-        organization2 (organizations/add-organization! owner {:organization/id "organization2"
-                                                              :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
-                                                              :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
-                                                              :organization/owners [{:userid organization-owner2}]
-                                                              :organization/review-emails []})
-
 
         ;; Create licenses
         license1 (create-license! {:actor owner
@@ -1320,10 +1273,60 @@
                              :organization {:organization/id "organization1"}
                              :workflow-id (:organization-owner workflows)})))
 
+(defn create-organizations! [users]
+  (let [owner (users :owner)
+        organization-owner1 (users :organization-owner1)
+        organization-owner2 (users :organization-owner2)]
+    ;; Create organizations
+    (create-organization! {:actor owner :users users})
+    (create-organization! {:actor owner
+                           :organization/id "hus"
+                           :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
+                           :organization/short-name {:fi "HUS" :en "HUS" :sv "HUS"}
+                           :organization/owners [{:userid organization-owner1}]
+                           :organization/review-emails []})
+    (create-organization! {:actor owner
+                           :organization/id "thl"
+                           :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
+                           :organization/short-name {:fi "THL" :en "THL" :sv "THL"}
+                           :organization/owners [{:userid organization-owner2}]
+                           :organization/review-emails []})
+    (create-organization! {:actor owner
+                           :organization/id "nbn"
+                           :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                           :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                           :organization/owners [{:userid organization-owner2}]
+                           :organization/review-emails []})
+    (create-organization! {:actor owner
+                           :organization/id "abc"
+                           :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
+                           :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}
+                           :organization/owners []
+                           :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
+    (create-organization! {:actor owner
+                           :organization/id "csc"
+                           :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
+                           :organization/short-name {:fi "CSC" :en "CSC" :sv "CSC"}
+                           :organization/owners []
+                           :organization/review-emails []})
+    (create-organization! {:actor owner
+                           :organization/id "organization1"
+                           :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                           :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
+                           :organization/owners [{:userid organization-owner1}]
+                           :organization/review-emails []})
+    (create-organization! {:actor owner
+                           :organization/id "organization2"
+                           :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
+                           :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
+                           :organization/owners [{:userid organization-owner2}]
+                           :organization/review-emails []})))
+
 (defn create-test-data! []
   (assert-no-existing-data!)
   (api-key/add-api-key! 42 {:comment "test data"})
   (create-test-users-and-roles!)
+  (create-organizations! +fake-users+)
   (create-bots!)
   (create-items! +fake-users+))
 
@@ -1334,6 +1337,7 @@
                             [+demo-users+ +demo-user-data+])]
     (api-key/add-api-key! 55 {:comment "Finna"})
     (create-users-and-roles! users user-data)
+    (create-organizations! users)
     (create-bots!)
     (create-items! users)))
 

@@ -17,11 +17,19 @@
    "t"
    (fn [v] (-> (ISODateTimeFormat/dateTime) (.print ^ReadableInstant v)))))
 
+(def joda-time-reader
+  (transit/read-handler time-format/parse))
+
+(def joda-unix-time-reader
+  (transit/read-handler #(DateTime. (Long/parseLong %) time/utc)))
+
 (def muuntaja
   (muuntaja/create
    (-> muuntaja/default-options
        (assoc-in [:formats "application/json" :encoder-opts :modules] [(JodaModule.)])
-       (assoc-in [:formats "application/transit+json" :encoder-opts :handlers] {DateTime joda-time-writer}))))
+       (assoc-in [:formats "application/transit+json" :encoder-opts :handlers] {DateTime joda-time-writer})
+       (assoc-in [:formats "application/transit+json" :decoder-opts :handlers] {"t" joda-time-reader
+                                                                                "m" joda-unix-time-reader}))))
 
 (def mapper
   (j/object-mapper
@@ -57,9 +65,9 @@
                (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0 (DateTimeZone/forID "Europe/Helsinki"))})))))
 
       (testing "decoding"
-        (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0 DateTimeZone/UTC))}
+        (is (= {:date-time (DateTime. 2000 1 1 12 0 DateTimeZone/UTC)}
                (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~t2000-01-01T12:00:00.000Z\"]")))
-        (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0 DateTimeZone/UTC))}
+        (is (= {:date-time (DateTime. 2000 1 1 12 0 DateTimeZone/UTC)}
                (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~m946728000000\"]")))))))
 
 ;;; Utils for schema-based coercion

@@ -14,8 +14,11 @@
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :comment "Kommentar"
             :decide "Avgör"
+            :delete "Radera utkast"
+            :delete-intro [:div.intro [:p "Radera den här utkast permanent?"]] ;; TODO check
             :errors {:already-member "Användare är redan medlem."
                      :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
+                     :duplicate-id "Id är redan i bruk."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har into godkänt användarvillkoren."
                      :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
@@ -69,7 +72,9 @@
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
+                   :edit-organization "Ändra organisation"
                    :edit-workflow "Ändra arbetsflöde"
+                   :email "E-postaddress"
                    :enable "Ta i bruk"
                    :end "Slut"
                    :errors {:dependencies-archived "Arkiverad beroenden:"
@@ -85,6 +90,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Person som ändrade"
+                   :name "Namn"
                    :no-licenses "Inga licenser"
                    :organization "Organisation"
                    :organizations "Organisationer"
@@ -94,6 +100,7 @@
                    :reports "Rapporter"
                    :resource "Resurs"
                    :resources "Resurser"
+                   :review-email-n "E-postaddress för granskning %1"
                    :review-emails "E-postaddresser för granskning"
                    :save "Spara"
                    :short-name "Kort namn"
@@ -130,6 +137,7 @@
                           :copied-to "%1 kopierade ansökning som ny ansökning."
                           :created "%1 skapade ny ansökning."
                           :decided "%1 behandlade ansökning."
+                          :deleted "%1 raderade utkastet."
                           :decision-requested "%1 begärde beslut från användare %2."
                           :draft-saved "%1 sparade utkast för ansökning."
                           :external-id-assigned "%1 lade till externt id %2."

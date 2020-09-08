@@ -1,10 +1,10 @@
 (ns rems.db.user-settings
   (:require [clojure.string :as str]
             [medley.core :refer [map-keys]]
+            [rems.common.util :refer [+email-regex+]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
-            [rems.util :as util]
             [schema.coerce :as coerce]
             [schema.core :as s]))
 
@@ -47,7 +47,7 @@
 (defn validate-new-settings [{:keys [language notification-email] :as settings}]
   (into {} [(when (contains? (set (:languages env)) language)
               {:language language})
-            (when (and notification-email (re-matches util/+email-regex+ notification-email))
+            (when (and notification-email (re-matches +email-regex+ notification-email))
               {:notification-email notification-email})
             (when (and (contains? settings :notification-email)
                        (str/blank? notification-email))

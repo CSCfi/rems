@@ -112,7 +112,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/when roles/show-admin-edit-buttons?
-            #_[to-create-organization] ; TODO hidden until it works
+            [to-create-organization]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
             [status-flags/disabled-and-archived-explanation]]
            [organizations-list]])))

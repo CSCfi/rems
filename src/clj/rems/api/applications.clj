@@ -213,7 +213,6 @@
         (catch rems.InvalidRequestException e
           (unsupported-media-type))))
 
-
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
       :roles #{:logged-in}
@@ -230,6 +229,8 @@
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
+    (command-endpoint :application.command/delete commands/DeleteCommand
+                      "Only drafts can be deleted. Only applicants can delete drafts.")
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)

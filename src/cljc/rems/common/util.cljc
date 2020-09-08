@@ -4,6 +4,9 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 
+;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
+(def +email-regex+ #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
+
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
   "Like `get` but throws an exception if the key is not found."
@@ -17,6 +20,10 @@
   "Like `get-in` but throws an exception if the key is not found."
   [m ks]
   (reduce getx m ks))
+
+(def conj-set (fnil conj #{}))
+
+(def conj-vec (fnil conj []))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.

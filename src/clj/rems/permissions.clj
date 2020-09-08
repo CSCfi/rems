@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals map-kv-vals]]
-            [rems.util :refer [conj-set]]))
+            [rems.common.util :refer [conj-set]]))
 
 (defn- give-role-to-user [application role user]
   (assert (keyword? role) {:role role})

@@ -11,6 +11,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
@@ -23,8 +24,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
-            [rems.scheduler :as scheduler]
-            [rems.util :refer [conj-set]])
+            [rems.scheduler :as scheduler])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications
@@ -277,3 +277,11 @@
 (mount/defstate all-applications-cache-reloader
   :start (scheduler/start! reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
+
+(defn delete-application! [app-id]
+  (let [application (get-application app-id)]
+    (assert (= :application.state/draft (:application/state application))
+            (str "Tried to delete application " app-id " which is not a draft!")))
+  (db/delete-application-events! {:application app-id})
+  (db/delete-application! {:application app-id})
+  (reload-cache!))

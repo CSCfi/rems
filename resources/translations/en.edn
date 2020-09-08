@@ -14,8 +14,11 @@
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
             :comment "Comment"
             :decide "Decide"
+            :delete "Delete draft"
+            :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
             :errors {:already-member "User is already a member of this application"
                      :disabled-catalogue-item "Resource no longer available."
+                     :duplicate-id "Id is already in use."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
                      :submission-failed "Submission failed. Check the following errors:"}
@@ -69,7 +72,9 @@
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"
+                   :edit-organization "Edit organization"
                    :edit-workflow "Edit workflow"
+                   :email "Email"
                    :enable "Enable"
                    :end "End"
                    :errors {:dependencies-archived "Archived dependencies:"
@@ -85,6 +90,7 @@
                    :license-name "License name"
                    :licenses "Licenses"
                    :modifier "Modifier"
+                   :name "Name"
                    :no-licenses "No licenses"
                    :organization "Organization"
                    :organizations "Organizations"
@@ -94,6 +100,7 @@
                    :reports "Reports"
                    :resource "Resource"
                    :resources "Resources"
+                   :review-email-n "Review email %1"
                    :review-emails "Review emails"
                    :save "Save"
                    :short-name "Short name"
@@ -133,6 +140,7 @@
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
                           :decision-requested "%1 requested a decision from %2."
+                          :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."

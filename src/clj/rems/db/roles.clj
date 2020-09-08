@@ -3,7 +3,7 @@
             [rems.util :refer [errorf]]))
 
 ;; The roles that are set for users in the database instead of setting them dynamically.
-(def ^:private +db-roles+ #{:owner :organization-owner :reporter :user-owner})
+(def ^:private +db-roles+ #{:owner :reporter :user-owner})
 
 (defn- role-from-db [{role-string :role}]
   (let [role (keyword role-string)]
@@ -22,4 +22,8 @@
 
 (defn add-role! [user role]
   (db/add-role! {:user user :role (role-to-db role)})
+  nil)
+
+(defn remove-role! [user role]
+  (db/remove-role! {:user user :role (role-to-db role)})
   nil)
