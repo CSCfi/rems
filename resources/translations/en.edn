@@ -226,7 +226,6 @@
                 :field-title "Field title"
                 :field-type "Field type"
                 :info-text "Field information, extra description, examples (optional)"
-                :info-text-aria-label "Field information aria-label text (optional)"
                 :maxlength "Maximum length in characters (optional)"
                 :option-key "ID code"
                 :option-label "Label"
