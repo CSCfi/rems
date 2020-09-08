@@ -953,6 +953,8 @@
       (select-option* "Owners" "Organization owner 1")
       (btu/scroll-and-click :add-review-email)
       (btu/scroll-and-click :add-review-email)
+
+      (btu/wait-visible :review-emails-1-name-en)
       (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
       (btu/fill-human :review-emails-1-name-fi "Review mail FI")
       (btu/fill-human :review-emails-1-name-sv "Review mail SV")
