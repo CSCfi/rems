@@ -19,12 +19,12 @@
   (test-data/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
   (let [lic1 (test-data/create-license! {:license/type :link
                                          :license/title {:en "Google license"
-                                                 :fi "Google-lisenssi"}
+                                                         :fi "Google-lisenssi"}
                                          :license/link {:en "http://google.com"
                                                         :fi "http://google.fi"}})
         lic2 (test-data/create-license! {:license/type :text
                                          :license/title {:en "Text license"
-                                                 :fi "Tekstilisenssi"}
+                                                         :fi "Tekstilisenssi"}
                                          :license/text {:en "Some text"
                                                         :fi "Tekstiä"}})
         ;; TODO attachment license
@@ -147,10 +147,10 @@
                  (with-fixed-time (time/date-time 2010)
                    (fn []
                      (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))))
-      (testing "pdf rendering succeeds"
-        (is (some?
-             (with-language :en
-               #(do
+    (testing "pdf rendering succeeds"
+      (is (some?
+           (with-language :en
+             #(do
                   ;; uncomment this to get a pdf file to look at
-                  #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
-                  (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id)))))))))
+                #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
+                (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id)))))))))
