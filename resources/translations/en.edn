@@ -133,6 +133,7 @@
                  ;;   code to match the term in UI.
                  :description "Title"
                  :empty "No applications."
+                 :entitlement-end "Access rights end %1."
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "%1 copied the application from an old application."

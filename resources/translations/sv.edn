@@ -131,6 +131,7 @@
                  :created "Skapad"
                  :description "Rubrik"
                  :empty "Inga ansökningar."
+                 :entitlement-end "TODO"
                  :events {:approved "%1 godkände ansökning."
                           :closed "%1 stängde ansökning."
                           :copied-from "%1 kopierade ansökning från en tidigare ansökning."
