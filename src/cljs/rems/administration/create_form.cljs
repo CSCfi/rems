@@ -140,9 +140,8 @@
           :field/type (:field/type field)
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
-                            false)}
-         (when (common-form/supports-collapsable-info-text? field)
-           {:field/info-text (build-localized-string (:field/info-text field) languages)})
+                            false)
+          :field/info-text (build-localized-string (:field/info-text field) languages)}
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
          (when (common-form/supports-max-length? field)
@@ -560,8 +559,7 @@
 
             [form-field-title-field index]
             [form-field-type-radio-group index]
-            (when (common-form/supports-collapsable-info-text? field)
-              [form-field-info-text index])
+            [form-field-info-text index]
             (when (common-form/supports-optional? field)
               [form-field-optional-checkbox index])
             (when (common-form/supports-placeholder? field)
