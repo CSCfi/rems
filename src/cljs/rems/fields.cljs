@@ -418,7 +418,7 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :field/collapse-aria-label {:en "Collapse aria lebel"}
+                    :field/collapse-aria-label {:en "Collapse aria-lebel"}
                     :field/info-text {:en "Extra information"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
