@@ -118,21 +118,33 @@ jobs:
           paths:
             - target/uberjar/rems.jar
 
-  rahti-dev:
+  docker-circle:
     <<: *defaults
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run: .circleci/rahti-ci.sh dev
+      - run: .circleci/docker.sh circle
+
+  docker-release:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: .circleci/docker.sh release
+
+  rahti-dev:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: .circleci/rahti-deploy.sh dev
 
   rahti-demo:
     <<: *defaults
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - run: .circleci/rahti-ci.sh demo
+      - run: .circleci/rahti-deploy.sh demo
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
@@ -177,6 +189,23 @@ workflows:
             branches:
               only:
                 - master
+      - docker-circle:
+          requires:
+            - build
+            - war
+          filters:
+            branches:
+              only:
+                - dockerhub
+      - docker-release:
+          requires:
+            - build
+            - war
+          filters:
+            tags:
+              only: /v[0-9]\.[0-9].*/
+            branches:
+              ignore: /.*/
       - rahti-dev:
           requires:
             - build
@@ -184,7 +213,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - dockerhub
       - rahti-demo:
           requires:
             - build
