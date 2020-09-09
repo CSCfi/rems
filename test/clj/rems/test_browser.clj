@@ -985,6 +985,7 @@
 
     (testing "edit after creation"
       (btu/scroll-and-click :edit-organization)
+      (btu/wait-page-loaded)
       (btu/wait-visible :short-name-en)
       (select-option* "Owners" "Organization owner 2")
       (btu/clear :short-name-en)
@@ -1054,6 +1055,8 @@
 
       (testing "edit as organization owner"
         (btu/scroll-and-click :edit-organization)
+        (btu/wait-page-loaded)
+        (btu/wait-visible :short-name-en)
         (btu/clear :short-name-en)
         (btu/fill-human :short-name-en "SNEN")
         (btu/clear :short-name-fi)
