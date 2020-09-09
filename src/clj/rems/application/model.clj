@@ -10,7 +10,7 @@
             [rems.permissions :as permissions]
             [rems.roles :refer [has-roles?]]
             [rems.util :refer [conj-vec]]
-            [rems.db.users :as users]))
+            [rems.db.roles :as roles]))
 
 ;;;; Application
 
@@ -664,11 +664,15 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
+(defn user-is-applicant-or-member [application user-id]
+  (let [roles (permissions/user-roles application user-id)]
+    (or (contains? roles :applicant)
+        (contains? roles :member))))
+
 (defn see-application? [application user-id]
-  (let [permissions (permissions/user-roles application user-id)]
-    (if (and (= :application.state/draft (:application/state application)) (contains? permissions :reporter))
-      false
-      (not= #{:everyone-else} permissions))))
+  (if (= :application.state/draft (:application/state application))
+    (user-is-applicant-or-member application user-id)
+    (not= #{:everyone-else})))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
