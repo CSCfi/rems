@@ -942,7 +942,7 @@
       (btu/scroll-and-click :create-organization)
       (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
       (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
-      (btu/wait-page-loaded)
+      (btu/wait-visible :id)
       (btu/fill-human :id (btu/context-get :organization-id))
       (btu/fill-human :short-name-en "SNEN")
       (btu/fill-human :short-name-fi "SNFI")
@@ -985,7 +985,7 @@
 
     (testing "edit after creation"
       (btu/scroll-and-click :edit-organization)
-      (btu/wait-page-loaded)
+      (btu/wait-visible :short-name-en)
       (select-option* "Owners" "Organization owner 2")
       (btu/clear :short-name-en)
       (btu/fill-human :short-name-en "SNEN2")
