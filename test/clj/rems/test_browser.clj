@@ -747,20 +747,20 @@
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
-
+                               :field/info-text {:en "Info test (en)", :fi "Info test (fi)", :sv "Info test (sv)"}
                                :field/type "description"
                                :field/id "fld3"
                                :field/max-length nil
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
                                :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
-
+                               :field/info-text {:en "Info test (en)", :fi "Info test (fi)", :sv "Info test (sv)"}
                                :field/type "texta"
                                :field/id "fld1"
                                :field/max-length 127
                                :field/optional true}
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-
+                               :field/info-text {:en "Info test (en)", :fi "Info test (fi)", :sv "Info test (sv)"}
                                :field/type "option"
                                :field/id "fld2"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
