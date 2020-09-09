@@ -1,15 +1,22 @@
 (ns rems.actions.approve-reject
-  (:require [re-frame.core :as rf]
+  (:require [cljs-time.core :as time]
+            [cljs-time.format :as time-format]
+            [re-frame.core :as rf]
             [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.atoms :refer [close-symbol]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "approve-reject")
 
+(defn default-end [length]
+  (when length
+    (time-format/unparse (time-format/formatters :year-month-day)
+                         (time/plus (time/now) (time/days length)))))
+
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-   {:db (assoc db ::comment "" ::end nil)
+   {:db (assoc db ::comment "" ::end (default-end (get-in db [:config :entitlement-default-length-days])))
     :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
