@@ -105,7 +105,7 @@
                        read-ok-body)))))
     (testing "filtering log by user"
       (is (= [{:userid "alice" :apikey "42" :method "get" :path "/api/users/active" :status "403"}
-              {:apikey "42", :method "get", :path (str "/api/applications/" app-id), :status "200", :userid "alice"}
+              {:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
               {:userid "alice" :apikey "43" :method "post" :path "/api/applications/submit" :status "200"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "400"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "500"}
