@@ -118,7 +118,7 @@ jobs:
           paths:
             - target/uberjar/rems.jar
 
-  docker-circle:
+  docker-snapshot:
     <<: *defaults
     steps:
       - checkout
@@ -189,7 +189,7 @@ workflows:
             branches:
               only:
                 - master
-      - docker-circle:
+      - docker-snapshot:
           requires:
             - build
             - war
