@@ -223,7 +223,7 @@
                 :field-n "Kenttä %1: %2"
                 :field-title "Kentän otsikko"
                 :field-type "Kentän tyyppi"
-                :info-text "Kenttätiedot, ylimääräinen kuvaus, esimerkkejä (valinnainen)"
+                :info-text "Kentän kuvaus (ei pakollinen)"
                 :maxlength "Enimmäispituus merkkeinä (ei pakollinen)"
                 :option-key "Tunniste"
                 :option-label "Otsikko"
