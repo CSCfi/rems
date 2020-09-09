@@ -188,7 +188,7 @@ workflows:
               only: /.*/
             branches:
               only:
-                - dockerhub
+                - master
       - docker-circle:
           requires:
             - build
@@ -196,7 +196,7 @@ workflows:
           filters:
             branches:
               only:
-                - dockerhub
+                - master
       - docker-release:
           requires:
             - build
@@ -213,7 +213,7 @@ workflows:
           filters:
             branches:
               only:
-                - dockerhub
+                - master
       - rahti-demo:
           requires:
             - build
