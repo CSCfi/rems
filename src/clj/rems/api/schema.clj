@@ -175,7 +175,7 @@
 
 (def FieldId s/Str)
 
-;;; asking api for form templete
+;;; template for a form field, before answering
 (s/defschema FieldTemplate
   {:field/id FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
