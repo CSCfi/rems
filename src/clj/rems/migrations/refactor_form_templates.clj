@@ -4,7 +4,7 @@
             [rems.json :as json]))
 
 (hugsql/def-db-fns-from-string
- "
+  "
 -- :name get-form-templates :? :*
 SELECT
  id,

@@ -20,6 +20,6 @@
 
 (deftest test-config-api-smoke
   (let [config (-> (request :get "/api/config")
-                 handler
-                 read-ok-body)]
+                   handler
+                   read-ok-body)]
     (is (true? (:dev config)))))

@@ -135,7 +135,7 @@
   (when-let [query (parse-query query)]
     (refresh!) ; TODO: call from a background thread asynchronously?
     (with-searcher
-     (fn [^IndexSearcher searcher]
-       (->> (.search searcher query Integer/MAX_VALUE)
-            (get-application-ids searcher)
-            set)))))
+      (fn [^IndexSearcher searcher]
+        (->> (.search searcher query Integer/MAX_VALUE)
+             (get-application-ids searcher)
+             set)))))

@@ -977,11 +977,11 @@
             (is (number? id))
             (testing "and retrieving it"
               (let [response (-> (read-request id)
-                             (authenticate api-key user-id)
-                             handler
-                             assert-response-is-ok)]
-            (is (= "attachment;filename=\"test (1).txt\"" (get-in response [:headers "Content-Disposition"])))
-            (is (= (slurp testfile) (slurp (:body response))))))))
+                                 (authenticate api-key user-id)
+                                 handler
+                                 assert-response-is-ok)]
+                (is (= "attachment;filename=\"test (1).txt\"" (get-in response [:headers "Content-Disposition"])))
+                (is (= (slurp testfile) (slurp (:body response))))))))
         (testing "and retrieving it as non-applicant"
           (let [response (-> (read-request id)
                              (authenticate api-key "carl")

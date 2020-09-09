@@ -130,16 +130,16 @@
                                 event application
                                 :t.email.application-submitted/subject-to-applicant
                                 :t.email.application-submitted/message-to-applicant)
-           (if (= (:event/time event)
-                  (:application/first-submitted application))
-             (emails-to-recipients (handlers application)
-                                   event application
-                                   :t.email.application-submitted/subject-to-handler
-                                   :t.email.application-submitted/message-to-handler)
-             (emails-to-recipients (handlers application)
-                                   event application
-                                   :t.email.application-resubmitted/subject-to-handler
-                                   :t.email.application-resubmitted/message-to-handler))))
+          (if (= (:event/time event)
+                 (:application/first-submitted application))
+            (emails-to-recipients (handlers application)
+                                  event application
+                                  :t.email.application-submitted/subject-to-handler
+                                  :t.email.application-submitted/message-to-handler)
+            (emails-to-recipients (handlers application)
+                                  event application
+                                  :t.email.application-resubmitted/subject-to-handler
+                                  :t.email.application-resubmitted/message-to-handler))))
 
 (defmethod event-to-emails :application.event/review-requested [event application]
   (emails-to-recipients (:application/reviewers event)

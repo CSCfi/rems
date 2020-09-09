@@ -45,4 +45,4 @@
   "Add event to database. Returns the event as it went into the db."
   [event]
   (fix-event-from-db (db/add-application-event! {:application (:application/id event)
-                                                       :eventdata (event->json event)})))
+                                                 :eventdata (event->json event)})))
