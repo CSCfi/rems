@@ -140,7 +140,8 @@
           :field/type (:field/type field)
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
-                            false)}
+                            false)
+          :field/info-text (build-localized-string (:field/info-text field) languages)}
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
          (when (common-form/supports-max-length? field)
