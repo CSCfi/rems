@@ -100,7 +100,9 @@
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
-                        [:.commands {:white-space "nowrap"}])))
+                        [:.commands {:white-space "nowrap"}])
+   (stylesheet/at-media {:prefers-reduced-motion :reduce}
+                        [:body {:scroll-behavior :auto}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -331,7 +333,8 @@
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
-           :padding-top (u/px 56)}]
+           :padding-top (u/px 56)
+           :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
    [:h1 {:margin-bottom (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
