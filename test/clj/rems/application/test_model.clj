@@ -1457,40 +1457,41 @@
       (is (= #{:role-1} (:application/roles (model/apply-user-permissions enriched "user-1"))))
       (is (= #{:role-2} (:application/roles (model/apply-user-permissions enriched "user-2")))))
 
-    (let [all-events [{:event/id 10
-                       :event/type :application.event/created}
-                      {:event/id 11
-                       :event/type :application.event/submitted}
-                      {:event/id 12
-                       :event/type :application.event/review-requested}
-                      {:event/id 13
-                       :event/type :application.event/remarked
-                       :application/public true}
-                      {:event/id 14
-                       :event/type :application.event/remarked
-                       :application/public false}]
-          restricted-event-ids [10 11 13]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/review-requested
+                                                   :event/actor "handler"})
+                          (model/application-view {:event/type :application.event/remarked
+                                                   :application/comment "this is public"
+                                                   :event/actor "bob"
+                                                   :application/public true})
+                          (model/application-view {:event/type :application.event/remarked
+                                                   :application/comment "this is private"
+                                                   :event/actor "smith"
+                                                   :application/public false}))
           enriched (-> application
-                       (assoc :application/events all-events)
                        (permissions/update-role-permissions {:role-1 #{:see-everything}})
                        (model/enrich-with-injections injections))]
       (testing "privileged users"
         (let [application (model/apply-user-permissions enriched "user-1")]
           (testing "see all events"
-            (is (= (mapv :event/id all-events)
-                   (mapv :event/id (:application/events application)))))
+            (is (= [:application.event/created :application.event/submitted :application.event/review-requested
+                    :application.event/remarked :application.event/remarked]
+                   (mapv :event/type (:application/events application)))))
           (testing "see all applicant attributes"
             (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                    (:application/applicant application))))
           (testing "see dynamic workflow handlers"
-            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}]
+            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret" :handler/active? true}]
                    (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
 
       (testing "normal users"
         (let [application (model/apply-user-permissions enriched "user-2")]
           (testing "see only some events"
-            (is (= restricted-event-ids
-                   (mapv :event/id (:application/events application)))))
+            (is (= [{:event/type :application.event/created}
+                    {:event/type :application.event/submitted}
+                    {:event/type :application.event/remarked
+                     :application/comment "this is public"}]
+                   (mapv #(select-keys % [:event/type :application/comment]) (:application/events application)))))
           (testing "see only limited applicant attributes"
             (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
                    (:application/applicant application))))
