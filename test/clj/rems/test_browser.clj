@@ -746,6 +746,8 @@
         (btu/wait-page-loaded)
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
 
+
+
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
@@ -753,7 +755,7 @@
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
-                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/info-text {:en "", :fi "", :sv ""}
                                :field/type "description"
                                :field/id "fld3"
                                :field/max-length nil
