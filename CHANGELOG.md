@@ -23,6 +23,7 @@ Changes since v2.12
 - Application events are now presented in chronological order instead of grouping requests and responses together.
   In addition there is now a possibility to highlight related events. (#2233)
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
+- Better error message for missing organization in admin UI (#2039)
 
 ### Fixes
 - Various fixes in workflow editor UI
@@ -51,6 +52,7 @@ Changes since v2.12
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
 - The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
+- Better documentation related to organizations (#2039)
 
 ## v2.12 "Merituulentie" 2020-05-04
 
