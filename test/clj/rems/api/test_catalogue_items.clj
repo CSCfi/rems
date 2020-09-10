@@ -254,7 +254,6 @@
 
         (testing "the old item"
           (is (:archived old-catalogue-item))
-          (is (:expired old-catalogue-item))
           (is (not (:enabled old-catalogue-item))))
 
         (let [same-keys [:wfid :workflow-name :resid :resource-id :resource-name]]
@@ -264,9 +263,7 @@
         (doseq [langcode (into (keys (:localizations old-catalogue-item))
                                (keys (:localizations new-catalogue-item)))]
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
-                 (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
-
-        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
+                 (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))))
     (testing "can change to form that's in another organization"
       (let [form-id (test-data/create-form! {:form/title "wrong organization"
                                              :organization {:organization/id "organization2"}})

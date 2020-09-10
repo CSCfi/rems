@@ -15,7 +15,7 @@
 (mount/defstate ^:dynamic ^JwkProvider jwk-provider
   :start (when-let [jwks-uri (:jwks_uri oidc-configuration)]
            (-> (JwkProviderBuilder. (URL. ^String jwks-uri))
-              (.build))))
+               (.build))))
 
 (defn- fetch-public-key [^String jwt]
   (let [key-id (.getKeyId (JWT/decode jwt))]

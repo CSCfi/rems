@@ -1,10 +1,8 @@
 #!/bin/bash
 
-cd rems
-
 [ -z "$COMMANDS" ] && COMMANDS="run"
 
-certfile=$(ls /rems/certs)
+certfile=$(ls /rems/certs 2>/dev/null)
 
 if [ ! -z ${certfile} ] && [ "${certfile}" != "null" ] ; then
     keytool -importcert -cacerts -noprompt \

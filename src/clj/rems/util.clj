@@ -7,9 +7,6 @@
   (:import [clojure.lang Atom]
            [java.io ByteArrayOutputStream FileInputStream]))
 
-;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
-(def +email-regex+ #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
-
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
@@ -42,10 +39,6 @@
    (getx-user-id context/*user*))
   ([user]
    (getx user :eppn)))
-
-(def conj-set (fnil conj #{}))
-
-(def conj-vec (fnil conj []))
 
 (defn update-present
   "Like clojure.core/update, but does nothing if the key `k` does not exist in `m`."

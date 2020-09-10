@@ -138,10 +138,12 @@
       (model/enrich-with-injections injections)))
 
 (defn- set-command-defaults [cmd]
-  (-> cmd
-      (assoc :time test-time)
-      (cond-> (not= :application.command/create (:type cmd))
-              (assoc :application-id app-id))))
+  (cond-> cmd
+    true
+    (assoc :time test-time)
+
+    (not= :application.command/create (:type cmd))
+    (assoc :application-id app-id)))
 
 (defn- fail-command
   ([application cmd]
@@ -320,9 +322,9 @@
     (testing "does not save a draft when validations fail"
       (is (= {:errors [{:field-id "1", :type :t.form.validation/invalid-value :form-id 1}]}
              (fail-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -801,6 +803,18 @@
                          {:type :application.command/approve
                           :actor handler-user-id
                           :comment "fine"}))))
+    (testing "approved with end-date"
+      (is (= {:event/type :application.event/approved
+              :event/time test-time
+              :event/actor handler-user-id
+              :entitlement/end (DateTime. 1234)
+              :application/id app-id
+              :application/comment "fine"}
+             (ok-command application
+                         {:type :application.command/approve
+                          :actor handler-user-id
+                          :entitlement-end (DateTime. 1234)
+                          :comment "fine"}))))
     (testing "rejected successfully"
       (is (= {:event/type :application.event/rejected
               :application/comment "bad"
@@ -824,15 +838,47 @@
                                     :event/actor handler-user-id
                                     :application/id app-id
                                     :application/comment ""}])]
-    (is (= {:event/type :application.event/closed
-            :event/time test-time
-            :event/actor handler-user-id
-            :application/id app-id
-            :application/comment "outdated"}
-           (ok-command application
-                       {:type :application.command/close
-                        :actor handler-user-id
-                        :comment "outdated"})))))
+    (testing "handler can close approved application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor handler-user-id
+                          :comment "outdated"})))))
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id}
+                                   {:event/type :application.event/returned
+                                    :event/time test-time
+                                    :event/actor handler-user-id
+                                    :application/id app-id
+                                    :application/comment ""}])]
+    (testing "applicant can close returned application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor applicant-user-id
+                          :comment "outdated"}))))
+    (testing "handler can close returned application"
+      (is (= {:event/type :application.event/closed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/comment "outdated"}
+             (ok-command application
+                         {:type :application.command/close
+                          :actor handler-user-id
+                          :comment "outdated"}))))))
 
 (deftest test-revoke
   (let [application (apply-events nil [dummy-created-event
@@ -1595,6 +1641,31 @@
                                        :application/external-id new-external-id}}]
              (ok-command application
                          {:type :application.command/copy-as-new
+                          :actor applicant-user-id}
+                         injections))))))
+
+(deftest test-delete
+  (let [draft-application (apply-events nil [dummy-created-event])
+        submitted-application (apply-events draft-application [{:event/type :application.event/submitted
+                                                                :event/time test-time
+                                                                :event/actor applicant-user-id
+                                                                :application/id app-id}])]
+    (testing "forbidden"
+      (is (= {:errors [{:type :forbidden}]} (fail-command draft-application
+                                                          {:type :application.command/delete
+                                                           :actor handler-user-id}
+                                                          injections)))
+      (is (= {:errors [{:type :forbidden}]} (fail-command submitted-application
+                                                          {:type :application.command/delete
+                                                           :actor applicant-user-id}
+                                                          injections))))
+    (testing "success"
+      (is (= {:event/type :application.event/deleted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command draft-application
+                         {:type :application.command/delete
                           :actor applicant-user-id}
                          injections))))))
 

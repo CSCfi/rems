@@ -7,11 +7,15 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [caches-fixture test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.json :as json]
-            [rems.testing-util :refer [suppress-logging]]
+            [rems.testing-util :refer [fixed-time-fixture suppress-logging]]
             [stub-http.core :as stub]))
+
+(def +test-time+ (time/date-time 2050 01 01)) ;; needs to be in the future so that catalogue items are active
+(def +test-time-string+ "2050-01-01T00:00:00.000Z")
 
 (use-fixtures
   :once
+  (fixed-time-fixture +test-time+)
   (suppress-logging "rems.db.entitlements")
   test-db-fixture
   rollback-db-fixture
@@ -19,12 +23,12 @@
   caches-fixture)
 
 (def +entitlements+
-  [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t"}
+  [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t" :end (time/date-time 2003 10 11)}
    {:resid "res2" :catappid 12 :userid "user2" :start (time/date-time 2002 10 11) :mail "user2@tes.t"}])
 
 (def +expected-payload+
-  [{:resource "res1" :application 11 :user "user1" :mail "user1@tes.t"}
-   {:resource "res2" :application 12 :user "user2" :mail "user2@tes.t"}])
+  [{:resource "res1" :application 11 :user "user1" :mail "user1@tes.t" :end "2003-10-11T00:00:00.000Z"}
+   {:resource "res2" :application 12 :user "user2" :mail "user2@tes.t" :end nil}])
 
 (defn run-with-server
   [endpoint-spec callback]
@@ -48,15 +52,15 @@
 
   (testing "ok :ga4gh action"
     (run-with-server
-      {:status 200}
-      (fn [server]
-        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
-        (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
-                                "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
-               (-> (stub/recorded-requests server)
-                   first
-                   (get-in [:body "postData"])
-                   json/parse-string))))))
+     {:status 200}
+     (fn [server]
+       (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
+       (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
+                               "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
+              (-> (stub/recorded-requests server)
+                  first
+                  (get-in [:body "postData"])
+                  json/parse-string))))))
 
   (testing "not-found"
     (run-with-server
@@ -162,8 +166,8 @@
              (testing "entitlements were POSTed to callbacks"
                (let [add-paths (requests-for-paths server "/add")
                      ga4gh-paths (requests-for-paths server "/ga4gh")]
-                 (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
-                          {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
+                 (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob" :end nil}]}
+                          {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob" :end nil}]}}
                         (set add-paths)))
                  (is (= 2 (count ga4gh-paths)))
                  (is (every? is-valid-ga4gh? ga4gh-paths))))))))
@@ -186,8 +190,8 @@
            (testing "new entitlements were POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    ga4gh-paths (requests-for-paths server "/ga4gh")]
-               (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                        {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+               (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a" :end nil}]}
+                        {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a" :end nil}]}}
                       (set add-paths)))
                (is (= 2 (count ga4gh-paths)))
                (is (every? is-valid-ga4gh? ga4gh-paths)))))))
@@ -201,15 +205,14 @@
                                 :actor admin
                                 :member {:userid member}
                                 :comment "Left team"})
-
            (entitlements/process-outbox!)
 
            (testing "entitlements removed from db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]}
-                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "removed entitlements were POSTed to callback"
-             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                      {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a" :end +test-time-string+}]}
+                      {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a" :end +test-time-string+}]}}
                     (set (get-requests server))))))))
 
       (testing "changing resources changes entitlements"
@@ -226,14 +229,14 @@
 
            (testing "entitlements changed in db"
              (is (= #{[applicant "resource1"] [applicant "resource3"]}
-                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "entitlement changes POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    remove-paths (requests-for-paths server "/remove")
                    ga4gh-paths (requests-for-paths server "/ga4gh")]
-               (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+               (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end nil}]}}
                       (set add-paths)))
-               (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
+               (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
                       (set remove-paths)))
                (is (= 1 (count ga4gh-paths)))
                (is (every? is-valid-ga4gh? ga4gh-paths)))))))
@@ -250,11 +253,37 @@
            (entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
-             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+             (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
            (testing "ended entitlements POSTed to callback"
-             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
-                      {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}
+                      {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
                     (set (get-requests server)))))))))
+
+    (testing "approve with end time"
+      (let [end (time/date-time 2100 01 01)
+            app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
+        (test-data/command! {:type :application.command/accept-licenses
+                             :application-id app-id
+                             :accepted-licenses [lic-id1 lic-id2]
+                             :actor applicant})
+        (test-data/command! {:type :application.command/submit
+                             :application-id app-id
+                             :actor applicant})
+        (test-data/command! {:type :application.command/approve
+                             :application-id app-id
+                             :actor admin
+                             :entitlement-end end
+                             :comment ""})
+
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (entitlements/process-outbox!)
+
+           (is (= [{:resid "resource1" :userid applicant :end (time/date-time 2100 01 01)}]
+                  (mapv #(select-keys % [:resid :userid :end]) (db/get-entitlements {:application app-id}))))
+           (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end "2100-01-01T00:00:00.000Z"}]}]
+                  (requests-for-paths server "/add")))))))
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-data/command! {:type :application.command/accept-licenses
@@ -283,7 +312,7 @@
            (entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
-             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+             (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
            (testing "ended entitlements POSTed to callback"
-             (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
+             (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}]
                     (get-requests server))))))))))

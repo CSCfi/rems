@@ -74,12 +74,12 @@
 
 (defn- form-field-names [form-id application]
   (let [form (find-first #(= form-id (:form/id %)) (:application/forms application))]
-      (assert form
-              (str "Form " form-id " not found in application " (:application/id application)))
-      (->> form
-           :form/fields
-           (mapv :field/title)
-           (mapv text/localized))))
+    (assert form
+            (str "Form " form-id " not found in application " (:application/id application)))
+    (->> form
+         :form/fields
+         (mapv :field/title)
+         (mapv text/localized))))
 
 (defn applications-to-csv [applications form-id user-id]
   (let [language (:language (user-settings/get-user-settings user-id))]

@@ -1,30 +1,71 @@
 (ns ^:integration rems.api.test-entitlements
-  (:require [clojure.test :refer :all]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
+            [rems.db.core :as db]
+            [rems.db.roles :as roles]
+            [rems.db.test-data :as test-data]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture-without-data)
 
 (deftest entitlements-test
-  ;; TODO: create applications inside the test
+  (testing "set up data"
+    (api-key/add-api-key! 42 {})
+    (users/add-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"})
+    ;; don't set malice's email to test the api with nil emails
+    (users/add-user! {:userid "malice" :name "Malice Applicant"})
+    (users/add-user! {:userid "developer"})
+    (users/add-user! {:userid "owner"})
+    (roles/add-role! "owner" :owner)
+    (users/add-user! {:userid "reporter"})
+    (roles/add-role! "reporter" :reporter)
+    (let [res-id (test-data/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"})
+          wf-id (test-data/create-workflow! {:type :workflow/default :handlers ["developer"]})
+          form-id (test-data/create-form! {})
+          cat-id (test-data/create-catalogue-item! {:resource-id res-id :form-id form-id :workflow-id wf-id})
+          app-id (test-data/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
+          expired-app-id (test-data/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
+          malice-app-id (test-data/create-application! {:actor "malice" :catalogue-item-ids [cat-id]})]
+      (test-data/command! {:type :application.command/submit
+                           :application-id app-id
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/approve
+                           :application-id app-id
+                           :actor "developer"})
+      (test-data/command! {:type :application.command/submit
+                           :application-id expired-app-id
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/approve
+                           :application-id expired-app-id
+                           :actor "developer"})
+      (test-data/command! {:type :application.command/close
+                           :application-id expired-app-id
+                           :actor "developer"})
+      (test-data/command! {:type :application.command/submit
+                           :application-id malice-app-id
+                           :actor "malice"})
+      (test-data/command! {:type :application.command/approve
+                           :application-id malice-app-id
+                           :actor "developer"
+                           :entitlement-end (time/date-time 2100 01 01)})))
+
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))
                        handler)
           body (read-body response)]
       (is (= "unauthorized" body))))
-  ;; zero malice's email to test the api with nil emails
-  (users/add-user! {:userid "malice" :name "Malice Applicant"})
   (let [api-key "42"
         check-alice-entitlement (fn [x]
                                   (is (= {:user {:userid "alice"
                                                  :email "alice@example.com"
                                                  :name "Alice Applicant"
-                                                 :nickname "In Wonderland"
-                                                 :organizations [{:organization/id "default"}]}
+                                                 :nickname "In Wonderland"}
                                           :resource "urn:nbn:fi:lb-201403262"
                                           :end nil
                                           :mail "alice@example.com"}
@@ -34,8 +75,7 @@
                                           (is (= {:user {:userid "alice"
                                                          :email "alice@example.com"
                                                          :name "Alice Applicant"
-                                                         :nickname "In Wonderland"
-                                                         :organizations [{:organization/id "default"}]}
+                                                         :nickname "In Wonderland"}
                                                   :resource "urn:nbn:fi:lb-201403262"
                                                   :mail "alice@example.com"}
                                                  (dissoc x :start :end :application-id)))
@@ -46,7 +86,7 @@
                                                   :email nil
                                                   :name "Malice Applicant"}
                                            :resource "urn:nbn:fi:lb-201403262"
-                                           :end nil
+                                           :end "2100-01-01T00:00:00.000Z"
                                            :mail nil}
                                           (dissoc x :start :application-id)))
                                    (is (valid-date? (:start x))))]

@@ -6,11 +6,8 @@
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index getx]]
-            [rems.permissions :as permissions]
-            [rems.roles :refer [has-roles?]]
-            [rems.util :refer [conj-vec]]
-            [rems.db.roles :as roles]))
+            [rems.common.util :refer [build-index conj-vec getx]]
+            [rems.permissions :as permissions]))
 
 ;;;; Application
 
@@ -22,6 +19,7 @@
     :application.state/returned
     :application.state/revoked
     :application.state/submitted})
+;; TODO deleted state?
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -163,9 +161,10 @@
   application)
 
 (defmethod event-type-specific-application-view :application.event/approved
-  [application _event]
+  [application event]
   (-> application
       (assoc :application/state :application.state/approved)
+      (merge (select-keys event [:entitlement/end]))
       (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
@@ -210,6 +209,10 @@
   [application event]
   (assoc application :application/external-id (:application/external-id event)))
 
+(defmethod event-type-specific-application-view :application.event/deleted
+  [application _event]
+  application)
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -235,6 +238,7 @@
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/decide}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
@@ -261,6 +265,7 @@
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
+    {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}

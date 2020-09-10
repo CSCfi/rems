@@ -15,6 +15,7 @@
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
        "&scope=openid profile email"
+       (getx env :oidc-additional-authorization-parameters)
        #_"&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
 
 (defn logout-url []
@@ -45,7 +46,7 @@
         ;; locale – could be used to set preferred lang on first login
         ;; email – non-unique (!) email
         id-data (jwt/validate id-token issuer audience now)
-        identity-base {:eppn (:sub id-data)
+        identity-base {:eppn (get id-data (keyword (getx env :oidc-userid-attribute)))
                        ;; need to maintain a fallback list of name attributes since identity
                        ;; providers differ in what they give us
                        :commonName (some id-data [:name :unique_name :family_name])
@@ -53,7 +54,7 @@
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data))
-    (-> (redirect "/") ; TODO Could redirect with state param
+    (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
         (assoc-in [:session :identity] (merge identity-base extra-attributes)))))
@@ -75,9 +76,9 @@
 (defroutes routes
   (GET "/oidc-login" _req (redirect (login-url)))
   (GET "/oidc-logout" req
-       (let [session (get req :session)]
-         (when (:log-authentication-details env)
-           (log/info "logging out" (:identity session)))
-         (oidc-revoke (:access-token session))
-         (assoc (redirect "/") :session (dissoc session :identity :access-token))))
+    (let [session (get req :session)]
+      (when (:log-authentication-details env)
+        (log/info "logging out" (:identity session)))
+      (oidc-revoke (:access-token session))
+      (assoc (redirect "/") :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))

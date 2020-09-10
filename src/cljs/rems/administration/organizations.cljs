@@ -77,7 +77,8 @@
  (fn [[organizations language] _]
    (for [organization organizations]
      {:key (:organization/id organization)
-      :name {:value (get-in organization [:organization/short-name language])}
+      :short-name {:value (get-in organization [:organization/short-name language])}
+      :name {:value (get-in organization [:organization/name language])}
       :active (let [checked? (status-flags/active? organization)]
                 {:td [:td.active
                       [readonly-checkbox {:value checked?}]]
@@ -90,7 +91,9 @@
 
 (defn- organizations-list []
   (let [organizations-table {:id ::organizations
-                             :columns [{:key :name
+                             :columns [{:key :short-name
+                                        :title (text :t.administration/short-name)}
+                                       {:key :name
                                         :title (text :t.administration/organization)}
                                        {:key :active
                                         :title (text :t.administration/active)
@@ -112,7 +115,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/when roles/show-admin-edit-buttons?
-            #_[to-create-organization] ; TODO hidden until it works
+            [to-create-organization]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
             [status-flags/disabled-and-archived-explanation]]
            [organizations-list]])))

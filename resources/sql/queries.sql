@@ -199,13 +199,22 @@ INSERT INTO catalogue_item_application (id)
 VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
 
+-- :name get-application-ids :?
+SELECT id FROM catalogue_item_application;
+
+-- :name delete-application! :!
+DELETE FROM catalogue_item_application
+WHERE id = :application;
+
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId, approvedby)
-VALUES (:application, :user, :resource, :approvedby);
+INSERT INTO entitlement (catAppId, userId, resId, approvedby, endt)
+VALUES (:application, :user, :resource, :approvedby,
+/*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
+);
 
 -- :name end-entitlements! :!
 UPDATE entitlement
-SET (endt, revokedby) = (current_timestamp, :revokedby)
+SET (endt, revokedby) = (:end, :revokedby)
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
@@ -221,7 +230,7 @@ WHERE catAppId = :application
 --   :application -- application id to limit select to
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
---   :is-active? -- entitlement is without end date
+--   :active-at -- only return entitlements with start<=active-at<end (or end undefined)
 SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail,
 entitlement.approvedby FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
@@ -239,8 +248,8 @@ WHERE 1=1
 /*~ (when (:resource-ext-id params) */
   AND res.resid = :resource-ext-id
 /*~ ) ~*/
-/*~ (when (:is-active? params) */
-  AND entitlement.endt IS NULL
+/*~ (when (:active-at params) */
+  AND entitlement.start <= :active-at AND (entitlement.endt is NULL OR :active-at < entitlement.endt)
 /*~ ) ~*/
 ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
@@ -433,6 +442,11 @@ VALUES (:user, :role)
 ON CONFLICT (userId, role)
 DO NOTHING;
 
+-- :name remove-role! :!
+DELETE FROM roles
+WHERE userId = :user
+  AND role = :role;
+
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
@@ -489,6 +503,10 @@ LIMIT 1;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
+
+-- :name delete-application-events! :!
+DELETE FROM application_event
+WHERE appId = :application;
 
 -- :name upsert-api-key! :insert
 INSERT INTO api_key (apiKey, comment, users, paths)
@@ -598,10 +616,12 @@ SELECT id, modifierUserId, modified, data::text as data FROM organization;
 -- :name get-organization-by-id :? :1
 SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
 
--- :name add-organization! :!
-INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);
+-- :name add-organization! :insert
+INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
+ON CONFLICT (id) DO NOTHING
+RETURNING id;
 
 -- :name set-organization! :!
 UPDATE organization
-SET data = :data::jsonb
+SET data = :data::jsonb, modified = :time, modifierUserId = :user
 WHERE id = :id;

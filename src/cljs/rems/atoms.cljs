@@ -93,15 +93,23 @@
 
   Additional options:
   `:inline?` - puts the label and value on the same row
-  `:box?`    - wrap the value into a field value box (default true)"
-  [title value & [{:keys [inline? box?] :or {box? true} :as opts}]]
-  (if inline?
-    [:div.form-group.row
-     [:label.col-sm-3.col-form-label title]
-     [:div.col-sm-9 (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]
-    [:div.form-group
-     [:label title]
-     [:div (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]))
+  `:box?`    - wrap the value into a field value box (default true)
+  `:dashed?` - wrap the value into a dashed box (default false)
+  `:border?` - wrap the value into a solid border (default false)"
+  [title value & [{:keys [inline? box? dashed? solid?] :or {box? true dashed? false solid? false} :as _opts}]]
+  (let [values (if (list? value) value (list value))
+        style (cond box? {:class "form-control"}
+                    dashed? {:class "dashed-group"}
+                    solid? {:class "solid-group"}
+                    :else {:style {:padding-left 0}})]
+    (if inline?
+      [:div.form-group.row
+       [:label.col-sm-3.col-form-label title]
+       (into [:div.col-sm-9 style]
+             values)]
+      [:div.form-group
+       [:label title]
+       (into [:div style] values)])))
 
 (defn download-button
   [title url]

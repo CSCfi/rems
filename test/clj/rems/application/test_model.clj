@@ -50,8 +50,7 @@
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
                       :field/max-length 100
-                      :field/type :text}
-]
+                      :field/type :text}]
        :enabled true
        :archived false}})
 
@@ -650,10 +649,10 @@
                                                            {:form 40 :field "42" :value "new bar"}
                                                            {:form 40 :field "43" :value "new private answer"}
                                                            {:form 40 :field "field-does-not-exist" :value "something"}]
-               :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
-                                                                   {:form 40 :field "42" :value "bar"}
-                                                                   {:form 40 :field "43" :value "private answer"}
-                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))))
+                :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                    {:form 40 :field "42" :value "bar"}
+                                                                    {:form 40 :field "43" :value "private answer"}
+                                                                    {:form 40 :field "field-does-not-exist" :value "something"}]}))))
 
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"

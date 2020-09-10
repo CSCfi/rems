@@ -15,6 +15,7 @@
             [com.rpl.specter :refer [select ALL]]
             [rems.browser-test-util :as btu]
             [rems.config]
+            [rems.db.organizations :as organizations]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -901,7 +902,9 @@
                            :actor "alice"})
       (test-data/command! {:type :application.command/submit
                            :application-id (btu/context-get :application-id)
-                           :actor "alice"}))
+                           :actor "alice"})
+
+      (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
 
     (testing "open report"
       (login-as "owner")
@@ -910,11 +913,9 @@
       (btu/wait-page-loaded)
       (select-option* "Form" (btu/context-get :form-title))
       (btu/scroll-and-click :export-applications-button)
-      #_(btu/wait-for-downloads #"applications_.*\.csv"))
+      (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
-    ;; TODO disabled until chromedriver 83 is available and has bugfix for downloading in other tab (target blank)
-    (is true)
-    #_(testing "check report CSV"
+    (testing "check report CSV"
       (let [application (get-application-from-api (btu/context-get :application-id))
             q (fn [s] (str "\"" s "\""))]
         (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
@@ -931,3 +932,156 @@
                     first
                     slurp
                     str/split-lines)))))))
+
+(deftest test-organizations
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "owner")
+    (go-to-admin "Organizations")
+
+    (testing "create"
+      (btu/scroll-and-click :create-organization)
+      (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
+      (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
+      (btu/wait-visible :id)
+      (btu/fill-human :id (btu/context-get :organization-id))
+      (btu/fill-human :short-name-en "SNEN")
+      (btu/fill-human :short-name-fi "SNFI")
+      (btu/fill-human :short-name-sv "SNSV")
+      (btu/fill-human :name-en (str (btu/context-get :organization-name) " EN"))
+      (btu/fill-human :name-fi (str (btu/context-get :organization-name) " FI"))
+      (btu/fill-human :name-sv (str (btu/context-get :organization-name) " SV"))
+      (select-option* "Owners" "Organization owner 1")
+      (btu/scroll-and-click :add-review-email)
+      (btu/scroll-and-click :add-review-email)
+
+      (btu/wait-visible :review-emails-1-name-en)
+      (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
+      (btu/fill-human :review-emails-1-name-fi "Review mail FI")
+      (btu/fill-human :review-emails-1-name-sv "Review mail SV")
+      (btu/fill-human :review-emails-1-email "review.email@example.com")
+      (btu/scroll-and-click {:css ".remove"}) ; remove first
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+
+    (testing "view after creation"
+      (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+        (is (= {"Id" (btu/context-get :organization-id)
+                "Short name (FI)" "SNFI"
+                "Short name (EN)" "SNEN"
+                "Short name (SV)" "SNSV"
+                "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Owners" "organization-owner1"
+                "Name (FI)" "Review mail FI"
+                "Name (SV)" "Review mail SV"
+                "Name (EN)" "Review mail EN"
+                "Email" "review.email@example.com"
+                "Active" ""
+                "Last modified" last-modified
+                "Modifier" "owner"}
+               (slurp-fields :organization)))))
+
+    (testing "edit after creation"
+      (btu/scroll-and-click :edit-organization)
+      (btu/wait-page-loaded)
+      (btu/wait-visible :short-name-en)
+      (select-option* "Owners" "Organization owner 2")
+      (btu/clear :short-name-en)
+      (btu/fill-human :short-name-en "SNEN2")
+      (btu/clear :short-name-fi)
+      (btu/fill-human :short-name-fi "SNFI2")
+      (btu/clear :short-name-sv)
+      (btu/fill-human :short-name-sv "SNSV2")
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+      (testing "view after editing"
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI2"
+                  "Short name (EN)" "SNEN2"
+                  "Short name (SV)" "SNSV2"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "organization-owner1\norganization-owner2"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" last-modified
+                  "Modifier" "owner"}
+                 (slurp-fields :organization))))))
+
+    (testing "as organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Organizations")
+
+      (testing "list shows created organization"
+        (let [orgs (slurp-rows :organizations)]
+          (is (some #{{"short-name" "SNEN2"
+                       "name" (str (btu/context-get :organization-name) " EN")
+                       "active" ""
+                       "commands" "ViewDisableArchive"}}
+                    orgs))))
+
+      (testing "view from list"
+        (click-row-action [:organizations]
+                          {:fn/text (str (btu/context-get :organization-name) " EN")}
+                          (select-button-by-label "View"))
+        (btu/wait-page-loaded)
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI2"
+                  "Short name (EN)" "SNEN2"
+                  "Short name (SV)" "SNSV2"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "organization-owner1\norganization-owner2"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" last-modified
+                  "Modifier" "owner"}
+                 (slurp-fields :organization)))))
+
+      (testing "edit as organization owner"
+        (btu/scroll-and-click :edit-organization)
+        (btu/wait-page-loaded)
+        (btu/wait-visible :short-name-en)
+        (btu/clear :short-name-en)
+        (btu/fill-human :short-name-en "SNEN")
+        (btu/clear :short-name-fi)
+        (btu/fill-human :short-name-fi "SNFI")
+        (btu/clear :short-name-sv)
+        (btu/fill-human :short-name-sv "SNSV")
+        (btu/scroll-and-click :save)
+        (btu/wait-visible {:css ".alert-success"})
+        (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+        (testing "view after editing"
+          (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+            (is (= {"Id" (btu/context-get :organization-id)
+                    "Short name (FI)" "SNFI"
+                    "Short name (EN)" "SNEN"
+                    "Short name (SV)" "SNSV"
+                    "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                    "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                    "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                    "Owners" "organization-owner1\norganization-owner2"
+                    "Name (FI)" "Review mail FI"
+                    "Name (SV)" "Review mail SV"
+                    "Name (EN)" "Review mail EN"
+                    "Email" "review.email@example.com"
+                    "Active" ""
+                    "Last modified" last-modified
+                    "Modifier" "organization-owner2"}
+                   (slurp-fields :organization)))))))))

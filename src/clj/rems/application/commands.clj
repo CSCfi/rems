@@ -49,7 +49,8 @@
   (assoc CommandBase
          :member {:userid UserId}))
 (s/defschema ApproveCommand
-  CommandWithComment)
+  (assoc CommandWithComment
+         (s/optional-key :entitlement-end) DateTime))
 (s/defschema AssignExternalIdCommand
   (assoc CommandBase
          :external-id s/Str))
@@ -96,6 +97,8 @@
                          :value s/Str}]))
 (s/defschema SubmitCommand
   CommandBase)
+(s/defschema DeleteCommand
+  CommandBase)
 (s/defschema UninviteMemberCommand
   (assoc CommandWithComment
          :member {:name s/Str
@@ -113,6 +116,7 @@
    :application.command/copy-as-new CopyAsNewCommand
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
+   :application.command/delete DeleteCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
@@ -375,7 +379,9 @@
 (defmethod command-handler :application.command/approve
   [cmd application injections]
   (add-comment-and-attachments cmd injections
-                               {:event/type :application.event/approved}))
+                               (merge {:event/type :application.event/approved}
+                                      (when-let [end (:entitlement-end cmd)]
+                                        {:entitlement/end end}))))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
@@ -566,6 +572,17 @@
   (ok {:event/type :application.event/external-id-assigned
        :application/external-id (:external-id cmd)}))
 
+(defn- forbidden-error [application cmd]
+  (let [permissions (if application
+                      (permissions/user-permissions application (:actor cmd))
+                      #{:application.command/create})]
+    (when-not (contains? permissions (:type cmd))
+      {:errors [{:type :forbidden}]})))
+
+(defmethod command-handler :application.command/delete
+  [cmd application injections]
+  (ok {:event/type :application.event/deleted}))
+
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event
       (update :application/id (fn [app-id]
@@ -580,13 +597,6 @@
 (defn- application-not-found-error [application cmd]
   (when (and (:application-id cmd) (not application))
     {:errors [{:type :application-not-found}]}))
-
-(defn- forbidden-error [application cmd]
-  (let [permissions (if application
-                      (permissions/user-permissions application (:actor cmd))
-                      #{:application.command/create})]
-    (when-not (contains? permissions (:type cmd))
-      {:errors [{:type :forbidden}]})))
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api

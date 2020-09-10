@@ -2,7 +2,7 @@
   "Pure functions for form validation logic"
   (:require [clojure.string :as str]
             [rems.common.form :as form]
-            [rems.util :as util]))
+            [rems.common.util :refer [+email-regex+]]))
 
 (defn- required? [field]
   (and (not (:field/optional field))
@@ -17,7 +17,7 @@
 (defn- invalid-email-address? [field]
   (and (= (:field/type field) :email)
        (not (str/blank? (:field/value field)))
-       (not (re-matches util/+email-regex+ (:field/value field)))))
+       (not (re-matches +email-regex+ (:field/value field)))))
 
 (defn- option-value-valid? [field]
   (let [allowed-values (set (conj (map :key (:field/options field)) ""))]

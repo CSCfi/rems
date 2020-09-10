@@ -30,6 +30,8 @@ Changes since v2.12
 - Form field placeholders now fulfil accessibility contrast ratio requirements (#2229)
 - UI for the close action erroneously claimed the comment is not shown to the applicant. (#2212)
 - Description of the Decider workflow erroneously claimed that application can not be closed.
+- Redirecting the user back to the page they landed on after login now works even with OIDC authentication. (#2247)
+- Fixed enabling a catalogue item after changing its form. (#2283)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
@@ -44,8 +46,12 @@ Changes since v2.12
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
 - Organizations have an initial UI (#2039)
+- Organisations can be created and edited in the UI (#2039)
 - The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
-- REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. (#2130)
+- REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. See [docs/configuration.md](docs/configuration.md). (#2130)
+- The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
+- The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
+- Applicants can now permanently delete drafts. (#2219)
 
 ## v2.12 "Merituulentie" 2020-05-04
 

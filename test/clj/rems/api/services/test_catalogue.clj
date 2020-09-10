@@ -5,9 +5,11 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
+            [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
-            [rems.testing-util :refer [with-user]]))
+            [rems.testing-util :refer [with-user]])
+  (:import org.joda.time.DateTime))
 
 (use-fixtures :once test-db-fixture caches-fixture)
 (use-fixtures :each rollback-db-fixture)
@@ -18,6 +20,7 @@
 
 (deftest catalogue-item-enabled-archived-test
   (let [owner "owner"
+        _org (test-data/create-organization! {})
         form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
@@ -65,6 +68,24 @@
       (is (= {:enabled false
               :archived false}
              (status-flags item-id))))
+
+    (testing "enable unsets end time"
+      (db/set-catalogue-item-endt! {:id item-id :end (DateTime. 1)})
+      (is (:expired (catalogue/get-localized-catalogue-item item-id)))
+      (enable-catalogue-item! true)
+      (is (= {:enabled true
+              :archived false}
+             (status-flags item-id)))
+      (is (not (:expired (catalogue/get-localized-catalogue-item item-id))))
+      (is (not (:end (catalogue/get-localized-catalogue-item item-id)))))
+
+    (testing "disable doesn't set end time"
+      (enable-catalogue-item! false)
+      (is (= {:enabled false
+              :archived false}
+             (status-flags item-id)))
+      (is (not (:expired (catalogue/get-localized-catalogue-item item-id))))
+      (is (not (:end (catalogue/get-localized-catalogue-item item-id)))))
 
     (testing "archive"
       (archive-catalogue-item! true)
@@ -126,7 +147,8 @@
       (is (:success (archive-catalogue-item! true))))))
 
 (deftest test-edit-catalogue-item
-  (let [item-id (test-data/create-catalogue-item!
+  (let [_org (test-data/create-organization! {})
+        item-id (test-data/create-catalogue-item!
                  {:title {:en "Old title"
                           :fi "Vanha nimi"}})
         old-item (first (catalogue/get-localized-catalogue-items))
@@ -144,6 +166,7 @@
 
 (deftest test-get-localized-catalogue-items
   (let [owner "owner"
+        _org (test-data/create-organization! {})
         item-id (test-data/create-catalogue-item! {})]
 
     (testing "find all"

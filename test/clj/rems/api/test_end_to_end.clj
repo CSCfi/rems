@@ -273,11 +273,13 @@
                   (is (= #{{:application application-id
                             :mail "applicant@example.com"
                             :resource resource-ext-id
-                            :user applicant-id}
+                            :user applicant-id
+                            :end nil}
                            {:application application-id
                             :mail "applicant@example.com"
                             :resource resource-ext-id2
-                            :user applicant-id}}
+                            :user applicant-id
+                            :end nil}}
                          (set (concat (json/parse-string (get-in req [:body "postData"]))
                                       (json/parse-string (get-in req2 [:body "postData"])))))))))
 
@@ -300,20 +302,18 @@
                   (is (= resource-ext-id2 (:resource entitlement2)))
                   (is (:end entitlement2) entitlement2)))
               (testing "POSTed to callback"
-                (let [[_old _old2 req req2 & others] (stub/recorded-requests entitlements-server)]
+                (let [[_old _old2 req req2 & others] (stub/recorded-requests entitlements-server)
+                      [body] (json/parse-string (get-in req [:body "postData"]))
+                      [body2] (json/parse-string (get-in req2 [:body "postData"]))]
                   (is (empty? others))
                   (is (= "/remove" (:path req)))
                   (is (= "/remove" (:path req2)))
-                  (is (= #{{:application application-id
-                            :mail "applicant@example.com"
-                            :resource resource-ext-id
-                            :user applicant-id}
-                           {:application application-id
-                            :mail "applicant@example.com"
-                            :resource resource-ext-id2
-                            :user applicant-id}}
-                         (set (concat (json/parse-string (get-in req [:body "postData"]))
-                                      (json/parse-string (get-in req2 [:body "postData"])))))))))
+                  (is (= application-id (:application body) (:application body2)))
+                  (is (= applicant-id (:user body) (:user body2)))
+                  (is (= "applicant@example.com" (:mail body) (:mail body2)))
+                  (is (:end body))
+                  (is (:end body2))
+                  (is (= #{resource-ext-id resource-ext-id2} (set [(:resource body) (:resource body2)]))))))
 
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
