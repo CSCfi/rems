@@ -523,10 +523,6 @@
         handler "developer"]
     (let [app-id (test-data/create-application! {:actor applicant})]
       (testing "can't delete draft as other user"
-        (is (not (contains? (-> (get-application-for-user app-id handler)
-                                :application/permissions
-                                set)
-                            :application.command/delete)))
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key handler))))
