@@ -9,8 +9,8 @@ progress, but here is a summary of the current status.
 ## Available organizations
 
 Available organizations are stored in the database table `organization`.
-While taking a new REMS instance into use, you should create them either 
-using the API or administration UI as you are creating licenses, forms etc.
+While migrating or taking a new REMS instance into use, you should create them
+either using the API or administration UI as you are creating licenses, forms etc.
 Licenses, forms etc. all require you to specify the organization so you
 must create at least one.
 
