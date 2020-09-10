@@ -61,7 +61,7 @@
                    :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
                    :create-form "Uusi lomake"
-                   :create-license "Uusi lisessi"
+                   :create-license "Uusi lisenssi"
                    :create-organization "Uusi organisaatio"
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"
