@@ -8,18 +8,28 @@
             [rems.db.user-settings :as user-settings]
             [rems.text :as text]))
 
+(def ^:private crlf "\r\n")
+
 (defn print-to-csv [& {:keys [column-names rows
-                              quote-strings? separator]
+                              quote-strings? separator
+                              strip-line-returns?]
                        :or {separator (:csv-separator env)}}]
   (let [escape-quotes #(str/replace % "\"" "\\\"")
+        strip-line-returns #(str/replace % #"[\r\n]" " ")
+        maybe-strip #(if (and (string? %)
+                             strip-line-returns?)
+                       (strip-line-returns %)
+                       %)
         maybe-quote #(if (and (string? %)
                               quote-strings?)
                        (str "\"" (escape-quotes %) "\"")
                        %)]
     (with-out-str
-      (println (str/join separator (mapv maybe-quote column-names)))
+      (print (str/join separator (mapv (comp maybe-quote maybe-strip) column-names)))
+      (print crlf)
       (doseq [row rows]
-        (println (str/join separator (mapv maybe-quote row)))))))
+        (print (str/join separator (mapv (comp maybe-quote maybe-strip) row)))
+        (print crlf)))))
 
 ;; Export applications
 
@@ -92,7 +102,8 @@
         #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
                                              (form-field-names form-id (first applications)))
                        :rows (mapv (partial application-to-row form-id) applications)
-                       :quote-strings? true)))))
+                       :quote-strings? true
+                       :strip-line-returns? true)))))
 
 (defn applications-filename []
   (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))
