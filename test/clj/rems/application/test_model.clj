@@ -1427,10 +1427,16 @@
       (is (not (str/includes? (pr-str redacted) "secret"))))))
 
 (deftest test-apply-user-permissions
-  (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"
-                                                     :workflow/type :workflow/default
-                                                     :workflow/id 50})
+  ;; TODO test drafts separately
+  (let [application (-> nil
+                        (model/application-view {:event/type :application.event/created
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/default
+                                                 :workflow/id 50})
+                        (model/application-view {:event/type :application.event/submitted
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/default
+                                                 :workflow/id 50})
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :reporter ["reporter"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
@@ -1439,8 +1445,7 @@
                                                               :role-2 #{:foo :bar}
                                                               :reporter #{:see-everything}}))
         enriched (model/enrich-with-injections application injections)]
-    (testing "reporter can't see draft application"
-      (is (nil? (model/apply-user-permissions enriched "reporter"))))
+
     (testing "users with a role can see the application"
       (is (not (nil? (model/apply-user-permissions enriched "user-1")))))
     (testing "users without a role cannot see the application"
