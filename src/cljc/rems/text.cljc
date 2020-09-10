@@ -166,6 +166,6 @@
      (case event-type
        :application.event/approved
        (when-let [end (:entitlement/end event)]
-         (str " " (text-format :t.applications.entitlement-end (localize-time end))))
+         (str " " (text-format :t.applications/entitlement-end (localize-time end))))
 
        nil))))

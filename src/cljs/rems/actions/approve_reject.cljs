@@ -76,7 +76,7 @@
     [action-attachment {:application-id application-id
                         :key action-form-id}]
     [:div.form-group
-     [:label {:for "approve-end"} (text :t.actions.approve-end-date)]
+     [:label {:for "approve-end"} (text :t.actions/approve-end-date)]
      [:div.input-group.w-50
       [:input.form-control {:type "date"
                             :id "approve-end"
@@ -88,7 +88,7 @@
         [:div.input-group-append
          [:button.btn.btn-outline-secondary
           {:on-click #(on-set-end nil)
-           :aria-label (text :t.actions.clear)}
+           :aria-label (text :t.actions/clear)}
           [close-symbol]]])]]]])
 
 (defn approve-reject-form [application-id on-finished]
