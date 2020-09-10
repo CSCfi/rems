@@ -21,6 +21,7 @@
                      :duplicate-id "Id is already in use."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
+                     :organization-does-not-exist "Organization \"%1\" does not exist"
                      :submission-failed "Submission failed. Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
