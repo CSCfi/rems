@@ -1134,7 +1134,5 @@
                     "Email" "review.email@example.com"
                     "Active" ""
                     "Last modified" last-modified
-                    "Modifier" "organization-owner2"
-                    ;; this is an artefact of how slurp-fields works:
-                    "Review emails" "Review mail FI"}
+                    "Modifier" "organization-owner2"}
                    (slurp-fields :organization)))))))))
