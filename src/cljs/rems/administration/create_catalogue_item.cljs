@@ -109,25 +109,27 @@
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
 (rf/reg-event-fx ::edit-catalogue-item edit-catalogue-item!)
 
-(defn- update-loading! [db]
-  (when (and (::catalogue-item db)
-             (seq (::workflows db))
-             (seq (::resources db))
-             (seq (::forms db)))
-    (let [{:keys [wfid resource-id formid localizations organization]} (::catalogue-item db)]
-      (-> db
-          (assoc ::form {:workflow (item-by-id (::workflows db) :id wfid)
-                         :resource (item-by-id (::resources db) :id resource-id)
-                         :form (item-by-id (::forms db) :form/id formid)
-                         :organization organization
-                         :title (map-vals :title localizations)
-                         :infourl (map-vals :infourl localizations)})))))
+(rf/reg-event-db
+ ::update-loading!
+ (fn [db _]
+   (merge
+    db
+    (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
+      (when-let [workflows (get-in db [::workflows :data])]
+        (when-let [resources (get-in db [::resources :data])]
+          (when-let [forms (get-in db [::forms :data])]
+            {::form {:workflow (item-by-id workflows :id wfid)
+                     :resource (item-by-id resources :id resource-id)
+                     :form (item-by-id forms :form/id formid)
+                     :organization organization
+                     :title (map-vals :title localizations)
+                     :infourl (map-vals :infourl localizations)}})))))))
 
-(fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success (fn [db _] (update-loading! db))})
-(fetcher/reg-fetcher ::resources "/api/resources" {:on-success (fn [db _] (update-loading! db))})
-(fetcher/reg-fetcher ::forms "/api/forms" {:on-success (fn [db _] (update-loading! db))})
+(fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
+(fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
+(fetcher/reg-fetcher ::forms "/api/forms" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
-                                                                  :on-success (fn [db _] (update-loading! db))})
+                                                                  :on-success #(rf/dispatch [::update-loading!])})
 
 ;;;; UI
 
