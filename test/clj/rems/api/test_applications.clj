@@ -483,17 +483,13 @@
       (let [created (get-application-for-user application-id user-id)]
         (is (= "application.state/draft" (get created :application/state)))))
 
-    (testing "getting application as other user is forbidden"
-      (is (response-is-forbidden?
-           (-> (request :get (str "/api/applications/" application-id))
-               (authenticate api-key "bob")
-               handler))))
-
-    (testing "seeing draft application as reporter is forbidden"
-      (is (response-is-forbidden?
-            (-> (request :get (str "/api/applications/" application-id))
-                (authenticate api-key "reporter")
-                handler))))
+    (testing "seeing draft is forbidden"
+      (testing "as unrelated user"
+        (is (response-is-forbidden? (api-response :get (str "/api/applications/" application-id) nil api-key "bob"))))
+      (testing "as reporter"
+        (is (response-is-forbidden? (api-response :get (str "/api/applications/" application-id) nil api-key "reporter"))))
+      (testing "as handler"
+        (is (response-is-forbidden? (api-response :get (str "/api/applications/" application-id) nil api-key "developer")))))
 
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
