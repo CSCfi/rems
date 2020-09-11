@@ -44,13 +44,13 @@ Some pointers for common tasks:
 
 # Running the application with Docker
 
-### Option 1: Running rems from dockerhub:
+### Option 1: Run rems from dockerhub
 
     docker-compose up -d db
     docker-compose run --rm -e COMMANDS="migrate test-data" app
     docker-compose up -d
 
-### Option 2: Building the image locally
+### Option 2: Build rems image locally
 
     lein uberjar
     docker-compose -f docker-compose-build.yml build
@@ -58,15 +58,15 @@ Some pointers for common tasks:
     docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
     docker-compose -f docker-compose-build.yml up -d
 
-### Access rems:
+### Access rems
 
     Point your browser to <http://localhost:3000>
 
-### Shutdown:
+### Shutdown
 
     docker-compose stop
 
-### Shutdown and remove all data:
+### Shutdown and remove all data
 
     docker-compose down
 
