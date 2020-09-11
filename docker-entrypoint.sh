@@ -30,5 +30,3 @@ done
 echo "####################"
 echo "########## CONTAINER STARTUP FINISHED"
 echo "####################"
-
-tail -f /dev/null
