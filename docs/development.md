@@ -44,8 +44,6 @@ Point your browser to <http://localhost:3000>
 
 Build the image and initialize the database:
 
-    lein uberjar
-    docker-compose build
     docker-compose up -d db
     docker-compose run --rm -e COMMANDS="migrate test-data" app
 
