@@ -87,6 +87,17 @@
     ""
     (text (get todos todo :t.applications.todos/unknown))))
 
+(defn- time-format []
+  (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
+
+(defn localize-time [time]
+  #?(:clj (when time
+            (let [time (if (string? time) (format/parse time) time)]
+              (format/unparse (time-format) time)))
+     :cljs (let [time (if (string? time) (format/parse time) time)]
+             (when time
+               (format/unparse-local (time-format) (time/to-default-time-zone time))))))
+
 (def ^:private event-types
   {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
@@ -125,40 +136,36 @@
 
 (defn localize-event [event]
   (let [event-type (:event/type event)]
-    (text-format
-     (get event-types event-type :t.applications.events/unknown)
-     (application-util/get-member-name (:event/actor-attributes event))
+    (str
+     (text-format
+      (get event-types event-type :t.applications.events/unknown)
+      (application-util/get-member-name (:event/actor-attributes event))
+      (case event-type
+        :application.event/review-requested
+        (str/join ", " (mapv application-util/get-member-name
+                             (:application/reviewers event)))
+
+        :application.event/decision-requested
+        (str/join ", " (mapv application-util/get-member-name
+                             (:application/deciders event)))
+
+        :application.event/external-id-assigned
+        (:application/external-id event)
+
+        (:application.event/member-added
+         :application.event/member-invited
+         :application.event/member-removed
+         :application.event/member-uninvited)
+        (application-util/get-member-name (:application/member event))
+
+        :application.event/resources-changed
+        (str/join ", " (mapv #(localized (:catalogue-item/title %))
+                             (:application/resources event)))
+
+        nil))
      (case event-type
-       :application.event/review-requested
-       (str/join ", " (mapv application-util/get-member-name
-                            (:application/reviewers event)))
-
-       :application.event/decision-requested
-       (str/join ", " (mapv application-util/get-member-name
-                            (:application/deciders event)))
-
-       :application.event/external-id-assigned
-       (:application/external-id event)
-
-       (:application.event/member-added
-        :application.event/member-invited
-        :application.event/member-removed
-        :application.event/member-uninvited)
-       (application-util/get-member-name (:application/member event))
-
-       :application.event/resources-changed
-       (str/join ", " (mapv #(localized (:catalogue-item/title %))
-                            (:application/resources event)))
+       :application.event/approved
+       (when-let [end (:entitlement/end event)]
+         (str " " (text-format :t.applications/entitlement-end (localize-time end))))
 
        nil))))
-
-(defn- time-format []
-  (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
-
-(defn localize-time [time]
-  #?(:clj (when time
-            (let [time (if (string? time) (format/parse time) time)]
-              (format/unparse (time-format) time)))
-     :cljs (let [time (if (string? time) (format/parse time) time)]
-             (when time
-               (format/unparse-local (time-format) (time/to-default-time-zone time))))))

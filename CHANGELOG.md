@@ -53,6 +53,7 @@ Changes since v2.12
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
 - The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
+- When approving an application, the handler can optionally pick an end date for the entitlement. There is also a `:entitlement-default-length-days` configuration variable that is used to compute a default value for the end date. (#2123)
 
 ## v2.12 "Merituulentie" 2020-05-04
 

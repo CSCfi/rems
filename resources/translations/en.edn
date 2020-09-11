@@ -6,10 +6,12 @@
             :add-licenses "Add terms of use"
             :add-member "Add member"
             :approve "Approve"
+            :approve-end-date "Date for access rights to expire (optional)"
             :approve-reject "Approve or reject"
             :bundling-intro [:div.intro [:p "Note that only resources that have the same application workflow can be bundled together."]]
             :cancel "Cancel"
             :change-resources "Change resources"
+            :clear "Clear"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
             :comment "Comment"
@@ -133,6 +135,7 @@
                  ;;   code to match the term in UI.
                  :description "Title"
                  :empty "No applications."
+                 :entitlement-end "Access rights end %1."
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "%1 copied the application from an old application."
