@@ -1509,8 +1509,7 @@
           (testing "see only some events"
             (is (= [{:event/type :application.event/created}
                     {:event/type :application.event/submitted}
-                    {:event/type :application.event/remarked
-                     :application/comment "this is public"}]
+                    {:event/type :application.event/remarked :application/comment "this is public"}]
                    (mapv #(select-keys % [:event/type :application/comment]) (:application/events application)))))
           (testing "see only limited applicant attributes"
             (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
