@@ -64,7 +64,7 @@
         selected-form-id @(rf/subscribe [::selected-form-id])
         item-selected? #(= (:form/id %) selected-form-id)]
     [:div.form-group
-     [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
+     [:label {:for form-dropdown-id} (text :t.administration/form)]
      [dropdown/dropdown
       {:id form-dropdown-id
        :items forms

@@ -71,13 +71,12 @@
                                                                       (map enrich-user)
                                                                       (map :display)
                                                                       (interpose [:br]))]
-              [info-field
-               (text :t.administration/review-emails)
-               (->> (:organization/review-emails organization)
-                    (map display-localized-review-email)
-                    (interpose [:br]))
-               {:box? false
-                :solid? true}]
+              [:div
+               [:label (text :t.administration/review-emails)]
+               [:div.solid-group
+                (->> (:organization/review-emails organization)
+                     (map display-localized-review-email)
+                     (interpose [:br]))]]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
               [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]

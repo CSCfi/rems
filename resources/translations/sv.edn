@@ -93,6 +93,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Person som ändrade"
+                   :more-info "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :organization "Organisation"
@@ -216,12 +217,6 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och den nya kopian använder blanketten du valt."
                 :form-selection "Blankett"}
-  :create-catalogue-item {:form-selection "Blankett"
-                          :infourl "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
-                          :resource-selection "Resurs"
-                          :title "Namn"
-                          :title-placeholder "Namn"
-                          :workflow-selection "Arbetsflöde"}
   :create-form {:add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
                 :field-n "Fält %1: %2"
