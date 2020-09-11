@@ -92,6 +92,7 @@
                    :license-name "License name"
                    :licenses "Licenses"
                    :modifier "Modifier"
+                   :more-info "More info URL (optional, defaults to resource URN)"
                    :name "Name"
                    :no-licenses "No licenses"
                    :organization "Organization"
@@ -217,12 +218,6 @@
              :show-more "Show more"}
   :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
-  :create-catalogue-item {:form-selection "Form"
-                          :infourl "More info URL (optional, defaults to resource URN)"
-                          :resource-selection "Resource"
-                          :title "Name"
-                          :title-placeholder "Name"
-                          :workflow-selection "Workflow"}
   :create-form {:add-form-field "Add field"
                 :add-option "Add option"
                 :field-n "Field %1: %2"

@@ -593,9 +593,9 @@
       (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Name" (btu/context-get :catalogue-item-name) {:index 1})
-      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
-      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
+      (fill-form-field "Title" (btu/context-get :catalogue-item-name) {:index 1})
+      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
+      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
       (select-option "Form" (btu/context-get :form-name))
@@ -685,9 +685,9 @@
       (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
       (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
       (is (= {;; slurp-fields can't read the organization dropdown currently
-              "Name (EN)" "test-edit-catalogue-item EN"
-              "Name (FI)" "test-edit-catalogue-item FI"
-              "Name (SV)" "test-edit-catalogue-item SV"
+              "Title (EN)" "test-edit-catalogue-item EN"
+              "Title (FI)" "test-edit-catalogue-item FI"
+              "Title (SV)" "test-edit-catalogue-item SV"
               "More info URL (optional, defaults to resource URN) (EN)" ""
               "More info URL (optional, defaults to resource URN) (FI)" ""
               "More info URL (optional, defaults to resource URN) (SV)" ""

@@ -92,6 +92,7 @@
                    :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :modifier "Muokkaaja"
+                   :more-info "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
                    :name "Nimi"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
@@ -215,12 +216,6 @@
              :show-more "Näytä lisää"}
   :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta."
                 :form-selection "Lomake"}
-  :create-catalogue-item {:form-selection "Lomake"
-                          :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
-                          :resource-selection "Resurssi"
-                          :title "Nimi"
-                          :title-placeholder "Nimi"
-                          :workflow-selection "Työvuo"}
   :create-form {:add-form-field "Lisää kenttä"
                 :add-option "Lisää vaihtoehto"
                 :field-n "Kenttä %1: %2"

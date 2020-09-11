@@ -152,14 +152,14 @@
 
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
-                       :label (str (text :t.create-catalogue-item/title)
+                       :label (str (text :t.administration/title)
                                    " (" (str/upper-case (name language)) ")")
-                       :placeholder (text :t.create-catalogue-item/title-placeholder)}])
+                       :placeholder (text :t.administration/title)}])
 
 (defn- catalogue-item-infourl-field [language]
   [text-field context {:keys [:infourl language]
                        ;; no placeholder to make clear that field is optional
-                       :label (str (text :t.create-catalogue-item/infourl)
+                       :label (str (text :t.administration/more-info)
                                    " (" (str/upper-case (name language)) ")")}])
 
 (defn- catalogue-item-workflow-field []
@@ -169,7 +169,7 @@
         item-selected? #(= (:id %) (:id selected-workflow))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
+     [:label {:for workflow-dropdown-id} (text :t.administration/workflow)]
      (if editing?
        (let [workflow (item-by-id workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
@@ -192,7 +192,7 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
+     [:label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
@@ -215,7 +215,7 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
+     [:label {:for form-dropdown-id} (text :t.administration/form)]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
