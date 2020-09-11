@@ -16,14 +16,14 @@
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-   {:db (assoc db ::comment "" ::end (default-end (get-in db [:config :entitlement-default-length-days])))
+   {:db (assoc db ::comment "" ::entitlement-end (default-end (get-in db [:config :entitlement-default-length-days])))
     :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
-(rf/reg-sub ::end (fn [db _] (::end db)))
-(rf/reg-event-db ::set-end (fn [db [_ value]] (assoc db ::end value)))
+(rf/reg-sub ::entitlement-end (fn [db _] (::entitlement-end db)))
+(rf/reg-event-db ::set-entitlement-end (fn [db [_ value]] (assoc db ::entitlement-end value)))
 
 (rf/reg-event-fx
  ::send-approve
@@ -94,12 +94,12 @@
 (defn approve-reject-form [application-id on-finished]
   (let [comment @(rf/subscribe [::comment])
         attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])
-        end @(rf/subscribe [::end])]
+        end @(rf/subscribe [::entitlement-end])]
     [approve-reject-view {:application-id application-id
                           :comment comment
                           :on-set-comment #(rf/dispatch [::set-comment %])
                           :end end
-                          :on-set-end #(rf/dispatch [::set-end %])
+                          :on-set-end #(rf/dispatch [::set-entitlement-end %])
                           :on-approve #(rf/dispatch [::send-approve {:application-id application-id
                                                                      :comment comment
                                                                      :attachments attachments
