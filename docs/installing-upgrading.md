@@ -41,3 +41,32 @@ Some pointers for common tasks:
         java -Drems.config=path/to/your/rems/config -jar rems.jar migrate
 
 1. Restart rems. Remember to check the log for warnings, they might tell you about compatibility problems with the data or your configuration.
+
+## Running the application with Docker
+
+# Option 1: Running rems from dockerhub:
+
+    docker-compose up -d db
+    docker-compose run --rm -e COMMANDS="migrate test-data" app
+    docker-compose up -d
+
+# Option 2: Building the image locally
+
+    lein uberjar
+    docker-compose -f docker-compose-build.yml build
+    docker-compose -f docker-compose-build.yml up -d db
+    docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-build.yml up -d
+
+# Access rems:
+
+    Point your browser to <http://localhost:3000>
+
+# Shutdown:
+
+    docker-compose stop
+
+# Shutdown and remove all data:
+
+    docker-compose down
+
