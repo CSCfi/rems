@@ -81,18 +81,15 @@
          (mapv :field/title)
          (mapv text/localized))))
 
-(defn applications-to-csv [applications form-id user-id & {:keys [include-drafts]}]
-  (let [language (:language (user-settings/get-user-settings user-id))
-        applications (filter #(or include-drafts
-                                  (not= (:application/state %) :application.state/draft))
-                             applications)]
+(defn applications-to-csv [applications form-id user-id]
+  (let [language (:language (user-settings/get-user-settings user-id))]
     (if (empty? applications)
       ""
       (text/with-language language
-        #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
-                                             (form-field-names form-id (first applications)))
-                       :rows (mapv (partial application-to-row form-id) applications)
-                       :quote-strings? true)))))
+                          #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
+                                                               (form-field-names form-id (first applications)))
+                                         :rows (mapv (partial application-to-row form-id) applications)
+                                         :quote-strings? true)))))
 
 (defn applications-filename []
   (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))

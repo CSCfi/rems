@@ -12,6 +12,11 @@
 (deftest test-audit-log
   (let [time-a (atom nil)
         app-id (test-data/create-application! {:actor "alice"})]
+
+    (test-data/command! {:type           :application.command/submit
+                         :application-id app-id
+                         :actor          "alice"})
+
     (testing "populate log"
       (testing "> unknown endpoint"
         (testing "> no user"
