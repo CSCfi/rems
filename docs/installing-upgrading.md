@@ -48,7 +48,13 @@ Some pointers for common tasks:
 
     docker-compose up -d db
     docker-compose run --rm -e COMMANDS="migrate test-data" app
-    docker-compose up -d
+    docker-compose up -d app
+
+### Option 1.1: Use config file instead of environment variables
+
+    docker-compose -f docker-compose-config.yml up -d db
+    docker-compose -f docker-compose-config.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-config.yml up -d app
 
 ### Option 2: Build rems image locally
 
@@ -56,7 +62,8 @@ Some pointers for common tasks:
     docker-compose -f docker-compose-build.yml build
     docker-compose -f docker-compose-build.yml up -d db
     docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
-    docker-compose -f docker-compose-build.yml up -d
+    docker-compose -f docker-compose-build.yml up -d app
+
 
 ### Access rems
 
