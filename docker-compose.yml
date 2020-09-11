@@ -2,15 +2,13 @@ version: '2'
 services:
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: rems
+    image: cscfi/rems
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
       AUTHENTICATION: :fake
       PUBLIC_URL: http://localhost:3000/
+      COMMANDS: "migrate run"
     mem_reservation: 200m
     mem_limit: 500m
     ports:
