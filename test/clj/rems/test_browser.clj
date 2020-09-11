@@ -248,7 +248,7 @@
                          (http/get (str (btu/get-server-url) "/api/applications/" (btu/context-get :application-id))
                                    {:as :json
                                     :headers {"x-rems-api-key" "42"
-                                              "x-rems-user-id" "handler"}}))
+                                              "x-rems-user-id" "alice"}}))
             form-id (get-in application [:application/forms 0 :form/id])
             description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))

@@ -91,11 +91,8 @@
          (mapv :field/title)
          (mapv text/localized))))
 
-(defn applications-to-csv [applications form-id user-id & {:keys [include-drafts]}]
-  (let [language (:language (user-settings/get-user-settings user-id))
-        applications (filter #(or include-drafts
-                                  (not= (:application/state %) :application.state/draft))
-                             applications)]
+(defn applications-to-csv [applications form-id user-id]
+  (let [language (:language (user-settings/get-user-settings user-id))]
     (if (empty? applications)
       ""
       (text/with-language language

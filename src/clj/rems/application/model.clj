@@ -669,8 +669,15 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
+(defn user-is-applicant-or-member [roles]
+  (or (contains? roles :applicant)
+      (contains? roles :member)))
+
 (defn see-application? [application user-id]
-  (not= #{:everyone-else} (permissions/user-roles application user-id)))
+  (let [permissions (permissions/user-roles application user-id)]
+  (if (= :application.state/draft (:application/state application))
+    (user-is-applicant-or-member permissions)
+    (not= #{:everyone-else} permissions))))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)

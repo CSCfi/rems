@@ -112,15 +112,6 @@
         external-id (:application/external-id (applications/get-application app-id))
         get-application #(applications/get-application app-id)]
 
-    (testing "draft applications not included as default"
-      (is (= ""
-             (csv/applications-to-csv [(get-application)] form-id "owner"))))
-
-    (testing "draft applications included when explicitly set"
-      (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"
-                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource, Other resource\",\"\",\"\"\r\n")
-             (csv/applications-to-csv [(get-application)] form-id "owner" :include-drafts true))))
-
     (test-data/fill-form! {:application-id app-id
                            :actor applicant
                            :field-value "test\nvalue"})
@@ -128,7 +119,7 @@
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"
                   app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource, Other resource\",\"test value\",\"\"\r\n")
-             (csv/applications-to-csv [(get-application)] form-id "owner" :include-drafts true))))
+             (csv/applications-to-csv [(get-application)] form-id "owner"))))
 
     (test-data/accept-licenses! {:application-id app-id
                                  :actor applicant})

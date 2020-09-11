@@ -6,7 +6,7 @@
 (def keepalive-interval (time/minutes 1))
 
 (defn keepalive! []
-  (fetch "/api/keepalive" {}))
+  (fetch "/api/keepalive" {:response-format nil})) ;; the response is empty
 
 (rf/reg-event-db
  ::activity

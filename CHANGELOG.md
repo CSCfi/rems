@@ -23,6 +23,7 @@ Changes since v2.12
 - Application events are now presented in chronological order instead of grouping requests and responses together.
   In addition there is now a possibility to highlight related events. (#2233)
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
+- Reporter can't see draft applications (#2268)
 
 ### Fixes
 - Various fixes in workflow editor UI
@@ -31,6 +32,7 @@ Changes since v2.12
 - Description of the Decider workflow erroneously claimed that application can not be closed.
 - Redirecting the user back to the page they landed on after login now works even with OIDC authentication. (#2247)
 - Fixed enabling a catalogue item after changing its form. (#2283)
+- Added missing decision text to pdf event list.
 - More compatible CSV reports. Line returns are removed from field values and CSV lines are separated with CRLF. (#2311)
 
 ### Additions

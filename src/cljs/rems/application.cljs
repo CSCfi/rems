@@ -455,8 +455,7 @@
 
 (defn- event-view [event]
   (let [event-text (localize-event event)
-        decision (when (= (:event/type event) :application.event/decided)
-                   (localize-decision event))
+        decision (localize-decision event)
         comment (case (:event/type event)
                   :application.event/copied-from
                   [application-link (:application/copied-from event) (text :t.applications/application)]
