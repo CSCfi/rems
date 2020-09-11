@@ -34,6 +34,7 @@ Changes since v2.12
 - Fixed enabling a catalogue item after changing its form. (#2283)
 - Added missing decision text to pdf event list.
 - More compatible CSV reports. Line returns are removed from field values and CSV lines are separated with CRLF. (#2311)
+- Fixed editing a catalogue item. (#2322)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
