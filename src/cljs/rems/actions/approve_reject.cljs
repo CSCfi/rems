@@ -57,7 +57,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn approve-reject-view
-  [{:keys [application-id comment on-set-comment end on-set-end on-approve on-reject]}]
+  [{:keys [application-id comment on-set-comment end on-set-entitlement-end on-approve on-reject]}]
   [action-form-view action-form-id
    (text :t.actions/approve-reject)
    [[button-wrapper {:id "reject"
@@ -83,11 +83,11 @@
                             :name "approve-end"
                             :value end
                             :required false
-                            :on-change #(on-set-end (.. % -target -value))}]
+                            :on-change #(on-set-entitlement-end (.. % -target -value))}]
       (when end
         [:div.input-group-append
          [:button.btn.btn-outline-secondary
-          {:on-click #(on-set-end nil)
+          {:on-click #(on-set-entitlement-end nil)
            :aria-label (text :t.actions/clear)}
           [close-symbol]]])]]]])
 
@@ -99,7 +99,7 @@
                           :comment comment
                           :on-set-comment #(rf/dispatch [::set-comment %])
                           :end end
-                          :on-set-end #(rf/dispatch [::set-entitlement-end %])
+                          :on-set-entitlement-end #(rf/dispatch [::set-entitlement-end %])
                           :on-approve #(rf/dispatch [::send-approve {:application-id application-id
                                                                      :comment comment
                                                                      :attachments attachments
