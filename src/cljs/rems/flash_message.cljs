@@ -5,7 +5,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
             [rems.focus :as focus]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text text-format]]))
 
 (rf/reg-sub ::message (fn [db _]
                         (-> (::message db)
@@ -95,15 +95,19 @@
            (when (:key error)
              (text (:key error)))
            (when (:type error)
-             (text (:type error)))
+             (if (:args error)
+               (apply text-format (:type error) (:args error))
+               (text (:type error))))
            (when-let [text (:status-text error)] text)
            (when-let [text (:status error)]
              (str " (" text ")"))])))
 
 (defn format-response-error [response]
-  (if (:errors response)
-    (format-errors (:errors response))
-    (:status-text response)))
+  (if (:response response)
+    (format-response-error (:response (clojure.walk/keywordize-keys response)))
+    (if (:errors response)
+      (format-errors (:errors response))
+      (:status-text response))))
 
 (defn default-success-handler [location description on-success]
   (fn [response]

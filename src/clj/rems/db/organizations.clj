@@ -5,7 +5,8 @@
             [rems.json :as json]
             [schema.coerce :as coerce]
             [clj-time.core :as time-core])
-  (:import [org.joda.time DateTime]))
+  (:import [org.joda.time DateTime]
+           rems.DataException))
 
 (def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
 
@@ -39,7 +40,8 @@
 (defn getx-organization-by-id [id]
   (assert id)
   (let [organization (-> (db/get-organization-by-id {:id id}) parse-organization)]
-    (assert (:organization/id organization) {:error "organization does not exist" :organization/id id :found organization})
+    (when-not (:organization/id organization)
+      (throw (DataException. (str "organization \"" id "\" does not exist") {:errors [{:type :t.actions.errors/organization-does-not-exist  :args [id] :organization/id id}]})))
     (coerce-organization-full organization)))
 
 (defn join-organization [x]

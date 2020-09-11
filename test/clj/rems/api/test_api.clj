@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
+            [rems.db.core :as db]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -111,3 +112,19 @@
   (assert-response-is-ok (-> (request :get "/keepalive")
                              handler))
   (is true))
+
+(deftest data-exception-test
+  (testing "a broken license without an organization"
+    (let [license-id (:id (db/create-license! {:owneruserid "owner"
+                                               :modifieruserid "owner"
+                                               :organization "does-not-exist"
+                                               :type "text"}))
+          response (-> (api-response :get (str "/api/licenses/" license-id)
+                                     nil
+                                     "42" "owner"))]
+      (testing "returns a useful description of the problem"
+        (is (= 503 (:status response)))
+        (is (= {:errors [{:args ["does-not-exist"]
+                          :organization/id "does-not-exist"
+                          :type "t.actions.errors/organization-does-not-exist"}]}
+               (read-body response)))))))

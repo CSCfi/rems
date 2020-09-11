@@ -23,6 +23,7 @@
                      :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
+                     :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :handled-applications "Käsitellyt hakemukset"
@@ -63,7 +64,7 @@
                    :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
                    :create-form "Uusi lomake"
-                   :create-license "Uusi lisessi"
+                   :create-license "Uusi lisenssi"
                    :create-organization "Uusi organisaatio"
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"

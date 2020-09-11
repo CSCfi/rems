@@ -24,6 +24,7 @@ Changes since v2.12
   In addition there is now a possibility to highlight related events. (#2233)
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
 - Reporter can't see draft applications (#2268)
+- Better error message for missing organization in admin UI (#2039)
 
 ### Fixes
 - Various fixes in workflow editor UI
@@ -55,6 +56,7 @@ Changes since v2.12
 - The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
 - When approving an application, the handler can optionally pick an end date for the entitlement. There is also a `:entitlement-default-length-days` configuration variable that is used to compute a default value for the end date. (#2123)
+- Better documentation related to organizations (#2039)
 
 ## v2.12 "Merituulentie" 2020-05-04
 
