@@ -1,4 +1,4 @@
-### Example file for running REMS using a config file with
+### Example file for running REMS using a config file
 
 version: '2'
 services:
