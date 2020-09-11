@@ -115,7 +115,7 @@
    :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-decision [event]
-  (let [decision (:application/decision event)]
+  (when-let [decision (:application/decision event)]
     (text-format
      (case decision
        :approved :t.applications.events/approved

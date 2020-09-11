@@ -32,6 +32,7 @@ Changes since v2.12
 - Description of the Decider workflow erroneously claimed that application can not be closed.
 - Redirecting the user back to the page they landed on after login now works even with OIDC authentication. (#2247)
 - Fixed enabling a catalogue item after changing its form. (#2283)
+- Added missing decision text to pdf event list.
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)

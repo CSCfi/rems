@@ -17,6 +17,7 @@
 (deftest test-pdf-gold-standard
   (test-data/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-data/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
+  (test-data/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
   (let [lic1 (test-data/create-license! {:license/type :link
                                          :license/title {:en "Google license"
                                                          :fi "Google-lisenssi"}
@@ -73,6 +74,19 @@
                            :type :application.command/add-member
                            :member {:userid "beth"}
                            :actor handler}))
+    (testing "decide"
+      (test-data/command! {:time (time/date-time 2003)
+                           :application-id application-id
+                           :type :application.command/request-decision
+                           :comment "please decide"
+                           :deciders ["david"]
+                           :actor handler})
+      (test-data/command! {:time (time/date-time 2003)
+                           :application-id application-id
+                           :type :application.command/decide
+                           :comment "I have decided"
+                           :decision :approved
+                           :actor "david"}))
     (testing "approve"
       (let [att1 (:id (db/save-attachment! {:application application-id
                                             :user handler
@@ -135,13 +149,13 @@
                  [:paragraph "pdf test"]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
-                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil]
-                 [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil]
-                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil]
-                 [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil]
-                 [:phrase "2003-01-01 00:00" " " "Developer approved the application."
-                  "\nComment: approved"
-                  "\nAttachments: file1.txt, file2.pdf"]]]]]
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil nil]
+                 [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil nil]
+                 [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer requested a decision from David Decider." nil "\nComment: please decide" nil]
+                 [:phrase "2003-01-01 00:00" " " "David Decider filed a decision for the application." "\nDavid Decider approved the application." "\nComment: I have decided" nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer approved the application." nil "\nComment: approved" "\nAttachments: file1.txt, file2.pdf"]]]]]
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)

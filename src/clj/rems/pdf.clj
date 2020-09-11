@@ -4,7 +4,7 @@
             [clj-time.core :as time]
             [clojure.string :as str]
             [rems.common.util :refer [build-index]]
-            [rems.text :refer [localized localize-event localize-state localize-time text with-language]]
+            [rems.text :refer [localized localize-decision localize-event localize-state localize-time text with-language]]
             [rems.util :refer [getx getx-in]])
   (:import [java.io ByteArrayOutputStream]))
 
@@ -65,6 +65,8 @@
             (localize-time (:event/time event))
             " "
             (localize-event event)
+            (when-let [decision (localize-decision event)]
+              (str "\n" decision))
             (let [comment (get event :application/comment)]
               (when-not (empty? comment)
                 (str "\n"
