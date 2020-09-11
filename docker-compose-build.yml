@@ -1,3 +1,5 @@
+### Example file for building REMS docker image and running it
+
 version: '2'
 services:
 

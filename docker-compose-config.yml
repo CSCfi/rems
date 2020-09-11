@@ -1,3 +1,5 @@
+### Example file for running REMS using a config file with
+
 version: '2'
 services:
 

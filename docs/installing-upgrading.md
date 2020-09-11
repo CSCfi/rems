@@ -42,21 +42,21 @@ Some pointers for common tasks:
 
 1. Restart rems. Remember to check the log for warnings, they might tell you about compatibility problems with the data or your configuration.
 
-# Running the application with Docker
+# Running REMS with Docker
 
-### Option 1: Run rems from dockerhub
+### Option 1: Run REMS from dockerhub
 
     docker-compose up -d db
     docker-compose run --rm -e COMMANDS="migrate test-data" app
     docker-compose up -d app
 
-### Option 1.1: Use config file instead of environment variables
+### Option 1.1: Use config file simple-config.edn instead of environment variables
 
     docker-compose -f docker-compose-config.yml up -d db
     docker-compose -f docker-compose-config.yml run --rm -e COMMANDS="migrate test-data" app
     docker-compose -f docker-compose-config.yml up -d app
 
-### Option 2: Build rems image locally
+### Option 2: Build REMS image locally
 
     lein uberjar
     docker-compose -f docker-compose-build.yml build
@@ -65,9 +65,9 @@ Some pointers for common tasks:
     docker-compose -f docker-compose-build.yml up -d app
 
 
-### Access rems
+### Access REMS
 
-    Point your browser to <http://localhost:3000>
+Point your browser to <http://localhost:3000>
 
 ### Shutdown
 
