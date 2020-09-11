@@ -1,19 +1,16 @@
-### Example file for running REMS using docker image from DockerHub
+### Example file for running REMS using a config file
 
 version: '2'
 services:
 
   app:
     image: cscfi/rems
-    environment:
-      PORT: 3000
-      DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
-      AUTHENTICATION: :fake
-      PUBLIC_URL: http://localhost:3000/
     mem_reservation: 200m
     mem_limit: 500m
     ports:
       - "127.0.0.1:3000:3000"
+    volumes:
+      - ./simple-config.edn:/rems/config/config.edn
 
   db:
     image: postgres:9.6

@@ -1,10 +1,13 @@
-### Example file for running REMS using docker image from DockerHub
+### Example file for building REMS docker image and running it
 
 version: '2'
 services:
 
   app:
-    image: cscfi/rems
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rems
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
