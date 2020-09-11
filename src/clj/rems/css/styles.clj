@@ -70,6 +70,8 @@
                              :font-weight 400
                              :font-style "normal"})))
 
+;; input.form-control white-space: pre-wrap
+
 (defn- generate-form-placeholder-styles []
   (list
    [".form-control::placeholder" {:color "#555"}] ; Standard
@@ -657,7 +659,8 @@
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
    [:#application-fields
-    [:.application-field-label {:font-weight "bold"}]]
+    [:.application-field-label {:font-weight "bold"}]
+    [:.field-info {:font-weight "400"}]]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
