@@ -29,10 +29,11 @@
  ::send-approve
  (fn [_ [_ {:keys [application-id comment attachments end on-finished]}]]
    (command! :application.command/approve
-             {:application-id application-id
-              :comment comment
-              :entitlement-end (js/Date. end)
-              :attachments attachments}
+             (merge {:application-id application-id
+                     :comment comment
+                     :attachments attachments}
+                    (when end
+                      {:entitlement-end (js/Date. end)}))
              {:description [text :t.actions/approve]
               :collapse action-form-id
               :on-finished on-finished})
