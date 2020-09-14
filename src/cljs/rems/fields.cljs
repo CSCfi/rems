@@ -26,7 +26,7 @@
    [:div.field-info.collapse {:id (str info-id "-collapse")
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
-    body-text]])
+    (linkify body-text)]])
 
 
 (defn- diff [value previous-value]
@@ -417,7 +417,7 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :field/info-text {:en "Extra information"}}])
+                    :field/info-text {:en "Extra information about the field, maybe it even contains a link, such as https://en.wikipedia.org/wiki/Igor_Stravinsky"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
                     :field/id "1"
