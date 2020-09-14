@@ -226,12 +226,12 @@
      :resource (btu/get-element-text-el (btu/child row {:css ".resource"}))
      :state (btu/get-element-text-el (btu/child row {:css ".state"}))}))
 
-(defn- get-application-from-api [application-id]
+(defn- get-application-from-api [application-id & [userid]]
   (:body
    (http/get (str (btu/get-server-url) "/api/applications/" application-id)
              {:as :json
               :headers {"x-rems-api-key" "42"
-                        "x-rems-user-id" "handler"}})))
+                        "x-rems-user-id" (or userid "handler")}})))
 
 ;;; tests
 
@@ -407,7 +407,16 @@
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
       (is (= ["test.txt" "test-fi.txt"]
-             (get-attachments {:css "div.event a.attachment-link"}))))))
+             (get-attachments {:css "div.event a.attachment-link"}))))
+    (testing "event via api"
+      (is (= {:application/id (btu/context-get :application-id)
+              :event/type "application.event/approved"
+              :application/comment "this is a comment"
+              :event/actor "developer"}
+             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+                  :application/events
+                  last
+                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-guide-page
   (btu/with-postmortem {:dir btu/reporting-dir}
