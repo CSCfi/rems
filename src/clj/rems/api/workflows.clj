@@ -37,7 +37,7 @@
 
     (GET "/" []
       :summary "Get workflows"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return [Workflow]
@@ -80,7 +80,7 @@
 
     (GET "/:workflow-id" []
       :summary "Get workflow by id"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return Workflow
       (if-some [wf (workflow/get-workflow workflow-id)]

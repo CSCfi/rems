@@ -45,6 +45,7 @@
     :title (text :t.administration/blacklist)
     :always [:div
              [blacklist/blacklist]
+             ;; TODO disable for reporter?
              [blacklist/add-user-form {:resource/ext-id (:resid @(rf/subscribe [::resource]))}]]}])
 
 (defn resource-view [resource language]
