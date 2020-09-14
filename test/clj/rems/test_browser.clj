@@ -412,6 +412,7 @@
       (is (= ["test.txt" "test-fi.txt"]
              (get-attachments {:css "div.event a.attachment-link"}))))
     (testing "event via api"
+      ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
       (is (= {:application/id (btu/context-get :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
