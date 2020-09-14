@@ -90,7 +90,7 @@
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
         info-text (localized (:field/info-text opts))
-        collapse-aria-label (str "Info about " title)]
+        collapse-aria-label ((text :t.create-form/collapse-aria-label) (linkify raw-title))]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field
@@ -417,7 +417,10 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}
-                    :field/info-text {:en "Extra information about the field, maybe it even contains a link, such as https://en.wikipedia.org/wiki/Igor_Stravinsky"}}])
+                    :field/info-text {:en "Extra information about the field, \n
+                                           maybe it even contains a link, such as https://en.wikipedia.org/wiki/Igor_Stravinsky
+                                           \n
+                                           or https://en.wikipedia.org/wiki/Dmitri_Shostakovich"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
                     :field/id "1"
