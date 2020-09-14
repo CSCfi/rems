@@ -153,34 +153,37 @@
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
 
-(defn set-date [label date]
+(defn set-date [id date]
+  ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
+  ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
+  ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
+  (btu/js-execute
+   ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
+   "
+   function setNativeValue(element, value) {
+       const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
+       const prototype = Object.getPrototypeOf(element)
+       const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
+
+       if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+           prototypeValueSetter.call(element, value)
+       } else if (valueSetter) {
+           valueSetter.call(element, value)
+       } else {
+           throw new Error('The given element does not have a value setter')
+       }
+   }
+   var field = document.getElementById(arguments[0])
+   setNativeValue(field, arguments[1])
+   field.dispatchEvent(new Event('change', {bubbles: true}))
+   "
+   id date))
+
+(defn set-date-for-label [label date]
   (let [id (btu/get-element-attr [{:css ".fields"}
                                   {:tag :label :fn/text label}]
                                  :for)]
-    ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
-    ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
-    ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
-    (btu/js-execute
-     ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
-     "
-                function setNativeValue(element, value) {
-                    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
-                    const prototype = Object.getPrototypeOf(element)
-                    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
-
-                    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
-                        prototypeValueSetter.call(element, value)
-                    } else if (valueSetter) {
-                        valueSetter.call(element, value)
-                    } else {
-                        throw new Error('The given element does not have a value setter')
-                    }
-                }
-                var field = document.getElementById(arguments[0])
-                setNativeValue(field, arguments[1])
-                field.dispatchEvent(new Event('change', {bubbles: true}))
-                "
-     id date)))
+    (set-date id date)))
 
 (defn select-option [label option]
   (let [id (btu/get-element-attr [{:css ".fields"}
@@ -262,7 +265,7 @@
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
         (fill-form-field "Text area" "Test2")
-        (set-date "Date field" "2050-01-02")
+        (set-date-for-label "Date field" "2050-01-02")
 
         (fill-form-field "Email field" "user@example.com")
 
