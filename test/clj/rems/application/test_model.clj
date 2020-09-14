@@ -50,8 +50,7 @@
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
                       :field/max-length 100
-                      :field/type :text}
-]
+                      :field/type :text}]
        :enabled true
        :archived false}})
 
@@ -650,10 +649,10 @@
                                                            {:form 40 :field "42" :value "new bar"}
                                                            {:form 40 :field "43" :value "new private answer"}
                                                            {:form 40 :field "field-does-not-exist" :value "something"}]
-               :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
-                                                                   {:form 40 :field "42" :value "bar"}
-                                                                   {:form 40 :field "43" :value "private answer"}
-                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))))
+                :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                    {:form 40 :field "42" :value "bar"}
+                                                                    {:form 40 :field "43" :value "private answer"}
+                                                                    {:form 40 :field "field-does-not-exist" :value "something"}]}))))
 
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"
@@ -1427,16 +1426,46 @@
       (is (not (str/includes? (pr-str redacted) "secret"))))))
 
 (deftest test-apply-user-permissions
-  (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"
-                                                     :workflow/type :workflow/default
-                                                     :workflow/id 50})
+  (testing "draft visibility"
+    (let [application (-> nil
+                          (model/application-view {:event/type :application.event/created
+                                                   :event/actor "applicant"
+                                                   :workflow/type :workflow/default
+                                                   :workflow/id 50})
+                          (model/application-view {:event/type :application.event/member-joined
+                                                   :event/actor "member"}))
+          enriched (model/enrich-with-injections application injections)]
+      (testing "sanity check roles"
+        (is (= {"applicant" #{:applicant}
+                "member" #{:member}
+                "handler" #{:handler}
+                "reporter1" #{:reporter}} (:application/user-roles enriched))))
+      (testing "reporter can't see draft application"
+        (is (nil? (model/apply-user-permissions enriched "reporter1"))))
+      (testing "handler can't see draft application"
+        (is (nil? (model/apply-user-permissions enriched "handler"))))
+      (testing "applicant can see draft application"
+        (is (model/apply-user-permissions enriched "applicant")))
+      (testing "member can see draft application"
+        (is (model/apply-user-permissions enriched "member")))))
+  (let [application (-> nil
+                        (model/application-view {:event/type :application.event/created
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/default
+                                                 :workflow/id 50})
+                        (model/application-view {:event/type :application.event/submitted
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/default
+                                                 :workflow/id 50})
                         (permissions/give-role-to-users :handler ["handler"])
+                        (permissions/give-role-to-users :reporter ["reporter"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/update-role-permissions {:role-1 #{}
-                                                              :role-2 #{:foo :bar}}))
+                                                              :role-2 #{:foo :bar}
+                                                              :reporter #{:see-everything}}))
         enriched (model/enrich-with-injections application injections)]
+
     (testing "users with a role can see the application"
       (is (not (nil? (model/apply-user-permissions enriched "user-1")))))
     (testing "users without a role cannot see the application"
@@ -1448,40 +1477,40 @@
       (is (= #{:role-1} (:application/roles (model/apply-user-permissions enriched "user-1"))))
       (is (= #{:role-2} (:application/roles (model/apply-user-permissions enriched "user-2")))))
 
-    (let [all-events [{:event/id 10
-                       :event/type :application.event/created}
-                      {:event/id 11
-                       :event/type :application.event/submitted}
-                      {:event/id 12
-                       :event/type :application.event/review-requested}
-                      {:event/id 13
-                       :event/type :application.event/remarked
-                       :application/public true}
-                      {:event/id 14
-                       :event/type :application.event/remarked
-                       :application/public false}]
-          restricted-event-ids [10 11 13]
+    (let [application (-> application
+                          (model/application-view {:event/type :application.event/review-requested
+                                                   :event/actor "handler"})
+                          (model/application-view {:event/type :application.event/remarked
+                                                   :application/comment "this is public"
+                                                   :event/actor "bob"
+                                                   :application/public true})
+                          (model/application-view {:event/type :application.event/remarked
+                                                   :application/comment "this is private"
+                                                   :event/actor "smith"
+                                                   :application/public false}))
           enriched (-> application
-                       (assoc :application/events all-events)
                        (permissions/update-role-permissions {:role-1 #{:see-everything}})
                        (model/enrich-with-injections injections))]
       (testing "privileged users"
         (let [application (model/apply-user-permissions enriched "user-1")]
           (testing "see all events"
-            (is (= (mapv :event/id all-events)
-                   (mapv :event/id (:application/events application)))))
+            (is (= [:application.event/created :application.event/submitted :application.event/review-requested
+                    :application.event/remarked :application.event/remarked]
+                   (mapv :event/type (:application/events application)))))
           (testing "see all applicant attributes"
             (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                    (:application/applicant application))))
           (testing "see dynamic workflow handlers"
-            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}]
+            (is (= [{:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret" :handler/active? true}]
                    (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
 
       (testing "normal users"
         (let [application (model/apply-user-permissions enriched "user-2")]
           (testing "see only some events"
-            (is (= restricted-event-ids
-                   (mapv :event/id (:application/events application)))))
+            (is (= [{:event/type :application.event/created}
+                    {:event/type :application.event/submitted}
+                    {:event/type :application.event/remarked :application/comment "this is public"}]
+                   (mapv #(select-keys % [:event/type :application/comment]) (:application/events application)))))
           (testing "see only limited applicant attributes"
             (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
                    (:application/applicant application))))

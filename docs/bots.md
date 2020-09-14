@@ -5,7 +5,10 @@ handlers that can be attached to a workflow.
 
 To use a bot, create a user with the corresponding user id, and add
 that user as a handler to a workflow. The 'email' attribute for the
-user can be null, or the attribute can be left out completely.
+user can be null, or the attribute can be left out completely. The
+name of the bot will be visible to the applicants in the event log
+as the person who approved or rejected their application so make it
+something sensible!
 
 ## Approver Bot
 
@@ -17,6 +20,12 @@ of the application is blacklisted for an applied resource.
 If the applicant or any of the members has been blacklisted for an
 applied resource, the bot will do nothing and a human will need to
 handle the application.
+
+Example of creating the bot user with the API.
+
+```sh
+curl -X POST -H "content-type: application/json" -H "x-rems-api-key: 42" -H "x-rems-user-id: owner" http://localhost:3000/api/users/create --data '{"userid": "approver-bot", "name": "Approver Bot", "email": null}'
+```
 
 ## Rejecter bot
 
@@ -39,3 +48,9 @@ in three ways:
 
 NB! The rejecter bot can only reject applications for which it is a
 handler.
+
+Example of creating the bot user with the API.
+
+```sh
+curl -X POST -H "content-type: application/json" -H "x-rems-api-key: 42" -H "x-rems-user-id: owner" http://localhost:3000/api/users/create --data '{"userid": "rejecter-bot", "name": "Rejecter Bot", "email": null}'
+```

@@ -5,7 +5,7 @@
 
 (defroutes entitlements-routes
   (GET "/entitlements.csv" []
-       (response/content-type
-        {:status 200
-         :body (get-entitlements-for-export)}
-        "text/csv")))
+    (response/content-type
+     {:status 200
+      :body (get-entitlements-for-export)}
+     "text/csv")))

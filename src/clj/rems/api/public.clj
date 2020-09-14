@@ -24,6 +24,7 @@
    :application-id-column (s/enum :id :external-id)
    :catalogue-is-public s/Bool
    :extra-pages [ExtraPage]
+   :entitlement-default-length-days (s/maybe s/Int)
    :languages [s/Keyword]
    :default-language s/Keyword
    :oidc-extra-attributes [{:attribute s/Str
@@ -61,6 +62,7 @@
                             :catalogue-is-public
                             :default-language
                             :dev
+                            :entitlement-default-length-days
                             :extra-pages
                             :languages
                             :oidc-extra-attributes])))

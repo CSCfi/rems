@@ -235,10 +235,10 @@
      (for [[field-index _review-email] (indexed (:organization/review-emails form))]
        ^{:key field-index} [organization-review-email-field field-index])
      [:div.dashed-group.text-center
-      [:a.add-form-field {:href "#"
-                          :on-click (fn [event]
-                                      (.preventDefault event)
-                                      (rf/dispatch [::add-review-email]))}
+      [:a#add-review-email {:href "#"
+                            :on-click (fn [event]
+                                        (.preventDefault event)
+                                        (rf/dispatch [::add-review-email]))}
        (text :t.administration/add)]]]))
 
 (defn create-organization-page []

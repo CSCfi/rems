@@ -163,6 +163,8 @@
 (def has-text? (wrap-etaoin et/has-text?))
 (def has-class? (wrap-etaoin et/has-class?))
 (def disabled? (wrap-etaoin et/disabled?))
+(def clear (wrap-etaoin et/clear))
+(def clear-el (wrap-etaoin et/clear-el))
 ;; TODO add more of etaoin here
 
 

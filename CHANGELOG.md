@@ -23,6 +23,8 @@ Changes since v2.12
 - Application events are now presented in chronological order instead of grouping requests and responses together.
   In addition there is now a possibility to highlight related events. (#2233)
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
+- Reporter can't see draft applications (#2268)
+- Better error message for missing organization in admin UI (#2039)
 
 ### Fixes
 - Various fixes in workflow editor UI
@@ -31,6 +33,9 @@ Changes since v2.12
 - Description of the Decider workflow erroneously claimed that application can not be closed.
 - Redirecting the user back to the page they landed on after login now works even with OIDC authentication. (#2247)
 - Fixed enabling a catalogue item after changing its form. (#2283)
+- Added missing decision text to pdf event list.
+- More compatible CSV reports. Line returns are removed from field values and CSV lines are separated with CRLF. (#2311)
+- Fixed editing a catalogue item. (#2322)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
@@ -51,8 +56,9 @@ Changes since v2.12
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
 - The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
+- When approving an application, the handler can optionally pick an end date for the entitlement. There is also a `:entitlement-default-length-days` configuration variable that is used to compute a default value for the end date. (#2123)
+- Better documentation related to organizations (#2039)
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
-
 
 ## v2.12 "Merituulentie" 2020-05-04
 

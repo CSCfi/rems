@@ -88,12 +88,15 @@
   :main rems.standalone
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
-  :plugins [[lein-cljsbuild "1.1.7"]
+  :plugins [[lein-cljfmt "0.6.7"]
+            [lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
             [lein-uberwar "0.2.1"]
             [migratus-lein "0.5.7"]]
+
+  :cljfmt {:remove-consecutive-blank-lines? false} ;; too many changes for now
 
   :clean-targets ["target"]
 

@@ -15,6 +15,7 @@
             [com.rpl.specter :refer [select ALL]]
             [rems.browser-test-util :as btu]
             [rems.config]
+            [rems.db.organizations :as organizations]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -102,11 +103,13 @@
 ;;; application page
 
 (defn slurp-fields [selector]
-  (->> (for [row (btu/query-all [selector {:fn/has-class :row}])
+  (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
                    [value-el] (btu/children row {:css ".form-control"})]
              :when value-el]
-         [k (str/trim (btu/get-element-text-el value-el))])
+         (let [value (or (btu/get-element-attr-el value-el "value")
+                         (btu/get-element-text-el value-el))]
+           [k (str/trim value)]))
        (into {})))
 
 (defn slurp-rows [& selectors]
@@ -247,7 +250,7 @@
                          (http/get (str (btu/get-server-url) "/api/applications/" (btu/context-get :application-id))
                                    {:as :json
                                     :headers {"x-rems-api-key" "42"
-                                              "x-rems-user-id" "handler"}}))
+                                              "x-rems-user-id" "alice"}}))
             form-id (get-in application [:application/forms 0 :form/id])
             description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
@@ -590,9 +593,9 @@
       (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Name" (btu/context-get :catalogue-item-name) {:index 1})
-      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
-      (fill-form-field "Name" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
+      (fill-form-field "Title" (btu/context-get :catalogue-item-name) {:index 1})
+      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
+      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
       (select-option "Form" (btu/context-get :form-name))
@@ -661,6 +664,55 @@
       (login-as "alice")
       (go-to-catalogue)
       (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
+
+(deftest test-edit-catalogue-item
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (let [workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
+                                                :type :workflow/default
+                                                :handlers ["handler"]})
+          resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"})
+          form (test-data/create-form! {:form/title "test-edit-catalogue-item form"
+                                        :form/fields []})
+          catalogue-item (test-data/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
+                                                                    :fi "test-edit-catalogue-item FI"
+                                                                    :sv "test-edit-catalogue-item SV"}
+                                                            :resource-id resource
+                                                            :form-id form
+                                                            :workflow-id workflow})]
+      (login-as "owner")
+      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" catalogue-item))
+      (btu/wait-page-loaded)
+      (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
+      (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
+      (is (= {;; slurp-fields can't read the organization dropdown currently
+              "Title (EN)" "test-edit-catalogue-item EN"
+              "Title (FI)" "test-edit-catalogue-item FI"
+              "Title (SV)" "test-edit-catalogue-item SV"
+              "More info URL (optional, defaults to resource URN) (EN)" ""
+              "More info URL (optional, defaults to resource URN) (FI)" ""
+              "More info URL (optional, defaults to resource URN) (SV)" ""
+              "Form" "test-edit-catalogue-item form"
+              "Workflow" "test-edit-catalogue-item workflow"
+              "Resource" "test-edit-catalogue-item resource"}
+             (slurp-fields :catalogue-item-editor)))
+      (btu/fill-human :infourl-en "http://google.com")
+      (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-2.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+      (btu/wait-page-loaded)
+      (is (= {"Organization" "The Default Organization"
+              "Title (EN)" "test-edit-catalogue-item EN"
+              "Title (FI)" "test-edit-catalogue-item FI"
+              "Title (SV)" "test-edit-catalogue-item SV"
+              "More info (EN)" "http://google.com"
+              "More info (FI)" ""
+              "More info (SV)" ""
+              "Form" "test-edit-catalogue-item form"
+              "Workflow" "test-edit-catalogue-item workflow"
+              "Resource" "test-edit-catalogue-item resource"
+              "End" ""
+              "Active" ""}
+             (dissoc (slurp-fields :catalogue-item) "Start"))))))
 
 (deftest test-form-editor
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -942,3 +994,156 @@
                     first
                     slurp
                     str/split-lines)))))))
+
+(deftest test-organizations
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "owner")
+    (go-to-admin "Organizations")
+
+    (testing "create"
+      (btu/scroll-and-click :create-organization)
+      (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
+      (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
+      (btu/wait-visible :id)
+      (btu/fill-human :id (btu/context-get :organization-id))
+      (btu/fill-human :short-name-en "SNEN")
+      (btu/fill-human :short-name-fi "SNFI")
+      (btu/fill-human :short-name-sv "SNSV")
+      (btu/fill-human :name-en (str (btu/context-get :organization-name) " EN"))
+      (btu/fill-human :name-fi (str (btu/context-get :organization-name) " FI"))
+      (btu/fill-human :name-sv (str (btu/context-get :organization-name) " SV"))
+      (select-option* "Owners" "Organization owner 1")
+      (btu/scroll-and-click :add-review-email)
+      (btu/scroll-and-click :add-review-email)
+
+      (btu/wait-visible :review-emails-1-name-en)
+      (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
+      (btu/fill-human :review-emails-1-name-fi "Review mail FI")
+      (btu/fill-human :review-emails-1-name-sv "Review mail SV")
+      (btu/fill-human :review-emails-1-email "review.email@example.com")
+      (btu/scroll-and-click {:css ".remove"}) ; remove first
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+
+    (testing "view after creation"
+      (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+        (is (= {"Id" (btu/context-get :organization-id)
+                "Short name (FI)" "SNFI"
+                "Short name (EN)" "SNEN"
+                "Short name (SV)" "SNSV"
+                "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Owners" "organization-owner1"
+                "Name (FI)" "Review mail FI"
+                "Name (SV)" "Review mail SV"
+                "Name (EN)" "Review mail EN"
+                "Email" "review.email@example.com"
+                "Active" ""
+                "Last modified" last-modified
+                "Modifier" "owner"}
+               (slurp-fields :organization)))))
+
+    (testing "edit after creation"
+      (btu/scroll-and-click :edit-organization)
+      (btu/wait-page-loaded)
+      (btu/wait-visible :short-name-en)
+      (select-option* "Owners" "Organization owner 2")
+      (btu/clear :short-name-en)
+      (btu/fill-human :short-name-en "SNEN2")
+      (btu/clear :short-name-fi)
+      (btu/fill-human :short-name-fi "SNFI2")
+      (btu/clear :short-name-sv)
+      (btu/fill-human :short-name-sv "SNSV2")
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css ".alert-success"})
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+      (testing "view after editing"
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI2"
+                  "Short name (EN)" "SNEN2"
+                  "Short name (SV)" "SNSV2"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "organization-owner1\norganization-owner2"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" last-modified
+                  "Modifier" "owner"}
+                 (slurp-fields :organization))))))
+
+    (testing "as organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Organizations")
+
+      (testing "list shows created organization"
+        (let [orgs (slurp-rows :organizations)]
+          (is (some #{{"short-name" "SNEN2"
+                       "name" (str (btu/context-get :organization-name) " EN")
+                       "active" ""
+                       "commands" "ViewDisableArchive"}}
+                    orgs))))
+
+      (testing "view from list"
+        (click-row-action [:organizations]
+                          {:fn/text (str (btu/context-get :organization-name) " EN")}
+                          (select-button-by-label "View"))
+        (btu/wait-page-loaded)
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI2"
+                  "Short name (EN)" "SNEN2"
+                  "Short name (SV)" "SNSV2"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "organization-owner1\norganization-owner2"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" last-modified
+                  "Modifier" "owner"}
+                 (slurp-fields :organization)))))
+
+      (testing "edit as organization owner"
+        (btu/scroll-and-click :edit-organization)
+        (btu/wait-page-loaded)
+        (btu/wait-visible :short-name-en)
+        (btu/clear :short-name-en)
+        (btu/fill-human :short-name-en "SNEN")
+        (btu/clear :short-name-fi)
+        (btu/fill-human :short-name-fi "SNFI")
+        (btu/clear :short-name-sv)
+        (btu/fill-human :short-name-sv "SNSV")
+        (btu/scroll-and-click :save)
+        (btu/wait-visible {:css ".alert-success"})
+        (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+        (testing "view after editing"
+          (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+            (is (= {"Id" (btu/context-get :organization-id)
+                    "Short name (FI)" "SNFI"
+                    "Short name (EN)" "SNEN"
+                    "Short name (SV)" "SNSV"
+                    "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                    "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                    "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                    "Owners" "organization-owner1\norganization-owner2"
+                    "Name (FI)" "Review mail FI"
+                    "Name (SV)" "Review mail SV"
+                    "Name (EN)" "Review mail EN"
+                    "Email" "review.email@example.com"
+                    "Active" ""
+                    "Last modified" last-modified
+                    "Modifier" "organization-owner2"}
+                   (slurp-fields :organization)))))))))

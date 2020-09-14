@@ -6,10 +6,12 @@
             :add-licenses "Lägg till en licens"
             :add-member "Lägg till medlem"
             :approve "Godkänn"
+            :approve-end-date "Slutdatum för rättigheter (frivillig)" ;; TODO check
             :approve-reject "Godkänn eller avslå"
             :bundling-intro [:div.intro [:p "Notera, att endast resurser som har samma ansökningsblankett och samma arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
+            :clear "Töm"
             :close "Stäng ansökan"
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :comment "Kommentar"
@@ -21,6 +23,7 @@
                      :duplicate-id "Id är redan i bruk."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har into godkänt användarvillkoren."
+                     :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :handled-applications "Behandlade ansökningar"
@@ -90,6 +93,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Person som ändrade"
+                   :more-info "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :organization "Organisation"
@@ -131,6 +135,7 @@
                  :created "Skapad"
                  :description "Rubrik"
                  :empty "Inga ansökningar."
+                 :entitlement-end "Slutdatum för rättigheterna: %1." ;; TODO check
                  :events {:approved "%1 godkände ansökning."
                           :closed "%1 stängde ansökning."
                           :copied-from "%1 kopierade ansökning från en tidigare ansökning."
@@ -212,12 +217,6 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och den nya kopian använder blanketten du valt."
                 :form-selection "Blankett"}
-  :create-catalogue-item {:form-selection "Blankett"
-                          :infourl "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
-                          :resource-selection "Resurs"
-                          :title "Namn"
-                          :title-placeholder "Namn"
-                          :workflow-selection "Arbetsflöde"}
   :create-form {:add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
                 :field-n "Fält %1: %2"

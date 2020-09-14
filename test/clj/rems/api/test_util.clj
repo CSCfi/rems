@@ -63,6 +63,6 @@
       (is false "did not throw")
       (catch clojure.lang.Compiler$CompilerException ce
         (is (-> ce
-                 .getCause
-                 .getMessage
-                 (.contains "Route must have a :summary when using :roles and it must be specified before :roles")))))))
+                .getCause
+                .getMessage
+                (.contains "Route must have a :summary when using :roles and it must be specified before :roles")))))))

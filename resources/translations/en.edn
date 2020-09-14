@@ -6,10 +6,12 @@
             :add-licenses "Add terms of use"
             :add-member "Add member"
             :approve "Approve"
+            :approve-end-date "Date for access rights to expire (optional)"
             :approve-reject "Approve or reject"
             :bundling-intro [:div.intro [:p "Note that only resources that have the same application workflow can be bundled together."]]
             :cancel "Cancel"
             :change-resources "Change resources"
+            :clear "Clear"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
             :comment "Comment"
@@ -21,6 +23,7 @@
                      :duplicate-id "Id is already in use."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
+                     :organization-does-not-exist "Organization \"%1\" does not exist"
                      :submission-failed "Submission failed. Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
@@ -90,6 +93,7 @@
                    :license-name "License name"
                    :licenses "Licenses"
                    :modifier "Modifier"
+                   :more-info "More info URL (optional, defaults to resource URN)"
                    :name "Name"
                    :no-licenses "No licenses"
                    :organization "Organization"
@@ -133,6 +137,7 @@
                  ;;   code to match the term in UI.
                  :description "Title"
                  :empty "No applications."
+                 :entitlement-end "Access rights end %1."
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "%1 copied the application from an old application."
@@ -214,12 +219,6 @@
              :show-more "Show more"}
   :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
-  :create-catalogue-item {:form-selection "Form"
-                          :infourl "More info URL (optional, defaults to resource URN)"
-                          :resource-selection "Resource"
-                          :title "Name"
-                          :title-placeholder "Name"
-                          :workflow-selection "Workflow"}
   :create-form {:add-form-field "Add field"
                 :add-option "Add option"
                 :field-n "Field %1: %2"

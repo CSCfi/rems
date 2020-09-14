@@ -138,10 +138,12 @@
       (model/enrich-with-injections injections)))
 
 (defn- set-command-defaults [cmd]
-  (-> cmd
-      (assoc :time test-time)
-      (cond-> (not= :application.command/create (:type cmd))
-              (assoc :application-id app-id))))
+  (cond-> cmd
+    true
+    (assoc :time test-time)
+
+    (not= :application.command/create (:type cmd))
+    (assoc :application-id app-id)))
 
 (defn- fail-command
   ([application cmd]
@@ -320,9 +322,9 @@
     (testing "does not save a draft when validations fail"
       (is (= {:errors [{:field-id "1", :type :t.form.validation/invalid-value :form-id 1}]}
              (fail-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -1663,9 +1665,9 @@
               :event/actor applicant-user-id
               :application/id app-id}
              (ok-command draft-application
-                            {:type :application.command/delete
-                             :actor applicant-user-id}
-                            injections))))))
+                         {:type :application.command/delete
+                          :actor applicant-user-id}
+                         injections))))))
 
 (deftest test-handle-command
   (let [application (model/application-view nil {:event/type :application.event/created

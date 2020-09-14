@@ -30,8 +30,10 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
-            [schema.core :as s])
+            [schema.core :as s]
+            [rems.json :as json])
   (:import [rems.auth ForbiddenException UnauthorizedException]
+           rems.DataException
            rems.InvalidRequestException
            rems.TryAgainException))
 
@@ -71,6 +73,12 @@
   (log/error "try again" exception)
   (-> (service-unavailable "please try again")
       (plain-text)))
+
+(defn data-exception-handler
+  [exception _ex-data _request]
+  (log/error "data exception" (pr-str (.-data exception)))
+  (-> (service-unavailable (json/generate-string (.-data exception)))
+      (response/content-type "application/json")))
 
 (defn with-logging
   ;; Like in compojure.api.exception, but logs some of the data (with pprint)
@@ -136,6 +144,7 @@
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
                              TryAgainException try-again-handler
+                             DataException data-exception-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
                              ::ex/request-validation (with-logging ex/request-validation-handler)

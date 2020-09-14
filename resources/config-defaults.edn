@@ -70,6 +70,10 @@
                        :remove nil
                        :ga4gh nil} ;; Url where entitlements are pushed in ga4gh format, see https://github.com/ga4gh-duri/ga4gh-duri.github.io/
 
+ ;; Default length for entitlements, in days. This only affects the UI of the approve command.
+ ;; The default, nil, means indefinite entitlements.
+ :entitlement-default-length-days nil
+
  ;; URLs to notify about new events. An array of targets. Targets can have keys:
  ;;   :url (mandatory) - the url to send HTTP PUT requests to
  ;;   :event-types (optional) - an array of event types to send. A missing value means "send everything".

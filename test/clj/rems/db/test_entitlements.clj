@@ -52,15 +52,15 @@
 
   (testing "ok :ga4gh action"
     (run-with-server
-      {:status 200}
-      (fn [server]
-        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
-        (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
-                                "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
-               (-> (stub/recorded-requests server)
-                   first
-                   (get-in [:body "postData"])
-                   json/parse-string))))))
+     {:status 200}
+     (fn [server]
+       (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
+       (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
+                               "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
+              (-> (stub/recorded-requests server)
+                  first
+                  (get-in [:body "postData"])
+                  json/parse-string))))))
 
   (testing "not-found"
     (run-with-server

@@ -32,8 +32,8 @@
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-fi)))
       "en matches fi")
-    (is (= (recursive-keys (loc-en))
-           (recursive-keys (loc-sv)))
+  (is (= (recursive-keys (loc-en))
+         (recursive-keys (loc-sv)))
       "en matches sv"))
 
 (deftest test-extract-format-parameters
@@ -48,7 +48,7 @@
         (testing k
           (is (= (locales/extract-format-parameters (getx-in en (vec k)))
                  (locales/extract-format-parameters (getx-in fi (vec k)))))))))
-    (testing "[:en vs :sv]"
+  (testing "[:en vs :sv]"
     (let [en (loc-en)
           sv (loc-sv)]
       (doseq [k (recursive-keys en)]

@@ -1,0 +1,5 @@
+{:port 3000
+ :database-url "postgresql://db:5432/rems?user=rems&password=remspassword"
+ :search-index-path "/tmp/rems-search-index"
+ :authentication :fake
+ :public-url "http://localhost:3000/"}
