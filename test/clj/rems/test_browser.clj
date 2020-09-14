@@ -421,6 +421,43 @@
                   last
                   (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
+(deftest test-approve-with-end-date
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                         :field/optional false
+                                                                         :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+                                                                 [(btu/context-get :catalogue-id)]
+                                                                 "test-approve-with-end-date"))
+    (test-data/command! {:type :application.command/submit
+                         :application-id (btu/context-get :application-id)
+                         :actor "alice"}))
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "developer")
+    (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
+    (btu/wait-visible {:tag :h1 :fn/has-text "test-approve-with-end-date"})
+    (testing "approve"
+      (btu/scroll-and-click :approve-reject-action-button)
+      (btu/wait-visible :comment-approve-reject)
+      (btu/fill-human :comment-approve-reject "this is a comment")
+      (set-date :approve-end "2100-05-06")
+      (btu/scroll-and-click :approve)
+      (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
+    (testing "event visible in eventlog"
+      ;; time rendering depends on time zone
+      (is (btu/visible? {:css "div.event-description b" :fn/has-text "Developer approved the application. Access rights end"})))
+    (testing "event via api"
+      (is (= {:application/id (btu/context-get :application-id)
+              :event/type "application.event/approved"
+              :application/comment "this is a comment"
+              :entitlement/end "2100-05-06T00:00:00.000Z"
+              :event/actor "developer"}
+             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+                 :application/events
+                 last
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+
 (deftest test-guide-page
   (btu/with-postmortem {:dir btu/reporting-dir}
     (btu/go (str (btu/get-server-url) "guide"))
