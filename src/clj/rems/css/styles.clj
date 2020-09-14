@@ -47,7 +47,6 @@
 (defn get-logo-name-sm [lang]
   (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
 
-
 (defn- generate-at-font-faces []
   (list
    (stylesheet/at-font-face {:font-family "'Lato'"
@@ -615,6 +614,7 @@
                        :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"
                        :background-color "rgba(0, 0, 0, 0.01)"}
     [:&:empty {:height (u/rem 2.25)}]]
+   [:input.form-control {:white-space "pre-wrap"}]
    [:.toggle-diff {:float "right"}]
    [:.diff
     [:ins {:background-color "#acf2bd"}]
@@ -658,9 +658,8 @@
    [:.form-group {:text-align "initial"}
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
-   [:#application-fields
-    [:.application-field-label {:font-weight "bold"}]
-    [:.field-info {:font-weight "400"}]]
+   [:label.application-field-label {:font-weight "bold"}]
+   [:div.field-info {:font-weight "400"}]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
