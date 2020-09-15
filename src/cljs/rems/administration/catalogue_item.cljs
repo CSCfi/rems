@@ -75,7 +75,7 @@
    (let [id (:id catalogue-item)]
      [:div.col.commands
       [administration/back-button "/administration/catalogue-items"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/when roles/+admin-write-roles+
        [edit-button id]
        [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]])])

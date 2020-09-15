@@ -74,7 +74,7 @@
    (let [id (:id license)]
      [:div.col.commands
       [administration/back-button "/administration/licenses"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/when roles/+admin-write-roles+
        [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
 

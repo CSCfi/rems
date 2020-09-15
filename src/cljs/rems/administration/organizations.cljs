@@ -85,7 +85,7 @@
                  :sort-value (if checked? 1 2)})
       :commands {:td [:td.commands
                       [to-view-organization (:organization/id organization)]
-                      [roles/when roles/show-admin-edit-buttons?
+                      [roles/when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
                        [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
                        [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})))
 
@@ -114,7 +114,7 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/when roles/show-admin-edit-buttons?
+          [[roles/when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
             [to-create-organization]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
             [status-flags/disabled-and-archived-explanation]]

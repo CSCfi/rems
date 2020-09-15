@@ -12,8 +12,7 @@
             [rems.text :refer [text text-format localize-time]]
             [rems.util :refer [fetch post!]]))
 
-(defn show-blacklist-add? [roles]
-  (some #{:owner :handler} roles)) ;; same roles as in rems.api.blacklist
+(def +blacklist-add-roles+ #{:owner :handler}) ;; same roles as in rems.api.blacklist
 
 (rf/reg-event-fx
  ::enter-page
@@ -69,7 +68,7 @@
 (rf/reg-event-fx
  ::fetch-users
  (fn [{:keys [db]} _]
-   (when (show-blacklist-add? (get-in db [:identity :roles]))
+   (when (some +blacklist-add-roles+ (get-in db [:identity :roles]))
      (fetch "/api/blacklist/users"
             {:handler #(rf/dispatch [::fetch-users-result %])
              :error-handler (flash-message/default-error-handler :top "Fetch users")}))
@@ -181,7 +180,7 @@
         (text :t.administration/add)]]]]))
 
 (defn add-user-form [resource]
-  [roles/when show-blacklist-add? [add-user-form-impl resource]])
+  [roles/when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width

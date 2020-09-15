@@ -74,7 +74,7 @@
    (let [id (:form/id form)]
      [:div.col.commands
       [administration/back-button "/administration/forms"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/when roles/+admin-write-roles+
        [edit-button id]
        [copy-as-new-button id]
        [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
