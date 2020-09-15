@@ -15,7 +15,7 @@
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
-(defn collapse [info-id aria-label-text focus-when-collapse-opened body-text]
+(defn info-collapse [info-id aria-label-text focus-when-collapse-opened body-text]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
          :href (str "#" (str info-id "-collapse"))
@@ -26,7 +26,7 @@
    [:div.field-info.collapse {:id (str info-id "-collapse")
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
-    (linkify body-text)]])
+     body-text]])
 
 
 (defn- diff [value previous-value]
@@ -89,8 +89,8 @@
         value (:field/value opts)
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
-        info-text (localized (:field/info-text opts))
-        collapse-aria-label (str (text :t.create-form/collapse-aria-label) (linkify raw-title))]
+        info-text (linkify (localized (:field/info-text opts)))
+        collapse-aria-label (str (text :t.create-form/collapse-aria-label) raw-title)]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field
@@ -116,7 +116,7 @@
         (text :t.form/optional)
         (text :t.form/required))
       (when info-text
-        [collapse
+        [info-collapse
          (field-name opts)
          collapse-aria-label
          focus-when-collapse-opened
@@ -294,7 +294,7 @@
       [add-symbol]
       " "
       (text :t.form/upload)]
-     [collapse
+     [info-collapse
       info-id
       (text :t.form/upload-extensions)
       focus-when-collapse-opened
