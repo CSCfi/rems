@@ -6,6 +6,8 @@
             [ring.util.http-response :refer :all])
   (:import (rems.auth ForbiddenException UnauthorizedException)))
 
+(def +roles+ #{:role1})
+
 (deftest route-role-check-test
   (testing "no roles required"
     (let [route (GET "/foo" []
@@ -53,6 +55,26 @@
                   (ok {:success true}))]
       (is (= "Summary text (roles: role1, role2)"
              (get-in route [:info :public :summary])))))
+
+  (testing "roles can be a var"
+    (let [route (GET "/foo" []
+                  :summary "Summary text"
+                  :roles +roles+
+                  (ok {:success true}))]
+      (is (= "Summary text (roles: role1)"
+             (get-in route [:info :public :summary])))
+      (binding [context/*roles* #{:role1}
+                context/*user* {:eppn "user1"}]
+        (is (= {:status 200
+                :headers {}
+                :body {:success true}}
+               (route {:request-method :get
+                       :uri "/foo"}))))
+      (binding [context/*roles* #{}
+                context/*user* {:eppn "user1"}]
+        (is (thrown? ForbiddenException
+                     (route {:request-method :get
+                             :uri "/foo"}))))))
 
   (testing "summary documentation is required"
     (try
