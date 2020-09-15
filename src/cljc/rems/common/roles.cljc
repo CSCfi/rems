@@ -3,6 +3,9 @@
   #?(:clj (:require [rems.context :as context])
      :cljs (:require [re-frame.core :as rf])))
 
+(def +admin-write-roles+ #{:organization-owner :owner})
+(def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
+
 (defn is-logged-in? [roles]
   (some #{:logged-in} roles))
 
@@ -16,9 +19,7 @@
   (some #{:handler :reviewer :decider :past-reviewer :past-decider} roles))
 
 (defn show-admin-pages? [roles]
-  (some #{:organization-owner :owner :handler :reporter} roles))
-
-(def +admin-write-roles+ #{:organization-owner :owner})
+  (some +admin-read-roles+ roles))
 
 (defn disallow-setting-organization? [roles]
   (not-any? #{:organization-owner :owner} roles))

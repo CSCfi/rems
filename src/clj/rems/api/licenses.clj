@@ -3,7 +3,8 @@
             [rems.api.schema :refer :all]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
-            [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.json-schema :as rjs]

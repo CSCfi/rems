@@ -2,7 +2,8 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.services.resource :as resource]
-            [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

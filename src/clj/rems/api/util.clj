@@ -6,9 +6,6 @@
             [rems.common.roles :refer [has-roles?]]
             [rems.util :refer [errorf get-user-id]]))
 
-(def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
-(def +admin-write-roles+ #{:owner :organization-owner})
-
 (defn check-user []
   (let [user-id (get-user-id)]
     (when-not user-id (throw-unauthorized))))

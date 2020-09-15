@@ -4,8 +4,9 @@
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
-            [rems.api.util :refer [+admin-read-roles+]]
+            [rems.api.util] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
+            [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]

@@ -2,7 +2,8 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.services.form :as form]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate OrganizationId SuccessResponse]]
-            [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

@@ -3,7 +3,8 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.services.catalogue :as catalogue]
-            [rems.api.util :refer [+admin-write-roles+ not-found-json-response check-user]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
+            [rems.common.roles :refer [+admin-write-roles+]]
             [rems.db.core :as db]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
