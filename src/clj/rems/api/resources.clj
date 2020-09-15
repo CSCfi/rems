@@ -38,7 +38,7 @@
 
     (GET "/" []
       :summary "Get resources"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
@@ -47,7 +47,7 @@
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
       (if-let [resource (resource/get-resource resource-id)]

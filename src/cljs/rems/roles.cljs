@@ -15,7 +15,7 @@
   (some #{:handler :reviewer :decider :past-reviewer :past-decider} roles))
 
 (defn show-admin-pages? [roles]
-  (some #{:organization-owner :owner :handler} roles))
+  (some #{:organization-owner :owner :handler :reporter} roles))
 
 (defn show-admin-edit-buttons? [roles]
   (some #{:organization-owner :owner} roles))

@@ -90,7 +90,7 @@
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
         info-text (localized (:field/info-text opts))
-        collapse-aria-label ((text :t.create-form/collapse-aria-label) (linkify raw-title))]
+        collapse-aria-label (str (text :t.create-form/collapse-aria-label) (linkify raw-title))]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field

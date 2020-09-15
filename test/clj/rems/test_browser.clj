@@ -153,34 +153,37 @@
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
 
-(defn set-date [label date]
+(defn set-date [id date]
+  ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
+  ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
+  ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
+  (btu/js-execute
+   ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
+   "
+   function setNativeValue(element, value) {
+       const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
+       const prototype = Object.getPrototypeOf(element)
+       const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
+
+       if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+           prototypeValueSetter.call(element, value)
+       } else if (valueSetter) {
+           valueSetter.call(element, value)
+       } else {
+           throw new Error('The given element does not have a value setter')
+       }
+   }
+   var field = document.getElementById(arguments[0])
+   setNativeValue(field, arguments[1])
+   field.dispatchEvent(new Event('change', {bubbles: true}))
+   "
+   id date))
+
+(defn set-date-for-label [label date]
   (let [id (btu/get-element-attr [{:css ".fields"}
                                   {:tag :label :fn/text label}]
                                  :for)]
-    ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
-    ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
-    ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
-    (btu/js-execute
-     ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
-     "
-                function setNativeValue(element, value) {
-                    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
-                    const prototype = Object.getPrototypeOf(element)
-                    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
-
-                    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
-                        prototypeValueSetter.call(element, value)
-                    } else if (valueSetter) {
-                        valueSetter.call(element, value)
-                    } else {
-                        throw new Error('The given element does not have a value setter')
-                    }
-                }
-                var field = document.getElementById(arguments[0])
-                setNativeValue(field, arguments[1])
-                field.dispatchEvent(new Event('change', {bubbles: true}))
-                "
-     id date)))
+    (set-date id date)))
 
 (defn select-option [label option]
   (let [id (btu/get-element-attr [{:css ".fields"}
@@ -226,12 +229,12 @@
      :resource (btu/get-element-text-el (btu/child row {:css ".resource"}))
      :state (btu/get-element-text-el (btu/child row {:css ".state"}))}))
 
-(defn- get-application-from-api [application-id]
+(defn- get-application-from-api [application-id & [userid]]
   (:body
    (http/get (str (btu/get-server-url) "/api/applications/" application-id)
              {:as :json
               :headers {"x-rems-api-key" "42"
-                        "x-rems-user-id" "handler"}})))
+                        "x-rems-user-id" (or userid "handler")}})))
 
 ;;; tests
 
@@ -262,7 +265,7 @@
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
         (fill-form-field "Text area" "Test2")
-        (set-date "Date field" "2050-01-02")
+        (set-date-for-label "Date field" "2050-01-02")
 
         (fill-form-field "Email field" "user@example.com")
 
@@ -407,7 +410,54 @@
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
       (is (= ["test.txt" "test-fi.txt"]
-             (get-attachments {:css "div.event a.attachment-link"}))))))
+             (get-attachments {:css "div.event a.attachment-link"}))))
+    (testing "event via api"
+      ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
+      (is (= {:application/id (btu/context-get :application-id)
+              :event/type "application.event/approved"
+              :application/comment "this is a comment"
+              :event/actor "developer"}
+             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+                  :application/events
+                  last
+                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+
+(deftest test-approve-with-end-date
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                         :field/optional false
+                                                                         :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+                                                                 [(btu/context-get :catalogue-id)]
+                                                                 "test-approve-with-end-date"))
+    (test-data/command! {:type :application.command/submit
+                         :application-id (btu/context-get :application-id)
+                         :actor "alice"}))
+  (btu/with-postmortem {:dir btu/reporting-dir}
+    (login-as "developer")
+    (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
+    (btu/wait-visible {:tag :h1 :fn/has-text "test-approve-with-end-date"})
+    (testing "approve"
+      (btu/scroll-and-click :approve-reject-action-button)
+      (btu/wait-visible :comment-approve-reject)
+      (btu/fill-human :comment-approve-reject "this is a comment")
+      (set-date :approve-end "2100-05-06")
+      (btu/scroll-and-click :approve)
+      (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
+    (testing "event visible in eventlog"
+      ;; time rendering depends on time zone
+      (is (btu/visible? {:css "div.event-description b" :fn/has-text "Developer approved the application. Access rights end"})))
+    (testing "event via api"
+      (is (= {:application/id (btu/context-get :application-id)
+              :event/type "application.event/approved"
+              :application/comment "this is a comment"
+              :entitlement/end "2100-05-06T00:00:00.000Z"
+              :event/actor "developer"}
+             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+                 :application/events
+                 last
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-guide-page
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -969,7 +1019,7 @@
       (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
 
     (testing "open report"
-      (login-as "owner")
+      (login-as "reporter")
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)

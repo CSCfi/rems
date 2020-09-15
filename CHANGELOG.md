@@ -58,6 +58,7 @@ Changes since v2.12
 - Applicants can now permanently delete drafts. (#2219)
 - When approving an application, the handler can optionally pick an end date for the entitlement. There is also a `:entitlement-default-length-days` configuration variable that is used to compute a default value for the end date. (#2123)
 - Better documentation related to organizations (#2039)
+- The reporter role now has read-only access to administration APIs and pages. (#2313)
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 
 ## v2.12 "Merituulentie" 2020-05-04

@@ -47,7 +47,8 @@
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
-      :roles #{:owner :handler :organization-owner}
+      ;; TODO reporter shouldn't strictly need this, but it's read-only so no harm.
+      :roles #{:owner :handler :reporter :organization-owner}
       :return [schema/UserWithAttributes]
       (ok (users/get-users)))
 

@@ -9,18 +9,18 @@ The original idea with workflows was that the handler has the power to do anythi
 
 Example: When an application comes in, there is one person who does the back-and-forth with the applicant until the application is ready, after which the application will be forwarded to an official who will either approve or reject the application. In this case the handler cannot approve/reject the application. Also applications are never closed, but there is always an official decision.
 
-Thus arose the need to have custom workflows. 
+Thus arose the need to have custom workflows.
 
 
 ## Prototypes
 
-The `calculate-permissions` function is in control of mapping users and roles to allowed commands, and by modifying those allowed commands we can produce different kinds of workflows.  
+The `calculate-permissions` function (since renamed to `application-permissions-view`) is in control of mapping users and roles to allowed commands, and by modifying those allowed commands we can produce different kinds of workflows.
 
 ### POC 1: Multiple distinct workflows
 
 The first idea was to have multiple `calculate-permissions` functions, one for each workflow. This is the most flexible solution, but it results in quite much duplication, and the duplication scales linearly over the number of commands.
 
-The prototype is at #1838 (7392154f06c5304b208b57322558ef97c3699437). 
+The prototype is at #1838 (7392154f06c5304b208b57322558ef97c3699437).
 
 ### POC 2: Master workflow + command whitelist/blacklist
 
