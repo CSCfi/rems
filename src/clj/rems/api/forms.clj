@@ -32,7 +32,7 @@
 
     (GET "/" []
       :summary "Get forms"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return [FormTemplateOverview]
@@ -48,7 +48,7 @@
 
     (GET "/:form-id" []
       :summary "Get form by id"
-      :roles #{:owner :organization-owner :handler}
+      :roles #{:owner :organization-owner :handler :reporter}
       :path-params [form-id :- (describe s/Int "form-id")]
       :return FormTemplate
       (let [form (form/get-form-template form-id)]

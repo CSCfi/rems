@@ -1008,7 +1008,7 @@
       (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
 
     (testing "open report"
-      (login-as "owner")
+      (login-as "reporter")
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
