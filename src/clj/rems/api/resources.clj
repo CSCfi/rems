@@ -5,8 +5,7 @@
             [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s]))
 
 ;; TODO convert to V2Resource
 (s/defschema Resource

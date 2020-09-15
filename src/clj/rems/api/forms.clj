@@ -1,7 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.services.form :as form]
-            [rems.api.services.util :as services-util]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate OrganizationId SuccessResponse]]
             [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
             [rems.util :refer [getx-user-id]]

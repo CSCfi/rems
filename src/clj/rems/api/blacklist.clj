@@ -1,6 +1,5 @@
 (ns rems.api.blacklist
-  (:require [clj-time.core :as time]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
