@@ -75,10 +75,11 @@
      [:div.col.commands
       [administration/back-button "/administration/forms"]
       [roles/when roles/+admin-write-roles+
-       [edit-button id]
-       [copy-as-new-button id]
-       [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]]])
+       [:<>
+        [edit-button id]
+        [copy-as-new-button id]
+        [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
+        [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]]]])
    (when-let [errors (:form/errors form)]
      [:div.alert.alert-danger
       [text :t.administration/has-errors]

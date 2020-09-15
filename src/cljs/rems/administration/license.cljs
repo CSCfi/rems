@@ -75,8 +75,9 @@
      [:div.col.commands
       [administration/back-button "/administration/licenses"]
       [roles/when roles/+admin-write-roles+
-       [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
+       [:<>
+        [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
+        [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]]])])
 
 ;; XXX: Duplicates much of license-view. One notable difference is that
 ;;      here the license text is only shown in the current language.

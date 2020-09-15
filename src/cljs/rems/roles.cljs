@@ -22,6 +22,6 @@
 (defn disallow-setting-organization? [roles]
   (not-any? #{:organization-owner :owner} roles))
 
-(defn when [roles & body]
+(defn when [roles val]
   (clojure.core/when (some (set roles) (:roles @(rf/subscribe [:identity])))
-    (into [:<>] body)))
+    val))

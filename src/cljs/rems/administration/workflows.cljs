@@ -86,9 +86,10 @@
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
                            [roles/when roles/+admin-write-roles+
-                            [workflow/edit-button (:id workflow)]
-                            [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
-                            [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]]}})
+                            [:<>
+                             [workflow/edit-button (:id workflow)]
+                             [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
+                             [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]]]}})
         workflows)))
 
 (defn- workflows-list []
@@ -118,7 +119,8 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/when roles/+admin-write-roles+
-            [to-create-workflow]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
-            [status-flags/disabled-and-archived-explanation]]
+            [:<>
+             [to-create-workflow]
+             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
+             [status-flags/disabled-and-archived-explanation]]]
            [workflows-list]])))

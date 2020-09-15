@@ -86,8 +86,9 @@
            :commands {:td [:td.commands
                            [to-view-resource (:id resource)]
                            [roles/when roles/+admin-write-roles+
-                            [status-flags/enabled-toggle resource #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])]
-                            [status-flags/archived-toggle resource #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])]]]}})
+                            [:<>
+                             [status-flags/enabled-toggle resource #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])]
+                             [status-flags/archived-toggle resource #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])]]]]}})
         resources)))
 
 (defn- resources-list []
@@ -116,7 +117,8 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/when roles/+admin-write-roles+
-            [to-create-resource]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-resources])]
-            [status-flags/disabled-and-archived-explanation]]
+            [:<>
+             [to-create-resource]
+             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-resources])]
+             [status-flags/disabled-and-archived-explanation]]]
            [resources-list]])))
