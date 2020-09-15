@@ -6,7 +6,7 @@
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text text-format localize-time]]

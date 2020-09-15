@@ -8,7 +8,7 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! trim-when-string]]))

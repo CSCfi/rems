@@ -8,7 +8,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch]]))

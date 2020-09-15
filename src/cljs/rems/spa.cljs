@@ -46,7 +46,7 @@
             [rems.keepalive :as keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.settings :refer [settings-page missing-email-warning]]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]

@@ -7,7 +7,7 @@
             [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch]]))

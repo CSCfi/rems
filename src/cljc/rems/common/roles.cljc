@@ -1,6 +1,6 @@
-(ns rems.roles
+(ns rems.common.roles
   (:refer-clojure :exclude [when])
-  (:require [re-frame.core :as rf]))
+  #?(:cljs (:require [re-frame.core :as rf])))
 
 (defn is-logged-in? [roles]
   (some #{:logged-in} roles))
@@ -22,6 +22,7 @@
 (defn disallow-setting-organization? [roles]
   (not-any? #{:organization-owner :owner} roles))
 
-(defn when [roles val]
-  (clojure.core/when (some (set roles) (:roles @(rf/subscribe [:identity])))
-    val))
+#?(:cljs
+   (defn when [roles val]
+     (clojure.core/when (some (set roles) (:roles @(rf/subscribe [:identity])))
+       val)))
