@@ -3,7 +3,7 @@
             [compojure.api.meta :refer [restructure-param]]
             [ring.util.http-response :as http-response]
             [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
-            [rems.roles :refer [has-roles?]]
+            [rems.common.roles :refer [has-roles?]]
             [rems.util :refer [errorf get-user-id]]))
 
 (def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
