@@ -7,7 +7,7 @@
             [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch]]))
@@ -83,7 +83,7 @@
    (let [id (:organization/id organization)]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
        [edit-button id]
        [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])])

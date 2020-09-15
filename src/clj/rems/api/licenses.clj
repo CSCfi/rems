@@ -3,7 +3,8 @@
             [rems.api.schema :refer :all]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
-            [rems.api.util :as api-util] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.json-schema :as rjs]
@@ -43,7 +44,7 @@
 
     (GET "/" []
       :summary "Get licenses"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]
       :return Licenses
@@ -52,35 +53,35 @@
 
     (GET "/:license-id" []
       :summary "Get license"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :path-params [license-id :- (describe s/Int "license id")]
       :return License
       (ok (licenses/get-license license-id)))
 
     (POST "/create" []
       :summary "Create license"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
       (ok (licenses/create-license! command (getx-user-id))))
 
     (PUT "/archived" []
       :summary "Archive or unarchive license"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (licenses/set-license-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable license"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :multipart-params [file :- upload/TempFileUpload]
       :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
@@ -88,15 +89,15 @@
 
     (POST "/remove_attachment" []
       :summary "Remove an attachment that could have been used in a license."
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return SuccessResponse
       (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
 
     (GET "/attachments/:attachment-id" []
       :summary "Get a license's attachment"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :path-params [attachment-id :- (describe s/Int "attachment id")]
       (if-let [attachment (licenses/get-license-attachment attachment-id)]
         (attachment/download attachment)
-        (api-util/not-found-json-response)))))
+        (not-found-json-response)))))

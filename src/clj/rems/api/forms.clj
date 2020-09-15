@@ -1,9 +1,9 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.services.form :as form]
-            [rems.api.services.util :as services-util]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate OrganizationId SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -32,7 +32,7 @@
 
     (GET "/" []
       :summary "Get forms"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return [FormTemplateOverview]
@@ -41,14 +41,14 @@
 
     (POST "/create" []
       :summary "Create form"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command CreateFormCommand]
       :return CreateFormResponse
       (ok (form/create-form! (getx-user-id) command)))
 
     (GET "/:form-id" []
       :summary "Get form by id"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :path-params [form-id :- (describe s/Int "form-id")]
       :return FormTemplate
       (let [form (form/get-form-template form-id)]
@@ -58,28 +58,28 @@
 
     (GET "/:form-id/editable" []
       :summary "Check if the form is editable"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :path-params [form-id :- (describe s/Int "form-id")]
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
     (PUT "/edit" []
       :summary "Edit form"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EditFormCommand]
       :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive form"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (form/set-form-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable form"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (form/set-form-enabled! command)))))

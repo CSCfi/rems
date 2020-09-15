@@ -52,6 +52,7 @@
 
     (PUT "/edit" []
       :summary "Edit organization. Organization owners cannot change the owners."
+      ;; explicit roles seem clearer here instead of +admin-write-roles+
       :roles #{:owner :organization-owner}
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse

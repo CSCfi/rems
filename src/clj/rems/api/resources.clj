@@ -3,10 +3,10 @@
             [rems.api.schema :refer :all]
             [rems.api.services.resource :as resource]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s]))
 
 ;; TODO convert to V2Resource
 (s/defschema Resource
@@ -38,7 +38,7 @@
 
     (GET "/" []
       :summary "Get resources"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
@@ -47,7 +47,7 @@
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
       (if-let [resource (resource/get-resource resource-id)]
@@ -56,21 +56,21 @@
 
     (POST "/create" []
       :summary "Create resource"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
       (ok (resource/create-resource! command (getx-user-id))))
 
     (PUT "/archived" []
       :summary "Archive or unarchive resource"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (resource/set-resource-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable resource"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (resource/set-resource-enabled! command)))))

@@ -4,7 +4,7 @@
             [rems.atoms :refer [document-title]]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]))

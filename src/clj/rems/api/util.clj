@@ -3,8 +3,8 @@
             [compojure.api.meta :refer [restructure-param]]
             [ring.util.http-response :as http-response]
             [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
-            [rems.roles :refer [has-roles?]]
-            [rems.util :refer [get-user-id]]))
+            [rems.common.roles :refer [has-roles?]]
+            [rems.util :refer [errorf get-user-id]]))
 
 (defn check-user []
   (let [user-id (get-user-id)]
@@ -27,9 +27,13 @@
 
 (defmethod restructure-param :roles [_ roles acc]
   (-> acc
-      (update-in [:info :public :summary] add-roles-documentation roles)
+      (update-in [:info :public :summary]
+                 add-roles-documentation
+                 (cond (coll? roles) roles
+                       (symbol? roles) @(resolve roles)
+                       :else (errorf "Don't know how to handle :roles %s" (pr-str roles))))
       (update-in [:lets] into ['_ `(do (check-user)
-                                       (check-roles ~@roles))])))
+                                       (apply check-roles ~roles))])))
 
 (defn not-found-json-response []
   (-> (http-response/not-found "{\"error\": \"not found\"}")

@@ -4,7 +4,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [get-localized-title text]]
@@ -86,7 +86,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-license (:id license)]
-                           [roles/when roles/show-admin-edit-buttons?
+                           [roles/show-when roles/+admin-write-roles+
                             [status-flags/enabled-toggle license #(rf/dispatch [::set-license-enabled %1 %2 [::fetch-licenses]])]
                             [status-flags/archived-toggle license #(rf/dispatch [::set-license-archived %1 %2 [::fetch-licenses]])]]]}})
         licenses)))
@@ -118,7 +118,7 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/when roles/show-admin-edit-buttons?
+          [[roles/show-when roles/+admin-write-roles+
             [to-create-license]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-licenses])]
             [status-flags/disabled-and-archived-explanation]]
