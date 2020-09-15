@@ -180,7 +180,7 @@
         (text :t.administration/add)]]]]))
 
 (defn add-user-form [resource]
-  [roles/when +blacklist-add-roles+ [add-user-form-impl resource]])
+  [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width

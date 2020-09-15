@@ -130,7 +130,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [view-button (:id item)]
-                           [roles/when roles/+admin-write-roles+
+                           [roles/show-when roles/+admin-write-roles+
                             [catalogue-item/edit-button (:id item)]
                             [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
                             [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]]}})
@@ -174,12 +174,11 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/when roles/+admin-write-roles+
-            [:<>
-             [:div.commands.text-left.pl-0
-              [create-catalogue-item-button]
-              [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
-             [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
-                                                        (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
-             [status-flags/disabled-and-archived-explanation]]]
+          [[roles/show-when roles/+admin-write-roles+
+            [:div.commands.text-left.pl-0
+             [create-catalogue-item-button]
+             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
+            [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
+                                                       (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
+            [status-flags/disabled-and-archived-explanation]]
            [catalogue-list]])))

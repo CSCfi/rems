@@ -61,10 +61,9 @@
    (let [id (:id resource)]
      [:div.col.commands
       [administration/back-button "/administration/resources"]
-      [roles/when roles/+admin-write-roles+
-       [:<>
-        [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
-        [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]]])])
+      [roles/show-when roles/+admin-write-roles+
+       [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])])
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])

@@ -72,11 +72,10 @@
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]
-      [roles/when roles/+admin-write-roles+
-       [:<>
-        [edit-button id]
-        [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
-        [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]]]])])
+      [roles/show-when roles/+admin-write-roles+
+       [edit-button id]
+       [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]]])])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])

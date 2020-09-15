@@ -100,12 +100,11 @@
                       :sort-value 2})
            :commands {:td [:td.commands
                            [to-view-form form]
-                           [roles/when roles/+admin-write-roles+
-                            [:<>
-                             [form/edit-button (:form/id form)]
-                             [copy-as-new-form form]
-                             [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
-                             [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]]]}})
+                           [roles/show-when roles/+admin-write-roles+
+                            [form/edit-button (:form/id form)]
+                            [copy-as-new-form form]
+                            [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
+                            [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]]}})
         forms)))
 
 (defn- forms-list []
@@ -136,9 +135,8 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/when roles/+admin-write-roles+
-            [:<>
-             [to-create-form]
-             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
-             [status-flags/disabled-and-archived-explanation]]]
+          [[roles/show-when roles/+admin-write-roles+
+            [to-create-form]
+            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
+            [status-flags/disabled-and-archived-explanation]]
            [forms-list]])))

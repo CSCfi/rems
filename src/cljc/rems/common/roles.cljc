@@ -32,6 +32,7 @@
             (boolean (some (set roles) context/*roles*)))
      :cljs (some (set roles) (:roles @(rf/subscribe [:identity])))))
 
-(defn when [roles val]
-  (clojure.core/when (apply has-roles? roles)
-    val))
+#?(:cljs
+   (defn show-when [roles & body]
+     (clojure.core/when (apply has-roles? roles)
+       (into [:<>] body))))
