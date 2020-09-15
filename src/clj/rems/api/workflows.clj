@@ -2,8 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand OrganizationId SuccessResponse UserId UserWithAttributes Workflow]]
             [rems.api.services.workflow :as workflow]
-            [rems.api.util :as api-util]
-            [rems.api.util] ; required for route :roles
+            [rems.api.util :refer [+admin-read-roles+ +admin-write-roles+ not-found-json-response]] ; required for route :roles
             [rems.application.events :as events]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -37,7 +36,7 @@
 
     (GET "/" []
       :summary "Get workflows"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return [Workflow]
@@ -46,43 +45,43 @@
 
     (POST "/create" []
       :summary "Create workflow"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
       (ok (workflow/create-workflow! (assoc command :user-id (getx-user-id)))))
 
     (PUT "/edit" []
       :summary "Edit workflow title and handlers"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EditWorkflowCommand]
       :return SuccessResponse
       (ok (workflow/edit-workflow! command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive workflow"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (workflow/set-workflow-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable workflow"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (workflow/set-workflow-enabled! command)))
 
     (GET "/actors" []
       :summary "List of available actors"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :return AvailableActors
       (ok (workflow/get-available-actors)))
 
     (GET "/:workflow-id" []
       :summary "Get workflow by id"
-      :roles #{:owner :organization-owner :handler :reporter}
+      :roles +admin-read-roles+
       :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return Workflow
       (if-some [wf (workflow/get-workflow workflow-id)]
         (ok wf)
-        (api-util/not-found-json-response)))))
+        (not-found-json-response)))))

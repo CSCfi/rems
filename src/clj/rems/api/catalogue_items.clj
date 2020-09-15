@@ -3,7 +3,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.services.catalogue :as catalogue]
-            [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
+            [rems.api.util :refer [+admin-write-roles+ not-found-json-response check-user]] ; required for route :roles
             [rems.db.core :as db]
             [rems.util :refer [getx-user-id]]
             [ring.swagger.json-schema :as rjs]
@@ -78,7 +78,7 @@
 
     (POST "/:item-id/change-form" []
       :summary "Change catalogue item form. Creates a copy and ends the old."
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :path-params [item-id :- (describe s/Int "catalogue item")]
       :body [command ChangeFormCommand]
       :responses {200 {:schema ChangeFormResponse}
@@ -100,14 +100,14 @@
 
     (POST "/create" []
       :summary "Create a new catalogue item"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
       (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/edit" []
       :summary "Edit a catalogue item"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EditCatalogueItemCommand]
       :return SuccessResponse
       (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
@@ -116,14 +116,14 @@
 
     (PUT "/archived" []
       :summary "Archive or unarchive catalogue item"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (catalogue/set-catalogue-item-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable catalogue item"
-      :roles #{:owner :organization-owner}
+      :roles +admin-write-roles+
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (catalogue/set-catalogue-item-enabled! command)))))

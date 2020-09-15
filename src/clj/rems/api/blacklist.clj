@@ -5,6 +5,7 @@
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
+            [rems.api.util :refer [+admin-read-roles+]]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
@@ -36,7 +37,7 @@
 
     (GET "/" []
       :summary "Get blacklist entries"
-      :roles #{:handler :owner :reporter :organization-owner}
+      :roles +admin-read-roles+
       :query-params [{user :- schema/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
@@ -47,8 +48,8 @@
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
-      ;; TODO reporter shouldn't strictly need this, but it's read-only so no harm.
-      :roles #{:owner :handler :reporter :organization-owner}
+      ;; TODO reporter shouldn't strictly need this, but using +admin-read-roles+ for consistency
+      :roles +admin-read-roles+
       :return [schema/UserWithAttributes]
       (ok (users/get-users)))
 
