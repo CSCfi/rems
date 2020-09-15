@@ -418,7 +418,7 @@
           :no-rows-selected "Inga rader är valda"
           :some-rows-selected "Några rader är valda"
           :show-all-n-rows "Visa alla %1 rader"}
-  :unauthorized-page {:unauthorized "Inga användningsrättigheter"
-                      :you-are-unauthorized "Du har inte rätt att använda denna sida."}
+  :unauthorized-page {:unauthorized "Ingen tillgång"
+                      :you-are-unauthorized "Du har inte tillgång till denna sida."}
   :forbidden-page {:forbidden "Förbjuden"
                    :you-are-forbidden "Innehåll förbjudet."}}}
