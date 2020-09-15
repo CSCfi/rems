@@ -25,6 +25,7 @@ Changes since v2.12
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
 - Reporter can't see draft applications (#2268)
 - Better error message for missing organization in admin UI (#2039)
+- Improvements to swedish translations
 
 ### Fixes
 - Various fixes in workflow editor UI
