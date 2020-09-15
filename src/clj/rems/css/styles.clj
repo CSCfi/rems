@@ -614,7 +614,7 @@
                        :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"
                        :background-color "rgba(0, 0, 0, 0.01)"}
     [:&:empty {:height (u/rem 2.25)}]]
-   [:input.form-control {:white-space "pre-wrap"}]
+   [:.field-info {:white-space :pre-wrap}]
    [:.toggle-diff {:float "right"}]
    [:.diff
     [:ins {:background-color "#acf2bd"}]
