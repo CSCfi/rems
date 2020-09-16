@@ -59,6 +59,14 @@ jobs:
       - store_test_results:
           path: target/test-results
 
+  cljfmt:
+    executor: clojure
+    steps:
+      - checkout
+      - restore_cache:
+          key: v3-dependencies-{{ checksum "project.clj" }}
+      - run: lein cljfmt check
+
   integration-test:
     executor: db
     steps:
@@ -162,6 +170,10 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - cljfmt:
+          filters:
+            tags:
+              only: /.*/
       - build:
           requires:
             - deps
@@ -212,6 +224,7 @@ workflows:
             - integration-test
             - browser-test
             - build
+            # cljfmt not required to pass CI currently
           filters:
             tags:
               only: /.*/
