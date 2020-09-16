@@ -96,7 +96,8 @@
             [lein-uberwar "0.2.1"]
             [migratus-lein "0.5.7"]]
 
-  :cljfmt {:remove-consecutive-blank-lines? false} ;; too many changes for now
+  :cljfmt {:paths ["src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ;; need explicit paths to include cljs
+           :remove-consecutive-blank-lines? false} ;; too many changes for now
 
   :clean-targets ["target"]
 
