@@ -171,8 +171,6 @@
                              :field/index 0
                              :field/title {:en "en title"
                                            :fi "fi title"}
-                             :field/info-text {:en "en info text"
-                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length "12"

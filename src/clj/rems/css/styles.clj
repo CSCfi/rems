@@ -69,8 +69,6 @@
                              :font-weight 400
                              :font-style "normal"})))
 
-;; input.form-control white-space: pre-wrap
-
 (defn- generate-form-placeholder-styles []
   (list
    [".form-control::placeholder" {:color "#555"}] ; Standard

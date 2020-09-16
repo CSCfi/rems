@@ -848,8 +848,6 @@
         (btu/wait-page-loaded)
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
 
-
-
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
