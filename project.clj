@@ -198,6 +198,7 @@
                                                        :source-map true
                                                        :optimizations :none
                                                        :pretty-print true
+                                                       :warnings {:munged-namespace false} ;; for rems.actions.delete
                                                        :preloads [devtools.preload re-frisk.preload]}}
                                       :test {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                                              :compiler {:output-to "target/cljsbuild/test/test.js"
