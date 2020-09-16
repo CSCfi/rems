@@ -17,7 +17,7 @@
   (let [escape-quotes #(str/replace % "\"" "\\\"")
         strip-line-returns #(str/replace % #"[\r\n]" " ")
         maybe-strip #(if (and (string? %)
-                             strip-line-returns?)
+                              strip-line-returns?)
                        (strip-line-returns %)
                        %)
         maybe-quote #(if (and (string? %)

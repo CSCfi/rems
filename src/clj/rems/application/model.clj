@@ -682,9 +682,9 @@
 
 (defn see-application? [application user-id]
   (let [permissions (permissions/user-roles application user-id)]
-  (if (= :application.state/draft (:application/state application))
-    (user-is-applicant-or-member permissions)
-    (not= #{:everyone-else} permissions))))
+    (if (= :application.state/draft (:application/state application))
+      (user-is-applicant-or-member permissions)
+      (not= #{:everyone-else} permissions))))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
