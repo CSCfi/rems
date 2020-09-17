@@ -418,9 +418,9 @@
               :application/comment "this is a comment"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
-                  :application/events
-                  last
-                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 :application/events
+                 last
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
