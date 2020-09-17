@@ -33,9 +33,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - v3-dependencies-
 
       # upgrade node
       # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
@@ -52,7 +52,7 @@ jobs:
             # unless the project.clj is changed. This might create differences
             # between dev, CI and actual deployment.
             - node_modules
-          key: v2-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
 
   without-db:
     <<: *docker
@@ -61,7 +61,7 @@ jobs:
       # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
       - store_test_results:
@@ -79,7 +79,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}
       - run: lein cljtests-ci
       - store_test_results:
           path: target/test-results
@@ -94,8 +94,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
-      - run: lein deps # just in case cache fails
+            - v3-dependencies-{{ checksum "project.clj" }}
       - run: lein doo chrome-headless test once
       - store_test_results:
           path: target/test-results
@@ -106,7 +105,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}
       - run: lein uberwar
       - store_artifacts:
           path: target/uberjar/rems.war
