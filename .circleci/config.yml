@@ -20,7 +20,9 @@ defaults: &defaults
 
 jobs:
   build:
-    <<: *defaults
+    executor: docker
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
     steps:
       - checkout
 
@@ -33,9 +35,9 @@ jobs:
 
       # upgrade node
       # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
-      - run: sudo rm /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
-      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-      - run: sudo apt install nodejs
+      #- run: sudo rm /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
+      #- run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
+      #- run: sudo apt install nodejs
 
       - run: lein deps
 
@@ -51,7 +53,7 @@ jobs:
   without-db:
     executor: docker
     docker:
-      - image: clojure:openjdk-11-lein-2.9.3
+      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
     steps:
       - checkout
       # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
