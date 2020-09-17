@@ -29,22 +29,14 @@ jobs:
     <<: *docker
     steps:
       - checkout
-
       # Download and cache dependencies
       - restore_cache:
           keys:
             - v3-dependencies-{{ checksum "project.clj" }}
             # fallback to using the latest cache if no exact match is found
             - v3-dependencies-
-
-      # upgrade node
-      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
-      #- run: sudo rm /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
-      #- run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-      #- run: sudo apt install nodejs
-
       - run: lein deps
-
+      # TODO using persist_to_workspace might be more robust than using cache
       - save_cache:
           paths:
             - ~/.m2
@@ -117,6 +109,7 @@ jobs:
           paths:
             - target/uberjar/rems.jar
 
+  # TODO: use docker executor and setup_remote_docker for these builder too:
   docker-snapshot:
     <<: *defaults
     steps:
