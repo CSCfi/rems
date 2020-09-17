@@ -1,6 +1,6 @@
 (ns rems.api.organizations
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [OrganizationArchivedCommand OrganizationEnabledCommand OrganizationFull SuccessResponse UserId UserWithAttributes]]
+            [rems.api.schema :refer [OrganizationArchivedCommand OrganizationEnabledCommand OrganizationFull SuccessResponse User UserWithAttributes]]
             [rems.api.util] ; required for route :roles
             [rems.api.services.organizations :as organizations]
             [rems.util :refer [getx-user-id]]
@@ -8,7 +8,10 @@
             [schema.core :as s]))
 
 (s/defschema CreateOrganizationCommand
-  OrganizationFull)
+  (-> OrganizationFull
+      (dissoc :organization/modifier
+              :organization/last-modifier)
+      (assoc (s/optional-key :organization/owners) [User])))
 
 (s/defschema CreateOrganizationResponse
   {:success s/Bool
@@ -16,7 +19,10 @@
    (s/optional-key :errors) [s/Any]})
 
 (s/defschema EditOrganizationCommand
-  OrganizationFull)
+  (-> OrganizationFull
+      (dissoc :organization/modifier
+              :organization/last-modifier)
+      (assoc (s/optional-key :organization/owners) [User])))
 
 (s/defschema EditOrganizationResponse
   {:success s/Bool

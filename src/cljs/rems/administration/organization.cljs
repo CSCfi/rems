@@ -84,7 +84,9 @@
               [review-emails-field (:organization/review-emails organization)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
-              [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]
+              [inline-info-field (text :t.administration/modifier) (->> (:organization/modifier organization)
+                                                                        enrich-user
+                                                                        :display)]]}]
    (let [id (:organization/id organization)]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
