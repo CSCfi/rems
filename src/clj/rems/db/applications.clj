@@ -264,10 +264,10 @@
   (->> (get-all-applications user-id)
        (filter my-application?)))
 
-(defn export-applications-for-form-as-csv [user-id form-id]
+(defn export-applications-for-form-as-csv [user-id form-id language]
   (let [applications (get-all-applications-full user-id)
         filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (csv/applications-to-csv filtered-applications form-id user-id)))
+    (csv/applications-to-csv filtered-applications form-id language)))
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")
