@@ -54,6 +54,7 @@ jobs:
       - image: clojure:openjdk-11-lein-2.9.3
     steps:
       - checkout
+      # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
