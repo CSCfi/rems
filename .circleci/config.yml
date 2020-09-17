@@ -1,10 +1,7 @@
 version: 2.1
 
-# We use the machine executor because our dev_db.sh uses docker to run
-# a fixed postgres version. Additionally, if we wanted to use docker
-# for builds we'd need to setup a custom lein+npm+postgres image and
-# publish it on docker hub. Maybe some day.
-
+# We still use this legacy machine executor for building docker images.
+# TODO: use docker executor and setup_remote_docker for these builds.
 defaults: &defaults
   machine:
     image: ubuntu-1604:201903-01
@@ -104,7 +101,6 @@ jobs:
           paths:
             - target/uberjar/rems.jar
 
-  # TODO: use docker executor and setup_remote_docker for these builder too:
   docker-snapshot:
     <<: *defaults
     steps:
