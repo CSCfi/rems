@@ -103,6 +103,7 @@ jobs:
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
+      - run: lein deps # just in case cache fails
       - run: lein doo chrome-headless test once
       - store_test_results:
           path: target/test-results
