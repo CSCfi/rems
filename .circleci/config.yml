@@ -18,11 +18,15 @@ defaults: &defaults
     # Customize the JVM maximum heap limit
     JVM_OPTS: -Xmx3200m
 
+docker: &docker
+  executor: docker
+  docker:
+    - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+
+
 jobs:
   build:
-    executor: docker
-    docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+    <<: *docker
     steps:
       - checkout
 
@@ -51,9 +55,7 @@ jobs:
           key: v2-dependencies-{{ checksum "project.clj" }}
 
   without-db:
-    executor: docker
-    docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+    <<: *docker
     steps:
       - checkout
       # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
@@ -95,9 +97,7 @@ jobs:
           path: browsertest-downloads
 
   doo:
-    executor: docker
-    docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+    <<: *docker
     steps:
       - checkout
       - restore_cache:
@@ -108,9 +108,7 @@ jobs:
           path: target/test-results
 
   war:
-    executor: docker
-    docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+    <<: *docker
     steps:
       - checkout
       - restore_cache:
