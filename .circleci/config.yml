@@ -54,8 +54,7 @@ jobs:
       - checkout
       # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
       - restore_cache:
-          keys:
-            - v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
       - store_test_results:
@@ -66,8 +65,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       - run: lein cljtests-ci
       - store_test_results:
           path: target/test-results
@@ -81,8 +79,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       - run: lein doo chrome-headless test once
       - store_test_results:
           path: target/test-results
@@ -92,8 +89,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       - run: lein uberwar
       - store_artifacts:
           path: target/uberjar/rems.war
