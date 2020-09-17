@@ -38,6 +38,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v3-dependencies-
       - run: lein deps
+      - run: lein cljsbuild deps
       # TODO using persist_to_workspace might be more robust than using cache
       - save_cache:
           paths:
