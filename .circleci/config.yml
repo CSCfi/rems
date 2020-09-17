@@ -68,26 +68,18 @@ jobs:
           path: target/test-results
 
   test:
-    <<: *defaults
+    executor: docker
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+      - image: postgres:9.6
+        environment:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: rems_test
     steps:
       - checkout
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
-      # dl.google.com new apt key isn't trusted by the image
-      - run: curl https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-      # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
-      - run: sudo killall -9 apt-get || true; sudo apt update
-
-      # upgrade chromedriver and node
-      - run: sudo apt remove google-chrome-stable
-      # remove conflicting versions installed by circle
-      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
-      - run: sudo rm /usr/local/bin/chromedriver /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
-      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-      - run: sudo apt install chromium-chromedriver nodejs
-
-      - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests-ci
       - store_test_results:
           path: target/test-results
