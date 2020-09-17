@@ -27,7 +27,7 @@ executors:
           POSTGRES_USER: rems_test
 
 jobs:
-  build:
+  deps:
     executor: clojure
     steps:
       - checkout
@@ -48,7 +48,7 @@ jobs:
             - node_modules
           key: v3-dependencies-{{ checksum "project.clj" }}
 
-  without-db:
+  unit-test:
     executor: clojure
     steps:
       - checkout
@@ -56,16 +56,29 @@ jobs:
           key: v3-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
+      - run: lein cljsbuild once
+      - run: lein doo chrome-headless test once
       - store_test_results:
           path: target/test-results
 
-  test:
+  integration-test:
     executor: db
     steps:
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
-      - run: lein cljtests-ci
+      - run: lein kaocha --reporter kaocha.report/documentation integration
+      - store_test_results:
+          path: target/test-results
+
+  browser-test:
+    executor: db
+    steps:
+      - checkout
+      - restore_cache:
+          key: v3-dependencies-{{ checksum "project.clj" }}
+      - run: lein cljsbuild once
+      - run: lein kaocha --reporter kaocha.report/documentation browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:
@@ -73,17 +86,7 @@ jobs:
       - store_artifacts:
           path: browsertest-downloads
 
-  doo:
-    executor: clojure
-    steps:
-      - checkout
-      - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
-      - run: lein doo chrome-headless test once
-      - store_test_results:
-          path: target/test-results
-
-  war:
+  build:
     executor: clojure
     steps:
       - checkout
@@ -140,31 +143,31 @@ workflows:
   version: 2
   build-test-and-deploy:
     jobs:
+      - deps:
+          filters:
+            tags:
+              only: /.*/
+      - unit-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
+      - integration-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
+      - browser-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
       - build:
-          filters:
-            tags:
-              only: /.*/
-      - without-db:
           requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - doo:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - war:
-          requires:
-            - build
+            - deps
           filters:
             tags:
               only: /.*/
@@ -173,16 +176,16 @@ workflows:
                 - master
       - docker-snapshot:
           requires:
+            - deps
             - build
-            - war
           filters:
             branches:
               only:
                 - master
       - docker-release:
           requires:
+            - deps
             - build
-            - war
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/
@@ -190,16 +193,16 @@ workflows:
               ignore: /.*/
       - rahti-dev:
           requires:
+            - deps
             - build
-            - war
           filters:
             branches:
               only:
                 - master
       - rahti-demo:
           requires:
+            - deps
             - build
-            - war
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/
@@ -207,11 +210,11 @@ workflows:
               ignore: /.*/
       - ok:
           requires:
+            - deps
+            - unit-test
+            - integration-test
+            - browser-test
             - build
-            - without-db
-            - test
-            - doo
-            - war
           filters:
             tags:
               only: /.*/
