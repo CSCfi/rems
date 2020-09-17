@@ -52,7 +52,6 @@ jobs:
     executor: clojure
     steps:
       - checkout
-      # TODO cache restore puts stuff in the wrong directories due to the build step being non-docker
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
