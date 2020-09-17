@@ -885,6 +885,7 @@
                                                     :workflow-id wf-id
                                                     :form-id form-2-id})
         app-id (test-data/create-draft! applicant [cat-id] "Answer1")
+        _draft-app-id (test-data/create-draft! applicant [cat-id] "DraftAnswer")
         app-2-id (test-data/create-draft! applicant [cat-id cat-2-id] "Answer2")]
     (send-command applicant {:type :application.command/submit
                              :application-id app-id})
@@ -893,16 +894,19 @@
     (testing "reporter can export"
       (let [exported (api-call :get (str "/api/applications/export?form-id=" form-id) nil
                                api-key reporter)
-            [header & lines] (str/split-lines exported)]
+            [_header & lines] (str/split-lines exported)]
         (is (str/includes? exported "Field 1")
             exported)
         (is (not (str/includes? exported "HIDDEN"))
             exported)
-        (is (= 2 (count lines)))
-        (is (some #(str/includes? % "\"Item1\",\"Answer1\"") lines)
-            lines)
-        (is (some #(str/includes? % "\"Item1, Item2\",\"Answer2\"") lines)
-            lines)))
+        (testing "drafts are not visible"
+          (is (not (str/includes? exported "DraftAnswer"))))
+        (testing "submitted applications are visible"
+          (is (= 2 (count lines)))
+          (is (some #(str/includes? % "\"Item1\",\"Answer1\"") lines)
+              lines)
+          (is (some #(str/includes? % "\"Item1, Item2\",\"Answer2\"") lines)
+              lines))))
     (testing "handler can't export"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
                                                 api-key handler))))))
