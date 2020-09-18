@@ -1,5 +1,6 @@
 (ns rems.actions.approve-reject
-  (:require [cljs-time.core :as time]
+  (:require [cljs-time.coerce :as time-coerce]
+            [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
@@ -33,7 +34,11 @@
                      :comment comment
                      :attachments attachments}
                     (when end
-                      {:entitlement-end (js/Date. end)}))
+                      ;; selecting an entitlement end of 2008-03-15 means the entitlement ends 2008-03-15T23:59:59
+                      {:entitlement-end (-> (time-format/parse (time-format/formatters :year-month-day) end)
+                                            (time/plus (time/days 1))
+                                            (time/minus (time/seconds 1))
+                                            (time-coerce/to-date))}))
              {:description [text :t.actions/approve]
               :collapse action-form-id
               :on-finished on-finished})

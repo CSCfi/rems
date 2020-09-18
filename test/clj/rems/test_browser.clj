@@ -452,7 +452,7 @@
       (is (= {:application/id (btu/context-get :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
-              :entitlement/end "2100-05-06T00:00:00.000Z"
+              :entitlement/end "2100-05-06T23:59:59.000Z"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
                  :application/events
