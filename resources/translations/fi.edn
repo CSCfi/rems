@@ -96,6 +96,7 @@
                    :more-info "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
                    :name "Nimi"
                    :no-licenses "Ei lisenssejä"
+                   :optional "(valinnainen)"
                    :organization "Organisaatio"
                    :organizations "Organisaatiot"
                    :owners "Omistajat"

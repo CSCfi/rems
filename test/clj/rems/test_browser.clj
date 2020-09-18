@@ -418,9 +418,9 @@
               :application/comment "this is a comment"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
-                  :application/events
-                  last
-                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 :application/events
+                 last
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
@@ -1073,14 +1073,14 @@
                 "Title (EN)" (str (btu/context-get :organization-name) " EN")
                 "Title (FI)" (str (btu/context-get :organization-name) " FI")
                 "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                "Owners" "organization-owner1"
+                "Owners" "Organization Owner 1 (organization-owner1@example.com)"
                 "Name (FI)" "Review mail FI"
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
                 "Active" ""
                 "Last modified" last-modified
-                "Modifier" "owner"}
+                "Modifier" "Owner (owner@example.com)"}
                (slurp-fields :organization)))))
 
     (testing "edit after creation"
@@ -1107,14 +1107,14 @@
                   "Title (EN)" (str (btu/context-get :organization-name) " EN")
                   "Title (FI)" (str (btu/context-get :organization-name) " FI")
                   "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "organization-owner1\norganization-owner2"
+                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                   "Name (FI)" "Review mail FI"
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" ""
                   "Last modified" last-modified
-                  "Modifier" "owner"}
+                  "Modifier" "Owner (owner@example.com)"}
                  (slurp-fields :organization))))))
 
     (testing "as organization owner"
@@ -1143,14 +1143,14 @@
                   "Title (EN)" (str (btu/context-get :organization-name) " EN")
                   "Title (FI)" (str (btu/context-get :organization-name) " FI")
                   "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "organization-owner1\norganization-owner2"
+                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                   "Name (FI)" "Review mail FI"
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" ""
                   "Last modified" last-modified
-                  "Modifier" "owner"}
+                  "Modifier" "Owner (owner@example.com)"}
                  (slurp-fields :organization)))))
 
       (testing "edit as organization owner"
@@ -1176,12 +1176,12 @@
                     "Title (EN)" (str (btu/context-get :organization-name) " EN")
                     "Title (FI)" (str (btu/context-get :organization-name) " FI")
                     "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                    "Owners" "organization-owner1\norganization-owner2"
+                    "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                     "Name (FI)" "Review mail FI"
                     "Name (SV)" "Review mail SV"
                     "Name (EN)" "Review mail EN"
                     "Email" "review.email@example.com"
                     "Active" ""
                     "Last modified" last-modified
-                    "Modifier" "organization-owner2"}
+                    "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                    (slurp-fields :organization)))))))))
