@@ -50,7 +50,7 @@ Changes since v2.12
 - It's now possible to add a text to the login page after the login button using extra translations (:t.login/intro2) (#2214)
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
-- Organizations have an initial UI (#2039)
+- Organizations have an initial UI (#2039, #2332)
 - Organisations can be created and edited in the UI (#2039)
 - The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
 - REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. See [docs/configuration.md](docs/configuration.md). (#2130)
