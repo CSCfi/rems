@@ -18,11 +18,7 @@
    (s/optional-key :organization/id) s/Str
    (s/optional-key :errors) [s/Any]})
 
-(s/defschema EditOrganizationCommand
-  (-> OrganizationFull
-      (dissoc :organization/modifier
-              :organization/last-modifier)
-      (assoc (s/optional-key :organization/owners) [User])))
+(s/defschema EditOrganizationCommand CreateOrganizationCommand)
 
 (s/defschema EditOrganizationResponse
   {:success s/Bool
