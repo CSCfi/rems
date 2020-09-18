@@ -1065,6 +1065,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
     (testing "view after creation"
+      (btu/wait-visible :organization)
       (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI"
@@ -1099,6 +1100,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
       (testing "view after editing"
+        (btu/wait-visible :organization)
         (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
