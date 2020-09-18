@@ -96,6 +96,7 @@
                    :more-info "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
+                   :optional "(valfritt)"
                    :organization "Organisation"
                    :organizations "Organisationer"
                    :owners "Ägare"
