@@ -2,9 +2,9 @@
   (:require [clojure.test :refer [deftest is]]
             #?(:clj [clj-time.core :as time]
                :cljs [cljs-time.core :as time])
-            #?(:clj [clj-time.format :as format]
-               :cljs [cljs-time.format :as format])
-            #?(:cljs [cljs-time.coerce :as coerce])
+            #?(:clj [clj-time.format :as time-format]
+               :cljs [cljs-time.format :as time-format])
+            #?(:cljs [cljs-time.coerce :as time-coerce])
             [clojure.string :as str]
             #?(:cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
@@ -26,7 +26,7 @@
                  (cons k args)))))
 
 (defn text-format
-  "Return the tempura translation for a given key & format arguments"
+  "Return the tempura translation for a given key & time arguments"
   [k & args]
   #?(:clj (context/*tempura* [k :t/missing] (vec args))
      :cljs (let [translations (rf/subscribe [:translations])
@@ -90,21 +90,21 @@
     (text (get todos todo :t.applications.todos/unknown))))
 
 (defn- time-format []
-  (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
+  (time-format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
 
 (defn localize-time [time]
   #?(:clj (when time
-            (let [time (if (string? time) (format/parse time) time)]
-              (format/unparse (time-format) time)))
-     :cljs (let [time (if (string? time) (format/parse time) time)]
+            (let [time (if (string? time) (time-format/parse time) time)]
+              (time-format/unparse (time-format) time)))
+     :cljs (let [time (if (string? time) (time-format/parse time) time)]
              (when time
-               (format/unparse-local (time-format) (time/to-default-time-zone time))))))
+               (time-format/unparse-local (time-format) (time/to-default-time-zone time))))))
 
 (defn localize-utc-date
   "For a given time instant, return the ISO date (yyyy-MM-dd) that it corresponds to in UTC."
   [time]
-  #?(:clj (format/unparse (format/formatter "yyyy-MM-dd") time)
-     :cljs (format/unparse (format/formatter "yyyy-MM-dd") (coerce/to-local-date time))))
+  #?(:clj (time-format/unparse (time-format/formatter "yyyy-MM-dd") time)
+     :cljs (time-format/unparse (time-format/formatter "yyyy-MM-dd") (time-coerce/to-local-date time))))
 
 (deftest test-localize-utc-date []
   (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 1 1))))
