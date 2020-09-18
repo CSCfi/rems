@@ -64,6 +64,8 @@
    (= (set languages)
       (set (keys (:organization/short-name request)))
       (set (keys (:organization/name request))))
+   (not-any? str/blank? (vals (:organization/short-name request)))
+   (not-any? str/blank? (vals (:organization/name request)))
    (every? valid-owner? (:organization/owners request))
    (every? (partial valid-review-email? languages) (:organization/review-emails request))))
 
@@ -85,6 +87,8 @@
   (and (= (set languages)
           (set (keys (:organization/short-name request)))
           (set (keys (:organization/name request))))
+       (not-any? str/blank? (vals (:organization/short-name request)))
+       (not-any? str/blank? (vals (:organization/name request)))
        (every? valid-owner? (:organization/owners request))
        (every? (partial valid-review-email? languages) (:organization/review-emails request))))
 
