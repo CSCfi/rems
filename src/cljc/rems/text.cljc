@@ -1,8 +1,10 @@
 (ns rems.text
-  (:require #?(:clj [clj-time.core :as time]
+  (:require [clojure.test :refer [deftest is]]
+            #?(:clj [clj-time.core :as time]
                :cljs [cljs-time.core :as time])
             #?(:clj [clj-time.format :as format]
                :cljs [cljs-time.format :as format])
+            #?(:cljs [cljs-time.coerce :as coerce])
             [clojure.string :as str]
             #?(:cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
@@ -98,6 +100,23 @@
              (when time
                (format/unparse-local (time-format) (time/to-default-time-zone time))))))
 
+(defn localize-utc-date
+  "For a given time instant, return the ISO date (yyyy-MM-dd) that it corresponds to in UTC."
+  [time]
+  #?(:clj (format/unparse (format/formatter "yyyy-MM-dd") time)
+     :cljs (format/unparse (format/formatter "yyyy-MM-dd") (coerce/to-local-date time))))
+
+(deftest test-localize-utc-date []
+  (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 1 1))))
+  (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 23 59))))
+  ;; [cl]js dates are always in UTC, so we can only test these for clj
+  #?(:clj (do
+            (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 23 59)
+                                                                      (time/time-zone-for-offset 5))))
+            (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 1 1)
+                                                                      (time/time-zone-for-offset -5)))))))))
+
+
 (def ^:private event-types
   {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
@@ -166,6 +185,6 @@
      (case event-type
        :application.event/approved
        (when-let [end (:entitlement/end event)]
-         (str " " (text-format :t.applications/entitlement-end (localize-time end))))
+         (str " " (text-format :t.applications/entitlement-end (localize-utc-date end))))
 
        nil))))
