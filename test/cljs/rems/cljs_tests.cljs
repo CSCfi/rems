@@ -13,7 +13,8 @@
             rems.flash-message
             rems.test-fields
             rems.test-table
-            rems.test-util))
+            rems.test-util
+            rems.text))
 
 (doo-tests 'rems.administration.test-create-catalogue-item
            'rems.administration.test-create-form
@@ -28,4 +29,5 @@
            'rems.flash-message
            'rems.test-fields
            'rems.test-table
-           'rems.test-util)
+           'rems.test-util
+           'rems.text)

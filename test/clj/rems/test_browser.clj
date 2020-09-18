@@ -446,13 +446,12 @@
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
     (testing "event visible in eventlog"
-      ;; time rendering depends on time zone
-      (is (btu/visible? {:css "div.event-description b" :fn/has-text "Developer approved the application. Access rights end"})))
+      (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application. Access rights end 2100-05-06"})))
     (testing "event via api"
       (is (= {:application/id (btu/context-get :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
-              :entitlement/end "2100-05-06T00:00:00.000Z"
+              :entitlement/end "2100-05-06T23:59:59.000Z"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
                  :application/events
