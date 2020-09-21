@@ -8,8 +8,6 @@ have notable changes.
 
 Changes since v2.13
 
-*Note!* This is the last release that supports the `:shibboleth` authentication method.
-
 ### Breaking changes
 
 ### Changes
@@ -19,6 +17,8 @@ Changes since v2.13
 ### Additions
 
 ## v2.13 "Etelätuulentie" 2020-09-17
+
+*Note!* This is the last release that supports the `:shibboleth` authentication method.
 
 ### Breaking changes
 - Organizations are maintained in the database and not config. (#2039)
