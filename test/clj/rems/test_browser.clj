@@ -855,7 +855,6 @@
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
-                               :field/info-text {:en "", :fi "", :sv ""}
                                :field/type "description"
                                :field/id "fld3"
                                :field/max-length nil
