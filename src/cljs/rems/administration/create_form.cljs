@@ -142,7 +142,10 @@
                             (boolean (:field/optional field))
                             false)
           }
-         (when (:field/info-text field)
+         (when (and
+                (string? (:fi (:field/info-text field)))
+                (string? (:en (:field/info-text field)))
+                (string? (:sv (:field/info-text field))))
           {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
