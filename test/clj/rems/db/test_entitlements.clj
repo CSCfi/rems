@@ -55,8 +55,8 @@
      {:status 200}
      (fn [server]
        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
-       (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
-                               "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
+       (is (= {:ga4gh_passport_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUT0RPIiwic3ViIjoiVE9ETyIsImlhdCI6MCwiZXhwIjowLCJzY29wZSI6Im9wZW5pZCIsImdhNGdoX3Zpc2FfdjEiOnsidHlwZSI6IkNvbnRyb2xsZWRBY2Nlc3NHcmFudHMiLCJ2YWx1ZSI6InJlczEiLCJzb3VyY2UiOiJodHRwczovL25vLm9yZ2FuaXphdGlvbiIsImJ5Ijoic3lzdGVtIiwiYXNzZXJ0ZWQiOjEwMDI3NTg0MDAwMDB9fQ.l24iGpWDBym3rMBii7HvVw7AV0NBYjtMiK0S1flc0R4"
+                                   "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUT0RPIiwic3ViIjoiVE9ETyIsImlhdCI6MCwiZXhwIjowLCJzY29wZSI6Im9wZW5pZCIsImdhNGdoX3Zpc2FfdjEiOnsidHlwZSI6IkNvbnRyb2xsZWRBY2Nlc3NHcmFudHMiLCJ2YWx1ZSI6InJlczIiLCJzb3VyY2UiOiJodHRwczovL25vLm9yZ2FuaXphdGlvbiIsImJ5Ijoic3lzdGVtIiwiYXNzZXJ0ZWQiOjEwMzQyOTQ0MDAwMDB9fQ.0SvFsS6OFEC0MxQ8m9qhngTDMzNCYEER6u6K_8fAT84"]}
               (-> (stub/recorded-requests server)
                   first
                   (get-in [:body "postData"])
@@ -89,7 +89,7 @@
   (filter #(= (% :path) path) (set (get-requests server))))
 
 (defn- is-valid-ga4gh? [entry]
-  (string? (first (:ga4gh_visa_v1 (:body entry)))))
+  (string? (first (:ga4gh_passport_v1 (:body entry)))))
 
 (deftest test-entitlement-granting
   (let [applicant "bob"

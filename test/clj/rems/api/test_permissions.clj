@@ -13,9 +13,9 @@
 
 (defn- validate-alice-result [data]
   (is (= 1 (count data)))
-  (is (contains? data :ga4gh_visa_v1))
-  (is (vector? (:ga4gh_visa_v1 data)))
-  (is (string? (first (:ga4gh_visa_v1 data)))))
+  (is (contains? data :ga4gh_passport_v1))
+  (is (vector? (:ga4gh_passport_v1 data)))
+  (is (string? (first (:ga4gh_passport_v1 data)))))
 
 (deftest permissions-test-content
   (let [api-key "42"]

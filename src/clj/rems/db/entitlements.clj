@@ -40,10 +40,10 @@
                                            (time/now))})))
 
 (defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
-  (ga4gh/entitlements->visa (db/get-entitlements {:user user
-                                                  :resource-ext-id resource-or-nil
-                                                  :active-at (when-not expired?
-                                                               (time/now))})))
+  (ga4gh/entitlements->passport (db/get-entitlements {:user user
+                                                      :resource-ext-id resource-or-nil
+                                                      :active-at (when-not expired?
+                                                                   (time/now))})))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
@@ -55,7 +55,7 @@
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
-    :ga4gh (ga4gh/entitlements->visa entitlements)
+    :ga4gh (ga4gh/entitlements->passport entitlements)
     (for [e entitlements]
       {:application (:catappid e)
        :resource (:resid e)
