@@ -612,7 +612,6 @@
                        :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"
                        :background-color "rgba(0, 0, 0, 0.01)"}
     [:&:empty {:height (u/rem 2.25)}]]
-   [:.field-info {:white-space :pre-wrap}]
    [:.toggle-diff {:float "right"}]
    [:.diff
     [:ins {:background-color "#acf2bd"}]
@@ -657,7 +656,8 @@
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
    [:label.application-field-label {:font-weight "bold"}]
-   [:div.field-info {:font-weight "400"}]
+   [:div.info-collapse {:font-weight "400"
+                        :white-space :pre-wrap}]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]

@@ -23,7 +23,7 @@
          :aria-expanded "false"
          :aria-controls (str info-id "-collapse")}
         [:i.fa.fa-info-circle]]
-   [:div.field-info.collapse {:id (str info-id "-collapse")
+   [:div.info-collapse.collapse {:id (str info-id "-collapse")
                               :ref focus-when-collapse-opened
                               :tab-index "-1"}
      body-text]])
