@@ -51,9 +51,15 @@
                        ;; providers differ in what they give us
                        :commonName (some id-data [:name :unique_name :family_name])
                        :mail (:email id-data)}
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
+
+        user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
+                    (-> (http/get url
+                                  {:headers {"Authorization" (str "Bearer " access-token)}})
+                        :body
+                        json/parse-string))]
     (when (:log-authentication-details env)
-      (log/info "logged in" id-data))
+      (log/info "logged in" id-data user-info))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
