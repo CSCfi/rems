@@ -89,7 +89,7 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljfmt "0.6.7"]
-            [lein-cljsbuild "1.1.7"]
+            [lein-cljsbuild "1.1.8"]
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]

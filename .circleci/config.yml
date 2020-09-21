@@ -1,14 +1,7 @@
-# Clojure CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-clojure/ for more details
-#
-version: 2
+version: 2.1
 
-# We use the machine executor because our dev_db.sh uses docker to run
-# a fixed postgres version. Additionally, if we wanted to use docker
-# for builds we'd need to setup a custom lein+npm+postgres image and
-# publish it on docker hub. Maybe some day.
-
+# We still use this legacy machine executor for building docker images.
+# TODO: use docker executor and setup_remote_docker for these builds.
 defaults: &defaults
   machine:
     image: ubuntu-1604:201903-01
@@ -18,27 +11,32 @@ defaults: &defaults
     # Customize the JVM maximum heap limit
     JVM_OPTS: -Xmx3200m
 
+executors:
+  clojure:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+  db:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
+      - image: postgres:9.6
+        environment:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: rems_test
+
 jobs:
-  build:
-    <<: *defaults
+  deps:
+    executor: clojure
     steps:
       - checkout
-
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
-
-      # upgrade node
-      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
-      - run: sudo rm /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
-      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-      - run: sudo apt install nodejs
-
+            - v3-dependencies-
       - run: lein deps
-
+      - run: lein cljsbuild deps
+      # TODO using persist_to_workspace might be more robust than using cache
       - save_cache:
           paths:
             - ~/.m2
@@ -46,42 +44,39 @@ jobs:
             # unless the project.clj is changed. This might create differences
             # between dev, CI and actual deployment.
             - node_modules
-          key: v2-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
 
-  without-db:
-    <<: *defaults
+  unit-test:
+    executor: clojure
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
+      - run: lein cljsbuild once
+      - run: lein doo chrome-headless test once
       - store_test_results:
           path: target/test-results
 
-  test:
-    <<: *defaults
+  integration-test:
+    executor: db
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
-      # dl.google.com new apt key isn't trusted by the image
-      - run: curl https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-      # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
-      - run: sudo killall -9 apt-get || true; sudo apt update
+          key: v3-dependencies-{{ checksum "project.clj" }}
+      - run: lein kaocha --reporter kaocha.report/documentation integration
+      - store_test_results:
+          path: target/test-results
 
-      # upgrade chromedriver and node
-      - run: sudo apt remove google-chrome-stable
-      # remove conflicting versions installed by circle
-      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
-      - run: sudo rm /usr/local/bin/chromedriver /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
-      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-      - run: sudo apt install chromium-chromedriver nodejs
-
-      - run: FOR_TESTS=1 ./dev_db.sh
-      - run: lein cljtests-ci
+  browser-test:
+    executor: db
+    steps:
+      - checkout
+      - restore_cache:
+          key: v3-dependencies-{{ checksum "project.clj" }}
+      - run: lein cljsbuild once
+      - run: lein kaocha --reporter kaocha.report/documentation browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:
@@ -89,24 +84,12 @@ jobs:
       - store_artifacts:
           path: browsertest-downloads
 
-  doo:
-    <<: *defaults
+  build:
+    executor: clojure
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
-      - run: lein doo chrome-headless test once
-      - store_test_results:
-          path: target/test-results
-
-  war:
-    <<: *defaults
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}
       - run: lein uberwar
       - store_artifacts:
           path: target/uberjar/rems.war
@@ -148,7 +131,6 @@ jobs:
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
-    executor: docker
     docker:
       - image: alpine
     steps:
@@ -158,31 +140,31 @@ workflows:
   version: 2
   build-test-and-deploy:
     jobs:
+      - deps:
+          filters:
+            tags:
+              only: /.*/
+      - unit-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
+      - integration-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
+      - browser-test:
+          requires:
+            - deps
+          filters:
+            tags:
+              only: /.*/
       - build:
-          filters:
-            tags:
-              only: /.*/
-      - without-db:
           requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - doo:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-      - war:
-          requires:
-            - build
+            - deps
           filters:
             tags:
               only: /.*/
@@ -191,16 +173,16 @@ workflows:
                 - master
       - docker-snapshot:
           requires:
+            - deps
             - build
-            - war
           filters:
             branches:
               only:
                 - master
       - docker-release:
           requires:
+            - deps
             - build
-            - war
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/
@@ -208,16 +190,16 @@ workflows:
               ignore: /.*/
       - rahti-dev:
           requires:
+            - deps
             - build
-            - war
           filters:
             branches:
               only:
                 - master
       - rahti-demo:
           requires:
+            - deps
             - build
-            - war
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/
@@ -225,11 +207,11 @@ workflows:
               ignore: /.*/
       - ok:
           requires:
+            - deps
+            - unit-test
+            - integration-test
+            - browser-test
             - build
-            - without-db
-            - test
-            - doo
-            - war
           filters:
             tags:
               only: /.*/
