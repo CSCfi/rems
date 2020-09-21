@@ -39,21 +39,24 @@
                               :active-at (when-not expired?
                                            (time/now))})))
 
-(defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
+(defn- entitlement->grant [{:keys [resid _catappid start _end _mail _userid approvedby]}]
   (let [start-datetime (DateTime. start)]
+    ;; TODO should this send the end time also if we know it?
     (jwt/sign {:type "ControlledAccessGrants"
                :value (str resid)
                :source "https://ga4gh.org/duri/no_org"
                :by (str approvedby)
-               :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
+               :asserted (.getMillis start-datetime)}
+              "secret"))) ;;TODO use key/real secret here
 
-;; TODO should this send the end time also if we know it?
+(defn entitlements->visa [entitlements]
+  {:ga4gh_visa_v1 (mapv entitlement->grant entitlements)})
+
 (defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
-  {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
-                        (db/get-entitlements {:user user
-                                              :resource-ext-id resource-or-nil
-                                              :active-at (when-not expired?
-                                                           (time/now))}))})
+  (entitlements->visa (db/get-entitlements {:user user
+                                            :resource-ext-id resource-or-nil
+                                            :active-at (when-not expired?
+                                                         (time/now))})))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
@@ -65,7 +68,7 @@
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
-    :ga4gh {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api entitlements)}
+    :ga4gh (entitlements->visa entitlements)
     (for [e entitlements]
       {:application (:catappid e)
        :resource (:resid e)
