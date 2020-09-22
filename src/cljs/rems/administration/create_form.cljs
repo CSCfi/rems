@@ -135,8 +135,10 @@
              [language (trim-when-string (get lstr language ""))])))
 
 (defn- string-is-not-empty [s]
-  (when (string? s)
-    (not (str/blank? s))))
+  (if (string? s)
+    (not (str/blank? s))
+    false
+    ))
 
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)

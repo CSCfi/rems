@@ -1,7 +1,7 @@
 (ns rems.administration.test-create-form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
+            [rems.administration.create-form :refer [build-request build-request-field build-localized-string string-is-not-empty]]
             [rems.identity :refer [set-roles!]]
             [rems.testing :refer [isolate-re-frame-state]]
             [rems.util :refer [getx-in]]))
@@ -12,6 +12,18 @@
 
 (defn reset-form []
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
+
+(deftest string-is-not-empty-test
+  (testing "string is not empty"
+    (is (= true (string-is-not-empty "everything")))
+    (is (= true (string-is-not-empty "But would you kindly ponder this question: \n
+                                      What would your good do if \n
+                                      evil didn't exist, and what would the earth look \n
+                                      like if all the shadows disappeared?"))))
+  (testing "string is empty"
+    (is (= false (string-is-not-empty nil)))
+    (is (= false (string-is-not-empty " ")))
+    (is (= false (string-is-not-empty "")))))
 
 (deftest add-form-field-test
   (set-roles! [:owner])
