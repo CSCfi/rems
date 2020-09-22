@@ -1011,6 +1011,7 @@
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
+      (btu/wait-visible {:tag :label :fn/text "Form"})
       (select-option* "Form" (btu/context-get :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
