@@ -174,12 +174,13 @@
 ;; Etaoin's fill-human almost works, but very rarely loses characters,
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
-(def character-delay 0.1)
+(def +character-delay+ 0.1)
 
 (defn fill-human [q text]
   (doseq [c text]
-    (et/fill (get-driver) q c)
-    (et/wait character-delay))
+    (et/wait +character-delay+)
+    (et/fill (get-driver) q c))
+  (et/wait +character-delay+)
   (let [value (get-element-attr q "value")]
     (when-not (= text value)
       (log/warn "Failed to fill field to" (pr-str text) "got" (pr-str value) "instead."))))
