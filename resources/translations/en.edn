@@ -225,6 +225,8 @@
                 :field-n "Field %1: %2"
                 :field-title "Field title"
                 :field-type "Field type"
+                :info-text "Field description (optional)"
+                :collapse-aria-label "Info about "
                 :maxlength "Maximum length in characters (optional)"
                 :option-key "ID code"
                 :option-label "Label"

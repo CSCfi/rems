@@ -782,6 +782,9 @@
       (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
       (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
       (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
+      (btu/fill-human :fields-0-info-text-en "Info text (EN)")
+      (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
+      (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
       (btu/scroll-and-click :fields-0-type-texta)
       (btu/scroll-and-click :fields-0-optional)
       (btu/fill-human :fields-0-max-length "127")
@@ -791,6 +794,9 @@
       (btu/fill-human :fields-1-title-en "Option list (EN)")
       (btu/fill-human :fields-1-title-fi "Option list (FI)")
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
+      (btu/fill-human :fields-1-info-text-en "Info text (EN)")
+      (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
+      (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
       (btu/scroll-and-click :fields-1-type-option)
       (btu/scroll-and-click {:class :add-option})
       (btu/wait-visible :fields-1-options-0-key)
@@ -854,11 +860,13 @@
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
                                :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "texta"
                                :field/id "fld1"
                                :field/max-length 127
                                :field/optional true}
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "option"
                                :field/id "fld2"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}

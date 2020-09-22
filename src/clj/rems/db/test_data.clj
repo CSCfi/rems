@@ -332,65 +332,68 @@
     (db/set-license-enabled! {:id id :enabled false})))
 
 (def all-field-types-example
-  [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+  [{:field/type :label
+    :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
                   :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
                   :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}
-    :field/optional false
-    :field/type :label}
+    :field/optional false}
 
-   {:field/title {:en "Application title field"
+   {:field/type :description
+    :field/title {:en "Application title field"
                   :fi "Hakemuksen otsikko -kenttä"
                   :sv "Ansökningens rubrikfält"}
-    :field/optional false
-    :field/type :description}
+    :field/optional false}
 
-   {:field/title {:en "Text field"
+   {:field/type :text
+    :field/title {:en "Text field"
                   :fi "Tekstikenttä"
                   :sv "Textfält"}
     :field/optional false
-    :field/type :text
+    :field/info-text {:en "Explanation of how to fill in text field"
+                      :fi "Selitys tekstikentän täyttämisestä"
+                      :sv "Förklaring till hur man fyller i textfält"}
     :field/placeholder {:en "Placeholder text"
                         :fi "Täyteteksti"
                         :sv "Textexempel"}}
 
-   {:field/title {:en "Text area"
+   {:field/type :texta
+    :field/title {:en "Text area"
                   :fi "Tekstialue"
                   :sv "Textområde"}
     :field/optional false
-    :field/type :texta
     :field/placeholder {:en "Placeholder text"
                         :fi "Täyteteksti"
                         :sv "Textexempel"}}
 
-   {:field/title {:en "Header"
+   {:field/type :header
+    :field/title {:en "Header"
                   :fi "Otsikko"
                   :sv "Titel"}
-    :field/type :header
     :field/optional false}
 
-   {:field/title {:en "Date field"
+   {:field/type :date
+    :field/title {:en "Date field"
                   :fi "Päivämääräkenttä"
                   :sv "Datumfält"}
-    :field/optional true
-    :field/type :date}
+    :field/optional true}
 
-   {:field/title {:en "Email field"
+   {:field/type :email
+    :field/title {:en "Email field"
                   :fi "Sähköpostikenttä"
                   :sv "E-postaddressfält"}
-    :field/optional true
-    :field/type :email}
+    :field/optional true}
 
-   {:field/title {:en "Attachment"
+   {:field/type :attachment
+    :field/title {:en "Attachment"
                   :fi "Liitetiedosto"
                   :sv "Bilaga"}
-    :field/optional true
-    :field/type :attachment}
+    :field/optional true}
 
-   {:field/title {:en "Option list. Choose the first option to reveal a new field."
+   {:field/type :option
+    :field/title {:en "Option list. Choose the first option to reveal a new field."
                   :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
                   :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
     :field/optional true
-    :field/type :option
     :field/id "option"
     :field/options [{:key "Option1"
                      :label {:en "First option"
@@ -405,20 +408,20 @@
                              :fi "Kolmas vaihtoehto"
                              :sv "Tredje alternativ"}}]}
 
-   {:field/title {:en "Conditional field. Shown only if first option is selected above."
+   {:field/type :text
+    :field/title {:en "Conditional field. Shown only if first option is selected above."
                   :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
                   :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
     :field/optional false
-    :field/type :text
     :field/visibility {:visibility/type :only-if
                        :visibility/field {:field/id "option"}
                        :visibility/values ["Option1"]}}
 
-   {:field/title {:en "Multi-select list"
+   {:field/type :multiselect
+    :field/title {:en "Multi-select list"
                   :fi "Monivalintalista"
                   :sv "Lista med flerval"}
     :field/optional true
-    :field/type :multiselect
     :field/options [{:key "Option1"
                      :label {:en "First option"
                              :fi "Ensimmäinen vaihtoehto"
@@ -432,25 +435,25 @@
                              :fi "Kolmas vaihtoehto"
                              :sv "Tredje alternativ"}}]}
 
-   {:field/title {:en "The following field types can have a max length."
+   {:field/type :label
+    :field/title {:en "The following field types can have a max length."
                   :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
                   :sv "De nästa fälttyperna kan ha bengränsat längd."}
-    :field/optional false
-    :field/type :label}
+    :field/optional false}
 
    ;; fields which support maxlength
-   {:field/title {:en "Text field with max length"
+   {:field/type :text
+    :field/title {:en "Text field with max length"
                   :fi "Tekstikenttä pituusrajalla"
                   :sv "Textfält med begränsat längd"}
     :field/optional true
-    :field/type :text
     :field/max-length 10}
 
-   {:field/title {:en "Text area with max length"
+   {:field/type :texta
+    :field/title {:en "Text area with max length"
                   :fi "Tekstialue pituusrajalla"
                   :sv "Textområdet med begränsat längd"}
     :field/optional true
-    :field/type :texta
     :field/max-length 100}])
 
 (deftest test-all-field-types-example

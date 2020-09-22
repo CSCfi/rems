@@ -47,7 +47,6 @@
 (defn get-logo-name-sm [lang]
   (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
 
-
 (defn- generate-at-font-faces []
   (list
    (stylesheet/at-font-face {:font-family "'Lato'"
@@ -100,7 +99,9 @@
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
-                        [:.commands {:white-space "nowrap"}])))
+                        [:.commands {:white-space "nowrap"}])
+   (stylesheet/at-media {:prefers-reduced-motion :reduce}
+                        [:body {:scroll-behavior :auto}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -331,7 +332,8 @@
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
-           :padding-top (u/px 56)}]
+           :padding-top (u/px 56)
+           :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
    [:h1 {:margin-bottom (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
@@ -653,8 +655,9 @@
    [:.form-group {:text-align "initial"}
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
-   [:#application-fields
-    [:.application-field-label {:font-weight "bold"}]]
+   [:label.application-field-label {:font-weight "bold"}]
+   [:div.info-collapse {:font-weight "400"
+                        :white-space :pre-wrap}]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]

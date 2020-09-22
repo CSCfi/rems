@@ -223,6 +223,8 @@
                 :field-n "Fält %1: %2"
                 :field-title "Fältets namn"
                 :field-type "Typ av fält"
+                :info-text "Fält beskrivning (valfritt)"
+                :collapse-aria-label "Info om "
                 :maxlength "Max antal tecken (valfri begränsning)"
                 :option-key "Id"
                 :option-label "Titel"

@@ -15,6 +15,27 @@
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
+(defn info-collapse
+  "Collapse field from Bootstrap that shows extra information about input fields.
+
+  `:info-id` - id of the element being described
+  `:aria-label-text` - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
+  `:focus-when-collapse-opened` - element that is focused when the info is opened
+  `:body-text` - component that is shown if open"
+  [{:keys [info-id aria-label-text focus-when-collapse-opened body-text]}]
+  [:<> [:button.info-button.btn.btn-link
+        {:data-toggle "collapse"
+         :href (str "#" (str info-id "-collapse"))
+         :aria-label aria-label-text
+         :aria-expanded "false"
+         :aria-controls (str info-id "-collapse")}
+        [:i.fa.fa-info-circle]]
+   [:div.info-collapse.collapse {:id (str info-id "-collapse")
+                              :ref focus-when-collapse-opened
+                              :tab-index "-1"}
+     body-text]])
+
+
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
         diff (.diff_main dmp
@@ -59,6 +80,7 @@
   :field/optional - boolean, true if the field is not required
   :field/value - string, the current value of the field
   :field/previous-value - string, the previously submitted value of the field
+  :field/info-text - text for collapsable info field
   :readonly - boolean, true if the field should not be editable
   :readonly-component - HTML, custom component for a readonly field
   :diff - boolean, true if should show the diff between :value and :previous-value
@@ -73,7 +95,9 @@
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
-        max-length (:field/max-length opts)]
+        max-length (:field/max-length opts)
+        info-text (linkify (localized (:field/info-text opts)))
+        collapse-aria-label (str (text :t.create-form/collapse-aria-label) raw-title)]
     ;; TODO: simplify fieldset code
     [(if fieldset
        :fieldset.form-group.field
@@ -97,7 +121,14 @@
       " "
       (if optional
         (text :t.form/optional)
-        (text :t.form/required))]
+        (text :t.form/required))
+      (when info-text
+        [info-collapse
+         {:info-id (field-name opts)
+          :aria-label-text collapse-aria-label
+          :focus-when-collapse-opened focus-when-collapse-opened
+          :body-text info-text
+          }])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -129,7 +160,7 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change] :as opts}]
+  [{:keys [validation on-change info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -271,19 +302,13 @@
       [add-symbol]
       " "
       (text :t.form/upload)]
-     [:a.upload-info-button.btn.btn-link
-      {:data-toggle "collapse"
-       :href (str "#" info-id)
-       :aria-label (text :t.form/upload-extensions)
-       :aria-expanded "false"
-       :aria-controls info-id}
-      [:i.fa.fa-question-circle]]
-     [:div.upload-info.collapse {:id info-id
-                                 :ref focus-when-collapse-opened
-                                 :tab-index "-1"}
-      [text :t.form/upload-extensions]
-      ": "
-      attachment-types/allowed-extensions-string]]))
+     [info-collapse
+      {:info-id info-id
+       :aria-label-text (text :t.form/upload-extensions)
+       :focus-when-collapse-opened focus-when-collapse-opened
+       :body-text [:span [text :t.form/upload-extensions]
+                   ": "
+                   attachment-types/allowed-extensions-string]} ]]))
 
 (defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group
@@ -375,18 +400,18 @@
    (component-info multi-attachment-view)
    (example "no attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachment nil
-                                     :on-attach (fn [_] nil)}])
+                                    :attachment nil
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "attachment.xlsx"}
-                                                   {:attachment/filename "data.pdf"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "attachment.xlsx"}
+                                                  {:attachment/filename "data.pdf"}]
+                                    :on-attach (fn [_] nil)}])
    (example "multiple attachments, long filenames"
             [multi-attachment-view {:key "action-guide-example-1"
-                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
-                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
-                                     :on-attach (fn [_] nil)}])
+                                    :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
+                                                  {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
+                                    :on-attach (fn [_] nil)}])
    (component-info field)
    (example "field of type \"text\""
             [field {:form/id 1
@@ -394,6 +419,16 @@
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}}])
+   (example "field of type \"text\" with info field"
+            [field {:form/id 1
+                    :field/id "1"
+                    :field/type :text
+                    :field/title {:en "Title"}
+                    :field/placeholder {:en "placeholder"}
+                    :field/info-text {:en "Extra information about the field, \n
+                                           maybe it even contains a link, such as https://en.wikipedia.org/wiki/Igor_Stravinsky
+                                           \n
+                                           or https://en.wikipedia.org/wiki/Dmitri_Shostakovich"}}])
    (example "field of type \"text\" with maximum length"
             [field {:form/id 2
                     :field/id "1"
@@ -625,7 +660,7 @@
                     :readonly true
                     :field/value "123"
                     :field/attachments (repeat 100 {:attachment/id 123
-                                         :attachment/filename "test.txt"})}])
+                                                    :attachment/filename "test.txt"})}])
    (example "field of type \"date\""
             [field {:form/id 24
                     :field/id "1"
