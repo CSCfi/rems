@@ -1,7 +1,7 @@
 (ns rems.administration.test-create-form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.administration.create-form :refer [build-request build-localized-string]]
+            [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
             [rems.identity :refer [set-roles!]]
             [rems.testing :refer [isolate-re-frame-state]]
             [rems.util :refer [getx-in]]))
@@ -164,6 +164,56 @@
                @form)
             "after move 3")))))
 
+(deftest build-request-field-test
+  (let [fields [{:field/id "fld1"
+                 :field/index 0
+                 :field/title {:en "en title"
+                                :fi "fi title"}
+                 :field/info-text {:en "en info text"
+                                    :fi "fi info text"}
+                 :field/optional true
+                 :field/type :text
+                 :field/max-length "12"
+                 :field/placeholder {:en "en placeholder"
+                                    :fi "fi placeholder"}}]
+        fields-empty-info-text [{:field/id "fld1"
+                                 :field/index 0
+                                 :field/title {:en "en title"
+                                               :fi "fi title"}
+                                 :field/info-text {:en ""
+                                                   :fi ""}
+                                 :field/optional true
+                                 :field/type :text
+                                 :field/max-length "12"
+                                 :field/placeholder {:en "en placeholder"
+                                                     :fi "fi placeholder"}}]
+        languages [:en :fi]]
+    (testing "basic fields"
+      (is (= [{:field/id "fld1"
+               :field/title {:en "en title"
+                             :fi "fi title"}
+               :field/info-text {:en "en info text"
+                                 :fi "fi info text"}
+               :field/optional true
+               :field/type :text
+               :field/max-length 12
+               :field/placeholder {:en "en placeholder"
+                                   :fi "fi placeholder"}}]
+             
+           (mapv #(build-request-field % languages) fields)))
+      
+      (is (= [{:field/id "fld1"
+               :field/title {:en "en title"
+                             :fi "fi title"}
+               :field/optional true
+               :field/type :text
+               :field/max-length 12
+               :field/placeholder {:en "en placeholder"
+                                   :fi "fi placeholder"}}]
+
+             (mapv #(build-request-field % languages) fields-empty-info-text)))
+    )))
+
 (deftest build-request-test
   (let [form {:organization {:organization/id "abc"}
               :form/title "the title"
@@ -178,6 +228,17 @@
                              :field/max-length "12"
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
+        fields-empty-info-text {:organization {:organization/id "abc"}
+                                :form/title "the title"
+                                :form/fields [{:field/id "fld1"
+                                               :field/index 0
+                                               :field/title {:en "en title"
+                                                             :fi "fi title"}
+                                               :field/optional true
+                                               :field/type :text
+                                               :field/max-length "12"
+                                               :field/placeholder {:en "en placeholder"
+                                                                   :fi "fi placeholder"}}]}
         languages [:en :fi]]
 
     (testing "basic form"
@@ -194,6 +255,19 @@
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
              (build-request form languages))))
+    
+    (testing "basic form without input field "
+      (is (= {:organization {:organization/id "abc"}
+              :form/title "the title"
+              :form/fields [{:field/id "fld1"
+                             :field/title {:en "en title"
+                                           :fi "fi title"}
+                             :field/optional true
+                             :field/type :text
+                             :field/max-length 12
+                             :field/placeholder {:en "en placeholder"
+                                                 :fi "fi placeholder"}}]}
+             (build-request fields-empty-info-text languages))))
 
     (testing "trim strings"
       (is (= {:organization {:organization/id "abc"}

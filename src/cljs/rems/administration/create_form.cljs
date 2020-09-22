@@ -134,18 +134,21 @@
   (into {} (for [language languages]
              [language (trim-when-string (get lstr language ""))])))
 
+(defn- string-is-not-empty [s]
+  (when (string? s)
+    (not (clojure.string/blank? s))))
+
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
           :field/title (build-localized-string (:field/title field) languages)
           :field/type (:field/type field)
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
-                            false)
-          }
-         (when (and
-                (string? (:fi (:field/info-text field)))
-                (string? (:en (:field/info-text field)))
-                (string? (:sv (:field/info-text field))))
+                            false)}
+         (when (or
+                (string-is-not-empty (:fi (:field/info-text field)))
+                (string-is-not-empty (:en (:field/info-text field)))
+                (string-is-not-empty (:sv (:field/info-text field))))
           {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
