@@ -4,6 +4,7 @@
   (:require [clj-time.coerce]
             [clj-time.core :as time]
             [clojure.test :refer :all]
+            [rems.config :refer [env]]
             [rems.jwt :as jwt]
             [rems.testing-util :refer [with-fixed-time]]
             [schema.core :as s])
@@ -38,45 +39,44 @@
 
 (def +default-length+ (time/years 1))
 
-(def +issuer+ "TODO")
-
 (defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby]}]
-  {:iss +issuer+
+  {:iss (:public-url env)
    :sub userid
    :iat (clj-time.coerce/to-long (time/now))
    :exp (clj-time.coerce/to-long (or end (time/plus (time/now) +default-length+)))
    :scope "openid"
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
-                   :source "https://no.organization" ;; TODO
+                   :source (:public-url env)
                    :by "system" ;; TODO or "so"?
                    :asserted (clj-time.coerce/to-long start)}})
 
 (deftest test-entitlement->visa-claims
-  (with-fixed-time (time/date-time 2010 01 01)
-    (fn []
-      (is (= {:iss "TODO"
-              :sub "user@example.com"
-              :iat (clj-time.coerce/to-long "2010")
-              :exp (clj-time.coerce/to-long "2011")
-              :scope "openid"
-              :ga4gh_visa_v1 {:type "ControlledAccessGrants"
-                              :value "urn:1234"
-                              :source "https://no.organization"
-                              :by "system"
-                              :asserted (clj-time.coerce/to-long "2009")}}
-             (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :userid "user@example.com"})))
-      (is (= {:iss "TODO"
-              :sub "user@example.com"
-              :iat (clj-time.coerce/to-long "2010")
-              :exp (clj-time.coerce/to-long "2010-06-02")
-              :scope "openid"
-              :ga4gh_visa_v1 {:type "ControlledAccessGrants"
-                              :value "urn:1234"
-                              :source "https://no.organization"
-                              :by "system"
-                              :asserted (clj-time.coerce/to-long "2009")}}
-             (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :end (time/date-time 2010 6 2) :userid "user@example.com"}))))))
+  (with-redefs [env {:public-url "https://rems.example/"}]
+    (with-fixed-time (time/date-time 2010 01 01)
+      (fn []
+        (is (= {:iss "https://rems.example/"
+                :sub "user@example.com"
+                :iat (clj-time.coerce/to-long "2010")
+                :exp (clj-time.coerce/to-long "2011")
+                :scope "openid"
+                :ga4gh_visa_v1 {:type "ControlledAccessGrants"
+                                :value "urn:1234"
+                                :source "https://rems.example/"
+                                :by "system"
+                                :asserted (clj-time.coerce/to-long "2009")}}
+               (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :userid "user@example.com"})))
+        (is (= {:iss "https://rems.example/"
+                :sub "user@example.com"
+                :iat (clj-time.coerce/to-long "2010")
+                :exp (clj-time.coerce/to-long "2010-06-02")
+                :scope "openid"
+                :ga4gh_visa_v1 {:type "ControlledAccessGrants"
+                                :value "urn:1234"
+                                :source "https://rems.example/"
+                                :by "system"
+                                :asserted (clj-time.coerce/to-long "2009")}}
+               (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :end (time/date-time 2010 6 2) :userid "user@example.com"})))))))
 
 (defn- entitlement->visa [entitlement]
   (sign-visa (entitlement->visa-claims entitlement)))
