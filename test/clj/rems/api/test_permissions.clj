@@ -1,8 +1,11 @@
 (ns ^:integration rems.api.test-permissions
-  (:require [clojure.test :refer :all]
+  (:require [buddy.sign.jwt :as buddy-jwt]
+            [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.ga4gh :as ga4gh]
             [rems.handler :refer [handler]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all]
+            [schema.core :as s]))
 
 (use-fixtures
   :once
@@ -11,11 +14,15 @@
     (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api true)]
       (f))))
 
+(defn- validate-visa [visa]
+  (s/validate ga4gh/VisaClaim visa))
+
 (defn- validate-alice-result [data]
-  (is (= 1 (count data)))
-  (is (contains? data :ga4gh_visa_v1))
-  (is (vector? (:ga4gh_visa_v1 data)))
-  (is (string? (first (:ga4gh_visa_v1 data)))))
+  (doseq [visa (:ga4gh_passport_v1 data)]
+    (let [data (buddy-jwt/unsign visa "secret" {:skip-validation true})]
+      (validate-visa data)
+      (is (= "alice" (:sub data)))
+      (is (= "urn:nbn:fi:lb-201403262" (get-in data [:ga4gh_visa_v1 :value]))))))
 
 (deftest permissions-test-content
   (let [api-key "42"]

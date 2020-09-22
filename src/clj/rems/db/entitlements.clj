@@ -13,8 +13,8 @@
             [rems.db.csv :as csv]
             [rems.db.outbox :as outbox]
             [rems.db.users :as users]
+            [rems.ga4gh :as ga4gh]
             [rems.json :as json]
-            [rems.jwt :as jwt]
             [rems.common.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
             [rems.util :refer [getx-user-id]])
@@ -39,21 +39,11 @@
                               :active-at (when-not expired?
                                            (time/now))})))
 
-(defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
-  (let [start-datetime (DateTime. start)]
-    (jwt/sign {:type "ControlledAccessGrants"
-               :value (str resid)
-               :source "https://ga4gh.org/duri/no_org"
-               :by (str approvedby)
-               :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
-
-;; TODO should this send the end time also if we know it?
 (defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
-  {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
-                        (db/get-entitlements {:user user
-                                              :resource-ext-id resource-or-nil
-                                              :active-at (when-not expired?
-                                                           (time/now))}))})
+  (ga4gh/entitlements->passport (db/get-entitlements {:user user
+                                                      :resource-ext-id resource-or-nil
+                                                      :active-at (when-not expired?
+                                                                   (time/now))})))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
@@ -65,7 +55,7 @@
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
-    :ga4gh {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api entitlements)}
+    :ga4gh (ga4gh/entitlements->passport entitlements)
     (for [e entitlements]
       {:application (:catappid e)
        :resource (:resid e)

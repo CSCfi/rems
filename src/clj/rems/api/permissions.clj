@@ -8,13 +8,13 @@
             [schema.core :as s]))
 
 (s/defschema GetPermissionsResponse
-  Ga4ghVisa)
+  {:ga4gh_passport_v1 [s/Str]})
 
 (def permissions-api
   (context "/permissions" []
     :tags ["permissions"]
-
     (GET "/:user" []
+      ;; We're trying to replicate https://github.com/CSCfi/elixir-rems-proxy/#get-permissionsusername here
       :summary "Experimental. Returns user's permissions in ga4gh visa format. Currently signed with fake key. See https://github.com/ga4gh-duri/ga4gh-duri.github.io/"
       :roles #{:handler :owner}
       :path-params [user :- (describe s/Str "return permissions for this user, required")]
