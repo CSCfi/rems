@@ -140,7 +140,6 @@
 (def wait-invisible (wrap-etaoin et/wait-invisible))
 (def query-all (wrap-etaoin et/query-all))
 (def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
-(def fill-human (wrap-etaoin et/fill-human))
 (def get-element-attr (wrap-etaoin et/get-element-attr))
 (def js-execute (wrap-etaoin et/js-execute))
 (def fill (wrap-etaoin et/fill))
@@ -170,6 +169,20 @@
 
 
 ;;; etaoin extensions
+
+;; TODO our input fields process every character through re-frame.
+;; Etaoin's fill-human almost works, but very rarely loses characters,
+;; probably due to the lack of a _minimum_ delay between keypresses.
+;; This is a reimplementation.
+(def character-delay 0.1)
+
+(defn fill-human [q text]
+  (doseq [c text]
+    (et/fill (get-driver) q c)
+    (et/wait character-delay))
+  (let [value (get-element-attr q "value")]
+    (when-not (= text value)
+      (log/warn "Failed to fill field to" (pr-str text) "got" (pr-str value) "instead."))))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
