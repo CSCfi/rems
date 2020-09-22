@@ -15,7 +15,13 @@
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
-(defn info-collapse [info-id aria-label-text focus-when-collapse-opened body-text]
+(defn info-collapse
+  "Bootstrap collapse field that shows extra information about input fields:
+   info-id - CSS id of the element being described
+   aria-label-text - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
+   focus-when-collapse-opened - focus function that toggles the collapsable field
+   body-text - text that is shown as the info icon is toggles that described the field"
+  [{:keys [info-id aria-label-text focus-when-collapse-opened body-text]}]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
          :href (str "#" (str info-id "-collapse"))
