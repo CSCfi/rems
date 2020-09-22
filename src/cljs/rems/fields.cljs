@@ -16,11 +16,12 @@
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
 (defn info-collapse
-  "Bootstrap collapse field that shows extra information about input fields:
-   info-id - CSS id of the element being described
-   aria-label-text - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
-   focus-when-collapse-opened - focus function that toggles the collapsable field
-   body-text - text that is shown as the info icon is toggles that described the field"
+  "Collapse field from Bootstrap that shows extra information about input fields.
+
+  `:info-id` - id of the element being described
+  `:aria-label-text` - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
+  `:focus-when-collapse-opened` - element that is focused when the info is opened
+  `:body-text` - component that is shown if open"
   [{:keys [info-id aria-label-text focus-when-collapse-opened body-text]}]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
@@ -123,10 +124,11 @@
         (text :t.form/required))
       (when info-text
         [info-collapse
-         (field-name opts)
-         collapse-aria-label
-         focus-when-collapse-opened
-         info-text])]
+         {:info-id (field-name opts)
+          :aria-label-text collapse-aria-label
+          :focus-when-collapse-opened focus-when-collapse-opened
+          :body-text info-text
+          }])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -301,12 +303,12 @@
       " "
       (text :t.form/upload)]
      [info-collapse
-      info-id
-      (text :t.form/upload-extensions)
-      focus-when-collapse-opened
-      [:span [text :t.form/upload-extensions]
-       ": "
-       attachment-types/allowed-extensions-string]]]))
+      {:info-id info-id
+       :aria-label-text (text :t.form/upload-extensions)
+       :focus-when-collapse-opened focus-when-collapse-opened
+       :body-text [:span [text :t.form/upload-extensions]
+                   ": "
+                   attachment-types/allowed-extensions-string]} ]]))
 
 (defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group
