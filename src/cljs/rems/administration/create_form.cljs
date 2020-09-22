@@ -137,8 +137,7 @@
 (defn- string-is-not-empty [s]
   (if (string? s)
     (not (str/blank? s))
-    false
-    ))
+    false))
 
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
@@ -147,9 +146,8 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (some true? 
-                (mapv (fn [l] (string-is-not-empty (l (:field/info-text field)))) 
-                   languages))
+         (when (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
+                     languages)
           {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
