@@ -56,7 +56,7 @@
    (set-language-cookie! language)
    (update-document-language language)
    {:db (assoc-in db [:user-settings :language] language)
-    :dispatch [::save-user-language!]}))
+    :dispatch [::save-user-language! language]}))
 
 (rf/reg-event-fx
  :check-if-should-save-language!
@@ -66,7 +66,7 @@
      ;; user can change the language before login, so we should persist
      ;; the change to the user settings after login
      (when (and cookie-language (not= cookie-language settings-language))
-       {:dispatch [::save-user-language!]}))))
+       {:dispatch [::save-user-language! cookie-language]}))))
 
 (rf/reg-event-fx
  :loaded-user-settings
@@ -85,11 +85,11 @@
 
 (rf/reg-event-fx
  ::save-user-language!
- (fn [{:keys [db]} [_]]
+ (fn [{:keys [db]} [_ language]]
    (let [user-id (get-in db [:identity :user :userid])]
      (when user-id
        (put! "/api/user-settings"
-             {:params {:language (get-current-language db)}
+             {:params {:language language}
               :handler fetch-user-settings!
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
      {})))

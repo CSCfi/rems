@@ -1019,6 +1019,7 @@
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
+      (btu/wait-visible {:tag :label :fn/text "Form"})
       (select-option* "Form" (btu/context-get :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
@@ -1133,6 +1134,7 @@
       (go-to-admin "Organizations")
 
       (testing "list shows created organization"
+        (btu/wait-visible :organizations)
         (let [orgs (slurp-rows :organizations)]
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-get :organization-name) " EN")
@@ -1145,6 +1147,7 @@
                           {:fn/text (str (btu/context-get :organization-name) " EN")}
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
+        (btu/wait-visible :organization)
         (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
@@ -1178,6 +1181,7 @@
         (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
         (testing "view after editing"
+          (btu/wait-visible :organization)
           (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
             (is (= {"Id" (btu/context-get :organization-id)
                     "Short name (FI)" "SNFI"
