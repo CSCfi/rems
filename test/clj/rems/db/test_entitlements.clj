@@ -55,12 +55,12 @@
      {:status 200}
      (fn [server]
        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
-       (is (= {:ga4gh_passport_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUT0RPIiwic3ViIjoiVE9ETyIsImlhdCI6MCwiZXhwIjowLCJzY29wZSI6Im9wZW5pZCIsImdhNGdoX3Zpc2FfdjEiOnsidHlwZSI6IkNvbnRyb2xsZWRBY2Nlc3NHcmFudHMiLCJ2YWx1ZSI6InJlczEiLCJzb3VyY2UiOiJodHRwczovL25vLm9yZ2FuaXphdGlvbiIsImJ5Ijoic3lzdGVtIiwiYXNzZXJ0ZWQiOjEwMDI3NTg0MDAwMDB9fQ.l24iGpWDBym3rMBii7HvVw7AV0NBYjtMiK0S1flc0R4"
-                                   "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUT0RPIiwic3ViIjoiVE9ETyIsImlhdCI6MCwiZXhwIjowLCJzY29wZSI6Im9wZW5pZCIsImdhNGdoX3Zpc2FfdjEiOnsidHlwZSI6IkNvbnRyb2xsZWRBY2Nlc3NHcmFudHMiLCJ2YWx1ZSI6InJlczIiLCJzb3VyY2UiOiJodHRwczovL25vLm9yZ2FuaXphdGlvbiIsImJ5Ijoic3lzdGVtIiwiYXNzZXJ0ZWQiOjEwMzQyOTQ0MDAwMDB9fQ.0SvFsS6OFEC0MxQ8m9qhngTDMzNCYEER6u6K_8fAT84"]}
-              (-> (stub/recorded-requests server)
-                  first
-                  (get-in [:body "postData"])
-                  json/parse-string))))))
+       (let [data (-> (stub/recorded-requests server)
+                      first
+                      (get-in [:body "postData"])
+                      json/parse-string)]
+         (is (= [:ga4gh_passport_v1] (keys data)))
+         (is (= [true true] (map string? (:ga4gh_passport_v1 data))))))))
 
   (testing "not-found"
     (run-with-server

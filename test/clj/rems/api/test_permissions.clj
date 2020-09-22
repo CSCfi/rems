@@ -19,7 +19,10 @@
 
 (defn- validate-alice-result [data]
   (doseq [visa (:ga4gh_passport_v1 data)]
-    (validate-visa (buddy-jwt/unsign visa "secret" {:skip-validation true}))))
+    (let [data (buddy-jwt/unsign visa "secret" {:skip-validation true})]
+      (validate-visa data)
+      (is (= "alice" (:sub data)))
+      (is (= "urn:nbn:fi:lb-201403262" (get-in data [:ga4gh_visa_v1 :value]))))))
 
 (deftest permissions-test-content
   (let [api-key "42"]

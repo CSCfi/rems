@@ -1,7 +1,9 @@
 (ns rems.ga4gh
   "Implementation of GA4GH Passports and Visas
    <https://github.com/ga4gh-duri/ga4gh-duri.github.io/tree/master/researcher_ids>"
-  (:require [rems.jwt :as jwt]
+  (:require [clj-time.coerce]
+            [clj-time.core :as time]
+            [rems.jwt :as jwt]
             [schema.core :as s])
   (:import org.joda.time.DateTime))
 
@@ -32,19 +34,22 @@
 (defn- sign-visa [visa]
   (jwt/sign (s/validate VisaClaim visa) "secret")) ;; TODO use key/real secret here
 
-(defn- entitlement->visa [{:keys [resid _catappid start _end _mail _userid _approvedby]}]
-  (let [start-datetime (DateTime. start)]
-    ;; TODO should this send the end time also if we know it?
-    (sign-visa {:iss "TODO"
-                :sub "TODO"
-                :iat 0
-                :exp 0
-                :scope "openid"
-                :ga4gh_visa_v1 {:type "ControlledAccessGrants"
-                                :value (str resid)
-                                :source "https://no.organization" ;; TODO
-                                :by "system" ;; TODO or "so"?
-                                :asserted (.getMillis start-datetime)}})))
+(def +default-length+ (time/years 1))
+
+(def +issuer+ "TODO")
+
+(defn- entitlement->visa [{:keys [resid _catappid start end _mail userid _approvedby]}]
+  ;; TODO should this send the end time also if we know it?
+  (sign-visa {:iss +issuer+
+              :sub userid
+              :iat (clj-time.coerce/to-long (time/now))
+              :exp (clj-time.coerce/to-long (or end (time/plus (time/now) +default-length+)))
+              :scope "openid"
+              :ga4gh_visa_v1 {:type "ControlledAccessGrants"
+                              :value (str resid)
+                              :source "https://no.organization" ;; TODO
+                              :by "system" ;; TODO or "so"?
+                              :asserted (clj-time.coerce/to-long start)}}))
 
 (defn entitlements->passport [entitlements]
   {:ga4gh_passport_v1 (mapv entitlement->visa entitlements)})
