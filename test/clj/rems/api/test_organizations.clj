@@ -59,9 +59,9 @@
                   :organization/name {:fi "Organisaatiot API Test ORG"
                                       :en "Organizations API Test ORG"}
                   :organization/short-name {:fi "ORG" :en "ORG"}
-                  :organization/owners [{:userid org-owner1}]
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}]
                   :organization/last-modified test-time1
-                  :organization/modifier {:userid owner}
+                  :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization.test.org"
                                                 :name {:fi "Organisaatiot API Test ORG Katselmoijat"
                                                        :en "Organizations API Test ORG Reviewers"}}]
@@ -104,9 +104,10 @@
                   :organization/name {:fi "Organisaatiot API Test ORG 2"
                                       :en "Organizations API Test ORG 2"}
                   :organization/short-name {:fi "ORG2" :en "ORG2"}
-                  :organization/owners [{:userid org-owner1} {:userid org-owner2}]
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
+                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}]
                   :organization/last-modified test-time2
-                  :organization/modifier {:userid owner}
+                  :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization2.test.org"
                                                 :name {:fi "Organisaatiot 2 API Test ORG Katselmoijat"
                                                        :en "Organizations 2 API Test ORG Reviewers"}}]
@@ -132,9 +133,10 @@
                   :organization/name {:fi "Organisaatiot API Test ORG 3"
                                       :en "Organizations API Test ORG 3"}
                   :organization/short-name {:fi "ORG3" :en "ORG3"}
-                  :organization/owners [{:userid org-owner1} {:userid org-owner2}] ; owners is not changed
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
+                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}] ; owners is not changed
                   :organization/last-modified test-time3
-                  :organization/modifier {:userid org-owner1}
+                  :organization/modifier {:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
                   :organization/review-emails [{:email "test@organization3.test.org"
                                                 :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
                                                        :en "Organizations 3 API Test ORG Reviewers"}}]

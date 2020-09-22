@@ -42,9 +42,9 @@
 
 (s/defschema OrganizationFull
   (merge OrganizationOverview
-         {(s/optional-key :organization/modifier) User
+         {(s/optional-key :organization/modifier) UserWithAttributes
           (s/optional-key :organization/last-modified) DateTime
-          (s/optional-key :organization/owners) [User]
+          (s/optional-key :organization/owners) [UserWithAttributes]
           (s/optional-key :organization/review-emails) [{:name LocalizedString
                                                          :email s/Str}]
           (s/optional-key :enabled) s/Bool

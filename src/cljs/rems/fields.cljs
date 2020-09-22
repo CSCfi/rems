@@ -7,7 +7,7 @@
             [rems.common.util :refer [getx]]
             [rems.dropdown :as dropdown]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))

@@ -17,6 +17,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.csv :as csv]
+            [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.experimental.pdf :as experimental-pdf]
             [rems.pdf :as pdf]
@@ -176,7 +177,9 @@
       :summary "Export all submitted applications of a given form as CSV"
       :roles #{:owner :reporter}
       :query-params [form-id :- (describe s/Int "form id")]
-      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id) form-id))
+      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id)
+                                                                form-id
+                                                                (:language (user-settings/get-user-settings (getx-user-id)))))
           (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
           (content-type "text/csv")))
 

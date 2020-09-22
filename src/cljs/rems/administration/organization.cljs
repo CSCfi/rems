@@ -7,7 +7,7 @@
             [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch]]))
@@ -50,6 +50,16 @@
              localization]))
    [inline-info-field (text :t.administration/email) (:email review-email)]])
 
+(defn- review-emails-field [review-emails]
+  (if (empty? review-emails)
+    [inline-info-field (text :t.administration/review-emails)] ; looks good when empty
+    [:div.mb-2
+     [:label (text :t.administration/review-emails)]
+     [:div.solid-group
+      (->> review-emails
+           (map display-localized-review-email)
+           (interpose [:br]))]]))
+
 (defn organization-view [organization language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -71,19 +81,16 @@
                                                                       (map enrich-user)
                                                                       (map :display)
                                                                       (interpose [:br]))]
-              [:div
-               [:label (text :t.administration/review-emails)]
-               [:div.solid-group
-                (->> (:organization/review-emails organization)
-                     (map display-localized-review-email)
-                     (interpose [:br]))]]
+              [review-emails-field (:organization/review-emails organization)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]
               [inline-info-field (text :t.administration/last-modified) (localize-time (:organization/last-modified organization))]
-              [inline-info-field (text :t.administration/modifier) (:userid (:organization/modifier organization))]]}]
+              [inline-info-field (text :t.administration/modifier) (->> (:organization/modifier organization)
+                                                                        enrich-user
+                                                                        :display)]]}]
    (let [id (:organization/id organization)]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
        [edit-button id]
        [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])])

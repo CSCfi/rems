@@ -9,7 +9,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
@@ -72,7 +72,7 @@
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/show-when roles/+admin-write-roles+
        [edit-button id]
        [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]]])])

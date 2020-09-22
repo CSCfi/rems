@@ -3,6 +3,7 @@
             [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
             [rems.db.core :as db]
             [rems.json :as json]
+            [rems.db.users :as users]
             [schema.coerce :as coerce]
             [clj-time.core :as time-core])
   (:import [org.joda.time DateTime]
@@ -35,11 +36,16 @@
 (defn get-organizations-raw []
   (->> (db/get-organizations)
        (map parse-organization)
+       (map #(update % :organization/owners (partial mapv (comp users/get-user :userid))))
+       (map #(update % :organization/modifier (comp users/get-user :userid)))
        (map coerce-organization-full)))
 
 (defn getx-organization-by-id [id]
   (assert id)
-  (let [organization (-> (db/get-organization-by-id {:id id}) parse-organization)]
+  (let [organization (-> (db/get-organization-by-id {:id id})
+                         parse-organization
+                         (update :organization/owners (partial mapv (comp users/get-user :userid)))
+                         (update :organization/modifier (comp users/get-user :userid)))]
     (when-not (:organization/id organization)
       (throw (DataException. (str "organization \"" id "\" does not exist") {:errors [{:type :t.actions.errors/organization-does-not-exist  :args [id] :organization/id id}]})))
     (coerce-organization-full organization)))

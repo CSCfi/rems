@@ -17,12 +17,11 @@
 (defn show-admin-pages? [roles]
   (some #{:organization-owner :owner :handler :reporter} roles))
 
-(defn show-admin-edit-buttons? [roles]
-  (some #{:organization-owner :owner} roles))
+(def +admin-write-roles+ #{:organization-owner :owner})
 
 (defn disallow-setting-organization? [roles]
   (not-any? #{:organization-owner :owner} roles))
 
-(defn when [predicate & body]
-  (clojure.core/when (predicate (:roles @(rf/subscribe [:identity])))
+(defn when [roles & body]
+  (clojure.core/when (some (set roles) (:roles @(rf/subscribe [:identity])))
     (into [:<>] body)))

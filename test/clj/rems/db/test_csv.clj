@@ -119,7 +119,11 @@
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"
                   app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource, Other resource\",\"test value\",\"\"\r\n")
-             (csv/applications-to-csv [(get-application)] form-id "owner"))))
+             (csv/applications-to-csv [(get-application)] form-id :en)))
+      (testing "in finnish"
+        (is (= (str "\"Tunniste\",\"Ulkoinen tunniste\",\"Hakija\",\"Lähetetty\",\"Tila\",\"Resurssit\",\"Hakemuksen otsikko\",\"Kuvaus\"\r\n"
+                    app-id ",\"" external-id "\",\"Alice Applicant\",,\"Luonnos\",\"Testiresurssi, Toinen resurssi\",\"test value\",\"\"\r\n")
+               (csv/applications-to-csv [(get-application)] form-id :fi)))))
 
     (test-data/accept-licenses! {:application-id app-id
                                  :actor applicant})
@@ -134,4 +138,4 @@
                   app-id ",\"" external-id "\",\"Alice Applicant\",\""
                   (text/localize-time test-time)
                   "\",\"Applied\",\"Test resource, Other resource\",\"test value\",\"\"\r\n")
-             (csv/applications-to-csv [(get-application)] form-id "owner"))))))
+             (csv/applications-to-csv [(get-application)] form-id :en))))))

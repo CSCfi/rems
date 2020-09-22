@@ -5,7 +5,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -100,7 +100,7 @@
                       :sort-value 2})
            :commands {:td [:td.commands
                            [to-view-form form]
-                           [roles/when roles/show-admin-edit-buttons?
+                           [roles/show-when roles/+admin-write-roles+
                             [form/edit-button (:form/id form)]
                             [copy-as-new-form form]
                             [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
@@ -135,7 +135,7 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/when roles/show-admin-edit-buttons?
+          [[roles/show-when roles/+admin-write-roles+
             [to-create-form]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
             [status-flags/disabled-and-archived-explanation]]

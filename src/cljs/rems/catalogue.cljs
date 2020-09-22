@@ -8,7 +8,7 @@
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.guide-functions]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text get-localized-title]]))

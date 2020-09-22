@@ -26,7 +26,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
             [rems.util :refer [navigate! fetch put! post! normalize-option-key trim-when-string visibility-ratio focus-input-field]]))

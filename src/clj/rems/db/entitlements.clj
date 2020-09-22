@@ -15,7 +15,7 @@
             [rems.db.users :as users]
             [rems.json :as json]
             [rems.jwt :as jwt]
-            [rems.roles :refer [has-roles?]]
+            [rems.common.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
             [rems.util :refer [getx-user-id]])
   (:import [org.joda.time DateTime]))

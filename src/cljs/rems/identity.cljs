@@ -1,6 +1,6 @@
 (ns rems.identity
   (:require [re-frame.core :as rf]
-            [rems.roles :as roles]))
+            [rems.common.roles :as roles]))
 
 ;;; subscriptions
 

@@ -418,9 +418,9 @@
               :application/comment "this is a comment"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
-                  :application/events
-                  last
-                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 :application/events
+                 last
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
@@ -446,13 +446,12 @@
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
     (testing "event visible in eventlog"
-      ;; time rendering depends on time zone
-      (is (btu/visible? {:css "div.event-description b" :fn/has-text "Developer approved the application. Access rights end"})))
+      (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application. Access rights end 2100-05-06"})))
     (testing "event via api"
       (is (= {:application/id (btu/context-get :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
-              :entitlement/end "2100-05-06T00:00:00.000Z"
+              :entitlement/end "2100-05-06T23:59:59.000Z"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-get :application-id) "developer")
                  :application/events
@@ -1074,6 +1073,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
     (testing "view after creation"
+      (btu/wait-visible :organization)
       (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI"
@@ -1082,14 +1082,14 @@
                 "Title (EN)" (str (btu/context-get :organization-name) " EN")
                 "Title (FI)" (str (btu/context-get :organization-name) " FI")
                 "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                "Owners" "organization-owner1"
+                "Owners" "Organization Owner 1 (organization-owner1@example.com)"
                 "Name (FI)" "Review mail FI"
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
                 "Active" ""
                 "Last modified" last-modified
-                "Modifier" "owner"}
+                "Modifier" "Owner (owner@example.com)"}
                (slurp-fields :organization)))))
 
     (testing "edit after creation"
@@ -1108,6 +1108,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
       (testing "view after editing"
+        (btu/wait-visible :organization)
         (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
@@ -1116,14 +1117,14 @@
                   "Title (EN)" (str (btu/context-get :organization-name) " EN")
                   "Title (FI)" (str (btu/context-get :organization-name) " FI")
                   "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "organization-owner1\norganization-owner2"
+                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                   "Name (FI)" "Review mail FI"
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" ""
                   "Last modified" last-modified
-                  "Modifier" "owner"}
+                  "Modifier" "Owner (owner@example.com)"}
                  (slurp-fields :organization))))))
 
     (testing "as organization owner"
@@ -1152,14 +1153,14 @@
                   "Title (EN)" (str (btu/context-get :organization-name) " EN")
                   "Title (FI)" (str (btu/context-get :organization-name) " FI")
                   "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "organization-owner1\norganization-owner2"
+                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                   "Name (FI)" "Review mail FI"
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" ""
                   "Last modified" last-modified
-                  "Modifier" "owner"}
+                  "Modifier" "Owner (owner@example.com)"}
                  (slurp-fields :organization)))))
 
       (testing "edit as organization owner"
@@ -1185,12 +1186,12 @@
                     "Title (EN)" (str (btu/context-get :organization-name) " EN")
                     "Title (FI)" (str (btu/context-get :organization-name) " FI")
                     "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                    "Owners" "organization-owner1\norganization-owner2"
+                    "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                     "Name (FI)" "Review mail FI"
                     "Name (SV)" "Review mail SV"
                     "Name (EN)" "Review mail EN"
                     "Email" "review.email@example.com"
                     "Active" ""
                     "Last modified" last-modified
-                    "Modifier" "organization-owner2"}
+                    "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                    (slurp-fields :organization)))))))))

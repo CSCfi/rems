@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

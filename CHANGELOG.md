@@ -6,11 +6,24 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.12
+Changes since v2.13
 
 ### Breaking changes
+
+### Changes
+
+### Fixes
+
+### Additions
+
+## v2.13 "Etelätuulentie" 2020-09-17
+
+*Note!* This is the last release that supports the `:shibboleth` authentication method.
+
+### Breaking changes
+- Organizations are maintained in the database and not config. (#2039)
+  - See [docs/organizations.md](docs/organizations.md) for more info
 - Multiple organization support for users #2035
-- Organizations are maintained in the database and not config #2039
 
 ### Changes
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
@@ -25,6 +38,7 @@ Changes since v2.12
 - Rejecter-bot now rejects existing open applications when a user gets added to a blacklist either manually or via the revoke command. (#2015)
 - Reporter can't see draft applications (#2268)
 - Better error message for missing organization in admin UI (#2039)
+- Improvements to swedish translations
 
 ### Fixes
 - Various fixes in workflow editor UI
@@ -35,12 +49,12 @@ Changes since v2.12
 - Fixed enabling a catalogue item after changing its form. (#2283)
 - Added missing decision text to pdf event list.
 - More compatible CSV reports. Line returns are removed from field values and CSV lines are separated with CRLF. (#2311)
-- Fixed editing a catalogue item. (#2322)
+- Fixed editing a catalogue item. (#2321)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
-- There is now an API for querying and creating organizations #2039
-- Possibility to access `/catalogue` without logging in. Configurable by `:catalogue-is-public` #2120
+- There is now an API for querying and creating organizations. (#2039)
+- Possibility to access `/catalogue` without logging in. Configurable by `:catalogue-is-public`. (#2120)
 - Workflows can now have forms. Workflow forms apply to all catalogue items that use the workflow. (#2052)
 - Applicants now get emails when a public remark is added to an application. (#2190)
 - All emails sent by REMS now have the Auto-Submitted header set. (#2175)
@@ -49,15 +63,14 @@ Changes since v2.12
 - It's now possible to add a text to the login page after the login button using extra translations (:t.login/intro2) (#2214)
 - Indicate which items are in shopping cart by changing add button to remove (#2228)
 - Applicants now receive an email when submitting an application. (#2234)
-- Organizations have an initial UI (#2039)
-- Organisations can be created and edited in the UI (#2039)
+- Organisations can be created and edited in the UI. (#2039, #2332)
 - The /apply-for redirect supports multiple resources. See [docs/linking.md](docs/linking.md). (#2245)
 - REMS can now store and show additional user attributes from OIDC. These attributes are only shown to handlers, owners etc. and not applicants. See [docs/configuration.md](docs/configuration.md). (#2130)
 - The OIDC attribute to use as the rems userid is now configurable via the `:oidc-userid-attribute`. See [docs/configuration.md](docs/configuration.md). (#2281)
 - The `:oidc-additional-authorization-parameters` config option. See [config-defaults.edn](resources/config-defaults.edn)
 - Applicants can now permanently delete drafts. (#2219)
 - When approving an application, the handler can optionally pick an end date for the entitlement. There is also a `:entitlement-default-length-days` configuration variable that is used to compute a default value for the end date. (#2123)
-- Better documentation related to organizations (#2039)
+- Better documentation related to organizations. (#2039)
 - The reporter role now has read-only access to administration APIs and pages. (#2313)
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 

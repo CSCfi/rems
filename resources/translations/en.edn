@@ -96,6 +96,7 @@
                    :more-info "More info URL (optional, defaults to resource URN)"
                    :name "Name"
                    :no-licenses "No licenses"
+                   :optional "(optional)"
                    :organization "Organization"
                    :organizations "Organizations"
                    :owners "Owners"

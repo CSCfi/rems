@@ -5,7 +5,7 @@
             [rems.api.util] ; required for route :roles
             [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
             [rems.config :refer [env]]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

@@ -243,6 +243,10 @@
       (get-in [::apps-by-user user-id])
       (->> (map ->ApplicationOverview))))
 
+(defn- get-all-applications-full [user-id] ;; full i.e. not overview
+  (-> (refresh-all-applications-cache!)
+      (get-in [::apps-by-user user-id])))
+
 (defn get-all-application-roles [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::roles-by-user user-id])
@@ -260,10 +264,10 @@
   (->> (get-all-applications user-id)
        (filter my-application?)))
 
-(defn export-applications-for-form-as-csv [user-id form-id]
-  (let [applications (get-all-unrestricted-applications)
+(defn export-applications-for-form-as-csv [user-id form-id language]
+  (let [applications (get-all-applications-full user-id)
         filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (csv/applications-to-csv filtered-applications form-id user-id)))
+    (csv/applications-to-csv filtered-applications form-id language)))
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")

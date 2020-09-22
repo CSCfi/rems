@@ -8,7 +8,7 @@
             [rems.common.util :refer [andstr]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title text text-format]]
             [rems.util :refer [fetch]]))
@@ -74,7 +74,7 @@
    (let [id (:id license)]
      [:div.col.commands
       [administration/back-button "/administration/licenses"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/show-when roles/+admin-write-roles+
        [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
 

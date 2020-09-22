@@ -7,7 +7,7 @@
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text]]
             [rems.util :refer [fetch]]))
@@ -75,7 +75,7 @@
    (let [id (:id catalogue-item)]
      [:div.col.commands
       [administration/back-button "/administration/catalogue-items"]
-      [roles/when roles/show-admin-edit-buttons?
+      [roles/show-when roles/+admin-write-roles+
        [edit-button id]
        [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]])])

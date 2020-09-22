@@ -89,7 +89,7 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljfmt "0.6.7"]
-            [lein-cljsbuild "1.1.7"]
+            [lein-cljsbuild "1.1.8"]
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
@@ -198,6 +198,7 @@
                                                        :source-map true
                                                        :optimizations :none
                                                        :pretty-print true
+                                                       :warnings {:munged-namespace false} ;; for rems.actions.delete
                                                        :preloads [devtools.preload re-frisk.preload]}}
                                       :test {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
                                              :compiler {:output-to "target/cljsbuild/test/test.js"

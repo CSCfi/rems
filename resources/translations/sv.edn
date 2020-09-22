@@ -1,14 +1,14 @@
 {:t
  {:actions {:accept-invitation "Acceptera inbjudan"
-            :accept-invitation-already-member "Du är redan medlem."
-            :accept-invitation-success "Du har gått med i ansökan."
+            :accept-invitation-already-member "Du deltar redan."
+            :accept-invitation-success "Du deltar nu i ansökan."
             :accept-licenses "Acceptera licenserna"
             :add-licenses "Lägg till en licens"
-            :add-member "Lägg till medlem"
+            :add-member "Lägg till deltagare"
             :approve "Godkänn"
-            :approve-end-date "Slutdatum för rättigheter (frivillig)" ;; TODO check
+            :approve-end-date "Datum då rättigheterna upphör (frivilligt)"
             :approve-reject "Godkänn eller avslå"
-            :bundling-intro [:div.intro [:p "Notera, att endast resurser som har samma ansökningsblankett och samma arbetsflöde kan kopplas samman."]]
+            :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
             :clear "Töm"
@@ -17,36 +17,36 @@
             :comment "Kommentar"
             :decide "Avgör"
             :delete "Radera utkast"
-            :delete-intro [:div.intro [:p "Radera den här utkast permanent?"]] ;; TODO check
-            :errors {:already-member "Användare är redan medlem."
+            :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
+            :errors {:already-member "Användare är deltar redan."
                      :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
-                     :duplicate-id "Id är redan i bruk."
+                     :duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
-                     :licenses-not-accepted "Du har into godkänt användarvillkoren."
+                     :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :handled-applications "Behandlade ansökningar"
-            :invite-member "Bjud in medlem"
+            :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
             :load-application-states "Ladda status för ansökningarna"
-            :member "Medlem"
-            :member-email "E-postaddress"
+            :member "Deltagare"
+            :member-email "E-postadress"
             :member-name "Namn"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
             :reject "Avslå"
             :remark "Gör anteckning"
             :remark-public "Visa anteckning för sökande"
-            :remove-member "Ta bort medlem"
+            :remove-member "Ta bort deltagare"
             :request-decision "Begär beslut"
             :request-review "Begär granskning"
             :request-selection "Skicka begäran"
-            :resources-selection "Välj resurser som ansökningen gäller:"
+            :resources-selection "Välj resurser som ansökan gäller:"
             :return "Sänd tillbaka till sökande"
             :review "Granska"
             :revoke "Återkalla rättigheter"
             :show-publications "Visa publikationer" ; VAI Visa publiceringar?
-            :show-throughput-times "Visa behandlingsstider"
+            :show-throughput-times "Visa behandlingstider"
             :todo-applications "Aktiva ansökningar"}
   :administration {:active "Aktiv"
                    :add "Lägg till"
@@ -54,13 +54,13 @@
                    :added-by "Tillagd av"
                    :archive "Arkivera"
                    :back "Tillbaka"
-                   :blacklist "Blacklist"
+                   :blacklist "Svartlista"
                    :change-form "Ändra blankett"
                    :cancel "Avbryt"
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
                    :change "Ändra"
-                   :comment "Kommentera"
+                   :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"
                    :create-catalogue-item "Ny katalogpost"
                    :create-form "Ny blankett"
@@ -70,18 +70,18 @@
                    :create-workflow "Nytt arbetsflöde"
                    :created "Skapad"
                    :disable "Avaktivera"
-                   :disabled-and-archived-explanation "Avaktiveringen döljer föremål för användarna. Arkiveringen döljer den också från administrationsvyn."
+                   :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
                    :display-archived "Visa arkiverade"
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
                    :edit-organization "Ändra organisation"
                    :edit-workflow "Ändra arbetsflöde"
-                   :email "E-postaddress"
-                   :enable "Ta i bruk"
+                   :email "E-postadress"
+                   :enable "Aktivera"
                    :end "Slut"
-                   :errors {:dependencies-archived "Arkiverad beroenden:"
-                            :in-use-by "Den är aktiv i:"}
+                   :errors {:dependencies-archived "Arkiverade beroenden:"
+                            :in-use-by "Aktiv i:"}
                    :export-applications "exportera ansökningar"
                    :form "Blankett"
                    :forms "Blanketter"
@@ -92,10 +92,11 @@
                    :license-field "Licens \"%1\""
                    :license-name "Licensens namn"
                    :licenses "Licenser"
-                   :modifier "Person som ändrade"
+                   :modifier "Ändringen gjordes av"
                    :more-info "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
+                   :optional "(valfritt)"
                    :organization "Organisation"
                    :organizations "Organisationer"
                    :owners "Ägare"
@@ -104,12 +105,12 @@
                    :reports "Rapporter"
                    :resource "Resurs"
                    :resources "Resurser"
-                   :review-email-n "E-postaddress för granskning %1"
-                   :review-emails "E-postaddresser för granskning"
+                   :review-email-n "E-postadress för granskning %1"
+                   :review-emails "E-postadresser för granskning"
                    :save "Spara"
-                   :short-name "Kort namn"
+                   :short-name "Förkortning"
                    :start "Början"
-                   :title "Namn"
+                   :title "Fullt namn"
                    :type "Typ"
                    :unarchive "Avarkivera"
                    :user "Användare"
@@ -119,48 +120,48 @@
                    :workflows "Arbetsflöden"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
-                   :email "E-postaddress (från autentisering)"
-                   :invited-member "Inbjuden medlem"
-                   :member "Medlem"
+                   :email "E-postadress (från identifieringstjäst)"
+                   :invited-member "Inbjuden deltagare"
+                   :member "Deltagare"
                    :name "Namn"
-                   :notification-email "E-postaddress (sökande)"
+                   :notification-email "E-postadress (angiven av den sökande)"
                    :organization "Organisation"
                    :username "Användarnamn"}
   :applications {:all-applications "Alla ansökningar"
                  :applicant "Sökande"
-                 :application "Ansökning"
+                 :application "Ansökan"
                  :applications "Ansökningar"
-                 :copied-from "Kopierat från ansökning"
-                 :copied-to "Kopierat till ansökning"
+                 :copied-from "Kopierat från ansökan"
+                 :copied-to "Kopierat till ansökan"
                  :created "Skapad"
                  :description "Rubrik"
                  :empty "Inga ansökningar."
-                 :entitlement-end "Slutdatum för rättigheterna: %1." ;; TODO check
-                 :events {:approved "%1 godkände ansökning."
-                          :closed "%1 stängde ansökning."
-                          :copied-from "%1 kopierade ansökning från en tidigare ansökning."
-                          :copied-to "%1 kopierade ansökning som ny ansökning."
-                          :created "%1 skapade ny ansökning."
-                          :decided "%1 behandlade ansökning."
+                 :entitlement-end "Upphörandedatum för rättigheterna: %1."
+                 :events {:approved "%1 godkände ansökan."
+                          :closed "%1 stängde ansökan."
+                          :copied-from "%1 kopierade ansökan från en tidigare ansökan."
+                          :copied-to "%1 kopierade ansökan som ny ansökan."
+                          :created "%1 skapade ny ansökan."
+                          :decided "%1 behandlade ansökan."
                           :deleted "%1 raderade utkastet."
                           :decision-requested "%1 begärde beslut från användare %2."
-                          :draft-saved "%1 sparade utkast för ansökning."
+                          :draft-saved "%1 sparade utkast för ansökan."
                           :external-id-assigned "%1 lade till externt id %2."
                           :licenses-accepted "%1 accepterade licenserna."
                           :licenses-added "%1 lade till licenser."
-                          :member-added "%1 lade till %2 som medlem."
-                          :member-invited "%1 inbjöd %2 som medlem."
-                          :member-joined "%1 blev medlem."
-                          :member-removed "%1 tog bort medlem %2."
-                          :member-uninvited "%1 tog bort medlem %2."
-                          :rejected "%1 avslog ansökning."
+                          :member-added "%1 lade till %2 som deltagare."
+                          :member-invited "%1 bjöd in %2 att delta."
+                          :member-joined "%1 blev deltagare."
+                          :member-removed "%1 tog bort deltagare %2."
+                          :member-uninvited "%1 tog bort deltagare %2."
+                          :rejected "%1 avslog ansökan."
                           :remarked "%1 gjorde en anteckning."
                           :resources-changed "%1 ändrade sökta resurser. Nya resurser: %2."
-                          :returned "%1 returnerade ansökningen för redigering."
+                          :returned "%1 returnerade ansökan för korrigering."
                           :review-requested "%1 begärde granskning av %2."
-                          :reviewed "%1 granskade ansökningen."
+                          :reviewed "%1 granskade ansökan."
                           :revoked "%1 återkallade rättigheter."
-                          :submitted "%1 lämnade in ansökningen."
+                          :submitted "%1 lämnade in ansökan."
                           :unknown "Okänd"}
                  :export {:applicant "Sökande"
                           :external-id "Externt id"
@@ -171,7 +172,7 @@
                  :handlers "Handläggare"
                  :highlight-related-events "Visa relaterade händelser."
                  :id "id"
-                 :intro [:div.intro [:p "Fyll i ansökningen och skicka den för behandling. Du kan bjuda in andra som medlemmar i din ansökning. Alla medlemmar måste godkänna användarvillkoren senast när ansökningen godkänts."]]
+                 :intro [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"
@@ -186,21 +187,21 @@
                           :submitted "Inlämnad"
                           :unknown "Okänd"}
                  :submitted "Inlämnad"
-                 :todo "Kräver åtgärd"
-                 :todos {:new-application "Ny ansökning"
+                 :todo "Åtgärd krävs"
+                 :todos {:new-application "Ny ansökan"
                          :no-pending-requests "Inga öppna ärenden"
-                         :resubmitted-application "Ansökning återinlämnad"
+                         :resubmitted-application "Ansökan återinlämnad"
                          :unknown "Okänd"
                          :waiting-for-decision "Väntar på beslut"
                          :waiting-for-review "Väntar på granskning"
                          :waiting-for-your-decision "Väntar på ditt beslut"
                          :waiting-for-your-review "Väntar på din granskning"}
                  :view "Visa"
-                 :view-application-with-description "Visa ansökning %1: %2"
-                 :view-application-without-description "Visa ansökning %1 för resurser: %2"}
+                 :view-application-with-description "Visa ansökan %1: %2"
+                 :view-application-without-description "Visa ansökan %1 för resurser: %2"}
   :cart {:add "Lägg i korgen"
          :apply "Ansök"
-         :apply-for-bundle "Ansök %1 resurser tillsammans"
+         :apply-for-bundle "Ansök om %1 resurser"
          :header "%1 katalogposter i varukorgen"
          :intro [:div.intro [:p "Ansök om användningsrätt genom att lägga resurser i varukorgen. Alla resurser i korgen samlas till en ansökan."]]
          :remove "Ta bort från korgen"}
@@ -208,19 +209,19 @@
               :header "Katalog"
               :intro [:p "Användningsrätt kan ansökas till resurserna nedan."]
               :more-info "Läs mer"
-              :continue-existing-application "Återuppta ansökning"
+              :continue-existing-application "Återuppta ansökan"
               :continue-existing-application-intro [:div.intro [:p "Utkast till ansökningar:"]]
               :apply-resources "Ansök om resurser"}
   :collapse {:hide "Dölj"
              :show "Visa"
              :show-less "Visa mindre"
              :show-more "Visa mer"}
-  :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och den nya kopian använder blanketten du valt."
+  :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
                 :form-selection "Blankett"}
   :create-form {:add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
                 :field-n "Fält %1: %2"
-                :field-title "Namn på fält"
+                :field-title "Fältets namn"
                 :field-type "Typ av fält"
                 :info-text "Fält beskrivning (valfritt)"
                 :collapse-aria-label "Info om "
@@ -231,25 +232,25 @@
                 :optional "Frivilligt fält"
                 :placeholder "Exempel (frivilligt)"
                 :privacy {:private "Privat"
-                          :public "Offentlig"}
+                          :public "Publikt"}
                 :title "Blankettens namn"
                 :type-attachment "Bilaga"
                 :type-date "Datum"
-                :type-description "Ansökningens rubrik"
-                :type-email "E-postaddress"
+                :type-description "Ansökans rubrik"
+                :type-email "E-postadress"
                 :type-header "Titel"
-                :type-label "Fält för tilläggsinformation"
-                :type-multiselect "Lista med flerval"
-                :type-option "Lista (enkelt val)"
-                :type-privacy "Offentlighet"
+                :type-label "Informationsfält"
+                :type-multiselect "Flervalsmeny"
+                :type-option "Rullgardinsmeny"
+                :type-privacy "Publikt / privat"
                 :type-text "Textfält"
-                :type-texta "Textområde"
+                :type-texta "Textruta"
                 :type-visibility "Synlighet"
-                :visibility {:always "Alltid"
+                :visibility {:always "Visas alltid"
                              :field "Fält"
                              :has-value "Har värde"
                              :hidden "Dold"
-                             :only-if "om"}}
+                             :only-if "Visas om"}}
   :create-license {:external-link "Länk"
                    :inline-text "Text"
                    :license-attachment "Bilaga"
@@ -261,93 +262,93 @@
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
-                    :decider-workflow-description "Handläggare har inte rätt att godkänna eller förkasta ansökan. Endast godkännare kan göra detta."
-                    :default-workflow "Standard arbetsflöde"
-                    :default-workflow-description "Ansökan är under handläggarens kontroll. Behandlaren kan be enskilda granskare ta ställning till den och be om beslut enligt behov."
+                    :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
+                    :default-workflow "Standard"
+                    :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
-                    :master-workflow-description "ENDAST FÖR TESTBRUK. Sammanslagning av alla möjliga arbetsflöden"
+                    :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
-  :email {:application-approved {:subject-to-applicant "Din ansökning %3 är godkänd"
-                                 :message-to-applicant "Bästa %1,\n\nDin ansökning %3 är godkänd.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"
-                                 :subject-to-handler "(%3) Ansökningen är godkänd"
-                                 :message-to-handler "Bästa %1,\n\n%2 har godkänt ansökning %3 av %4.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"}
-          :application-rejected {:subject-to-applicant "Din ansökning %3 har fått avslag"
-                                 :message-to-applicant "Bästa %1,\n\nDin ansökning %3 har fått avslag.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"
-                                 :subject-to-handler "(%3) Ansökningen avslagen"
-                                 :message-to-handler "Bästa %1,\n\n%2 har avslagit %4s ansökning %3.\n\nDu kan granska ansökningen och beslutet bakom denna länk: %6"}
-          :application-closed {:subject-to-applicant "Din ansökning %3 har stängts"
-                               :message-to-applicant "Bästa %1,\n\nDin ansökning %3 har stängts.\n\nDu kan granska ansökningen bakom denna länk: %6"
-                               :subject-to-handler "Ansökning (%3)har stängts"
-                               :message-to-handler "Bästa %1,\n\n%2 har stängt ansökning %3 av %4.\n\nDu kan granska ansökningen bakom denna länk: %6"}
-          :application-returned {:subject-to-applicant "Din ansökning %3 kräver komplettering"
-                                 :message-to-applicant "Bästa %1,\n\nDin ansökning %3 har skickats tillbaka för komplettering. Var god och komplettera den enligt anvisningarna.\n\nDu kan granska ansökningen bakom denna länk: %6"
-                                 :subject-to-handler "(%3) Ansökning returnerad"
-                                 :message-to-handler "Bästa %1,\n\n%2 har returnerat  ansökning %3 av %4 .\n\nDu kan granska ansökningen bakom denna länk: %6"}
-          :application-revoked {:subject-to-applicant "Rättigheterna till %3 är annullerade."
-                                :message-to-applicant "Bästa %1,\n\nRättigheterna i anslutning till ansökning %3 är annullerade.\n\nDu kan granska ansökningen bakom denna länk: %6"
-                                :subject-to-handler "(%3) Användarrätt annullerad"
-                                :message-to-handler "Bästa %1,\n\n%2 har annullerat %4s rättigheterna som hör till ansökning %3.\n\nDu kan granska ansökan bakom denna länk: %6"}
+  :email {:application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
+                                 :message-to-applicant "%1,\n\nDin ansökan %3 är godkänd.\n\nDu kan granska ansökningen och beslutet här: %6"
+                                 :subject-to-handler "(%3) Ansökan är godkänd"
+                                 :message-to-handler "%1,\n\n%2 har godkänt ansökan %3 från %4.\n\nDu kan granska ansökningen och beslutet här: %6"}
+          :application-rejected {:subject-to-applicant "Din ansökan %3 har fått avslag"
+                                 :message-to-applicant "%1,\n\nDin ansökan %3 har fått avslag.\n\nDu kan granska ansökningen och beslutet här: %6"
+                                 :subject-to-handler "(%3) Avslag på ansökan"
+                                 :message-to-handler "%1,\n\n%2 har avslagit %4s ansökan %3.\n\nDu kan granska ansökningen och beslutet här: %6"}
+          :application-closed {:subject-to-applicant "Din ansökan %3 har stängts"
+                               :message-to-applicant "%1,\n\nDin ansökan %3 har stängts.\n\nDu kan granska ansökningen här: %6"
+                               :subject-to-handler "Ansökan (%3)har stängts"
+                               :message-to-handler "%1,\n\n%2 har stängt ansökan %3 från %4.\n\nDu kan granska ansökningen här: %6"}
+          :application-returned {:subject-to-applicant "Din ansökan %3 kräver komplettering"
+                                 :message-to-applicant "%1,\n\nDin ansökan %3 har skickats tillbaka för komplettering. Var god och komplettera den enligt anvisningarna.\n\nDu kan granska ansökningen här: %6"
+                                 :subject-to-handler "(%3) Ansökan returnerad"
+                                 :message-to-handler "%1,\n\n%2 har returnerat ansökan %3 från %4 .\n\nDu kan granska ansökningen här: %6"}
+          :application-revoked {:subject-to-applicant "Rättigheterna till %3 är återkallade."
+                                :message-to-applicant "%1,\n\nRättigheterna gällande ansökan %3 har blivit återkallade.\n\nDu kan granska ansökningen här: %6"
+                                :subject-to-handler "(%3) Användarrättigheter återkallade"
+                                :message-to-handler "%1,\n\n%2 har återkallat %4s rättigheterna som hör till ansökan %3.\n\nDu kan granska ansökan här %6"}
           :application-licenses-added {:subject "Användarvillkoren för %3 har förändrats"
-                                       :message "Bästa %1,\n\n%2 begär ditt godkännande för de förändrade användarvillkoren för ansökning %3.\n\nDu kan granska ansökningen och godkänna de förändrade användarvillkoren bakom denna länk: %6"}
-          :application-resubmitted {:subject-to-handler "(%3) Ansökningen har lämnats in igen"
-                                    :message-to-handler "Bästa %1,\n\n%4 har lämnat in ansökning %3 igen.\n\nDu kan granska ansökan bakom denna länk: %6"}
-          :application-submitted {:subject-to-applicant "Din ansökning %3 har mottagits" ;; TODO check translation
-                                  :message-to-applicant "Bästä %1,\n\nDin ansökning %3 har mottagits och ska behandlas. Du får e-post när ansökningen har behandlats.\n\nDu kan granska ansökningen bakom denna länk: %6" ;; TODO check translation
+                                       :message "%1,\n\n%2 begär ditt godkännande för de förändrade användarvillkoren för ansökan %3.\n\nDu kan granska ansökningen och godkänna de förändrade användarvillkoren här: %6"}
+          :application-resubmitted {:subject-to-handler "(%3) Ansökan har återinlämnats"
+                                    :message-to-handler "%1,\n\n%4 har gjort en återinlämning av ansökan %3.\n\nDu kan granska ansökan här: %6"}
+          :application-submitted {:subject-to-applicant "Din ansökan %3 har tagits emot"
+                                  :message-to-applicant "%1,\n\nDin ansökan %3 har mottagits och kommer att behandlas. Du meddelas via e-post när ansökningen är behandlad.\n\nDu kan granska ansökningen här: %6"
                                   :subject-to-handler "(%3) Ny ansökan"
-                                  :message-to-handler "Bästa %1,\n\n%4 har lämnat in ansökning %3 om användningsrätt till följande resurs(er) %5.\n\nDu kan granska ansökningen bakom denna länk: %6"}
+                                  :message-to-handler "%1,\n\n%4 har lämnat in ansökan %3 om användningsrätt till följande resurs(er) %5.\n\nDu kan granska ansökningen här: %6"}
           :decided {:subject "(%3) Beslut skickat"
-                    :message "Bästa %1,\n\n%2 har gett ett beslut angående %4s ansökning %3.\n\nDu kan granska ansökningen bakom denna länk: %6"}
+                    :message "%1,\n\n%2 har fattat beslut angående %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :decision-requested {:subject "(%3) Begäran om beslut"
-                               :message "Bästa %1,\n\n%2 har begärt ett beslut av dig gällande %4s ansökan %3.\n\nDu kan granska ansökningen bakom denna länk: %6"}
+                               :message "%1,\n\n%2 har begärt ett beslut av dig gällande %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :footer "\n\nDetta är ett automatiskt meddelande. Svara inte på detta meddelande."
           :handler-reminder {:application "%1, inlämnad av %2"
-                             :message "Bästa %1,\n\nFöljande ansökningar är öppna och kan kräva åtgärder:\n\n%2\n\nDu kan granska ansökningar bakom denna länk: %3"
+                             :message "%1,\n\nFöljande ansökningar är öppna och kräver eventuellt åtgärder:\n\n%2\n\nDu kan granska ansökningar här: %3"
                              :subject "Öppna ansökningar"}
-          :member-added {:subject "Tillagd som medlem i ansökning %3"
-                         :message "Bästa %1,\n\nDu har blivit tillagd som medlem i ansökning %3 av %4.\n\nDu kan granska ansökningen och godkänna användarvillkoren bakom denna länk: %6"}
+          :member-added {:subject "Tillagd som deltagare i ansökan %3"
+                         :message "%1,\n\nDu har blivit tillagd som deltagare i ansökan %3 av %4.\n\nDu kan granska ansökningen och godkänna användarvillkoren här: %6"}
           :member-invited {:subject "Inbjudan att delta i ansökan %3"
-                           :message "Bästa %1,\n\nDu är inbjuden att delta i %2s ansökning %3 om tillgång till material.\n\nDu kan granska ansökningen och godkänna användarvillkoren bakom denna länk: %4"};; < ONKO OIKEIN?
+                           :message "%1,\n\nDu är inbjuden att delta i %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen och godkänna användarvillkoren här: %4"}
           :regards "\n\nMed vänlig hälsning,\n\nREMS\n"
-          :remarked {:subject "Ansökning (%3) kommenterad"
-                     :message "Bästa %1,\n\n%2 har kommenterat ansökning (%3) inlämnad av %4.\n\nDu kan se kommentar och granska ansökningen bakom denna länk: %6"}
+          :remarked {:subject "Ansökan (%3) har fått en kommentar"
+                     :message "%1,\n\n%2 har kommenterat ansökan (%3) inlämnad av %4.\n\nDu kan se kommentar och granska ansökningen här: %6"}
           :review-requested {:subject "(%3) Begäran om granskning"
-                             :message "Bästa %1,\n\n%2 ber dig granska %4s ansökning: %3.\n\nVDu kan granska ansökningen bakom denna länk: %6"}
-          :reviewed {:subject "Ansökning %3 granskad"
-                     :message "Bästa %1,\n\n%2 har granskat %4s ansökning %3.\n\nDu kan granska ansökningen bakom denna länk: %6"}
+                             :message "%1,\n\n%2 har bett dig granska %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
+          :reviewed {:subject "Ansökan %3 granskad"
+                     :message "%1,\n\n%2 har granskat %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :reviewer-reminder {:application "%1, skickad av %2"
-                              :message "Bästa %1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska nsökningar bakom denna länk:  %3"
+                              :message "%1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska ansökningarna här:  %3"
                               :subject "Ansökningar väntar på granskning"}}
   :footer "CSC – IT-centret för forskning"
   :form {:accepted-licenses "Licenserna har accepterats"
          :actions "Funktioner"
-         :add-comments-not-shown-to-applicant "Kommentar osynlig för sökande"
-         :add-comments-shown-to-applicant "Kommentar synlig för sökande"
-         :add-remark "Anteckning (syns eller döljs för sökande)"
-         :alert-blacklisted-users "Dessa medlemmar har blockerats för någon av de ansökta resurserna"
+         :add-comments-not-shown-to-applicant "Kommentar, dold för sökande"
+         :add-comments-shown-to-applicant "Kommentar, synlig för sökande"
+         :add-remark "Anteckning (dold eller synlig för sökande)"
+         :alert-blacklisted-users "Dessa användare har blockerats från någon av de ansökta resurserna"
          :alert-disabled-resources "Resurser som inte längre är tillgängliga:"
-         :application "Ansökning"
+         :application "Ansökan"
          :attachment-remove "Ta bort"
          :attachments "Bilagor"
          :attachments-as-zip "Alla bilagor (zip)"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
-         :comment "Komment"
+         :comment "Kommentar"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"
-         :diff-hide "Dölja ändringar"
+         :diff-hide "Dölj ändringar"
          :diff-show "Visa ändringar"
          :events "Händelser"
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
-         :invalid-attachment "Filtyp inte tillåtet."
+         :invalid-attachment "Filtyp inte tillåten."
          :licenses "Licenser"
-         :maxlength "(längd högst %1 tecken)"
+         :maxlength "(max %1 tecken)"
          :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."
          :optional "(frivillig)"
-         :please-wait "Vänta en stund"
+         :please-wait "Var god vänta"
          :previous-applications "Sökandes tidigare ansökningar"
          :previous-value "Föregående"
          :required "*"
@@ -372,14 +373,14 @@
           :alternative-text ""
           :fake-text ""
           :fake-title ""
-          :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här finns en del fantasiresurser, som du kan ansöka rättigheter till. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]]
+          :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här kan du ansöka om rättigheter till olika demo-resurser. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]]
           :intro2 ""
           :login "Logga in"
           :oidc-text ""
           :oidc-title ""
           :shibboleth-text ""
           :shibboleth-title ""
-          :text [:p "Var god, logga in."]
+          :text [:p "Logga in för att komma vidare."]
           :title ""}
   :missing "Översättning hittades inte: %1"
   :navigation {:actions "Funktioner"
@@ -393,7 +394,7 @@
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
-  :pdf {:generated "Detta pdf skapad"}
+  :pdf {:generated "Denna pdf skapades"}
   :phases {:apply "Skicka in"
            :approve "Godkänn"
            :approved "Godkänt"
@@ -408,19 +409,19 @@
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
-           :search "Sök"} ;;
-  :settings {:idp-email "E-postadress från identfieringstjänst" ; TODO check
-             :no-email "(ingen e-postaddress)"
+           :search "Sök"}
+  :settings {:idp-email "E-postadress från identifieringstjänst"
+             :no-email "(ingen e-postadress)"
              :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
              :save "Spara"
-             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökning."]}
+             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
           :all-rows-selected "Alla rader är valda"
           :no-rows-selected "Inga rader är valda"
           :some-rows-selected "Några rader är valda"
           :show-all-n-rows "Visa alla %1 rader"}
-  :unauthorized-page {:unauthorized "Ingen användningsrätt"
-                      :you-are-unauthorized "Du har inte rätt att använda denna sida."}
+  :unauthorized-page {:unauthorized "Ingen tillgång"
+                      :you-are-unauthorized "Du har inte tillgång till denna sida."}
   :forbidden-page {:forbidden "Förbjuden"
-                   :you-are-forbidden "Förbjudet."}}}
+                   :you-are-forbidden "Innehåll förbjudet."}}}

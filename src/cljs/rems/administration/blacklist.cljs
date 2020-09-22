@@ -6,10 +6,13 @@
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text text-format localize-time]]
             [rems.util :refer [fetch post!]]))
+
+(def +blacklist-add-roles+ #{:owner :handler}) ;; same roles as in rems.api.blacklist
 
 (rf/reg-event-fx
  ::enter-page
@@ -64,10 +67,11 @@
 
 (rf/reg-event-fx
  ::fetch-users
- (fn []
-   (fetch "/api/blacklist/users"
-          {:handler #(rf/dispatch [::fetch-users-result %])
-           :error-handler (flash-message/default-error-handler :top "Fetch users")})
+ (fn [{:keys [db]} _]
+   (when (some +blacklist-add-roles+ (get-in db [:identity :roles]))
+     (fetch "/api/blacklist/users"
+            {:handler #(rf/dispatch [::fetch-users-result %])
+             :error-handler (flash-message/default-error-handler :top "Fetch users")}))
    {}))
 
 (rf/reg-event-db
@@ -132,7 +136,7 @@
          :style {:display :block}} ; XXX: .invalid-feedback is hidden unless it's a sibling of .form-control.is-invalid
         error])]))
 
-(defn add-user-form [resource]
+(defn add-user-form-impl [resource]
   (let [user-field-id "blacklist-user"
         comment-field-id "blacklist-comment"
         selected-user @(rf/subscribe [::selected-user])
@@ -174,6 +178,9 @@
        [:button#blacklist-add.btn.btn-primary
         {:type :submit}
         (text :t.administration/add)]]]]))
+
+(defn add-user-form [resource]
+  [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width
