@@ -10,7 +10,7 @@
 
 (rf/reg-event-db
  ::activity
- (fn [db _ ]
+ (fn [db _]
    (let [now (time/now)
          deadline (get db ::next-keepalive (time/date-time 1970))]
      (if (time/before? now deadline)

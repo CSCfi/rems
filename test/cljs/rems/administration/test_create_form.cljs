@@ -169,14 +169,14 @@
   (let [fields [{:field/id "fld1"
                  :field/index 0
                  :field/title {:en "en title"
-                                :fi "fi title"}
+                               :fi "fi title"}
                  :field/info-text {:en "en info text"
-                                    :fi "fi info text"}
+                                   :fi "fi info text"}
                  :field/optional true
                  :field/type :text
                  :field/max-length "12"
                  :field/placeholder {:en "en placeholder"
-                                    :fi "fi placeholder"}}]
+                                     :fi "fi placeholder"}}]
         fields-empty-info-text [{:field/id "fld1"
                                  :field/index 0
                                  :field/title {:en "en title"
@@ -200,9 +200,9 @@
                :field/max-length 12
                :field/placeholder {:en "en placeholder"
                                    :fi "fi placeholder"}}]
-             
-           (mapv #(build-request-field % languages) fields)))
-      
+
+             (mapv #(build-request-field % languages) fields)))
+
       (is (= [{:field/id "fld1"
                :field/title {:en "en title"
                              :fi "fi title"}
@@ -212,8 +212,7 @@
                :field/placeholder {:en "en placeholder"
                                    :fi "fi placeholder"}}]
 
-             (mapv #(build-request-field % languages) fields-empty-info-text)))
-    )))
+             (mapv #(build-request-field % languages) fields-empty-info-text))))))
 
 (deftest build-request-test
   (let [form {:organization {:organization/id "abc"}
@@ -256,7 +255,7 @@
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
              (build-request form languages))))
-    
+
     (testing "basic form without input field "
       (is (= {:organization {:organization/id "abc"}
               :form/title "the title"

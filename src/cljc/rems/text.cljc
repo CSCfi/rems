@@ -113,8 +113,8 @@
   #?(:clj (do
             (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 23 59)
                                                                       (time/time-zone-for-offset 5))))
-            (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 1 1)
-                                                                      (time/time-zone-for-offset -5)))))))))
+                (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 1 1)
+                                                                          (time/time-zone-for-offset -5)))))))))
 
 
 (def ^:private event-types

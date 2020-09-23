@@ -142,8 +142,8 @@
                             (boolean (:field/optional field))
                             false)}
          (when (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang)))
-                     languages)
-          {:field/info-text (build-localized-string (:field/info-text field) languages)})
+                         languages)
+           {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
          (when (common-form/supports-max-length? field)
@@ -189,13 +189,13 @@
        (send-verb send-url
                   {:params request
                    :handler (flash-message/default-success-handler
-                              :top
-                              description
-                              (fn [response]
-                                (navigate! (str "/administration/forms/"
-                                                (if edit?
-                                                  (::form-id db)
-                                                  (response :id))))))
+                             :top
+                             description
+                             (fn [response]
+                               (navigate! (str "/administration/forms/"
+                                               (if edit?
+                                                 (::form-id db)
+                                                 (response :id))))))
                    :error-handler (flash-message/default-error-handler :top description)}))
      {:db (assoc db ::form-errors form-errors)})))
 

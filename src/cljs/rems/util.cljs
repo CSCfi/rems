@@ -70,7 +70,7 @@
       (when old-handler
         (old-handler response))
       (finally
-       (new-handler response)))))
+        (new-handler response)))))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
