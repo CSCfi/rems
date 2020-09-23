@@ -1,6 +1,10 @@
 # How to contribute
 
-REMS is an open source project and we accept pull request from anyone. Before starting on working something big/non-trivial, make sure to submit an issue first. [README.md](README.md) contains instructions on how get started.
+REMS is an open source project and we are open to issues and pull requests from everyone. Before starting on working something big/non-trivial, please submit an issue first, we can help with the design and provide assistance!
+
+Instructions for getting started are in [development.md](development.md).
+
+See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issue) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
 
 ## Submitting a pull request
 
@@ -13,10 +17,8 @@ git clone git@github.com:your-username/rems.git
 ```
 - Make sure that tests pass by running `lein alltests`
 - Submit a pull request against the main repository
-
-## Accepting changes
-
-Before your changes will be merged into the project, it will have go through the following checks:
-
-- Changes have to be accepted by at least one of the core team members
-- All status checks have passed 
+- Fill in the info you think is relevant for the PR (screenshots, tests, ...)
+- Wait for the CI build to finish and fix the findings
+- One of the core team members will review it
+- React to questions and comments in the PR
+- Let's get it merged and celebrate!
