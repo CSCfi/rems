@@ -224,7 +224,7 @@ workflows:
             - integration-test
             - browser-test
             - build
-            # cljfmt not required to pass CI currently
+            - cljfmt
           filters:
             tags:
               only: /.*/
