@@ -70,14 +70,14 @@
                          (rf/dispatch [::add-attachment key {:attachment/id (:id response)
                                                              :attachment/filename (.. file (get "file") -name)}])))
              :error-handler (fn [response]
-                             (if (= 415 (:status response))
-                               (flash-message/show-default-error! :actions description
-                                                                  [:div
-                                                                   [:p [text :t.form/invalid-attachment]]
-                                                                   [:p [text :t.form/upload-extensions]
-                                                                    ": "
-                                                                    attachment-types/allowed-extensions-string]])
-                               ((flash-message/default-error-handler :actions description) response)))})
+                              (if (= 415 (:status response))
+                                (flash-message/show-default-error! :actions description
+                                                                   [:div
+                                                                    [:p [text :t.form/invalid-attachment]]
+                                                                    [:p [text :t.form/upload-extensions]
+                                                                     ": "
+                                                                     attachment-types/allowed-extensions-string]])
+                                ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
 (defn action-attachment [{:keys [application-id key]}]

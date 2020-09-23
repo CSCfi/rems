@@ -31,9 +31,9 @@
          :aria-controls (str info-id "-collapse")}
         [:i.fa.fa-info-circle]]
    [:div.info-collapse.collapse {:id (str info-id "-collapse")
-                              :ref focus-when-collapse-opened
-                              :tab-index "-1"}
-     body-text]])
+                                 :ref focus-when-collapse-opened
+                                 :tab-index "-1"}
+    body-text]])
 
 
 (defn- diff [value previous-value]
@@ -127,8 +127,7 @@
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
           :focus-when-collapse-opened focus-when-collapse-opened
-          :body-text info-text
-          }])]
+          :body-text info-text}])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -308,7 +307,7 @@
        :focus-when-collapse-opened focus-when-collapse-opened
        :body-text [:span [text :t.form/upload-extensions]
                    ": "
-                   attachment-types/allowed-extensions-string]} ]]))
+                   attachment-types/allowed-extensions-string]}]]))
 
 (defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group

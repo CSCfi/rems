@@ -509,9 +509,9 @@
 
     (testing "seeing submitted application as reporter is allowed"
       (is (response-is-ok?
-            (-> (request :get (str "/api/applications/" application-id))
-                (authenticate api-key "reporter")
-                handler))))))
+           (-> (request :get (str "/api/applications/" application-id))
+               (authenticate api-key "reporter")
+               handler))))))
 
 (deftest test-application-delete
   (let [api-key "42"

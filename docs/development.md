@@ -96,6 +96,13 @@ To conveniently run all the tests you can run the lein alias
 lein alltests
 ```
 
+## Indentation & formatting
+
+We use [cljfmt](https://github.com/weavejester/cljfmt) for checking & fixing code formatting issues.
+
+Use `lein cljfmt check` to check your formatting. Use `lein cljfmt
+fix` or `lein cljfmt fix <file>` to automatically fix your formatting.
+
 ## Component Guide
 
 You can access the component guide at `/guide`. It contains all the
