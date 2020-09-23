@@ -4,7 +4,7 @@ REMS is an open source project and we are open to issues and pull requests from 
 
 Instructions for getting started are in [development.md](development.md).
 
-See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issues) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
+See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issue) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
 
 ## Submitting a pull request
 
