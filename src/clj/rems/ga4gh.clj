@@ -48,7 +48,7 @@
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
                    :source (:public-url env)
-                   :by "system" ;; TODO or "so"?
+                   :by "dac" ;; the Data Access Commitee acts via REMS
                    :asserted (clj-time.coerce/to-long start)}})
 
 (deftest test-entitlement->visa-claims
@@ -63,7 +63,7 @@
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
-                                :by "system"
+                                :by "dac"
                                 :asserted (clj-time.coerce/to-long "2009")}}
                (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :userid "user@example.com"})))
         (is (= {:iss "https://rems.example/"
@@ -74,7 +74,7 @@
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
-                                :by "system"
+                                :by "dac"
                                 :asserted (clj-time.coerce/to-long "2009")}}
                (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :end (time/date-time 2010 6 2) :userid "user@example.com"})))))))
 
