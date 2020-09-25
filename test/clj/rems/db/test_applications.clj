@@ -7,7 +7,7 @@
             [rems.db.core :as db]
             [rems.db.events :as db-events]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import [clojure.lang ExceptionInfo]
@@ -17,8 +17,7 @@
 (use-fixtures
   :once
   test-db-fixture
-  rollback-db-fixture
-  test-data-fixture)
+  rollback-db-fixture)
 
 (deftest test-event-serialization
   (testing "round trip serialization"
