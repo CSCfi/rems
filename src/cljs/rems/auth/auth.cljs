@@ -3,7 +3,6 @@
             [rems.atoms :as atoms]
             [rems.auth.fake :as fake]
             [rems.auth.oidc :as oidc]
-            [rems.auth.shibboleth :as shibboleth]
             [rems.navbar :as nav]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -11,7 +10,6 @@
 (defn login-component []
   (let [config @(rf/subscribe [:rems.config/config])
         login-component (case (:authentication config)
-                          :shibboleth (shibboleth/login-component)
                           :oidc (oidc/login-component)
                           :fake (fake/login-component)
                           nil)]
@@ -30,7 +28,5 @@
 
 (defn guide []
   [:div
-   (component-info shibboleth/login-component)
-   (example "shibboleth login" [shibboleth/login-component])
    (component-info oidc/login-component)
    (example "oidc login" [oidc/login-component])])

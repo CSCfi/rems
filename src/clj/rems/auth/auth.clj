@@ -5,11 +5,9 @@
             [compojure.core :refer [GET routes]]
             [rems.auth.fake-login :as fake-login]
             [rems.auth.oidc :as oidc]
-            [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.users :as users]
-            [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 
 (defn get-api-key [request]
@@ -31,10 +29,7 @@
                  (users/get-raw-user-attributes uid)))))))
 
 (defn- auth-backends []
-  (let [backend (case (:authentication env)
-                  :shibboleth (shibboleth/backend)
-                  (session-backend))]
-    [(api-key-backend) backend]))
+  [(api-key-backend) (session-backend)])
 
 (defn- wrap-uses-valid-api-key [handler]
   (fn [request]
@@ -49,13 +44,11 @@
 
 (defn- login-url []
   (case (:authentication env)
-    :shibboleth (shibboleth/login-url)
     :oidc (oidc/login-url)
     :fake (fake-login/login-url)))
 
 (defn- logout-url []
   (case (:authentication env)
-    :shibboleth (shibboleth/logout-url)
     :oidc (oidc/logout-url)
     :fake (fake-login/logout-url)))
 
@@ -64,6 +57,5 @@
    (GET "/logout" _ (redirect (logout-url)))
    (GET "/login" _ (redirect (login-url)))
    (case (:authentication env)
-     :shibboleth never-match-route ; shibboleth routes handled by tomcat
      :oidc oidc/routes
      :fake fake-login/routes)))

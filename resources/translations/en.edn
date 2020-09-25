@@ -380,8 +380,6 @@
           :login "Login"
           :oidc-text ""
           :oidc-title ""
-          :shibboleth-text ""
-          :shibboleth-title ""
           :text [:p "Please, login to access REMS."]
           :title ""}
   :missing "Missing translation %1"

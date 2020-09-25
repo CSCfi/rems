@@ -6,10 +6,14 @@
             [rems.db.user-settings :as user-settings]
             [rems.json :as json]))
 
+;; TODO the user db still stores shibboleth-like
+;; attributes (:eppn, :commonName), refactor to store formatted or
+;; oidc-like user attributes.
+
 (defn format-user [u]
   (merge {:userid (:eppn u)
           :name (or (:commonName u)
-                    (:displayName u)) ;; some shibboleth idps don't send commonName
+                    (:displayName u))
           :email (:mail u)}
          (select-keys u [:organizations :notification-email])
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
