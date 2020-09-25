@@ -15,6 +15,7 @@ Changes since v2.13
 ### Changes
 
 ### Fixes
+- New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
