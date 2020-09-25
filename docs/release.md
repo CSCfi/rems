@@ -46,7 +46,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
    `git push origin v2.6`
 
-7. Get the `rems.jar` and `rems.war` packages for the release from CircleCI.
+7. Get the `rems.jar` package for the release from CircleCI.
    You can do this manually or using `rems-deploy/scripts/fetch_from_circle.sh`
 
 8. Go to the github page for the release, e.g.,
@@ -61,6 +61,6 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
     - Change lines starting with `###` to `##` for better formatting
 
-11. Press "Attach binaries" to upload the `rems.jar` and `rems.war` you got in step 8.
+11. Press "Attach binaries" to upload the `rems.jar` you got in step 8.
 
 12. Press "Publish release".

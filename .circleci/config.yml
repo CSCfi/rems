@@ -98,9 +98,6 @@ jobs:
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
-      - run: lein uberwar
-      - store_artifacts:
-          path: target/uberjar/rems.war
       - run: lein uberjar
       - store_artifacts:
           path: target/uberjar/rems.jar

@@ -93,7 +93,6 @@
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
-            [lein-uberwar "0.2.1"]
             [migratus-lein "0.5.7"]]
 
   :cljfmt {:paths ["src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ;; need explicit paths to include cljs
@@ -106,13 +105,6 @@
              :nrepl-port 7002
              :css-dirs ["target/resources/public/css"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
-
-  :uberwar {:handler rems.handler/handler
-            :init rems.handler/init
-            :destroy rems.handler/destroy
-            :web-xml "web.xml"
-            :name "rems.war"}
-
 
   :npm {:devDependencies [;; cljs testing
                           [karma "3.1.1"]
