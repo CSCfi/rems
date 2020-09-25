@@ -10,6 +10,7 @@ Changes since v2.13
 
 ### Breaking changes
 - Dropped support for shibboleth authentication. (#1235)
+- Dropped support for running REMS under tomcat. Dropped support for building the `rems.war` uberwar. (#1235)
 
 ### Changes
 

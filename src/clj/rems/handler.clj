@@ -1,6 +1,5 @@
 (ns rems.handler
-  (:require [clojure.tools.logging :as log]
-            [compojure.core :refer [defroutes routes wrap-routes]]
+  (:require [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
@@ -13,24 +12,6 @@
             [rems.middleware :as middleware]
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))
-
-(defn init
-  "init will be called once when
-   app is deployed as a servlet on
-   an app server such as Tomcat
-   put any initialization code here"
-  []
-  (doseq [component (:started (mount/start))]
-    (log/info component "started")))
-
-(defn destroy
-  "destroy will be called when your application
-   shuts down, put any clean up code here"
-  []
-  (doseq [component (:stopped (mount/stop))]
-    (log/info component "stopped"))
-  (shutdown-agents)
-  (log/info "Rems has shut down!"))
 
 (defn not-found-handler [_req]
   ;; TODO: serve 404 for routes which the frontend doesn't recognize
