@@ -378,8 +378,6 @@
           :login "Logga in"
           :oidc-text ""
           :oidc-title ""
-          :shibboleth-text ""
-          :shibboleth-title ""
           :text [:p "Logga in för att komma vidare."]
           :title ""}
   :missing "Översättning hittades inte: %1"

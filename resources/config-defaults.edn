@@ -29,14 +29,14 @@
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
- ;; Supported authentication methods: :shibboleth, :oidc, :fake
- :authentication :shibboleth
+ ;; Supported authentication methods: :oidc, :fake
+ :authentication :fake
 
  ;; Log additional details about authentication
  :log-authentication-details false
 
- ;; For :shibboleth authentication
- :alternative-login-url nil ;; link to this login url in addition to /Shibboleth.sso/Login
+ ;; Show link to an alternative login service
+ :alternative-login-url nil
 
  ;; For :oidc authentication
  :oidc-domain nil

@@ -3,7 +3,8 @@
   :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
   :url "https://github.com/CSCfi/rems"
 
-  :dependencies [[buddy/buddy-sign "3.1.0"]
+  :dependencies [[buddy/buddy-auth "2.1.0"]
+                 [buddy/buddy-sign "3.1.0"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
                  [clj-http "3.10.2"]
@@ -28,7 +29,6 @@
                  [cprop "0.1.17"]
                  [funcool/promesa "5.1.0"]
                  [garden "1.3.10"]
-                 [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]

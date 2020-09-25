@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.13
 
 ### Breaking changes
+- Dropped support for shibboleth authentication. (#1235)
 
 ### Changes
 

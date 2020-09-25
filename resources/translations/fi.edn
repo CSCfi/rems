@@ -378,8 +378,6 @@
           :login "Kirjaudu sisään"
           :oidc-text ""
           :oidc-title ""
-          :shibboleth-text ""
-          :shibboleth-title ""
           :text [:p "Ole hyvä ja kirjaudu sisään."]
           :title ""}
   :missing "Käännös puuttuu %1"

@@ -3,7 +3,6 @@
             [clj-time.format :as time-format]
             [clojure.test :refer [deftest is testing]]
             [cognitect.transit :as transit]
-            [cuerdas.core :refer [numeric? parse-number]]
             [jsonista.core :as j]
             [muuntaja.core :as muuntaja]
             [schema.coerce :as coerce]

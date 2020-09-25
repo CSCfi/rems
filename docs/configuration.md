@@ -10,17 +10,10 @@ REMS tries to validate your config file when starting. Errors or warnings will b
 
 ## Authentication options
 
-Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Auth0). Login method to be used can be defined with the key `:authentication` and the following values are recognized:
+Currently the only real authentication method is OpenId Connect (e.g. Auth0). The authentication method to be used can be defined with the key `:authentication` and the following values are recognized:
 
-* `:shibboleth` for SAML2
 * `:oidc` for OpenId Connect
 * `:fake` for development login
-
-A link to an alternative login endpoint can also be shown if the `:alternative-login-url` option is set.
-
-### SAML2 (`:shibboleth`)
-
-When using this option, login requests are directed to `/Shibboleth.sso/Login`.
 
 ### OpenId Connect (`:oidc`)
 
