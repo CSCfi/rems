@@ -6,6 +6,7 @@
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.config :as config]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -21,6 +22,11 @@
  ::fetch-organizations
  (fn [db]
    (let [description [text :t.administration/organizations]]
+     ;; Refresh :organizations subscription. We do this here
+     ;; since it would be surprising if an organization was visible on
+     ;; this page but not selectable e.g. when creating a resource.
+     (config/fetch-organizations!)
+     ;; Fetch the organizations for our display on this page:
      (fetch "/api/organizations"
             {:url-params {:disabled true
                           :archived (status-flags/display-archived? db)}
