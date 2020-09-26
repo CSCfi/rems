@@ -134,6 +134,11 @@
   (into {} (for [language languages]
              [language (trim-when-string (get lstr language ""))])))
 
+(defn- string-is-not-empty [s]
+  (not (str/blank? s)))
+
+
+
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
           :field/title (build-localized-string (:field/title field) languages)
@@ -141,8 +146,8 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang)))
-                         languages)
+         (when (and (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
+                     languages) (common-form/supports-info-text?  field))
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
@@ -561,7 +566,8 @@
 
             [form-field-title-field index]
             [form-field-type-radio-group index]
-            [form-field-info-text index]
+            (when (common-form/supports-info-text? field)
+              [form-field-info-text index])
             (when (common-form/supports-optional? field)
               [form-field-optional-checkbox index])
             (when (common-form/supports-placeholder? field)

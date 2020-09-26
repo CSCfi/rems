@@ -866,7 +866,7 @@
                                :field/max-length 127
                                :field/optional true}
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv ""}
                                :field/type "option"
                                :field/id "fld2"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
