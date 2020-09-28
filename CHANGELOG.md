@@ -15,6 +15,7 @@ Changes since v2.13
 ### Changes
 
 ### Fixes
+- Add vertical margins around search field for better readability (#2330)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
