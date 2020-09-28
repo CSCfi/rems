@@ -192,7 +192,7 @@
                                  :field/index 0
                                  :field/title {:en "en title"
                                                :fi "fi title"}
-                                 :field/info-text {:en "en placeholder"
+                                 :field/info-text {:en "en info text"
                                                    :fi ""}
                                  :field/optional true
                                  :field/type :text

@@ -137,8 +137,6 @@
 (defn- string-is-not-empty [s]
   (not (str/blank? s)))
 
-
-
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
           :field/title (build-localized-string (:field/title field) languages)
@@ -146,8 +144,9 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (and (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
-                     languages) (common-form/supports-info-text?  field))
+         (when (and (common-form/supports-info-text?  field)  
+                    (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
+                     languages))
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
@@ -499,6 +498,10 @@
             (for [[lang error] (:field/placeholder field-errors)]
               (format-validation-link (str "fields-" field-index "-placeholder-" (name lang))
                                       (text-format error (str (text :t.create-form/placeholder)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
+            (for [[lang error] (:field/info-text field-errors)]
+              (format-validation-link (str "fields-" field-index "-info-text-" (name lang))
+                                      (text-format error (str (text :t.create-form/info-text)
                                                               " (" (.toUpperCase (name lang)) ")"))))
             (when (:field/max-length field-errors)
               [(format-validation-link (str "fields-" field-index "-max-length")

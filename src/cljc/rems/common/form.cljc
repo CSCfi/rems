@@ -245,8 +245,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
-                            ;;  :field/info-text {:en "en info text"
-                            ;;                    :fi "fi info text"}
+                              :field/info-text {:en "en info text"
+                                                :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length "12"
@@ -291,12 +291,14 @@
              (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text" :fi ""}) languages)
              (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text"}) languages))))
 
-    (testing "placeholder & max-length shouldn't be present if they are not applicable"
+    (testing "placeholder & max-length & info text shouldn't be present if they are not applicable"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
-                     (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
+                     (assoc-in [:form/fields 0 :field/placeholder :fi] "")
+                     (assoc-in [:form/fields 0 :field/info-text :fi] ""))]
         (is (= {:form/fields {0 {:field/placeholder :unsupported
-                                 :field/max-length :unsupported}}}
+                                 :field/max-length :unsupported
+                                 :field/info-text :unsupported}}}
                (validate-form-template form languages)))))
 
     (testing "privacy, & options shouldn't be present if they are not applicable"
