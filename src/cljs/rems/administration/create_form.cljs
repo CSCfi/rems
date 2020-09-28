@@ -146,7 +146,12 @@
                             false)}
          (when (and (common-form/supports-info-text?  field)
                     (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
-                          languages))
+                          languages)
+                    ;; (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang))))
+                    )
+                    ;; (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
+                    ;;       languages)
+                    ;; )
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
