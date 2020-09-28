@@ -245,8 +245,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
-                              :field/info-text {:en "en info text"
-                                                :fi "fi info text"}
+                             :field/info-text {:en "en info text"
+                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length "12"
@@ -285,7 +285,7 @@
       (is (= {:form/fields {0 {:field/placeholder {:fi :t.form.validation/required}}}}
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder"}) languages))))
-    
+
     (testing "if you use info text, you must fill in all the languages"
       (is (= {:form/fields {0 {:field/info-text {:fi :t.form.validation/required}}}}
              (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text" :fi ""}) languages)

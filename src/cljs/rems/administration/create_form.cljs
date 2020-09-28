@@ -144,9 +144,9 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (and (common-form/supports-info-text?  field)  
+         (when (and (common-form/supports-info-text?  field)
                     (some (fn [l] (string-is-not-empty (l (:field/info-text field))))
-                     languages))
+                          languages))
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
