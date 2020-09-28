@@ -791,7 +791,9 @@
      :.application-applicant {:max-width "10em"}]]
    [:.search-field {:display :flex
                     :flex-wrap :nowrap
-                    :align-items :center}
+                    :align-items :center
+                    :margin-bottom "1rem"
+                    :margin-top "1rem"}
     [:label {:margin-bottom 0}] ; override the default from Bootstrap
     [:div.input-group {:width "17em"}]]
    [:.search-tips {:font-size "0.9rem"
