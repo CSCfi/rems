@@ -716,52 +716,52 @@
 
 (deftest test-edit-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
-    (let [workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
-                                                :type :workflow/default
-                                                :handlers ["handler"]})
-          resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"})
-          form (test-data/create-form! {:form/title "test-edit-catalogue-item form"
-                                        :form/fields []})
-          catalogue-item (test-data/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
-                                                                    :fi "test-edit-catalogue-item FI"
-                                                                    :sv "test-edit-catalogue-item SV"}
-                                                            :resource-id resource
-                                                            :form-id form
-                                                            :workflow-id workflow})]
-      (login-as "owner")
-      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" catalogue-item))
-      (btu/wait-page-loaded)
-      (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
-      (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
-      (is (= {;; slurp-fields can't read the organization dropdown currently
-              "Title (EN)" "test-edit-catalogue-item EN"
-              "Title (FI)" "test-edit-catalogue-item FI"
-              "Title (SV)" "test-edit-catalogue-item SV"
-              "More info URL (optional, defaults to resource URN) (EN)" ""
-              "More info URL (optional, defaults to resource URN) (FI)" ""
-              "More info URL (optional, defaults to resource URN) (SV)" ""
-              "Form" "test-edit-catalogue-item form"
-              "Workflow" "test-edit-catalogue-item workflow"
-              "Resource" "test-edit-catalogue-item resource"}
-             (slurp-fields :catalogue-item-editor)))
-      (btu/fill-human :infourl-en "http://google.com")
-      (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-2.png"))
-      (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
-      (btu/wait-page-loaded)
-      (is (= {"Organization" "The Default Organization"
-              "Title (EN)" "test-edit-catalogue-item EN"
-              "Title (FI)" "test-edit-catalogue-item FI"
-              "Title (SV)" "test-edit-catalogue-item SV"
-              "More info (EN)" "http://google.com"
-              "More info (FI)" ""
-              "More info (SV)" ""
-              "Form" "test-edit-catalogue-item form"
-              "Workflow" "test-edit-catalogue-item workflow"
-              "Resource" "test-edit-catalogue-item resource"
-              "End" ""
-              "Active" ""}
-             (dissoc (slurp-fields :catalogue-item) "Start"))))))
+    (btu/context-assoc! :workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
+                                                               :type :workflow/default
+                                                               :handlers ["handler"]}))
+    (btu/context-assoc! :resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"}))
+    (btu/context-assoc! :form (test-data/create-form! {:form/title "test-edit-catalogue-item form"
+                                                       :form/fields []}))
+    (btu/context-assoc! :catalogue-item (test-data/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
+                                                                                   :fi "test-edit-catalogue-item FI"
+                                                                                   :sv "test-edit-catalogue-item SV"}
+                                                                           :resource-id (btu/context-get :resource)
+                                                                           :form-id (btu/context-get :form)
+                                                                           :workflow-id (btu/context-get :workflow)}))
+    (login-as "owner")
+    (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
+    (btu/wait-page-loaded)
+    (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
+    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
+    (is (= {;; slurp-fields can't read the organization dropdown currently
+            "Title (EN)" "test-edit-catalogue-item EN"
+            "Title (FI)" "test-edit-catalogue-item FI"
+            "Title (SV)" "test-edit-catalogue-item SV"
+            "More info URL (optional, defaults to resource URN) (EN)" ""
+            "More info URL (optional, defaults to resource URN) (FI)" ""
+            "More info URL (optional, defaults to resource URN) (SV)" ""
+            "Form" "test-edit-catalogue-item form"
+            "Workflow" "test-edit-catalogue-item workflow"
+            "Resource" "test-edit-catalogue-item resource"}
+           (slurp-fields :catalogue-item-editor)))
+    (btu/fill-human :infourl-en "http://google.com")
+    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-2.png"))
+    (btu/scroll-and-click :save)
+    (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+    (btu/wait-page-loaded)
+    (is (= {"Organization" "The Default Organization"
+            "Title (EN)" "test-edit-catalogue-item EN"
+            "Title (FI)" "test-edit-catalogue-item FI"
+            "Title (SV)" "test-edit-catalogue-item SV"
+            "More info (EN)" "http://google.com"
+            "More info (FI)" ""
+            "More info (SV)" ""
+            "Form" "test-edit-catalogue-item form"
+            "Workflow" "test-edit-catalogue-item workflow"
+            "Resource" "test-edit-catalogue-item resource"
+            "End" ""
+            "Active" ""}
+           (dissoc (slurp-fields :catalogue-item) "Start")))))
 
 (deftest test-form-editor
   (btu/with-postmortem {:dir btu/reporting-dir}
