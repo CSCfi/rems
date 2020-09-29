@@ -796,7 +796,7 @@
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
       (btu/fill-human :fields-1-info-text-en "Info text (EN)")
       (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
-      (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
+      (btu/fill-human :fields-1-info-text-sv "")
       (btu/scroll-and-click :fields-1-type-option)
       (btu/scroll-and-click {:class :add-option})
       (btu/wait-visible :fields-1-options-0-key)
@@ -866,7 +866,7 @@
                                :field/max-length 127
                                :field/optional true}
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                              ;;  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv ""}
                                :field/type "option"
                                :field/id "fld2"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}

@@ -23,6 +23,9 @@
 (defn supports-privacy? [field]
   (not (contains? #{:label :header} (:field/type field))))
 
+(defn supports-info-text? [field]
+  (not (contains? #{:label} (:field/type field))))
+
 (defn supports-visibility? [field]
   true) ; at the moment all field types
 
@@ -190,6 +193,9 @@
                         (if (supports-placeholder? field)
                           (validate-optional-localized-field field :field/placeholder languages)
                           (validate-not-present field :field/placeholder))
+                        (if (supports-info-text? field)
+                          (validate-optional-localized-field field :field/info-text languages)
+                          (validate-not-present field :field/info-text))
                         (if (supports-max-length? field)
                           (validate-max-length (:field/max-length field))
                           (validate-not-present field :field/max-length))
@@ -239,6 +245,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en "en info text"
+                                               :fi "fi info text"}
                              :field/optional true
                              :field/type :text
                              :field/max-length "12"
@@ -278,12 +286,19 @@
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder"}) languages))))
 
-    (testing "placeholder & max-length shouldn't be present if they are not applicable"
+    (testing "if you use info text, you must fill in all the languages"
+      (is (= {:form/fields {0 {:field/info-text {:fi :t.form.validation/required}}}}
+             (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text" :fi ""}) languages)
+             (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text"}) languages))))
+
+    (testing "placeholder & max-length & info text shouldn't be present if they are not applicable"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
-                     (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
+                     (assoc-in [:form/fields 0 :field/placeholder :fi] "")
+                     (assoc-in [:form/fields 0 :field/info-text :fi] ""))]
         (is (= {:form/fields {0 {:field/placeholder :unsupported
-                                 :field/max-length :unsupported}}}
+                                 :field/max-length :unsupported
+                                 :field/info-text :unsupported}}}
                (validate-form-template form languages)))))
 
     (testing "privacy, & options shouldn't be present if they are not applicable"
