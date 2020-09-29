@@ -229,8 +229,6 @@
                              :fi "fi title"}
                :field/optional true
                :field/type :text
-               :field/info-text {:en "en info text"
-                                 :fi ""}
                :field/max-length 12
                :field/placeholder {:en "en placeholder"
                                    :fi "fi placeholder"}}]
