@@ -4,7 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [caches-fixture test-db-fixture rollback-db-fixture]]
             [rems.json :as json]
             [rems.testing-util :refer [fixed-time-fixture suppress-logging]]
@@ -94,44 +94,44 @@
   (let [applicant "bob"
         member "elsa"
         admin "owner"
-        wfid (test-data-functions/create-workflow! {:handlers [admin]})
-        form-id (test-data-functions/create-form! {})
-        lic-id1 (test-data-functions/create-license! {})
-        lic-id2 (test-data-functions/create-license! {})
-        item1 (test-data-functions/create-catalogue-item!
-               {:resource-id (test-data-functions/create-resource! {:resource-ext-id "resource1"
+        wfid (test-helpers/create-workflow! {:handlers [admin]})
+        form-id (test-helpers/create-form! {})
+        lic-id1 (test-helpers/create-license! {})
+        lic-id2 (test-helpers/create-license! {})
+        item1 (test-helpers/create-catalogue-item!
+               {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource1"
                                                           :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})
-        item2 (test-data-functions/create-catalogue-item!
-               {:resource-id (test-data-functions/create-resource! {:resource-ext-id "resource2"
+        item2 (test-helpers/create-catalogue-item!
+               {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource2"
                                                           :license-ids [lic-id2]})
                 :form-id form-id
                 :workflow-id wfid})
-        item3 (test-data-functions/create-catalogue-item!
-               {:resource-id (test-data-functions/create-resource! {:resource-ext-id "resource3"
+        item3 (test-helpers/create-catalogue-item!
+               {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource3"
                                                           :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})]
-    (test-data-functions/create-user! {:eppn applicant :mail "b@o.b" :commonName "Bob"})
-    (test-data-functions/create-user! {:eppn member :mail "e.l@s.a" :commonName "Elsa"})
-    (test-data-functions/create-user! {:eppn admin :mail "o.w@n.er" :commonName "Owner"})
+    (test-helpers/create-user! {:eppn applicant :mail "b@o.b" :commonName "Bob"})
+    (test-helpers/create-user! {:eppn member :mail "e.l@s.a" :commonName "Elsa"})
+    (test-helpers/create-user! {:eppn admin :mail "o.w@n.er" :commonName "Owner"})
 
     (entitlements/process-outbox!) ;; empty outbox from pending posts
 
-    (let [app-id (test-data-functions/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
+    (let [app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/accept-licenses
+           (test-helpers/command! {:type :application.command/accept-licenses
                                 :application-id app-id
                                 :accepted-licenses [lic-id1 lic-id2]
                                 :actor applicant})
-           (test-data-functions/command! {:type :application.command/submit
+           (test-helpers/command! {:type :application.command/submit
                                 :application-id app-id
                                 :actor applicant})
-           (test-data-functions/command! {:type :application.command/add-member
+           (test-helpers/command! {:type :application.command/add-member
                                 :application-id app-id
                                 :actor admin
                                 :member {:userid member}})
@@ -145,11 +145,11 @@
           (run-with-server
            {:status 200}
            (fn [server]
-             (test-data-functions/command! {:type :application.command/approve
+             (test-helpers/command! {:type :application.command/approve
                                   :application-id app-id
                                   :actor admin
                                   :comment ""})
-             (test-data-functions/command! {:type :application.command/accept-licenses
+             (test-helpers/command! {:type :application.command/accept-licenses
                                   :application-id app-id
                                   :actor member
                                   :accepted-licenses [lic-id1]}) ; only accept some licenses
@@ -175,7 +175,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/accept-licenses
+           (test-helpers/command! {:type :application.command/accept-licenses
                                 :application-id app-id
                                 :actor member
                                 :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
@@ -199,7 +199,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/remove-member
+           (test-helpers/command! {:type :application.command/remove-member
                                 :application-id app-id
                                 :actor admin
                                 :member {:userid member}
@@ -218,7 +218,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/change-resources
+           (test-helpers/command! {:type :application.command/change-resources
                                 :application-id app-id
                                 :actor admin
                                 :catalogue-item-ids [item1 item3]
@@ -244,7 +244,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/close
+           (test-helpers/command! {:type :application.command/close
                                 :application-id app-id
                                 :actor admin
                                 :comment "Finished"})
@@ -260,15 +260,15 @@
 
     (testing "approve with end time"
       (let [end (time/date-time 2100 01 01)
-            app-id (test-data-functions/create-application! {:actor applicant :catalogue-item-ids [item1]})]
-        (test-data-functions/command! {:type :application.command/accept-licenses
+            app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1]})]
+        (test-helpers/command! {:type :application.command/accept-licenses
                              :application-id app-id
                              :accepted-licenses [lic-id1 lic-id2]
                              :actor applicant})
-        (test-data-functions/command! {:type :application.command/submit
+        (test-helpers/command! {:type :application.command/submit
                              :application-id app-id
                              :actor applicant})
-        (test-data-functions/command! {:type :application.command/approve
+        (test-helpers/command! {:type :application.command/approve
                              :application-id app-id
                              :actor admin
                              :entitlement-end end
@@ -284,15 +284,15 @@
            (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end "2100-01-01T00:00:00.000Z"}]}]
                   (requests-for-paths server "/add")))))))
 
-    (let [app-id (test-data-functions/create-application! {:actor applicant :catalogue-item-ids [item1]})]
-      (test-data-functions/command! {:type :application.command/accept-licenses
+    (let [app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1]})]
+      (test-helpers/command! {:type :application.command/accept-licenses
                            :application-id app-id
                            :accepted-licenses [lic-id1 lic-id2]
                            :actor applicant})
-      (test-data-functions/command! {:type :application.command/submit
+      (test-helpers/command! {:type :application.command/submit
                            :application-id app-id
                            :actor applicant})
-      (test-data-functions/command! {:type :application.command/approve
+      (test-helpers/command! {:type :application.command/approve
                            :application-id app-id
                            :actor admin
                            :comment ""})
@@ -303,7 +303,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (test-data-functions/command! {:type :application.command/revoke
+           (test-helpers/command! {:type :application.command/revoke
                                 :application-id app-id
                                 :actor admin
                                 :comment "Banned"})

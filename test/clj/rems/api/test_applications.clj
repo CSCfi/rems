@@ -8,7 +8,7 @@
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.json]
             [rems.testing-util :refer [with-user]]
@@ -81,7 +81,7 @@
   (let [username "alice"
         cookie (login-with-cookies username)
         csrf (get-csrf-token cookie)
-        cat-id (test-data-functions/create-catalogue-item! {})]
+        cat-id (test-helpers/create-catalogue-item! {})]
     (testing "save with session"
       (let [body (-> (request :post "/api/applications/create")
                      (header "Cookie" cookie)
@@ -114,10 +114,10 @@
                        (authenticate "42" "developer")
                        handler)]
       (is (response-is-not-found? response))))
-  (let [cat-id (test-data-functions/create-catalogue-item! {:title {:fi "Fi title" :en "En title"}})
-        application-id (test-data-functions/create-application! {:actor "alice"
+  (let [cat-id (test-helpers/create-catalogue-item! {:title {:fi "Fi title" :en "En title"}})
+        application-id (test-helpers/create-application! {:actor "alice"
                                                        :catalogue-item-ids [cat-id]})]
-    (test-data-functions/command! {:type :application.command/submit
+    (test-helpers/command! {:type :application.command/submit
                          :application-id application-id
                          :actor "alice"})
     (testing "forbidden"
@@ -140,27 +140,27 @@
         handler-id "developer"
         reviewer-id "carl"
         decider-id "elsa"
-        license-id1 (test-data-functions/create-license! {})
-        license-id2 (test-data-functions/create-license! {})
-        license-id3 (test-data-functions/create-license! {})
-        license-id4 (test-data-functions/create-license! {})
-        form-id (test-data-functions/create-form! {})
-        workflow-id (test-data-functions/create-workflow! {:type :workflow/master
+        license-id1 (test-helpers/create-license! {})
+        license-id2 (test-helpers/create-license! {})
+        license-id3 (test-helpers/create-license! {})
+        license-id4 (test-helpers/create-license! {})
+        form-id (test-helpers/create-form! {})
+        workflow-id (test-helpers/create-workflow! {:type :workflow/master
                                                  :handlers [handler-id]})
-        cat-item-id1 (test-data-functions/create-catalogue-item! {:resource-id (test-data-functions/create-resource!
+        cat-item-id1 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
                                                                       {:license-ids [license-id1 license-id2]})
                                                         :form-id form-id
                                                         :workflow-id workflow-id})
-        cat-item-id2 (test-data-functions/create-catalogue-item! {:resource-id (test-data-functions/create-resource!
+        cat-item-id2 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
                                                                       {:license-ids [license-id1 license-id2]})
                                                         :form-id form-id
                                                         :workflow-id workflow-id})
 
-        cat-item-id3 (test-data-functions/create-catalogue-item! {:resource-id (test-data-functions/create-resource!
+        cat-item-id3 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
                                                                       {:license-ids [license-id3]})
                                                         :form-id form-id
                                                         :workflow-id workflow-id})
-        application-id (test-data-functions/create-application! {:catalogue-item-ids [cat-item-id1]
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id1]
                                                        :actor user-id})]
 
     (testing "accept licenses"
@@ -444,8 +444,8 @@
         applicant "alice"
         handler "developer"]
     (testing "json"
-      (let [app-id (test-data-functions/create-application! {:actor applicant})]
-        (test-data-functions/command! {:type :application.command/submit
+      (let [app-id (test-helpers/create-application! {:actor applicant})]
+        (test-helpers/command! {:type :application.command/submit
                              :application-id app-id
                              :actor applicant})
         (is (= {:success true} (send-command handler {:type :application.command/approve
@@ -456,8 +456,8 @@
           (is (= "application.state/approved" (:application/state app)))
           (is (= "2100-01-01T00:00:00.000Z" (:entitlement/end app))))))
     (testing "transit"
-      (let [app-id (test-data-functions/create-application! {:actor applicant})]
-        (test-data-functions/command! {:type :application.command/submit
+      (let [app-id (test-helpers/create-application! {:actor applicant})]
+        (test-helpers/command! {:type :application.command/submit
                              :application-id app-id
                              :actor applicant})
         (is (= {:success true} (send-command-transit handler {:type :application.command/approve
@@ -473,7 +473,7 @@
         user-id "alice"
         application-id (-> (request :post "/api/applications/create")
                            (authenticate "42" user-id)
-                           (json-body {:catalogue-item-ids [(test-data-functions/create-catalogue-item! {})]})
+                           (json-body {:catalogue-item-ids [(test-helpers/create-catalogue-item! {})]})
                            handler
                            read-ok-body
                            :application-id)]
@@ -517,7 +517,7 @@
   (let [api-key "42"
         applicant "alice"
         handler "developer"]
-    (let [app-id (test-data-functions/create-application! {:actor applicant})]
+    (let [app-id (test-helpers/create-application! {:actor applicant})]
       (testing "can't delete draft as other user"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
@@ -534,15 +534,15 @@
         (is (response-is-not-found?
              (api-response :get (str "/api/applications/" app-id) nil
                            api-key applicant)))))
-    (let [app-id (test-data-functions/create-application! {:actor applicant})]
-      (test-data-functions/command! {:application-id app-id
+    (let [app-id (test-helpers/create-application! {:actor applicant})]
+      (test-helpers/command! {:application-id app-id
                            :type :application.command/submit
                            :actor applicant})
       (testing "can't delete submitted application"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant))))
-      (test-data-functions/command! {:application-id app-id
+      (test-helpers/command! {:application-id app-id
                            :type :application.command/return
                            :actor handler})
       (testing "can't delete returned application"
@@ -552,8 +552,8 @@
 
 (deftest test-application-close
   (let [user-id "alice"
-        application-id (test-data-functions/create-application! {:actor user-id})]
-    (test-data-functions/command! {:application-id application-id
+        application-id (test-helpers/create-application! {:actor user-id})]
+    (test-helpers/command! {:application-id application-id
                          :type :application.command/submit
                          :actor user-id})
     (is (= {:success true}
@@ -566,9 +566,9 @@
 (deftest test-application-submit
   (let [owner "owner"
         user-id "alice"
-        form-id (test-data-functions/create-form! {})
-        cat-id (test-data-functions/create-catalogue-item! {:form-id form-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id] :actor user-id})
+        form-id (test-helpers/create-form! {})
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})
         enable-catalogue-item! #(with-user owner
                                   (catalogue/set-catalogue-item-enabled! {:id cat-id
                                                                           :enabled %}))
@@ -600,7 +600,7 @@
 
 (deftest test-application-validation
   (let [user-id "alice"
-        form-id (test-data-functions/create-form! {:form/fields [{:field/id "req1"
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "req1"
                                                         :field/title {:en "req"
                                                                       :fi "pak"
                                                                       :sv "obl"}
@@ -612,7 +612,7 @@
                                                                       :sv "fri"}
                                                         :field/type :text
                                                         :field/optional true}]})
-        form-id2 (test-data-functions/create-form! {:form/fields [{:field/id "req2"
+        form-id2 (test-helpers/create-form! {:form/fields [{:field/id "req2"
                                                          :field/title {:en "req"
                                                                        :fi "pak"
                                                                        :sv "obl"}
@@ -642,10 +642,10 @@
                                                                                   :fi "Kolmas"
                                                                                   :sv "Tredje"}}]
                                                          :field/optional true}]})
-        wf-id (test-data-functions/create-workflow! {})
-        cat-id (test-data-functions/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
-        cat-id2 (test-data-functions/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id cat-id2]
+        wf-id (test-helpers/create-workflow! {})
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
+        cat-id2 (test-helpers/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id cat-id2]
                                                :actor user-id})]
 
     (testing "set value of optional field"
@@ -701,10 +701,10 @@
   (let [applicant "alice"
         handler "handler"
         decider "carl"
-        wf-id (test-data-functions/create-workflow! {:type :workflow/decider
+        wf-id (test-helpers/create-workflow! {:type :workflow/decider
                                            :handlers [handler]})
-        cat-id (test-data-functions/create-catalogue-item! {:workflow-id wf-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        cat-id (test-helpers/create-catalogue-item! {:workflow-id wf-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})]
     (testing "applicant's commands for draft"
       (is (= #{"application.command/accept-licenses"
@@ -764,15 +764,15 @@
   (let [applicant-id "alice"
         member-id "malice"
         handler-id "handler"
-        wfid (test-data-functions/create-workflow! {:handlers [handler-id]})
-        formid (test-data-functions/create-form! {})
+        wfid (test-helpers/create-workflow! {:handlers [handler-id]})
+        formid (test-helpers/create-form! {})
         ext1 "revoke-test-resource-1"
         ext2 "revoke-test-resource-2"
-        res1 (test-data-functions/create-resource! {:resource-ext-id ext1})
-        res2 (test-data-functions/create-resource! {:resource-ext-id ext2})
-        cat1 (test-data-functions/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res1})
-        cat2 (test-data-functions/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res2})
-        app-id (test-data-functions/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+        res1 (test-helpers/create-resource! {:resource-ext-id ext1})
+        res2 (test-helpers/create-resource! {:resource-ext-id ext2})
+        cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res1})
+        cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res2})
+        app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
     (testing "set up application with multiple resources and members"
       (is (= {:success true}
              (send-command applicant-id {:type :application.command/submit
@@ -815,10 +815,10 @@
         member-id "developer"
         handler-id "handler"
         api-key "42"
-        wfid (test-data-functions/create-workflow! {:handlers [handler-id]})
-        cat1 (test-data-functions/create-catalogue-item! {:workflow-id wfid})
+        wfid (test-helpers/create-workflow! {:handlers [handler-id]})
+        cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid})
         ;; TODO blacklist?
-        app-id (test-data-functions/create-application! {:actor applicant-id :catalogue-item-ids [cat1]})]
+        app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1]})]
     (testing "set up approved application with multiple members"
       (is (= {:success true}
              (send-command applicant-id {:type :application.command/submit
@@ -868,25 +868,25 @@
         handler "handler"
         reporter "reporter"
         api-key "42"
-        wf-id (test-data-functions/create-workflow! {:type :workflow/default
+        wf-id (test-helpers/create-workflow! {:type :workflow/default
                                            :handlers [handler]})
-        form-id (test-data-functions/create-form! {:form/fields [{:field/id "fld1"
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "fld1"
                                                         :field/type :text
                                                         :field/title {:en "Field 1" :fi "Field 1" :sv "Field 1"}
                                                         :field/optional false}]})
-        form-2-id (test-data-functions/create-form! {:form/fields [{:field/id "fld2"
+        form-2-id (test-helpers/create-form! {:form/fields [{:field/id "fld2"
                                                           :field/type :text
                                                           :field/title {:en "HIDDEN" :fi "HIDDEN" :sv "HIDDEN"}
                                                           :field/optional false}]})
-        cat-id (test-data-functions/create-catalogue-item! {:title {:en "Item1"}
+        cat-id (test-helpers/create-catalogue-item! {:title {:en "Item1"}
                                                   :workflow-id wf-id
                                                   :form-id form-id})
-        cat-2-id (test-data-functions/create-catalogue-item! {:title {:en "Item2"}
+        cat-2-id (test-helpers/create-catalogue-item! {:title {:en "Item2"}
                                                     :workflow-id wf-id
                                                     :form-id form-2-id})
-        app-id (test-data-functions/create-draft! applicant [cat-id] "Answer1")
-        _draft-app-id (test-data-functions/create-draft! applicant [cat-id] "DraftAnswer")
-        app-2-id (test-data-functions/create-draft! applicant [cat-id cat-2-id] "Answer2")]
+        app-id (test-helpers/create-draft! applicant [cat-id] "Answer1")
+        _draft-app-id (test-helpers/create-draft! applicant [cat-id] "DraftAnswer")
+        app-2-id (test-helpers/create-draft! applicant [cat-id cat-2-id] "Answer2")]
     (send-command applicant {:type :application.command/submit
                              :application-id app-id})
     (send-command applicant {:type :application.command/submit
@@ -928,15 +928,15 @@
 (deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
-        handler-id "developer" ;; developer is the default handler in test-data-functions
-        form-id (test-data-functions/create-form! {:form/fields [{:field/id "attach"
+        handler-id "developer" ;; developer is the default handler in test-helpers
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "attach"
                                                         :field/title {:en "some attachment"
                                                                       :fi "joku liite"
                                                                       :sv "bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
-        cat-id (test-data-functions/create-catalogue-item! {:form-id form-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor user-id})
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
@@ -1083,10 +1083,10 @@
         handler-id "developer"
         reviewer-id "carl"
         file #(assoc filecontent :filename %)
-        workflow-id (test-data-functions/create-workflow! {:type :workflow/master
+        workflow-id (test-helpers/create-workflow! {:type :workflow/master
                                                  :handlers [handler-id]})
-        cat-item-id (test-data-functions/create-catalogue-item! {:workflow-id workflow-id})
-        application-id (test-data-functions/create-application! {:catalogue-item-ids [cat-item-id]
+        cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id})
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
                                                        :actor applicant-id})
         add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                             (authenticate api-key %1)
@@ -1244,8 +1244,8 @@
         applicant-id "alice"
         handler-id "handler"
         reporter-id "reporter"
-        workflow-id (test-data-functions/create-workflow! {:handlers [handler-id]})
-        form-id (test-data-functions/create-form! {:form/fields [{:field/id "attach1"
+        workflow-id (test-helpers/create-workflow! {:handlers [handler-id]})
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "attach1"
                                                         :field/title {:en "some attachment"
                                                                       :fi "joku liite"
                                                                       :sv "bilaga"}
@@ -1257,9 +1257,9 @@
                                                                       :sv "annan bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
-        cat-id (test-data-functions/create-catalogue-item! {:workflow-id workflow-id
+        cat-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
                                                   :form-id form-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant-id})
         add-attachment (fn [user file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
@@ -1338,8 +1338,8 @@
         non-applicant "bob"
         owner "owner"
         handler-user "developer"
-        cat-id (test-data-functions/create-catalogue-item! {})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        cat-id (test-helpers/create-catalogue-item! {})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})
         file-en (clojure.java.io/file "./test-data/test.txt")
         filecontent-en {:tempfile file-en
@@ -1425,8 +1425,8 @@
 (deftest test-applications-api-security
   (let [api-key "42"
         applicant "alice"
-        cat-id (test-data-functions/create-catalogue-item! {})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        cat-id (test-helpers/create-catalogue-item! {})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})]
 
     (testing "fetch application without authentication"
@@ -1495,7 +1495,7 @@
                                            handler)))))))
 
 (deftest test-application-listing
-  (let [app-id (test-data-functions/create-application! {:actor "alice"})]
+  (let [app-id (test-helpers/create-application! {:actor "alice"})]
 
     (testing "list user applications"
       (is (contains? (get-ids (get-my-applications "alice"))
@@ -1520,9 +1520,9 @@
         handler "developer"
         reviewer "reviewer"
         decider "decider"
-        app-id (test-data-functions/create-application! {:actor applicant})]
-    (test-data-functions/create-user! {:eppn reviewer})
-    (test-data-functions/create-user! {:eppn decider})
+        app-id (test-helpers/create-application! {:actor applicant})]
+    (test-helpers/create-user! {:eppn reviewer})
+    (test-helpers/create-user! {:eppn decider})
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos handler))
@@ -1596,22 +1596,22 @@
         applicant "alice"
         handler "handler"
         reporter "reporter"
-        form-id (test-data-functions/create-form! {:form/title "notifications"
+        form-id (test-helpers/create-form! {:form/title "notifications"
                                          :form/fields [{:field/type :text
                                                         :field/id "field-1"
                                                         :field/title {:en "text field"
                                                                       :fi "text field"
                                                                       :sv "text field"}
                                                         :field/optional false}]})
-        workflow-id (test-data-functions/create-workflow! {:title "wf"
+        workflow-id (test-helpers/create-workflow! {:title "wf"
                                                  :handlers [handler]
                                                  :type :workflow/default})
         ext-id "resres"
-        res-id (test-data-functions/create-resource! {:resource-ext-id ext-id})
-        cat-id (test-data-functions/create-catalogue-item! {:form-id form-id
+        res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id
                                                   :resource-id res-id
                                                   :workflow-id workflow-id})
-        app-id (test-data-functions/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
+        app-id (test-helpers/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
                                                 api-key applicant))))

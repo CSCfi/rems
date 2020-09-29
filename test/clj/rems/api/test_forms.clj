@@ -5,7 +5,7 @@
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
             [rems.db.core :as db]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
@@ -223,7 +223,7 @@
         (testing "as organization owner"
           (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
                                   api-key "organization-owner1")))))
-      (let [cat-id (test-data-functions/create-catalogue-item! {:form-id form-id
+      (let [cat-id (test-helpers/create-catalogue-item! {:form-id form-id
                                                       :archived false
                                                       :organization {:organization/id "organization1"}})]
         (testing "Form is non-editable after in use by a catalogue item"
@@ -251,7 +251,7 @@
         (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
                                 api-key user-id))))
       (testing "Form is non-editable after in use by a workflow"
-        (let [wfid (test-data-functions/create-workflow! {:forms [{:form/id form-id}]
+        (let [wfid (test-helpers/create-workflow! {:forms [{:form/id form-id}]
                                                 :title "wf with form"})]
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
@@ -608,7 +608,7 @@
 
 (deftest test-form-missing-languages
   (let [id (with-redefs [rems.api.services.form/validation-error (constantly nil)] ;; disable validation
-             (test-data-functions/create-form! {:form/title "invalid form"
+             (test-helpers/create-form! {:form/title "invalid form"
                                       :form/fields [{:field/id "fld1"
                                                      :field/type :text
                                                      :field/optional true

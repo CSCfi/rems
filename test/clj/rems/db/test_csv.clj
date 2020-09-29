@@ -1,7 +1,7 @@
 (ns ^:integration rems.db.test-csv
   (:require [clojure.test :refer :all]
             [rems.db.applications :as applications]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.csv :as csv]
             [rems.text :as text])
@@ -78,8 +78,8 @@
 ;; TODO: This could be non-integration non-db test if the application was
 ;;       created from events.
 (deftest test-applications-to-csv
-  (test-data-functions/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
-  (let [form-id (test-data-functions/create-form!
+  (test-helpers/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
+  (let [form-id (test-helpers/create-form!
                  {:form/fields [{:field/title {:en "Application title"
                                                :fi "Hakemuksen otsikko"
                                                :sv "sv"}
@@ -90,29 +90,29 @@
                                                :sv "sv"}
                                  :field/optional true
                                  :field/type :description}]})
-        other-form-id (test-data-functions/create-form!
+        other-form-id (test-helpers/create-form!
                        {:form/fields [{:field/title {:en "SHOULD NOT BE VISIBLE"
                                                      :fi "SHOULD NOT BE VISIBLE"
                                                      :sv "sv"}
                                        :field/optional true
                                        :field/type :text}]})
-        wf-id (test-data-functions/create-workflow! {})
-        cat-id (test-data-functions/create-catalogue-item! {:title {:en "Test resource"
+        wf-id (test-helpers/create-workflow! {})
+        cat-id (test-helpers/create-catalogue-item! {:title {:en "Test resource"
                                                           :fi "Testiresurssi"
                                                           :sv "sv"}
                                                   :form-id form-id
                                                   :workflow-id wf-id})
-        other-cat-id (test-data-functions/create-catalogue-item! {:title {:en "Other resource"
+        other-cat-id (test-helpers/create-catalogue-item! {:title {:en "Other resource"
                                                                 :fi "Toinen resurssi"
                                                                 :sv "sv"}
                                                         :form-id other-form-id
                                                         :workflow-id wf-id})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id other-cat-id]
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id other-cat-id]
                                                :actor applicant})
         external-id (:application/external-id (applications/get-application app-id))
         get-application #(applications/get-application app-id)]
 
-    (test-data-functions/fill-form! {:application-id app-id
+    (test-helpers/fill-form! {:application-id app-id
                            :actor applicant
                            :field-value "test\nvalue"})
 
@@ -125,10 +125,10 @@
                     app-id ",\"" external-id "\",\"Alice Applicant\",,\"Luonnos\",\"Testiresurssi, Toinen resurssi\",\"test value\",\"\"\r\n")
                (csv/applications-to-csv [(get-application)] form-id :fi)))))
 
-    (test-data-functions/accept-licenses! {:application-id app-id
+    (test-helpers/accept-licenses! {:application-id app-id
                                  :actor applicant})
 
-    (test-data-functions/command! {:type :application.command/submit
+    (test-helpers/command! {:type :application.command/submit
                          :application-id app-id
                          :actor applicant
                          :time test-time})

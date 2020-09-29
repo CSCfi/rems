@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -11,9 +11,9 @@
 
 (deftest test-audit-log
   (let [time-a (atom nil)
-        app-id (test-data-functions/create-application! {:actor "alice"})]
+        app-id (test-helpers/create-application! {:actor "alice"})]
 
-    (test-data-functions/command! {:type           :application.command/submit
+    (test-helpers/command! {:type           :application.command/submit
                          :application-id app-id
                          :actor          "alice"})
 

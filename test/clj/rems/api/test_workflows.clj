@@ -5,7 +5,7 @@
             [rems.api.testing :refer :all]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [sync-with-database-time]]
             [rems.handler :refer [handler]]
             [rems.testing-util :refer [with-user]]
@@ -49,7 +49,7 @@
                                "42" user-id)]
             (is (coll-is-not-empty? data))))
 
-        (let [id (test-data-functions/create-workflow! {})]
+        (let [id (test-helpers/create-workflow! {})]
           (testing "get by id"
             (let [data (api-call :get (str "/api/workflows/" id) nil
                                  "42" user-id)]
@@ -60,7 +60,7 @@
                                                       "42" user-id)))))
 
         (testing "create default workflow with form"
-          (let [form-id (test-data-functions/create-form! {:form/title "workflow form"
+          (let [form-id (test-helpers/create-form! {:form/title "workflow form"
                                                  :form/fields [{:field/type :text
                                                                 :field/title {:fi "fi" :sv "sv" :en "en"}
                                                                 :field/optional true}]})
@@ -110,11 +110,11 @@
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data-functions/create-workflow! {:organization {:organization/id "organization1"}
+        wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
-        lic-id (test-data-functions/create-license! {:organization {:organization/id "organization1"}})
+        lic-id (test-helpers/create-license! {:organization {:organization/id "organization1"}})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id :organization "organization1"})
 
         fetch #(fetch api-key user-id wfid)
@@ -173,14 +173,14 @@
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data-functions/create-workflow! {:organization {:organization/id "organization1"}
+        wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
 
-        cat-id (test-data-functions/create-catalogue-item! {:organization {:organization/id "organization1"}
+        cat-id (test-helpers/create-catalogue-item! {:organization {:organization/id "organization1"}
                                                   :workflow-id wfid})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor "tester"})
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
@@ -235,8 +235,8 @@
                (application->handler-user-ids app)))))))
 
 (deftest workflows-api-filtering-test
-  (let [enabled-wf (test-data-functions/create-workflow! {})
-        disabled-wf (test-data-functions/create-workflow! {})
+  (let [enabled-wf (test-helpers/create-workflow! {})
+        disabled-wf (test-helpers/create-workflow! {})
         _ (with-user "owner"
             (workflow/set-workflow-enabled! {:id disabled-wf
                                              :enabled false}))

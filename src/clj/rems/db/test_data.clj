@@ -10,7 +10,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.db.test-data-functions :refer :all]
+            [rems.db.test-data-helpers :refer :all]
             [rems.db.test-data-users :refer :all]
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]

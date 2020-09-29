@@ -1,4 +1,4 @@
-(ns rems.db.test-data-functions
+(ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]

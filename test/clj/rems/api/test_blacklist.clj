@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.applications :as applications]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
   (:import [org.joda.time DateTimeUtils]))
@@ -45,15 +45,15 @@
       assert-response-is-ok))
 
 (deftest test-blacklist
-  (test-data-functions/create-user! {:eppn "user1" :email ""})
-  (test-data-functions/create-user! {:eppn "user2" :email ""})
-  (test-data-functions/create-user! {:eppn "user3" :email ""})
-  (let [res-id-1 (test-data-functions/create-resource! {:resource-ext-id "A"})
-        res-id-2 (test-data-functions/create-resource! {:resource-ext-id "B"})
-        res-id-3 (test-data-functions/create-resource! {:resource-ext-id "C"})
+  (test-helpers/create-user! {:eppn "user1" :email ""})
+  (test-helpers/create-user! {:eppn "user2" :email ""})
+  (test-helpers/create-user! {:eppn "user3" :email ""})
+  (let [res-id-1 (test-helpers/create-resource! {:resource-ext-id "A"})
+        res-id-2 (test-helpers/create-resource! {:resource-ext-id "B"})
+        res-id-3 (test-helpers/create-resource! {:resource-ext-id "C"})
 
-        cat-id (test-data-functions/create-catalogue-item! {:resource-id res-id-2})
-        app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
+        cat-id (test-helpers/create-catalogue-item! {:resource-id res-id-2})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                :actor "user2"})
         get-app #(applications/get-application app-id)]
     (testing "initially no blacklist"

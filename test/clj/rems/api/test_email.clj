@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.outbox :as outbox]
-            [rems.db.test-data-functions :as test-data-functions]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -15,11 +15,11 @@
 (def user-id "developer")
 
 (defn- create-application-in-review! []
-  (let [app-id (test-data-functions/create-application! {:actor "alice"})]
-    (test-data-functions/command! {:type :application.command/submit
+  (let [app-id (test-helpers/create-application! {:actor "alice"})]
+    (test-helpers/command! {:type :application.command/submit
                          :application-id app-id
                          :actor "alice"})
-    (test-data-functions/command! {:type :application.command/request-review
+    (test-helpers/command! {:type :application.command/request-review
                          :application-id app-id
                          :actor "developer"
                          :reviewers ["carl"]
