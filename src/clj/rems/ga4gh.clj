@@ -66,9 +66,12 @@
    (s/optional-key :jti) s/Str
    :ga4gh_visa_v1 VisaObject})
 
+(defn- visa-header []
+  {:jku (str (:public-url env) "api/jwk")})
+
 (defn- sign-visa [visa]
   ;; TODO look up algorithm from key?
-  (jwt/sign (s/validate VisaClaim visa) +private-key-parsed+ {:alg :rs256}))
+  (jwt/sign (s/validate VisaClaim visa) +private-key-parsed+ {:alg :rs256 :header (visa-header)}))
 
 (def +default-length+ (time/years 1))
 
