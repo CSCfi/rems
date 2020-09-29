@@ -1128,6 +1128,17 @@
                   "Modifier" "Owner (owner@example.com)"}
                  (slurp-fields :organization))))))
 
+    (testing "use after creation"
+      (go-to-admin "Resources")
+      (btu/wait-page-loaded)
+      (btu/scroll-and-click :create-resource)
+      (btu/wait-page-loaded)
+      (btu/wait-visible :organization-dropdown)
+      (btu/fill-human :resid (str "resource for " (btu/context-get :organization-name)))
+      (select-option* "Organization" (btu/context-get :organization-name))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css ".alert-success"}))
+
     (testing "as organization owner"
       (logout)
       (login-as "organization-owner2")

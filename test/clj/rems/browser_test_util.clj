@@ -223,6 +223,7 @@
   [q & [opt]]
   (wait-visible q opt)
   (scroll-query q {"block" "center"})
+  (assert (not (get-element-attr q "disabled")))
   (click q))
 
 (defn scroll-and-click-el
