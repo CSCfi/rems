@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.applications :as applications]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -14,10 +14,10 @@
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/title "form name" :organization {:organization/id "organization1"}})
+        form-id (test-data-functions/create-form! {:form/title "form name" :organization {:organization/id "organization1"}})
         ;; can create catalogue items with mixed organizations:
-        wf-id (test-data/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
-        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
+        wf-id (test-data-functions/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
+        res-id (test-data-functions/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -74,9 +74,9 @@
   (let [api-key "42"
         owner "owner"
         user "alice"
-        form-id (test-data/create-form! {:organization {:organization/id "organization1"}})
-        wf-id (test-data/create-workflow! {:organization {:organization/id "organization1"}})
-        res-id (test-data/create-resource! {:organization {:organization/id "organization1"}})]
+        form-id (test-data-functions/create-form! {:organization {:organization/id "organization1"}})
+        wf-id (test-data-functions/create-workflow! {:organization {:organization/id "organization1"}})
+        res-id (test-data-functions/create-resource! {:organization {:organization/id "organization1"}})]
     (testing "create"
       (let [create (-> (request :post "/api/catalogue-items/create")
                        (authenticate api-key owner)
@@ -91,7 +91,7 @@
                        read-ok-body)
             id (:id create)]
         (is (:success create))
-        (let [app-id (test-data/create-application! {:catalogue-item-ids [id]
+        (let [app-id (test-data-functions/create-application! {:catalogue-item-ids [id]
                                                      :actor "alice"})
               get-app #(applications/get-application app-id)]
           (is (= {:sv "http://info.se"}
@@ -222,12 +222,12 @@
 
 (deftest change-form-test
   (let [api-key "42"
-        resource-id (test-data/create-resource! {:organization {:organization/id "organization1"}})
-        old-form-id (test-data/create-form! {:form/title "old form"
+        resource-id (test-data-functions/create-resource! {:organization {:organization/id "organization1"}})
+        old-form-id (test-data-functions/create-form! {:form/title "old form"
                                              :organization {:organization/id "organization1"}})
-        new-form-id (test-data/create-form! {:form/title "new form"
+        new-form-id (test-data-functions/create-form! {:form/title "new form"
                                              :organization {:organization/id "organization1"}})
-        old-catalogue-item-id (test-data/create-catalogue-item!
+        old-catalogue-item-id (test-data-functions/create-catalogue-item!
                                {:organization {:organization/id "organization1"}
                                 :title {:en "change-form-test catalogue item en"
                                         :fi "change-form-test catalogue item fi"}
@@ -265,7 +265,7 @@
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))))
     (testing "can change to form that's in another organization"
-      (let [form-id (test-data/create-form! {:form/title "wrong organization"
+      (let [form-id (test-data-functions/create-form! {:form/title "wrong organization"
                                              :organization {:organization/id "organization2"}})
             response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate api-key "owner")
@@ -290,8 +290,8 @@
 
 (deftest test-enable-archive
   (let [api-key "42"
-        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})
-        id (test-data/create-catalogue-item!
+        res-id (test-data-functions/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})
+        id (test-data-functions/create-catalogue-item!
             {:organization {:organization/id "organization1"}
              :title {:en "en"
                      :fi "fi"}

@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
             [rems.testing-util :refer [with-fixed-time utc-fixture]]
@@ -15,30 +16,30 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard
-  (test-data/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
-  (test-data/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
-  (test-data/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
-  (let [lic1 (test-data/create-license! {:license/type :link
+  (test-data-functions/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
+  (test-data-functions/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
+  (test-data-functions/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
+  (let [lic1 (test-data-functions/create-license! {:license/type :link
                                          :license/title {:en "Google license"
                                                          :fi "Google-lisenssi"}
                                          :license/link {:en "http://google.com"
                                                         :fi "http://google.fi"}})
-        lic2 (test-data/create-license! {:license/type :text
+        lic2 (test-data-functions/create-license! {:license/type :text
                                          :license/title {:en "Text license"
                                                          :fi "Tekstilisenssi"}
                                          :license/text {:en "Some text"
                                                         :fi "Tekstiä"}})
         ;; TODO attachment license
-        resource (test-data/create-resource! {:resource-ext-id "pdf-resource-ext"
+        resource (test-data-functions/create-resource! {:resource-ext-id "pdf-resource-ext"
                                               :license-ids [lic1 lic2]})
-        form (test-data/create-form! {:form/title "Form"
-                                      :form/fields test-data/all-field-types-example})
-        catalogue-item (test-data/create-catalogue-item! {:resource-id resource
+        form (test-data-functions/create-form! {:form/title  "Form"
+                                                :form/fields test-data/all-field-types-example})
+        catalogue-item (test-data-functions/create-catalogue-item! {:resource-id resource
                                                           :title {:en "Catalogue item"
                                                                   :fi "Katalogi-itemi"}
                                                           :form-id form})
         applicant "alice"
-        application-id (test-data/create-application! {:actor applicant
+        application-id (test-data-functions/create-application! {:actor applicant
                                                        :catalogue-item-ids [catalogue-item]
                                                        :time (time/date-time 2000)})
         handler "developer"]
@@ -49,39 +50,39 @@
                                                   :type "application/pdf"
                                                   :data (byte-array 0)}))]
         ;; two draft-saved events
-        (test-data/fill-form! {:time (time/date-time 2000)
+        (test-data-functions/fill-form! {:time (time/date-time 2000)
                                :actor applicant
                                :application-id application-id
                                :field-value "pdf test"
                                :attachment attachment
                                :optional-fields true})
-        (test-data/fill-form! {:time (time/date-time 2000)
+        (test-data-functions/fill-form! {:time (time/date-time 2000)
                                :actor applicant
                                :application-id application-id
                                :field-value "pdf test"
                                :attachment attachment
                                :optional-fields true}))
-      (test-data/accept-licenses! {:time (time/date-time 2000)
+      (test-data-functions/accept-licenses! {:time (time/date-time 2000)
                                    :actor applicant
                                    :application-id application-id})
-      (test-data/command! {:time (time/date-time 2001)
+      (test-data-functions/command! {:time (time/date-time 2001)
                            :application-id application-id
                            :type :application.command/submit
                            :actor applicant}))
     (testing "add member"
-      (test-data/command! {:time (time/date-time 2002)
+      (test-data-functions/command! {:time (time/date-time 2002)
                            :application-id application-id
                            :type :application.command/add-member
                            :member {:userid "beth"}
                            :actor handler}))
     (testing "decide"
-      (test-data/command! {:time (time/date-time 2003)
+      (test-data-functions/command! {:time (time/date-time 2003)
                            :application-id application-id
                            :type :application.command/request-decision
                            :comment "please decide"
                            :deciders ["david"]
                            :actor handler})
-      (test-data/command! {:time (time/date-time 2003)
+      (test-data-functions/command! {:time (time/date-time 2003)
                            :application-id application-id
                            :type :application.command/decide
                            :comment "I have decided"
@@ -98,7 +99,7 @@
                                             :filename "file2.pdf"
                                             :type "application/pdf"
                                             :data (byte-array 0)}))]
-        (test-data/command! {:time (time/date-time 2003)
+        (test-data-functions/command! {:time (time/date-time 2003)
                              :application-id application-id
                              :type :application.command/approve
                              :comment "approved"

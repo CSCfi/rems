@@ -6,7 +6,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
@@ -44,24 +44,24 @@
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-get-catalogue-item-licenses
-  (let [form-id (test-data/create-form! {})]
+  (let [form-id (test-data-functions/create-form! {})]
     (testing "resource licenses"
-      (let [lic-id (test-data/create-license! {})
-            wf-id (test-data/create-workflow! {})
-            res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))
+      (let [lic-id (test-data-functions/create-license! {})
+            wf-id (test-data-functions/create-workflow! {})
+            res-id (test-data-functions/create-resource! {:resource-ext-id (str (UUID/randomUUID))
                                                 :license-ids [lic-id]})
-            cat-id (test-data/create-catalogue-item! {:resource-id res-id
+            cat-id (test-data-functions/create-catalogue-item! {:resource-id res-id
                                                       :form-id form-id
                                                       :workflow-id wf-id})]
         (is (= [lic-id]
                (map :id (applications/get-catalogue-item-licenses cat-id))))))
 
     (testing "workflow licenses"
-      (let [lic-id (test-data/create-license! {})
-            wf-id (test-data/create-workflow! {})
+      (let [lic-id (test-data-functions/create-license! {})
+            wf-id (test-data-functions/create-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
-            res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
-            cat-id (test-data/create-catalogue-item! {:resource-id res-id
+            res-id (test-data-functions/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
+            cat-id (test-data-functions/create-catalogue-item! {:resource-id res-id
                                                       :form-id form-id
                                                       :workflow-id wf-id})]
         (is (= [lic-id]
@@ -79,7 +79,7 @@
     (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
 
 (deftest test-delete-application!
-  (let [app-id (test-data/create-application! {:actor "applicant"})]
+  (let [app-id (test-data-functions/create-application! {:actor "applicant"})]
     (is (applications/get-application app-id))
     (applications/delete-application! app-id)
     (testing "deleted draft is gone"
@@ -88,13 +88,13 @@
       (is (empty? (db-events/get-application-events app-id))))
     (testing "db entry for application is gone"
       (is (not (contains? (set (db/get-application-ids {})) app-id)))))
-  (let [app-id (test-data/create-application! {:actor "applicant"})]
-    (test-data/command! {:application-id app-id
+  (let [app-id (test-data-functions/create-application! {:actor "applicant"})]
+    (test-data-functions/command! {:application-id app-id
                          :type :application.command/submit
                          :actor "applicant"})
     (testing "can't delete submitted application"
       (is (thrown? AssertionError (applications/delete-application! app-id))))
-    (test-data/command! {:application-id app-id
+    (test-data-functions/command! {:application-id app-id
                          :type :application.command/return
                          :actor "developer"})
     (testing "can't delete returned application"

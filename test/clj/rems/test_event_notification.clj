@@ -6,7 +6,7 @@
             [rems.api.services.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
             [rems.db.events]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
             [stub-http.core :as stub]))
@@ -57,7 +57,7 @@
                                              :body
                                              (get "content")
                                              json/parse-string)}))
-            form-id (test-data/create-form! {:form/title "notifications"
+            form-id (test-data-functions/create-form! {:form/title "notifications"
                                              :form/fields [{:field/type :text
                                                             :field/id "field-1"
                                                             :field/title {:en "text field"
@@ -65,12 +65,12 @@
                                                                           :sv "textfält"}
                                                             :field/optional false}]})
             handler "handler"
-            workflow-id (test-data/create-workflow! {:title "wf"
+            workflow-id (test-data-functions/create-workflow! {:title "wf"
                                                      :handlers [handler]
                                                      :type :workflow/default})
             ext-id "resres"
-            res-id (test-data/create-resource! {:resource-ext-id ext-id})
-            cat-id (test-data/create-catalogue-item! {:form-id form-id
+            res-id (test-data-functions/create-resource! {:resource-ext-id ext-id})
+            cat-id (test-data-functions/create-catalogue-item! {:form-id form-id
                                                       :resource-id res-id
                                                       :workflow-id workflow-id})
             applicant "alice"
@@ -130,14 +130,14 @@
                                       (get "content")
                                       json/parse-string
                                       (select-keys [:event/id :event/time]))))
-            form-id (test-data/create-form! {:form/title "notifications"
+            form-id (test-data-functions/create-form! {:form/title "notifications"
                                              :form/fields [{:field/type :text
                                                             :field/id "field-1"
                                                             :field/title {:en "text field"
                                                                           :fi "tekstikenttä"
                                                                           :sv "textfält"}
                                                             :field/optional false}]})
-            cat-id (test-data/create-catalogue-item! {:form-id form-id})
+            cat-id (test-data-functions/create-catalogue-item! {:form-id form-id})
             applicant "alice"
             t (time/date-time 2010)
             app-id (:application-id (command/command! {:type :application.command/create

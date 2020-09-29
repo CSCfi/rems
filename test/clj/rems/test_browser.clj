@@ -16,7 +16,7 @@
             [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.organizations :as organizations]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
@@ -354,14 +354,14 @@
 
 (deftest test-handling
   (testing "submit test data with API"
-    (btu/context-assoc! :form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+    (btu/context-assoc! :form-id (test-data-functions/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                          :field/optional false
                                                                          :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
-    (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+    (btu/context-assoc! :catalogue-id (test-data-functions/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-data-functions/create-draft! "alice"
                                                                  [(btu/context-get :catalogue-id)]
                                                                  "test-handling"))
-    (test-data/command! {:type :application.command/submit
+    (test-data-functions/command! {:type :application.command/submit
                          :application-id (btu/context-get :application-id)
                          :actor "alice"}))
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -716,13 +716,13 @@
 
 (deftest test-edit-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
-    (let [workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
+    (let [workflow (test-data-functions/create-workflow! {:title "test-edit-catalogue-item workflow"
                                                 :type :workflow/default
                                                 :handlers ["handler"]})
-          resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"})
-          form (test-data/create-form! {:form/title "test-edit-catalogue-item form"
+          resource (test-data-functions/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"})
+          form (test-data-functions/create-form! {:form/title "test-edit-catalogue-item form"
                                         :form/fields []})
-          catalogue-item (test-data/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
+          catalogue-item (test-data-functions/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
                                                                     :fi "test-edit-catalogue-item FI"
                                                                     :sv "test-edit-catalogue-item SV"}
                                                             :resource-id resource
@@ -941,7 +941,7 @@
 (deftest test-blacklist
   (btu/with-postmortem {:dir btu/reporting-dir}
     (testing "set up resource & user"
-      (test-data/create-resource! {:resource-ext-id "blacklist-test"})
+      (test-data-functions/create-resource! {:resource-ext-id "blacklist-test"})
       (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
     (testing "add blacklist entry via resource page"
       (login-as "owner")
@@ -991,24 +991,24 @@
   (btu/with-postmortem {:dir btu/reporting-dir}
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
-      (btu/context-assoc! :form-id (test-data/create-form! {:form/title (btu/context-get :form-title)
+      (btu/context-assoc! :form-id (test-data-functions/create-form! {:form/title (btu/context-get :form-title)
                                                             :form/fields [{:field/id "desc"
                                                                            :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                            :field/optional false
                                                                            :field/type :description}]}))
-      (btu/context-assoc! :workflow-id (test-data/create-workflow! {:handlers ["handler"]}))
-      (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
+      (btu/context-assoc! :workflow-id (test-data-functions/create-workflow! {:handlers ["handler"]}))
+      (btu/context-assoc! :catalogue-id (test-data-functions/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
 
-      (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+      (btu/context-assoc! :application-id (test-data-functions/create-draft! "alice"
                                                                    [(btu/context-get :catalogue-id)]
                                                                    (str "test-reporting " (btu/get-seed))))
-      (test-data/command! {:type :application.command/save-draft
+      (test-data-functions/command! {:type :application.command/save-draft
                            :application-id (btu/context-get :application-id)
                            :field-values [{:form (btu/context-get :form-id)
                                            :field "desc"
                                            :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
                            :actor "alice"})
-      (test-data/command! {:type :application.command/submit
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id (btu/context-get :application-id)
                            :actor "alice"})
 

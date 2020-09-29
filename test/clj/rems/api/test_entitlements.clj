@@ -5,7 +5,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -25,32 +25,32 @@
     (roles/add-role! "owner" :owner)
     (users/add-user! {:userid "reporter"})
     (roles/add-role! "reporter" :reporter)
-    (let [res-id (test-data/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"})
-          wf-id (test-data/create-workflow! {:type :workflow/default :handlers ["developer"]})
-          form-id (test-data/create-form! {})
-          cat-id (test-data/create-catalogue-item! {:resource-id res-id :form-id form-id :workflow-id wf-id})
-          app-id (test-data/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
-          expired-app-id (test-data/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
-          malice-app-id (test-data/create-application! {:actor "malice" :catalogue-item-ids [cat-id]})]
-      (test-data/command! {:type :application.command/submit
+    (let [res-id (test-data-functions/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"})
+          wf-id (test-data-functions/create-workflow! {:type :workflow/default :handlers ["developer"]})
+          form-id (test-data-functions/create-form! {})
+          cat-id (test-data-functions/create-catalogue-item! {:resource-id res-id :form-id form-id :workflow-id wf-id})
+          app-id (test-data-functions/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
+          expired-app-id (test-data-functions/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
+          malice-app-id (test-data-functions/create-application! {:actor "malice" :catalogue-item-ids [cat-id]})]
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/approve
+      (test-data-functions/command! {:type :application.command/approve
                            :application-id app-id
                            :actor "developer"})
-      (test-data/command! {:type :application.command/submit
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id expired-app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/approve
+      (test-data-functions/command! {:type :application.command/approve
                            :application-id expired-app-id
                            :actor "developer"})
-      (test-data/command! {:type :application.command/close
+      (test-data-functions/command! {:type :application.command/close
                            :application-id expired-app-id
                            :actor "developer"})
-      (test-data/command! {:type :application.command/submit
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id malice-app-id
                            :actor "malice"})
-      (test-data/command! {:type :application.command/approve
+      (test-data-functions/command! {:type :application.command/approve
                            :application-id malice-app-id
                            :actor "developer"
                            :entitlement-end (time/date-time 2100 01 01)})))

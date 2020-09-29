@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.blacklist :as blacklist]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures
@@ -11,11 +11,11 @@
   rollback-db-fixture)
 
 (deftest test-blacklist-event-storage
-  (test-data/create-user! {:eppn "user1"})
-  (test-data/create-user! {:eppn "user2"})
-  (test-data/create-user! {:eppn "handler"})
-  (test-data/create-resource! {:resource-ext-id "urn.fi/123"})
-  (test-data/create-resource! {:resource-ext-id "urn.fi/124"})
+  (test-data-functions/create-user! {:eppn "user1"})
+  (test-data-functions/create-user! {:eppn "user2"})
+  (test-data-functions/create-user! {:eppn "handler"})
+  (test-data-functions/create-resource! {:resource-ext-id "urn.fi/123"})
+  (test-data-functions/create-resource! {:resource-ext-id "urn.fi/124"})
 
   (blacklist/add-event! {:event/type :blacklist.event/add
                          :event/actor "handler"
@@ -78,8 +78,8 @@
                  :event/time (time/now)
                  :resource/ext-id resource-ext-id
                  :userid user-id}]
-    (test-data/create-user! {:eppn user-id})
-    (test-data/create-resource! {:resource-ext-id resource-ext-id})
+    (test-data-functions/create-user! {:eppn user-id})
+    (test-data-functions/create-resource! {:resource-ext-id resource-ext-id})
 
     (testing "user and resource both exist"
       (is (not (blacklist/blacklisted? user-id resource-ext-id)))

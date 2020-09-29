@@ -3,6 +3,7 @@
             [rems.application.search :as search]
             [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
 
 (use-fixtures :once
@@ -14,21 +15,21 @@
   ;; generate users with full names and emails
   (test-data/create-test-users-and-roles!)
   ;; unrelated application - it's an error if any of the tests finds this
-  (test-data/create-application! {:actor "developer"})
+  (test-data-functions/create-application! {:actor "developer"})
 
   (testing "find by applicant"
-    (let [app-id (test-data/create-application! {:actor "alice"})]
+    (let [app-id (test-data-functions/create-application! {:actor "alice"})]
       (is (= #{app-id} (search/find-applications "alice")) "user ID, any field")
       (is (= #{app-id} (search/find-applications "applicant:alice")) "user ID")
       (is (= #{app-id} (search/find-applications "applicant:\"Alice Applicant\"")) "name")
       (is (= #{app-id} (search/find-applications "applicant:\"alice@example.com\"")) "email")))
 
   (testing "find by member"
-    (let [app-id (test-data/create-application! {:actor "alice"})]
-      (test-data/command! {:type :application.command/submit
+    (let [app-id (test-data-functions/create-application! {:actor "alice"})]
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/add-member
+      (test-data-functions/command! {:type :application.command/add-member
                            :application-id app-id
                            :actor "developer"
                            :member {:userid "elsa"}})
@@ -38,23 +39,23 @@
       (is (= #{app-id} (search/find-applications "member:\"elsa@example.com\"")) "email")))
 
   (testing "find by ID"
-    (let [app-id (test-data/create-application! {:actor "alice"})
+    (let [app-id (test-data-functions/create-application! {:actor "alice"})
           app (applications/get-application app-id)]
       (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
       (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
       (is (= #{app-id} (search/find-applications (str "id:\"" (:application/external-id app) "\""))) "external ID")))
 
   (testing "find by title"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/id "abc"
+    (let [form-id (test-data-functions/create-form! {:form/fields [{:field/id "abc"
                                                           :field/type :description
                                                           :field/title {:en "Title"
                                                                         :fi "Titteli"
                                                                         :sv "Titel"}
                                                           :field/optional false}]})
-          cat-id (test-data/create-catalogue-item! {:form-id form-id})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+          cat-id (test-data-functions/create-catalogue-item! {:form-id form-id})
+          app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
                                                  :actor "alice"})]
-      (test-data/command! {:type :application.command/save-draft
+      (test-data-functions/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
                            :field-values [{:form form-id
@@ -64,12 +65,12 @@
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
   (testing "find by resource"
-    (let [resource (test-data/create-resource! {:resource-ext-id "urn:fi:abcd"})
-          cat-id (test-data/create-catalogue-item! {:resource-id resource
+    (let [resource (test-data-functions/create-resource! {:resource-ext-id "urn:fi:abcd"})
+          cat-id (test-data-functions/create-catalogue-item! {:resource-id resource
                                                     :title {:en "Spam"
                                                             :fi "Nötkötti"
                                                             :sv "Skinka"}})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+          app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
                                                  :actor "alice"})]
       (is (= #{app-id} (search/find-applications "Spam")) "en title, any field")
       (is (= #{app-id} (search/find-applications "resource:Spam")) "en title")
@@ -78,11 +79,11 @@
       (is (= #{app-id} (search/find-applications "resource:\"urn:fi:abcd\"")) "external id, resource field")))
 
   (testing "find by state"
-    (let [app-id (test-data/create-application! {:actor "alice"})]
-      (test-data/command! {:type :application.command/submit
+    (let [app-id (test-data-functions/create-application! {:actor "alice"})]
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/approve
+      (test-data-functions/command! {:type :application.command/approve
                            :application-id app-id
                            :actor "developer"
                            :comment ""})
@@ -91,11 +92,11 @@
       (is (= #{app-id} (search/find-applications "state:Hyväksytty")) "fi status")))
 
   (testing "find by todo"
-    (let [app-id (test-data/create-application! {:actor "alice"})]
-      (test-data/command! {:type :application.command/submit
+    (let [app-id (test-data-functions/create-application! {:actor "alice"})]
+      (test-data-functions/command! {:type :application.command/submit
                            :application-id app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/request-review
+      (test-data-functions/command! {:type :application.command/request-review
                            :application-id app-id
                            :actor "developer"
                            :reviewers ["elsa"]
@@ -107,24 +108,24 @@
       (is (= #{app-id} (search/find-applications "todo:\"waiting-for-review\"")) "keyword todo, any field")))
 
   (testing "find by form content"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+    (let [form-id (test-data-functions/create-form! {:form/fields [{:field/id "1"
                                                           :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"
                                                                         :sv "Textfält"}
                                                           :field/optional false}]})
-          form-id2 (test-data/create-form! {:form/fields [{:field/id "1"
+          form-id2 (test-data-functions/create-form! {:form/fields [{:field/id "1"
                                                            :field/type :text
                                                            :field/title {:en "Text field"
                                                                          :fi "Tekstikenttä"
                                                                          :sv "Textfält"}
                                                            :field/optional false}]})
-          wf-id (test-data/create-workflow! {})
-          cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
-          cat-id2 (test-data/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id cat-id2]
+          wf-id (test-data-functions/create-workflow! {})
+          cat-id (test-data-functions/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
+          cat-id2 (test-data-functions/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
+          app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id cat-id2]
                                                  :actor "alice"})]
-      (test-data/command! {:type :application.command/save-draft
+      (test-data-functions/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
                            :field-values [{:form form-id
@@ -139,16 +140,16 @@
       (is (= #{app-id} (search/find-applications "form:flesh")) "form field")))
 
   (testing "updating applications"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+    (let [form-id (test-data-functions/create-form! {:form/fields [{:field/id "1"
                                                           :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"
                                                                         :sv "Textfält"}
                                                           :field/optional false}]})
-          cat-id (test-data/create-catalogue-item! {:form-id form-id})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+          cat-id (test-data-functions/create-catalogue-item! {:form-id form-id})
+          app-id (test-data-functions/create-application! {:catalogue-item-ids [cat-id]
                                                  :actor "alice"})]
-      (test-data/command! {:type :application.command/save-draft
+      (test-data-functions/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
                            :field-values [{:form form-id
@@ -157,7 +158,7 @@
       (is (= #{app-id} (search/find-applications "version1"))
           "original version is indexed")
 
-      (test-data/command! {:type :application.command/save-draft
+      (test-data-functions/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
                            :field-values [{:form form-id

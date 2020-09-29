@@ -2,31 +2,31 @@
   (:require [clojure.test :refer :all]
             [rems.api.services.dependencies :as dependencies]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-functions :as test-data-functions]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-dependencies
-  (let [shared-license (test-data/create-license! {})
-        shared-resource-license (test-data/create-license! {})
-        resource-license (test-data/create-license! {})
-        unused-license (test-data/create-license! {})
-        res-1 (test-data/create-resource! {:resource-ext-id "res1"
+  (let [shared-license (test-data-functions/create-license! {})
+        shared-resource-license (test-data-functions/create-license! {})
+        resource-license (test-data-functions/create-license! {})
+        unused-license (test-data-functions/create-license! {})
+        res-1 (test-data-functions/create-resource! {:resource-ext-id "res1"
                                            :license-ids [shared-license shared-resource-license]})
-        res-2 (test-data/create-resource! {:resource-ext-id "res2"
+        res-2 (test-data-functions/create-resource! {:resource-ext-id "res2"
                                            :license-ids [shared-license shared-resource-license resource-license]})
-        shared-form (test-data/create-form! {})
-        wf-form (test-data/create-form! {})
-        cat-form (test-data/create-form! {})
-        unused-form (test-data/create-form! {})
-        wf-1 (test-data/create-workflow! {:forms [{:form/id shared-form}]})
-        wf-2 (test-data/create-workflow! {:forms [{:form/id wf-form} {:form/id shared-form}]})
-        cat-1 (test-data/create-catalogue-item! {:resource-id res-1
+        shared-form (test-data-functions/create-form! {})
+        wf-form (test-data-functions/create-form! {})
+        cat-form (test-data-functions/create-form! {})
+        unused-form (test-data-functions/create-form! {})
+        wf-1 (test-data-functions/create-workflow! {:forms [{:form/id shared-form}]})
+        wf-2 (test-data-functions/create-workflow! {:forms [{:form/id wf-form} {:form/id shared-form}]})
+        cat-1 (test-data-functions/create-catalogue-item! {:resource-id res-1
                                                  :form-id cat-form
                                                  :workflow-id wf-1})
-        cat-2 (test-data/create-catalogue-item! {:resource-id res-1
+        cat-2 (test-data-functions/create-catalogue-item! {:resource-id res-1
                                                  :form-id shared-form
                                                  :workflow-id wf-2})]
     ;; TODO no public way to set workflow licenses for now
