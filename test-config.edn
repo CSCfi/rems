@@ -12,4 +12,5 @@
                          {:attribute "picture"}]
  :languages [:en :fi :sv]
  :enable-pdf-api true
+ :enable-permissions-api true
  :catalogue-is-public false}
