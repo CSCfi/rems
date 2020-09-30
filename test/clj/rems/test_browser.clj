@@ -109,7 +109,9 @@
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
-                   [value-el] (btu/children row {:css ".form-control"})]
+                   value-els (concat (btu/children row {:css ".form-control"})
+                                     (btu/children row {:css ".dropdown-container"}))]
+             value-el value-els
              :when value-el]
          (let [value (or (btu/get-element-attr-el value-el "value")
                          (btu/get-element-text-el value-el))]
@@ -745,7 +747,7 @@
     (btu/wait-page-loaded)
     (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
     (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
-    (is (= {;; slurp-fields can't read the organization dropdown currently
+    (is (= {"Organization" "The Organization"
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -784,7 +786,7 @@
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
         (btu/wait-page-loaded)
         (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
-        (is (= {;;"Organization" "The Organization"
+        (is (= {"Organization" "The Organization"
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
                 "Title (SV)" "test-edit-catalogue-item SV"
