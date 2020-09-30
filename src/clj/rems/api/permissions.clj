@@ -20,7 +20,7 @@
        :return s/Any
        (if (not (:enable-permissions-api config/env))
          (not-implemented "permissions api not implemented")
-         (ok rems.ga4gh/+public-key+))))
+         (ok {:keys [rems.ga4gh/+public-key+]}))))
    (context "/permissions" []
      :tags ["permissions"]
      (GET "/:user" []
