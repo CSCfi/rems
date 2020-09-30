@@ -175,12 +175,12 @@
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
 (def +character-delay+ 0.02)
-(def +max-extra-delay+ 0.15)
+(def +max-extra-delay+ 0.2)
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
   (doseq [c text]
-    (et/wait (* +max-extra-delay+ (rand)))
+    (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)
       (et/wait +character-delay+)
       (et/fill (get-driver) q (char (inc (int c))))
