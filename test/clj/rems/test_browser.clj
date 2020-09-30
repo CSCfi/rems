@@ -1092,6 +1092,9 @@
                     slurp
                     str/split-lines)))))))
 
+(defn- get-organization-last-modified [organization-id]
+  (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id organization-id}))))
+
 (deftest test-organizations
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
@@ -1125,23 +1128,22 @@
 
     (testing "view after creation"
       (btu/wait-visible :organization)
-      (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
-        (is (= {"Id" (btu/context-get :organization-id)
-                "Short name (FI)" "SNFI"
-                "Short name (EN)" "SNEN"
-                "Short name (SV)" "SNSV"
-                "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                "Owners" "Organization Owner 1 (organization-owner1@example.com)"
-                "Name (FI)" "Review mail FI"
-                "Name (SV)" "Review mail SV"
-                "Name (EN)" "Review mail EN"
-                "Email" "review.email@example.com"
-                "Active" ""
-                "Last modified" last-modified
-                "Modifier" "Owner (owner@example.com)"}
-               (slurp-fields :organization)))))
+      (is (= {"Id" (btu/context-get :organization-id)
+              "Short name (FI)" "SNFI"
+              "Short name (EN)" "SNEN"
+              "Short name (SV)" "SNSV"
+              "Title (EN)" (str (btu/context-get :organization-name) " EN")
+              "Title (FI)" (str (btu/context-get :organization-name) " FI")
+              "Title (SV)" (str (btu/context-get :organization-name) " SV")
+              "Owners" "Organization Owner 1 (organization-owner1@example.com)"
+              "Name (FI)" "Review mail FI"
+              "Name (SV)" "Review mail SV"
+              "Name (EN)" "Review mail EN"
+              "Email" "review.email@example.com"
+              "Active" ""
+              "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
+              "Modifier" "Owner (owner@example.com)"}
+             (slurp-fields :organization))))
 
     (testing "edit after creation"
       (btu/scroll-and-click :edit-organization)
@@ -1160,23 +1162,22 @@
 
       (testing "view after editing"
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
-          (is (= {"Id" (btu/context-get :organization-id)
-                  "Short name (FI)" "SNFI2"
-                  "Short name (EN)" "SNEN2"
-                  "Short name (SV)" "SNSV2"
-                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
-                  "Name (FI)" "Review mail FI"
-                  "Name (SV)" "Review mail SV"
-                  "Name (EN)" "Review mail EN"
-                  "Email" "review.email@example.com"
-                  "Active" ""
-                  "Last modified" last-modified
-                  "Modifier" "Owner (owner@example.com)"}
-                 (slurp-fields :organization))))))
+        (is (= {"Id" (btu/context-get :organization-id)
+                "Short name (FI)" "SNFI2"
+                "Short name (EN)" "SNEN2"
+                "Short name (SV)" "SNSV2"
+                "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
+                "Name (FI)" "Review mail FI"
+                "Name (SV)" "Review mail SV"
+                "Name (EN)" "Review mail EN"
+                "Email" "review.email@example.com"
+                "Active" ""
+                "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
+                "Modifier" "Owner (owner@example.com)"}
+               (slurp-fields :organization)))))
 
     (testing "use after creation"
       (go-to-admin "Resources")
@@ -1209,23 +1210,22 @@
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
-          (is (= {"Id" (btu/context-get :organization-id)
-                  "Short name (FI)" "SNFI2"
-                  "Short name (EN)" "SNEN2"
-                  "Short name (SV)" "SNSV2"
-                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
-                  "Name (FI)" "Review mail FI"
-                  "Name (SV)" "Review mail SV"
-                  "Name (EN)" "Review mail EN"
-                  "Email" "review.email@example.com"
-                  "Active" ""
-                  "Last modified" last-modified
-                  "Modifier" "Owner (owner@example.com)"}
-                 (slurp-fields :organization)))))
+        (is (= {"Id" (btu/context-get :organization-id)
+                "Short name (FI)" "SNFI2"
+                "Short name (EN)" "SNEN2"
+                "Short name (SV)" "SNSV2"
+                "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
+                "Name (FI)" "Review mail FI"
+                "Name (SV)" "Review mail SV"
+                "Name (EN)" "Review mail EN"
+                "Email" "review.email@example.com"
+                "Active" ""
+                "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
+                "Modifier" "Owner (owner@example.com)"}
+               (slurp-fields :organization))))
 
       (testing "edit as organization owner"
         (btu/scroll-and-click :edit-organization)
@@ -1243,20 +1243,19 @@
 
         (testing "view after editing"
           (btu/wait-visible :organization)
-          (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
-            (is (= {"Id" (btu/context-get :organization-id)
-                    "Short name (FI)" "SNFI"
-                    "Short name (EN)" "SNEN"
-                    "Short name (SV)" "SNSV"
-                    "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                    "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                    "Title (SV)" (str (btu/context-get :organization-name) " SV")
-                    "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
-                    "Name (FI)" "Review mail FI"
-                    "Name (SV)" "Review mail SV"
-                    "Name (EN)" "Review mail EN"
-                    "Email" "review.email@example.com"
-                    "Active" ""
-                    "Last modified" last-modified
-                    "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
-                   (slurp-fields :organization)))))))))
+          (is (= {"Id" (btu/context-get :organization-id)
+                  "Short name (FI)" "SNFI"
+                  "Short name (EN)" "SNEN"
+                  "Short name (SV)" "SNSV"
+                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
+                  "Name (FI)" "Review mail FI"
+                  "Name (SV)" "Review mail SV"
+                  "Name (EN)" "Review mail EN"
+                  "Email" "review.email@example.com"
+                  "Active" ""
+                  "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
+                  "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
+                 (slurp-fields :organization))))))))
