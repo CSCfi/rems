@@ -7,7 +7,9 @@
             [rems.db.test-data :as test-data]
             [rems.json :as json]
             [rems.event-notification :as event-notification]
-            [stub-http.core :as stub]))
+            [stub-http.core :as stub])
+  (:import [com.auth0.jwk JwkProviderBuilder]
+           [java.net URL]))
 
 (use-fixtures :each standalone-fixture)
 
@@ -92,3 +94,11 @@
         (event-notification/process-outbox!)
         (is (= 1 (count (stub/recorded-responses server))))
         (is (= "new-id" (get-ext-id)))))))
+
+(deftest test-jwks
+  (is (some? (-> (str (:public-url rems.config/env) "api/jwk")
+                 (URL.)
+                 (JwkProviderBuilder.)
+                 (.build)
+                 (.get "2011-04-29")
+                 (.getPublicKey)))))
