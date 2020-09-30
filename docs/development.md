@@ -54,6 +54,12 @@ To run tests that need a database:
 lein kaocha integration
 ```
 
+To run a specific test you can use:
+
+```
+lein kaocha --focus 'rems.test-browser/test-form-editor'
+```
+
 ### Browser tests
 
 To run build the JS bundle and run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
