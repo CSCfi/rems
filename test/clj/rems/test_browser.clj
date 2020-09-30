@@ -1125,7 +1125,7 @@
 
     (testing "view after creation"
       (btu/wait-visible :organization)
-      (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
+      (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI"
                 "Short name (EN)" "SNEN"
@@ -1160,7 +1160,7 @@
 
       (testing "view after editing"
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
                   "Short name (EN)" "SNEN2"
@@ -1209,7 +1209,7 @@
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
                   "Short name (EN)" "SNEN2"
@@ -1243,7 +1243,7 @@
 
         (testing "view after editing"
           (btu/wait-visible :organization)
-          (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
+          (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id (btu/context-get :organization-id)})))]
             (is (= {"Id" (btu/context-get :organization-id)
                     "Short name (FI)" "SNFI"
                     "Short name (EN)" "SNEN"

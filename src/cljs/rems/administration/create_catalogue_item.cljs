@@ -24,9 +24,9 @@
                ::form nil
                ::catalogue-item-id catalogue-item-id
                ::editing? (some? catalogue-item-id))
-    :dispatch-n [[::workflows]
-                 [::resources]
-                 [::forms]
+    :dispatch-n [[::workflows {:disabled true :archived true}]
+                 [::resources {:disabled true :archived true}]
+                 [::forms {:disabled true :archived true}]
                  (when catalogue-item-id [::catalogue-item])]}))
 
 (rf/reg-sub ::catalogue-item-id (fn [db _] (::catalogue-item-id db)))
@@ -177,7 +177,7 @@
                                  :value (:title workflow)}])
        [dropdown/dropdown
         {:id workflow-dropdown-id
-         :items workflows
+         :items (->> workflows (filter :enabled) (remove :archived))
          :item-key :id
          :item-label #(str (:title %)
                            " (org: "
@@ -200,7 +200,7 @@
                                  :value (:resid resource)}])
        [dropdown/dropdown
         {:id resource-dropdown-id
-         :items resources
+         :items (->> resources (filter :enabled) (remove :archived))
          :item-key :id
          :item-label #(str (:resid %)
                            " (org: "
@@ -223,7 +223,7 @@
                                  :value (:form/title form)}])
        [dropdown/dropdown
         {:id form-dropdown-id
-         :items forms
+         :items (->> forms (filter :enabled) (remove :archived))
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
