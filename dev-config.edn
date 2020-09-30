@@ -29,4 +29,5 @@
  :extra-pages-path "./test-data/extra-pages"
  :application-deadline-days 4
  :enable-pdf-api true
+ :enable-permissions-api true
  :catalogue-is-public false}
