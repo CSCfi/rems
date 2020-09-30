@@ -61,5 +61,6 @@
 
 (defn fetch-organizations! []
   (fetch "/api/organizations"
-         {:handler #(rf/dispatch-sync [:loaded-organizations %])
+         {:params {:disabled true :archived true}
+          :handler #(rf/dispatch-sync [:loaded-organizations %])
           :error-handler (flash-message/default-error-handler :top "Fetch organizations")}))

@@ -786,7 +786,7 @@
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
         (btu/wait-page-loaded)
         (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
-        (is (= {"Organization" "The Organization"
+        (is (= {"Organization" "Select..." ; unable to select a disabled org again
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
                 "Title (SV)" "test-edit-catalogue-item SV"
