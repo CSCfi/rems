@@ -166,6 +166,11 @@
                               :catalogue-item-ids (or catalogue-item-ids [(create-catalogue-item! {})])
                               :actor actor})))
 
+(defn submit-application [app-id applicant]
+  (command! {:type :application.command/submit
+             :application-id app-id
+             :actor applicant}))
+
 (defn- base-command [{:keys [application-id actor time]}]
   (assert application-id)
   (assert actor)
@@ -209,3 +214,5 @@
                        :application-id app-id
                        :actor actor})
     app-id))
+
+
