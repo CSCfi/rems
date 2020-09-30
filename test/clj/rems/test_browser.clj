@@ -13,13 +13,17 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [rems.api.services.form :as forms]
+            [rems.api.services.organizations :as organizations]
+            [rems.api.services.resource :as resources]
+            [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
             [rems.config]
-            [rems.db.organizations :as organizations]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
+            [rems.testing-util :refer [with-user]]
             [rems.text :as text]))
 
 (comment ; convenience for development testing
@@ -716,18 +720,26 @@
 
 (deftest test-edit-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
+    (btu/context-assoc! :organization (test-data/create-organization! {:organization/id (btu/context-get :organization-id)
+                                                                       :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
+                                                                       :organization/name {:en "The Organization" :fi "Organisaatio" :sv "Organisationen"}}))
     (btu/context-assoc! :workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
                                                                :type :workflow/default
+                                                               :organization {:organization/id (btu/context-get :organization-id)}
                                                                :handlers ["handler"]}))
-    (btu/context-assoc! :resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"}))
+    (btu/context-assoc! :resource (test-data/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"
+                                                               :organization {:organization/id (btu/context-get :organization-id)}}))
     (btu/context-assoc! :form (test-data/create-form! {:form/title "test-edit-catalogue-item form"
-                                                       :form/fields []}))
+                                                       :form/fields []
+                                                       :form/organization {:organization/id (btu/context-get :organization-id)}}))
     (btu/context-assoc! :catalogue-item (test-data/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
                                                                                    :fi "test-edit-catalogue-item FI"
                                                                                    :sv "test-edit-catalogue-item SV"}
                                                                            :resource-id (btu/context-get :resource)
                                                                            :form-id (btu/context-get :form)
-                                                                           :workflow-id (btu/context-get :workflow)}))
+                                                                           :workflow-id (btu/context-get :workflow)
+                                                                           :organization {:organization/id (btu/context-get :organization-id)}}))
     (login-as "owner")
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
     (btu/wait-page-loaded)
@@ -749,7 +761,7 @@
     (btu/scroll-and-click :save)
     (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
     (btu/wait-page-loaded)
-    (is (= {"Organization" "The Default Organization"
+    (is (= {"Organization" "The Organization"
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -761,7 +773,45 @@
             "Resource" "test-edit-catalogue-item resource"
             "End" ""
             "Active" ""}
-           (dissoc (slurp-fields :catalogue-item) "Start")))))
+           (dissoc (slurp-fields :catalogue-item) "Start")))
+    (testing "after disabling the components"
+      (with-user "owner"
+        (organizations/set-organization-enabled! "owner" {:enabled false :organization/id (btu/context-get :organization-id)})
+        (forms/set-form-enabled! {:id (btu/context-get :form) :enabled false})
+        (resources/set-resource-enabled! {:id (btu/context-get :resource) :enabled false})
+        (workflows/set-workflow-enabled! {:id (btu/context-get :workflow) :enabled false}))
+      (testing "viewing"
+        (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
+        (is (= {;;"Organization" "The Organization"
+                "Title (EN)" "test-edit-catalogue-item EN"
+                "Title (FI)" "test-edit-catalogue-item FI"
+                "Title (SV)" "test-edit-catalogue-item SV"
+                "More info URL (optional, defaults to resource URN) (EN)" "http://google.com"
+                "More info URL (optional, defaults to resource URN) (FI)" ""
+                "More info URL (optional, defaults to resource URN) (SV)" ""
+                "Form" "test-edit-catalogue-item form"
+                "Workflow" "test-edit-catalogue-item workflow"
+                "Resource" "test-edit-catalogue-item resource"}
+               (dissoc (slurp-fields :create-catalogue-item) "Start"))))
+      (testing "viewing"
+        (btu/scroll-and-click :cancel)
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:id :title :fn/has-text "test-edit-catalogue-item EN"})
+        (is (= {"Organization" "The Organization"
+                "Title (EN)" "test-edit-catalogue-item EN"
+                "Title (FI)" "test-edit-catalogue-item FI"
+                "Title (SV)" "test-edit-catalogue-item SV"
+                "More info (EN)" "http://google.com"
+                "More info (FI)" ""
+                "More info (SV)" ""
+                "Form" "test-edit-catalogue-item form"
+                "Workflow" "test-edit-catalogue-item workflow"
+                "Resource" "test-edit-catalogue-item resource"
+                "End" ""
+                "Active" ""}
+               (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
 (deftest test-form-editor
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -1075,7 +1125,7 @@
 
     (testing "view after creation"
       (btu/wait-visible :organization)
-      (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+      (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI"
                 "Short name (EN)" "SNEN"
@@ -1110,7 +1160,7 @@
 
       (testing "view after editing"
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
                   "Short name (EN)" "SNEN2"
@@ -1159,7 +1209,7 @@
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
         (btu/wait-visible :organization)
-        (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+        (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI2"
                   "Short name (EN)" "SNEN2"
@@ -1193,7 +1243,7 @@
 
         (testing "view after editing"
           (btu/wait-visible :organization)
-          (let [last-modified (text/localize-time (:organization/last-modified (organizations/getx-organization-by-id (btu/context-get :organization-id))))]
+          (let [last-modified (text/localize-time (:organization/last-modified (organizations/get-organization-raw (btu/context-get :organization-id))))]
             (is (= {"Id" (btu/context-get :organization-id)
                     "Short name (FI)" "SNFI"
                     "Short name (EN)" "SNEN"
