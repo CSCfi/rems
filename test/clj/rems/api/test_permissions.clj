@@ -33,6 +33,8 @@
     (let [header (buddy-jws/decode-header visa)
           data (buddy-jwt/unsign visa ga4gh/+public-key-parsed+ {:alg :rs256})]
       (is (= (str (:public-url rems.config/env) "api/jwk") (:jku header)))
+      (is (= "JWT" (:typ header)))
+      (is (= "2011-04-29" (:kid header)))
       (validate-visa data)
       (is (= "alice" (:sub data)))
       (is (= "urn:nbn:fi:lb-201403262" (get-in data [:ga4gh_visa_v1 :value]))))))
