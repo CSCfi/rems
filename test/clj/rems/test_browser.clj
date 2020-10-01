@@ -723,9 +723,12 @@
 (deftest test-edit-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
     (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
+    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
     (btu/context-assoc! :organization (test-data/create-organization! {:organization/id (btu/context-get :organization-id)
                                                                        :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
-                                                                       :organization/name {:en "The Organization" :fi "Organisaatio" :sv "Organisationen"}}))
+                                                                       :organization/name {:en (str (btu/context-get :organization-name) " en")
+                                                                                           :fi (str (btu/context-get :organization-name) " fi")
+                                                                                           :sv (str (btu/context-get :organization-name) " sv")}}))
     (btu/context-assoc! :workflow (test-data/create-workflow! {:title "test-edit-catalogue-item workflow"
                                                                :type :workflow/default
                                                                :organization {:organization/id (btu/context-get :organization-id)}
@@ -747,7 +750,7 @@
     (btu/wait-page-loaded)
     (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
     (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
-    (is (= {"Organization" "The Organization"
+    (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -763,7 +766,7 @@
     (btu/scroll-and-click :save)
     (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
     (btu/wait-page-loaded)
-    (is (= {"Organization" "The Organization"
+    (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -801,7 +804,7 @@
         (btu/scroll-and-click :cancel)
         (btu/wait-page-loaded)
         (btu/wait-visible {:id :title :fn/has-text "test-edit-catalogue-item EN"})
-        (is (= {"Organization" "The Organization"
+        (is (= {"Organization" (str (btu/context-get :organization-name) " en")
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
                 "Title (SV)" "test-edit-catalogue-item SV"
