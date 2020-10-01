@@ -98,23 +98,23 @@
                                        :field/type :text}]})
         wf-id (test-helpers/create-workflow! {})
         cat-id (test-helpers/create-catalogue-item! {:title {:en "Test resource"
-                                                          :fi "Testiresurssi"
-                                                          :sv "sv"}
-                                                  :form-id form-id
-                                                  :workflow-id wf-id})
+                                                             :fi "Testiresurssi"
+                                                             :sv "sv"}
+                                                     :form-id form-id
+                                                     :workflow-id wf-id})
         other-cat-id (test-helpers/create-catalogue-item! {:title {:en "Other resource"
-                                                                :fi "Toinen resurssi"
-                                                                :sv "sv"}
-                                                        :form-id other-form-id
-                                                        :workflow-id wf-id})
+                                                                   :fi "Toinen resurssi"
+                                                                   :sv "sv"}
+                                                           :form-id other-form-id
+                                                           :workflow-id wf-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id other-cat-id]
-                                               :actor applicant})
+                                                  :actor applicant})
         external-id (:application/external-id (applications/get-application app-id))
         get-application #(applications/get-application app-id)]
 
     (test-helpers/fill-form! {:application-id app-id
-                           :actor applicant
-                           :field-value "test\nvalue"})
+                              :actor applicant
+                              :field-value "test\nvalue"})
 
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"
@@ -126,12 +126,12 @@
                (csv/applications-to-csv [(get-application)] form-id :fi)))))
 
     (test-helpers/accept-licenses! {:application-id app-id
-                                 :actor applicant})
+                                    :actor applicant})
 
     (test-helpers/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor applicant
-                         :time test-time})
+                            :application-id app-id
+                            :actor applicant
+                            :time test-time})
 
     (testing "submitted application"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"

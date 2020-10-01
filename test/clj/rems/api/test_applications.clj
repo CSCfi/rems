@@ -116,10 +116,10 @@
       (is (response-is-not-found? response))))
   (let [cat-id (test-helpers/create-catalogue-item! {:title {:fi "Fi title" :en "En title"}})
         application-id (test-helpers/create-application! {:actor "alice"
-                                                       :catalogue-item-ids [cat-id]})]
+                                                          :catalogue-item-ids [cat-id]})]
     (test-helpers/command! {:type :application.command/submit
-                         :application-id application-id
-                         :actor "alice"})
+                            :application-id application-id
+                            :actor "alice"})
     (testing "forbidden"
       (let [response (-> (request :get (str "/api/applications/" application-id "/pdf"))
                          (authenticate "42" "bob")
@@ -146,22 +146,22 @@
         license-id4 (test-helpers/create-license! {})
         form-id (test-helpers/create-form! {})
         workflow-id (test-helpers/create-workflow! {:type :workflow/master
-                                                 :handlers [handler-id]})
+                                                    :handlers [handler-id]})
         cat-item-id1 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
-                                                                      {:license-ids [license-id1 license-id2]})
-                                                        :form-id form-id
-                                                        :workflow-id workflow-id})
+                                                                         {:license-ids [license-id1 license-id2]})
+                                                           :form-id form-id
+                                                           :workflow-id workflow-id})
         cat-item-id2 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
-                                                                      {:license-ids [license-id1 license-id2]})
-                                                        :form-id form-id
-                                                        :workflow-id workflow-id})
+                                                                         {:license-ids [license-id1 license-id2]})
+                                                           :form-id form-id
+                                                           :workflow-id workflow-id})
 
         cat-item-id3 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
-                                                                      {:license-ids [license-id3]})
-                                                        :form-id form-id
-                                                        :workflow-id workflow-id})
+                                                                         {:license-ids [license-id3]})
+                                                           :form-id form-id
+                                                           :workflow-id workflow-id})
         application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id1]
-                                                       :actor user-id})]
+                                                          :actor user-id})]
 
     (testing "accept licenses"
       (is (= {:success true} (send-command user-id
@@ -446,8 +446,8 @@
     (testing "json"
       (let [app-id (test-helpers/create-application! {:actor applicant})]
         (test-helpers/command! {:type :application.command/submit
-                             :application-id app-id
-                             :actor applicant})
+                                :application-id app-id
+                                :actor applicant})
         (is (= {:success true} (send-command handler {:type :application.command/approve
                                                       :application-id app-id
                                                       :comment ""
@@ -458,8 +458,8 @@
     (testing "transit"
       (let [app-id (test-helpers/create-application! {:actor applicant})]
         (test-helpers/command! {:type :application.command/submit
-                             :application-id app-id
-                             :actor applicant})
+                                :application-id app-id
+                                :actor applicant})
         (is (= {:success true} (send-command-transit handler {:type :application.command/approve
                                                               :application-id app-id
                                                               :comment ""
@@ -536,15 +536,15 @@
                            api-key applicant)))))
     (let [app-id (test-helpers/create-application! {:actor applicant})]
       (test-helpers/command! {:application-id app-id
-                           :type :application.command/submit
-                           :actor applicant})
+                              :type :application.command/submit
+                              :actor applicant})
       (testing "can't delete submitted application"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant))))
       (test-helpers/command! {:application-id app-id
-                           :type :application.command/return
-                           :actor handler})
+                              :type :application.command/return
+                              :actor handler})
       (testing "can't delete returned application"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
@@ -554,8 +554,8 @@
   (let [user-id "alice"
         application-id (test-helpers/create-application! {:actor user-id})]
     (test-helpers/command! {:application-id application-id
-                         :type :application.command/submit
-                         :actor user-id})
+                            :type :application.command/submit
+                            :actor user-id})
     (is (= {:success true}
            (send-command "developer" {:type :application.command/close
                                       :application-id application-id
@@ -601,52 +601,52 @@
 (deftest test-application-validation
   (let [user-id "alice"
         form-id (test-helpers/create-form! {:form/fields [{:field/id "req1"
-                                                        :field/title {:en "req"
-                                                                      :fi "pak"
-                                                                      :sv "obl"}
-                                                        :field/type :text
-                                                        :field/optional false}
-                                                       {:field/id "opt1"
-                                                        :field/title {:en "opt"
-                                                                      :fi "val"
-                                                                      :sv "fri"}
-                                                        :field/type :text
-                                                        :field/optional true}]})
+                                                           :field/title {:en "req"
+                                                                         :fi "pak"
+                                                                         :sv "obl"}
+                                                           :field/type :text
+                                                           :field/optional false}
+                                                          {:field/id "opt1"
+                                                           :field/title {:en "opt"
+                                                                         :fi "val"
+                                                                         :sv "fri"}
+                                                           :field/type :text
+                                                           :field/optional true}]})
         form-id2 (test-helpers/create-form! {:form/fields [{:field/id "req2"
-                                                         :field/title {:en "req"
-                                                                       :fi "pak"
-                                                                       :sv "obl"}
-                                                         :field/type :text
-                                                         :field/optional false}
-                                                        {:field/id "opt2"
-                                                         :field/title {:en "opt"
-                                                                       :fi "val"
-                                                                       :sv "fri"}
-                                                         :field/type :text
-                                                         :field/optional true}
-                                                        {:field/id "optionlist"
-                                                         :field/title {:en "Option list."
-                                                                       :fi "Valintalista."
-                                                                       :sv "Välj"}
-                                                         :field/type :option
-                                                         :field/options [{:key "Option1"
-                                                                          :label {:en "First"
-                                                                                  :fi "Ensimmäinen"
-                                                                                  :sv "Först"}}
-                                                                         {:key "Option2"
-                                                                          :label {:en "Second"
-                                                                                  :fi "Toinen"
-                                                                                  :sv "Den andra"}}
-                                                                         {:key "Option3"
-                                                                          :label {:en "Third"
-                                                                                  :fi "Kolmas"
-                                                                                  :sv "Tredje"}}]
-                                                         :field/optional true}]})
+                                                            :field/title {:en "req"
+                                                                          :fi "pak"
+                                                                          :sv "obl"}
+                                                            :field/type :text
+                                                            :field/optional false}
+                                                           {:field/id "opt2"
+                                                            :field/title {:en "opt"
+                                                                          :fi "val"
+                                                                          :sv "fri"}
+                                                            :field/type :text
+                                                            :field/optional true}
+                                                           {:field/id "optionlist"
+                                                            :field/title {:en "Option list."
+                                                                          :fi "Valintalista."
+                                                                          :sv "Välj"}
+                                                            :field/type :option
+                                                            :field/options [{:key "Option1"
+                                                                             :label {:en "First"
+                                                                                     :fi "Ensimmäinen"
+                                                                                     :sv "Först"}}
+                                                                            {:key "Option2"
+                                                                             :label {:en "Second"
+                                                                                     :fi "Toinen"
+                                                                                     :sv "Den andra"}}
+                                                                            {:key "Option3"
+                                                                             :label {:en "Third"
+                                                                                     :fi "Kolmas"
+                                                                                     :sv "Tredje"}}]
+                                                            :field/optional true}]})
         wf-id (test-helpers/create-workflow! {})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
         cat-id2 (test-helpers/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id cat-id2]
-                                               :actor user-id})]
+                                                  :actor user-id})]
 
     (testing "set value of optional field"
       (is (= {:success true}
@@ -702,10 +702,10 @@
         handler "handler"
         decider "carl"
         wf-id (test-helpers/create-workflow! {:type :workflow/decider
-                                           :handlers [handler]})
+                                              :handlers [handler]})
         cat-id (test-helpers/create-catalogue-item! {:workflow-id wf-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor applicant})]
+                                                  :actor applicant})]
     (testing "applicant's commands for draft"
       (is (= #{"application.command/accept-licenses"
                "application.command/change-resources"
@@ -869,21 +869,21 @@
         reporter "reporter"
         api-key "42"
         wf-id (test-helpers/create-workflow! {:type :workflow/default
-                                           :handlers [handler]})
+                                              :handlers [handler]})
         form-id (test-helpers/create-form! {:form/fields [{:field/id "fld1"
-                                                        :field/type :text
-                                                        :field/title {:en "Field 1" :fi "Field 1" :sv "Field 1"}
-                                                        :field/optional false}]})
+                                                           :field/type :text
+                                                           :field/title {:en "Field 1" :fi "Field 1" :sv "Field 1"}
+                                                           :field/optional false}]})
         form-2-id (test-helpers/create-form! {:form/fields [{:field/id "fld2"
-                                                          :field/type :text
-                                                          :field/title {:en "HIDDEN" :fi "HIDDEN" :sv "HIDDEN"}
-                                                          :field/optional false}]})
+                                                             :field/type :text
+                                                             :field/title {:en "HIDDEN" :fi "HIDDEN" :sv "HIDDEN"}
+                                                             :field/optional false}]})
         cat-id (test-helpers/create-catalogue-item! {:title {:en "Item1"}
-                                                  :workflow-id wf-id
-                                                  :form-id form-id})
+                                                     :workflow-id wf-id
+                                                     :form-id form-id})
         cat-2-id (test-helpers/create-catalogue-item! {:title {:en "Item2"}
-                                                    :workflow-id wf-id
-                                                    :form-id form-2-id})
+                                                       :workflow-id wf-id
+                                                       :form-id form-2-id})
         app-id (test-helpers/create-draft! applicant [cat-id] "Answer1")
         _draft-app-id (test-helpers/create-draft! applicant [cat-id] "DraftAnswer")
         app-2-id (test-helpers/create-draft! applicant [cat-id cat-2-id] "Answer2")]
@@ -930,14 +930,14 @@
         user-id "alice"
         handler-id "developer" ;; developer is the default handler in test-helpers
         form-id (test-helpers/create-form! {:form/fields [{:field/id "attach"
-                                                        :field/title {:en "some attachment"
-                                                                      :fi "joku liite"
-                                                                      :sv "bilaga"}
-                                                        :field/type :attachment
-                                                        :field/optional true}]})
+                                                           :field/title {:en "some attachment"
+                                                                         :fi "joku liite"
+                                                                         :sv "bilaga"}
+                                                           :field/type :attachment
+                                                           :field/optional true}]})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor user-id})
+                                                  :actor user-id})
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (assoc :params {"file" file})
@@ -1084,10 +1084,10 @@
         reviewer-id "carl"
         file #(assoc filecontent :filename %)
         workflow-id (test-helpers/create-workflow! {:type :workflow/master
-                                                 :handlers [handler-id]})
+                                                    :handlers [handler-id]})
         cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id})
         application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
-                                                       :actor applicant-id})
+                                                          :actor applicant-id})
         add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                             (authenticate api-key %1)
                             (assoc :params {"file" %2})
@@ -1246,21 +1246,21 @@
         reporter-id "reporter"
         workflow-id (test-helpers/create-workflow! {:handlers [handler-id]})
         form-id (test-helpers/create-form! {:form/fields [{:field/id "attach1"
-                                                        :field/title {:en "some attachment"
-                                                                      :fi "joku liite"
-                                                                      :sv "bilaga"}
-                                                        :field/type :attachment
-                                                        :field/optional true}
-                                                       {:field/id "attach2"
-                                                        :field/title {:en "another attachment"
-                                                                      :fi "toinen liite"
-                                                                      :sv "annan bilaga"}
-                                                        :field/type :attachment
-                                                        :field/optional true}]})
+                                                           :field/title {:en "some attachment"
+                                                                         :fi "joku liite"
+                                                                         :sv "bilaga"}
+                                                           :field/type :attachment
+                                                           :field/optional true}
+                                                          {:field/id "attach2"
+                                                           :field/title {:en "another attachment"
+                                                                         :fi "toinen liite"
+                                                                         :sv "annan bilaga"}
+                                                           :field/type :attachment
+                                                           :field/optional true}]})
         cat-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
-                                                  :form-id form-id})
+                                                     :form-id form-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor applicant-id})
+                                                  :actor applicant-id})
         add-attachment (fn [user file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (authenticate api-key user)
@@ -1340,7 +1340,7 @@
         handler-user "developer"
         cat-id (test-helpers/create-catalogue-item! {})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor applicant})
+                                                  :actor applicant})
         file-en (clojure.java.io/file "./test-data/test.txt")
         filecontent-en {:tempfile file-en
                         :content-type "text/plain"
@@ -1427,7 +1427,7 @@
         applicant "alice"
         cat-id (test-helpers/create-catalogue-item! {})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor applicant})]
+                                                  :actor applicant})]
 
     (testing "fetch application without authentication"
       (let [req (request :get (str "/api/applications/" app-id))]
@@ -1597,20 +1597,20 @@
         handler "handler"
         reporter "reporter"
         form-id (test-helpers/create-form! {:form/title "notifications"
-                                         :form/fields [{:field/type :text
-                                                        :field/id "field-1"
-                                                        :field/title {:en "text field"
-                                                                      :fi "text field"
-                                                                      :sv "text field"}
-                                                        :field/optional false}]})
+                                            :form/fields [{:field/type :text
+                                                           :field/id "field-1"
+                                                           :field/title {:en "text field"
+                                                                         :fi "text field"
+                                                                         :sv "text field"}
+                                                           :field/optional false}]})
         workflow-id (test-helpers/create-workflow! {:title "wf"
-                                                 :handlers [handler]
-                                                 :type :workflow/default})
+                                                    :handlers [handler]
+                                                    :type :workflow/default})
         ext-id "resres"
         res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id
-                                                  :resource-id res-id
-                                                  :workflow-id workflow-id})
+                                                     :resource-id res-id
+                                                     :workflow-id workflow-id})
         app-id (test-helpers/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil

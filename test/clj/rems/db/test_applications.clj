@@ -49,10 +49,10 @@
       (let [lic-id (test-helpers/create-license! {})
             wf-id (test-helpers/create-workflow! {})
             res-id (test-helpers/create-resource! {:resource-ext-id (str (UUID/randomUUID))
-                                                :license-ids [lic-id]})
+                                                   :license-ids [lic-id]})
             cat-id (test-helpers/create-catalogue-item! {:resource-id res-id
-                                                      :form-id form-id
-                                                      :workflow-id wf-id})]
+                                                         :form-id form-id
+                                                         :workflow-id wf-id})]
         (is (= [lic-id]
                (map :id (applications/get-catalogue-item-licenses cat-id))))))
 
@@ -62,8 +62,8 @@
             _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
             res-id (test-helpers/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
             cat-id (test-helpers/create-catalogue-item! {:resource-id res-id
-                                                      :form-id form-id
-                                                      :workflow-id wf-id})]
+                                                         :form-id form-id
+                                                         :workflow-id wf-id})]
         (is (= [lic-id]
                (map :id (applications/get-catalogue-item-licenses cat-id))))))))
 
@@ -90,12 +90,12 @@
       (is (not (contains? (set (db/get-application-ids {})) app-id)))))
   (let [app-id (test-helpers/create-application! {:actor "applicant"})]
     (test-helpers/command! {:application-id app-id
-                         :type :application.command/submit
-                         :actor "applicant"})
+                            :type :application.command/submit
+                            :actor "applicant"})
     (testing "can't delete submitted application"
       (is (thrown? AssertionError (applications/delete-application! app-id))))
     (test-helpers/command! {:application-id app-id
-                         :type :application.command/return
-                         :actor "developer"})
+                            :type :application.command/return
+                            :actor "developer"})
     (testing "can't delete returned application"
       (is (thrown? AssertionError (applications/delete-application! app-id))))))

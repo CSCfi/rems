@@ -17,13 +17,13 @@
 (defn- create-application-in-review! []
   (let [app-id (test-helpers/create-application! {:actor "alice"})]
     (test-helpers/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor "alice"})
+                            :application-id app-id
+                            :actor "alice"})
     (test-helpers/command! {:type :application.command/request-review
-                         :application-id app-id
-                         :actor "developer"
-                         :reviewers ["carl"]
-                         :comment ""})))
+                            :application-id app-id
+                            :actor "developer"
+                            :reviewers ["carl"]
+                            :comment ""})))
 
 (deftest test-send-handler-reminder
   (testing "sends emails"

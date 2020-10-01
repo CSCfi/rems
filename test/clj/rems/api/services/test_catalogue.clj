@@ -26,8 +26,8 @@
         res-id (test-helpers/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
         workflow-id (test-helpers/create-workflow! {})
         item-id (test-helpers/create-catalogue-item! {:resource-id res-id
-                                                   :form-id form-id
-                                                   :workflow-id workflow-id})
+                                                      :form-id form-id
+                                                      :workflow-id workflow-id})
         item-id2 (test-helpers/create-catalogue-item! {})
 
         enable-catalogue-item! #(with-user owner

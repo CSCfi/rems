@@ -14,8 +14,8 @@
         app-id (test-helpers/create-application! {:actor "alice"})]
 
     (test-helpers/command! {:type           :application.command/submit
-                         :application-id app-id
-                         :actor          "alice"})
+                            :application-id app-id
+                            :actor          "alice"})
 
     (testing "populate log"
       (testing "> unknown endpoint"

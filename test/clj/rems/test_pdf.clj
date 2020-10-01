@@ -20,28 +20,28 @@
   (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
   (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
   (let [lic1 (test-helpers/create-license! {:license/type :link
-                                         :license/title {:en "Google license"
-                                                         :fi "Google-lisenssi"}
-                                         :license/link {:en "http://google.com"
-                                                        :fi "http://google.fi"}})
+                                            :license/title {:en "Google license"
+                                                            :fi "Google-lisenssi"}
+                                            :license/link {:en "http://google.com"
+                                                           :fi "http://google.fi"}})
         lic2 (test-helpers/create-license! {:license/type :text
-                                         :license/title {:en "Text license"
-                                                         :fi "Tekstilisenssi"}
-                                         :license/text {:en "Some text"
-                                                        :fi "Tekstiä"}})
+                                            :license/title {:en "Text license"
+                                                            :fi "Tekstilisenssi"}
+                                            :license/text {:en "Some text"
+                                                           :fi "Tekstiä"}})
         ;; TODO attachment license
         resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"
-                                              :license-ids [lic1 lic2]})
+                                                 :license-ids [lic1 lic2]})
         form (test-helpers/create-form! {:form/title  "Form"
-                                                :form/fields test-data/all-field-types-example})
+                                         :form/fields test-data/all-field-types-example})
         catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
-                                                          :title {:en "Catalogue item"
-                                                                  :fi "Katalogi-itemi"}
-                                                          :form-id form})
+                                                             :title {:en "Catalogue item"
+                                                                     :fi "Katalogi-itemi"}
+                                                             :form-id form})
         applicant "alice"
         application-id (test-helpers/create-application! {:actor applicant
-                                                       :catalogue-item-ids [catalogue-item]
-                                                       :time (time/date-time 2000)})
+                                                          :catalogue-item-ids [catalogue-item]
+                                                          :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
       (let [attachment (:id (db/save-attachment! {:application application-id
@@ -51,43 +51,43 @@
                                                   :data (byte-array 0)}))]
         ;; two draft-saved events
         (test-helpers/fill-form! {:time (time/date-time 2000)
-                               :actor applicant
-                               :application-id application-id
-                               :field-value "pdf test"
-                               :attachment attachment
-                               :optional-fields true})
+                                  :actor applicant
+                                  :application-id application-id
+                                  :field-value "pdf test"
+                                  :attachment attachment
+                                  :optional-fields true})
         (test-helpers/fill-form! {:time (time/date-time 2000)
-                               :actor applicant
-                               :application-id application-id
-                               :field-value "pdf test"
-                               :attachment attachment
-                               :optional-fields true}))
+                                  :actor applicant
+                                  :application-id application-id
+                                  :field-value "pdf test"
+                                  :attachment attachment
+                                  :optional-fields true}))
       (test-helpers/accept-licenses! {:time (time/date-time 2000)
-                                   :actor applicant
-                                   :application-id application-id})
+                                      :actor applicant
+                                      :application-id application-id})
       (test-helpers/command! {:time (time/date-time 2001)
-                           :application-id application-id
-                           :type :application.command/submit
-                           :actor applicant}))
+                              :application-id application-id
+                              :type :application.command/submit
+                              :actor applicant}))
     (testing "add member"
       (test-helpers/command! {:time (time/date-time 2002)
-                           :application-id application-id
-                           :type :application.command/add-member
-                           :member {:userid "beth"}
-                           :actor handler}))
+                              :application-id application-id
+                              :type :application.command/add-member
+                              :member {:userid "beth"}
+                              :actor handler}))
     (testing "decide"
       (test-helpers/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/request-decision
-                           :comment "please decide"
-                           :deciders ["david"]
-                           :actor handler})
+                              :application-id application-id
+                              :type :application.command/request-decision
+                              :comment "please decide"
+                              :deciders ["david"]
+                              :actor handler})
       (test-helpers/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/decide
-                           :comment "I have decided"
-                           :decision :approved
-                           :actor "david"}))
+                              :application-id application-id
+                              :type :application.command/decide
+                              :comment "I have decided"
+                              :decision :approved
+                              :actor "david"}))
     (testing "approve"
       (let [att1 (:id (db/save-attachment! {:application application-id
                                             :user handler
@@ -100,11 +100,11 @@
                                             :type "application/pdf"
                                             :data (byte-array 0)}))]
         (test-helpers/command! {:time (time/date-time 2003)
-                             :application-id application-id
-                             :type :application.command/approve
-                             :comment "approved"
-                             :attachments [{:attachment/id att1} {:attachment/id att2}]
-                             :actor handler})))
+                                :application-id application-id
+                                :type :application.command/approve
+                                :comment "approved"
+                                :attachments [{:attachment/id att1} {:attachment/id att2}]
+                                :actor handler})))
     (testing "pdf contents"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: pdf test"]

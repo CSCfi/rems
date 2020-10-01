@@ -355,15 +355,15 @@
 (deftest test-handling
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
-                                                                         :field/optional false
-                                                                         :field/type :description}]}))
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                 [(btu/context-get :catalogue-id)]
-                                                                 "test-handling"))
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-handling"))
     (test-helpers/command! {:type :application.command/submit
-                         :application-id (btu/context-get :application-id)
-                         :actor "alice"}))
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"}))
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "developer")
     (testing "handler should see todos on logging in"
@@ -425,15 +425,15 @@
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
-                                                                         :field/optional false
-                                                                         :field/type :description}]}))
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                 [(btu/context-get :catalogue-id)]
-                                                                 "test-approve-with-end-date"))
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-approve-with-end-date"))
     (test-helpers/command! {:type :application.command/submit
-                         :application-id (btu/context-get :application-id)
-                         :actor "alice"}))
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"}))
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "developer")
     (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
@@ -717,17 +717,17 @@
 (deftest test-edit-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
     (let [workflow (test-helpers/create-workflow! {:title "test-edit-catalogue-item workflow"
-                                                :type :workflow/default
-                                                :handlers ["handler"]})
+                                                   :type :workflow/default
+                                                   :handlers ["handler"]})
           resource (test-helpers/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"})
           form (test-helpers/create-form! {:form/title "test-edit-catalogue-item form"
-                                        :form/fields []})
+                                           :form/fields []})
           catalogue-item (test-helpers/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
-                                                                    :fi "test-edit-catalogue-item FI"
-                                                                    :sv "test-edit-catalogue-item SV"}
-                                                            :resource-id resource
-                                                            :form-id form
-                                                            :workflow-id workflow})]
+                                                                       :fi "test-edit-catalogue-item FI"
+                                                                       :sv "test-edit-catalogue-item SV"}
+                                                               :resource-id resource
+                                                               :form-id form
+                                                               :workflow-id workflow})]
       (login-as "owner")
       (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" catalogue-item))
       (btu/wait-page-loaded)
@@ -992,25 +992,25 @@
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
       (btu/context-assoc! :form-id (test-helpers/create-form! {:form/title (btu/context-get :form-title)
-                                                            :form/fields [{:field/id "desc"
-                                                                           :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
-                                                                           :field/optional false
-                                                                           :field/type :description}]}))
+                                                               :form/fields [{:field/id "desc"
+                                                                              :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                              :field/optional false
+                                                                              :field/type :description}]}))
       (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:handlers ["handler"]}))
       (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
 
       (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                   [(btu/context-get :catalogue-id)]
-                                                                   (str "test-reporting " (btu/get-seed))))
+                                                                      [(btu/context-get :catalogue-id)]
+                                                                      (str "test-reporting " (btu/get-seed))))
       (test-helpers/command! {:type :application.command/save-draft
-                           :application-id (btu/context-get :application-id)
-                           :field-values [{:form (btu/context-get :form-id)
-                                           :field "desc"
-                                           :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
-                           :actor "alice"})
+                              :application-id (btu/context-get :application-id)
+                              :field-values [{:form (btu/context-get :form-id)
+                                              :field "desc"
+                                              :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
+                              :actor "alice"})
       (test-helpers/command! {:type :application.command/submit
-                           :application-id (btu/context-get :application-id)
-                           :actor "alice"})
+                              :application-id (btu/context-get :application-id)
+                              :actor "alice"})
 
       (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
 

@@ -54,7 +54,7 @@
 
         cat-id (test-helpers/create-catalogue-item! {:resource-id res-id-2})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor "user2"})
+                                                  :actor "user2"})
         get-app #(applications/get-application app-id)]
     (testing "initially no blacklist"
       (is (= [] (fetch {})))

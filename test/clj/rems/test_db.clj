@@ -42,14 +42,14 @@
         item1 (test-helpers/create-catalogue-item! {:form-id form-id :resource-id res1 :workflow-id wfid})
         item2 (test-helpers/create-catalogue-item! {:form-id form-id :resource-id res2 :workflow-id wfid})
         app-id (test-helpers/create-application! {:catalogue-item-ids [item1 item2]
-                                               :actor applicant})]
+                                                  :actor applicant})]
     (test-helpers/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor applicant})
+                            :application-id app-id
+                            :actor applicant})
     (test-helpers/command! {:type :application.command/approve
-                         :application-id app-id
-                         :actor "handler"
-                         :comment ""})
+                            :application-id app-id
+                            :actor "handler"
+                            :comment ""})
     (is (= :application.state/approved (:application/state (applications/get-application-for-user applicant app-id))))
 
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
@@ -78,19 +78,19 @@
         jack-app (test-helpers/create-application! {:actor "jack" :catalogue-item-ids [item1]})
         jill-app (test-helpers/create-application! {:actor "jill" :catalogue-item-ids [item1 item2]})]
     (test-helpers/command! {:type :application.command/submit
-                         :application-id jack-app
-                         :actor "jack"})
+                            :application-id jack-app
+                            :actor "jack"})
     (test-helpers/command! {:type :application.command/approve
-                         :application-id jack-app
-                         :actor "handler"
-                         :comment ""})
+                            :application-id jack-app
+                            :actor "handler"
+                            :comment ""})
     (test-helpers/command! {:type :application.command/submit
-                         :application-id jill-app
-                         :actor "jill"})
+                            :application-id jill-app
+                            :actor "jill"})
     (test-helpers/command! {:type :application.command/approve
-                         :application-id jill-app
-                         :actor "handler"
-                         :comment ""})
+                            :application-id jill-app
+                            :actor "handler"
+                            :comment ""})
 
     (binding [context/*roles* #{:handler}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]

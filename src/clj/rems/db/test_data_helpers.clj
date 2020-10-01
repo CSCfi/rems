@@ -37,12 +37,12 @@
                {})))
 
 (deftest test-transpose-localizations
-         (is (= {:en {:title "en", :url "www.com"}
-                 :fi {:title "fi", :url "www.fi"}
-                 :sv {:url "www.se"}}
-                (transpose-localizations {:title {:en "en" :fi "fi"}
-                                          :url {:en "www.com" :fi "www.fi" :sv "www.se"}
-                                          :empty {}}))))
+  (is (= {:en {:title "en", :url "www.com"}
+          :fi {:title "fi", :url "www.fi"}
+          :sv {:url "www.se"}}
+         (transpose-localizations {:title {:en "en" :fi "fi"}
+                                   :url {:en "www.com" :fi "www.fi" :sv "www.se"}
+                                   :empty {}}))))
 
 (defn create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
@@ -76,13 +76,13 @@
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                          (licenses/create-license! {:licensetype (name (or type :text))
-                                                     :organization (or organization {:organization/id "default"})
-                                                     :localizations
-                                                     (transpose-localizations {:title title
-                                                                               :textcontent (merge link text)
-                                                                               :attachment-id attachment-id})}
-                                                    actor))]
+                 (licenses/create-license! {:licensetype (name (or type :text))
+                                            :organization (or organization {:organization/id "default"})
+                                            :localizations
+                                            (transpose-localizations {:title title
+                                                                      :textcontent (merge link text)
+                                                                      :attachment-id attachment-id})}
+                                           actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -96,22 +96,22 @@
                                                            :type "text/plain"
                                                            :data (.getBytes "License in English.")}))]
     (with-user actor
-               (create-license! {:actor actor
-                                 :license/type :attachment
-                                 :organization (or organization {:organization/id "default"})
-                                 :license/title {:fi "Liitelisenssi" :en "Attachment license"}
-                                 :license/text {:fi "fi" :en "en"}
-                                 :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
+      (create-license! {:actor actor
+                        :license/type :attachment
+                        :organization (or organization {:organization/id "default"})
+                        :license/title {:fi "Liitelisenssi" :en "Attachment license"}
+                        :license/text {:fi "fi" :en "en"}
+                        :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
 (defn create-form! [{:keys [actor organization]
                      :form/keys [title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                          (form/create-form! actor
-                                             {:organization (or organization {:organization/id "default"})
-                                              :form/title (or title "FORM")
-                                              :form/fields (or fields [])}))]
+                 (form/create-form! actor
+                                    {:organization (or organization {:organization/id "default"})
+                                     :form/title (or title "FORM")
+                                     :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -119,10 +119,10 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                          (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                                      :organization (or organization {:organization/id "default"})
-                                                      :licenses (or license-ids [])}
-                                                     actor))]
+                 (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                                             :organization (or organization {:organization/id "default"})
+                                             :licenses (or license-ids [])}
+                                            actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -130,16 +130,16 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                          (workflow/create-workflow!
-                            {:user-id actor
-                             :organization (or organization {:organization/id "default"})
-                             :title (or title "")
-                             :type (or type :workflow/master)
-                             :forms forms
-                             :handlers
-                             (or handlers
-                                 (do (create-user! (get +fake-user-data+ "developer"))
-                                     ["developer"]))}))]
+                 (workflow/create-workflow!
+                  {:user-id actor
+                   :organization (or organization {:organization/id "default"})
+                   :title (or title "")
+                   :type (or type :workflow/master)
+                   :forms forms
+                   :handlers
+                   (or handlers
+                       (do (create-user! (get +fake-user-data+ "developer"))
+                           ["developer"]))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -151,12 +151,12 @@
                               [lang {:title (get title lang)
                                      :infourl (get infourl lang)}]))
         result (with-user actor
-                          (catalogue/create-catalogue-item!
-                            {:resid (or resource-id (create-resource! {:organization organization}))
-                             :form (or form-id (create-form! {:organization organization}))
-                             :organization (or organization {:organization/id "default"})
-                             :wfid (or workflow-id (create-workflow! {:organization organization}))
-                             :localizations (or localizations {})}))]
+                 (catalogue/create-catalogue-item!
+                  {:resid (or resource-id (create-resource! {:organization organization}))
+                   :form (or form-id (create-form! {:organization organization}))
+                   :organization (or organization {:organization/id "default"})
+                   :wfid (or workflow-id (create-workflow! {:organization organization}))
+                   :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -181,26 +181,26 @@
 (defn fill-form! [{:keys [application-id actor field-value optional-fields attachment] :as command}]
   (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
-                :type :application.command/save-draft
-                :field-values (for [form (:application/forms app)
-                                    field (:form/fields form)
-                                    :when (or optional-fields
-                                              (not (:field/optional field)))]
-                                {:form (:form/id form)
-                                 :field (:field/id field)
-                                 :value (case (:field/type field)
-                                          (:header :label) ""
-                                          :date "2002-03-04"
-                                          :email "user@example.com"
-                                          :attachment (str attachment)
-                                          (:option :multiselect) (:key (first (:field/options field)))
-                                          (or field-value "x"))})))))
+                     :type :application.command/save-draft
+                     :field-values (for [form (:application/forms app)
+                                         field (:form/fields form)
+                                         :when (or optional-fields
+                                                   (not (:field/optional field)))]
+                                     {:form (:form/id form)
+                                      :field (:field/id field)
+                                      :value (case (:field/type field)
+                                               (:header :label) ""
+                                               :date "2002-03-04"
+                                               :email "user@example.com"
+                                               :attachment (str attachment)
+                                               (:option :multiselect) (:key (first (:field/options field)))
+                                               (or field-value "x"))})))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
   (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
-                :type :application.command/accept-licenses
-                :accepted-licenses (map :license/id (:application/licenses app))))))
+                     :type :application.command/accept-licenses
+                     :accepted-licenses (map :license/id (:application/licenses app))))))
 
 (defn create-draft! [actor catalogue-item-ids description & [time]]
   (let [app-id (create-application! {:time time

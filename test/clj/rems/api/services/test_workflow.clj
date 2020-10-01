@@ -21,14 +21,14 @@
     (test-helpers/create-organization! {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}})
     (testing "default workflow with forms"
       (let [form-id (test-helpers/create-form! {:form/title "workflow form"
-                                             :form/fields [{:field/type :text
-                                                            :field/title {:fi "fi" :sv "sv" :en "en"}
-                                                            :field/optional true}]})
+                                                :form/fields [{:field/type :text
+                                                               :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                               :field/optional true}]})
             wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                               :type :workflow/default
-                                               :title "the title"
-                                               :handlers ["user1" "user2"]
-                                               :forms [{:form/id form-id}]})]
+                                                  :type :workflow/default
+                                                  :title "the title"
+                                                  :handlers ["user1" "user2"]
+                                                  :forms [{:form/id form-id}]})]
         (is (= {:id wf-id
                 :organization {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}}
                 :title "the title"
@@ -45,9 +45,9 @@
 
     (testing "decider workflow"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                               :type :workflow/decider
-                                               :title "the title"
-                                               :handlers ["user1" "user2"]})]
+                                                  :type :workflow/decider
+                                                  :title "the title"
+                                                  :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
                 :organization {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}}
                 :title "the title"
@@ -64,9 +64,9 @@
 
     (testing "master workflow"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                               :type :workflow/master
-                                               :title "the title"
-                                               :handlers ["user1" "user2"]})]
+                                                  :type :workflow/master
+                                                  :title "the title"
+                                                  :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
                 :organization {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}}
                 :title "the title"
@@ -88,9 +88,9 @@
     (test-helpers/create-organization! {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}})
     (testing "change title"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                               :type :workflow/master
-                                               :title "original title"
-                                               :handlers ["user1"]})]
+                                                  :type :workflow/master
+                                                  :title "original title"
+                                                  :handlers ["user1"]})]
         (workflow/edit-workflow! {:id wf-id
                                   :title "changed title"})
         (is (= {:id wf-id
@@ -103,9 +103,9 @@
 
     (testing "change handlers"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                               :type :workflow/master
-                                               :title "original title"
-                                               :handlers ["user1"]})]
+                                                  :type :workflow/master
+                                                  :title "original title"
+                                                  :handlers ["user1"]})]
         (workflow/edit-workflow! {:id wf-id
                                   :handlers ["user2"]})
         (is (= {:id wf-id
@@ -128,13 +128,13 @@
   (with-user "owner"
     (let [simplify #(map :userid %)
           wf1 (test-helpers/create-workflow! {:type :workflow/default
-                                           :title "workflow2"
-                                           :handlers ["user1"
-                                                      "user2"]})
+                                              :title "workflow2"
+                                              :handlers ["user1"
+                                                         "user2"]})
           wf2 (test-helpers/create-workflow! {:type :workflow/default
-                                           :title "workflow2"
-                                           :handlers ["user2"
-                                                      "user3"]})]
+                                              :title "workflow2"
+                                              :handlers ["user2"
+                                                         "user3"]})]
 
       (testing "returns distinct handlers from all workflows"
         (is (= ["user1" "user2" "user3"]

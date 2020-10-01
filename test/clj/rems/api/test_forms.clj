@@ -224,8 +224,8 @@
           (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
                                   api-key "organization-owner1")))))
       (let [cat-id (test-helpers/create-catalogue-item! {:form-id form-id
-                                                      :archived false
-                                                      :organization {:organization/id "organization1"}})]
+                                                         :archived false
+                                                         :organization {:organization/id "organization1"}})]
         (testing "Form is non-editable after in use by a catalogue item"
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
@@ -252,7 +252,7 @@
                                 api-key user-id))))
       (testing "Form is non-editable after in use by a workflow"
         (let [wfid (test-helpers/create-workflow! {:forms [{:form/id form-id}]
-                                                :title "wf with form"})]
+                                                   :title "wf with form"})]
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
                             :workflows [{:id wfid :title "wf with form"}]}]}
@@ -609,17 +609,17 @@
 (deftest test-form-missing-languages
   (let [id (with-redefs [rems.api.services.form/validation-error (constantly nil)] ;; disable validation
              (test-helpers/create-form! {:form/title "invalid form"
-                                      :form/fields [{:field/id "fld1"
-                                                     :field/type :text
-                                                     :field/optional true
-                                                     :field/title {:fi "Title in Finnish"}
-                                                     :field/placeholder {:en "Placeholder"}}
-                                                    {:field/id "fld2"
-                                                     :field/type :option
-                                                     :field/optional false
-                                                     :field/title {:fi "fi" :sv "sv" :en "en"}
-                                                     :field/options [{:key "opt"
-                                                                      :label {:sv "Swedish label"}}]}]}))]
+                                         :form/fields [{:field/id "fld1"
+                                                        :field/type :text
+                                                        :field/optional true
+                                                        :field/title {:fi "Title in Finnish"}
+                                                        :field/placeholder {:en "Placeholder"}}
+                                                       {:field/id "fld2"
+                                                        :field/type :option
+                                                        :field/optional false
+                                                        :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                        :field/options [{:key "opt"
+                                                                         :label {:sv "Swedish label"}}]}]}))]
     (is (= {:form/id id
             :organization {:organization/id "default"
                            :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"}

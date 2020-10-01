@@ -33,27 +33,27 @@
           expired-app-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
           malice-app-id (test-helpers/create-application! {:actor "malice" :catalogue-item-ids [cat-id]})]
       (test-helpers/command! {:type :application.command/submit
-                           :application-id app-id
-                           :actor "alice"})
+                              :application-id app-id
+                              :actor "alice"})
       (test-helpers/command! {:type :application.command/approve
-                           :application-id app-id
-                           :actor "developer"})
+                              :application-id app-id
+                              :actor "developer"})
       (test-helpers/command! {:type :application.command/submit
-                           :application-id expired-app-id
-                           :actor "alice"})
+                              :application-id expired-app-id
+                              :actor "alice"})
       (test-helpers/command! {:type :application.command/approve
-                           :application-id expired-app-id
-                           :actor "developer"})
+                              :application-id expired-app-id
+                              :actor "developer"})
       (test-helpers/command! {:type :application.command/close
-                           :application-id expired-app-id
-                           :actor "developer"})
+                              :application-id expired-app-id
+                              :actor "developer"})
       (test-helpers/command! {:type :application.command/submit
-                           :application-id malice-app-id
-                           :actor "malice"})
+                              :application-id malice-app-id
+                              :actor "malice"})
       (test-helpers/command! {:type :application.command/approve
-                           :application-id malice-app-id
-                           :actor "developer"
-                           :entitlement-end (time/date-time 2100 01 01)})))
+                              :application-id malice-app-id
+                              :actor "developer"
+                              :entitlement-end (time/date-time 2100 01 01)})))
 
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))

@@ -100,17 +100,17 @@
         lic-id2 (test-helpers/create-license! {})
         item1 (test-helpers/create-catalogue-item!
                {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource1"
-                                                          :license-ids [lic-id1]})
+                                                             :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})
         item2 (test-helpers/create-catalogue-item!
                {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource2"
-                                                          :license-ids [lic-id2]})
+                                                             :license-ids [lic-id2]})
                 :form-id form-id
                 :workflow-id wfid})
         item3 (test-helpers/create-catalogue-item!
                {:resource-id (test-helpers/create-resource! {:resource-ext-id "resource3"
-                                                          :license-ids [lic-id1]})
+                                                             :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})]
     (test-helpers/create-user! {:eppn applicant :mail "b@o.b" :commonName "Bob"})
@@ -125,16 +125,16 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/accept-licenses
-                                :application-id app-id
-                                :accepted-licenses [lic-id1 lic-id2]
-                                :actor applicant})
+                                   :application-id app-id
+                                   :accepted-licenses [lic-id1 lic-id2]
+                                   :actor applicant})
            (test-helpers/command! {:type :application.command/submit
-                                :application-id app-id
-                                :actor applicant})
+                                   :application-id app-id
+                                   :actor applicant})
            (test-helpers/command! {:type :application.command/add-member
-                                :application-id app-id
-                                :actor admin
-                                :member {:userid member}})
+                                   :application-id app-id
+                                   :actor admin
+                                   :member {:userid member}})
 
            (entitlements/process-outbox!)
 
@@ -146,13 +146,13 @@
            {:status 200}
            (fn [server]
              (test-helpers/command! {:type :application.command/approve
-                                  :application-id app-id
-                                  :actor admin
-                                  :comment ""})
+                                     :application-id app-id
+                                     :actor admin
+                                     :comment ""})
              (test-helpers/command! {:type :application.command/accept-licenses
-                                  :application-id app-id
-                                  :actor member
-                                  :accepted-licenses [lic-id1]}) ; only accept some licenses
+                                     :application-id app-id
+                                     :actor member
+                                     :accepted-licenses [lic-id1]}) ; only accept some licenses
              (is (= {applicant #{lic-id1 lic-id2}
                      member #{lic-id1}}
                     (:application/accepted-licenses (applications/get-application app-id))))
@@ -176,9 +176,9 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/accept-licenses
-                                :application-id app-id
-                                :actor member
-                                :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
+                                   :application-id app-id
+                                   :actor member
+                                   :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
 
            (entitlements/process-outbox!)
 
@@ -200,10 +200,10 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/remove-member
-                                :application-id app-id
-                                :actor admin
-                                :member {:userid member}
-                                :comment "Left team"})
+                                   :application-id app-id
+                                   :actor admin
+                                   :member {:userid member}
+                                   :comment "Left team"})
            (entitlements/process-outbox!)
 
            (testing "entitlements removed from db"
@@ -219,10 +219,10 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/change-resources
-                                :application-id app-id
-                                :actor admin
-                                :catalogue-item-ids [item1 item3]
-                                :comment "Removed second resource, added third resource"})
+                                   :application-id app-id
+                                   :actor admin
+                                   :catalogue-item-ids [item1 item3]
+                                   :comment "Removed second resource, added third resource"})
 
            (entitlements/process-outbox!)
 
@@ -245,9 +245,9 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/close
-                                :application-id app-id
-                                :actor admin
-                                :comment "Finished"})
+                                   :application-id app-id
+                                   :actor admin
+                                   :comment "Finished"})
 
            (entitlements/process-outbox!)
 
@@ -262,17 +262,17 @@
       (let [end (time/date-time 2100 01 01)
             app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1]})]
         (test-helpers/command! {:type :application.command/accept-licenses
-                             :application-id app-id
-                             :accepted-licenses [lic-id1 lic-id2]
-                             :actor applicant})
+                                :application-id app-id
+                                :accepted-licenses [lic-id1 lic-id2]
+                                :actor applicant})
         (test-helpers/command! {:type :application.command/submit
-                             :application-id app-id
-                             :actor applicant})
+                                :application-id app-id
+                                :actor applicant})
         (test-helpers/command! {:type :application.command/approve
-                             :application-id app-id
-                             :actor admin
-                             :entitlement-end end
-                             :comment ""})
+                                :application-id app-id
+                                :actor admin
+                                :entitlement-end end
+                                :comment ""})
 
         (run-with-server
          {:status 200}
@@ -286,16 +286,16 @@
 
     (let [app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-helpers/command! {:type :application.command/accept-licenses
-                           :application-id app-id
-                           :accepted-licenses [lic-id1 lic-id2]
-                           :actor applicant})
+                              :application-id app-id
+                              :accepted-licenses [lic-id1 lic-id2]
+                              :actor applicant})
       (test-helpers/command! {:type :application.command/submit
-                           :application-id app-id
-                           :actor applicant})
+                              :application-id app-id
+                              :actor applicant})
       (test-helpers/command! {:type :application.command/approve
-                           :application-id app-id
-                           :actor admin
-                           :comment ""})
+                              :application-id app-id
+                              :actor admin
+                              :comment ""})
 
       (entitlements/process-outbox!)
 
@@ -304,9 +304,9 @@
          {:status 200}
          (fn [server]
            (test-helpers/command! {:type :application.command/revoke
-                                :application-id app-id
-                                :actor admin
-                                :comment "Banned"})
+                                   :application-id app-id
+                                   :actor admin
+                                   :comment "Banned"})
 
            (entitlements/process-outbox!)
 

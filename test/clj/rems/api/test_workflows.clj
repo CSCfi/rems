@@ -61,9 +61,9 @@
 
         (testing "create default workflow with form"
           (let [form-id (test-helpers/create-form! {:form/title "workflow form"
-                                                 :form/fields [{:field/type :text
-                                                                :field/title {:fi "fi" :sv "sv" :en "en"}
-                                                                :field/optional true}]})
+                                                    :form/fields [{:field/type :text
+                                                                   :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                                   :field/optional true}]})
                 body (create-workflow user-id "organization1" :workflow/default [{:form/id form-id}])
                 id (:id body)]
             (is (< 0 id))
@@ -111,9 +111,9 @@
   (let [api-key "42"
         user-id "owner"
         wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
-                                          :title "workflow title"
-                                          :type :workflow/default
-                                          :handlers ["handler" "carl"]})
+                                             :title "workflow title"
+                                             :type :workflow/default
+                                             :handlers ["handler" "carl"]})
         lic-id (test-helpers/create-license! {:organization {:organization/id "organization1"}})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id :organization "organization1"})
 
@@ -174,14 +174,14 @@
   (let [api-key "42"
         user-id "owner"
         wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
-                                          :title "workflow title"
-                                          :type :workflow/default
-                                          :handlers ["handler" "carl"]})
+                                             :title "workflow title"
+                                             :type :workflow/default
+                                             :handlers ["handler" "carl"]})
 
         cat-id (test-helpers/create-catalogue-item! {:organization {:organization/id "organization1"}
-                                                  :workflow-id wfid})
+                                                     :workflow-id wfid})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
-                                               :actor "tester"})
+                                                  :actor "tester"})
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (sync-with-database-time)

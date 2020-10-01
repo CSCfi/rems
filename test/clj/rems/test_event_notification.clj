@@ -58,21 +58,21 @@
                                              (get "content")
                                              json/parse-string)}))
             form-id (test-helpers/create-form! {:form/title "notifications"
-                                             :form/fields [{:field/type :text
-                                                            :field/id "field-1"
-                                                            :field/title {:en "text field"
-                                                                          :fi "tekstikenttä"
-                                                                          :sv "textfält"}
-                                                            :field/optional false}]})
+                                                :form/fields [{:field/type :text
+                                                               :field/id "field-1"
+                                                               :field/title {:en "text field"
+                                                                             :fi "tekstikenttä"
+                                                                             :sv "textfält"}
+                                                               :field/optional false}]})
             handler "handler"
             workflow-id (test-helpers/create-workflow! {:title "wf"
-                                                     :handlers [handler]
-                                                     :type :workflow/default})
+                                                        :handlers [handler]
+                                                        :type :workflow/default})
             ext-id "resres"
             res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
             cat-id (test-helpers/create-catalogue-item! {:form-id form-id
-                                                      :resource-id res-id
-                                                      :workflow-id workflow-id})
+                                                         :resource-id res-id
+                                                         :workflow-id workflow-id})
             applicant "alice"
             app-id (:application-id (command/command! {:type :application.command/create
                                                        :actor applicant
@@ -131,12 +131,12 @@
                                       json/parse-string
                                       (select-keys [:event/id :event/time]))))
             form-id (test-helpers/create-form! {:form/title "notifications"
-                                             :form/fields [{:field/type :text
-                                                            :field/id "field-1"
-                                                            :field/title {:en "text field"
-                                                                          :fi "tekstikenttä"
-                                                                          :sv "textfält"}
-                                                            :field/optional false}]})
+                                                :form/fields [{:field/type :text
+                                                               :field/id "field-1"
+                                                               :field/title {:en "text field"
+                                                                             :fi "tekstikenttä"
+                                                                             :sv "textfält"}
+                                                               :field/optional false}]})
             cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
             applicant "alice"
             t (time/date-time 2010)

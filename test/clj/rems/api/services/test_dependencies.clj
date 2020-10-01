@@ -14,9 +14,9 @@
         resource-license (test-helpers/create-license! {})
         unused-license (test-helpers/create-license! {})
         res-1 (test-helpers/create-resource! {:resource-ext-id "res1"
-                                           :license-ids [shared-license shared-resource-license]})
+                                              :license-ids [shared-license shared-resource-license]})
         res-2 (test-helpers/create-resource! {:resource-ext-id "res2"
-                                           :license-ids [shared-license shared-resource-license resource-license]})
+                                              :license-ids [shared-license shared-resource-license resource-license]})
         shared-form (test-helpers/create-form! {})
         wf-form (test-helpers/create-form! {})
         cat-form (test-helpers/create-form! {})
@@ -24,11 +24,11 @@
         wf-1 (test-helpers/create-workflow! {:forms [{:form/id shared-form}]})
         wf-2 (test-helpers/create-workflow! {:forms [{:form/id wf-form} {:form/id shared-form}]})
         cat-1 (test-helpers/create-catalogue-item! {:resource-id res-1
-                                                 :form-id cat-form
-                                                 :workflow-id wf-1})
+                                                    :form-id cat-form
+                                                    :workflow-id wf-1})
         cat-2 (test-helpers/create-catalogue-item! {:resource-id res-1
-                                                 :form-id shared-form
-                                                 :workflow-id wf-2})]
+                                                    :form-id shared-form
+                                                    :workflow-id wf-2})]
     ;; TODO no public way to set workflow licenses for now
     (db/create-workflow-license! {:wfid wf-2 :licid shared-license})
 

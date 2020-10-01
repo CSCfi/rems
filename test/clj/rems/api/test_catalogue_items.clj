@@ -92,7 +92,7 @@
             id (:id create)]
         (is (:success create))
         (let [app-id (test-helpers/create-application! {:catalogue-item-ids [id]
-                                                     :actor "alice"})
+                                                        :actor "alice"})
               get-app #(applications/get-application app-id)]
           (is (= {:sv "http://info.se"}
                  (:catalogue-item/infourl
@@ -224,9 +224,9 @@
   (let [api-key "42"
         resource-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})
         old-form-id (test-helpers/create-form! {:form/title "old form"
-                                             :organization {:organization/id "organization1"}})
+                                                :organization {:organization/id "organization1"}})
         new-form-id (test-helpers/create-form! {:form/title "new form"
-                                             :organization {:organization/id "organization1"}})
+                                                :organization {:organization/id "organization1"}})
         old-catalogue-item-id (test-helpers/create-catalogue-item!
                                {:organization {:organization/id "organization1"}
                                 :title {:en "change-form-test catalogue item en"
@@ -266,7 +266,7 @@
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))))
     (testing "can change to form that's in another organization"
       (let [form-id (test-helpers/create-form! {:form/title "wrong organization"
-                                             :organization {:organization/id "organization2"}})
+                                                :organization {:organization/id "organization2"}})
             response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate api-key "owner")
                          (json-body {:form form-id})
