@@ -424,14 +424,14 @@
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
-    (btu/context-assoc! :form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                          :field/optional false
                                                                          :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-data/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
-    (btu/context-assoc! :application-id (test-data/create-draft! "alice"
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                  [(btu/context-get :catalogue-id)]
                                                                  "test-approve-with-end-date"))
-    (test-data/command! {:type :application.command/submit
+    (test-helpers/command! {:type :application.command/submit
                          :application-id (btu/context-get :application-id)
                          :actor "alice"}))
   (btu/with-postmortem {:dir btu/reporting-dir}
