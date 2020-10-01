@@ -782,7 +782,7 @@
         (forms/set-form-enabled! {:id (btu/context-get :form) :enabled false})
         (resources/set-resource-enabled! {:id (btu/context-get :resource) :enabled false})
         (workflows/set-workflow-enabled! {:id (btu/context-get :workflow) :enabled false}))
-      (testing "viewing"
+      (testing "editing"
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
         (btu/wait-page-loaded)
         (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
