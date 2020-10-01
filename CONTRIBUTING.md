@@ -8,7 +8,7 @@ You can try things against our [demo instance](https://rems-demo.rahtiapp.fi/).
 
 See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issue) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
 
-Don't forget [Hacktoberfest](https://github.com/CSCfi/rems/labels/Hacktoberfest), we tried to make sure these issues have been groomed, but please ask by e.g. commenting the issues!
+Don't forget [Hacktoberfest](https://hacktoberfest.digitalocean.com/), we tried to make sure [issues with the Hacktoberfest label](https://github.com/CSCfi/rems/labels/Hacktoberfest) have been groomed, but please ask by e.g. commenting the issues!
 
 ## Submitting a pull request
 
