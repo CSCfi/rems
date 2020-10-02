@@ -254,9 +254,9 @@
   "Return the \"value\" an element `el`.
 
   Value is the first of
-  - read-only checkbox has \"aria-checked\"
-  - input has \"value\",
-  - other (read-only) fields have text
+  - aria-checked attribute of a read-only checkbox,
+  - value attribute of an input or
+  - element content text for others
 
   Mostly we check `el` children in case the structure is deep."
   [el]
@@ -282,8 +282,12 @@
        first))
 
 (defn first-value-of-el
-  "Return the first non-nil value of a child of `el` optionally
-  trying the given `selectors`."
+  "Return the first non-nil value of `el`.
+
+  Optionally try the children of `el` with the given `selectors` to
+  find the actual child element with the value.
+
+  Value is defined by `value-of-el` function."
   [el & [selectors]]
   (->> (if (seq selectors)
          (mapcat #(children el %) selectors)
