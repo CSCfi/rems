@@ -166,6 +166,10 @@
 
  ;; enable /api/permissions/:user
  :enable-permissions-api false
+ ;; Keys for signing GA4GH Visas produced by permissions api.
+ ;; Format: path to file containing key in JWK (Json Web Key) format
+ :ga4gh-visa-private-key nil
+ :ga4gh-visa-public-key nil
 
  ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
  :catalogue-is-public false
