@@ -13,6 +13,7 @@ Changes since v2.13
 - Dropped support for running REMS under tomcat. Dropped support for building the `rems.war` uberwar. (#1235)
 
 ### Changes
+- The development login page now uses the actual app styles.
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
