@@ -165,6 +165,7 @@
  :enable-pdf-api false
 
  ;; enable /api/permissions/:user
+ ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
  ;; Keys for signing GA4GH Visas produced by permissions api.
  ;; Format: path to file containing key in JWK (Json Web Key) format

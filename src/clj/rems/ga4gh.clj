@@ -1,6 +1,8 @@
 (ns rems.ga4gh
   "Implementation of GA4GH Passports and Visas
-   <https://github.com/ga4gh-duri/ga4gh-duri.github.io/tree/master/researcher_ids>"
+   <https://github.com/ga4gh-duri/ga4gh-duri.github.io/tree/master/researcher_ids>
+
+   See also docs/ga4gh-visas.md"
   (:require [buddy.core.keys :as keys]
             [clj-time.coerce]
             [clj-time.core :as time]
