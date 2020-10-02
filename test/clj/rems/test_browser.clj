@@ -796,7 +796,7 @@
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
       (btu/fill-human :fields-1-info-text-en "Info text (EN)")
       (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
-      (btu/fill-human :fields-1-info-text-sv "")
+      (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
       (btu/scroll-and-click :fields-1-type-option)
       (btu/scroll-and-click {:class :add-option})
       (btu/wait-visible :fields-1-options-0-key)
@@ -866,7 +866,7 @@
                                :field/max-length 127
                                :field/optional true}
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-                              ;;  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv ""}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "option"
                                :field/id "fld2"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
@@ -950,6 +950,7 @@
                         (select-button-by-label "View"))
       (btu/wait-visible {:tag :h1 :fn/text "Resource"})
       (btu/wait-page-loaded)
+      (btu/wait-visible :blacklist)
       (is (= [{}] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
@@ -958,6 +959,7 @@
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
     (testing "check entry on resource page"
+      (btu/wait-visible :blacklist)
       (is (= [{} ;; TODO remove the header row in slurp-rows
               {"resource" "blacklist-test"
                "user" "Bruce Baddie"
@@ -971,6 +973,7 @@
       (go-to-admin "Blacklist")
       (btu/wait-visible {:tag :h1 :fn/text "Blacklist"})
       (btu/wait-page-loaded)
+      (btu/wait-visible :blacklist)
       (is (= [{}
               {"resource" "blacklist-test"
                "user" "Bruce Baddie"
@@ -985,6 +988,7 @@
                         (select-button-by-label "Remove"))
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (btu/wait-visible :blacklist)
       (is (= [{}] (slurp-rows :blacklist))))))
 
 (deftest test-report
