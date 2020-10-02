@@ -16,6 +16,7 @@ Changes since v2.13
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
+- Catalogue item editor didn't properly show forms, resources or workflows if they were disabled or archived (#2335)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)

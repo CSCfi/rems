@@ -4,6 +4,7 @@
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [etaoin.api :as et]
@@ -248,3 +249,49 @@
 
 (defn wait-for-downloads [string-or-regex]
   (wait-predicate #(seq (downloaded-files string-or-regex))))
+
+(defn- value-of-el
+  "Return the \"value\" an element `el`.
+
+  Value is the first of
+  - aria-checked attribute of a read-only checkbox,
+  - value attribute of an input or
+  - element content text for others
+
+  Mostly we check `el` children in case the structure is deep."
+  [el]
+  (->> [(try ; checkbox
+          (when-let [checkbox-el (child el {:css ".checkbox"})]
+            (= "true" (get-element-attr-el checkbox-el "aria-checked")))
+          (catch Exception _))
+
+        (try ; input with value
+          (when-let [input-el (if (get-element-attr-el el "value")
+                                el
+                                (child el {:css "input"}))]
+            (when-let [v (get-element-attr-el input-el "value")]
+              (when-not (str/blank? v) ; e.g. dropdown doesn't use value
+                (str/trim v))))
+          (catch Exception _))
+
+        ;; others
+        (when-let [v (get-element-text-el el)]
+          (str/trim v))]
+
+       (remove nil?) ; we want false but not nil
+       first))
+
+(defn first-value-of-el
+  "Return the first non-nil value of `el`.
+
+  Optionally try the children of `el` with the given `selectors` to
+  find the actual child element with the value.
+
+  Value is defined by `value-of-el` function."
+  [el & [selectors]]
+  (->> (if (seq selectors)
+         (mapcat #(children el %) selectors)
+         [el])
+       (remove nil?)
+       (mapv value-of-el)
+       first))

@@ -362,7 +362,7 @@
                         :value (get-in value [:organization/name language])}]
        [dropdown/dropdown
         {:id id
-         :items organizations
+         :items (->> organizations (filter :enabled) (remove :archived))
          :item-key :organization/id
          :item-label (comp language :organization/name)
          :item-selected? item-selected?

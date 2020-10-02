@@ -44,7 +44,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "catalogue-item"
-     :title [:span (get-localized-title catalogue-item language)]
+     :title [:span#title (get-localized-title catalogue-item language)]
      :always (into [:div
                     [inline-info-field (text :t.administration/organization) (get-in catalogue-item [:organization :organization/name language])]]
                    (concat
