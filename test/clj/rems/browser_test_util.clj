@@ -82,7 +82,9 @@
 
   `:browser-id` - You can specify e.g. `:chrome`.
   `:url`        - Specify a url of the server you want to test against or use default.
-  `:mode`       - Specify `:development` if you wish to keep just one driver running, and not headless."
+  `:mode`       - Specify `:development` if you wish to keep just one driver running, and not headless.
+
+   Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
   (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
   (swap! test-context
@@ -94,7 +96,8 @@
                                           :safebrowsing.enabled false
                                           :safebrowsing.disable_download_protection true}
                                   :download-dir (.getAbsolutePath download-dir)
-                                  :headless (not= :development mode)})
+                                  :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
+                                                     (= :development mode)))})
          :url url
          :mode mode
          :seed (random-seed))
