@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-resources
   (:require [clojure.test :refer :all]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
@@ -35,8 +35,8 @@
   (let [api-key "42"
         owner "owner"
         org-owner "organization-owner1"
-        licid-org1 (test-data/create-license! {:organization {:organization/id "organization1"}})
-        licid-org2 (test-data/create-license! {:organization {:organization/id "organization2"}})
+        licid-org1 (test-helpers/create-license! {:organization {:organization/id "organization1"}})
+        licid-org2 (test-helpers/create-license! {:organization {:organization/id "organization2"}})
         resid "resource-api-test"]
 
     (doseq [user-id [owner org-owner]]

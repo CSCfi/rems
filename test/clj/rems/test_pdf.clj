@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
             [rems.testing-util :refer [with-fixed-time utc-fixture]]
@@ -15,32 +16,32 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard
-  (test-data/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
-  (test-data/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
-  (test-data/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
-  (let [lic1 (test-data/create-license! {:license/type :link
-                                         :license/title {:en "Google license"
-                                                         :fi "Google-lisenssi"}
-                                         :license/link {:en "http://google.com"
-                                                        :fi "http://google.fi"}})
-        lic2 (test-data/create-license! {:license/type :text
-                                         :license/title {:en "Text license"
-                                                         :fi "Tekstilisenssi"}
-                                         :license/text {:en "Some text"
-                                                        :fi "Tekstiä"}})
+  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
+  (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
+  (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
+  (let [lic1 (test-helpers/create-license! {:license/type :link
+                                            :license/title {:en "Google license"
+                                                            :fi "Google-lisenssi"}
+                                            :license/link {:en "http://google.com"
+                                                           :fi "http://google.fi"}})
+        lic2 (test-helpers/create-license! {:license/type :text
+                                            :license/title {:en "Text license"
+                                                            :fi "Tekstilisenssi"}
+                                            :license/text {:en "Some text"
+                                                           :fi "Tekstiä"}})
         ;; TODO attachment license
-        resource (test-data/create-resource! {:resource-ext-id "pdf-resource-ext"
-                                              :license-ids [lic1 lic2]})
-        form (test-data/create-form! {:form/title "Form"
-                                      :form/fields test-data/all-field-types-example})
-        catalogue-item (test-data/create-catalogue-item! {:resource-id resource
-                                                          :title {:en "Catalogue item"
-                                                                  :fi "Katalogi-itemi"}
-                                                          :form-id form})
+        resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"
+                                                 :license-ids [lic1 lic2]})
+        form (test-helpers/create-form! {:form/title  "Form"
+                                         :form/fields test-data/all-field-types-example})
+        catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
+                                                             :title {:en "Catalogue item"
+                                                                     :fi "Katalogi-itemi"}
+                                                             :form-id form})
         applicant "alice"
-        application-id (test-data/create-application! {:actor applicant
-                                                       :catalogue-item-ids [catalogue-item]
-                                                       :time (time/date-time 2000)})
+        application-id (test-helpers/create-application! {:actor applicant
+                                                          :catalogue-item-ids [catalogue-item]
+                                                          :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
       (let [attachment (:id (db/save-attachment! {:application application-id
@@ -49,44 +50,44 @@
                                                   :type "application/pdf"
                                                   :data (byte-array 0)}))]
         ;; two draft-saved events
-        (test-data/fill-form! {:time (time/date-time 2000)
-                               :actor applicant
-                               :application-id application-id
-                               :field-value "pdf test"
-                               :attachment attachment
-                               :optional-fields true})
-        (test-data/fill-form! {:time (time/date-time 2000)
-                               :actor applicant
-                               :application-id application-id
-                               :field-value "pdf test"
-                               :attachment attachment
-                               :optional-fields true}))
-      (test-data/accept-licenses! {:time (time/date-time 2000)
-                                   :actor applicant
-                                   :application-id application-id})
-      (test-data/command! {:time (time/date-time 2001)
-                           :application-id application-id
-                           :type :application.command/submit
-                           :actor applicant}))
+        (test-helpers/fill-form! {:time (time/date-time 2000)
+                                  :actor applicant
+                                  :application-id application-id
+                                  :field-value "pdf test"
+                                  :attachment attachment
+                                  :optional-fields true})
+        (test-helpers/fill-form! {:time (time/date-time 2000)
+                                  :actor applicant
+                                  :application-id application-id
+                                  :field-value "pdf test"
+                                  :attachment attachment
+                                  :optional-fields true}))
+      (test-helpers/accept-licenses! {:time (time/date-time 2000)
+                                      :actor applicant
+                                      :application-id application-id})
+      (test-helpers/command! {:time (time/date-time 2001)
+                              :application-id application-id
+                              :type :application.command/submit
+                              :actor applicant}))
     (testing "add member"
-      (test-data/command! {:time (time/date-time 2002)
-                           :application-id application-id
-                           :type :application.command/add-member
-                           :member {:userid "beth"}
-                           :actor handler}))
+      (test-helpers/command! {:time (time/date-time 2002)
+                              :application-id application-id
+                              :type :application.command/add-member
+                              :member {:userid "beth"}
+                              :actor handler}))
     (testing "decide"
-      (test-data/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/request-decision
-                           :comment "please decide"
-                           :deciders ["david"]
-                           :actor handler})
-      (test-data/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/decide
-                           :comment "I have decided"
-                           :decision :approved
-                           :actor "david"}))
+      (test-helpers/command! {:time (time/date-time 2003)
+                              :application-id application-id
+                              :type :application.command/request-decision
+                              :comment "please decide"
+                              :deciders ["david"]
+                              :actor handler})
+      (test-helpers/command! {:time (time/date-time 2003)
+                              :application-id application-id
+                              :type :application.command/decide
+                              :comment "I have decided"
+                              :decision :approved
+                              :actor "david"}))
     (testing "approve"
       (let [att1 (:id (db/save-attachment! {:application application-id
                                             :user handler
@@ -98,12 +99,12 @@
                                             :filename "file2.pdf"
                                             :type "application/pdf"
                                             :data (byte-array 0)}))]
-        (test-data/command! {:time (time/date-time 2003)
-                             :application-id application-id
-                             :type :application.command/approve
-                             :comment "approved"
-                             :attachments [{:attachment/id att1} {:attachment/id att2}]
-                             :actor handler})))
+        (test-helpers/command! {:time (time/date-time 2003)
+                                :application-id application-id
+                                :type :application.command/approve
+                                :comment "approved"
+                                :attachments [{:attachment/id att1} {:attachment/id att2}]
+                                :actor handler})))
     (testing "pdf contents"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: pdf test"]

@@ -4,7 +4,7 @@
             [rems.application.commands :as commands]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture reset-db-fixture]]
             [rems.db.users :as users])
   (:import [java.sql SQLException]
@@ -55,7 +55,7 @@
         concurrent-readers 5
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
-                       (test-data/create-application! {:actor user-id})))
+                       (test-helpers/create-application! {:actor user-id})))
         ;; Currently we only test that commands are not executed concurrently
         ;; for a single application. To guarantee that, we could add an app version
         ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
@@ -76,7 +76,7 @@
       (let [write-event (fn [app-id]
                           (try
                             (conman/with-transaction [db/*db* {:isolation :serializable}]
-                              (test-data/command!
+                              (test-helpers/command!
                                {:type :application.command/save-draft
                                 :application-id app-id
                                 :actor user-id
