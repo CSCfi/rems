@@ -41,7 +41,7 @@
   (btu/screenshot (io/file btu/reporting-dir "landing-page.png"))
   (btu/scroll-and-click {:css ".login-btn"})
   (btu/screenshot (io/file btu/reporting-dir "login-page.png"))
-  (btu/scroll-and-click [{:class "users"} {:tag :a :fn/text username}])
+  (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
   (btu/wait-visible :logout)
   (btu/screenshot (io/file btu/reporting-dir "logged-in.png")))
 
