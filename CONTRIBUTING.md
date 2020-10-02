@@ -2,9 +2,13 @@
 
 REMS is an open source project and we are open to issues and pull requests from everyone. Before starting on working something big/non-trivial, please submit an issue first, we can help with the design and provide assistance!
 
-Instructions for getting started are in [development.md](development.md).
+Instructions for getting started are in [docs/development.md](docs/development.md). You will also contain some architecture documentation and more guides in [docs directory](docs/).
+
+You can try things against our [demo instance](https://rems-demo.rahtiapp.fi/).
 
 See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issue) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
+
+Don't forget [Hacktoberfest](https://hacktoberfest.digitalocean.com/), we tried to make sure [issues with the Hacktoberfest label](https://github.com/CSCfi/rems/labels/Hacktoberfest) have been groomed, but please ask by e.g. commenting the issues!
 
 ## Submitting a pull request
 
