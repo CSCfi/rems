@@ -109,21 +109,18 @@
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
-                   value-els (concat (btu/children row {:css ".form-control"})
-                                     (btu/children row {:css ".dropdown-container"}))]
-             value-el value-els
-             :when value-el]
-         (let [value (or (btu/get-element-attr-el value-el "value")
-                         (btu/get-element-text-el value-el))]
-           [k (str/trim value)]))
+                   v (btu/first-value-of-el row [{:css ".form-control"}
+                                                 {:css ".dropdown-container"}
+                                                 {:css ".list-group"}])]]
+         [k v])
        (into {})))
 
 (defn slurp-rows [& selectors]
   (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
     (->> (for [td (btu/children row {:css "td"})
                :let [k (str/trim (btu/get-element-attr-el td "class"))
-                     v (btu/get-element-text-el td)]]
-           [k (str/trim v)])
+                     v (btu/first-value-of-el td)]]
+           [k v])
          (into {}))))
 
 (defn find-rows [table-selectors child-selector]
@@ -385,7 +382,7 @@
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-more-link)
       (is (= {"Name" "Alice Applicant"
-              "Accepted terms of use" ""
+              "Accepted terms of use" true
               "Username" "alice"
               "Email (from identity provider)" "alice@example.com"
               "Organization" "Default"
@@ -537,14 +534,14 @@
               "External link (EN)" "https://www.csc.fi/home"
               "External link (FI)" "https://www.csc.fi/etusivu"
               "External link (SV)" "https://www.csc.fi/home"
-              "Active" ""}
+              "Active" true}
              (slurp-fields :license)))
       (go-to-admin "Licenses")
       (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
       (is (some #{{"organization" "NBN"
                    "title" (str (btu/context-get :license-name) " EN")
                    "type" "link"
-                   "active" ""
+                   "active" true
                    "commands" "ViewDisableArchive"}}
                 (slurp-rows :licenses)))
       (click-row-action [:licenses]
@@ -559,7 +556,7 @@
               "External link (EN)" "https://www.csc.fi/home"
               "External link (FI)" "https://www.csc.fi/etusivu"
               "External link (SV)" "https://www.csc.fi/home"
-              "Active" ""}
+              "Active" true}
              (slurp-fields :license))))))
 
 (defn create-resource []
@@ -580,7 +577,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Resource" (btu/context-get :resid)
-              "Active" ""}
+              "Active" true}
              (slurp-fields :resource)))
       (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
              (btu/get-element-text [:licenses {:class :license-title}])))
@@ -606,7 +603,7 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :form-name)
-              "Active" ""}
+              "Active" true}
              (slurp-fields :form)))
       (go-to-admin "Forms")
       (is (some #(= (btu/context-get :form-name) (get % "title"))
@@ -634,7 +631,8 @@
               "Title" (btu/context-get :workflow-name)
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
-              "Active" ""}
+              "Forms" ""
+              "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
       (is (some #(= (btu/context-get :workflow-name) (get % "title"))
@@ -670,7 +668,7 @@
               "Workflow" (btu/context-get :workflow-name)
               "Resource" (btu/context-get :resid)
               "Form" (btu/context-get :form-name)
-              "Active" ""
+              "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
                      "Start")))
@@ -777,7 +775,7 @@
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"
             "End" ""
-            "Active" ""}
+            "Active" true}
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
@@ -815,7 +813,7 @@
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"
                 "End" ""
-                "Active" ""}
+                "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
 (deftest test-form-editor
@@ -876,7 +874,7 @@
       (btu/wait-page-loaded)
       (is (= {"Organization" "NBN"
               "Title" "Form editor test"
-              "Active" ""}
+              "Active" true}
              (slurp-fields :form)))
       (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
@@ -962,7 +960,8 @@
               "Title" "test-workflow-create-edit"
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
-              "Active" ""}
+              "Forms" "Simple form"
+              "Active" true}
              (slurp-fields :workflow)))
       ;; slurp-fields doesn't get the form because it's in a slightly different format
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))
@@ -989,7 +988,8 @@
               "Title" "test-workflow-create-edit-v2"
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
-              "Active" ""}
+              "Forms" "Simple form"
+              "Active" true}
              (slurp-fields :workflow)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
@@ -1145,7 +1145,7 @@
               "Name (SV)" "Review mail SV"
               "Name (EN)" "Review mail EN"
               "Email" "review.email@example.com"
-              "Active" ""
+              "Active" true
               "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
               "Modifier" "Owner (owner@example.com)"}
              (slurp-fields :organization))))
@@ -1179,7 +1179,7 @@
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
-                "Active" ""
+                "Active" true
                 "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                 "Modifier" "Owner (owner@example.com)"}
                (slurp-fields :organization)))))
@@ -1205,7 +1205,7 @@
         (let [orgs (slurp-rows :organizations)]
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-get :organization-name) " EN")
-                       "active" ""
+                       "active" true
                        "commands" "ViewDisableArchive"}}
                     orgs))))
 
@@ -1227,7 +1227,7 @@
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
-                "Active" ""
+                "Active" true
                 "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                 "Modifier" "Owner (owner@example.com)"}
                (slurp-fields :organization))))
@@ -1260,7 +1260,7 @@
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
-                  "Active" ""
+                  "Active" true
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                  (slurp-fields :organization))))))))
