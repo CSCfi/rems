@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resources]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
 
@@ -15,12 +15,12 @@
         (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
-  (test-data/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:eppn "owner"} :owner)
   (with-user "owner"
-    (let [_org (test-data/create-organization! {})
-          lic-id (test-data/create-license! {})
-          res-id (test-data/create-resource! {:license-ids [lic-id]})
-          res-id2 (test-data/create-resource! {})
+    (let [_org (test-helpers/create-organization! {})
+          lic-id (test-helpers/create-license! {})
+          res-id (test-helpers/create-resource! {:license-ids [lic-id]})
+          res-id2 (test-helpers/create-resource! {})
 
           archive-license! #(with-user "owner"
                               (licenses/set-license-archived! {:id lic-id

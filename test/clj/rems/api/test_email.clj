@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.outbox :as outbox]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -15,15 +15,15 @@
 (def user-id "developer")
 
 (defn- create-application-in-review! []
-  (let [app-id (test-data/create-application! {:actor "alice"})]
-    (test-data/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor "alice"})
-    (test-data/command! {:type :application.command/request-review
-                         :application-id app-id
-                         :actor "developer"
-                         :reviewers ["carl"]
-                         :comment ""})))
+  (let [app-id (test-helpers/create-application! {:actor "alice"})]
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id app-id
+                            :actor "alice"})
+    (test-helpers/command! {:type :application.command/request-review
+                            :application-id app-id
+                            :actor "developer"
+                            :reviewers ["carl"]
+                            :comment ""})))
 
 (deftest test-send-handler-reminder
   (testing "sends emails"

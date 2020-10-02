@@ -67,7 +67,9 @@
    :ga4gh_visa_v1 VisaObject})
 
 (defn- visa-header []
-  {:jku (str (:public-url env) "api/jwk")})
+  {:jku (str (:public-url env) "api/jwk")
+   :typ "JWT"
+   :kid (:kid +private-key+)})
 
 (defn- sign-visa [visa]
   ;; TODO look up algorithm from key?
