@@ -76,6 +76,13 @@ For fixing or especially the development of the browser tests, you can run a win
 2. Use the code `(init-driver! :chrome "http://localhost:3000/" :development)` to open up the controller browser instance
 3. Evaluate any test code in your editor to see the actions happen in the browser.
 
+Alternatively, you can set the environment variable `HEADLESS` to `0` to see the tests while they are running:
+
+```
+HEADLESS=0 lein browsertests                                     # to see all browser test
+HEADLESS=0 lein kaocha --focus rems.test-browser/test-blacklist  # to see a specific browser test
+```
+
 ### Clojurescript tests
 
 First make sure you have the npm depenencies with
