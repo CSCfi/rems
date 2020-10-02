@@ -30,6 +30,13 @@
                  :theme-static-resources (file-sibling file "public")})
     config))
 
+(defn load-keys [config]
+  (merge config
+         (when-let [key-file (get-file config :ga4gh-visa-private-key)]
+           {:ga4gh-visa-private-key (json/parse-string (slurp key-file))})
+         (when-let [key-file (get-file config :ga4gh-visa-public-key)]
+           {:ga4gh-visa-public-key (json/parse-string (slurp key-file))})))
+
 (defn- parse-config [config]
   (-> config
       (update :email-retry-period #(Period/parse %))
@@ -75,6 +82,7 @@
                                       ;; If neither system property is defined, the :file parameter is silently ignored.
                                       :file (System/getProperty "rems.config"))
                          (load-external-theme)
+                         (load-keys)
                          (parse-config)
                          (validate-config)))
 

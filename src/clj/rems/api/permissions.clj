@@ -4,7 +4,6 @@
             [rems.api.util :as api-util] ; required for route :roles
             [rems.db.entitlements :as entitlements]
             [rems.config :as config]
-            [rems.ga4gh]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -20,7 +19,9 @@
        :return s/Any
        (if (not (:enable-permissions-api config/env))
          (not-implemented "permissions api not implemented")
-         (ok {:keys [rems.ga4gh/+public-key+]}))))
+         (let [key (:ga4gh-visa-public-key config/env)]
+           (assert key ":ga4gh-visa-public-key not defined in config!")
+           (ok {:keys [key]})))))
    (context "/permissions" []
      :tags ["permissions"]
      (GET "/:user" []
