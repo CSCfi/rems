@@ -134,9 +134,6 @@
   (into {} (for [language languages]
              [language (trim-when-string (get lstr language ""))])))
 
-(defn- string-is-not-empty [s]
-  (not (str/blank? s)))
-
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
           :field/title (build-localized-string (:field/title field) languages)
