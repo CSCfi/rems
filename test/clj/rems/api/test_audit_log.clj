@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -11,11 +11,11 @@
 
 (deftest test-audit-log
   (let [time-a (atom nil)
-        app-id (test-data/create-application! {:actor "alice"})]
+        app-id (test-helpers/create-application! {:actor "alice"})]
 
-    (test-data/command! {:type           :application.command/submit
-                         :application-id app-id
-                         :actor          "alice"})
+    (test-helpers/command! {:type           :application.command/submit
+                            :application-id app-id
+                            :actor          "alice"})
 
     (testing "populate log"
       (testing "> unknown endpoint"

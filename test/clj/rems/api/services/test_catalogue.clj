@@ -6,7 +6,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
@@ -20,15 +20,15 @@
 
 (deftest catalogue-item-enabled-archived-test
   (let [owner "owner"
-        _org (test-data/create-organization! {})
-        form-id (test-data/create-form! {})
-        lic-id (test-data/create-license! {})
-        res-id (test-data/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
-        workflow-id (test-data/create-workflow! {})
-        item-id (test-data/create-catalogue-item! {:resource-id res-id
-                                                   :form-id form-id
-                                                   :workflow-id workflow-id})
-        item-id2 (test-data/create-catalogue-item! {})
+        _org (test-helpers/create-organization! {})
+        form-id (test-helpers/create-form! {})
+        lic-id (test-helpers/create-license! {})
+        res-id (test-helpers/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
+        workflow-id (test-helpers/create-workflow! {})
+        item-id (test-helpers/create-catalogue-item! {:resource-id res-id
+                                                      :form-id form-id
+                                                      :workflow-id workflow-id})
+        item-id2 (test-helpers/create-catalogue-item! {})
 
         enable-catalogue-item! #(with-user owner
                                   (catalogue/set-catalogue-item-enabled! {:id item-id
@@ -147,8 +147,8 @@
       (is (:success (archive-catalogue-item! true))))))
 
 (deftest test-edit-catalogue-item
-  (let [_org (test-data/create-organization! {})
-        item-id (test-data/create-catalogue-item!
+  (let [_org (test-helpers/create-organization! {})
+        item-id (test-helpers/create-catalogue-item!
                  {:title {:en "Old title"
                           :fi "Vanha nimi"}})
         old-item (first (catalogue/get-localized-catalogue-items))
@@ -166,8 +166,8 @@
 
 (deftest test-get-localized-catalogue-items
   (let [owner "owner"
-        _org (test-data/create-organization! {})
-        item-id (test-data/create-catalogue-item! {})]
+        _org (test-helpers/create-organization! {})
+        item-id (test-helpers/create-catalogue-item! {})]
 
     (testing "find all"
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))

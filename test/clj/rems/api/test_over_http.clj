@@ -4,18 +4,20 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.json :as json]
             [rems.event-notification :as event-notification]
-            [stub-http.core :as stub]))
+            [stub-http.core :as stub])
+  (:import [com.auth0.jwk JwkProviderBuilder]
+           [java.net URL]))
 
 (use-fixtures :each standalone-fixture)
 
 (deftest test-api-sql-timeouts
   (let [api-key "42"
         user-id "alice"
-        application-id (test-data/create-application! {:actor user-id})
-        application-id-2 (test-data/create-application! {:actor user-id})
+        application-id (test-helpers/create-application! {:actor user-id})
+        application-id-2 (test-helpers/create-application! {:actor user-id})
         save-draft! #(-> (http/post (str (:public-url rems.config/env) "/api/applications/save-draft")
                                     {:throw-exceptions false
                                      :as :json
@@ -72,8 +74,8 @@
                                                                        :event-types [:application.event/submitted]}])]
       (let [api-key "42"
             applicant "alice"
-            cat-id (test-data/create-catalogue-item! {})
-            app-id (test-data/create-draft! applicant [cat-id] "value")
+            cat-id (test-helpers/create-catalogue-item! {})
+            app-id (test-helpers/create-draft! applicant [cat-id] "value")
             get-ext-id #(-> (http/get (str (:public-url rems.config/env) "/api/applications/" app-id)
                                       {:as :json
                                        :headers {"x-rems-api-key" api-key
@@ -92,3 +94,11 @@
         (event-notification/process-outbox!)
         (is (= 1 (count (stub/recorded-responses server))))
         (is (= "new-id" (get-ext-id)))))))
+
+(deftest test-jwks
+  (is (some? (-> (str (:public-url rems.config/env) "api/jwk")
+                 (URL.)
+                 (JwkProviderBuilder.)
+                 (.build)
+                 (.get "2011-04-29")
+                 (.getPublicKey)))))

@@ -15,6 +15,8 @@ Changes since v2.13
 ### Changes
 
 ### Fixes
+- New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
+- Catalogue item editor didn't properly show forms, resources or workflows if they were disabled or archived (#2335)
 - Add vertical margins around search field for better readability (#2330)
 
 ### Additions

@@ -8,6 +8,7 @@
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.common.util :refer [+email-regex+ conj-vec]]
             [rems.collapsible :as collapsible]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -108,7 +109,8 @@
      (post! "/api/organizations/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(navigate! (str "/administration/organizations/" (:organization/id %))))
+                       :top description #(do (config/fetch-organizations!)
+                                             (navigate! (str "/administration/organizations/" (:organization/id %)))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

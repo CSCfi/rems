@@ -24,11 +24,12 @@
                ::form nil
                ::catalogue-item-id catalogue-item-id
                ::editing? (some? catalogue-item-id))
-    :dispatch-n [[::workflows]
-                 [::resources]
-                 [::forms]
+    :dispatch-n [[::workflows {:disabled true :archived true}]
+                 [::resources {:disabled true :archived true}]
+                 [::forms {:disabled true :archived true}]
                  (when catalogue-item-id [::catalogue-item])]}))
 
+(rf/reg-sub ::catalogue-item-id (fn [db _] (::catalogue-item-id db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
@@ -176,7 +177,7 @@
                                  :value (:title workflow)}])
        [dropdown/dropdown
         {:id workflow-dropdown-id
-         :items workflows
+         :items (->> workflows (filter :enabled) (remove :archived))
          :item-key :id
          :item-label #(str (:title %)
                            " (org: "
@@ -199,7 +200,7 @@
                                  :value (:resid resource)}])
        [dropdown/dropdown
         {:id resource-dropdown-id
-         :items resources
+         :items (->> resources (filter :enabled) (remove :archived))
          :item-key :id
          :item-label #(str (:resid %)
                            " (org: "
@@ -222,7 +223,7 @@
                                  :value (:form/title form)}])
        [dropdown/dropdown
         {:id form-dropdown-id
-         :items forms
+         :items (->> forms (filter :enabled) (remove :archived))
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
@@ -231,9 +232,12 @@
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
-(defn- cancel-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/catalogue-items"
+(defn- cancel-button [catalogue-item-id]
+  [atoms/link {:id :cancel
+               :class "btn btn-secondary"}
+   (if catalogue-item-id
+     (str "/administration/catalogue-items/" catalogue-item-id)
+     "/administration/catalogue-items")
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form languages editing?]
@@ -252,6 +256,7 @@
 (defn create-catalogue-item-page []
   (let [languages @(rf/subscribe [:languages])
         editing? @(rf/subscribe [::editing?])
+        catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
         loading? (or @(rf/subscribe [::workflows ::fetching?])
                      @(rf/subscribe [::resources ::fetching?])
                      @(rf/subscribe [::forms ::fetching?])
@@ -278,5 +283,5 @@
                    [catalogue-item-form-field]
 
                    [:div.col.commands
-                    [cancel-button]
+                    [cancel-button catalogue-item-id]
                     [save-catalogue-item-button form languages editing?]]])]}]]))

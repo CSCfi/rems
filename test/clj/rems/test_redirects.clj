@@ -4,7 +4,7 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.testing :refer :all]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -21,21 +21,21 @@
 
 (deftest test-redirect-to-new-application
   (testing "redirects to new application page for catalogue item matching the resource ID"
-    (let [resid (test-data/create-resource! {:resource-ext-id "urn:one-matching-resource"})
-          catid (test-data/create-catalogue-item! {:resource-id resid})
+    (let [resid (test-helpers/create-resource! {:resource-ext-id "urn:one-matching-resource"})
+          catid (test-helpers/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
                        handler)]
       (is (= 302 (:status response)))
       (is (= (str "https://public.url/application?items=" catid) (get-in response [:headers "Location"])))))
 
   (testing "specifying multiple resources"
-    (let [wf (test-data/create-workflow! {})
-          resid-1 (test-data/create-resource! {:resource-ext-id "urn:multiple1"})
-          catid-1 (test-data/create-catalogue-item! {:resource-id resid-1 :workflow-id wf})
-          resid-2 (test-data/create-resource! {:resource-ext-id "urn:multiple2"})
-          catid-2 (test-data/create-catalogue-item! {:resource-id resid-2 :workflow-id wf})
-          resid-3 (test-data/create-resource! {:resource-ext-id "urn:multiple3"})
-          catid-3 (test-data/create-catalogue-item! {:resource-id resid-3 :workflow-id nil})] ;; create fresh workflow
+    (let [wf (test-helpers/create-workflow! {})
+          resid-1 (test-helpers/create-resource! {:resource-ext-id "urn:multiple1"})
+          catid-1 (test-helpers/create-catalogue-item! {:resource-id resid-1 :workflow-id wf})
+          resid-2 (test-helpers/create-resource! {:resource-ext-id "urn:multiple2"})
+          catid-2 (test-helpers/create-catalogue-item! {:resource-id resid-2 :workflow-id wf})
+          resid-3 (test-helpers/create-resource! {:resource-ext-id "urn:multiple3"})
+          catid-3 (test-helpers/create-catalogue-item! {:resource-id resid-3 :workflow-id nil})] ;; create fresh workflow
       (testing "works when workflows match"
         (let [response (-> (request :get "/apply-for?resource=urn:multiple1&resource=urn:multiple2")
                            handler)]
@@ -60,9 +60,9 @@
         (is (= "Resource not found" (read-body response))))))
 
   (testing "fails if more than one catalogue item is found"
-    (let [resid (test-data/create-resource! {:resource-ext-id "urn:two-matching-resources"})
-          _ (test-data/create-catalogue-item! {:resource-id resid})
-          _ (test-data/create-catalogue-item! {:resource-id resid})
+    (let [resid (test-helpers/create-resource! {:resource-ext-id "urn:two-matching-resources"})
+          _ (test-helpers/create-catalogue-item! {:resource-id resid})
+          _ (test-helpers/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
                        handler)]
       (is (= 400 (:status response)))
@@ -74,10 +74,10 @@
           (is (= "Catalogue item is not unique" (read-body response)))))))
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
-    (let [resid (test-data/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})
-          old-catid (test-data/create-catalogue-item! {:resource-id resid})
+    (let [resid (test-helpers/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})
+          old-catid (test-helpers/create-catalogue-item! {:resource-id resid})
           _ (disable-catalogue-item old-catid)
-          new-catid (test-data/create-catalogue-item! {:resource-id resid})
+          new-catid (test-helpers/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:enabled-and-disabled-items")
                        handler)]
       (is (= 302 (:status response)))

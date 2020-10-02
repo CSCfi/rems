@@ -1,7 +1,7 @@
 (ns ^:integration rems.db.test-csv
   (:require [clojure.test :refer :all]
             [rems.db.applications :as applications]
-            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.csv :as csv]
             [rems.text :as text])
@@ -78,8 +78,8 @@
 ;; TODO: This could be non-integration non-db test if the application was
 ;;       created from events.
 (deftest test-applications-to-csv
-  (test-data/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
-  (let [form-id (test-data/create-form!
+  (test-helpers/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
+  (let [form-id (test-helpers/create-form!
                  {:form/fields [{:field/title {:en "Application title"
                                                :fi "Hakemuksen otsikko"
                                                :sv "sv"}
@@ -90,31 +90,31 @@
                                                :sv "sv"}
                                  :field/optional true
                                  :field/type :description}]})
-        other-form-id (test-data/create-form!
+        other-form-id (test-helpers/create-form!
                        {:form/fields [{:field/title {:en "SHOULD NOT BE VISIBLE"
                                                      :fi "SHOULD NOT BE VISIBLE"
                                                      :sv "sv"}
                                        :field/optional true
                                        :field/type :text}]})
-        wf-id (test-data/create-workflow! {})
-        cat-id (test-data/create-catalogue-item! {:title {:en "Test resource"
-                                                          :fi "Testiresurssi"
-                                                          :sv "sv"}
-                                                  :form-id form-id
-                                                  :workflow-id wf-id})
-        other-cat-id (test-data/create-catalogue-item! {:title {:en "Other resource"
-                                                                :fi "Toinen resurssi"
-                                                                :sv "sv"}
-                                                        :form-id other-form-id
-                                                        :workflow-id wf-id})
-        app-id (test-data/create-application! {:catalogue-item-ids [cat-id other-cat-id]
-                                               :actor applicant})
+        wf-id (test-helpers/create-workflow! {})
+        cat-id (test-helpers/create-catalogue-item! {:title {:en "Test resource"
+                                                             :fi "Testiresurssi"
+                                                             :sv "sv"}
+                                                     :form-id form-id
+                                                     :workflow-id wf-id})
+        other-cat-id (test-helpers/create-catalogue-item! {:title {:en "Other resource"
+                                                                   :fi "Toinen resurssi"
+                                                                   :sv "sv"}
+                                                           :form-id other-form-id
+                                                           :workflow-id wf-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id other-cat-id]
+                                                  :actor applicant})
         external-id (:application/external-id (applications/get-application app-id))
         get-application #(applications/get-application app-id)]
 
-    (test-data/fill-form! {:application-id app-id
-                           :actor applicant
-                           :field-value "test\nvalue"})
+    (test-helpers/fill-form! {:application-id app-id
+                              :actor applicant
+                              :field-value "test\nvalue"})
 
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"
@@ -125,13 +125,13 @@
                     app-id ",\"" external-id "\",\"Alice Applicant\",,\"Luonnos\",\"Testiresurssi, Toinen resurssi\",\"test value\",\"\"\r\n")
                (csv/applications-to-csv [(get-application)] form-id :fi)))))
 
-    (test-data/accept-licenses! {:application-id app-id
-                                 :actor applicant})
+    (test-helpers/accept-licenses! {:application-id app-id
+                                    :actor applicant})
 
-    (test-data/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor applicant
-                         :time test-time})
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id app-id
+                            :actor applicant
+                            :time test-time})
 
     (testing "submitted application"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\r\n"

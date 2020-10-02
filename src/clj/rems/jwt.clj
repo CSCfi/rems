@@ -27,8 +27,8 @@
       (String. StandardCharsets/UTF_8)))
 
 ;;TODO: use key files, see https://funcool.github.io/buddy-sign/latest/#digital-signature-algorithms
-(defn sign [claims secret]
-  (buddy-jwt/sign claims secret))
+(defn sign [claims secret & [opts]]
+  (buddy-jwt/sign claims secret opts))
 
 (defn validate [^String jwt issuer audience now]
   (let [public-key (fetch-public-key jwt)
