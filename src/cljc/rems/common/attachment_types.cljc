@@ -19,11 +19,10 @@
 (defn allowed-extension? [filename]
   (some? (some #(str/ends-with? (str/lower-case filename) %) allowed-extensions)))
 
-(def allowed-extensions-string
-  (str/join ", " allowed-extensions))
-
-
 (deftest test-allowed-extension?
   (is (allowed-extension? "a-simple-filename.docx"))
   (is (allowed-extension? "must_ignore_capitals.PdF"))
   (is (not (allowed-extension? "something.obviously.wrong"))))
+
+(def allowed-extensions-string
+  (str/join ", " allowed-extensions))
