@@ -347,7 +347,7 @@
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
-         :optional "(ei pakollinen)"
+         :optional "(valinnainen)"
          :please-wait "Odota hetkinen"
          :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
