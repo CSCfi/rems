@@ -16,7 +16,7 @@
    ".svg"])
 
 (defn allowed-extension? [filename]
-  (some? (some #(.endsWith filename %) allowed-extensions)))
+  (some? (some #(str/ends-with? (str/lower-case filename) %) allowed-extensions)))
 
 (def allowed-extensions-string
   (str/join ", " allowed-extensions))
