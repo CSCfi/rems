@@ -24,7 +24,7 @@ window.rems = {
   (str "/css/" (name language) "/screen.css"))
 
 (defn- page-template
-  [content]
+  [content & [app-content]]
   (html5 [:html {:lang "en"}
           [:head
            [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
@@ -37,7 +37,7 @@ window.rems = {
            (include-css "/assets/font-awesome/css/all.css")
            (include-css (css-filename (env :default-language)))]
           [:body
-           [:div#app]
+           [:div#app app-content]
            (include-js "/assets/font-awesome/js/fontawesome.js")
            (include-js "/assets/better-dom/dist/better-dom.js")
            (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
@@ -67,7 +67,7 @@ window.rems = {
     (response/content-type
      {:status status
       :headers headers
-      :body (page-template content)}
+      :body (page-template content (:app-content params))}
      content-type)))
 
 (defn home-page []
