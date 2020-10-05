@@ -163,7 +163,7 @@
                                 [doo "0.1.11"]
                                 [lambdaisland/kaocha "1.0.669"]
                                 [lambdaisland/kaocha-junit-xml "0.0.76"]
-                                [etaoin "0.3.6"] ;; TODO 0.3.10 breaks browser tests for some reason
+                                [etaoin "0.3.10"]
                                 [figwheel-sidecar "0.5.20" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "1.0.0"] ;; coupled to the reagent version
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
