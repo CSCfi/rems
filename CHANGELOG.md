@@ -22,6 +22,7 @@ Changes since v2.13
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 - Experimental permissions API that produces GA4GH Visas is now documented in [docs/ga4gh-visas.md](docs/ga4gh-visas.md)
+- OIDC scopes are configurable via `:oidc-scopes`. See [docs/configuration.md](docs/configuration.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 
