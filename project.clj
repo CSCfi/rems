@@ -4,7 +4,7 @@
   :url "https://github.com/CSCfi/rems"
 
   :dependencies [[buddy/buddy-auth "2.1.0"]
-                 [buddy/buddy-sign "3.1.0"]
+                 [buddy/buddy-sign "3.2.0"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
                  [clj-http "3.10.2"]
