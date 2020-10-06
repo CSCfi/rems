@@ -14,6 +14,9 @@
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
+(defn- item-by-id [items id-key id]
+  (medley.core/find-first #(= (id-key %) id) items))
+
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
@@ -23,7 +26,7 @@
                ::editing? (some? workflow-id)
                ::form {:type :workflow/default})
     :dispatch-n [[::actors]
-                 [::forms]
+                 [::forms {:disabled true :archived true}]
                  (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
@@ -200,16 +203,23 @@
         id "workflow-forms"]
     [:div.form-group
      [:label {:for id} (text :t.administration/forms)]
-     [dropdown/dropdown
-      {:id id
-       :items all-forms
-       :item-key :form/id
-       :item-label :form/title ;; TODO render org like in create-catalogue-item
-       :item-selected? #(contains? selected-form-ids (:form/id %))
-       ;; TODO support ordering multiple forms
-       :multi? true
-       :disabled? @(rf/subscribe [::editing?])
-       :on-change #(rf/dispatch [::set-forms %])}]]))
+     (if @(rf/subscribe [::editing?])
+       [fields/readonly-field-raw
+        {:id id
+         :values (for [form (map (partial item-by-id all-forms :form/id) selected-form-ids)]
+                   [atoms/link nil
+                    (str "/administration/forms/" (:form/id form))
+                    (:form/title form)])}]
+       [dropdown/dropdown
+        {:id id
+         :items (->> all-forms (filter :enabled) (remove :archived))
+         :item-key :form/id
+         :item-label :form/title
+         :item-selected? #(contains? selected-form-ids (:form/id %))
+         ;; TODO support ordering multiple forms
+         :multi? true
+         :disabled? @(rf/subscribe [::editing?])
+         :on-change #(rf/dispatch [::set-forms %])}])]))
 
 (defn default-workflow-form []
   [:div

@@ -962,21 +962,18 @@
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
               "Active" true}
-             (slurp-fields :workflow)))
-      ;; slurp-fields doesn't get the form because it's in a slightly different format
-      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
+             (slurp-fields :workflow))))
     (testing "edit workflow"
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
-      ;; cant use btu/disabled? for the organization field so we check it's a div instead of an input
-      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown})))
+      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown}))) ; readonly field
       (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
-      (is (btu/disabled? :workflow-forms))
+      (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
       (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
       (btu/scroll-and-click :save))
     (testing "view workflow again"

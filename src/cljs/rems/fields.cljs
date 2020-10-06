@@ -67,8 +67,26 @@
      (text :t.form/diff-hide)
      (text :t.form/diff-show))])
 
-(defn readonly-field [{:keys [id value]}]
-  [:div.form-control {:id id} (linkify (str/trim (str value)))])
+(defn readonly-field-raw
+  "Insert a raw `value` or many raw `values` into the readonly field value slot.
+
+  The value(s) will be inserted as is so it can be any component."
+  [{:keys [id value values]}]
+  [:div {:id id
+         :class (when value "form-control")}
+   (if value
+     value
+     (into [:ul.list-group]
+           (for [v values]
+             [:li.list-group-item v])))])
+
+(defn readonly-field
+  "Insert a string `value` into the readonly field value slot.
+
+  The value will be trimmed and linkified."
+  [{:keys [id value]}]
+  (readonly-field-raw {:id id
+                       :value (linkify (str/trim (str value)))}))
 
 (defn field-wrapper
   "Common parts of a form field.
