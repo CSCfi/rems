@@ -1,5 +1,6 @@
 (ns rems.common.attachment-types
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is]]))
 
 (def allowed-extensions
   [".pdf"
@@ -16,7 +17,12 @@
    ".svg"])
 
 (defn allowed-extension? [filename]
-  (some? (some #(.endsWith filename %) allowed-extensions)))
+  (some? (some #(str/ends-with? (str/lower-case filename) %) allowed-extensions)))
+
+(deftest test-allowed-extension?
+  (is (allowed-extension? "a-simple-filename.docx"))
+  (is (allowed-extension? "must_ignore_capitals.PdF"))
+  (is (not (allowed-extension? "something.obviously.wrong"))))
 
 (def allowed-extensions-string
   (str/join ", " allowed-extensions))

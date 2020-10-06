@@ -89,15 +89,16 @@
   (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
   (swap! test-context
          assoc-some
-         :driver (et/boot-driver browser-id
-                                 {:args ["--lang=en-US"]
-                                  :prefs {:intl.accept_languages "en-US"
-                                          :download.directory_upgrade true
-                                          :safebrowsing.enabled false
-                                          :safebrowsing.disable_download_protection true}
-                                  :download-dir (.getAbsolutePath download-dir)
-                                  :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
-                                                     (= :development mode)))})
+         :driver (et/with-wait-timeout 60
+                   (et/boot-driver browser-id
+                                   {:args ["--lang=en-US"]
+                                    :prefs {:intl.accept_languages "en-US"
+                                            :download.directory_upgrade true
+                                            :safebrowsing.enabled false
+                                            :safebrowsing.disable_download_protection true}
+                                    :download-dir (.getAbsolutePath download-dir)
+                                    :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
+                                                       (= :development mode)))}))
          :url url
          :mode mode
          :seed (random-seed))
