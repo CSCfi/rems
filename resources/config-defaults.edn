@@ -42,6 +42,8 @@
  :oidc-domain nil
  :oidc-client-id nil
  :oidc-client-secret nil
+ ;; Which scopes to pass to the authorization endpoint
+ :oidc-scopes "openid profile email"
  ;; Which id-token attribute to use as the rems userid
  :oidc-userid-attribute "sub"
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in

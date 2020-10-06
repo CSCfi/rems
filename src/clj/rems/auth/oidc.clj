@@ -14,7 +14,7 @@
        "?response_type=code"
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
-       "&scope=openid profile email"
+       "&scope=" (getx env :oidc-scopes)
        (getx env :oidc-additional-authorization-parameters)
        #_"&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
 
