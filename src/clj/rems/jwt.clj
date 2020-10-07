@@ -35,15 +35,16 @@
         clock (reify Clock
                 (getToday [_]
                   (Date/from now)))
-        verifier (-> (JWT/require algorithm)
-                     (.withIssuer (into-array String [issuer]))
-                     (.withAudience (into-array String [audience]))
-                     (->> ^JWTVerifier$BaseVerification (cast JWTVerifier$BaseVerification))
-                     (.build clock))]
-    (-> (.verify verifier jwt)
-        (.getPayload)
-        (decode-base64url)
-        (json/read-str :key-fn keyword))))
+        verifier (JWT/require algorithm)]
+    (when issuer
+      (.withIssuer verifier (into-array String [issuer])))
+    (when audience
+      (.withAudience verifier (into-array String [audience])))
+    (let [verifier (. (cast JWTVerifier$BaseVerification verifier) build clock)]
+      (-> (.verify verifier jwt)
+          (.getPayload)
+          (decode-base64url)
+          (json/read-str :key-fn keyword)))))
 
 (defn expired?
   ([jwt]
