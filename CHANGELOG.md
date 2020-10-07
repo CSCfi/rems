@@ -14,6 +14,7 @@ Changes since v2.13
 
 ### Changes
 - The development login page now uses the actual app styles.
+- Changed the translations of the request recipients (now accounts for the singular or plural depending on the request type).
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
