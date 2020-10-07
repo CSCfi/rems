@@ -36,7 +36,7 @@
    :sub s/Str
    :exp s/Int
    :iat s/Int
-   :scope (s/eq "openid") ;; could also list multiple space-separated scopes, as long as one is "openid"
+   (s/optional-key :scope) s/Str ;; Embedded Document Tokens "MUST NOT contain 'openid'"
    (s/optional-key :jti) s/Str
    :ga4gh_visa_v1 VisaObject})
 
@@ -61,7 +61,6 @@
    :sub userid
    :iat (clj-time.coerce/to-long (time/now))
    :exp (clj-time.coerce/to-long (or end (time/plus (time/now) +default-length+)))
-   :scope "openid"
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
                    :source (:public-url env)
@@ -76,7 +75,6 @@
                 :sub "user@example.com"
                 :iat (clj-time.coerce/to-long "2010")
                 :exp (clj-time.coerce/to-long "2011")
-                :scope "openid"
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
@@ -87,7 +85,6 @@
                 :sub "user@example.com"
                 :iat (clj-time.coerce/to-long "2010")
                 :exp (clj-time.coerce/to-long "2010-06-02")
-                :scope "openid"
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
