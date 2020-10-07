@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
+            [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
             [rems.util :refer [getx]]
@@ -57,13 +58,15 @@
                     (-> (http/get url
                                   {:headers {"Authorization" (str "Bearer " access-token)}})
                         :body
-                        json/parse-string))]
+                        json/parse-string))
+        bonafide-attributes (when (ga4gh/bonafide-status? user-info)
+                              {:bonafide true})]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data user-info))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] (merge identity-base extra-attributes)))))
+        (assoc-in [:session :identity] (merge identity-base extra-attributes bonafide-attributes)))))
 
 (defn- oidc-revoke [token]
   (when token

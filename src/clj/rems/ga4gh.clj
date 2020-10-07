@@ -7,12 +7,14 @@
             [clj-time.coerce]
             [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.config :refer [env]]
-            [rems.json :as json]
+            [clojure.tools.logging :as log]
+            [rems.config :refer [env oidc-configuration]]
             [rems.jwt :as jwt]
             [rems.testing-util :refer [with-fixed-time]]
             [schema.core :as s])
-  (:import org.joda.time.DateTime))
+  (:import java.time.Instant))
+
+;; Schemas
 
 (s/defschema VisaType
   ;; Official types from:
@@ -37,6 +39,8 @@
    :scope (s/eq "openid") ;; could also list multiple space-separated scopes, as long as one is "openid"
    (s/optional-key :jti) s/Str
    :ga4gh_visa_v1 VisaObject})
+
+;; Creating visas
 
 (defn- visa-header []
   {:jku (str (:public-url env) "api/jwk")
@@ -96,3 +100,23 @@
 
 (defn entitlements->passport [entitlements]
   {:ga4gh_passport_v1 (mapv entitlement->visa entitlements)})
+
+;; Reading visas
+
+(defn bonafide-claim? [visa-claim]
+  ;; Let's keep this validation non-fatal for now. The real bona fide
+  ;; claims seem to lack e.g. the `scope` parameter.
+  (log/info "Checking visa" (pr-str visa-claim))
+  (when-let [errors (s/check VisaClaim visa-claim)]
+    (log/warn "Visa didn't match our schema:" (pr-str errors)))
+  (when-let [visa (:ga4gh_visa_v1 visa-claim)]
+    (and (= (:type visa) "ResearcherStatus")
+         (#{"so" "system"} (:by visa))
+         ;; should we also check this?
+         #_(= (:value visa) "https://doi.org/10.1038/s41431-018-0219-y"))))
+
+(defn bonafide-status? [id-token]
+  (when-let [visas (:ga4gh_passport_v1 id-token)]
+    (some identity
+          (doall (for [visa visas]
+                   (bonafide-claim? (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
