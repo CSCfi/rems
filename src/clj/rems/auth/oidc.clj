@@ -14,7 +14,7 @@
        "?response_type=code"
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
-       "&scope=openid profile email"
+       "&scope=" (getx env :oidc-scopes)
        (getx env :oidc-additional-authorization-parameters)
        #_"&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
 
@@ -51,9 +51,15 @@
                        ;; providers differ in what they give us
                        :commonName (some id-data [:name :unique_name :family_name])
                        :mail (:email id-data)}
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
+
+        user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
+                    (-> (http/get url
+                                  {:headers {"Authorization" (str "Bearer " access-token)}})
+                        :body
+                        json/parse-string))]
     (when (:log-authentication-details env)
-      (log/info "logged in" id-data))
+      (log/info "logged in" id-data user-info))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
