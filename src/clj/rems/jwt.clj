@@ -26,7 +26,6 @@
       (.decode base64-str)
       (String. StandardCharsets/UTF_8)))
 
-;;TODO: use key files, see https://funcool.github.io/buddy-sign/latest/#digital-signature-algorithms
 (defn sign [claims secret & [opts]]
   (buddy-jwt/sign claims secret opts))
 
