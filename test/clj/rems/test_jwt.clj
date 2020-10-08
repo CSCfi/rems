@@ -37,7 +37,7 @@
            (jwt/sign {:name "123"} "secret")))))
 
 (deftest test-jwt-validate
-  (binding [jwt/jwk-provider fake-jwk-provider]
+  (binding [jwt/oidc-public-keys fake-jwk-provider]
     (testing "decodes valid tokens"
       (is (= {:name "Esko Luontola"}
              (select-keys (jwt/validate token jwt-issuer jwt-audience now) [:name]))))

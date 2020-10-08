@@ -12,14 +12,14 @@
            [java.time Instant]
            [java.util Base64 Date]))
 
-(mount/defstate ^:dynamic ^JwkProvider jwk-provider
+(mount/defstate ^:dynamic ^JwkProvider oidc-public-keys
   :start (when-let [jwks-uri (:jwks_uri oidc-configuration)]
            (-> (JwkProviderBuilder. (URL. ^String jwks-uri))
                (.build))))
 
 (defn- fetch-public-key [^String jwt]
   (let [key-id (.getKeyId (JWT/decode jwt))]
-    (.getPublicKey (.get jwk-provider key-id))))
+    (.getPublicKey (.get oidc-public-keys key-id))))
 
 (defn- decode-base64url [^String base64-str]
   (-> (Base64/getUrlDecoder)
