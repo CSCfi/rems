@@ -18,8 +18,6 @@
                  [cljsjs/react-select "2.4.4-0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
-                 [com.auth0/java-jwt "3.10.3"]
-                 [com.auth0/jwks-rsa "0.12.0"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.11.2"]
                  [com.rpl/specter "1.1.3"]
