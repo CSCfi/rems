@@ -109,6 +109,7 @@
   (log/info "Checking visa" (pr-str visa-claim))
   (when-let [errors (s/check VisaClaim visa-claim)]
     (log/warn "Visa didn't match our schema:" (pr-str errors)))
+  ;; TODO should we check that "sub" of visa-claim matches the user?
   (when-let [visa (:ga4gh_visa_v1 visa-claim)]
     (when (and (= (:type visa) "ResearcherStatus")
                (#{"so" "system"} (:by visa))
