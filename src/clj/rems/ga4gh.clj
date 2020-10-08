@@ -8,6 +8,7 @@
             [clj-time.core :as time]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [rems.common.util :refer [getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.jwt :as jwt]
             [rems.testing-util :refer [with-fixed-time]]
@@ -100,20 +101,28 @@
 
 ;; Reading visas
 
-(defn bonafide-claim? [visa-claim]
-  ;; Let's keep this validation non-fatal for now. The real bona fide
-  ;; claims seem to lack e.g. the `scope` parameter.
+(defn visa->researcher-status-by
+  "Return the :by attribute (as a keyword) of a decoded GA4GH Visa
+  Claim, if the Visa asserts the \"Bona Fide\" researcher status."
+  [visa-claim]
+  ;; Let's keep this validation non-fatal for now.
   (log/info "Checking visa" (pr-str visa-claim))
   (when-let [errors (s/check VisaClaim visa-claim)]
     (log/warn "Visa didn't match our schema:" (pr-str errors)))
   (when-let [visa (:ga4gh_visa_v1 visa-claim)]
-    (and (= (:type visa) "ResearcherStatus")
-         (#{"so" "system"} (:by visa))
-         ;; should we also check this?
-         #_(= (:value visa) "https://doi.org/10.1038/s41431-018-0219-y"))))
+    (when (and (= (:type visa) "ResearcherStatus")
+               (#{"so" "system"} (:by visa))
+               ;; should we also check this?
+               #_(= (:value visa) "https://doi.org/10.1038/s41431-018-0219-y"))
+      (keyword (getx visa :by)))))
 
-(defn bonafide-status? [id-token]
+(defn passport->researcher-status-by
+  "Given an OIDC id token, check the visas in the :ga4gh_passport_v1
+  claim. If any of the visas assert \"Bona Fide\" researcher status,
+  return the :by attribute of the claim, as a keyword. If multiple
+  research status visas are found, uses the first one."
+  [id-token]
   (when-let [visas (:ga4gh_passport_v1 id-token)]
     (some identity
           (doall (for [visa visas]
-                   (bonafide-claim? (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
+                   (visa->researcher-status-by (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))

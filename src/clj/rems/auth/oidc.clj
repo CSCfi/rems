@@ -59,14 +59,14 @@
                                   {:headers {"Authorization" (str "Bearer " access-token)}})
                         :body
                         json/parse-string))
-        bonafide-attributes (when (ga4gh/bonafide-status? user-info)
-                              {:bonafide true})]
+        researcher-status-attributes (when-let [by (ga4gh/passport->researcher-status-by user-info)]
+                                       {:researcher-status-by by})]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data user-info))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] (merge identity-base extra-attributes bonafide-attributes)))))
+        (assoc-in [:session :identity] (merge identity-base extra-attributes researcher-status-attributes)))))
 
 (defn- oidc-revoke [token]
   (when token
