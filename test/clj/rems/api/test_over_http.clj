@@ -8,8 +8,7 @@
             [rems.json :as json]
             [rems.event-notification :as event-notification]
             [stub-http.core :as stub])
-  (:import [com.auth0.jwk JwkProviderBuilder]
-           [java.net URL]))
+  (:import [java.net URL]))
 
 (use-fixtures :each standalone-fixture)
 
@@ -96,9 +95,9 @@
         (is (= "new-id" (get-ext-id)))))))
 
 (deftest test-jwks
-  (is (some? (-> (str (:public-url rems.config/env) "api/jwk")
-                 (URL.)
-                 (JwkProviderBuilder.)
-                 (.build)
-                 (.get "2011-04-29")
-                 (.getPublicKey)))))
+  (is (= "2011-04-29" (-> (http/get (str (:public-url rems.config/env) "api/jwk")
+                                    {:as :json})
+                          :body
+                          :keys
+                          first
+                          :kid))))
