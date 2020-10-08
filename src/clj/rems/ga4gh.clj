@@ -37,7 +37,7 @@
    :sub s/Str
    :exp s/Int
    :iat s/Int
-   (s/optional-key :scope) s/Str ;; Embedded Document Tokens "MUST NOT contain 'openid'"
+   (s/optional-key :scope) s/Str ; Embedded Document Tokens "MUST NOT contain 'openid'"
    (s/optional-key :jti) s/Str
    :ga4gh_visa_v1 VisaObject})
 
@@ -65,7 +65,7 @@
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
                    :source (:public-url env)
-                   :by "dac" ;; the Data Access Commitee acts via REMS
+                   :by "dac" ; the Data Access Commitee acts via REMS
                    :asserted (clj-time.coerce/to-long start)}})
 
 (deftest test-entitlement->visa-claims
