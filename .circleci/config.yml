@@ -201,6 +201,7 @@ workflows:
           requires:
             - deps
             - build
+            - docker-snapshot
           filters:
             branches:
               only:
@@ -209,6 +210,7 @@ workflows:
           requires:
             - deps
             - build
+            - docker-release
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/
