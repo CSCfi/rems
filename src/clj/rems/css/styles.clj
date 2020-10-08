@@ -473,6 +473,7 @@
    [:.alert-dark {:color (get-theme-attribute :alert-dark-color)
                   :background-color (get-theme-attribute :alert-dark-bgcolor)
                   :border-color (get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
+   [:.applications.alert-secondary {:margin-top "1rem"}]
    shake
    [:.flash-message.alert-danger
     {:animation [[shake "0.6s cubic-bezier(.36,.07,.19,.97) both"]]}]
@@ -791,9 +792,7 @@
      :.application-applicant {:max-width "10em"}]]
    [:.search-field {:display :flex
                     :flex-wrap :nowrap
-                    :align-items :center
-                    :margin-bottom "1rem"
-                    :margin-top "1rem"}
+                    :align-items :center}
     [:label {:margin-bottom 0}] ; override the default from Bootstrap
     [:div.input-group {:width "17em"}]]
    [:.search-tips {:font-size "0.9rem"
