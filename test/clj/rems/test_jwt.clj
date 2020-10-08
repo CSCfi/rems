@@ -59,7 +59,11 @@
 
     (testing "validates token audience"
       (is (thrown-with-msg? InvalidClaimException #"The Claim 'aud' value doesn't contain the required audience."
-                            (jwt/validate token jwt-issuer "x" now))))))
+                            (jwt/validate token jwt-issuer "x" now))))
+
+    (testing "issuer and audience validation are optional"
+      (is (= {:name "Esko Luontola"}
+             (select-keys (jwt/validate token nil nil now) [:name]))))))
 
 (deftest test-jwt-expired
   (testing "expire time in past"

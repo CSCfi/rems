@@ -7,12 +7,15 @@
             [clj-time.coerce]
             [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.config :refer [env]]
-            [rems.json :as json]
+            [clojure.tools.logging :as log]
+            [rems.common.util :refer [getx]]
+            [rems.config :refer [env oidc-configuration]]
             [rems.jwt :as jwt]
             [rems.testing-util :refer [with-fixed-time]]
             [schema.core :as s])
-  (:import org.joda.time.DateTime))
+  (:import java.time.Instant))
+
+;; Schemas
 
 (s/defschema VisaType
   ;; Official types from:
@@ -34,9 +37,11 @@
    :sub s/Str
    :exp s/Int
    :iat s/Int
-   :scope (s/eq "openid") ;; could also list multiple space-separated scopes, as long as one is "openid"
+   (s/optional-key :scope) s/Str ; Embedded Document Tokens "MUST NOT contain 'openid'"
    (s/optional-key :jti) s/Str
    :ga4gh_visa_v1 VisaObject})
+
+;; Creating visas
 
 (defn- visa-header []
   {:jku (str (:public-url env) "api/jwk")
@@ -57,11 +62,10 @@
    :sub userid
    :iat (clj-time.coerce/to-long (time/now))
    :exp (clj-time.coerce/to-long (or end (time/plus (time/now) +default-length+)))
-   :scope "openid"
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
                    :source (:public-url env)
-                   :by "dac" ;; the Data Access Commitee acts via REMS
+                   :by "dac" ; the Data Access Commitee acts via REMS
                    :asserted (clj-time.coerce/to-long start)}})
 
 (deftest test-entitlement->visa-claims
@@ -72,7 +76,6 @@
                 :sub "user@example.com"
                 :iat (clj-time.coerce/to-long "2010")
                 :exp (clj-time.coerce/to-long "2011")
-                :scope "openid"
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
@@ -83,7 +86,6 @@
                 :sub "user@example.com"
                 :iat (clj-time.coerce/to-long "2010")
                 :exp (clj-time.coerce/to-long "2010-06-02")
-                :scope "openid"
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
@@ -96,3 +98,32 @@
 
 (defn entitlements->passport [entitlements]
   {:ga4gh_passport_v1 (mapv entitlement->visa entitlements)})
+
+;; Reading visas
+
+(defn visa->researcher-status-by
+  "Return the :by attribute (as a keyword) of a decoded GA4GH Visa
+  Claim, if the Visa asserts the \"Bona Fide\" researcher status."
+  [visa-claim]
+  ;; Let's keep this validation non-fatal for now.
+  (log/info "Checking visa" (pr-str visa-claim))
+  (when-let [errors (s/check VisaClaim visa-claim)]
+    (log/warn "Visa didn't match our schema:" (pr-str errors)))
+  ;; TODO should we check that "sub" of visa-claim matches the user?
+  (when-let [visa (:ga4gh_visa_v1 visa-claim)]
+    (when (and (= (:type visa) "ResearcherStatus")
+               (#{"so" "system"} (:by visa))
+               ;; should we also check this?
+               #_(= (:value visa) "https://doi.org/10.1038/s41431-018-0219-y"))
+      (keyword (getx visa :by)))))
+
+(defn passport->researcher-status-by
+  "Given an OIDC id token, check the visas in the :ga4gh_passport_v1
+  claim. If any of the visas assert \"Bona Fide\" researcher status,
+  return the :by attribute of the claim, as a keyword. If multiple
+  research status visas are found, uses the first one."
+  [id-token]
+  (when-let [visas (:ga4gh_passport_v1 id-token)]
+    (some identity
+          (doall (for [visa visas]
+                   (visa->researcher-status-by (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
