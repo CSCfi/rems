@@ -127,6 +127,7 @@
                    :name "Name"
                    :notification-email "Email (set by user)"
                    :organization "Organization"
+                   :researcher-status "Applicant researcher status"
                    :username "Username"}
   :applications {:all-applications "All applications"
                  :applicant "Applicant"

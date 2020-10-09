@@ -127,6 +127,7 @@
                    :name "Namn"
                    :notification-email "E-postadress (angiven av den sökande)"
                    :organization "Organisation"
+                   :researcher-status "Forskarestatus" ; TODO check!
                    :username "Användarnamn"}
   :applications {:all-applications "Alla ansökningar"
                  :applicant "Sökande"
