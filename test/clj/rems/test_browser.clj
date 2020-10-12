@@ -356,10 +356,13 @@
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
 (deftest test-handling
+  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
+                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
+
   (testing "submit test data with API"
-    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title    {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
-                                                                            :field/type :description}]}))
+                                                                            :field/type     :description}]}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-get :catalogue-id)]
