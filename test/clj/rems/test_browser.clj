@@ -24,7 +24,8 @@
             [rems.db.users :as users]
             [rems.standalone]
             [rems.testing-util :refer [with-user]]
-            [rems.text :as text]))
+            [rems.text :as text]
+            [rems.db.api-key :as api-key]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -355,9 +356,22 @@
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
-(deftest test-handling
+(defn- create-test-data []
+  (api-key/add-api-key! 42 {:comment "test data"})
+  (test-helpers/create-user! {:eppn "handler"})
+  (test-helpers/create-user! {:eppn "applicant"})
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
-                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
+                              :mail "alice@example.com" :organizations [{:organization/id "Default"}]})
+  (test-helpers/create-user! {:eppn "developer"})
+  (let [wfid (test-helpers/create-workflow! {:handlers ["handler" "developer"]})
+        form (test-helpers/create-form! nil)
+        res-id1 (test-helpers/create-resource! nil)
+        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :resource-id res-id1})
+        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
+    (test-helpers/submit-application app-id "applicant")))
+
+(deftest test-handling
+  (create-test-data)
 
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title    {:en "description" :fi "kuvaus" :sv "rubrik"}
