@@ -1119,6 +1119,11 @@
   (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id organization-id}))))
 
 (deftest test-organizations
+  (test-helpers/create-user! {:eppn "organization-owner1" :commonName "Organization Owner 1"
+                              :mail "organization-owner1@example.com" :organizations [{:organization/id "Default"}]} :owner)
+  (test-helpers/create-user! {:eppn "organization-owner2" :commonName "Organization Owner 2"
+                              :mail "organization-owner2@example.com" :organizations [{:organization/id "Default"}]} :owner)
+
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
     (go-to-admin "Organizations")
@@ -1281,4 +1286,6 @@
                   "Active" true
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
-                 (slurp-fields :organization))))))))
+                 (slurp-fields :organization)))))))
+
+  "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)")
