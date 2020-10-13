@@ -46,7 +46,7 @@
   (f))
 
 (use-fixtures :each btu/fixture-driver
-                    create-test-data)
+  create-test-data)
 
 (use-fixtures :once btu/test-dev-or-standalone-fixture)
 
@@ -84,7 +84,6 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
 
-
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
@@ -99,8 +98,6 @@
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
-
-
 
 ;;; catalogue page
 
@@ -118,8 +115,6 @@
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "application-page.png")))
-
-
 
 ;;; application page
 
@@ -236,8 +231,6 @@
    (get-attachments {:css "a.attachment-link"}))
   ([selector]
    (mapv (partial btu/get-element-text-el) (btu/query-all selector))))
-
-
 
 ;; applications page
 
@@ -708,7 +701,6 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
-
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
