@@ -37,7 +37,7 @@
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
                               :mail "alice@example.com" :organizations [{:organization/id "Default"}]})
   (test-helpers/create-user! {:eppn "developer"})
-  (let [wfid (test-helpers/create-workflow! {:handlers ["handler" "developer"]})
+  (let [wfid (test-helpers/create-workflow! {:title "Default workflow" :handlers ["handler" "developer"]})
         form (test-helpers/create-form! nil)
         res-id1 (test-helpers/create-resource! nil)
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :resource-id res-id1})
