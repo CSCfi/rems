@@ -33,7 +33,7 @@
 
 (defn- create-test-data [f]
   (api-key/add-api-key! 42 {:comment "test data"})
-  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"}]} :owner)
   (test-helpers/create-user! {:eppn "handler" :organizations [{:organization/id "default"}]})
   (test-helpers/create-user! {:eppn "reporter" :organizations [{:organization/id "default"}]} :reporter)
   (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
