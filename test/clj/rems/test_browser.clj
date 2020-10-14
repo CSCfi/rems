@@ -25,30 +25,54 @@
             [rems.standalone]
             [rems.testing-util :refer [with-user]]
             [rems.text :as text]
-            [rems.db.api-key :as api-key]))
+            [rems.db.api-key :as api-key]
+            [rems.db.test-data :as test-data]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
 (defn- create-test-data [f]
   (api-key/add-api-key! 42 {:comment "test data"})
-  (test-helpers/create-user! {:eppn "handler"})
-  (test-helpers/create-user! {:eppn "applicant"})
+  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "handler" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
-                              :mail "alice@example.com" :organizations [{:organization/id "Default"}]})
-  (test-helpers/create-user! {:eppn "developer"})
-  (let [wfid (test-helpers/create-workflow! {:title "Default workflow" :handlers ["handler" "developer"]})
-        form (test-helpers/create-form! nil)
+                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "developer" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-organization! {:actor "owner"})
+  (test-helpers/create-workflow! nil) ;;master workflow
+  (let [link (test-helpers/create-license! {:actor "owner"
+                                            :license/type :link
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "CC Attribution 4.0"
+                                                            :fi "CC Nimeä 4.0"
+                                                            :sv "CC Erkännande 4.0"}
+                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        text (test-helpers/create-license! {:actor "owner"
+                                            :license/type :text
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "General Terms of Use"
+                                                            :fi "Yleiset käyttöehdot"
+                                                            :sv "Allmänna villkor"}
+                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
+        wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
+        form (test-data/create-all-field-types-example-form! "owner" {:organization/id "default"} "Form")
         res-id1 (test-helpers/create-resource! nil)
-        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :resource-id res-id1})
+        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
+                                                                                               :sv "sv"} :resource-id res-id1})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
+    (test-helpers/create-workflow-licence! wfid link)
+    (test-helpers/create-workflow-licence! wfid text)
     (test-helpers/submit-application app-id "applicant"))
   (f))
 
-(use-fixtures :each btu/fixture-driver
-  create-test-data)
+(use-fixtures :each btu/fixture-driver)
 
-(use-fixtures :once btu/test-dev-or-standalone-fixture)
+(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data)
 
 ;;; common functionality
 
