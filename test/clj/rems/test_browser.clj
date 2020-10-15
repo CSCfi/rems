@@ -33,22 +33,26 @@
 
 (defn- create-test-data [f]
   (api-key/add-api-key! 42 {:comment "test data"})
+  ;; Organizations
+  (test-helpers/create-organization! {:actor "owner"})
+  (test-helpers/create-organization! {:actor "owner"
+                                        :organization/id "nbn"
+                                        :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                        :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                        :organization/owners [{:userid "organization-owner2"}]
+                                        :organization/review-emails []})
+  ;; Users
   (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"} {:organization/id "nbn"}]} :owner)
-  (test-helpers/create-user! {:eppn "carl" :organizations [{:organization/id "nbn"}]})
-  (test-helpers/create-user! {:eppn "handler" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! {:eppn "reporter" :organizations [{:organization/id "default"}]} :reporter)
+  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com" :organizations [{:organization/id "nbn"}]})
+  (test-helpers/create-user! {:eppn "handler" :commonName "Hannah Handler" :mail "handler@example.com" :organizations [{:organization/id "nbn"} {:organization/id "default"}]})
+  ;; Users for default organization
+  (test-helpers/create-user! {:eppn "reporter" :commonName "Reporter" :mail "reporter@example.com" :organizations [{:organization/id "default"}]} :reporter)
   (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
                               :mail "alice@example.com" :organizations [{:organization/id "default"}]})
   (test-helpers/create-user! {:eppn "developer" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-organization! {:actor "owner"})
-  (test-helpers/create-organization! {:actor "owner"
-                                      :organization/id "nbn"
-                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/owners [{:userid "organization-owner2"}]
-                                      :organization/review-emails []})
   (test-helpers/create-workflow! nil) ;;master workflow
+  ;; Forms, workflows etc.
   (let [link (test-helpers/create-license! {:actor "owner"
                                             :license/type :link
                                             :organization {:organization/id "nbn"}
@@ -72,7 +76,7 @@
                                       :organization {:organization/id "nbn"}
                                       :title "Decider workflow"
                                       :type :workflow/decider
-                                      :handlers ["carl"]})
+                                      :handlers ["carl" "handler"]})
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Form")
         simple-form (test-helpers/create-form! {:actor "owner"
                        :organization {:organization/id "nbn"}
