@@ -36,11 +36,11 @@
   ;; Organizations
   (test-helpers/create-organization! {:actor "owner"})
   (test-helpers/create-organization! {:actor "owner"
-                                        :organization/id "nbn"
-                                        :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                        :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                        :organization/owners [{:userid "organization-owner2"}]
-                                        :organization/review-emails []})
+                                      :organization/id "nbn"
+                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/owners [{:userid "organization-owner2"}]
+                                      :organization/review-emails []})
   ;; Users
   (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"} {:organization/id "nbn"}]} :owner)
   (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com" :organizations [{:organization/id "nbn"}]})
@@ -73,21 +73,21 @@
                                                            :sv (apply str (repeat 10 "Licens på svenska. "))}})
         wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
         decider-wf (test-helpers/create-workflow! {:actor "owner"
-                                      :organization {:organization/id "nbn"}
-                                      :title "Decider workflow"
-                                      :type :workflow/decider
-                                      :handlers ["carl" "handler"]})
+                                                   :organization {:organization/id "nbn"}
+                                                   :title "Decider workflow"
+                                                   :type :workflow/decider
+                                                   :handlers ["carl" "handler"]})
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Form")
         simple-form (test-helpers/create-form! {:actor "owner"
-                       :organization {:organization/id "nbn"}
-                       :form/title "Simple form"
-                       :form/fields [{:field/title {:en "Simple text field"
-                                                    :fi "Yksinkertainen tekstikenttä"
-                                                    :sv "Textfält"}
-                                      :field/optional false
-                                      :field/type :text
-                                      :field/max-length 100
-                                      :field/privacy :private}]})
+                                                :organization {:organization/id "nbn"}
+                                                :form/title "Simple form"
+                                                :form/fields [{:field/title {:en "Simple text field"
+                                                                             :fi "Yksinkertainen tekstikenttä"
+                                                                             :sv "Textfält"}
+                                                               :field/optional false
+                                                               :field/type :text
+                                                               :field/max-length 100
+                                                               :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "sv"} :resource-id res-id1})
