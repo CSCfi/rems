@@ -20,6 +20,7 @@
             [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.test-data-users :as test-users]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
@@ -42,15 +43,13 @@
                                       :organization/owners [{:userid "organization-owner2"}]
                                       :organization/review-emails []})
   ;; Users
-  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"} {:organization/id "nbn"}]} :owner)
-  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com" :organizations [{:organization/id "nbn"}]})
-  (test-helpers/create-user! {:eppn "handler" :commonName "Hannah Handler" :mail "handler@example.com" :organizations [{:organization/id "nbn"} {:organization/id "default"}]})
-  ;; Users for default organization
-  (test-helpers/create-user! {:eppn "reporter" :commonName "Reporter" :mail "reporter@example.com" :organizations [{:organization/id "default"}]} :reporter)
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "owner"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
   (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
-                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! {:eppn "developer" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow
   ;; Forms, workflows etc.
   (let [link (test-helpers/create-license! {:actor "owner"
