@@ -611,8 +611,7 @@
       :class (when group? "group")
       :always [:div
                [:h3 title]
-               (when-let [name (get-member-name attributes)]
-                 [info-field (text :t.applicant-info/name) name {:inline? true}])
+               [user/username attributes]
                (when-not (nil? accepted-licenses?)
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
       :collapse [user/attributes attributes]

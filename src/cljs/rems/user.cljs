@@ -2,9 +2,14 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field readonly-checkbox]]
+            [rems.common.application-util :refer [get-member-name]]
             [rems.common.util :refer [index-by]]
             [rems.text :refer [text localized]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
+
+(defn username [attributes]
+  (when-let [name (get-member-name attributes)]
+    [info-field (text :t.applicant-info/name) name {:inline? true}]))
 
 (defn attributes [attributes]
   (let [language @(rf/subscribe [:language])
@@ -33,6 +38,16 @@
 
 (defn guide []
   [:div
+   (component-info username)
+   (example "full set of attributes"
+            [username {:userid "developer@uu.id"
+                       :email "developer@example.com"
+                       :name "Deve Loper"}])
+   (example "fallback to userid"
+            [username {:userid "developer@uu.id"
+                       :email "developer@example.com"}])
+   (example "empty attributes"
+            [username {}])
    (component-info attributes)
    (example "full set of attributes"
             [attributes {:userid "developer@uu.id"
@@ -44,13 +59,12 @@
                          :researcher-status-by :so
                          :nickname "The Dev"}])
    (example "invalid value for researcher status"
-            [attributes {:email "developer@uu.id"
-                         :name "Deve Loper"
+            [attributes {:userid "developer@uu.id"
+                         :email "developer@uu.id"
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                          :researcher-status-by :dac}])
    (example "less attributes"
             [attributes {:email "developer@uu.id"
-                         :name "Deve Loper"
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]}])
    (example "empty attributes"
             [attributes {}])])

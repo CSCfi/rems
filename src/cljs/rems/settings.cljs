@@ -93,6 +93,7 @@
          {:type "submit"}
          (text :t.settings/save)]])
      [:h2 (text :t.settings/your-details)]
+     [user/username (:user identity)]
      [user/attributes (:user identity)]]))
 
 (defn guide []
