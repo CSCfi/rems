@@ -16,7 +16,8 @@
             [rems.phase :as phase]
             [rems.settings :as settings]
             [rems.spinner :as spinner]
-            [rems.table :as table])
+            [rems.table :as table]
+            [rems.user :as user])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
@@ -130,4 +131,5 @@
     [table/guide]
     [dropdown/guide]
     [phase/guide]
-    [atoms/guide]]])
+    [atoms/guide]
+    [user/guide]]])

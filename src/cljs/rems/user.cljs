@@ -3,7 +3,8 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.common.util :refer [index-by]]
-            [rems.text :refer [text localized]]))
+            [rems.text :refer [text localized]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn attributes [attributes]
   (let [language @(rf/subscribe [:language])
@@ -29,3 +30,27 @@
             (let [title (or (localized (get-in extra-attributes [(name k) :name]))
                             k)]
               [info-field title v {:inline? true}])))))
+
+(defn guide []
+  [:div
+   (component-info attributes)
+   (example "full set of attributes"
+            [attributes {:userid "developer@uu.id"
+                         :email "developer@uu.id"
+                         :name "Deve Loper"
+                         :notification-email "notification@example.com"
+                         :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
+                         :address "Testikatu 1, 00100 Helsinki"
+                         :researcher-status-by :so
+                         :nickname "The Dev"}])
+   (example "invalid value for researcher status"
+            [attributes {:email "developer@uu.id"
+                         :name "Deve Loper"
+                         :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
+                         :researcher-status-by :dac}])
+   (example "less attributes"
+            [attributes {:email "developer@uu.id"
+                         :name "Deve Loper"
+                         :organizations [{:organization/id "Testers"} {:organization/id "Users"}]}])
+   (example "empty attributes"
+            [attributes {}])])
