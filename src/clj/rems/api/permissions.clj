@@ -26,7 +26,7 @@
      :tags ["permissions"]
      (GET "/:user" []
        ;; We're trying to replicate https://github.com/CSCfi/elixir-rems-proxy/#get-permissionsusername here
-       :summary "Experimental. Returns user's permissions in ga4gh visa format. Currently signed with fake key. See https://github.com/ga4gh-duri/ga4gh-duri.github.io/"
+       :summary "Experimental. Returns user's permissions in ga4gh visa format. See also https://github.com/CSCfi/rems/blob/master/docs/ga4gh-visas.md"
        :roles #{:handler :owner}
        :path-params [user :- (describe s/Str "return permissions for this user, required")]
        :query-params [{expired :- (describe s/Bool "whether to include expired permissions") false}]
