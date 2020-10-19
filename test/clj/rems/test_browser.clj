@@ -24,14 +24,84 @@
             [rems.db.users :as users]
             [rems.standalone]
             [rems.testing-util :refer [with-user]]
-            [rems.text :as text]))
+            [rems.text :as text]
+            [rems.db.api-key :as api-key]
+            [rems.db.test-data :as test-data]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
+(defn- create-test-data [f]
+  (api-key/add-api-key! 42 {:comment "test data"})
+  ;; Organizations
+  (test-helpers/create-organization! {:actor "owner"})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "nbn"
+                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/owners [{:userid "organization-owner2"}]
+                                      :organization/review-emails []})
+  ;; Users
+  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"} {:organization/id "nbn"}]} :owner)
+  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com" :organizations [{:organization/id "nbn"}]})
+  (test-helpers/create-user! {:eppn "handler" :commonName "Hannah Handler" :mail "handler@example.com" :organizations [{:organization/id "nbn"} {:organization/id "default"}]})
+  ;; Users for default organization
+  (test-helpers/create-user! {:eppn "reporter" :commonName "Reporter" :mail "reporter@example.com" :organizations [{:organization/id "default"}]} :reporter)
+  (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
+                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:eppn "developer" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-workflow! nil) ;;master workflow
+  ;; Forms, workflows etc.
+  (let [link (test-helpers/create-license! {:actor "owner"
+                                            :license/type :link
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "CC Attribution 4.0"
+                                                            :fi "CC Nimeä 4.0"
+                                                            :sv "CC Erkännande 4.0"}
+                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        text (test-helpers/create-license! {:actor "owner"
+                                            :license/type :text
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "General Terms of Use"
+                                                            :fi "Yleiset käyttöehdot"
+                                                            :sv "Allmänna villkor"}
+                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
+        wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
+        decider-wf (test-helpers/create-workflow! {:actor "owner"
+                                                   :organization {:organization/id "nbn"}
+                                                   :title "Decider workflow"
+                                                   :type :workflow/decider
+                                                   :handlers ["carl" "handler"]})
+        form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Form")
+        simple-form (test-helpers/create-form! {:actor "owner"
+                                                :organization {:organization/id "nbn"}
+                                                :form/title "Simple form"
+                                                :form/fields [{:field/title {:en "Simple text field"
+                                                                             :fi "Yksinkertainen tekstikenttä"
+                                                                             :sv "Textfält"}
+                                                               :field/optional false
+                                                               :field/type :text
+                                                               :field/max-length 100
+                                                               :field/privacy :private}]})
+        res-id1 (test-helpers/create-resource! nil)
+        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
+                                                                                               :sv "sv"} :resource-id res-id1})
+        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
+    (test-helpers/create-workflow-licence! wfid link)
+    (test-helpers/create-workflow-licence! wfid text)
+    (test-helpers/create-workflow-licence! decider-wf link)
+    (test-helpers/create-workflow-licence! decider-wf text)
+    (test-helpers/submit-application app-id "applicant"))
+  (f))
+
 (use-fixtures :each btu/fixture-driver)
 
-(use-fixtures :once btu/test-dev-or-standalone-fixture)
+(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data)
 
 ;;; common functionality
 
@@ -67,7 +137,6 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
 
-
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
@@ -82,8 +151,6 @@
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
-
-
 
 ;;; catalogue page
 
@@ -101,8 +168,6 @@
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "application-page.png")))
-
-
 
 ;;; application page
 
@@ -219,8 +284,6 @@
    (get-attachments {:css "a.attachment-link"}))
   ([selector]
    (mapv (partial btu/get-element-text-el) (btu/query-all selector))))
-
-
 
 ;; applications page
 
@@ -357,9 +420,9 @@
 
 (deftest test-handling
   (testing "submit test data with API"
-    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title    {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
-                                                                            :field/type :description}]}))
+                                                                            :field/type     :description}]}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-get :catalogue-id)]
@@ -692,7 +755,6 @@
   (btu/wait-page-loaded)
   (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
-
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -1103,6 +1165,11 @@
   (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id organization-id}))))
 
 (deftest test-organizations
+  (test-helpers/create-user! {:eppn "organization-owner1" :commonName "Organization Owner 1"
+                              :mail "organization-owner1@example.com" :organizations [{:organization/id "Default"}]} :owner)
+  (test-helpers/create-user! {:eppn "organization-owner2" :commonName "Organization Owner 2"
+                              :mail "organization-owner2@example.com" :organizations [{:organization/id "Default"}]} :owner)
+
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
     (go-to-admin "Organizations")
