@@ -386,7 +386,8 @@
               "Username" "alice"
               "Email (from identity provider)" "alice@example.com"
               "Organization" "Default"
-              "Nickname" "In Wonderland"}
+              "Nickname" "In Wonderland"
+              "Applicant researcher status" true}
              (slurp-fields :applicant-info))))
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))

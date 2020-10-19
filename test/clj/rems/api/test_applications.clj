@@ -838,7 +838,8 @@
                 :name "Alice Applicant"
                 :email "alice@example.com"
                 :organizations [{:organization/id "default"}]
-                :nickname "In Wonderland"}
+                :nickname "In Wonderland"
+                :researcher-status-by "so"}
                (:application/applicant application)
                (get-in application [:application/events 0 :event/actor-attributes])))
         (is (= {:userid "developer"
@@ -1647,7 +1648,7 @@
               :application/blacklist []
               :application/id app-id
               :application/todo nil
-              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}]}
+              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
               :application/members []
               :application/resources [{:catalogue-item/start "REDACTED"
                                        :catalogue-item/end nil
@@ -1672,7 +1673,7 @@
                                    :form/title "notifications"
                                    :form/id form-id}]
               :application/events [{:application/external-id "2010/1"
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/id app-id
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :workflow/type "workflow/default"
@@ -1688,14 +1689,14 @@
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}]}
                                    {:event/id 100
                                     :event/type "application.event/licenses-accepted"
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/accepted-licenses []}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)

@@ -127,6 +127,7 @@
                    :name "Nimi"
                    :notification-email "Sähköposti (käyttäjän ilmoittama)"
                    :organization "Organisaatio"
+                   :researcher-status "Hakijan tutkijastatus"
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :applicant "Hakija"

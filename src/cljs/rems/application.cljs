@@ -602,7 +602,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
+        other-attributes (dissoc attributes :name :userid :email :organizations :notification-email :researcher-status-by)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))
@@ -630,7 +630,9 @@
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
                        (when-let [organizations (seq (:organizations attributes))]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])
+                       (when (#{:so :system} (:researcher-status-by attributes))
+                         [info-field (text :t.applicant-info/researcher-status) [readonly-checkbox {:value true}] {:inline? true}])]
                       (for [[k v] other-attributes]
                         (let [title (or (localized (get-in extra-attributes [(name k) :name]))
                                         k)]
@@ -853,7 +855,8 @@
                                        :name "Deve Loper"
                                        :notification-email "notification@example.com"
                                        :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
-                                       :address "Testikatu 1, 00100 Helsinki"}
+                                       :address "Testikatu 1, 00100 Helsinki"
+                                       :researcher-status-by :so}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])
