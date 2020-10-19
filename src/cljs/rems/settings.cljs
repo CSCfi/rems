@@ -5,7 +5,8 @@
             [rems.fetcher :as fetcher]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch put!]])
+            [rems.user :as user]
+            [rems.util :refer [put!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
@@ -90,7 +91,9 @@
 
         [:button.btn.btn-primary
          {:type "submit"}
-         (text :t.settings/save)]])]))
+         (text :t.settings/save)]])
+     [:h2 (text :t.settings/your-details)]
+     [user/attributes (:user identity)]]))
 
 (defn guide []
   [:div

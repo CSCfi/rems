@@ -414,7 +414,8 @@
              :no-email "(ingen e-postadress)"
              :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
              :save "Spara"
-             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]}
+             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
+             :your-details "Dina användardetaljer"} ; TODO check
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
           :all-rows-selected "Alla rader är valda"

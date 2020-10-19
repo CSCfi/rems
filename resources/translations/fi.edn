@@ -414,7 +414,8 @@
              :no-email "(ei sähköpostiosoitetta)"
              :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
              :save "Tallenna"
-             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/settings"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]}
+             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/settings"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
+             :your-details "Käyttäjätietosi"}
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
           :all-rows-selected "Kaikki rivit valittuna"
