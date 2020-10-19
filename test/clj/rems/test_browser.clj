@@ -20,6 +20,7 @@
             [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.test-data-users :as test-users]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.standalone]
@@ -42,15 +43,13 @@
                                       :organization/owners [{:userid "organization-owner2"}]
                                       :organization/review-emails []})
   ;; Users
-  (test-helpers/create-user! {:eppn "owner" :organizations [{:organization/id "default"} {:organization/id "nbn"}]} :owner)
-  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com" :organizations [{:organization/id "nbn"}]})
-  (test-helpers/create-user! {:eppn "handler" :commonName "Hannah Handler" :mail "handler@example.com" :organizations [{:organization/id "nbn"} {:organization/id "default"}]})
-  ;; Users for default organization
-  (test-helpers/create-user! {:eppn "reporter" :commonName "Reporter" :mail "reporter@example.com" :organizations [{:organization/id "default"}]} :reporter)
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "owner"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
   (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :nickname "In Wonderland"
-                              :mail "alice@example.com" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! {:eppn "developer" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow
   ;; Forms, workflows etc.
   (let [link (test-helpers/create-license! {:actor "owner"
@@ -945,7 +944,25 @@
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(optional)"))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+        (is (btu/has-text? {:tag :label :class :application-field-label :for :form-1-field-fld1}
+                           "Text area (EN)"))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+        (let [buttons (btu/query-all {:tag :button :fn/has-class :info-button})]
+           (btu/click-el (first buttons))
+           (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))
+           (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
+           (btu/click-el (first buttons))
+           (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))))
+        (change-language :fi)
+        (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
+        (let [buttons (btu/query-all {:tag :button :fn/has-class :info-button})]
+          (btu/click-el (first buttons))
+          (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))
+          (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))
+          (btu/click-el (first buttons))
+          (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))))
+        (change-language :en)))
 
     (testing "edit form"
       (btu/scroll-and-click {:fn/has-class :edit-form})
@@ -957,11 +974,22 @@
         (btu/fill-human :fields-0-title-en "Description (EN)")
         (btu/fill-human :fields-0-title-fi "Description (FI)")
         (btu/fill-human :fields-0-title-sv "Description (SV)")
+        
+        (btu/fill-human :fields-1-info-text-en "Info text (EN)")
+        (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
+        (btu/fill-human :fields-1-info-text-sv "")
 
         (btu/scroll-and-click :save)
-        (btu/wait-visible {:tag :h1 :fn/text "Form"})
-        (btu/wait-page-loaded)
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+        
+        ;; (btu/wait-visible {:tag :h1 :fn/text "Form"})
+         
+        ;; (is (btu/wait-visible {:tag :div :fn/has-class :alert-danger}))
+        (btu/scroll-query-el {:tag :div :fn/has-class :alert-danger})
+        ;; (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
+        ;; (btu/scroll-and-click :save)
+        ;; (btu/wait-page-loaded)
+        ;; (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+        ))
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
