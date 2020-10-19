@@ -952,16 +952,18 @@
            (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))
            (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
            (btu/click-el (first buttons))
-           (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))))
+           (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+          )
         (change-language :fi)
         (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
         (let [buttons (btu/query-all {:tag :button :fn/has-class :info-button})]
           (btu/click-el (first buttons))
-          (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))
+          (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
           (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))
           (btu/click-el (first buttons))
-          (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))))
+          (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+          )
         (change-language :en)))
 
     (testing "edit form"
@@ -975,29 +977,36 @@
         (btu/fill-human :fields-0-title-fi "Description (FI)")
         (btu/fill-human :fields-0-title-sv "Description (SV)")
         
-        (btu/fill-human :fields-1-info-text-en "Info text (EN)")
-        (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
-        (btu/fill-human :fields-1-info-text-sv "")
-
-        (btu/scroll-and-click :save)
+        (btu/fill-human :fields-0-info-text-en "Info text (EN)")
+        (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
+        (btu/fill-human :fields-0-info-text-sv " ")
         
-        ;; (btu/wait-visible {:tag :h1 :fn/text "Form"})
-         
-        ;; (is (btu/wait-visible {:tag :div :fn/has-class :alert-danger}))
-        (btu/scroll-query-el {:tag :div :fn/has-class :alert-danger})
-        ;; (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
-        ;; (btu/scroll-and-click :save)
-        ;; (btu/wait-page-loaded)
-        ;; (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+        ;; what if we accidentally switch to label?
+        ;; (btu/scroll-and-click :fields-0-type-label)
+        
+        (btu/scroll-and-click :save)
+      
+        (btu/visible? {:tag :textarea :id :fields-0-info-text-sv :fn/has-class :is-invalid})
+        (btu/visible? {:tag :div :class :invalid-feedback :fn/has-text "Field \"Field description (optional)\" is required."})
+        (btu/visible? {:tag :div :class :alert-danger :fn/has-text "Submission failed."})
+        
+        (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
+        
+        (btu/scroll-and-click :save)
+        (btu/wait-page-loaded)
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
         ))
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
-        (is (= {:form/id form-id
+        (is (= 
+             {:form/id form-id
                 :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
-                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
+                :form/fields [{
+                               :field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
                                :field/id "fld3"
                                :field/max-length nil
@@ -1023,7 +1032,8 @@
                 (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                           {:as :json
                            :headers {"x-rems-api-key" "42"
-                                     "x-rems-user-id" "handler"}}))))))))
+                                     "x-rems-user-id" "handler"}}))))))
+))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem {:dir btu/reporting-dir}
