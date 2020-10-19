@@ -1331,6 +1331,4 @@
                   "Active" true
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
-                 (slurp-fields :organization)))))))
-
-  "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)")
+                 (slurp-fields :organization))))))))
