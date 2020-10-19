@@ -1015,10 +1015,12 @@
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
-        (is (= {:form/id form-id
+        (is (= 
+             {:form/id form-id
                 :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
-                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
+                :form/fields [{
+                               :field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
@@ -1046,7 +1048,8 @@
                 (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                           {:as :json
                            :headers {"x-rems-api-key" "42"
-                                     "x-rems-user-id" "handler"}}))))))))
+                                     "x-rems-user-id" "handler"}}))))))
+))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
