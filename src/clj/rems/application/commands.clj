@@ -66,6 +66,11 @@
 (s/defschema DecideCommand
   (assoc CommandWithComment
          :decision (s/enum :approved :rejected)))
+(s/defschema InviteActorCommand
+  (assoc CommandBase
+         :invitee {:name s/Str ; TODO figure out a better name. :actor would conflict with CommandBase
+                   :email s/Str}
+         :role (s/eq :reviewer))) ; TODO support decider
 (s/defschema InviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
@@ -117,6 +122,7 @@
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
    :application.command/delete DeleteCommand
+   :application.command/invite-actor InviteActorCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
@@ -490,6 +496,13 @@
   [cmd _application {:keys [secure-token]}]
   (ok {:event/type :application.event/member-invited
        :application/member (:member cmd)
+       :invitation/token (secure-token)}))
+
+(defmethod command-handler :application.command/invite-actor
+  [cmd _application {:keys [secure-token]}]
+  (ok {:event/type :application.event/actor-invited
+       :application/actor (:invitee cmd)
+       :invitation/role (:role cmd)
        :invitation/token (secure-token)}))
 
 (defmethod command-handler :application.command/accept-invitation

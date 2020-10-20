@@ -1122,6 +1122,49 @@
                                      :email "member1@applicants.com"}}
                            injections)))))))
 
+(deftest test-invite-actor
+  (let [application (apply-events nil [dummy-created-event])
+        injections {:secure-token (constantly "very-secure")}]
+    (testing "applicant can't invite reviewer for draft"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/invite-actor
+                            :actor applicant-user-id
+                            :invitee {:name "A Reviewer"
+                                      :email "reviewer@applicants.com"}
+                            :role :reviewer}
+                           injections))))
+    (let [submitted (apply-events application [{:event/type :application.event/submitted
+                                                :event/time test-time
+                                                :event/actor applicant-user-id
+                                                :application/id app-id}])]
+      (testing "handler can invite reviewer for submitted"
+        (is (= {:event/type :application.event/actor-invited
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id app-id
+                :application/actor {:name "A Reviewer"
+                                    :email "reviewer@applicants.com"}
+                :invitation/role :reviewer
+                :invitation/token "very-secure"}
+               (ok-command submitted
+                           {:type :application.command/invite-actor
+                            :actor handler-user-id
+                            :invitee {:name "A Reviewer"
+                                      :email "reviewer@applicants.com"}
+                            :role :reviewer}
+                           injections))))
+      (doseq [user [applicant-user-id "member1"]]
+        (testing (str user " users cannot invite reviewer for submitted")
+          (is (= {:errors [{:type :forbidden}]}
+                 (fail-command submitted
+                               {:type :application.command/invite-actor
+                                :actor user
+                                :invitee {:name "A Reviewer"
+                                          :email "reviewer@applicants.com"}
+                                :role :reviewer}
+                               injections))))))))
+
 (deftest test-accept-invitation
   (let [application (apply-events nil
                                   [dummy-created-event
