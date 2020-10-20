@@ -36,18 +36,15 @@
 
 (def reporting-dir
   (doto (io/file "browsertest-errors")
-    (.mkdirs)
-    (delete-files)))
+    (.mkdirs)))
 
 (def accessibility-report-dir
   (doto (io/file "browsertest-accessibility-report")
-    (.mkdirs)
-    (delete-files)))
+    (.mkdirs)))
 
 (def download-dir
   (doto (io/file "browsertest-downloads")
-    (.mkdirs)
-    (delete-files)))
+    (.mkdirs)))
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
@@ -64,6 +61,11 @@
                   file))]
     (doseq [file files]
       (.delete file))))
+
+(defn- clean-directories! []
+  (.mkdirs reporting-dir)
+  (.mkdirs accessibility-report-dir)
+  (.mkdirs download-dir))
 
 (defn- mod-nth [coll i]
   (nth coll (mod (int i) (count coll))))
@@ -111,7 +113,9 @@
          :mode mode
          :seed (random-seed))
   (enable-downloads! (get-driver))
-  (et/delete-cookies (get-driver))) ; start with a clean slate
+  ;; start with a clean slate
+  (clean-directories!)
+  (et/delete-cookies (get-driver)))
 
 (defn fixture-driver
   "Executes a test running a fresh driver except when in development."
