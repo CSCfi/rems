@@ -1,5 +1,5 @@
 (ns rems.handler
-  (:require [compojure.core :refer [GET defroutes routes wrap-routes]]
+  (:require [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
@@ -11,7 +11,7 @@
             [rems.layout :as layout]
             [rems.middleware :as middleware]
             [rems.util :refer [never-match-route]]
-            [ring.util.response :as response]))
+            [ring.util.response :refer [file-response]]))
 
 (defn not-found-handler [_req]
   ;; TODO: serve 404 for routes which the frontend doesn't recognize
@@ -37,7 +37,7 @@
   (let [files (set files)]
     (fn [request]
       (when (contains? files (:uri request))
-        (response/file-response (:uri request) {:root root})))))
+        (file-response (:uri request) {:root root})))))
 
 (defn app-routes []
   (routes
