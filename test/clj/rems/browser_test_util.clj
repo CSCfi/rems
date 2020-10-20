@@ -350,4 +350,4 @@
                                  distinct
                                  (sort-by :impact))]]
         (spit (io/file accessibility-report-dir filename)
-              (json/generate-string content))))))
+              (json/generate-string-pretty content))))))
