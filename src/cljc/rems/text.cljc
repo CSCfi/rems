@@ -118,7 +118,9 @@
 
 
 (def ^:private event-types
-  {:application.event/approved :t.applications.events/approved
+  {:application.event/actor-invited :t.applications.events/actor-invited
+   :application.event/actor-joined :t.applications.events/actor-joined
+   :application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
    :application.event/review-requested :t.applications.events/review-requested
    :application.event/reviewed :t.applications.events/reviewed

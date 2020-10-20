@@ -1039,6 +1039,43 @@
                                            :application/past-members #{{:userid "member"}}})]
           (is (= expected-application (recreate expected-application))))))))
 
+(deftest test-application-view-actor-invited-joined
+  (testing "> actor invited"
+    (let [token "abcd1234"
+          new-event {:event/type :application.event/actor-invited
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/actor {:name "Mr. Reviewer"
+                                         :email "reviewer@example.com"}
+                     :invitation/role :reviewer
+                     :invitation/token token}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/actor-invitations {token {:invitation/role :reviewer
+                                                                              :application/actor {:name "Mr. Reviewer"
+                                                                                                  :email "reviewer@example.com"}}}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> actor joined"
+        (let [new-event {:event/type :application.event/actor-joined
+                         :event/time (DateTime. 5000)
+                         :event/actor "new-reviewer"
+                         :application/id 1
+                         :application/request-id review-request-id
+                         :invitation/role :reviewer
+                         :invitation/token token}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/actor-invitations {}
+                                           :application/todo :waiting-for-review
+                                           :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
+          (is (= expected-application (recreate expected-application))))))))
+
 ;;;; Tests for enriching
 
 ;;; A regression/gold master test for the entire enriching pipe
@@ -1519,16 +1556,26 @@
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
 
     (testing "invitation tokens are not visible to anybody"
-      (let [application (model/application-view application {:event/type :application.event/member-invited
-                                                             :application/member {:name "member"
-                                                                                  :email "member@example.com"}
-                                                             :invitation/token "secret"})
+      (let [application (-> application
+                            (model/application-view {:event/type :application.event/member-invited
+                                                     :application/member {:name "member"
+                                                                          :email "member@example.com"}
+                                                     :invitation/token "secret"})
+                            (model/application-view {:event/type :application.event/actor-invited
+                                                     :application/actor {:name "new-reviewer"
+                                                                         :email "reviewer@example.com"}
+                                                     :invitation/role :reviewer
+                                                     :invitation/token "clandestine"}))
             enriched (model/enrich-with-injections application injections)]
         (testing "- original"
-          (is (= #{"secret" nil} (set (map :invitation/token (:application/events enriched)))))
+          (is (= #{"secret" "clandestine" nil} (set (map :invitation/token (:application/events enriched)))))
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
                  (:application/invitation-tokens enriched)))
+          (is (= {"clandestine" {:invitation/role :reviewer
+                                 :application/actor {:name "new-reviewer"
+                                                     :email "reviewer@example.com"}}}
+                 (:application/actor-invitations enriched)))
           (is (= nil
                  (:application/invited-members enriched))))
         (doseq [user-id ["applicant" "handler"]]
@@ -1556,6 +1603,8 @@
       (testing "reviewer sees all applicant attributes"
         (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                (:application/applicant application)))))
+
+    ;; TODO test :application/todo for invited actors
 
     (let [application (-> application
                           (model/application-view {:event/type :application.event/decision-requested
