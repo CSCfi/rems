@@ -111,8 +111,7 @@
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]
                           ;; printing to pdf
-                          [puppeteer "2.0.0"]]
-        :dependencies [[axe-core "4.0.1"]]}
+                          [puppeteer "2.0.0"]]}
 
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
