@@ -100,7 +100,7 @@
 
 (use-fixtures :each btu/fixture-driver)
 
-(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data)
+(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data btu/accessibility-report-fixture)
 
 ;;; common functionality
 
@@ -306,11 +306,14 @@
 (deftest test-new-application
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "alice")
+    (btu/gather-axe-results)
 
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
+      (btu/gather-axe-results)
       (apply-for-resource "Default workflow")
+      (btu/gather-axe-results)
 
       (btu/context-assoc! :application-id (get-application-id))
 
@@ -356,7 +359,10 @@
         ;; leave "Text are with max length" empty
 
         (accept-licenses)
+        (btu/gather-axe-results)
+
         (send-application)
+        (btu/gather-axe-results)
 
         (is (= "Applied" (btu/get-element-text :application-state)))
 
@@ -369,6 +375,7 @@
 
             (testing "see application on applications page"
               (go-to-applications)
+              (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
                       :resource "Default workflow"
@@ -414,6 +421,7 @@
                                      {:css ".btn-primary"}])
               (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
               (btu/wait-page-loaded)
+              (btu/gather-axe-results)
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 

@@ -1,5 +1,5 @@
 (ns rems.handler
-  (:require [compojure.core :refer [defroutes routes wrap-routes]]
+  (:require [compojure.core :refer [GET defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
@@ -11,7 +11,7 @@
             [rems.layout :as layout]
             [rems.middleware :as middleware]
             [rems.util :refer [never-match-route]]
-            [ring.util.response :refer [file-response]]))
+            [ring.util.response :as response]))
 
 (defn not-found-handler [_req]
   ;; TODO: serve 404 for routes which the frontend doesn't recognize
@@ -27,6 +27,13 @@
 (defroutes secured-routes
   entitlements/entitlements-routes)
 
+(defn- axe-routes
+  "Serve axe.min.js through a symlink."
+  []
+  (fn [request]
+    (when (= "/js/axe.min.js" (:uri request))
+      (response/resource-response (:uri request) {:root "public" :allow-symlinks? true}))))
+
 (defn normal-routes []
   (routes
    (public-routes)
@@ -37,11 +44,12 @@
   (let [files (set files)]
     (fn [request]
       (when (contains? files (:uri request))
-        (file-response (:uri request) {:root root})))))
+        (response/file-response (:uri request) {:root root})))))
 
 (defn app-routes []
   (routes
    (extra-script-routes (:extra-scripts env))
+   (when (:accessibility-tooling env) (axe-routes))
    (normal-routes)
    (if-let [path (:extra-static-resources env)]
      (route/files "/" {:root path})

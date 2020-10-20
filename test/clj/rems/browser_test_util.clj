@@ -10,7 +10,9 @@
             [etaoin.api :as et]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
+            [rems.common.util :refer [conj-vec]]
             [rems.config]
+            [rems.json :as json]
             [rems.standalone])
   (:import (java.net SocketException)))
 
@@ -26,6 +28,7 @@
 (defn get-seed [] (:seed @test-context))
 (defn context-get [k] (get @test-context k))
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
+(defn context-update! [& args] (swap! test-context #(apply update % args)))
 
 (defn- delete-files [dir]
   (doseq [file (.listFiles dir)]
@@ -33,6 +36,11 @@
 
 (def reporting-dir
   (doto (io/file "browsertest-errors")
+    (.mkdirs)
+    (delete-files)))
+
+(def accessibility-report-dir
+  (doto (io/file "browsertest-accessibility-report")
     (.mkdirs)
     (delete-files)))
 
@@ -147,6 +155,7 @@
 (def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
 (def get-element-attr (wrap-etaoin et/get-element-attr))
 (def js-execute (wrap-etaoin et/js-execute))
+(def js-async (wrap-etaoin et/js-async))
 (def fill (wrap-etaoin et/fill))
 (def wait-has-class (wrap-etaoin et/wait-has-class))
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
@@ -299,3 +308,60 @@
        (remove nil?)
        (mapv value-of-el)
        first))
+
+(defn- inject-axe
+  "Injects the axe automatic accessibility test script into the page.
+
+  See https://www.deque.com/axe/"
+  []
+  (js-execute "
+    if (!window.axe) {
+      var scriptTag = document.createElement('script');
+      scriptTag.setAttribute('src', '/js/axe.min.js');
+      document.head.appendChild(scriptTag);
+    }")
+  (et/wait-predicate (fn [] (js-execute "return window.axe ? true : false"))))
+
+(defn check-axe
+  "Runs automatic accessibility tests using axe.
+
+  Returns the test report.
+
+  See https://www.deque.com/axe/"
+  []
+  (inject-axe)
+  (let [result (js-async "
+    var args = arguments;
+    var callback = args[args.length-1];
+    window.axe.configure({'reporter': 'v2'});
+    window.axe.run({ exclude:[['.dev-reload-button'],
+                              ['#figwheel-heads-up-container']]})
+    .then(callback);")]
+    result))
+
+(defn gather-axe-results
+  "Runs automatic accessbility tests using `check-axe`
+  and appends them to the test context for summary reporting."
+  []
+  (context-update! :axe conj-vec (check-axe)))
+
+(defn accessibility-report-fixture
+  "Runs the tests and finally stores the gathered accessibility
+  results into summary files.
+
+  NB: the individual tests must call `gather-axe-results` in each
+  interesting spot to have a sensible report to write."
+  [f]
+  (try
+    (f)
+    (finally
+      (doseq [k (->> (context-get :axe)
+                     (mapcat keys)
+                     distinct)
+              :let [filename (str (str/lower-case (name k)) ".json")
+                    content (->> (context-get :axe)
+                                 (mapcat #(get % k))
+                                 distinct
+                                 (sort-by :impact))]]
+        (spit (io/file accessibility-report-dir filename)
+              (json/generate-string content))))))

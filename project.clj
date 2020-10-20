@@ -110,7 +110,8 @@
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]
                           ;; printing to pdf
-                          [puppeteer "2.0.0"]]}
+                          [puppeteer "2.0.0"]]
+        :dependencies [[axe-core "4.0.1"]]} ; accessibility testing tool https://github.com/dequelabs/axe-core
 
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
@@ -178,6 +179,9 @@
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems
                                 :welcome (rems/repl-help)}
+
+                 :prep-tasks [["shell" "mkdir" "-p" "resources/public/js"]
+                              ["shell" "ln" "-f" "-s" "../../../node_modules/axe-core/axe.min.js" "resources/public/js/axe.min.js"]]
 
                  :cljsbuild {:builds {:dev {:source-paths ["src/cljs" "src/cljc"]
                                             :figwheel {:on-jsload "rems.spa/mount-components"}
