@@ -100,7 +100,11 @@
 
 (use-fixtures :each btu/fixture-driver)
 
-(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data btu/accessibility-report-fixture)
+(use-fixtures
+  :once
+  btu/test-dev-or-standalone-fixture
+  create-test-data
+  btu/accessibility-report-fixture)
 
 ;;; common functionality
 

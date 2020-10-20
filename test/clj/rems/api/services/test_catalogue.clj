@@ -11,7 +11,11 @@
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
 
-(use-fixtures :once test-db-fixture caches-fixture)
+(use-fixtures
+  :once
+  test-db-fixture
+  caches-fixture)
+
 (use-fixtures :each rollback-db-fixture)
 
 (defn- status-flags [item-id]
