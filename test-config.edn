@@ -17,4 +17,4 @@
  :ga4gh-visa-private-key "test-data/example-private-key.jwk"
  :ga4gh-visa-public-key "test-data/example-public-key.jwk"
  :catalogue-is-public false
- :accessibility-tooling true}
+ :accessibility-report true}
