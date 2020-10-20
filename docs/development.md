@@ -135,9 +135,9 @@ components in various configurations and is useful for example to develop and do
 
 See a running guide as example [https://rems-dev.rahtiapp.fi/guide](https://rems-dev.rahtiapp.fi/guide).
 
-## Automated accessibility test
+## Automated accessibility test report
 
-We use [axe](https://www.deque.com/axe/) for automated accessibility tests
+We use [axe](https://www.deque.com/axe/) for automated accessibility tests.
 
 The preferable way is to run the browser test suite, or let CI run it, and see what is recorded in the `browsertest-accessibility-report` directory, for example `violations.json` file.
 

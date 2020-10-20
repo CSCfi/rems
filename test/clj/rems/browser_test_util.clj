@@ -310,7 +310,7 @@
        first))
 
 (defn check-axe
-  "Runs automatic accessibility tests using axe.
+  "Runs automated accessibility tests using axe.
 
   Returns the test report.
 
