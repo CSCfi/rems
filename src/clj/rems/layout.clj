@@ -49,6 +49,7 @@ window.rems = {
            [:script {:type "text/javascript"} "delete module;"]
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
+           (when (:accessibility-tooling env) (include-js "/assets/axe-core/axe.min.js"))
            (initialize-hooks)
            (for [extra-script (get-in env [:extra-scripts :files])]
              (include-js extra-script))

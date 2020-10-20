@@ -309,19 +309,6 @@
        (mapv value-of-el)
        first))
 
-(defn- inject-axe
-  "Injects the axe automatic accessibility test script into the page.
-
-  See https://www.deque.com/axe/"
-  []
-  (js-execute "
-    if (!window.axe) {
-      var scriptTag = document.createElement('script');
-      scriptTag.setAttribute('src', '/js/axe.min.js');
-      document.head.appendChild(scriptTag);
-    }")
-  (et/wait-predicate (fn [] (js-execute "return window.axe ? true : false"))))
-
 (defn check-axe
   "Runs automatic accessibility tests using axe.
 
@@ -329,7 +316,6 @@
 
   See https://www.deque.com/axe/"
   []
-  (inject-axe)
   (let [result (js-async "
     var args = arguments;
     var callback = args[args.length-1];

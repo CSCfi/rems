@@ -27,13 +27,6 @@
 (defroutes secured-routes
   entitlements/entitlements-routes)
 
-(defn- axe-routes
-  "Serve axe.min.js through a symlink."
-  []
-  (fn [request]
-    (when (= "/js/axe.min.js" (:uri request))
-      (response/resource-response (:uri request) {:root "public" :allow-symlinks? true}))))
-
 (defn normal-routes []
   (routes
    (public-routes)
@@ -49,7 +42,6 @@
 (defn app-routes []
   (routes
    (extra-script-routes (:extra-scripts env))
-   (when (:accessibility-tooling env) (axe-routes))
    (normal-routes)
    (if-let [path (:extra-static-resources env)]
      (route/files "/" {:root path})
