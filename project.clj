@@ -146,7 +146,6 @@
                                                    :infer-externs :true ;; for window.rems.hooks to work
                                                    :externs ["react/externs/react.js"]}}}}
              :aot :all
-             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources" "target/uberjar/resources"]}
