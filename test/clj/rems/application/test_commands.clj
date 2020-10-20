@@ -1166,92 +1166,144 @@
                                injections))))))))
 
 (deftest test-accept-invitation
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/member-invited
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:name "Some Body" :email "somebody@applicants.com"}
-                                    :invitation/token "very-secure"}])
-        injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}}]
+  (testing "invited member"
+    (let [member-invited (apply-events nil
+                                       [dummy-created-event
+                                        {:event/type :application.event/member-invited
+                                         :event/time test-time
+                                         :event/actor applicant-user-id
+                                         :application/id app-id
+                                         :application/member {:name "Some Body" :email "somebody@applicants.com"}
+                                         :invitation/token "very-secure"}])
+          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}}]
 
-    (testing "invited member can join draft"
-      (is (= {:event/type :application.event/member-joined
-              :event/time test-time
-              :event/actor "somebody"
-              :application/id app-id
-              :invitation/token "very-secure"}
-             (ok-command application
-                         {:type :application.command/accept-invitation
-                          :actor "somebody"
-                          :token "very-secure"}
-                         injections))))
-
-    (testing "invited member can't join if they are already a member"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/member-added
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id
-                                        :application/member {:userid "somebody"}}])]
-        (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
-               (fail-command application
-                             {:type :application.command/accept-invitation
-                              :actor "somebody"
-                              :token "very-secure"}
-                             injections)))))
-
-    (testing "invalid token can't be used to join"
-      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-             (fail-command application
-                           {:type :application.command/accept-invitation
-                            :actor "somebody"
-                            :token "wrong-token"}
-                           injections))))
-
-    (testing "token can't be used twice"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/member-joined
-                                        :event/time test-time
-                                        :event/actor "somebody"
-                                        :application/id app-id
-                                        :invitation/token "very-secure"}])]
-        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-               (fail-command application
-                             {:type :application.command/accept-invitation
-                              :actor "somebody2"
-                              :token "very-secure"}
-                             injections)))))
-
-    (let [submitted (apply-events application
-                                  [{:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-      (testing "invited member can join submitted application"
+      (testing "can join draft"
         (is (= {:event/type :application.event/member-joined
-                :event/actor "somebody"
                 :event/time test-time
+                :event/actor "somebody"
                 :application/id app-id
                 :invitation/token "very-secure"}
-               (ok-command application
+               (ok-command member-invited
                            {:type :application.command/accept-invitation
                             :actor "somebody"
                             :token "very-secure"}
                            injections))))
 
-      (let [closed (apply-events submitted
-                                 [{:event/type :application.event/closed
-                                   :event/time test-time
-                                   :event/actor applicant-user-id
-                                   :application/id app-id
-                                   :application/comment ""}])]
-        (testing "invited member can't join a closed application"
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command closed
+      (testing "can't join if they are already a member"
+        (let [application (apply-events member-invited
+                                        [{:event/type :application.event/member-added
+                                          :event/time test-time
+                                          :event/actor applicant-user-id
+                                          :application/id app-id
+                                          :application/member {:userid "somebody"}}])]
+          (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
+                 (fail-command application
                                {:type :application.command/accept-invitation
                                 :actor "somebody"
+                                :token "very-secure"}
+                               injections)))))
+
+      (testing "can't be use invalid token"
+        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+               (fail-command member-invited
+                             {:type :application.command/accept-invitation
+                              :actor "somebody"
+                              :token "wrong-token"}
+                             injections))))
+
+      (testing "can't use token twice"
+        (let [application (apply-events member-invited
+                                        [{:event/type :application.event/member-joined
+                                          :event/time test-time
+                                          :event/actor "somebody"
+                                          :application/id app-id
+                                          :invitation/token "very-secure"}])]
+          (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+                 (fail-command application
+                               {:type :application.command/accept-invitation
+                                :actor "somebody2"
+                                :token "very-secure"}
+                               injections)))))
+
+      (let [submitted (apply-events member-invited
+                                    [{:event/type :application.event/submitted
+                                      :event/time test-time
+                                      :event/actor applicant-user-id
+                                      :application/id app-id}])]
+        (testing "can join submitted application"
+          (is (= {:event/type :application.event/member-joined
+                  :event/actor "somebody"
+                  :event/time test-time
+                  :application/id app-id
+                  :invitation/token "very-secure"}
+                 (ok-command member-invited
+                             {:type :application.command/accept-invitation
+                              :actor "somebody"
+                              :token "very-secure"}
+                             injections))))
+
+        (let [closed (apply-events submitted
+                                   [{:event/type :application.event/closed
+                                     :event/time test-time
+                                     :event/actor applicant-user-id
+                                     :application/id app-id
+                                     :application/comment ""}])]
+          (testing "can't join a closed application"
+            (is (= {:errors [{:type :forbidden}]}
+                   (fail-command closed
+                                 {:type :application.command/accept-invitation
+                                  :actor "somebody"
+                                  :token "very-secure"}
+                                 injections))))))))
+  (testing "invited reviewer"
+    (let [actor-invited (apply-events nil
+                                      [dummy-created-event
+                                       {:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id app-id}
+                                       {:event/type :application.event/actor-invited
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id app-id
+                                        :application/actor {:name "Some Body" :email "somebody@applicants.com"}
+                                        :invitation/role :reviewer
+                                        :invitation/token "very-secure"}])]
+      (testing "can join draft"
+        (let [event (ok-command actor-invited
+                                {:type :application.command/accept-invitation
+                                 :actor "somebody"
+                                 :token "very-secure"}
+                                injections)]
+          (is (instance? UUID (:application/request-id event)))
+          (is (= {:event/type :application.event/actor-joined
+                  :event/time test-time
+                  :event/actor "somebody"
+                  :application/id app-id
+                  :application/request-id (:application/request-id event)
+                  :invitation/role :reviewer
+                  :invitation/token "very-secure"}
+                 event))))
+      (testing "can't be use invalid token"
+        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+               (fail-command actor-invited
+                             {:type :application.command/accept-invitation
+                              :actor "somebody"
+                              :token "wrong-token"}
+                             injections))))
+      (testing "can't use token twice"
+        (let [application (apply-events actor-invited
+                                        [{:event/type :application.event/actor-joined
+                                          :event/time test-time
+                                          :event/actor "somebody"
+                                          :application/id app-id
+                                          :application/request-id (UUID/randomUUID)
+                                          :invitation/role :reviewer
+                                          :invitation/token "very-secure"}])]
+          (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+                 (fail-command application
+                               {:type :application.command/accept-invitation
+                                :actor "somebody2"
                                 :token "very-secure"}
                                injections))))))))
 

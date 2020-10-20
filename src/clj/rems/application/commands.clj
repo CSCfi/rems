@@ -263,13 +263,6 @@
     (when (seq errors)
       {:errors errors})))
 
-(defn- valid-invitation-token? [application token]
-  (contains? (:application/invitation-tokens application) token))
-
-(defn- invitation-token-error [application token]
-  (when-not (valid-invitation-token? application token)
-    {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
-
 (defn- member? [userid application]
   (some #(= userid (:userid %))
         (application-util/applicant-and-members application)))
@@ -505,14 +498,34 @@
        :invitation/role (:role cmd)
        :invitation/token (secure-token)}))
 
+(defn- valid-member-invitation-token? [application token]
+  (contains? (:application/invitation-tokens application) token))
+
+(defn- get-actor-invitation-token [application token]
+  (get-in application [:application/actor-invitations token]))
+
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
-  (or (already-member-error application (:actor cmd))
-      (invitation-token-error application (:token cmd))
+  (let [token (:token cmd)
+        actor-invitation (get-actor-invitation-token application token)]
+    (cond
+      (valid-member-invitation-token? application token)
+      (or (already-member-error application (:actor cmd))
+          (ok-with-data {:application-id (:application-id cmd)}
+                        [{:event/type :application.event/member-joined
+                          :application/id (:application-id cmd)
+                          :invitation/token (:token cmd)}]))
+      actor-invitation
       (ok-with-data {:application-id (:application-id cmd)}
-                    [{:event/type :application.event/member-joined
+                    ;; TODO could emit both actor-joined and request-review events!
+                    [{:event/type :application.event/actor-joined
                       :application/id (:application-id cmd)
-                      :invitation/token (:token cmd)}])))
+                      :invitation/role (:invitation/role actor-invitation)
+                      :application/request-id (UUID/randomUUID)
+                      :invitation/token (:token cmd)}])
+
+      :else
+      {:errors [{:type :t.actions.errors/invalid-token :token token}]})))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application injections]
