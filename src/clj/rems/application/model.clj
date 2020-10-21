@@ -107,24 +107,12 @@
 (defmethod application-base-view :application.event/actor-invited
   [application event]
   (-> application
-      (update :application/actor-invitations assoc (:invitation/token event) (select-keys event [:application/actor :invitation/role]))))
-
-(defn- update-todo-for-requests [application]
-  (assoc application :application/todo
-         (cond
-           (not (empty? (::latest-review-request-by-user application)))
-           :waiting-for-review
-           (not (empty? (::latest-decision-request-by-user application)))
-           :waiting-for-decision
-           :else
-           :no-pending-requests)))
+      (assoc-in [:application/actor-invitations (:invitation/token event)]
+                (select-keys event [:event/actor :application/actor :invitation/role]))))
 
 (defmethod application-base-view :application.event/actor-joined
   [application event]
-  (-> application
-      (update :application/actor-invitations dissoc (:invitation/token event))
-      (assoc-in [::latest-review-request-by-user (:event/actor event)] (:application/request-id event))
-      (update-todo-for-requests)))
+  (update application :application/actor-invitations dissoc (:invitation/token event)))
 
 (defmethod application-base-view :application.event/submitted
   [application event]
@@ -144,6 +132,16 @@
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
       (assoc :application/state :application.state/returned)
       (assoc :application/todo nil)))
+
+(defn- update-todo-for-requests [application]
+  (assoc application :application/todo
+         (cond
+           (not (empty? (::latest-review-request-by-user application)))
+           :waiting-for-review
+           (not (empty? (::latest-decision-request-by-user application)))
+           :waiting-for-decision
+           :else
+           :no-pending-requests)))
 
 (defmethod application-base-view :application.event/review-requested
   [application event]

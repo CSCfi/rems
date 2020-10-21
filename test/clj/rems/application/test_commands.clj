@@ -1264,26 +1264,32 @@
                                         :application/id app-id}
                                        {:event/type :application.event/actor-invited
                                         :event/time test-time
-                                        :event/actor applicant-user-id
+                                        :event/actor handler-user-id
                                         :application/id app-id
                                         :application/actor {:name "Some Body" :email "somebody@applicants.com"}
                                         :invitation/role :reviewer
                                         :invitation/token "very-secure"}])]
       (testing "can join draft"
-        (let [event (ok-command actor-invited
-                                {:type :application.command/accept-invitation
-                                 :actor "somebody"
-                                 :token "very-secure"}
-                                injections)]
-          (is (instance? UUID (:application/request-id event)))
+        (let [[joined request] (ok-command actor-invited
+                                           {:type :application.command/accept-invitation
+                                            :actor "somebody"
+                                            :token "very-secure"}
+                                           injections)]
           (is (= {:event/type :application.event/actor-joined
                   :event/time test-time
                   :event/actor "somebody"
                   :application/id app-id
-                  :application/request-id (:application/request-id event)
                   :invitation/role :reviewer
                   :invitation/token "very-secure"}
-                 event))))
+                 joined))
+          (is (instance? UUID (:application/request-id request)))
+          (is (= {:event/type :application.event/review-requested
+                  :event/time test-time
+                  :event/actor handler-user-id
+                  :application/id app-id
+                  :application/reviewers ["somebody"]
+                  :application/request-id (:application/request-id request)}
+                 request))))
       (testing "can't be use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
                (fail-command actor-invited
@@ -1297,7 +1303,6 @@
                                           :event/time test-time
                                           :event/actor "somebody"
                                           :application/id app-id
-                                          :application/request-id (UUID/randomUUID)
                                           :invitation/role :reviewer
                                           :invitation/token "very-secure"}])]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}

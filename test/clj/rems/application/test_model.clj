@@ -1054,7 +1054,8 @@
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
-                                       :application/actor-invitations {token {:invitation/role :reviewer
+                                       :application/actor-invitations {token {:event/actor "handler"
+                                                                              :invitation/role :reviewer
                                                                               :application/actor {:name "Mr. Reviewer"
                                                                                                   :email "reviewer@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
@@ -1064,16 +1065,13 @@
                          :event/time (DateTime. 5000)
                          :event/actor "new-reviewer"
                          :application/id 1
-                         :application/request-id review-request-id
                          :invitation/role :reviewer
                          :invitation/token token}
               events (conj events new-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/actor-invitations {}
-                                           :application/todo :waiting-for-review
-                                           :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
+                                           :application/actor-invitations {}})]
           (is (= expected-application (recreate expected-application))))))))
 
 ;;;; Tests for enriching

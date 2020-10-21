@@ -133,8 +133,7 @@
   (assoc EventBase
          :event/type (s/enum :application.event/actor-joined)
          :invitation/token s/Str
-         :invitation/role (s/enum :reviewer) ; TODO decider
-         :application/request-id s/Uuid)) ; TODO should we emit a separate ReviewRequested event instead?
+         :invitation/role (s/enum :reviewer))) ; TODO decider
 (s/defschema RejectedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/rejected)))

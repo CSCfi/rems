@@ -516,14 +516,19 @@
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
       actor-invitation
+      ;; TODO it's nice to separate the concerns by emitting two
+      ;; events here, but the event log in the UI might now be a bit
+      ;; confusing.
       (ok-with-data {:application-id (:application-id cmd)}
-                    ;; TODO could emit both actor-joined and request-review events!
                     [{:event/type :application.event/actor-joined
                       :application/id (:application-id cmd)
                       :invitation/role (:invitation/role actor-invitation)
-                      :application/request-id (UUID/randomUUID)
-                      :invitation/token (:token cmd)}])
-
+                      :invitation/token (:token cmd)}
+                     {:event/type :application.event/review-requested
+                      :application/id (:application-id cmd)
+                      :event/actor (:event/actor actor-invitation)
+                      :application/reviewers [(:actor cmd)]
+                      :application/request-id (UUID/randomUUID)}])
       :else
       {:errors [{:type :t.actions.errors/invalid-token :token token}]})))
 
@@ -613,8 +618,8 @@
   (-> event
       (update :application/id (fn [app-id]
                                 (or app-id (:application-id cmd))))
-      (assoc :event/time (:time cmd)
-             :event/actor (:actor cmd))))
+      (assoc :event/time (:time cmd))
+      (update :event/actor #(or % (:actor cmd)))))
 
 (defn- finalize-events [result cmd]
   (update-present result :events (fn [events]
