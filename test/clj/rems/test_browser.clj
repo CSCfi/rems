@@ -931,37 +931,36 @@
 
       (btu/scroll-and-click :save))
 
-    (testing "view form"
-      (btu/wait-visible {:tag :h1 :fn/text "Form"})
-      (btu/wait-page-loaded)
-      (is (= {"Organization" "NBN"
+      (testing "view form"
+        (btu/wait-visible {:tag :h1 :fn/text "Form"})
+        (btu/wait-page-loaded)
+        (is (= {"Organization" "NBN"
               "Title" "Form editor test"
               "Active" true}
              (slurp-fields :form)))
-      (testing "preview"
+        (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
-        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
-                           "(max 127 characters)"))
-        (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
-                           "(optional)"))
-        (is (btu/has-text? {:tag :label :class :application-field-label :for :form-1-field-fld1}
-                           "Text area (EN)"))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
-        (let [buttons (btu/query-all {:tag :button :fn/has-class :info-button})]
-          (btu/click-el (first buttons))
-          (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))
-          (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-          (btu/click-el (first buttons))
-          (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse}))))
-        (change-language :fi)
-        (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
-        (let [buttons (btu/query-all {:tag :button :fn/has-class :info-button})]
-          (btu/click-el (first buttons))
-          (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
-          (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))
-          (btu/click-el (first buttons))
-          (not (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
+        (let [button (first (btu/query-all {:tag :button :fn/has-class :info-button}))]
+         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                            "(max 127 characters)"))
+         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
+                   "(optional)"))
+         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+         (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
+         (btu/click-el button)
+         (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+         (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
+         (btu/click-el button)
+         (not (is (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+         (change-language :fi)
+         (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
+         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
+         (btu/click-el button)
+         (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+         (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))
+         (btu/click-el button)
+         (not (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
         (change-language :en)))
 
     (testing "edit form"
@@ -1028,7 +1027,8 @@
               (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                         {:as :json
                          :headers {"x-rems-api-key" "42"
-                                   "x-rems-user-id" "handler"}}))))))))
+                                   "x-rems-user-id" "handler"}}))))))
+))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem {:dir btu/reporting-dir}
