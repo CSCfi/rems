@@ -134,6 +134,11 @@
   (-> application
       (permissions/give-role-to-users :member [(:event/actor event)])))
 
+(defmethod application-permissions-view :application.event/actor-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users (:invitation/role event) [(:event/actor event)])))
+
 (defmethod application-permissions-view :application.event/member-removed
   [application event]
   (-> application

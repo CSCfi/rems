@@ -648,10 +648,11 @@
                 :application-id app-id}
                (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
                          api-key reviewer)))
-        ;; TODO
-        #_(testing ", member is able to fetch application and can submit a review"
-            (is (= []
-                   (:application/permissions (get-application-for-user app-id reviewer)))))))))
+        (testing ", reviewer is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/review"
+                  "application.command/remark"]
+                 (:application/permissions (get-application-for-user app-id reviewer)))))))))
 
 (deftest test-application-validation
   (let [user-id "alice"

@@ -50,4 +50,21 @@
       (is (not (contains? (permissions/user-permissions closed "joe")
                           :application.command/accept-invitation)))
       (is (not (contains? (permissions/user-permissions closed "applicant")
-                          :application.command/accept-invitation))))))
+                          :application.command/accept-invitation)))))
+
+  (testing "invited reviewer gets review permissions"
+    (let [invited (reduce application-permissions-view nil [{:event/type :application.event/created
+                                                             :event/actor "applicant"}
+                                                            {:event/type :application.event/submitted
+                                                             :event/actor "applicant"}
+                                                            {:event/type :application.event/actor-invited
+                                                             :event/actor "handler"
+                                                             :invitation/role :reviewer
+                                                             :application/actor {:name "reviewer" :email "reviewer@foo"}}])
+          joined (application-permissions-view invited {:event/type :application.event/actor-joined
+                                                        :event/actor "reviewer"
+                                                        :invitation/role :reviewer})]
+      (is (not (contains? (permissions/user-permissions invited "reviewer")
+                          :application.command/review)))
+      (is (contains? (permissions/user-permissions joined "reviewer")
+                     :application.command/review)))))

@@ -409,7 +409,7 @@
                          events/validate-events
                          save-sample-events!
                          (reduce model/application-view nil)
-                         ;; permissions are tested separately
+                         ;; permissions are tested separately in rems.application.test-master-workflow
                          permissions/cleanup)]
     (is (contains? model/states (:application/state application)))
     application))
