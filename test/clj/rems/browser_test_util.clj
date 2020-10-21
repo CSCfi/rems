@@ -30,21 +30,23 @@
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
 (defn context-update! [& args] (swap! test-context #(apply update % args)))
 
-(defn- delete-files [dir]
+(defn- delete-files! [dir]
   (doseq [file (.listFiles dir)]
     (io/delete-file file true)))
 
-(def reporting-dir
-  (doto (io/file "browsertest-errors")
-    (.mkdirs)))
+(defn- ensure-empty-directory!
+  [dir]
+  (.mkdirs dir)
+  (delete-files! dir))
 
-(def accessibility-report-dir
-  (doto (io/file "browsertest-accessibility-report")
-    (.mkdirs)))
+(def reporting-dir (io/file "browsertest-errors"))
+(def accessibility-report-dir (io/file "browsertest-accessibility-report"))
+(def download-dir (io/file "browsertest-downloads"))
 
-(def download-dir
-  (doto (io/file "browsertest-downloads")
-    (.mkdirs)))
+(defn- ensure-empty-directories! []
+  (ensure-empty-directory! reporting-dir)
+  (ensure-empty-directory! accessibility-report-dir)
+  (ensure-empty-directory! download-dir))
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
@@ -61,11 +63,6 @@
                   file))]
     (doseq [file files]
       (.delete file))))
-
-(defn- clean-directories! []
-  (.mkdirs reporting-dir)
-  (.mkdirs accessibility-report-dir)
-  (.mkdirs download-dir))
 
 (defn- mod-nth [coll i]
   (nth coll (mod (int i) (count coll))))
@@ -114,7 +111,7 @@
          :seed (random-seed))
   (enable-downloads! (get-driver))
   ;; start with a clean slate
-  (clean-directories!)
+  (ensure-empty-directories!)
   (et/delete-cookies (get-driver)))
 
 (defn fixture-driver
