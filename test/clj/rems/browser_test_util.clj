@@ -21,7 +21,10 @@
 (defonce test-context
   (atom {:url "http://localhost:3001/"
          :mode :test
-         :seed "circle"}))
+         :seed "circle"
+         :reporting-dir (io/file "browsertest-errors")
+         :accessibility-report-dir (io/file "browsertest-accessibility-report")
+         :download-dir (io/file "browsertest-downloads")}))
 
 (defn get-driver [] (:driver @test-context))
 (defn get-server-url [] (:url @test-context))
@@ -39,26 +42,22 @@
   (.mkdirs dir)
   (delete-files! dir))
 
-(def reporting-dir (io/file "browsertest-errors"))
-(def accessibility-report-dir (io/file "browsertest-accessibility-report"))
-(def download-dir (io/file "browsertest-downloads"))
-
 (defn- ensure-empty-directories! []
-  (ensure-empty-directory! reporting-dir)
-  (ensure-empty-directory! accessibility-report-dir)
-  (ensure-empty-directory! download-dir))
+  (ensure-empty-directory! (:reporting-dir @test-context))
+  (ensure-empty-directory! (:accessibility-report-dir @test-context))
+  (ensure-empty-directory! (:download-dir @test-context)))
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
-    [(io/file download-dir name-or-regex)]
-    (for [file (.listFiles download-dir)
+    [(io/file (:download-dir @test-context) name-or-regex)]
+    (for [file (.listFiles (:download-dir @test-context))
           :when (re-matches name-or-regex (.getName file))]
       file)))
 
 (defn delete-downloaded-files! [name-or-regex]
   (let [files (if (string? name-or-regex)
-                [(io/file download-dir name-or-regex)]
-                (for [file (.listFiles download-dir)
+                [(io/file (:download-dir @test-context) name-or-regex)]
+                (for [file (.listFiles (:download-dir @test-context))
                       :when (re-matches name-or-regex (.getName file))]
                   file))]
     (doseq [file files]
@@ -81,7 +80,7 @@
                :path [:session (:session @driver) "chromium/send_command"]
                :data {:cmd "Page.setDownloadBehavior"
                       :params {:behavior "allow"
-                               :downloadPath (.getAbsolutePath download-dir)}}}))
+                               :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
 
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
@@ -94,6 +93,7 @@
    Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
   (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
+  (ensure-empty-directories!)
   (swap! test-context
          assoc-some
          :driver (et/with-wait-timeout 60
@@ -103,7 +103,7 @@
                                             :download.directory_upgrade true
                                             :safebrowsing.enabled false
                                             :safebrowsing.disable_download_protection true}
-                                    :download-dir (.getAbsolutePath download-dir)
+                                    :download-dir (.getAbsolutePath (:download-dir @test-context))
                                     :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
                                                        (= :development mode)))}))
          :url url
@@ -111,7 +111,6 @@
          :seed (random-seed))
   (enable-downloads! (get-driver))
   ;; start with a clean slate
-  (ensure-empty-directories!)
   (et/delete-cookies (get-driver)))
 
 (defn fixture-driver
@@ -144,12 +143,15 @@
 
 ;;; etaoin exported
 
+(defn screenshot [filename]
+  (et/screenshot (get-driver)
+                 (io/file (:reporting-dir @test-context) filename)))
+
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
 
 (def set-window-size (wrap-etaoin et/set-window-size))
 (def go (wrap-etaoin et/go))
-(def screenshot (wrap-etaoin et/screenshot))
 (def wait-visible (wrap-etaoin et/wait-visible))
 (def wait-invisible (wrap-etaoin et/wait-invisible))
 (def query-all (wrap-etaoin et/query-all))
@@ -350,5 +352,5 @@
                                  (mapcat #(get % k))
                                  distinct
                                  (sort-by :impact))]]
-        (spit (io/file accessibility-report-dir filename)
+        (spit (io/file (:accessibility-report-dir @test-context) filename)
               (json/generate-string-pretty content))))))

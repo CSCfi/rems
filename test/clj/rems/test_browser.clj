@@ -111,12 +111,12 @@
 (defn login-as [username]
   (btu/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
   (btu/go (btu/get-server-url))
-  (btu/screenshot (io/file btu/reporting-dir "landing-page.png"))
+  (btu/screenshot "landing-page.png")
   (btu/scroll-and-click {:css ".login-btn"})
-  (btu/screenshot (io/file btu/reporting-dir "login-page.png"))
+  (btu/screenshot "login-page.png")
   (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
   (btu/wait-visible :logout)
-  (btu/screenshot (io/file btu/reporting-dir "logged-in.png")))
+  (btu/screenshot "logged-in.png"))
 
 (defn logout []
   (btu/scroll-and-click :logout)
@@ -132,13 +132,13 @@
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "catalogue-page.png")))
+  (btu/screenshot "catalogue-page.png"))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (btu/wait-visible {:tag :h1 :fn/text "Applications"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
+  (btu/screenshot "applications-page.png"))
 
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
@@ -150,7 +150,7 @@
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir (str "administration-page-" (str/replace link-text " " "-") ".png"))))
+  (btu/screenshot (str "administration-page-" (str/replace link-text " " "-") ".png")))
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -170,7 +170,7 @@
                          {:css ".apply-for-catalogue-items"}])
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "application-page.png")))
+  (btu/screenshot "application-page.png"))
 
 ;;; application page
 
@@ -595,11 +595,11 @@
       (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
       (fill-form-field "License name" (str (btu/context-get :license-name) " SV") {:index 3})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
+      (btu/screenshot "about-to-create-license.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "License"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
+      (btu/screenshot "created-license.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-get :license-name) " EN")
@@ -644,11 +644,11 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-get :resid))
       (select-option "License" (str (btu/context-get :license-name) " EN"))
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
+      (btu/screenshot "about-to-create-resource.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Resource"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
+      (btu/screenshot "created-resource.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Resource" (btu/context-get :resid)
@@ -670,11 +670,11 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Form name" (btu/context-get :form-name))
       ;; TODO: create fields
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-form.png"))
+      (btu/screenshot "about-to-create-form.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Form"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-form.png"))
+      (btu/screenshot "created-form.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :form-name)
@@ -696,11 +696,11 @@
       ;; Default workflow is already checked
       (select-option "Handlers" "handler")
       ;; No form
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-workflow.png"))
+      (btu/screenshot "about-to-create-workflow.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-workflow.png"))
+      (btu/screenshot "created-workflow.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :workflow-name)
@@ -727,11 +727,11 @@
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
       (select-option "Form" (btu/context-get :form-name))
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-catalogue-item.png"))
+      (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-catalogue-item.png"))
+      (btu/screenshot "created-catalogue-item.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title (EN)" (btu/context-get :catalogue-item-name)
@@ -761,10 +761,10 @@
   ;; incidentally test search while we're at it
   (btu/fill-human :catalogue-search item-name)
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "about-to-enable-catalogue-item.png"))
+  (btu/screenshot "about-to-enable-catalogue-item.png")
   (btu/scroll-and-click {:tag :button :fn/text "Enable"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
+  (btu/screenshot "enabled-catalogue-item.png")
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
@@ -821,7 +821,7 @@
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
     (btu/wait-page-loaded)
     (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
-    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
+    (btu/screenshot "test-edit-catalogue-item-1.png")
     (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
@@ -834,7 +834,7 @@
             "Resource" "test-edit-catalogue-item resource"}
            (slurp-fields :catalogue-item-editor)))
     (btu/fill-human :infourl-en "http://google.com")
-    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-2.png"))
+    (btu/screenshot "test-edit-catalogue-item-2.png")
     (btu/scroll-and-click :save)
     (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
     (btu/wait-page-loaded)
@@ -1023,12 +1023,12 @@
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-1.png"))
+      (btu/screenshot "test-workflow-create-edit-1.png")
       (btu/scroll-and-click :save))
     (testing "view workflow"
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-2.png"))
+      (btu/screenshot "test-workflow-create-edit-2.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" "test-workflow-create-edit"
@@ -1041,19 +1041,19 @@
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
+      (btu/screenshot "test-workflow-create-edit-3.png")
       (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown}))) ; readonly field
       (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
+      (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-5.png"))
+      (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" "test-workflow-create-edit-v2"
@@ -1080,7 +1080,7 @@
       (is (= [{}] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
-      (btu/screenshot (io/file btu/reporting-dir "test-blacklist-1.png"))
+      (btu/screenshot "test-blacklist-1.png")
       (btu/scroll-and-click :blacklist-add)
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
