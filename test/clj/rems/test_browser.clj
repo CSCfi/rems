@@ -308,7 +308,7 @@
 ;;; tests
 
 (deftest test-new-application
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "alice")
     (btu/gather-axe-results)
 
@@ -441,7 +441,7 @@
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-get :application-id)
                             :actor "alice"}))
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "developer")
     (testing "handler should see todos on logging in"
       (btu/wait-visible :todo-applications))
@@ -512,7 +512,7 @@
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-get :application-id)
                             :actor "alice"}))
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "developer")
     (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
     (btu/wait-visible {:tag :h1 :fn/has-text "test-approve-with-end-date"})
@@ -537,7 +537,7 @@
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-guide-page
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (btu/go (str (btu/get-server-url) "guide"))
     (btu/wait-visible {:tag :h1 :fn/text "Component Guide"})
     ;; if there is a js exception, nothing renders, so let's check
@@ -545,7 +545,7 @@
     (is (< 60 (count (btu/query-all {:class :example}))))))
 
 (deftest test-language-change
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "default language is English"
       (btu/go (btu/get-server-url))
       (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
@@ -582,7 +582,7 @@
 
 (defn create-license []
   (testing "create license"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
@@ -636,7 +636,7 @@
 
 (defn create-resource []
   (testing "create resource"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
@@ -662,7 +662,7 @@
 
 (defn create-form []
   (testing "create form"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
@@ -686,7 +686,7 @@
 
 (defn create-workflow []
   (testing "create workflow"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
       (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
@@ -715,7 +715,7 @@
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
@@ -768,7 +768,7 @@
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
       (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
@@ -793,7 +793,7 @@
       (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
 
 (deftest test-edit-catalogue-item
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
     (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
     (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-get :organization-id)
@@ -891,7 +891,7 @@
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
 (deftest test-form-editor
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Forms")
 
@@ -1009,7 +1009,7 @@
                                      "x-rems-user-id" "handler"}}))))))))
 
 (deftest test-workflow-create-edit
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Workflows")
     (testing "create workflow"
@@ -1065,7 +1065,7 @@
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "set up resource & user"
       (test-helpers/create-resource! {:resource-ext-id "blacklist-test"})
       (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
@@ -1118,7 +1118,7 @@
       (is (= [{}] (slurp-rows :blacklist))))))
 
 (deftest test-report
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
       (btu/context-assoc! :form-id (test-helpers/create-form! {:form/title (btu/context-get :form-title)
@@ -1181,7 +1181,7 @@
   (test-helpers/create-user! {:eppn "organization-owner2" :commonName "Organization Owner 2"
                               :mail "organization-owner2@example.com" :organizations [{:organization/id "Default"}]} :owner)
 
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Organizations")
 

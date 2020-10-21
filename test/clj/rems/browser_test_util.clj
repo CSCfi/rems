@@ -147,6 +147,11 @@
   (et/screenshot (get-driver)
                  (io/file (:reporting-dir @test-context) filename)))
 
+(defmacro with-postmortem [& args]
+  `(et/with-postmortem (get-driver)
+     {:dir (:reporting-dir @test-context)}
+     ~@args))
+
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
 
@@ -174,7 +179,6 @@
 (def click (wrap-etaoin et/click))
 (def visible? (wrap-etaoin et/visible?))
 (def displayed-el? (wrap-etaoin et/displayed-el?))
-(defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
 (def has-class? (wrap-etaoin et/has-class?))
