@@ -102,6 +102,7 @@
 
 (use-fixtures
   :once
+  btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
   create-test-data
   btu/accessibility-report-fixture)

@@ -93,7 +93,6 @@
    Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
   (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
-  (ensure-empty-directories!)
   (swap! test-context
          assoc-some
          :driver (et/with-wait-timeout 60
@@ -139,13 +138,28 @@
                       (standalone-fixture f)))
                   smoke-test]))
 
+(defn ensure-empty-directories-fixture [f]
+  (ensure-empty-directories!)
+  (f))
 
+(defn- get-sequence-number []
+  (:sequence-number (swap! test-context update :sequence-number (fnil inc 0))))
+
+(defn- get-current-test-name []
+  (if-let [test-var (first clojure.test/*testing-vars*)]
+    (name (symbol test-var))
+    "unknown"))
 
 ;;; etaoin exported
 
 (defn screenshot [filename]
-  (et/screenshot (get-driver)
-                 (io/file (:reporting-dir @test-context) filename)))
+  (let [full-filename (format "%03d-%s-%s"
+                              (get-sequence-number)
+                              (get-current-test-name)
+                              filename)
+        file (io/file (:reporting-dir @test-context) full-filename)]
+    (et/screenshot (get-driver)
+                   file)))
 
 (defmacro with-postmortem [& args]
   `(et/with-postmortem (get-driver)
