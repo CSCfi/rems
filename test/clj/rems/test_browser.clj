@@ -9,7 +9,6 @@
 
   NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
-            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
@@ -20,83 +19,14 @@
             [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.test-data-users :as test-users]
-            [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
+            [rems.db.user-settings :as user-settings]
             [rems.standalone]
             [rems.testing-util :refer [with-user]]
-            [rems.text :as text]
-            [rems.db.api-key :as api-key]
-            [rems.db.test-data :as test-data]))
+            [rems.text :as text]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
-
-(defn- create-test-data [f]
-  (api-key/add-api-key! 42 {:comment "test data"})
-  ;; Organizations
-  (test-helpers/create-organization! {:actor "owner"})
-  (test-helpers/create-organization! {:actor "owner"
-                                      :organization/id "nbn"
-                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/owners [{:userid "organization-owner2"}]
-                                      :organization/review-emails []})
-  ;; Users
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "owner"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
-  (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
-  (test-helpers/create-workflow! nil) ;;master workflow
-  ;; Forms, workflows etc.
-  (let [link (test-helpers/create-license! {:actor "owner"
-                                            :license/type :link
-                                            :organization {:organization/id "nbn"}
-                                            :license/title {:en "CC Attribution 4.0"
-                                                            :fi "CC Nimeä 4.0"
-                                                            :sv "CC Erkännande 4.0"}
-                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
-        text (test-helpers/create-license! {:actor "owner"
-                                            :license/type :text
-                                            :organization {:organization/id "nbn"}
-                                            :license/title {:en "General Terms of Use"
-                                                            :fi "Yleiset käyttöehdot"
-                                                            :sv "Allmänna villkor"}
-                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
-                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
-        wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
-        decider-wf (test-helpers/create-workflow! {:actor "owner"
-                                                   :organization {:organization/id "nbn"}
-                                                   :title "Decider workflow"
-                                                   :type :workflow/decider
-                                                   :handlers ["carl" "handler"]})
-        form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Form")
-        simple-form (test-helpers/create-form! {:actor "owner"
-                                                :organization {:organization/id "nbn"}
-                                                :form/title "Simple form"
-                                                :form/fields [{:field/title {:en "Simple text field"
-                                                                             :fi "Yksinkertainen tekstikenttä"
-                                                                             :sv "Textfält"}
-                                                               :field/optional false
-                                                               :field/type :text
-                                                               :field/max-length 100
-                                                               :field/privacy :private}]})
-        res-id1 (test-helpers/create-resource! nil)
-        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
-                                                                                               :sv "sv"} :resource-id res-id1})
-        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
-    (test-helpers/create-workflow-licence! wfid link)
-    (test-helpers/create-workflow-licence! wfid text)
-    (test-helpers/create-workflow-licence! decider-wf link)
-    (test-helpers/create-workflow-licence! decider-wf text)
-    (test-helpers/submit-application app-id "applicant"))
-  (f))
 
 (use-fixtures :each btu/fixture-driver)
 
@@ -104,7 +34,7 @@
   :once
   btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
-  create-test-data
+  btu/smoke-test
   btu/accessibility-report-fixture)
 
 ;;; common functionality
