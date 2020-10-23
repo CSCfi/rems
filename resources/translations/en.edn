@@ -277,7 +277,9 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
-  :email {:application-approved {:subject-to-applicant "Your application %3 has been approved"
+  :email {:actor-invited {:subject "Invitation to participate in handling application %3"
+                          :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
+          :application-approved {:subject-to-applicant "Your application %3 has been approved"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision at %6"
                                  :subject-to-handler "(%3) Application has been approved"
                                  :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can view the application and the decision at %6"}

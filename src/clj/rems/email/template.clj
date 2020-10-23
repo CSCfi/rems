@@ -199,6 +199,24 @@
                (text :t.email/regards)
                (text :t.email/footer))}])))
 
+(defmethod event-to-emails :application.event/actor-invited [event application]
+  (with-language (:default-language env)
+    (fn []
+      [{:to (:email (:application/actor event))
+        :subject (text-format :t.email.actor-invited/subject
+                              (:name (:application/actor event))
+                              (application-util/get-applicant-name application)
+                              (format-application-for-email application)
+                              (invitation-link (:invitation/token event)))
+        :body (str
+               (text-format :t.email.actor-invited/message
+                            (:name (:application/actor event))
+                            (application-util/get-applicant-name application)
+                            (format-application-for-email application)
+                            (invitation-link (:invitation/token event)))
+               (text :t.email/regards)
+               (text :t.email/footer))}])))
+
 ;; TODO member-joined?
 
 (defn handler-reminder-email [lang handler applications]

@@ -376,6 +376,16 @@
               :body "Dear Amber Assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
              (email-to "assistant" mails))))))
 
+(deftest test-invite-actor
+  (is (= [{:to "actor@example.com"
+           :subject "Invitation to participate in handling application 2001/3, \"Application title\""
+           :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
+         (emails base-events {:application/id 7
+                              :event/type :application.event/actor-invited
+                              :application/actor {:email "actor@example.com" :name "Adam Actor"}
+                              :invitation/role :reviewer
+                              :invitation/token "abc123"}))))
+
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:fi :t :email :regards] "")]

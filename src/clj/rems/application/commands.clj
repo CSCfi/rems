@@ -517,8 +517,9 @@
                           :invitation/token (:token cmd)}]))
       actor-invitation
       ;; TODO it's nice to separate the concerns by emitting two
-      ;; events here, but the event log in the UI might now be a bit
-      ;; confusing.
+      ;; events here, but the downsides are:
+      ;; - potentially confusing event log in UI
+      ;; - extra email sent to reviewer ("foo has requested your review on bar") after accepting invitation
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/actor-joined
                       :application/id (:application-id cmd)

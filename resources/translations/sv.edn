@@ -275,7 +275,9 @@
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
-  :email {:application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
+  :email {:actor-invited {:subject "Inbjudan att delta i behandling av ansökan %3" ; TODO check
+                          :message "%1,\n\nDu är inbjuden att delta i handling av %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen här: %4"} ; TODO check
+          :application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
                                  :message-to-applicant "%1,\n\nDin ansökan %3 är godkänd.\n\nDu kan granska ansökningen och beslutet här: %6"
                                  :subject-to-handler "(%3) Ansökan är godkänd"
                                  :message-to-handler "%1,\n\n%2 har godkänt ansökan %3 från %4.\n\nDu kan granska ansökningen och beslutet här: %6"}
