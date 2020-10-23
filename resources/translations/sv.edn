@@ -139,8 +139,8 @@
                  :description "Rubrik"
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
-                 :events {:actor-invited "TODO"
-                          :actor-joined "TODO"
+                 :events {:actor-invited "%1 bjöd in %2 som granskare" ; TODO check
+                          :actor-joined "%1 blev granskare" ; TODO check
                           :approved "%1 godkände ansökan."
                           :closed "%1 stängde ansökan."
                           :copied-from "%1 kopierade ansökan från en tidigare ansökan."

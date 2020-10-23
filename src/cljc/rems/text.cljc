@@ -173,7 +173,8 @@
         :application.event/external-id-assigned
         (:application/external-id event)
 
-        (:application.event/member-added
+        (:application.event/actor-invited
+         :application.event/member-added
          :application.event/member-invited
          :application.event/member-removed
          :application.event/member-uninvited)
