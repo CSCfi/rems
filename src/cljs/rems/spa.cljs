@@ -101,6 +101,7 @@
     :languages [:en]
     :default-language :en
     :translations {}
+    ::grab-focus? true
     :identity {:user nil :roles nil}}))
 
 (rf/reg-event-db
@@ -300,10 +301,11 @@
   [:div.logo [:div.container.img]])
 
 (defn main-content [_page-id _grab-focus?]
-  (let [on-update (fn [this]
+  (let [on-update (fn [& [this :as args]]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
                       (when grab-focus?
-                        (when-let [element (.querySelector js/document "#main-content")]
+                        (when-let [element (or (.querySelector js/document "h1")
+                                               (.querySelector js/document "#main-content"))]
                           (focus/focus element)
                           (rf/dispatch [::focus-grabbed])))))]
     (r/create-class
