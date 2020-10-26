@@ -9,7 +9,6 @@
 
   NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
-            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
@@ -20,99 +19,35 @@
             [rems.browser-test-util :as btu]
             [rems.config]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.test-data-users :as test-users]
-            [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
+            [rems.db.user-settings :as user-settings]
             [rems.standalone]
             [rems.testing-util :refer [with-user]]
-            [rems.text :as text]
-            [rems.db.api-key :as api-key]
-            [rems.db.test-data :as test-data]))
+            [rems.text :as text]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
-(defn- create-test-data [f]
-  (api-key/add-api-key! 42 {:comment "test data"})
-  ;; Organizations
-  (test-helpers/create-organization! {:actor "owner"})
-  (test-helpers/create-organization! {:actor "owner"
-                                      :organization/id "nbn"
-                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                                      :organization/owners [{:userid "organization-owner2"}]
-                                      :organization/review-emails []})
-  ;; Users
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "owner"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
-  (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
-  (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
-  (test-helpers/create-workflow! nil) ;;master workflow
-  ;; Forms, workflows etc.
-  (let [link (test-helpers/create-license! {:actor "owner"
-                                            :license/type :link
-                                            :organization {:organization/id "nbn"}
-                                            :license/title {:en "CC Attribution 4.0"
-                                                            :fi "CC Nimeä 4.0"
-                                                            :sv "CC Erkännande 4.0"}
-                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
-        text (test-helpers/create-license! {:actor "owner"
-                                            :license/type :text
-                                            :organization {:organization/id "nbn"}
-                                            :license/title {:en "General Terms of Use"
-                                                            :fi "Yleiset käyttöehdot"
-                                                            :sv "Allmänna villkor"}
-                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
-                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
-        wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
-        decider-wf (test-helpers/create-workflow! {:actor "owner"
-                                                   :organization {:organization/id "nbn"}
-                                                   :title "Decider workflow"
-                                                   :type :workflow/decider
-                                                   :handlers ["carl" "handler"]})
-        form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Form")
-        simple-form (test-helpers/create-form! {:actor "owner"
-                                                :organization {:organization/id "nbn"}
-                                                :form/title "Simple form"
-                                                :form/fields [{:field/title {:en "Simple text field"
-                                                                             :fi "Yksinkertainen tekstikenttä"
-                                                                             :sv "Textfält"}
-                                                               :field/optional false
-                                                               :field/type :text
-                                                               :field/max-length 100
-                                                               :field/privacy :private}]})
-        res-id1 (test-helpers/create-resource! nil)
-        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
-                                                                                               :sv "sv"} :resource-id res-id1})
-        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
-    (test-helpers/create-workflow-licence! wfid link)
-    (test-helpers/create-workflow-licence! wfid text)
-    (test-helpers/create-workflow-licence! decider-wf link)
-    (test-helpers/create-workflow-licence! decider-wf text)
-    (test-helpers/submit-application app-id "applicant"))
-  (f))
-
 (use-fixtures :each btu/fixture-driver)
 
-(use-fixtures :once btu/test-dev-or-standalone-fixture create-test-data)
+(use-fixtures
+  :once
+  btu/ensure-empty-directories-fixture
+  btu/test-dev-or-standalone-fixture
+  btu/smoke-test
+  btu/accessibility-report-fixture)
 
 ;;; common functionality
 
 (defn login-as [username]
   (btu/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
   (btu/go (btu/get-server-url))
-  (btu/screenshot (io/file btu/reporting-dir "landing-page.png"))
+  (btu/screenshot "landing-page.png")
   (btu/scroll-and-click {:css ".login-btn"})
-  (btu/screenshot (io/file btu/reporting-dir "login-page.png"))
+  (btu/screenshot "login-page.png")
   (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
   (btu/wait-visible :logout)
-  (btu/screenshot (io/file btu/reporting-dir "logged-in.png")))
+  (btu/screenshot "logged-in.png"))
 
 (defn logout []
   (btu/scroll-and-click :logout)
@@ -128,13 +63,13 @@
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "catalogue-page.png")))
+  (btu/screenshot "catalogue-page.png"))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (btu/wait-visible {:tag :h1 :fn/text "Applications"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "applications-page.png")))
+  (btu/screenshot "applications-page.png"))
 
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
@@ -146,7 +81,7 @@
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir (str "administration-page-" (str/replace link-text " " "-") ".png"))))
+  (btu/screenshot (str "administration-page-" (str/replace link-text " " "-") ".png")))
 
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -166,7 +101,7 @@
                          {:css ".apply-for-catalogue-items"}])
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "application-page.png")))
+  (btu/screenshot "application-page.png"))
 
 ;;; application page
 
@@ -304,13 +239,16 @@
 ;;; tests
 
 (deftest test-new-application
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "alice")
+    (btu/gather-axe-results)
 
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
+      (btu/gather-axe-results)
       (apply-for-resource "Default workflow")
+      (btu/gather-axe-results)
 
       (btu/context-assoc! :application-id (get-application-id))
 
@@ -356,7 +294,10 @@
         ;; leave "Text are with max length" empty
 
         (accept-licenses)
+        (btu/gather-axe-results)
+
         (send-application)
+        (btu/gather-axe-results)
 
         (is (= "Applied" (btu/get-element-text :application-state)))
 
@@ -369,6 +310,7 @@
 
             (testing "see application on applications page"
               (go-to-applications)
+              (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
                       :resource "Default workflow"
@@ -414,6 +356,7 @@
                                      {:css ".btn-primary"}])
               (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
               (btu/wait-page-loaded)
+              (btu/gather-axe-results)
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
@@ -429,7 +372,7 @@
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-get :application-id)
                             :actor "alice"}))
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "developer")
     (testing "handler should see todos on logging in"
       (btu/wait-visible :todo-applications))
@@ -500,7 +443,7 @@
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-get :application-id)
                             :actor "alice"}))
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "developer")
     (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
     (btu/wait-visible {:tag :h1 :fn/has-text "test-approve-with-end-date"})
@@ -525,7 +468,7 @@
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
 (deftest test-guide-page
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (btu/go (str (btu/get-server-url) "guide"))
     (btu/wait-visible {:tag :h1 :fn/text "Component Guide"})
     ;; if there is a js exception, nothing renders, so let's check
@@ -533,7 +476,7 @@
     (is (< 60 (count (btu/query-all {:class :example}))))))
 
 (deftest test-language-change
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "default language is English"
       (btu/go (btu/get-server-url))
       (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
@@ -570,7 +513,7 @@
 
 (defn create-license []
   (testing "create license"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
@@ -583,11 +526,11 @@
       (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
       (fill-form-field "License name" (str (btu/context-get :license-name) " SV") {:index 3})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
+      (btu/screenshot "about-to-create-license.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "License"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
+      (btu/screenshot "created-license.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-get :license-name) " EN")
@@ -624,7 +567,7 @@
 
 (defn create-resource []
   (testing "create resource"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
@@ -632,11 +575,11 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-get :resid))
       (select-option "License" (str (btu/context-get :license-name) " EN"))
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
+      (btu/screenshot "about-to-create-resource.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Resource"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
+      (btu/screenshot "created-resource.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Resource" (btu/context-get :resid)
@@ -650,7 +593,7 @@
 
 (defn create-form []
   (testing "create form"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
@@ -658,11 +601,11 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Form name" (btu/context-get :form-name))
       ;; TODO: create fields
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-form.png"))
+      (btu/screenshot "about-to-create-form.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Form"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-form.png"))
+      (btu/screenshot "created-form.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :form-name)
@@ -674,7 +617,7 @@
 
 (defn create-workflow []
   (testing "create workflow"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
       (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
@@ -684,11 +627,11 @@
       ;; Default workflow is already checked
       (select-option "Handlers" "handler")
       ;; No form
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-workflow.png"))
+      (btu/screenshot "about-to-create-workflow.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-workflow.png"))
+      (btu/screenshot "created-workflow.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-get :workflow-name)
@@ -703,7 +646,7 @@
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
-    (btu/with-postmortem {:dir btu/reporting-dir}
+    (btu/with-postmortem
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
@@ -715,11 +658,11 @@
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
       (select-option "Form" (btu/context-get :form-name))
-      (btu/screenshot (io/file btu/reporting-dir "about-to-create-catalogue-item.png"))
+      (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "created-catalogue-item.png"))
+      (btu/screenshot "created-catalogue-item.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title (EN)" (btu/context-get :catalogue-item-name)
@@ -749,14 +692,14 @@
   ;; incidentally test search while we're at it
   (btu/fill-human :catalogue-search item-name)
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "about-to-enable-catalogue-item.png"))
+  (btu/screenshot "about-to-enable-catalogue-item.png")
   (btu/scroll-and-click {:tag :button :fn/text "Enable"})
   (btu/wait-page-loaded)
-  (btu/screenshot (io/file btu/reporting-dir "enabled-catalogue-item.png"))
+  (btu/screenshot "enabled-catalogue-item.png")
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
       (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
@@ -781,7 +724,7 @@
       (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
 
 (deftest test-edit-catalogue-item
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
     (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
     (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-get :organization-id)
@@ -809,7 +752,7 @@
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
     (btu/wait-page-loaded)
     (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
-    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-1.png"))
+    (btu/screenshot "test-edit-catalogue-item-1.png")
     (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
@@ -822,7 +765,7 @@
             "Resource" "test-edit-catalogue-item resource"}
            (slurp-fields :catalogue-item-editor)))
     (btu/fill-human :infourl-en "http://google.com")
-    (btu/screenshot (io/file btu/reporting-dir "test-edit-catalogue-item-2.png"))
+    (btu/screenshot "test-edit-catalogue-item-2.png")
     (btu/scroll-and-click :save)
     (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
     (btu/wait-page-loaded)
@@ -879,7 +822,7 @@
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
 (deftest test-form-editor
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Forms")
 
@@ -1031,7 +974,7 @@
 ))
 
 (deftest test-workflow-create-edit
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Workflows")
     (testing "create workflow"
@@ -1045,12 +988,12 @@
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-1.png"))
+      (btu/screenshot "test-workflow-create-edit-1.png")
       (btu/scroll-and-click :save))
     (testing "view workflow"
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-2.png"))
+      (btu/screenshot "test-workflow-create-edit-2.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" "test-workflow-create-edit"
@@ -1063,19 +1006,19 @@
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-3.png"))
+      (btu/screenshot "test-workflow-create-edit-3.png")
       (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown}))) ; readonly field
       (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-4.png"))
+      (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
       (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
       (btu/wait-page-loaded)
-      (btu/screenshot (io/file btu/reporting-dir "test-workflow-create-edit-5.png"))
+      (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" "test-workflow-create-edit-v2"
@@ -1087,7 +1030,7 @@
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "set up resource & user"
       (test-helpers/create-resource! {:resource-ext-id "blacklist-test"})
       (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
@@ -1102,7 +1045,7 @@
       (is (= [{}] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
-      (btu/screenshot (io/file btu/reporting-dir "test-blacklist-1.png"))
+      (btu/screenshot "test-blacklist-1.png")
       (btu/scroll-and-click :blacklist-add)
       (btu/wait-visible {:css ".alert-success"})
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
@@ -1140,7 +1083,7 @@
       (is (= [{}] (slurp-rows :blacklist))))))
 
 (deftest test-report
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
       (btu/context-assoc! :form-id (test-helpers/create-form! {:form/title (btu/context-get :form-title)
@@ -1203,7 +1146,7 @@
   (test-helpers/create-user! {:eppn "organization-owner2" :commonName "Organization Owner 2"
                               :mail "organization-owner2@example.com" :organizations [{:organization/id "Default"}]} :owner)
 
-  (btu/with-postmortem {:dir btu/reporting-dir}
+  (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Organizations")
 
