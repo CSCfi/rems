@@ -5,7 +5,11 @@
             [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
 
-(use-fixtures :once test-db-fixture caches-fixture)
+(use-fixtures
+  :once
+  test-db-fixture
+  caches-fixture)
+
 (use-fixtures :each rollback-db-fixture)
 
 (defn- create-users []

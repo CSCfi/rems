@@ -21,12 +21,14 @@ Changes since v2.13
 - Catalogue item editor didn't properly show forms, resources or workflows if they were disabled or archived (#2335)
 - Workflow editor didn't properly show forms that were disabled or archived (#2335)
 - Check file extensions ignoring case (#2392)
+- Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 - Experimental permissions API that produces GA4GH Visas is now documented in [docs/ga4gh-visas.md](docs/ga4gh-visas.md)
 - OIDC scopes are configurable via `:oidc-scopes`. See [docs/configuration.md](docs/configuration.md).
 - REMS now reads GA4GH Passports on login and stores the ResearcherStatus of the user. See [docs/ga4gh-visas.md](docs/ga4gh-visas.md). (#2124)
+- Automated accessibility test report using [axe](https://www.deque.com/axe/) (#2263)
 - Settings page renamed to Profile, now also contains info about user attributes.
 
 ## v2.13 "Etelätuulentie" 2020-09-17

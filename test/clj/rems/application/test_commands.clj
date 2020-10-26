@@ -1086,24 +1086,6 @@
                           :member {:name "Member Applicant 1"
                                    :email "member1@applicants.com"}}
                          injections))))
-    (testing "handler can invite members"
-      (let [application (apply-events application [{:event/type :application.event/submitted
-                                                    :event/time test-time
-                                                    :event/actor applicant-user-id
-                                                    :application/id app-id}])]
-        (is (= {:event/type :application.event/member-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}
-                :invitation/token "very-secure"}
-               (ok-command application
-                           {:type :application.command/invite-member
-                            :actor handler-user-id
-                            :member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}}
-                           injections)))))
     (testing "other users cannot invite members"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
@@ -1126,12 +1108,19 @@
                                        :email "member1@applicants.com"}}
                              injections))))
       (testing "handler can invite members to submitted application"
-        (is (ok-command submitted
-                        {:type :application.command/invite-member
-                         :actor handler-user-id
-                         :member {:name "Member Applicant 1"
-                                  :email "member1@applicants.com"}}
-                        injections))))))
+        (is (= {:event/type :application.event/member-invited
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id app-id
+                :application/member {:name "Member Applicant 1"
+                                     :email "member1@applicants.com"}
+                :invitation/token "very-secure"}
+               (ok-command submitted
+                           {:type :application.command/invite-member
+                            :actor handler-user-id
+                            :member {:name "Member Applicant 1"
+                                     :email "member1@applicants.com"}}
+                           injections)))))))
 
 (deftest test-accept-invitation
   (let [application (apply-events nil
