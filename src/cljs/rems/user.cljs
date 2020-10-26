@@ -7,11 +7,15 @@
             [rems.text :refer [text localized]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn username [attributes]
+(defn username
+  "A rems.atoms/info-field with the name of the user."
+  [attributes]
   (when-let [name (get-member-name attributes)]
     [info-field (text :t.applicant-info/name) name {:inline? true}]))
 
-(defn attributes [attributes]
+(defn attributes
+  "A div with a rems.atoms/info-field for every user attribute in the given attributes."
+  [attributes]
   (let [language @(rf/subscribe [:language])
         organization-by-id @(rf/subscribe [:organization-by-id])
         organization-name-if-known (fn [organization]
