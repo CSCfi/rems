@@ -35,8 +35,17 @@
    {:modules [(JodaModule.)]
     :decode-key-fn keyword}))
 
+(def mapper-pretty
+  (j/object-mapper
+   {:modules [(JodaModule.)]
+    :pretty true
+    :decode-key-fn keyword}))
+
 (defn generate-string [obj]
   (j/write-value-as-string obj mapper))
+
+(defn generate-string-pretty [obj]
+  (j/write-value-as-string obj mapper-pretty))
 
 (defn parse-string [json]
   (j/read-value json mapper))

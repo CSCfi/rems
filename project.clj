@@ -54,6 +54,7 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [org.postgresql/postgresql "42.2.16"]
                  [org.webjars.bower/tether "1.4.4"]
+                 [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
                  [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/diff-match-patch "1.0.4"]

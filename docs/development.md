@@ -134,3 +134,11 @@ You can access the component guide at `/guide`. It contains all the UI
 components in various configurations and is useful for example to develop and document UI components.
 
 See a running guide as example [https://rems-dev.rahtiapp.fi/guide](https://rems-dev.rahtiapp.fi/guide).
+
+## Automated accessibility test report
+
+We use [axe](https://www.deque.com/axe/) for automated accessibility tests.
+
+The preferable way is to run the browser test suite, or let CI run it, and see what is recorded in the `browsertest-accessibility-report` directory, for example `violations.json` file.
+
+By enabling the configuration option `:accessibility-report` you can have the tool running and accessible also from `window.axe` object in the browser console. This should be enabled in the dev and test configs for you.
