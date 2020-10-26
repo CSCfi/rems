@@ -1,6 +1,7 @@
 (ns rems.profile
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
+            [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
             [rems.spinner :as spinner]
@@ -66,36 +67,40 @@
         form @(rf/subscribe [::form])]
     [:<>
      [document-title (text :t.navigation/profile)]
-     [:h2 (text :t.profile/settings)]
      [flash-message/component :top]
-     (if @(rf/subscribe [::user-settings :fetching?])
-       [spinner/big]
-       [:form
-        {:on-submit (fn [event]
-                      (.preventDefault event)
-                      (rf/dispatch [::save]))}
+     [collapsible/component
+      {:title (text :t.profile/settings)
+       :always (if @(rf/subscribe [::user-settings :fetching?])
+                 [spinner/big]
+                 [:form
+                  {:on-submit (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [::save]))}
 
-        [:div.form-group
-         (text :t.profile/idp-email) ": " (or (:email (:user identity))
-                                               [:span.text-muted (text :t.profile/no-email)])]
+                  [:div.form-group
+                   (text :t.profile/idp-email) ": " (or (:email (:user identity))
+                                                        [:span.text-muted (text :t.profile/no-email)])]
 
-        (let [id "notification-email"]
-          [:div.form-group
-           [:label {:for id} (text :t.profile/notification-email) ":"]
-           [:input.form-control
-            {:type "email"
-             :id id
-             :value (:notification-email form)
-             :on-change (fn [event]
-                          (let [value (.. event -target -value)]
-                            (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
+                  (let [id "notification-email"]
+                    [:div.form-group
+                     [:label {:for id} (text :t.profile/notification-email) ":"]
+                     [:input.form-control
+                      {:type "email"
+                       :id id
+                       :value (:notification-email form)
+                       :on-change (fn [event]
+                                    (let [value (.. event -target -value)]
+                                      (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
 
-        [:button.btn.btn-primary
-         {:type "submit"}
-         (text :t.profile/save)]])
-     [:h2 (text :t.profile/your-details)]
-     [user/username (:user identity)]
-     [user/attributes (:user identity)]]))
+                  [:button.btn.btn-primary
+                   {:type "submit"}
+                   (text :t.profile/save)]])}]
+     [:div.mt-3
+      [collapsible/component
+       {:title (text :t.profile/your-details)
+        :always [:<>
+                 [user/username (:user identity)]
+                 [user/attributes (:user identity)]]}]]]))
 
 (defn guide []
   [:div
