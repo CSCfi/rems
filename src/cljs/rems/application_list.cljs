@@ -178,7 +178,7 @@
     [:div.applications.alert.alert-danger @(rf/subscribe [applications :error])]
 
     (empty? @(rf/subscribe [applications]))
-    [:div.applications.alert.alert-secondary (text :t.applications/empty)]
+    [:div.applications.alert.alert-secondary.mt-3 (text :t.applications/empty)]
 
     :else
     [list (-> (application-list-defaults)

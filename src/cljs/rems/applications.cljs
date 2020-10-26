@@ -43,7 +43,7 @@
                                      :default-sort-column :created
                                      :default-sort-order :desc}]
         (when (roles/show-all-applications? (:roles identity))
-          [:div
+          [:<>
            [:h2 (text :t.applications/all-applications)]
            [search/application-search-field {:id "all-applications-search"
                                              :on-search #(rf/dispatch [::all-applications {:query %}])
