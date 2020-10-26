@@ -390,7 +390,7 @@
                :change-language "Vaihda kieleksi %1"
                :home "Etusivu"
                :logout "Kirjaudu ulos"
-               :settings "Asetukset"
+               :profile "Profiili"
                :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}
@@ -414,6 +414,7 @@
              :no-email "(ei sähköpostiosoitetta)"
              :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
              :save "Tallenna"
+             :settings "Asetukset"
              :warning-about-missing-email [:<> "Sinun on " [:a {:href "/settings"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
              :your-details "Käyttäjätietosi"}
   :table {:ascending-order "Nouseva järjestys"

@@ -65,7 +65,8 @@
   (let [identity @(rf/subscribe [:identity])
         form @(rf/subscribe [::form])]
     [:<>
-     [document-title (text :t.navigation/settings)]
+     [document-title (text :t.navigation/profile)]
+     [:h2 (text :t.settings/settings)]
      [flash-message/component :top]
      (if @(rf/subscribe [::user-settings :fetching?])
        [spinner/big]

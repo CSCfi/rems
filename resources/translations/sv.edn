@@ -390,7 +390,7 @@
                :change-language "Byt språk till %1"
                :home "Ingångssida"
                :logout "Logga ut"
-               :settings "Inställningar"
+               :profile "Profil" ; TODO check
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
@@ -414,6 +414,7 @@
              :no-email "(ingen e-postadress)"
              :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
              :save "Spara"
+             :settings "Inställningar"
              :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
              :your-details "Dina användardetaljer"} ; TODO check
   :table {:ascending-order "Stigande"

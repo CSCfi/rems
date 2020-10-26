@@ -488,7 +488,7 @@
   (rf/dispatch [:rems.extra-pages/enter-page page-id])
   (rf/dispatch [:set-active-page :extra-pages]))
 
-(secretary/defroute "/settings" []
+(secretary/defroute "/profile" []
   (rf/dispatch [:rems.settings/enter-page])
   (rf/dispatch [:set-active-page :settings]))
 
