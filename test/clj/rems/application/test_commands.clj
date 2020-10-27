@@ -1203,7 +1203,7 @@
                                 :token "very-secure"}
                                injections)))))
 
-      (testing "can't be use invalid token"
+      (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
                (fail-command member-invited
                              {:type :application.command/accept-invitation
@@ -1269,7 +1269,7 @@
                                         :application/actor {:name "Some Body" :email "somebody@applicants.com"}
                                         :invitation/role :reviewer
                                         :invitation/token "very-secure"}])]
-      (testing "can join draft"
+      (testing "can join submitted application"
         (let [[joined request] (ok-command actor-invited
                                            {:type :application.command/accept-invitation
                                             :actor "somebody"
@@ -1290,7 +1290,7 @@
                   :application/reviewers ["somebody"]
                   :application/request-id (:application/request-id request)}
                  request))))
-      (testing "can't be use invalid token"
+      (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
                (fail-command actor-invited
                              {:type :application.command/accept-invitation
