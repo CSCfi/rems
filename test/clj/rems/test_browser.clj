@@ -936,6 +936,7 @@
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
         (btu/wait-visible {:tag :h1 :fn/has-text "Form"})
+        (btu/scroll-query-el (first (btu/query-all {:tag :label :class :application-field-label})) {"block" "center"})
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
 
     (testing "fetch form via api"
