@@ -940,14 +940,14 @@
 
       (btu/scroll-and-click :save))
 
-      (testing "view form"
-        (btu/wait-visible {:tag :h1 :fn/text "Form"})
-        (btu/wait-page-loaded)
-        (is (= {"Organization" "NBN"
+    (testing "view form"
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (btu/wait-page-loaded)
+      (is (= {"Organization" "NBN"
               "Title" "Form editor test"
               "Active" true}
              (slurp-fields :form)))
-        (testing "preview"
+      (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
         (btu/wait-visible {:tag :button :fn/has-class :info-button})
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
@@ -1047,8 +1047,7 @@
               (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                         {:as :json
                          :headers {"x-rems-api-key" "42"
-                                   "x-rems-user-id" "handler"}}))))))
-))
+                                   "x-rems-user-id" "handler"}}))))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
