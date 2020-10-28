@@ -1131,7 +1131,7 @@
                            {:type :application.command/invite-reviewer
                             :actor applicant-user-id
                             :reviewer {:name "A Reviewer"
-                                      :email "reviewer@applicants.com"}}
+                                       :email "reviewer@applicants.com"}}
                            injections))))
     (testing "applicant can't invite decider for draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -1171,7 +1171,7 @@
                            {:type :application.command/invite-decider
                             :actor handler-user-id
                             :decider {:name "A Decider"
-                                       :email "decider@applicants.com"}}
+                                      :email "decider@applicants.com"}}
                            injections))))
       (doseq [user [applicant-user-id "member1"]]
         (testing (str user " users cannot invite reviewer for submitted")
@@ -1188,7 +1188,7 @@
                                {:type :application.command/invite-decider
                                 :actor user
                                 :decider {:name "A Decider"
-                                           :email "decider@applicants.com"}}
+                                          :email "decider@applicants.com"}}
                                injections))))))))
 
 (deftest test-accept-invitation
@@ -1283,17 +1283,17 @@
                                  injections))))))))
   (testing "invited reviewer"
     (let [reviewer-invited (apply-events nil
-                                      [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}
-                                       {:event/type :application.event/reviewer-invited
-                                        :event/time test-time
-                                        :event/actor handler-user-id
-                                        :application/id app-id
-                                        :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
-                                        :invitation/token "very-secure"}])]
+                                         [dummy-created-event
+                                          {:event/type :application.event/submitted
+                                           :event/time test-time
+                                           :event/actor applicant-user-id
+                                           :application/id app-id}
+                                          {:event/type :application.event/reviewer-invited
+                                           :event/time test-time
+                                           :event/actor handler-user-id
+                                           :application/id app-id
+                                           :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
+                                           :invitation/token "very-secure"}])]
       (testing "can join submitted application"
         (let [event (ok-command reviewer-invited
                                 {:type :application.command/accept-invitation
