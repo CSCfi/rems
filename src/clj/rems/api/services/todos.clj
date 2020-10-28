@@ -32,8 +32,9 @@
 
 (deftest test-todo-commands
   (let [non-todo-commands
-        #{;; only done by the applicant or members
+        #{;; always available
           :application.command/accept-invitation
+          ;; only done by the applicant or members
           :application.command/accept-licenses
           :application.command/copy-as-new
           :application.command/create
