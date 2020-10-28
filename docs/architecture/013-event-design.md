@@ -95,19 +95,21 @@ Problems:
 ## Discussion
 
 Since REMS commands are part of our public API, it makes sense to keep
-commands large. This way the user's intent can usually be represented
-with one command, keeping the frontend simple. Also, since one command
-means one database transaction (see [ADR 010: Database
+commands large (that is, one command does a lot of things). This way
+the user's intent can usually be represented with one command, keeping
+the frontend simple. Also, since one command means one database
+transaction (see [ADR 010: Database
 transactions](010-transactions.md)), issuing a single command is safer
 than issuing multiple commands. API usage is also nicer when you can
 often just post a single command.
 
 However, since commands and events are decoupled, we could have these
 commands produce multiple small events. So far REMS has favoured most
-commands producing just one large and nongeneri events. Also commands
-haven't reused events (for example review-requested and
-decision-requested are separate events). This way the events are more
-explicit and mirror the user's intent just like our commands.
+commands producing just one nongeneric and large event (that is, an
+event that has lots of effects). Also commands haven't reused events
+(for example review-requested and decision-requested are separate
+events). This way the events are more explicit and mirror the user's
+intent just like our commands.
 
 Design 1 was an attempt at using smaller, more decoupled events.
 However that immediately ran into problems with consuming events
