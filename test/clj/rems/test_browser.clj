@@ -922,9 +922,6 @@
         (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
         (btu/fill-human :fields-0-info-text-sv " ")
 
-        ;; what if we accidentally switch to label?
-        ;; (btu/scroll-and-click :fields-0-type-label)
-
         (btu/scroll-and-click :save)
 
         (btu/visible? {:tag :textarea :id :fields-0-info-text-sv :fn/has-class :is-invalid})
