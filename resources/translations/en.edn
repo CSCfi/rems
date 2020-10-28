@@ -309,6 +309,9 @@
                                   :message-to-handler "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
+          ;; generic text shared by decider-invited and reviewer-invited at the moment
+          :decider-invited {:subject "Invitation to participate in handling application %3"
+                            :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :decision-requested {:subject "(%3) Decision request"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."

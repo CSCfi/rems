@@ -307,6 +307,8 @@
                                   :message-to-handler "%1,\n\n%4 har lämnat in ansökan %3 om användningsrätt till följande resurs(er) %5.\n\nDu kan granska ansökningen här: %6"}
           :decided {:subject "(%3) Beslut skickat"
                     :message "%1,\n\n%2 har fattat beslut angående %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
+          :decider-invited {:subject "Inbjudan att delta i behandling av ansökan %3" ; TODO check
+                            :message "%1,\n\nDu är inbjuden att delta i handling av %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen här: %4"} ; TODO check
           :decision-requested {:subject "(%3) Begäran om beslut"
                                :message "%1,\n\n%2 har begärt ett beslut av dig gällande %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :footer "\n\nDetta är ett automatiskt meddelande. Svara inte på detta meddelande."

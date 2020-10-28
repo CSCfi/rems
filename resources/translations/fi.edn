@@ -307,6 +307,8 @@
                                   :message-to-handler "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decided {:subject "(%3) Päätös lähetetty"
                     :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decider-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
+                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :decision-requested {:subject "(%3) Päätöspyyntö"
                                :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."

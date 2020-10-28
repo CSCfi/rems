@@ -376,13 +376,20 @@
               :body "Dear Amber Assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
              (email-to "assistant" mails))))))
 
-(deftest test-invite-reviewer
+(deftest test-invite-reviewer-decider
   (is (= [{:to "actor@example.com"
            :subject "Invitation to participate in handling application 2001/3, \"Application title\""
            :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
          (emails base-events {:application/id 7
                               :event/type :application.event/reviewer-invited
                               :application/reviewer {:email "actor@example.com" :name "Adam Actor"}
+                              :invitation/token "abc123"})))
+  (is (= [{:to "actor@example.com"
+           :subject "Invitation to participate in handling application 2001/3, \"Application title\""
+           :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
+         (emails base-events {:application/id 7
+                              :event/type :application.event/decider-invited
+                              :application/decider {:email "actor@example.com" :name "Adam Actor"}
                               :invitation/token "abc123"}))))
 
 (deftest test-finnish-emails
