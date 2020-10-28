@@ -382,8 +382,7 @@
            :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
          (emails base-events {:application/id 7
                               :event/type :application.event/reviewer-invited
-                              :application/actor {:email "actor@example.com" :name "Adam Actor"}
-                              :invitation/role :reviewer
+                              :application/reviewer {:email "actor@example.com" :name "Adam Actor"}
                               :invitation/token "abc123"}))))
 
 (deftest test-finnish-emails
