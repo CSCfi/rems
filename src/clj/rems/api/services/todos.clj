@@ -48,6 +48,7 @@
           :application.command/change-resources
           :application.command/invite-member
           :application.command/invite-reviewer
+          :application.command/invite-decider
           :application.command/remove-member
           :application.command/uninvite-member
           ;; remarks can be made without a request, also on handled todos

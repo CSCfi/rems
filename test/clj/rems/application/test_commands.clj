@@ -1122,7 +1122,7 @@
                                      :email "member1@applicants.com"}}
                            injections)))))))
 
-(deftest test-invite-reviewer
+(deftest test-invite-reviewer-decider
   (let [application (apply-events nil [dummy-created-event])
         injections {:secure-token (constantly "very-secure")}]
     (testing "applicant can't invite reviewer for draft"
@@ -1132,6 +1132,14 @@
                             :actor applicant-user-id
                             :reviewer {:name "A Reviewer"
                                       :email "reviewer@applicants.com"}}
+                           injections))))
+    (testing "applicant can't invite decider for draft"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/invite-decider
+                            :actor applicant-user-id
+                            :decider {:name "A Decider"
+                                      :email "decider@applicants.com"}}
                            injections))))
     (let [submitted (apply-events application [{:event/type :application.event/submitted
                                                 :event/time test-time
@@ -1151,6 +1159,20 @@
                             :reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}}
                            injections))))
+      (testing "handler can invite decider for submitted"
+        (is (= {:event/type :application.event/decider-invited
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id app-id
+                :application/decider {:name "A Decider"
+                                      :email "decider@applicants.com"}
+                :invitation/token "very-secure"}
+               (ok-command submitted
+                           {:type :application.command/invite-decider
+                            :actor handler-user-id
+                            :decider {:name "A Decider"
+                                       :email "decider@applicants.com"}}
+                           injections))))
       (doseq [user [applicant-user-id "member1"]]
         (testing (str user " users cannot invite reviewer for submitted")
           (is (= {:errors [{:type :forbidden}]}
@@ -1159,6 +1181,14 @@
                                 :actor user
                                 :reviewer {:name "A Reviewer"
                                            :email "reviewer@applicants.com"}}
+                               injections))))
+        (testing (str user " users cannot invite decider for submitted")
+          (is (= {:errors [{:type :forbidden}]}
+                 (fail-command submitted
+                               {:type :application.command/invite-decider
+                                :actor user
+                                :decider {:name "A Decider"
+                                           :email "decider@applicants.com"}}
                                injections))))))))
 
 (deftest test-accept-invitation
@@ -1288,6 +1318,54 @@
       (testing "can't use token twice"
         (let [application (apply-events reviewer-invited
                                         [{:event/type :application.event/reviewer-joined
+                                          :event/time test-time
+                                          :event/actor "somebody"
+                                          :application/id app-id
+                                          :application/request-id (UUID/randomUUID)
+                                          :invitation/token "very-secure"}])]
+          (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+                 (fail-command application
+                               {:type :application.command/accept-invitation
+                                :actor "somebody2"
+                                :token "very-secure"}
+                               injections)))))))
+  (testing "invited decider"
+    (let [decider-invited (apply-events nil
+                                        [dummy-created-event
+                                         {:event/type :application.event/submitted
+                                          :event/time test-time
+                                          :event/actor applicant-user-id
+                                          :application/id app-id}
+                                         {:event/type :application.event/decider-invited
+                                          :event/time test-time
+                                          :event/actor handler-user-id
+                                          :application/id app-id
+                                          :application/decider {:name "Some Body" :email "somebody@applicants.com"}
+                                          :invitation/token "very-secure"}])]
+      (testing "can join submitted application"
+        (let [event (ok-command decider-invited
+                                {:type :application.command/accept-invitation
+                                 :actor "somebody"
+                                 :token "very-secure"}
+                                injections)]
+          (is (= {:event/type :application.event/decider-joined
+                  :event/time test-time
+                  :event/actor "somebody"
+                  :application/id app-id
+                  :invitation/token "very-secure"
+                  :application/request-id (:application/request-id event)}
+                 event))
+          (is (instance? UUID (:application/request-id event)))))
+      (testing "can't use invalid token"
+        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+               (fail-command decider-invited
+                             {:type :application.command/accept-invitation
+                              :actor "somebody"
+                              :token "wrong-token"}
+                             injections))))
+      (testing "can't use token twice"
+        (let [application (apply-events decider-invited
+                                        [{:event/type :application.event/decider-joined
                                           :event/time test-time
                                           :event/actor "somebody"
                                           :application/id app-id

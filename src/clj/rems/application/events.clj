@@ -127,13 +127,25 @@
          :event/type (s/enum :application.event/reviewer-invited)
          :application/reviewer {:name s/Str
                                 :email s/Str}
+         ;; TODO allocate request-id already here?
          :invitation/token s/Str))
 (s/defschema ReviewerJoinedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/reviewer-joined)
          :application/request-id s/Uuid
          :invitation/token s/Str))
-;; TODO DeciderInvited DeciderJoined
+(s/defschema DeciderInvitedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/decider-invited)
+         :application/decider {:name s/Str
+                               :email s/Str}
+         ;; TODO allocate request-id already here?
+         :invitation/token s/Str))
+(s/defschema DeciderJoinedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/decider-joined)
+         :application/request-id s/Uuid
+         :invitation/token s/Str))
 (s/defschema RejectedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/rejected)))
@@ -167,6 +179,8 @@
    :application.event/copied-to CopiedToEvent
    :application.event/created CreatedEvent
    :application.event/decided DecidedEvent
+   :application.event/decider-invited DeciderInvitedEvent
+   :application.event/decider-joined DeciderJoinedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/deleted DeletedEvent
    :application.event/draft-saved DraftSavedEvent

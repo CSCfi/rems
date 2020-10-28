@@ -234,6 +234,7 @@
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/delete commands/DeleteCommand
                       "Only drafts can be deleted. Only applicants can delete drafts.")
+    (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)

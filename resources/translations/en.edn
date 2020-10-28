@@ -147,6 +147,8 @@
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
+                          :decider-invited "%1 invited %2 to decide."
+                          :decider-joined "%1 accepted the invitation to decide."
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."

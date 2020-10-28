@@ -145,6 +145,8 @@
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
                           :created "%1 loi uuden hakemuksen."
                           :decided "%1 teki päätöksen hakemukselle."
+                          :decider-invited "%1 kutsui käyttäjän %2 päättämään."
+                          :decider-joined "%1 hyväksyi kutsun päättämään."
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :deleted "%1 poisti luonnoksen."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."

@@ -213,8 +213,9 @@
                  "application.command/add-licenses"
                  "application.command/add-member"
                  "application.command/remove-member"
-                 "application.command/invite-reviewer"
                  "application.command/invite-member"
+                 "application.command/invite-decider"
+                 "application.command/invite-reviewer"
                  "application.command/uninvite-member"
                  "application.command/change-resources"
                  "application.command/close"
@@ -235,8 +236,9 @@
                      "application.command/add-licenses"
                      "application.command/add-member"
                      "application.command/remove-member"
-                     "application.command/invite-reviewer"
                      "application.command/invite-member"
+                     "application.command/invite-decider"
+                     "application.command/invite-reviewer"
                      "application.command/uninvite-member"
                      "application.command/change-resources"
                      "application.command/close"
@@ -651,7 +653,30 @@
           (is (= ["see-everything"
                   "application.command/review"
                   "application.command/remark"]
-                 (:application/permissions (get-application-for-user app-id reviewer)))))))))
+                 (:application/permissions (get-application-for-user app-id reviewer)))))))
+    (testing "invite decider as handler"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/invite-decider
+                                    :application-id app-id
+                                    :decider {:name "Member 3" :email "member3@example.com"}}))))
+    (testing "accept handler invitation"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            decider "decider1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key decider)))
+        (testing ", decider is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/reject"
+                  "application.command/decide"
+                  "application.command/remark"
+                  "application.command/approve"]
+                 (:application/permissions (get-application-for-user app-id decider)))))))))
 
 (deftest test-application-validation
   (let [user-id "alice"

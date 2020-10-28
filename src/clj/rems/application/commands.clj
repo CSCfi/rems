@@ -70,7 +70,10 @@
   (assoc CommandBase
          :reviewer {:name s/Str
                     :email s/Str}))
-;; TODO InviteDeciderCommand
+(s/defschema InviteDeciderCommand
+  (assoc CommandBase
+         :decider {:name s/Str
+                   :email s/Str}))
 (s/defschema InviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
@@ -122,6 +125,7 @@
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
    :application.command/delete DeleteCommand
+   :application.command/invite-decider InviteDeciderCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/invite-reviewer InviteReviewerCommand
    :application.command/reject RejectCommand
@@ -491,6 +495,12 @@
        :application/member (:member cmd)
        :invitation/token (secure-token)}))
 
+(defmethod command-handler :application.command/invite-decider
+  [cmd _application {:keys [secure-token]}]
+  (ok {:event/type :application.event/decider-invited
+       :application/decider (:decider cmd)
+       :invitation/token (secure-token)}))
+
 (defmethod command-handler :application.command/invite-reviewer
   [cmd _application {:keys [secure-token]}]
   (ok {:event/type :application.event/reviewer-invited
@@ -514,10 +524,15 @@
                         [{:event/type :application.event/member-joined
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
-      actor-invitation
-      ;; TODO decider
+      (:application/reviewer actor-invitation)
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/reviewer-joined
+                      :application/id (:application-id cmd)
+                      :invitation/token (:token cmd)
+                      :application/request-id (UUID/randomUUID)}])
+      (:application/decider actor-invitation)
+      (ok-with-data {:application-id (:application-id cmd)}
+                    [{:event/type :application.event/decider-joined
                       :application/id (:application-id cmd)
                       :invitation/token (:token cmd)
                       :application/request-id (UUID/randomUUID)}])

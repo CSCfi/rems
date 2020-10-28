@@ -104,6 +104,12 @@
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
+(defmethod application-base-view :application.event/decider-invited
+  [application event]
+  (-> application
+      (assoc-in [:application/actor-invitations (:invitation/token event)]
+                (select-keys event [:event/actor :application/decider]))))
+
 (defmethod application-base-view :application.event/reviewer-invited
   [application event]
   (-> application
@@ -119,6 +125,13 @@
            :waiting-for-decision
            :else
            :no-pending-requests)))
+
+(defmethod application-base-view :application.event/decider-joined
+  [application event]
+  (-> application
+      (update :application/actor-invitations dissoc (:invitation/token event))
+      (assoc-in [::latest-decision-request-by-user (:event/actor event)] (:application/request-id event))
+      (update-todo-for-requests)))
 
 (defmethod application-base-view :application.event/reviewer-joined
   [application event]
@@ -260,6 +273,7 @@
     {:permission :application.command/create}
     {:permission :application.command/decide}
     {:permission :application.command/delete}
+    {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
     {:permission :application.command/remark}

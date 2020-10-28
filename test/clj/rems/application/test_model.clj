@@ -1039,7 +1039,7 @@
                                            :application/past-members #{{:userid "member"}}})]
           (is (= expected-application (recreate expected-application))))))))
 
-(deftest test-application-view-reviewer-invited-joined
+(deftest test-application-view-actor-invitations
   (testing "> reviewer invited"
     (let [token "abcd1234"
           new-event {:event/type :application.event/reviewer-invited
@@ -1072,6 +1072,39 @@
                                            :application/actor-invitations {}
                                            :application/todo :waiting-for-review
                                            :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
+          (is (= expected-application (recreate expected-application)))))))
+  (testing "> decider invited"
+    (let [token "abcd1234"
+          new-event {:event/type :application.event/decider-invited
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/decider {:name "Mr. Decider"
+                                           :email "decider@example.com"}
+                     :invitation/token token}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/actor-invitations {token {:event/actor "handler"
+                                                                              :application/decider {:name "Mr. Decider"
+                                                                                                    :email "decider@example.com"}}}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> decider joined"
+        (let [new-event {:event/type :application.event/decider-joined
+                         :event/time (DateTime. 5000)
+                         :event/actor "new-decider"
+                         :application/id 1
+                         :application/request-id review-request-id
+                         :invitation/token token}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/actor-invitations {}
+                                           :application/todo :waiting-for-decision
+                                           :rems.application.model/latest-decision-request-by-user {"new-decider" review-request-id}})]
           (is (= expected-application (recreate expected-application))))))))
 
 ;;;; Tests for enriching
