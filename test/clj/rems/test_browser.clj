@@ -938,39 +938,38 @@
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
-        (is (=
-             {:form/id form-id
-              :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
-              :form/title "Form editor test"
-              :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
-                             :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
-                             :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                             :field/type "description"
-                             :field/id "fld3"
-                             :field/max-length nil
-                             :field/optional false}
-                            {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
-                             :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
-                             :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                             :field/type "texta"
-                             :field/id "fld1"
-                             :field/max-length 127
-                             :field/optional true}
-                            {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-                             :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                             :field/type "option"
-                             :field/id "fld2"
-                             :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
-                                             {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
-                             :field/optional false}]
-              :form/errors nil
-              :enabled true
-              :archived false}
-             (:body
-              (http/get (str (btu/get-server-url) "/api/forms/" form-id)
-                        {:as :json
-                         :headers {"x-rems-api-key" "42"
-                                   "x-rems-user-id" "handler"}}))))))))
+        (is (= {:form/id form-id
+                :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
+                :form/title "Form editor test"
+                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
+                               :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/type "description"
+                               :field/id "fld3"
+                               :field/max-length nil
+                               :field/optional false}
+                              {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
+                               :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/type "texta"
+                               :field/id "fld1"
+                               :field/max-length 127
+                               :field/optional true}
+                              {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/type "option"
+                               :field/id "fld2"
+                               :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
+                                               {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
+                               :field/optional false}]
+                :form/errors nil
+                :enabled true
+                :archived false}
+               (:body
+                (http/get (str (btu/get-server-url) "/api/forms/" form-id)
+                          {:as :json
+                           :headers {"x-rems-api-key" "42"
+                                     "x-rems-user-id" "handler"}}))))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
