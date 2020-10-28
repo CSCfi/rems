@@ -154,6 +154,11 @@
   (-> application
       (permissions/give-role-to-users :reviewer (:application/reviewers event))))
 
+(defmethod application-permissions-view :application.event/reviewer-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :reviewer [(:event/actor event)])))
+
 (defmethod application-permissions-view :application.event/reviewed
   [application event]
   (-> application

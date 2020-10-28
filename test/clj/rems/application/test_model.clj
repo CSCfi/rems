@@ -1063,12 +1063,15 @@
                          :event/time (DateTime. 5000)
                          :event/actor "new-reviewer"
                          :application/id 1
+                         :application/request-id review-request-id
                          :invitation/token token}
               events (conj events new-event)
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/actor-invitations {}})]
+                                           :application/actor-invitations {}
+                                           :application/todo :waiting-for-review
+                                           :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
           (is (= expected-application (recreate expected-application))))))))
 
 ;;;; Tests for enriching

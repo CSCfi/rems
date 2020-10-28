@@ -131,6 +131,7 @@
 (s/defschema ReviewerJoinedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/reviewer-joined)
+         :application/request-id s/Uuid
          :invitation/token s/Str))
 ;; TODO DeciderInvited DeciderJoined
 (s/defschema RejectedEvent

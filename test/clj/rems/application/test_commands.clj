@@ -1265,25 +1265,19 @@
                                         :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
                                         :invitation/token "very-secure"}])]
       (testing "can join submitted application"
-        (let [[joined request] (ok-command reviewer-invited
-                                           {:type :application.command/accept-invitation
-                                            :actor "somebody"
-                                            :token "very-secure"}
-                                           injections)]
+        (let [event (ok-command reviewer-invited
+                                {:type :application.command/accept-invitation
+                                 :actor "somebody"
+                                 :token "very-secure"}
+                                injections)]
           (is (= {:event/type :application.event/reviewer-joined
                   :event/time test-time
                   :event/actor "somebody"
                   :application/id app-id
-                  :invitation/token "very-secure"}
-                 joined))
-          (is (instance? UUID (:application/request-id request)))
-          (is (= {:event/type :application.event/review-requested
-                  :event/time test-time
-                  :event/actor handler-user-id
-                  :application/id app-id
-                  :application/reviewers ["somebody"]
-                  :application/request-id (:application/request-id request)}
-                 request))))
+                  :invitation/token "very-secure"
+                  :application/request-id (:application/request-id event)}
+                 event))
+          (is (instance? UUID (:application/request-id event)))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
                (fail-command reviewer-invited
@@ -1297,6 +1291,7 @@
                                           :event/time test-time
                                           :event/actor "somebody"
                                           :application/id app-id
+                                          :application/request-id (UUID/randomUUID)
                                           :invitation/token "very-secure"}])]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
                  (fail-command application

@@ -519,11 +519,7 @@
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/reviewer-joined
                       :application/id (:application-id cmd)
-                      :invitation/token (:token cmd)}
-                     {:event/type :application.event/review-requested
-                      :application/id (:application-id cmd)
-                      :event/actor (:event/actor actor-invitation)
-                      :application/reviewers [(:actor cmd)]
+                      :invitation/token (:token cmd)
                       :application/request-id (UUID/randomUUID)}])
       :else
       {:errors [{:type :t.actions.errors/invalid-token :token token}]})))
