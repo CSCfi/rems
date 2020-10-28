@@ -47,7 +47,7 @@
           :application.command/assign-external-id
           :application.command/change-resources
           :application.command/invite-member
-          :application.command/invite-actor
+          :application.command/invite-reviewer
           :application.command/remove-member
           :application.command/uninvite-member
           ;; remarks can be made without a request, also on handled todos

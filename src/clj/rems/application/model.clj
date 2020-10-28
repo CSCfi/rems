@@ -104,13 +104,13 @@
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
-(defmethod application-base-view :application.event/actor-invited
+(defmethod application-base-view :application.event/reviewer-invited
   [application event]
   (-> application
       (assoc-in [:application/actor-invitations (:invitation/token event)]
-                (select-keys event [:event/actor :application/actor :invitation/role]))))
+                (select-keys event [:event/actor :application/reviewer]))))
 
-(defmethod application-base-view :application.event/actor-joined
+(defmethod application-base-view :application.event/reviewer-joined
   [application event]
   (update application :application/actor-invitations dissoc (:invitation/token event)))
 
@@ -257,8 +257,8 @@
     {:permission :application.command/create}
     {:permission :application.command/decide}
     {:permission :application.command/delete}
-    {:permission :application.command/invite-actor}
     {:permission :application.command/invite-member}
+    {:permission :application.command/invite-reviewer}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -285,8 +285,8 @@
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/delete}
-    {:permission :application.command/invite-actor}
     {:permission :application.command/invite-member}
+    {:permission :application.command/invite-reviewer}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}

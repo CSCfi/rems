@@ -1039,33 +1039,30 @@
                                            :application/past-members #{{:userid "member"}}})]
           (is (= expected-application (recreate expected-application))))))))
 
-(deftest test-application-view-actor-invited-joined
-  (testing "> actor invited"
+(deftest test-application-view-reviewer-invited-joined
+  (testing "> reviewer invited"
     (let [token "abcd1234"
-          new-event {:event/type :application.event/actor-invited
+          new-event {:event/type :application.event/reviewer-invited
                      :event/time (DateTime. 4000)
                      :event/actor "handler"
                      :application/id 1
-                     :application/actor {:name "Mr. Reviewer"
-                                         :email "reviewer@example.com"}
-                     :invitation/role :reviewer
+                     :application/reviewer {:name "Mr. Reviewer"
+                                            :email "reviewer@example.com"}
                      :invitation/token token}
           events (conj (:application/events submitted-application) new-event)
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
                                        :application/actor-invitations {token {:event/actor "handler"
-                                                                              :invitation/role :reviewer
-                                                                              :application/actor {:name "Mr. Reviewer"
-                                                                                                  :email "reviewer@example.com"}}}})]
+                                                                              :application/reviewer {:name "Mr. Reviewer"
+                                                                                                     :email "reviewer@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
 
-      (testing "> actor joined"
-        (let [new-event {:event/type :application.event/actor-joined
+      (testing "> reviewer joined"
+        (let [new-event {:event/type :application.event/reviewer-joined
                          :event/time (DateTime. 5000)
                          :event/actor "new-reviewer"
                          :application/id 1
-                         :invitation/role :reviewer
                          :invitation/token token}
               events (conj events new-event)
               expected-application (merge expected-application
@@ -1559,10 +1556,9 @@
                                                      :application/member {:name "member"
                                                                           :email "member@example.com"}
                                                      :invitation/token "secret"})
-                            (model/application-view {:event/type :application.event/actor-invited
-                                                     :application/actor {:name "new-reviewer"
-                                                                         :email "reviewer@example.com"}
-                                                     :invitation/role :reviewer
+                            (model/application-view {:event/type :application.event/reviewer-invited
+                                                     :application/reviewer {:name "new-reviewer"
+                                                                            :email "reviewer@example.com"}
                                                      :invitation/token "clandestine"}))
             enriched (model/enrich-with-injections application injections)]
         (testing "- original"
@@ -1570,9 +1566,8 @@
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
                  (:application/invitation-tokens enriched)))
-          (is (= {"clandestine" {:invitation/role :reviewer
-                                 :application/actor {:name "new-reviewer"
-                                                     :email "reviewer@example.com"}}}
+          (is (= {"clandestine" {:application/reviewer {:name "new-reviewer"
+                                                        :email "reviewer@example.com"}}}
                  (:application/actor-invitations enriched)))
           (is (= nil
                  (:application/invited-members enriched))))

@@ -139,9 +139,7 @@
                  :description "Otsikko"
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
-                 :events {:actor-invited "%1 kutsui käyttäjän %2 katselmoijaksi."
-                          :actor-joined "%1 hyväksyi kutsun katselmoijaksi."
-                          :approved "%1 hyväksyi hakemuksen. "
+                 :events {:approved "%1 hyväksyi hakemuksen. "
                           :closed "%1 sulki hakemuksen."
                           :copied-from "%1 kopioi hakemuksen vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
@@ -164,6 +162,8 @@
                           :returned "%1 palautti hakemuksen muokattavaksi."
                           :review-requested "%1 pyysi katselmointia käyttäjältä %2."
                           :reviewed "%1 katselmoi hakemuksen."
+                          :reviewer-invited "%1 kutsui käyttäjän %2 katselmoijaksi."
+                          :reviewer-joined "%1 hyväksyi kutsun katselmoijaksi."
                           :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
@@ -275,9 +275,7 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:actor-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
-                          :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
-          :application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
+  :email {:application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on hyväksytty"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
@@ -324,6 +322,8 @@
                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :reviewed {:subject "(%3) Hakemus katselmoitu"
                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :reviewer-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
+                             :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :reviewer-reminder {:application "%1, lähettänyt %2"
                               :message "Hyvä %1,\n\nSeuraavat hakemukset odottavat katselmointiasi:\n\n%2\n\nVoit tarkastella hakemuksia osoitteessa %3"
                               :subject "Katselmointia odottavat hakemukset"}}

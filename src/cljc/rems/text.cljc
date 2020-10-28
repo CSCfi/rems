@@ -118,9 +118,7 @@
 
 
 (def ^:private event-types
-  {:application.event/actor-invited :t.applications.events/actor-invited
-   :application.event/actor-joined :t.applications.events/actor-joined
-   :application.event/approved :t.applications.events/approved
+  {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
    :application.event/review-requested :t.applications.events/review-requested
    :application.event/reviewed :t.applications.events/reviewed
@@ -144,6 +142,8 @@
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
    :application.event/revoked :t.applications.events/revoked
+   :application.event/reviewer-invited :t.applications.events/reviewer-invited
+   :application.event/reviewer-joined :t.applications.events/reviewer-joined
    :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-decision [event]
@@ -173,11 +173,11 @@
         :application.event/external-id-assigned
         (:application/external-id event)
 
-        (:application.event/actor-invited
-         :application.event/member-added
+        (:application.event/member-added
          :application.event/member-invited
          :application.event/member-removed
-         :application.event/member-uninvited)
+         :application.event/member-uninvited
+         :application.event/reviewer-invited)
         (application-util/get-member-name (:application/member event))
 
         :application.event/resources-changed

@@ -122,18 +122,17 @@
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
                               :email s/Str}))
-(s/defschema ActorInvitedEvent
+(s/defschema ReviewerInvitedEvent
   (assoc EventBase
-         :event/type (s/enum :application.event/actor-invited)
-         :application/actor {:name s/Str
-                             :email s/Str}
-         :invitation/token s/Str
-         :invitation/role (s/enum :reviewer))) ; TODO decider
-(s/defschema ActorJoinedEvent
+         :event/type (s/enum :application.event/reviewer-invited)
+         :application/reviewer {:name s/Str
+                                :email s/Str}
+         :invitation/token s/Str))
+(s/defschema ReviewerJoinedEvent
   (assoc EventBase
-         :event/type (s/enum :application.event/actor-joined)
-         :invitation/token s/Str
-         :invitation/role (s/enum :reviewer))) ; TODO decider
+         :event/type (s/enum :application.event/reviewer-joined)
+         :invitation/token s/Str))
+;; TODO DeciderInvited DeciderJoined
 (s/defschema RejectedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/rejected)))
@@ -159,9 +158,7 @@
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas
-  {:application.event/actor-invited ActorInvitedEvent
-   :application.event/actor-joined ActorJoinedEvent
-   :application.event/approved ApprovedEvent
+  {:application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
    :application.event/review-requested ReviewRequestedEvent
    :application.event/reviewed ReviewedEvent
@@ -184,6 +181,8 @@
    :application.event/remarked RemarkedEvent
    :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
+   :application.event/reviewer-invited ReviewerInvitedEvent
+   :application.event/reviewer-joined ReviewerJoinedEvent
    :application.event/revoked RevokedEvent
    :application.event/submitted SubmittedEvent})
 

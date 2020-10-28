@@ -66,11 +66,11 @@
 (s/defschema DecideCommand
   (assoc CommandWithComment
          :decision (s/enum :approved :rejected)))
-(s/defschema InviteActorCommand
+(s/defschema InviteReviewerCommand
   (assoc CommandBase
-         :invitee {:name s/Str ; TODO figure out a better name. :actor would conflict with CommandBase
-                   :email s/Str}
-         :role (s/eq :reviewer))) ; TODO support decider
+         :reviewer {:name s/Str
+                    :email s/Str}))
+;; TODO InviteDeciderCommand
 (s/defschema InviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
@@ -122,8 +122,8 @@
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
    :application.command/delete DeleteCommand
-   :application.command/invite-actor InviteActorCommand
    :application.command/invite-member InviteMemberCommand
+   :application.command/invite-reviewer InviteReviewerCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
@@ -491,11 +491,10 @@
        :application/member (:member cmd)
        :invitation/token (secure-token)}))
 
-(defmethod command-handler :application.command/invite-actor
+(defmethod command-handler :application.command/invite-reviewer
   [cmd _application {:keys [secure-token]}]
-  (ok {:event/type :application.event/actor-invited
-       :application/actor (:invitee cmd)
-       :invitation/role (:role cmd)
+  (ok {:event/type :application.event/reviewer-invited
+       :application/reviewer (:reviewer cmd)
        :invitation/token (secure-token)}))
 
 (defn- valid-member-invitation-token? [application token]
@@ -516,14 +515,10 @@
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
       actor-invitation
-      ;; TODO it's nice to separate the concerns by emitting two
-      ;; events here, but the downsides are:
-      ;; - potentially confusing event log in UI
-      ;; - extra email sent to reviewer ("foo has requested your review on bar") after accepting invitation
+      ;; TODO decider
       (ok-with-data {:application-id (:application-id cmd)}
-                    [{:event/type :application.event/actor-joined
+                    [{:event/type :application.event/reviewer-joined
                       :application/id (:application-id cmd)
-                      :invitation/role (:invitation/role actor-invitation)
                       :invitation/token (:token cmd)}
                      {:event/type :application.event/review-requested
                       :application/id (:application-id cmd)

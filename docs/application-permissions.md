@@ -223,8 +223,8 @@
             <div>assign‑external‑id</div>
             <div>change‑resources</div>
             <div>close</div>
-            <div>invite‑actor</div>
             <div>invite‑member</div>
+            <div>invite‑reviewer</div>
             <div>remark</div>
             <div>remove‑member</div>
             <div>request‑review</div>
@@ -325,8 +325,8 @@
             <div>assign‑external‑id</div>
             <div>change‑resources</div>
             <div>close</div>
-            <div>invite‑actor</div>
             <div>invite‑member</div>
+            <div>invite‑reviewer</div>
             <div>reject</div>
             <div>remark</div>
             <div>remove‑member</div>

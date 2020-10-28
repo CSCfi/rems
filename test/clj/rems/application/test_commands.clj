@@ -1122,47 +1122,43 @@
                                      :email "member1@applicants.com"}}
                            injections)))))))
 
-(deftest test-invite-actor
+(deftest test-invite-reviewer
   (let [application (apply-events nil [dummy-created-event])
         injections {:secure-token (constantly "very-secure")}]
     (testing "applicant can't invite reviewer for draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
-                           {:type :application.command/invite-actor
+                           {:type :application.command/invite-reviewer
                             :actor applicant-user-id
-                            :invitee {:name "A Reviewer"
-                                      :email "reviewer@applicants.com"}
-                            :role :reviewer}
+                            :reviewer {:name "A Reviewer"
+                                      :email "reviewer@applicants.com"}}
                            injections))))
     (let [submitted (apply-events application [{:event/type :application.event/submitted
                                                 :event/time test-time
                                                 :event/actor applicant-user-id
                                                 :application/id app-id}])]
       (testing "handler can invite reviewer for submitted"
-        (is (= {:event/type :application.event/actor-invited
+        (is (= {:event/type :application.event/reviewer-invited
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id
-                :application/actor {:name "A Reviewer"
-                                    :email "reviewer@applicants.com"}
-                :invitation/role :reviewer
+                :application/reviewer {:name "A Reviewer"
+                                       :email "reviewer@applicants.com"}
                 :invitation/token "very-secure"}
                (ok-command submitted
-                           {:type :application.command/invite-actor
+                           {:type :application.command/invite-reviewer
                             :actor handler-user-id
-                            :invitee {:name "A Reviewer"
-                                      :email "reviewer@applicants.com"}
-                            :role :reviewer}
+                            :reviewer {:name "A Reviewer"
+                                       :email "reviewer@applicants.com"}}
                            injections))))
       (doseq [user [applicant-user-id "member1"]]
         (testing (str user " users cannot invite reviewer for submitted")
           (is (= {:errors [{:type :forbidden}]}
                  (fail-command submitted
-                               {:type :application.command/invite-actor
+                               {:type :application.command/invite-reviewer
                                 :actor user
-                                :invitee {:name "A Reviewer"
-                                          :email "reviewer@applicants.com"}
-                                :role :reviewer}
+                                :reviewer {:name "A Reviewer"
+                                           :email "reviewer@applicants.com"}}
                                injections))))))))
 
 (deftest test-accept-invitation
@@ -1256,30 +1252,28 @@
                                   :token "very-secure"}
                                  injections))))))))
   (testing "invited reviewer"
-    (let [actor-invited (apply-events nil
+    (let [reviewer-invited (apply-events nil
                                       [dummy-created-event
                                        {:event/type :application.event/submitted
                                         :event/time test-time
                                         :event/actor applicant-user-id
                                         :application/id app-id}
-                                       {:event/type :application.event/actor-invited
+                                       {:event/type :application.event/reviewer-invited
                                         :event/time test-time
                                         :event/actor handler-user-id
                                         :application/id app-id
-                                        :application/actor {:name "Some Body" :email "somebody@applicants.com"}
-                                        :invitation/role :reviewer
+                                        :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
                                         :invitation/token "very-secure"}])]
       (testing "can join submitted application"
-        (let [[joined request] (ok-command actor-invited
+        (let [[joined request] (ok-command reviewer-invited
                                            {:type :application.command/accept-invitation
                                             :actor "somebody"
                                             :token "very-secure"}
                                            injections)]
-          (is (= {:event/type :application.event/actor-joined
+          (is (= {:event/type :application.event/reviewer-joined
                   :event/time test-time
                   :event/actor "somebody"
                   :application/id app-id
-                  :invitation/role :reviewer
                   :invitation/token "very-secure"}
                  joined))
           (is (instance? UUID (:application/request-id request)))
@@ -1292,18 +1286,17 @@
                  request))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command actor-invited
+               (fail-command reviewer-invited
                              {:type :application.command/accept-invitation
                               :actor "somebody"
                               :token "wrong-token"}
                              injections))))
       (testing "can't use token twice"
-        (let [application (apply-events actor-invited
-                                        [{:event/type :application.event/actor-joined
+        (let [application (apply-events reviewer-invited
+                                        [{:event/type :application.event/reviewer-joined
                                           :event/time test-time
                                           :event/actor "somebody"
                                           :application/id app-id
-                                          :invitation/role :reviewer
                                           :invitation/token "very-secure"}])]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
                  (fail-command application

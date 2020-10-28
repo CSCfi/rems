@@ -199,17 +199,17 @@
                (text :t.email/regards)
                (text :t.email/footer))}])))
 
-(defmethod event-to-emails :application.event/actor-invited [event application]
+(defmethod event-to-emails :application.event/reviewer-invited [event application]
   (with-language (:default-language env)
     (fn []
       [{:to (:email (:application/actor event))
-        :subject (text-format :t.email.actor-invited/subject
+        :subject (text-format :t.email.reviewer-invited/subject
                               (:name (:application/actor event))
                               (application-util/get-applicant-name application)
                               (format-application-for-email application)
                               (invitation-link (:invitation/token event)))
         :body (str
-               (text-format :t.email.actor-invited/message
+               (text-format :t.email.reviewer-invited/message
                             (:name (:application/actor event))
                             (application-util/get-applicant-name application)
                             (format-application-for-email application)

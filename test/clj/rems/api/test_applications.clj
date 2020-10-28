@@ -213,7 +213,7 @@
                  "application.command/add-licenses"
                  "application.command/add-member"
                  "application.command/remove-member"
-                 "application.command/invite-actor"
+                 "application.command/invite-reviewer"
                  "application.command/invite-member"
                  "application.command/uninvite-member"
                  "application.command/change-resources"
@@ -235,7 +235,7 @@
                      "application.command/add-licenses"
                      "application.command/add-member"
                      "application.command/remove-member"
-                     "application.command/invite-actor"
+                     "application.command/invite-reviewer"
                      "application.command/invite-member"
                      "application.command/uninvite-member"
                      "application.command/change-resources"
@@ -633,10 +633,9 @@
                                       :application-id app-id}))))
     (testing "invite reviewer as handler"
       (is (= {:success true}
-             (send-command handler {:type :application.command/invite-actor
+             (send-command handler {:type :application.command/invite-reviewer
                                     :application-id app-id
-                                    :role :reviewer
-                                    :invitee {:name "Member 2" :email "member2@example.com"}}))))
+                                    :reviewer {:name "Member 2" :email "member2@example.com"}}))))
     (testing "accept handler invitation"
       (let [token (-> (rems.db.applications/get-application-internal app-id)
                       :application/events
@@ -789,7 +788,7 @@
                "application.command/assign-external-id"
                "application.command/change-resources"
                "application.command/close"
-               "application.command/invite-actor"
+               "application.command/invite-reviewer"
                "application.command/invite-member"
                "application.command/remark"
                "application.command/remove-member"

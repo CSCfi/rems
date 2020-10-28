@@ -43,7 +43,7 @@
     :application.command/change-resources
     :application.command/remove-member
     :application.command/invite-member
-    :application.command/invite-actor
+    :application.command/invite-reviewer
     :application.command/uninvite-member
     :application.command/request-review
     :application.command/request-decision
