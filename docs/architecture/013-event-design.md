@@ -72,7 +72,7 @@ Possible solutions:
 
 ### Design 3
 
-After discussions ended up with less code sharing but more explicit API & event structure. To be implemented.
+After discussions ended up with less code sharing but more explicit API & event structure. Commit 253b66d2e in [PR #2415][2415].
 
 - Command: invite-reviewer
   - Produces: reviewer-invited
