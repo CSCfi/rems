@@ -1,4 +1,4 @@
-# 013: Event design
+# 013: Command & event design
 
 Authors: @opqdonut @Macroz
 
@@ -12,7 +12,7 @@ application members by email.
 ## Existing commands & events
 
 - Command: invite-member
-  - Prouduces event: member-invited
+  - Produces event: member-invited
 - Command: accept-invitation
   - Produces: member-joined
 - Command: request-review
@@ -94,9 +94,20 @@ Problems:
 
 ## Discussion
 
-So far REMS used quite large and nongeneric events, for example
-splitting request-review and request-decision to separate events. This
-way the events are more explicit and closely mirror the user's intent.
+Since REMS commands are part of our public API, it makes sense to keep
+commands large. This way the user's intent can usually be represented
+with one command, keeping the frontend simple. Also, since one command
+means one database transaction (see [ADR 010: Database
+transactions](010-transactions.md)), issuing a single command is safer
+than issuing multiple commands. API usage is also nicer when you can
+often just post a single command.
+
+However, since commands and events are decoupled, we could have these
+commands produce multiple small events. So far REMS has favoured most
+commands producing just one large and nongeneri events. Also commands
+haven't reused events (for example review-requested and
+decision-requested are separate events). This way the events are more
+explicit and mirror the user's intent just like our commands.
 
 Design 1 was an attempt at using smaller, more decoupled events.
 However that immediately ran into problems with consuming events
@@ -105,7 +116,8 @@ work.
 
 Perhaps it is best for now to stick to large events so that we can
 easily react to the users intent in other code, instead of trying to
-recombine smaller events to reproduce intent.
+recombine smaller events to reproduce intent (e.g. not sending
+redundant email reminders)
 
 However, the decision to show the internal event log to users as-is
 might make our life harder in the future. We might need to re-evaluate
