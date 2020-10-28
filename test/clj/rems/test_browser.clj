@@ -901,10 +901,7 @@
           (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
           (btu/click-el button)
           (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
-          (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))
-         ;; (btu/click-el button)
-          ;; (not (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"})))
-          )
+          (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"})))
         (change-language :en)))
 
     (testing "edit form"
@@ -918,6 +915,17 @@
         (btu/fill-human :fields-0-title-fi "Description (FI)")
         (btu/fill-human :fields-0-title-sv "Description (SV)")
 
+        (btu/scroll-and-click :save)
+        (btu/wait-page-loaded)
+        (btu/scroll-query-el (first (btu/query-all {:tag :label :class :application-field-label})) {"block" "center"})
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
+
+      (testing "check that error message is present on field empty"
+        (btu/scroll-and-click {:fn/has-class :edit-form})
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+
+        (btu/scroll-and-click :fields-0-type-description)
         (btu/fill-human :fields-0-info-text-en "Info text (EN)")
         (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
         (btu/fill-human :fields-0-info-text-sv " ")
@@ -927,14 +935,11 @@
         (btu/visible? {:tag :textarea :id :fields-0-info-text-sv :fn/has-class :is-invalid})
         (btu/visible? {:tag :div :class :invalid-feedback :fn/has-text "Field \"Field description (optional)\" is required."})
         (btu/visible? {:tag :div :class :alert-danger :fn/has-text "Submission failed."})
-
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
 
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
-        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})
-        (btu/scroll-query-el (first (btu/query-all {:tag :label :class :application-field-label})) {"block" "center"})
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})))
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
