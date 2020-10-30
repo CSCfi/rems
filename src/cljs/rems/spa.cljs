@@ -101,7 +101,6 @@
     :languages [:en]
     :default-language :en
     :translations {}
-    ::grab-focus? true
     :identity {:user nil :roles nil}}))
 
 (rf/reg-event-db
