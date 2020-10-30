@@ -43,7 +43,7 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
-         :application/reviewers [s/Str]))
+         :application/reviewers [UserId]))
 (s/defschema CopiedFromEvent
   (assoc EventBase
          :event/type (s/enum :application.event/copied-from)
@@ -77,7 +77,7 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
-         :application/deciders [s/Str]))
+         :application/deciders [UserId]))
 (s/defschema DeletedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/deleted)))
