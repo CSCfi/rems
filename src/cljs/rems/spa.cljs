@@ -301,7 +301,7 @@
   [:div.logo [:div.container.img]])
 
 (defn main-content [_page-id _grab-focus?]
-  (let [on-update (fn [& [this :as args]]
+  (let [on-update (fn [this]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
                       (when grab-focus?
                         (when-let [element (or (.querySelector js/document "h1")
