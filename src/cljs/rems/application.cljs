@@ -34,6 +34,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
+            [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -602,39 +603,18 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
-                    (:userid attributes) (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))
-        organization-by-id @(rf/subscribe [:organization-by-id])
-        language @(rf/subscribe [:language])
-        extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))
-        organization-name-if-known (fn [organization]
-                                     (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
-                                       (get-in known-organization [:organization/short-name language])
-                                       (:organization/id organization)))]
+                    user-id (text :t.applicant-info/member)
+                    :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
       :always [:div
                [:h3 title]
-               (when-let [name (get-member-name attributes)]
-                 [info-field (text :t.applicant-info/name) name {:inline? true}])
+               [user/username attributes]
                (when-not (nil? accepted-licenses?)
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
-      :collapse (into [:div
-                       (when user-id
-                         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
-                       (when-let [mail (:notification-email attributes)]
-                         [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
-                       (when-let [mail (:email attributes)]
-                         [info-field (text :t.applicant-info/email) mail {:inline? true}])
-                       (when-let [organizations (seq (:organizations attributes))]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
-                      (for [[k v] other-attributes]
-                        (let [title (or (localized (get-in extra-attributes [(name k) :name]))
-                                        k)]
-                          [info-field title v {:inline? true}])))
+      :collapse [user/attributes attributes]
       :footer (let [element-id (str element-id "-remove-member")]
                 [:div {:id element-id}
                  (when can-remove?
@@ -853,7 +833,8 @@
                                        :name "Deve Loper"
                                        :notification-email "notification@example.com"
                                        :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
-                                       :address "Testikatu 1, 00100 Helsinki"}
+                                       :address "Testikatu 1, 00100 Helsinki"
+                                       :researcher-status-by :so}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])

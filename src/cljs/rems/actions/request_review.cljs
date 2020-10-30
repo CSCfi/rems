@@ -77,7 +77,7 @@
     [action-attachment {:key action-form-id
                         :application-id application-id}]
     [:div.form-group
-     [:label {:for dropdown-id} (text :t.actions/request-selection)]
+     [:label {:for dropdown-id} (text :t.actions/request-selections)]
      [dropdown/dropdown
       {:id dropdown-id
        :items potential-reviewers

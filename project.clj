@@ -4,7 +4,7 @@
   :url "https://github.com/CSCfi/rems"
 
   :dependencies [[buddy/buddy-auth "2.1.0"]
-                 [buddy/buddy-sign "3.1.0"]
+                 [buddy/buddy-sign "3.2.0"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
                  [clj-http "3.10.2"]
@@ -18,8 +18,6 @@
                  [cljsjs/react-select "2.4.4-0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
-                 [com.auth0/java-jwt "3.10.3"]
-                 [com.auth0/jwks-rsa "0.12.0"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.11.2"]
                  [com.rpl/specter "1.1.3"]
@@ -56,6 +54,7 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [org.postgresql/postgresql "42.2.16"]
                  [org.webjars.bower/tether "1.4.4"]
+                 [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
                  [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/diff-match-patch "1.0.4"]
@@ -148,7 +147,6 @@
                                                    :infer-externs :true ;; for window.rems.hooks to work
                                                    :externs ["react/externs/react.js"]}}}}
              :aot :all
-             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources" "target/uberjar/resources"]}
@@ -163,7 +161,7 @@
                                 [doo "0.1.11"]
                                 [lambdaisland/kaocha "1.0.669"]
                                 [lambdaisland/kaocha-junit-xml "0.0.76"]
-                                [etaoin "0.3.6"] ;; TODO 0.3.10 breaks browser tests for some reason
+                                [etaoin "0.3.10"]
                                 [figwheel-sidecar "0.5.20" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "1.0.0"] ;; coupled to the reagent version
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]

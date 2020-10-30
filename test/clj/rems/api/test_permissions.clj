@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-permissions
   (:require [buddy.sign.jws :as buddy-jws]
             [buddy.sign.jwt :as buddy-jwt]
+            [buddy.core.keys :as buddy-keys]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.config]
@@ -11,10 +12,7 @@
 
 (use-fixtures
   :once
-  api-fixture
-  (fn [f]
-    (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api true)]
-      (f))))
+  api-fixture)
 
 (deftest jwk-api
   (let [data (api-call :get "/api/jwk" nil nil nil)]
@@ -31,7 +29,8 @@
 (defn- validate-alice-result [data]
   (doseq [visa (:ga4gh_passport_v1 data)]
     (let [header (buddy-jws/decode-header visa)
-          data (buddy-jwt/unsign visa ga4gh/+public-key-parsed+ {:alg :rs256})]
+          key (buddy-keys/jwk->public-key (rems.config/env :ga4gh-visa-public-key))
+          data (buddy-jwt/unsign visa key {:alg :rs256})]
       (is (= (str (:public-url rems.config/env) "api/jwk") (:jku header)))
       (is (= "JWT" (:typ header)))
       (is (= "2011-04-29" (:kid header)))

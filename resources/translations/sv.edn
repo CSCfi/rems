@@ -6,7 +6,7 @@
             :add-licenses "Lägg till en licens"
             :add-member "Lägg till deltagare"
             :approve "Godkänn"
-            :approve-end-date "Datum då rättigheterna upphör (frivilligt)"
+            :approve-end-date "Datum då rättigheterna upphör (valfritt)"
             :approve-reject "Godkänn eller avslå"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
@@ -40,7 +40,8 @@
             :remove-member "Ta bort deltagare"
             :request-decision "Begär beslut"
             :request-review "Begär granskning"
-            :request-selection "Skicka begäran"
+            :request-selection "Skicka begäran till"
+            :request-selections "Skicka begäranden till"
             :resources-selection "Välj resurser som ansökan gäller:"
             :return "Sänd tillbaka till sökande"
             :review "Granska"
@@ -93,7 +94,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Ändringen gjordes av"
-                   :more-info "Webbadress för tilläggsinformation (om inget anges används resursens URN)"
+                   :more-info "Webbadress för tilläggsinformation (valfritt, om inget anges används resursens URN)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
@@ -126,6 +127,7 @@
                    :name "Namn"
                    :notification-email "E-postadress (angiven av den sökande)"
                    :organization "Organisation"
+                   :researcher-status "Forskarestatus" ; TODO check!
                    :username "Användarnamn"}
   :applications {:all-applications "Alla ansökningar"
                  :applicant "Sökande"
@@ -225,12 +227,12 @@
                 :field-type "Typ av fält"
                 :info-text "Fält beskrivning (valfritt)"
                 :collapse-aria-label "Info om "
-                :maxlength "Max antal tecken (valfri begränsning)"
+                :maxlength "Max antal tecken (valfritt)"
                 :option-key "Id"
                 :option-label "Titel"
                 :option-n "Alternativ %1"
                 :optional "Frivilligt fält"
-                :placeholder "Exempel (frivilligt)"
+                :placeholder "Exempel (valfritt)"
                 :privacy {:private "Privat"
                           :public "Publikt"}
                 :title "Blankettens namn"
@@ -347,7 +349,7 @@
          :licenses "Licenser"
          :maxlength "(max %1 tecken)"
          :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."
-         :optional "(frivillig)"
+         :optional "(valfritt)"
          :please-wait "Var god vänta"
          :previous-applications "Sökandes tidigare ansökningar"
          :previous-value "Föregående"
@@ -388,7 +390,7 @@
                :change-language "Byt språk till %1"
                :home "Ingångssida"
                :logout "Logga ut"
-               :settings "Inställningar"
+               :profile "Profil" ; TODO check
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
@@ -404,15 +406,17 @@
            :phase-revoked "Status återkallad:"
            :rejected "Avslag"
            :revoked "Återkallad"}
+  :profile {:idp-email "E-postadress från identifieringstjänst"
+            :no-email "(ingen e-postadress)"
+            :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
+            :save "Spara"
+            :settings "Inställningar"
+            :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
+            :your-details "Dina användardetaljer"} ; TODO check
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
            :search "Sök"}
-  :settings {:idp-email "E-postadress från identifieringstjänst"
-             :no-email "(ingen e-postadress)"
-             :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
-             :save "Spara"
-             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
           :all-rows-selected "Alla rader är valda"

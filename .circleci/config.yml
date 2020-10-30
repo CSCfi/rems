@@ -91,6 +91,8 @@ jobs:
           path: browsertest-errors
       - store_artifacts:
           path: browsertest-downloads
+      - store_artifacts:
+          path: browsertest-accessibility-report
 
   build:
     executor: clojure
@@ -201,6 +203,7 @@ workflows:
           requires:
             - deps
             - build
+            - docker-snapshot
           filters:
             branches:
               only:
@@ -209,6 +212,7 @@ workflows:
           requires:
             - deps
             - build
+            - docker-release
           filters:
             tags:
               only: /v[0-9]\.[0-9].*/

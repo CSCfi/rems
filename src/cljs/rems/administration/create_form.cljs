@@ -141,8 +141,9 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang)))
-                         languages)
+         (when (and (common-form/supports-info-text?  field)
+                    (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang)))
+                              languages))
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
@@ -495,6 +496,10 @@
               (format-validation-link (str "fields-" field-index "-placeholder-" (name lang))
                                       (text-format error (str (text :t.create-form/placeholder)
                                                               " (" (.toUpperCase (name lang)) ")"))))
+            (for [[lang error] (:field/info-text field-errors)]
+              (format-validation-link (str "fields-" field-index "-info-text-" (name lang))
+                                      (text-format error (str (text :t.create-form/info-text)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
             (when (:field/max-length field-errors)
               [(format-validation-link (str "fields-" field-index "-max-length")
                                        (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
@@ -561,7 +566,8 @@
 
             [form-field-title-field index]
             [form-field-type-radio-group index]
-            [form-field-info-text index]
+            (when (common-form/supports-info-text? field)
+              [form-field-info-text index])
             (when (common-form/supports-optional? field)
               [form-field-optional-checkbox index])
             (when (common-form/supports-placeholder? field)

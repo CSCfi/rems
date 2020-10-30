@@ -188,6 +188,17 @@
                                  :field/max-length "12"
                                  :field/placeholder {:en "en placeholder"
                                                      :fi "fi placeholder"}}]
+        fields-one-empty-info-text [{:field/id "fld1"
+                                     :field/index 0
+                                     :field/title {:en "en title"
+                                                   :fi "fi title"}
+                                     :field/info-text {:en "en info text"
+                                                       :fi ""}
+                                     :field/optional true
+                                     :field/type :text
+                                     :field/max-length "12"
+                                     :field/placeholder {:en "en placeholder"
+                                                         :fi "fi placeholder"}}]
         languages [:en :fi]]
     (testing "basic fields"
       (is (= [{:field/id "fld1"
@@ -212,7 +223,17 @@
                :field/placeholder {:en "en placeholder"
                                    :fi "fi placeholder"}}]
 
-             (mapv #(build-request-field % languages) fields-empty-info-text))))))
+             (mapv #(build-request-field % languages) fields-empty-info-text)))
+      (is (= [{:field/id "fld1"
+               :field/title {:en "en title"
+                             :fi "fi title"}
+               :field/optional true
+               :field/type :text
+               :field/max-length 12
+               :field/placeholder {:en "en placeholder"
+                                   :fi "fi placeholder"}}]
+
+             (mapv #(build-request-field % languages) fields-one-empty-info-text))))))
 
 (deftest build-request-test
   (let [form {:organization {:organization/id "abc"}

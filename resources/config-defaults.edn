@@ -42,6 +42,8 @@
  :oidc-domain nil
  :oidc-client-id nil
  :oidc-client-secret nil
+ ;; Which scopes to pass to the authorization endpoint
+ :oidc-scopes "openid profile email"
  ;; Which id-token attribute to use as the rems userid
  :oidc-userid-attribute "sub"
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
@@ -165,11 +167,17 @@
  :enable-pdf-api false
 
  ;; enable /api/permissions/:user
+ ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
+ ;; Keys for signing GA4GH Visas produced by permissions api.
+ ;; Format: path to file containing key in JWK (Json Web Key) format
+ :ga4gh-visa-private-key nil
+ :ga4gh-visa-public-key nil
 
  ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
  :catalogue-is-public false
 
  ;; Options used only for development
  :render-css-file? false
- :test-database-url nil}
+ :test-database-url nil
+ :accessibility-report false} ; should the axe accessibility tooling be included?

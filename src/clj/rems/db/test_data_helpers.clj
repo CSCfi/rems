@@ -103,6 +103,9 @@
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
+(defn create-workflow-licence! [wfid licid]
+  (db/create-workflow-license! {:wfid wfid :licid licid}))
+
 (defn create-form! [{:keys [actor organization]
                      :form/keys [title fields]
                      :as command}]

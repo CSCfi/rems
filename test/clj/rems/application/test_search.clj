@@ -6,7 +6,8 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
 
-(use-fixtures :once
+(use-fixtures
+  :once
   test-db-fixture
   rollback-db-fixture
   search-index-fixture)

@@ -37,10 +37,10 @@
      [:span
       [:i.fa.fa-user.mr-1]
       [:span.user-name (:name user)]]
-     [atoms/link {:id "settings", :class "nav-link"} (url-dest "/settings")
-      [:span {:aria-label (text :t.navigation/settings)}
+     [atoms/link {:id "settings", :class "nav-link"} (url-dest "/profile")
+      [:span {:aria-label (text :t.navigation/profile)}
        [:i.fa.fa-cog.mr-1]
-       [:span.icon-description (text :t.navigation/settings)]]]
+       [:span.icon-description (text :t.navigation/profile)]]]
      [atoms/link {:id "logout", :class "nav-link"} (url-dest "/logout")
       [:span {:aria-label (text :t.navigation/logout)}
        [:i.fa.fa-sign-out-alt.mr-1]

@@ -213,7 +213,8 @@
                                            :name "Alice Applicant"
                                            :nickname "In Wonderland"
                                            :userid "alice"
-                                           :organizations [{:organization/id "default"}]}]})
+                                           :organizations [{:organization/id "default"}]
+                                           :researcher-status-by "so"}]})
              (fetch api-key user-id wfid))))
 
     (testing "edit as organization-owner"

@@ -75,7 +75,9 @@
                  :authentication "HIDDEN"
                  :database-url "HIDDEN"
                  :test-database-url "HIDDEN"
-                 :oidc-client-secret "HIDDEN")))))
+                 :oidc-client-secret "HIDDEN"
+                 :ga4gh-visa-private-key "HIDDEN"
+                 :ga4gh-visa-public-key "HIDDEN")))))
 
 (def keepalive-api
   (context "/keepalive" []

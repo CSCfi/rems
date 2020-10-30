@@ -14,9 +14,10 @@
             [rems.language-switcher :as language-switcher]
             [rems.navbar :as nav]
             [rems.phase :as phase]
-            [rems.settings :as settings]
+            [rems.profile :as profile]
             [rems.spinner :as spinner]
-            [rems.table :as table])
+            [rems.table :as table]
+            [rems.user :as user])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
@@ -120,8 +121,8 @@
     [:h2 "Application actions"]
     [action/guide]
 
-    [:h2 "Settings"]
-    [settings/guide]
+    [:h2 "Profile"]
+    [profile/guide]
 
     [:h2 "Administration"]
     [administration/guide]
@@ -130,4 +131,5 @@
     [table/guide]
     [dropdown/guide]
     [phase/guide]
-    [atoms/guide]]])
+    [atoms/guide]
+    [user/guide]]])

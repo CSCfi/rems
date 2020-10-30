@@ -40,7 +40,8 @@
             :remove-member "Remove member"
             :request-decision "Request decision"
             :request-review "Request review"
-            :request-selection "Send requests"
+            :request-selection "Send request to"
+            :request-selections "Send requests to"
             :resources-selection "Resources included in the application:"
             :return "Return to applicant"
             :review "Review"
@@ -126,6 +127,7 @@
                    :name "Name"
                    :notification-email "Email (set by user)"
                    :organization "Organization"
+                   :researcher-status "Applicant researcher status"
                    :username "Username"}
   :applications {:all-applications "All applications"
                  :applicant "Applicant"
@@ -390,7 +392,7 @@
                :change-language "Change language to %1"
                :home "Home"
                :logout "Sign out"
-               :settings "Settings"
+               :profile "Profile"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
@@ -406,15 +408,17 @@
            :phase-revoked "Phase revoked:"
            :rejected "Rejected"
            :revoked "Revoked"}
+  :profile {:idp-email "Email address from identity provider"
+            :no-email "(no email address)"
+            :notification-email "Use another email address for notifications"
+            :save "Save"
+            :settings "Settings"
+            :warning-about-missing-email [:<> "You will need to " [:a {:href "/settings"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
+            :your-details "Your user details"}
   :search {:clear-search "Clear search"
            :example-searches "Example searches"
            :learn-more "Learn more"
            :search "Search"}
-  :settings {:idp-email "Email address from identity provider"
-             :no-email "(no email address)"
-             :notification-email "Use another email address for notifications"
-             :save "Save"
-             :warning-about-missing-email [:<> "You will need to " [:a {:href "/settings"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
           :all-rows-selected "All rows selected"
