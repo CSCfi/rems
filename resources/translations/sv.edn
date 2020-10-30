@@ -127,6 +127,7 @@
                    :name "Namn"
                    :notification-email "E-postadress (angiven av den sökande)"
                    :organization "Organisation"
+                   :researcher-status "Forskarestatus" ; TODO check!
                    :username "Användarnamn"}
   :applications {:all-applications "Alla ansökningar"
                  :applicant "Sökande"
@@ -389,7 +390,7 @@
                :change-language "Byt språk till %1"
                :home "Ingångssida"
                :logout "Logga ut"
-               :settings "Inställningar"
+               :profile "Profil" ; TODO check
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
@@ -405,15 +406,17 @@
            :phase-revoked "Status återkallad:"
            :rejected "Avslag"
            :revoked "Återkallad"}
+  :profile {:idp-email "E-postadress från identifieringstjänst"
+            :no-email "(ingen e-postadress)"
+            :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
+            :save "Spara"
+            :settings "Inställningar"
+            :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
+            :your-details "Dina användardetaljer"} ; TODO check
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
            :search "Sök"}
-  :settings {:idp-email "E-postadress från identifieringstjänst"
-             :no-email "(ingen e-postadress)"
-             :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
-             :save "Spara"
-             :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
           :all-rows-selected "Alla rader är valda"

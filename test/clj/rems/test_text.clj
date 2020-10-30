@@ -7,7 +7,8 @@
             [rems.test-locales :refer [loc-en]]
             [rems.text :refer [with-language localize-event localize-state]]))
 
-(use-fixtures :once
+(use-fixtures
+  :once
   (fn [f]
     (mount/start #'rems.config/env #'rems.locales/translations)
     (f)

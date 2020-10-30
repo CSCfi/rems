@@ -33,4 +33,5 @@
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
  :ga4gh-visa-private-key "test-data/example-private-key.jwk"
  :ga4gh-visa-public-key "test-data/example-public-key.jwk"
- :catalogue-is-public false}
+ :catalogue-is-public false
+ :accessibility-report true}

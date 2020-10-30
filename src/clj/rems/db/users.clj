@@ -16,6 +16,8 @@
                     (:displayName u))
           :email (:mail u)}
          (select-keys u [:organizations :notification-email])
+         (when-let [by (:researcher-status-by u)]
+           {:researcher-status-by (keyword by)})
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (defn- unformat-user
@@ -24,7 +26,7 @@
   (merge {:eppn (:userid u)
           :commonName (:name u)
           :mail (:email u)}
-         (select-keys u [:organizations])
+         (select-keys u [:organizations :researcher-status-by])
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (deftest test-format-unformat

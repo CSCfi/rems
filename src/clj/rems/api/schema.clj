@@ -33,6 +33,7 @@
    :email (s/maybe s/Str)
    (s/optional-key :organizations) [OrganizationId]
    (s/optional-key :notification-email) (s/maybe s/Str)
+   (s/optional-key :researcher-status-by) s/Keyword
    s/Keyword s/Any})
 
 (s/defschema OrganizationOverview

@@ -24,7 +24,10 @@
     (f)
     (mount/stop)))
 
-(use-fixtures :each empty-signature empty-footer)
+(use-fixtures
+  :each
+  empty-signature
+  empty-footer)
 
 (def ^:private get-catalogue-item
   {10 {:localizations {:en {:langcode :en

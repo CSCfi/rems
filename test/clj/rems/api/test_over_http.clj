@@ -4,6 +4,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
+            [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.json :as json]
             [rems.event-notification :as event-notification]
@@ -12,9 +13,22 @@
 
 (use-fixtures :each standalone-fixture)
 
+(defn- create-test-data []
+  (api-key/add-api-key! 42 {:comment "test data"})
+  (test-helpers/create-user! {:eppn "handler"})
+  (test-helpers/create-user! {:eppn "applicant"})
+  (test-helpers/create-user! {:eppn "developer"})
+  (let [wfid (test-helpers/create-workflow! {:handlers ["handler"]})
+        form (test-helpers/create-form! nil)
+        res-id1 (test-helpers/create-resource! nil)
+        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :resource-id res-id1})
+        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
+    (test-helpers/submit-application app-id "applicant")))
+
 (deftest test-api-sql-timeouts
+  (create-test-data)
   (let [api-key "42"
-        user-id "alice"
+        user-id "applicant"
         application-id (test-helpers/create-application! {:actor user-id})
         application-id-2 (test-helpers/create-application! {:actor user-id})
         save-draft! #(-> (http/post (str (:public-url rems.config/env) "/api/applications/save-draft")
@@ -55,6 +69,7 @@
                  (save-draft!))))))))
 
 (deftest test-allocate-external-id
+  (create-test-data)
   ;; this test mimics an external id number service
   (with-open [server (stub/start! {"/" (fn [r]
                                          (let [event (json/parse-string (get-in r [:body "content"]))
@@ -72,7 +87,7 @@
                                          :event-notification-targets [{:url (:uri server)
                                                                        :event-types [:application.event/submitted]}])]
       (let [api-key "42"
-            applicant "alice"
+            applicant "applicant"
             cat-id (test-helpers/create-catalogue-item! {})
             app-id (test-helpers/create-draft! applicant [cat-id] "value")
             get-ext-id #(-> (http/get (str (:public-url rems.config/env) "/api/applications/" app-id)

@@ -16,7 +16,6 @@
 (def ^{:doc "Run a full REMS HTTP server."} standalone-fixture
   (join-fixtures [test-db-fixture
                   reset-db-fixture
-                  test-data-fixture
                   (fn [f]
                     (mount/start) ;; mount/stop is in test-db-fixture
                     (f))]))
