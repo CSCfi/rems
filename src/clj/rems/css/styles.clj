@@ -473,7 +473,6 @@
    [:.alert-dark {:color (get-theme-attribute :alert-dark-color)
                   :background-color (get-theme-attribute :alert-dark-bgcolor)
                   :border-color (get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
-   [:.applications.alert-secondary {:margin-top "1rem"}]
    shake
    [:.flash-message.alert-danger
     {:animation [[shake "0.6s cubic-bezier(.36,.07,.19,.97) both"]]}]
