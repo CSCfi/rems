@@ -303,7 +303,8 @@
   (let [on-update (fn [this]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
                       (when grab-focus?
-                        (when-let [element (.querySelector js/document "#main-content")]
+                        (when-let [element (or (.querySelector js/document "h1")
+                                               (.querySelector js/document "#main-content"))]
                           (focus/focus element)
                           (rf/dispatch [::focus-grabbed])))))]
     (r/create-class
