@@ -373,7 +373,8 @@
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
-                      :toolong "Text in field \"%1\" too long."}}
+                      :toolong "Text in field \"%1\" too long."
+                      :unsupported "Field \"%1\" is not supported."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"
