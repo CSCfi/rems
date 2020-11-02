@@ -883,6 +883,7 @@
              (slurp-fields :form)))
       (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
+        (btu/wait-visible {:tag :button :fn/has-class :info-button})
         (let [button (first (btu/query-all {:tag :button :fn/has-class :info-button}))]
           (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                              "(max 127 characters)"))
