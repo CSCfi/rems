@@ -15,9 +15,7 @@
           :name (or (:commonName u)
                     (:displayName u))
           :email (:mail u)}
-         (select-keys u [:organizations :notification-email])
-         (when-let [by (:researcher-status-by u)]
-           {:researcher-status-by (keyword by)})
+         (select-keys u [:organizations :notification-email :researcher-status-by])
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (defn- unformat-user
