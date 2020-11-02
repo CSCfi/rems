@@ -834,7 +834,7 @@
                                        :notification-email "notification@example.com"
                                        :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                                        :address "Testikatu 1, 00100 Helsinki"
-                                       :researcher-status-by :so}
+                                       :researcher-status-by "so"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])

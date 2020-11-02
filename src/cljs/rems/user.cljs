@@ -33,7 +33,7 @@
              [info-field (text :t.applicant-info/email) mail {:inline? true}])
            (when-let [organizations (seq (:organizations attributes))]
              [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])
-           (when (#{:so :system} (:researcher-status-by attributes))
+           (when (#{"so" "system"} (:researcher-status-by attributes))
              [info-field (text :t.applicant-info/researcher-status) [readonly-checkbox {:value true}] {:inline? true}])]
           (for [[k v] other-attributes]
             (let [title (or (localized (get-in extra-attributes [(name k) :name]))
@@ -60,7 +60,7 @@
                          :notification-email "notification@example.com"
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                          :address "Testikatu 1, 00100 Helsinki"
-                         :researcher-status-by :so
+                         :researcher-status-by "so"
                          :nickname "The Dev"}])
    (example "invalid value for researcher status"
             [attributes {:userid "developer@uu.id"
