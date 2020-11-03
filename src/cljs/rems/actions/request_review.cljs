@@ -1,6 +1,6 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field-view action-form-view button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
@@ -70,10 +70,10 @@
                      :on-click on-send
                      :disabled (empty? selected-reviewers)}]]
    [:div
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-comments-not-shown-to-applicant)
-                     :comment comment
-                     :on-comment on-set-comment}]
+    [comment-field-view {:id action-form-id
+                         :label (text :t.form/add-comments-not-shown-to-applicant)
+                         :comment comment
+                         :on-comment on-set-comment}]
     [action-attachment {:key action-form-id
                         :application-id application-id}]
     [:div.form-group

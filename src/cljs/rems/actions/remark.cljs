@@ -1,7 +1,7 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view action-comment
-                                         button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field-view
+                                             button-wrapper command!]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -52,10 +52,10 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-remark)
-                     :comment comment
-                     :on-comment on-set-comment}]
+    [comment-field-view {:id action-form-id
+                         :label (text :t.form/add-remark)
+                         :comment comment
+                         :on-comment on-set-comment}]
     (let [id (str "public-" action-form-id)]
       [:div.form-group
        [:div.form-check

@@ -3,7 +3,7 @@
             [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field-view action-form-view button-wrapper command!]]
             [rems.atoms :refer [close-symbol]]
             [rems.text :refer [text]]))
 
@@ -75,10 +75,10 @@
                      :class "btn-success"
                      :on-click on-approve}]]
    [:<>
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-comments-shown-to-applicant)
-                     :comment comment
-                     :on-comment on-set-comment}]
+    [comment-field-view {:id action-form-id
+                         :label (text :t.form/add-comments-shown-to-applicant)
+                         :comment comment
+                         :on-comment on-set-comment}]
     [action-attachment {:application-id application-id
                         :key action-form-id}]
     [:div.form-group

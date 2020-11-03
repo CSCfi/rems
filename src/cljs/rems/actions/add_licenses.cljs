@@ -1,7 +1,7 @@
 (ns rems.actions.add-licenses
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field-view button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text get-localized-title]]
@@ -81,10 +81,10 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-comments-shown-to-applicant)
-                     :comment comment
-                     :on-comment on-set-comment}]
+    [comment-field-view {:id action-form-id
+                         :label (text :t.form/add-comments-shown-to-applicant)
+                         :comment comment
+                         :on-comment on-set-comment}]
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/licenses-selection)]
      [dropdown/dropdown

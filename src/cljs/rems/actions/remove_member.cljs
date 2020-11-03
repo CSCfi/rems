@@ -1,6 +1,6 @@
 (ns rems.actions.remove-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field-view button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -56,10 +56,10 @@
                      :text (text :t.actions/remove-member)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [action-comment {:id (str element-id "-comment")
-                    :label (text :t.form/add-comments-shown-to-applicant)
-                    :comment comment
-                    :on-comment on-set-comment}]
+   [comment-field-view {:id (str element-id "-comment")
+                        :label (text :t.form/add-comments-shown-to-applicant)
+                        :comment comment
+                        :on-comment on-set-comment}]
    {:collapse-id element-id}])
 
 (defn remove-member-form [element-id member application-id on-finished]

@@ -33,7 +33,7 @@
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
-(defn action-comment [{:keys [id label comment on-comment]}]
+(defn comment-field-view [{:keys [id label comment on-comment]}]
   (let [id (str "comment-" id)]
     [:div.form-group
      [:label {:for id} label]
