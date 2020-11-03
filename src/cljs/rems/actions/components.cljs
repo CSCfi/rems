@@ -58,7 +58,7 @@
 
 (rf/reg-event-fx
  ::save-attachment
- (fn [{:keys [db]} [_ application-id key file]]
+ (fn [_ [_ application-id key file]]
    (let [description [text :t.form/upload]]
      (post! "/api/applications/add-attachment"
             {:url-params {:application-id application-id}
