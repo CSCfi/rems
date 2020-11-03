@@ -1,6 +1,6 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
@@ -25,7 +25,7 @@
                ::comment ""
                ::potential-reviewers #{}
                ::selected-reviewers #{})
-    :dispatch [:rems.actions.action/set-attachments action-form-id []]
+    :dispatch [:rems.actions.components/set-attachments action-form-id []]
     ::fetch-potential-reviewers #(rf/dispatch [::set-potential-reviewers %])}))
 
 (rf/reg-sub ::potential-reviewers (fn [db _] (::potential-reviewers db)))
@@ -91,7 +91,7 @@
   (let [selected-reviewers @(rf/subscribe [::selected-reviewers])
         potential-reviewers @(rf/subscribe [::potential-reviewers])
         comment @(rf/subscribe [::comment])
-        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+        attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [request-review-view {:application-id application-id
                           :selected-reviewers selected-reviewers
                           :potential-reviewers potential-reviewers

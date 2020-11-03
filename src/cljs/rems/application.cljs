@@ -3,7 +3,7 @@
             [goog.string]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.action :refer [button-wrapper]]
+            [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]

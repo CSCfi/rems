@@ -1,6 +1,6 @@
 (ns rems.actions.change-resources
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]

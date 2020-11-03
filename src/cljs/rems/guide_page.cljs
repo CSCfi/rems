@@ -1,6 +1,6 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
-            [rems.actions.action :as action]
+            [rems.actions.components]
             [rems.administration.administration :as administration]
             [rems.application :as application]
             [rems.application-list :as application-list]
@@ -119,7 +119,7 @@
     [fields/guide]
 
     [:h2 "Application actions"]
-    [action/guide]
+    [rems.actions.components/guide]
 
     [:h2 "Profile"]
     [profile/guide]

@@ -1,4 +1,4 @@
-(ns rems.actions.action
+(ns rems.actions.components
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [attachment-link close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]

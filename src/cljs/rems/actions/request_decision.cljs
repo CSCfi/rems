@@ -1,6 +1,6 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
@@ -24,7 +24,7 @@
                ::comment ""
                ::potential-deciders #{}
                ::selected-deciders #{})
-    :dispatch [:rems.actions.action/set-attachments action-form-id []]
+    :dispatch [:rems.actions.components/set-attachments action-form-id []]
     ::fetch-potential-deciders #(rf/dispatch [::set-potential-deciders %])}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
@@ -90,7 +90,7 @@
   (let [selected-deciders @(rf/subscribe [::selected-deciders])
         potential-deciders @(rf/subscribe [::potential-deciders])
         comment @(rf/subscribe [::comment])
-        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+        attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [request-decision-view {:application-id application-id
                             :selected-deciders selected-deciders
                             :potential-deciders potential-deciders

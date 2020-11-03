@@ -1,6 +1,6 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "decide")
@@ -9,7 +9,7 @@
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db ::comment "")
-    :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
+    :dispatch [:rems.actions.components/set-attachments action-form-id []]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
@@ -54,7 +54,7 @@
 
 (defn decide-form [application-id on-finished]
   (let [comment @(rf/subscribe [::comment])
-        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+        attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [decide-view {:application-id application-id
                   :comment comment
                   :on-set-comment #(rf/dispatch [::set-comment %])

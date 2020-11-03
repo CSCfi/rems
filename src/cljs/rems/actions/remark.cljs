@@ -1,6 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-attachment action-button action-form-view action-comment
+            [rems.actions.components :refer [action-attachment action-button action-form-view action-comment
                                          button-wrapper command!]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -15,7 +15,7 @@
    {:db (assoc db
                ::comment ""
                ::public false)
-    :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
+    :dispatch [:rems.actions.components/set-attachments action-form-id []]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
@@ -70,7 +70,7 @@
                         :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]
-  (let [attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])
+  (let [attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])
         comment @(rf/subscribe [::comment])
         public @(rf/subscribe [::public])]
     [remark-view {:application-id application-id
