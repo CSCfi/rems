@@ -308,7 +308,7 @@
           :decided {:subject "(%3) Päätös lähetetty"
                     :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decider-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
-                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
+                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämän hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :decision-requested {:subject "(%3) Päätöspyyntö"
                                :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
@@ -327,7 +327,7 @@
           :reviewed {:subject "(%3) Hakemus katselmoitu"
                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :reviewer-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
-                             :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
+                             :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämän hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :reviewer-reminder {:application "%1, lähettänyt %2"
                               :message "Hyvä %1,\n\nSeuraavat hakemukset odottavat katselmointiasi:\n\n%2\n\nVoit tarkastella hakemuksia osoitteessa %3"
                               :subject "Katselmointia odottavat hakemukset"}}
