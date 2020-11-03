@@ -1054,7 +1054,7 @@
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
-                                       :application/actor-invitations {token {:event/actor "handler"
+                                       :application/invitation-tokens {token {:event/actor "handler"
                                                                               :application/reviewer {:name "Mr. Reviewer"
                                                                                                      :email "reviewer@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
@@ -1070,7 +1070,7 @@
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/actor-invitations {}
+                                           :application/invitation-tokens {}
                                            :application/todo :waiting-for-review
                                            :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
           (is (= expected-application (recreate expected-application)))))))
@@ -1087,7 +1087,7 @@
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
-                                       :application/actor-invitations {token {:event/actor "handler"
+                                       :application/invitation-tokens {token {:event/actor "handler"
                                                                               :application/decider {:name "Mr. Decider"
                                                                                                     :email "decider@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
@@ -1103,7 +1103,7 @@
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/actor-invitations {}
+                                           :application/invitation-tokens {}
                                            :application/todo :waiting-for-decision
                                            :rems.application.model/latest-decision-request-by-user {"new-decider" review-request-id}})]
           (is (= expected-application (recreate expected-application))))))))
@@ -1604,12 +1604,11 @@
           (is (= #{"secret" "clandestine" nil} (set (map :invitation/token (:application/events enriched)))))
           (is (= {"secret" {:event/actor "applicant"
                             :application/member {:name "member"
-                                                 :email "member@example.com"}}}
-                 (:application/invitation-tokens enriched)))
-          (is (= {"clandestine" {:event/actor "handler"
+                                                 :email "member@example.com"}}
+                  "clandestine" {:event/actor "handler"
                                  :application/reviewer {:name "new-reviewer"
                                                         :email "reviewer@example.com"}}}
-                 (:application/actor-invitations enriched)))
+                 (:application/invitation-tokens enriched)))
           (is (= nil
                  (:application/invited-members enriched))))
         (doseq [user-id ["applicant" "handler"]]

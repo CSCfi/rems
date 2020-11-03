@@ -507,32 +507,26 @@
        :application/reviewer (:reviewer cmd)
        :invitation/token (secure-token)}))
 
-(defn- valid-member-invitation-token? [application token]
-  (contains? (:application/invitation-tokens application) token))
-
-(defn- get-actor-invitation-token [application token]
-  (get-in application [:application/actor-invitations token]))
-
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
   (let [token (:token cmd)
-        actor-invitation (get-actor-invitation-token application token)]
+        invitation (get-in application [:application/invitation-tokens token])]
     (cond
-      (valid-member-invitation-token? application token)
+      (:application/member invitation)
       (or (already-member-error application (:actor cmd))
           (ok-with-data {:application-id (:application-id cmd)}
                         [{:event/type :application.event/member-joined
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
 
-      (:application/reviewer actor-invitation)
+      (:application/reviewer invitation)
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/reviewer-joined
                       :application/id (:application-id cmd)
                       :invitation/token (:token cmd)
                       :application/request-id (UUID/randomUUID)}])
 
-      (:application/decider actor-invitation)
+      (:application/decider invitation)
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/decider-joined
                       :application/id (:application-id cmd)

@@ -108,13 +108,13 @@
 (defmethod application-base-view :application.event/decider-invited
   [application event]
   (-> application
-      (assoc-in [:application/actor-invitations (:invitation/token event)]
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
                 (select-keys event [:event/actor :application/decider]))))
 
 (defmethod application-base-view :application.event/reviewer-invited
   [application event]
   (-> application
-      (assoc-in [:application/actor-invitations (:invitation/token event)]
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
                 (select-keys event [:event/actor :application/reviewer]))))
 
 (defn- update-todo-for-requests [application]
@@ -127,14 +127,14 @@
 (defmethod application-base-view :application.event/decider-joined
   [application event]
   (-> application
-      (update :application/actor-invitations dissoc (:invitation/token event))
+      (update :application/invitation-tokens dissoc (:invitation/token event))
       (assoc-in [::latest-decision-request-by-user (:event/actor event)] (:application/request-id event))
       (update-todo-for-requests)))
 
 (defmethod application-base-view :application.event/reviewer-joined
   [application event]
   (-> application
-      (update :application/actor-invitations dissoc (:invitation/token event))
+      (update :application/invitation-tokens dissoc (:invitation/token event))
       (assoc-in [::latest-review-request-by-user (:event/actor event)] (:application/request-id event))
       (update-todo-for-requests)))
 
@@ -639,11 +639,10 @@
   (-> application
       ;; the keys of the invitation-tokens map are secret
       (dissoc :application/invitation-tokens)
-      (dissoc :application/actor-invitations)
       (assoc :application/invited-members (->> application
                                                :application/invitation-tokens
                                                vals
-                                               (mapv :application/member)
+                                               (keep :application/member)
                                                set))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
