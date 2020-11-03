@@ -3,7 +3,7 @@
             [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field-view action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
             [rems.atoms :refer [close-symbol]]
             [rems.text :refer [text]]))
 
@@ -17,11 +17,9 @@
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-   {:db (assoc db ::comment "" ::entitlement-end (default-end (get-in db [:config :entitlement-default-length-days])))
-    :dispatch [:rems.actions.components/set-attachments action-form-id []]}))
-
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
+   {:db (assoc db ::entitlement-end (default-end (get-in db [:config :entitlement-default-length-days])))
+    :dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+                 [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-sub ::entitlement-end (fn [db _] (::entitlement-end db)))
 (rf/reg-event-db ::set-entitlement-end (fn [db [_ value]] (assoc db ::entitlement-end value)))
@@ -63,7 +61,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn approve-reject-view
-  [{:keys [application-id comment on-set-comment end on-set-entitlement-end on-approve on-reject]}]
+  [{:keys [application-id end on-set-entitlement-end on-approve on-reject]}]
   [action-form-view action-form-id
    (text :t.actions/approve-reject)
    [[button-wrapper {:id "reject"
@@ -75,12 +73,10 @@
                      :class "btn-success"
                      :on-click on-approve}]]
    [:<>
-    [comment-field-view {:id action-form-id
-                         :label (text :t.form/add-comments-shown-to-applicant)
-                         :comment comment
-                         :on-comment on-set-comment}]
-    [action-attachment {:application-id application-id
-                        :key action-form-id}]
+    [comment-field {:key action-form-id
+                    :label (text :t.form/add-comments-shown-to-applicant)}]
+    [action-attachment {:key action-form-id
+                        :application-id application-id}]
     [:div.form-group
      [:label {:for "approve-end"} (text :t.actions/approve-end-date)]
      [:div.input-group.w-50
@@ -98,12 +94,10 @@
           [close-symbol]]])]]]])
 
 (defn approve-reject-form [application-id on-finished]
-  (let [comment @(rf/subscribe [::comment])
+  (let [comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])
         end @(rf/subscribe [::entitlement-end])]
     [approve-reject-view {:application-id application-id
-                          :comment comment
-                          :on-set-comment #(rf/dispatch [::set-comment %])
                           :end end
                           :on-set-entitlement-end #(rf/dispatch [::set-entitlement-end %])
                           :on-approve #(rf/dispatch [::send-approve {:application-id application-id
