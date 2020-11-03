@@ -698,7 +698,7 @@
         ;; The :see-everything permission is used to determine whether the user
         ;; is allowed to see all comments. It would not make sense for the user
         ;; to be able to write a comment which he then cannot see.
-        show-comment-field-view? (contains? (:application/permissions application) :see-everything)
+        show-comment-field? (contains? (:application/permissions application) :see-everything)
         actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
@@ -706,7 +706,7 @@
                 [request-decision-form app-id reload]
                 [review-form app-id reload]
                 [remark-form app-id reload]
-                [close-form app-id show-comment-field-view? reload]
+                [close-form app-id show-comment-field? reload]
                 [revoke-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]

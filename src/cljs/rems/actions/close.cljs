@@ -29,7 +29,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn close-view
-  [{:keys [application-id show-comment-field-view? on-send]}]
+  [{:keys [application-id show-comment-field? on-send]}]
   [action-form-view action-form-id
    (text :t.actions/close)
    [[button-wrapper {:id "close"
@@ -38,18 +38,18 @@
                      :on-click on-send}]]
    [:div
     (text :t.actions/close-intro)
-    (when show-comment-field-view?
+    (when show-comment-field?
       [:<>
        [comment-field {:key action-form-id
                        :label (text :t.form/add-comments-shown-to-applicant)}]
        [action-attachment {:key action-form-id
                            :application-id application-id}]])]])
 
-(defn close-form [application-id show-comment-field-view? on-finished]
+(defn close-form [application-id show-comment-field? on-finished]
   (let [comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [close-view {:application-id application-id
-                 :show-comment-field-view? show-comment-field-view?
+                 :show-comment-field? show-comment-field?
                  :on-send #(rf/dispatch [::send-close {:application-id application-id
                                                        :comment comment
                                                        :attachments attachments
