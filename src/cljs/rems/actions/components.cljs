@@ -45,6 +45,34 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
+(defn public-checkbox-view [{:keys [id public on-set-public]}]
+  [:div.form-group
+   [:div.form-check
+    [:input.form-check-input {:type "checkbox"
+                              :id id
+                              :name id
+                              :checked public
+                              :on-change #(on-set-public (.. % -target -checked))}]
+    [:label.form-check-label {:for id}
+     (text :t.actions/remark-public)]]])
+
+(rf/reg-sub ::comment (fn [db [_ key]] (get-in db [::comment key])))
+(rf/reg-event-db ::set-comment (fn [db [_ key value]] (assoc-in db [::comment key] value)))
+
+(rf/reg-sub ::comment-public (fn [db [_ key]] (get-in db [::comment-public key])))
+(rf/reg-event-db ::set-comment-public (fn [db [_ key value]] (assoc-in db [::comment-public key] value)))
+
+(defn comment-field [{:keys [key label public-checkbox?]}]
+  [:<>
+   [comment-field-view {:id key
+                        :label label
+                        :comment @(rf/subscribe [::comment key])
+                        :on-comment #(rf/dispatch [::set-comment key %])}]
+   (when public-checkbox?
+     [public-checkbox-view {:id (str "public-" key)
+                            :public @(rf/subscribe [::comment-public key])
+                            :on-set-public #(rf/dispatch [::set-comment-public key %])}])])
+
 ;; attachments in suitable format for api:
 (rf/reg-sub ::attachments (fn [db [_ key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments key]))))
 ;; attachments with filenames for rendering:

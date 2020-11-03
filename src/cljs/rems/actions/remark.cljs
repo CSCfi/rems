@@ -1,6 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field-view
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field
                                              button-wrapper command!]]
             [rems.text :refer [text]]))
 
@@ -8,17 +8,10 @@
 
 (rf/reg-event-fx
  ::open-form
- (fn [{:keys [db]} _]
-   {:db (assoc db
-               ::comment ""
-               ::public false)
-    :dispatch [:rems.actions.components/set-attachments action-form-id []]}))
-
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
-
-(rf/reg-sub ::public (fn [db _] (::public db)))
-(rf/reg-event-db ::set-public (fn [db [_ value]] (assoc db ::public value)))
+ (fn [_ _]
+   {:dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+                 [:rems.actions.components/set-comment-public action-form-id false]
+                 [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx
  ::send-remark
@@ -39,8 +32,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn remark-view
-  [{:keys [application-id
-           comment on-set-comment public on-set-public on-send]}]
+  [{:keys [application-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
    [[button-wrapper {:id action-form-id
@@ -48,32 +40,17 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [comment-field-view {:id action-form-id
-                         :label (text :t.form/add-remark)
-                         :comment comment
-                         :on-comment on-set-comment}]
-    (let [id (str "public-" action-form-id)]
-      [:div.form-group
-       [:div.form-check
-        [:input.form-check-input {:type "checkbox"
-                                  :id id
-                                  :name id
-                                  :value public
-                                  :on-change #(on-set-public (.. % -target -checked))}]
-        [:label.form-check-label {:for id}
-         (text :t.actions/remark-public)]]])
+    [comment-field {:key action-form-id
+                    :label (text :t.form/add-remark)
+                    :public-checkbox? true}]
     [action-attachment {:key action-form-id
                         :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]
   (let [attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])
-        comment @(rf/subscribe [::comment])
-        public @(rf/subscribe [::public])]
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
+        public @(rf/subscribe [:rems.actions.components/comment-public action-form-id])]
     [remark-view {:application-id application-id
-                  :comment comment
-                  :on-set-comment #(rf/dispatch [::set-comment %])
-                  :public public
-                  :on-set-public #(rf/dispatch [::set-public %])
                   :on-send #(rf/dispatch [::send-remark {:application-id application-id
                                                          :comment comment
                                                          :public public
