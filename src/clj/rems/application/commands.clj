@@ -524,18 +524,21 @@
                         [{:event/type :application.event/member-joined
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
+
       (:application/reviewer actor-invitation)
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/reviewer-joined
                       :application/id (:application-id cmd)
                       :invitation/token (:token cmd)
                       :application/request-id (UUID/randomUUID)}])
+
       (:application/decider actor-invitation)
       (ok-with-data {:application-id (:application-id cmd)}
                     [{:event/type :application.event/decider-joined
                       :application/id (:application-id cmd)
                       :invitation/token (:token cmd)
                       :application/request-id (UUID/randomUUID)}])
+
       :else
       {:errors [{:type :t.actions.errors/invalid-token :token token}]})))
 

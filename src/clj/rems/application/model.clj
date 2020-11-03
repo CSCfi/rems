@@ -119,12 +119,9 @@
 (defn- update-todo-for-requests [application]
   (assoc application :application/todo
          (cond
-           (not (empty? (::latest-review-request-by-user application)))
-           :waiting-for-review
-           (not (empty? (::latest-decision-request-by-user application)))
-           :waiting-for-decision
-           :else
-           :no-pending-requests)))
+           (seq (::latest-review-request-by-user application)) :waiting-for-review
+           (seq (::latest-decision-request-by-user application)) :waiting-for-decision
+           :else :no-pending-requests)))
 
 (defmethod application-base-view :application.event/decider-joined
   [application event]
