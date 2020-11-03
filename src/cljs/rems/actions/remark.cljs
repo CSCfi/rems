@@ -2,10 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.actions.components :refer [action-attachment action-button action-form-view comment-field-view
                                              button-wrapper command!]]
-            [rems.fields :as fields]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.text :refer [text]]))
 
 (def ^:private action-form-id "remark")
 
@@ -43,8 +40,7 @@
 
 (defn remark-view
   [{:keys [application-id
-           comment on-set-comment public on-set-public on-send
-           attachment on-attach on-remove-attachment]}]
+           comment on-set-comment public on-set-public on-send]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
    [[button-wrapper {:id action-form-id
