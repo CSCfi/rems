@@ -126,6 +126,8 @@
    :application.event/copied-to :t.applications.events/copied-to
    :application.event/created :t.applications.events/created
    :application.event/decided :t.applications.events/decided
+   :application.event/decider-invited :t.applications.events/decider-invited
+   :application.event/decider-joined :t.applications.events/decider-joined
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/deleted :t.applications.events/deleted
    :application.event/draft-saved :t.applications.events/draft-saved
@@ -142,6 +144,8 @@
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
    :application.event/revoked :t.applications.events/revoked
+   :application.event/reviewer-invited :t.applications.events/reviewer-invited
+   :application.event/reviewer-joined :t.applications.events/reviewer-joined
    :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-decision [event]
@@ -174,7 +178,9 @@
         (:application.event/member-added
          :application.event/member-invited
          :application.event/member-removed
-         :application.event/member-uninvited)
+         :application.event/member-uninvited
+         :application.event/decider-invited
+         :application.event/reviewer-invited)
         (application-util/get-member-name (:application/member event))
 
         :application.event/resources-changed

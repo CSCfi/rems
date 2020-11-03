@@ -145,6 +145,8 @@
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
                           :created "%1 loi uuden hakemuksen."
                           :decided "%1 teki päätöksen hakemukselle."
+                          :decider-invited "%1 kutsui käyttäjän %2 päättämään."
+                          :decider-joined "%1 hyväksyi kutsun päättämään."
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :deleted "%1 poisti luonnoksen."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
@@ -162,6 +164,8 @@
                           :returned "%1 palautti hakemuksen muokattavaksi."
                           :review-requested "%1 pyysi katselmointia käyttäjältä %2."
                           :reviewed "%1 katselmoi hakemuksen."
+                          :reviewer-invited "%1 kutsui käyttäjän %2 katselmoijaksi."
+                          :reviewer-joined "%1 hyväksyi kutsun katselmoijaksi."
                           :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
@@ -303,6 +307,8 @@
                                   :message-to-handler "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decided {:subject "(%3) Päätös lähetetty"
                     :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decider-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
+                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämän hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :decision-requested {:subject "(%3) Päätöspyyntö"
                                :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
@@ -312,7 +318,7 @@
           :member-added {:subject "Lisätty hakemuksen %3 jäseneksi"
                          :message "Hyvä %1,\n\nSinut on lisätty käyttäjän %4 jättämän hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen %3"
-                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
+                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
           :regards "\n\nYstävällisin terveisin,\n\nREMS\n"
           :remarked {:subject "(%3) Hakemusta kommentoitu"
                      :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit nähdä kommentin ja tarkastella hakemusta osoitteessa %6"}
@@ -320,6 +326,8 @@
                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :reviewed {:subject "(%3) Hakemus katselmoitu"
                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :reviewer-invited {:subject "Kutsu osallistumaan hakemuksen %3 käsittelyyn"
+                             :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämän hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :reviewer-reminder {:application "%1, lähettänyt %2"
                               :message "Hyvä %1,\n\nSeuraavat hakemukset odottavat katselmointiasi:\n\n%2\n\nVoit tarkastella hakemuksia osoitteessa %3"
                               :subject "Katselmointia odottavat hakemukset"}}

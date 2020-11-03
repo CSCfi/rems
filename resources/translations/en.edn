@@ -147,6 +147,8 @@
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
+                          :decider-invited "%1 invited %2 to decide."
+                          :decider-joined "%1 accepted the invitation to decide."
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
@@ -164,6 +166,8 @@
                           :returned "%1 requested changes to the application."
                           :review-requested "%1 requested a review from %2."
                           :reviewed "%1 reviewed the application."
+                          :reviewer-invited "%1 invited %2 to review the application."
+                          :reviewer-joined "%1 accepted the invitation to review."
                           :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
@@ -305,6 +309,9 @@
                                   :message-to-handler "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
+          ;; generic text shared by decider-invited and reviewer-invited at the moment
+          :decider-invited {:subject "Invitation to participate in handling application %3"
+                            :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :decision-requested {:subject "(%3) Decision request"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."
@@ -322,6 +329,8 @@
                              :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :reviewed {:subject "(%3) Application has been reviewed"
                      :message "Dear %1,\n\n%2 has reviewed the application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :reviewer-invited {:subject "Invitation to participate in handling application %3"
+                             :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :reviewer-reminder {:application "%1, submitted by %2"
                               :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
                               :subject "Applications pending review"}}

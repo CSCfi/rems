@@ -214,6 +214,8 @@
                  "application.command/add-member"
                  "application.command/remove-member"
                  "application.command/invite-member"
+                 "application.command/invite-decider"
+                 "application.command/invite-reviewer"
                  "application.command/uninvite-member"
                  "application.command/change-resources"
                  "application.command/close"
@@ -235,6 +237,8 @@
                      "application.command/add-member"
                      "application.command/remove-member"
                      "application.command/invite-member"
+                     "application.command/invite-decider"
+                     "application.command/invite-reviewer"
                      "application.command/uninvite-member"
                      "application.command/change-resources"
                      "application.command/close"
@@ -598,6 +602,82 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
 
+(deftest test-application-invitations
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"
+        app-id (test-helpers/create-application! {:actor applicant})]
+    (testing "invite member for draft as applicant"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/invite-member
+                                      :application-id app-id
+                                      :member {:name "Member 1" :email "member1@example.com"}}))))
+    (testing "accept member invitation for draft"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            member "member1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key member)))
+        (testing ", member is able to fetch application and see themselves"
+          (is (= #{member}
+                 (->> (get-application-for-user app-id member)
+                      :application/members
+                      (mapv :userid)
+                      set))))))
+    (testing "submit application"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "invite reviewer as handler"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/invite-reviewer
+                                    :application-id app-id
+                                    :reviewer {:name "Member 2" :email "member2@example.com"}}))))
+    (testing "accept handler invitation"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            reviewer "reviewer1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key reviewer)))
+        (testing ", reviewer is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/review"
+                  "application.command/remark"]
+                 (:application/permissions (get-application-for-user app-id reviewer)))))))
+    (testing "invite decider as handler"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/invite-decider
+                                    :application-id app-id
+                                    :decider {:name "Member 3" :email "member3@example.com"}}))))
+    (testing "accept handler invitation"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            decider "decider1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key decider)))
+        (testing ", decider is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/reject"
+                  "application.command/decide"
+                  "application.command/remark"
+                  "application.command/approve"]
+                 (:application/permissions (get-application-for-user app-id decider)))))))))
+
 (deftest test-application-validation
   (let [user-id "alice"
         form-id (test-helpers/create-form! {:form/fields [{:field/id "req1"
@@ -733,6 +813,7 @@
                "application.command/assign-external-id"
                "application.command/change-resources"
                "application.command/close"
+               "application.command/invite-reviewer"
                "application.command/invite-member"
                "application.command/remark"
                "application.command/remove-member"
