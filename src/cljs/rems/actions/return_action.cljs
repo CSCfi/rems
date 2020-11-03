@@ -1,18 +1,15 @@
 (ns rems.actions.return-action
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field-view action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "return")
 
 (rf/reg-event-fx
  ::open-form
- (fn [{:keys [db]} _]
-   {:db (assoc db ::comment "")
-    :dispatch [:rems.actions.components/set-attachments action-form-id []]}))
-
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
+ (fn [_ _]
+   {:dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+                 [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx
  ::send-return
@@ -32,7 +29,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn return-view
-  [{:keys [application-id comment on-set-comment on-send]}]
+  [{:keys [application-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/return)
    [[button-wrapper {:id "return"
@@ -40,19 +37,15 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:<>
-    [comment-field-view {:id action-form-id
-                         :label (text :t.form/add-comments-shown-to-applicant)
-                         :comment comment
-                         :on-comment on-set-comment}]
+    [comment-field {:key action-form-id
+                    :label (text :t.form/add-comments-shown-to-applicant)}]
     [action-attachment {:application-id application-id
                         :key action-form-id}]]])
 
 (defn return-form [application-id on-finished]
-  (let [comment @(rf/subscribe [::comment])
+  (let [comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [return-view {:application-id application-id
-                  :comment comment
-                  :on-set-comment #(rf/dispatch [::set-comment %])
                   :on-send #(rf/dispatch [::send-return {:application-id application-id
                                                          :comment comment
                                                          :attachments attachments
