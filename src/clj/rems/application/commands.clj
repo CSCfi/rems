@@ -554,10 +554,9 @@
 
 (defmethod command-handler :application.command/uninvite-member
   [cmd application injections]
-  (or (when-not (contains? (set (map (juxt :name :email)
+  (or (when-not (contains? (set (map :application/member
                                      (vals (:application/invitation-tokens application))))
-                           [(:name (:member cmd))
-                            (:email (:member cmd))])
+                           (:member cmd))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
       (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/member-uninvited

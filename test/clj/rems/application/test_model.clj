@@ -978,8 +978,9 @@
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
-                                       :application/invitation-tokens {token {:name "Mr. Member"
-                                                                              :email "member@example.com"}}})]
+                                       :application/invitation-tokens {token {:event/actor "applicant"
+                                                                              :application/member {:name "Mr. Member"
+                                                                                                   :email "member@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> member uninvited"
@@ -1589,20 +1590,24 @@
     (testing "invitation tokens are not visible to anybody"
       (let [application (-> application
                             (model/application-view {:event/type :application.event/member-invited
+                                                     :event/actor "applicant"
                                                      :application/member {:name "member"
                                                                           :email "member@example.com"}
                                                      :invitation/token "secret"})
                             (model/application-view {:event/type :application.event/reviewer-invited
+                                                     :event/actor "handler"
                                                      :application/reviewer {:name "new-reviewer"
                                                                             :email "reviewer@example.com"}
                                                      :invitation/token "clandestine"}))
             enriched (model/enrich-with-injections application injections)]
         (testing "- original"
           (is (= #{"secret" "clandestine" nil} (set (map :invitation/token (:application/events enriched)))))
-          (is (= {"secret" {:name "member"
-                            :email "member@example.com"}}
+          (is (= {"secret" {:event/actor "applicant"
+                            :application/member {:name "member"
+                                                 :email "member@example.com"}}}
                  (:application/invitation-tokens enriched)))
-          (is (= {"clandestine" {:application/reviewer {:name "new-reviewer"
+          (is (= {"clandestine" {:event/actor "handler"
+                                 :application/reviewer {:name "new-reviewer"
                                                         :email "reviewer@example.com"}}}
                  (:application/actor-invitations enriched)))
           (is (= nil

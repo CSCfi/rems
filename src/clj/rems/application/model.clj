@@ -75,16 +75,17 @@
 (defmethod application-base-view :application.event/member-invited
   [application event]
   (-> application
-      (update :application/invitation-tokens assoc (:invitation/token event) (:application/member event))))
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
+                (select-keys event [:event/actor :application/member]))))
 
 (defmethod application-base-view :application.event/member-uninvited
   [application event]
   (-> application
-      ;; TODO rename to member-invitations?
       (update :application/invitation-tokens (fn [invitations]
                                                (->> invitations
-                                                    (remove (fn [[_token member]]
-                                                              (= member (:application/member event))))
+                                                    (remove (fn [[_token invitation]]
+                                                              (= (:application/member invitation)
+                                                                 (:application/member event))))
                                                     (into {}))))))
 
 (defmethod application-base-view :application.event/member-joined
@@ -639,7 +640,11 @@
       ;; the keys of the invitation-tokens map are secret
       (dissoc :application/invitation-tokens)
       (dissoc :application/actor-invitations)
-      (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
+      (assoc :application/invited-members (->> application
+                                               :application/invitation-tokens
+                                               vals
+                                               (mapv :application/member)
+                                               set))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
 (defn- may-see-private-answers? [roles]
