@@ -47,7 +47,7 @@
                      :text (text :t.actions/remove-member)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [comment-field {:key (str element-id "-comment")
+   [comment-field {:field-key (str element-id "-comment")
                    :label (text :t.form/add-comments-shown-to-applicant)}]
    {:collapse-id element-id}])
 

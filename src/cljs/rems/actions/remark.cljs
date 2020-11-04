@@ -40,10 +40,10 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [comment-field {:key action-form-id
+    [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)
                     :public-checkbox? true}]
-    [action-attachment {:key action-form-id
+    [action-attachment {:field-key action-form-id
                         :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]

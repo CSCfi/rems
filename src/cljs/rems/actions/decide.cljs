@@ -42,9 +42,9 @@
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
    [:<>
-    [comment-field {:key action-form-id
+    [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
-    [action-attachment {:key action-form-id
+    [action-attachment {:field-key action-form-id
                         :application-id application-id}]]])
 
 (defn decide-form [application-id on-finished]

@@ -67,9 +67,9 @@
                      :on-click on-send
                      :disabled (empty? selected-reviewers)}]]
    [:div
-    [comment-field {:key action-form-id
+    [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
-    [action-attachment {:key action-form-id
+    [action-attachment {:field-key action-form-id
                         :application-id application-id}]
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/request-selections)]

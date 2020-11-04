@@ -40,9 +40,9 @@
     (text :t.actions/close-intro)
     (when show-comment-field?
       [:<>
-       [comment-field {:key action-form-id
+       [comment-field {:field-key action-form-id
                        :label (text :t.form/add-comments-shown-to-applicant)}]
-       [action-attachment {:key action-form-id
+       [action-attachment {:field-key action-form-id
                            :application-id application-id}]])]])
 
 (defn close-form [application-id show-comment-field? on-finished]

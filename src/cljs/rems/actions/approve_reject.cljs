@@ -73,9 +73,9 @@
                      :class "btn-success"
                      :on-click on-approve}]]
    [:<>
-    [comment-field {:key action-form-id
+    [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]
-    [action-attachment {:key action-form-id
+    [action-attachment {:field-key action-form-id
                         :application-id application-id}]
     [:div.form-group
      [:label {:for "approve-end"} (text :t.actions/approve-end-date)]

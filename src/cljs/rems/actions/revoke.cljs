@@ -37,10 +37,10 @@
                      :class "btn-danger"
                      :on-click on-send}]]
    [:<>
-    [comment-field {:key action-form-id
+    [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]
     [action-attachment {:application-id application-id
-                        :key action-form-id}]]])
+                        :field-key action-form-id}]]])
 
 (defn revoke-form [application-id on-finished]
   (let [comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
