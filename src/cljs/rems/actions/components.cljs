@@ -117,6 +117,7 @@
                                  :on-attach #(rf/dispatch [::save-attachment application-id field-key %])
                                  :on-remove-attachment #(rf/dispatch [::remove-attachment field-key %])}])
 
+(fetcher/reg-fetcher ::reviewers "/api/applications/reviewers" {:result (partial map enrich-user)})
 (fetcher/reg-fetcher ::deciders "/api/applications/deciders" {:result (partial map enrich-user)})
 
 (rf/reg-sub ::users (fn [db [_ field-key]] (get-in db [::users field-key])))

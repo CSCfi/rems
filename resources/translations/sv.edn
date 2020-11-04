@@ -40,7 +40,6 @@
             :remove-member "Ta bort deltagare"
             :request-decision "Begär beslut"
             :request-review "Begär granskning"
-            :request-selection "Skicka begäran till"
             :request-selections "Skicka begäranden till"
             :resources-selection "Välj resurser som ansökan gäller:"
             :return "Sänd tillbaka till sökande"
