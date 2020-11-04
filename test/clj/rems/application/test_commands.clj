@@ -1152,10 +1152,12 @@
                 :application/id app-id
                 :application/reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}
+                :application/comment "please review"
                 :invitation/token "very-secure"}
                (ok-command submitted
                            {:type :application.command/invite-reviewer
                             :actor handler-user-id
+                            :comment "please review"
                             :reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}}
                            injections))))
@@ -1166,10 +1168,12 @@
                 :application/id app-id
                 :application/decider {:name "A Decider"
                                       :email "decider@applicants.com"}
+                :application/comment "please decide"
                 :invitation/token "very-secure"}
                (ok-command submitted
                            {:type :application.command/invite-decider
                             :actor handler-user-id
+                            :comment "please decide"
                             :decider {:name "A Decider"
                                       :email "decider@applicants.com"}}
                            injections))))

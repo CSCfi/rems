@@ -67,11 +67,11 @@
   (assoc CommandWithComment
          :decision (s/enum :approved :rejected)))
 (s/defschema InviteReviewerCommand
-  (assoc CommandBase
+  (assoc CommandWithComment
          :reviewer {:name s/Str
                     :email s/Str}))
 (s/defschema InviteDeciderCommand
-  (assoc CommandBase
+  (assoc CommandWithComment
          :decider {:name s/Str
                    :email s/Str}))
 (s/defschema InviteMemberCommand
@@ -496,16 +496,18 @@
        :invitation/token (secure-token)}))
 
 (defmethod command-handler :application.command/invite-decider
-  [cmd _application {:keys [secure-token]}]
-  (ok {:event/type :application.event/decider-invited
-       :application/decider (:decider cmd)
-       :invitation/token (secure-token)}))
+  [cmd _application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/decider-invited
+                                :application/decider (:decider cmd)
+                                :invitation/token ((getx injections :secure-token))}))
 
 (defmethod command-handler :application.command/invite-reviewer
-  [cmd _application {:keys [secure-token]}]
-  (ok {:event/type :application.event/reviewer-invited
-       :application/reviewer (:reviewer cmd)
-       :invitation/token (secure-token)}))
+  [cmd _application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/reviewer-invited
+                                :application/reviewer (:reviewer cmd)
+                                :invitation/token ((getx injections :secure-token))}))
 
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
