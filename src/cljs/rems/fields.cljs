@@ -327,21 +327,21 @@
                    ": "
                    attachment-types/allowed-extensions-string]}]]))
 
-(defn multi-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
+(defn multi-attachment-view [{:keys [id attachments on-attach on-remove-attachment]}]
   [:div.form-group
    (into [:<>]
          (for [attachment attachments]
            [:div.flex-row.d-flex.flex-wrap.mb-2
             [attachment-link attachment]
             [:button.btn.btn-outline-secondary.mr-2
-             {:class (str "remove-attachment-" key)
+             {:class (str "remove-attachment-" id)
               :type :button
               :on-click (fn [event]
                           (on-remove-attachment (:attachment/id attachment)))}
              [close-symbol]
              " "
              (text :t.form/attachment-remove)]]))
-   [upload-button (str "upload-" key) on-attach]])
+   [upload-button (str "upload-" id) on-attach]])
 
 (defn attachment-row [attachments]
   (into [:div.flex-row.d-flex.flex-wrap]
@@ -359,7 +359,7 @@
                                          [:div
                                           (text :t.form/current-value) ": "
                                           [attachment-row (:field/attachments opts)]]])
-   [multi-attachment-view {:key (field-name opts)
+   [multi-attachment-view {:id (field-name opts)
                            :attachments (:field/attachments opts)
                            :on-attach on-attach
                            :on-remove-attachment on-remove-attachment}]])
@@ -416,16 +416,16 @@
   [:div
    (component-info multi-attachment-view)
    (example "no attachments"
-            [multi-attachment-view {:key "action-guide-example-1"
+            [multi-attachment-view {:id "action-guide-example-1"
                                     :attachment nil
                                     :on-attach (fn [_] nil)}])
    (example "multiple attachments"
-            [multi-attachment-view {:key "action-guide-example-1"
+            [multi-attachment-view {:id "action-guide-example-1"
                                     :attachments [{:attachment/filename "attachment.xlsx"}
                                                   {:attachment/filename "data.pdf"}]
                                     :on-attach (fn [_] nil)}])
    (example "multiple attachments, long filenames"
-            [multi-attachment-view {:key "action-guide-example-1"
+            [multi-attachment-view {:id "action-guide-example-1"
                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
                                     :on-attach (fn [_] nil)}])

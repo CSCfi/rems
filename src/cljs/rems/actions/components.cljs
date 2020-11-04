@@ -1,4 +1,4 @@
-(ns rems.actions.action
+(ns rems.actions.components
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [attachment-link close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
@@ -33,7 +33,7 @@
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
-(defn action-comment [{:keys [id label comment on-comment]}]
+(defn comment-field-view [{:keys [id label comment on-comment]}]
   (let [id (str "comment-" id)]
     [:div.form-group
      [:label {:for id} label]
@@ -45,20 +45,49 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
+(defn public-checkbox-view [{:keys [id public on-set-public]}]
+  (let [id (str "public-" id)]
+    [:div.form-group
+     [:div.form-check
+      [:input.form-check-input {:type "checkbox"
+                                :id id
+                                :name id
+                                :checked public
+                                :on-change #(on-set-public (.. % -target -checked))}]
+      [:label.form-check-label {:for id}
+       (text :t.actions/remark-public)]]]))
+
+(rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
+(rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
+
+(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key])))
+(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
+
+(defn comment-field [{:keys [field-key label public-checkbox?]}]
+  [:<>
+   [comment-field-view {:id field-key
+                        :label label
+                        :comment @(rf/subscribe [::comment field-key])
+                        :on-comment #(rf/dispatch [::set-comment field-key %])}]
+   (when public-checkbox?
+     [public-checkbox-view {:id field-key
+                            :public @(rf/subscribe [::comment-public field-key])
+                            :on-set-public #(rf/dispatch [::set-comment-public field-key %])}])])
+
 ;; attachments in suitable format for api:
-(rf/reg-sub ::attachments (fn [db [_ key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments key]))))
+(rf/reg-sub ::attachments (fn [db [_ field-key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments field-key]))))
 ;; attachments with filenames for rendering:
-(rf/reg-sub ::attachments-with-filenames (fn [db [_ key]] (get-in db [::attachments key])))
-(rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
-(rf/reg-event-db ::add-attachment (fn [db [_ key value]] (update-in db [::attachments key] conj value)))
+(rf/reg-sub ::attachments-with-filenames (fn [db [_ field-key]] (get-in db [::attachments field-key])))
+(rf/reg-event-db ::set-attachments (fn [db [_ field-key value]] (assoc-in db [::attachments field-key] value)))
+(rf/reg-event-db ::add-attachment (fn [db [_ field-key value]] (update-in db [::attachments field-key] conj value)))
 (rf/reg-event-db
  ::remove-attachment
- (fn [db [_ key id]]
-   (update-in db [::attachments key] (partial remove (comp #{id} :attachment/id)))))
+ (fn [db [_ field-key id]]
+   (update-in db [::attachments field-key] (partial remove (comp #{id} :attachment/id)))))
 
 (rf/reg-event-fx
  ::save-attachment
- (fn [{:keys [db]} [_ application-id key file]]
+ (fn [_ [_ application-id field-key file]]
    (let [description [text :t.form/upload]]
      (post! "/api/applications/add-attachment"
             {:url-params {:application-id application-id}
@@ -67,8 +96,8 @@
                        :actions
                        description
                        (fn [response]
-                         (rf/dispatch [::add-attachment key {:attachment/id (:id response)
-                                                             :attachment/filename (.. file (get "file") -name)}])))
+                         (rf/dispatch [::add-attachment field-key {:attachment/id (:id response)
+                                                                   :attachment/filename (.. file (get "file") -name)}])))
              :error-handler (fn [response]
                               (if (= 415 (:status response))
                                 (flash-message/show-default-error! :actions description
@@ -80,11 +109,11 @@
                                 ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment [{:keys [application-id key]}]
-  [fields/multi-attachment-view {:key key
-                                 :attachments @(rf/subscribe [::attachments-with-filenames key])
-                                 :on-attach #(rf/dispatch [::save-attachment application-id key %])
-                                 :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
+(defn action-attachment [{:keys [application-id field-key]}]
+  [fields/multi-attachment-view {:id field-key
+                                 :attachments @(rf/subscribe [::attachments-with-filenames field-key])
+                                 :on-attach #(rf/dispatch [::save-attachment application-id field-key %])
+                                 :on-remove-attachment #(rf/dispatch [::remove-attachment field-key %])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.

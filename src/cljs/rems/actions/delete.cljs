@@ -1,6 +1,6 @@
 (ns rems.actions.delete
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-button action-form-view button-wrapper command!]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "delete")
