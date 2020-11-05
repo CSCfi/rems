@@ -17,7 +17,7 @@
     {:db (assoc db
                 ::initial-resources (into #{} (map :catalogue-item/id initial-resources))
                 ::selected-resources (into #{} (map :catalogue-item/id initial-resources)))
-     :dispatch-n (concat [[:rems.actions.components/set-comment action-form-id nil]]
+     :dispatch-n (concat [[:rems.actions.components/set-comment action-form-id ""]]
                          (when-not (:rems.catalogue/catalogue db)
                            [[:rems.catalogue/full-catalogue]]))})))
 
