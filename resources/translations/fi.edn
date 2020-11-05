@@ -40,7 +40,6 @@
             :remove-member "Poista jäsen"
             :request-decision "Pyydä päätöstä"
             :request-review "Pyydä katselmointia"
-            :request-selection "Lähetä pyyntö henkilölle"
             :request-selections "Lähetä pyynnöt henkilöille"
             :resources-selection "Hakemukseen liitettävät resurssit:"
             :return "Palauta hakijalle"

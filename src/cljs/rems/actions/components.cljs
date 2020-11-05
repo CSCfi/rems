@@ -1,7 +1,9 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [attachment-link close-symbol success-symbol textarea]]
+            [rems.atoms :refer [enrich-user textarea]]
             [rems.common.attachment-types :as attachment-types]
+            [rems.dropdown :as dropdown]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -114,6 +116,25 @@
                                  :attachments @(rf/subscribe [::attachments-with-filenames field-key])
                                  :on-attach #(rf/dispatch [::save-attachment application-id field-key %])
                                  :on-remove-attachment #(rf/dispatch [::remove-attachment field-key %])}])
+
+(fetcher/reg-fetcher ::reviewers "/api/applications/reviewers" {:result (partial map enrich-user)})
+(fetcher/reg-fetcher ::deciders "/api/applications/deciders" {:result (partial map enrich-user)})
+
+(rf/reg-sub ::users (fn [db [_ field-key]] (get-in db [::users field-key])))
+(rf/reg-event-db ::set-users (fn [db [_ field-key value]] (assoc-in db [::users field-key] value)))
+
+(defn user-selection [{:keys [subscription field-key]}]
+  (let [id (str field-key "-users")]
+    [:div.form-group
+     [:label {:for id} (text :t.actions/request-selections)]
+     [dropdown/dropdown
+      {:id id
+       :items @(rf/subscribe subscription)
+       :item-key :userid
+       :item-label :display
+       :item-selected? (set @(rf/subscribe [::users field-key]))
+       :multi? true
+       :on-change #(rf/dispatch [::set-users field-key %])}]]))
 
 (defn action-form-view
   "Renders an action form that is collapsible.
