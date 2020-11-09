@@ -67,4 +67,4 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
 ## Updating dependencies
 
-After the release is done. We want to update all the dependencies to the latest available versions.
+After the release is done we want to update all the dependencies to the latest available versions.
