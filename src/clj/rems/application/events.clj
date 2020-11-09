@@ -123,7 +123,7 @@
          :application/member {:name s/Str
                               :email s/Str}))
 (s/defschema ReviewerInvitedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/reviewer-invited)
          :application/reviewer {:name s/Str
                                 :email s/Str}
@@ -135,7 +135,7 @@
          :application/request-id s/Uuid
          :invitation/token s/Str))
 (s/defschema DeciderInvitedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/decider-invited)
          :application/decider {:name s/Str
                                :email s/Str}
