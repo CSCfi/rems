@@ -1,46 +1,18 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
-            [rems.atoms :refer [enrich-user]]
-            [rems.dropdown :as dropdown]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [fetch]]))
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-review")
-(def ^:private dropdown-id "request-review-dropdown")
-
-(rf/reg-fx
- ::fetch-potential-reviewers
- (fn [on-success]
-   (fetch "/api/applications/reviewers"
-          {:handler on-success
-           :error-handler (flash-message/default-error-handler :top "Fetch potential reviewers")})))
 
 (rf/reg-event-fx
  ::open-form
  (fn
-   [{:keys [db]} _]
-   {:db (assoc db
-               ::comment ""
-               ::potential-reviewers #{}
-               ::selected-reviewers #{})
-    :dispatch [:rems.actions.action/set-attachments action-form-id []]
-    ::fetch-potential-reviewers #(rf/dispatch [::set-potential-reviewers %])}))
-
-(rf/reg-sub ::potential-reviewers (fn [db _] (::potential-reviewers db)))
-(rf/reg-event-db
- ::set-potential-reviewers
- (fn [db [_ reviewers]]
-   (assoc db
-          ::potential-reviewers (set (map enrich-user reviewers))
-          ::selected-reviewers #{})))
-
-(rf/reg-sub ::selected-reviewers (fn [db _] (::selected-reviewers db)))
-(rf/reg-event-db ::set-selected-reviewers (fn [db [_ reviewers]] (assoc db ::selected-reviewers reviewers)))
-
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
+   [_ _]
+   {:dispatch-n [[:rems.actions.components/reviewers]
+                 [:rems.actions.components/set-users action-form-id nil]
+                 [:rems.actions.components/set-comment action-form-id ""]
+                 [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx
  ::send-request-review
@@ -61,43 +33,28 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-review-view
-  [{:keys [application-id selected-reviewers potential-reviewers comment on-set-comment on-set-reviewers on-send]}]
+  [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-review)
    [[button-wrapper {:id "request-review-button"
                      :text (text :t.actions/request-review)
                      :class "btn-primary"
                      :on-click on-send
-                     :disabled (empty? selected-reviewers)}]]
+                     :disabled disabled}]]
    [:div
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-comments-not-shown-to-applicant)
-                     :comment comment
-                     :on-comment on-set-comment}]
-    [action-attachment {:key action-form-id
+    [comment-field {:field-key action-form-id
+                    :label (text :t.form/add-comments-not-shown-to-applicant)}]
+    [action-attachment {:field-key action-form-id
                         :application-id application-id}]
-    [:div.form-group
-     [:label {:for dropdown-id} (text :t.actions/request-selections)]
-     [dropdown/dropdown
-      {:id dropdown-id
-       :items potential-reviewers
-       :item-key :userid
-       :item-label :display
-       :item-selected? #(contains? (set selected-reviewers) %)
-       :multi? true
-       :on-change on-set-reviewers}]]]])
+    [user-selection {:field-key action-form-id
+                     :subscription [:rems.actions.components/reviewers]}]]])
 
 (defn request-review-form [application-id on-finished]
-  (let [selected-reviewers @(rf/subscribe [::selected-reviewers])
-        potential-reviewers @(rf/subscribe [::potential-reviewers])
-        comment @(rf/subscribe [::comment])
-        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+  (let [selected-reviewers @(rf/subscribe [:rems.actions.components/users action-form-id])
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
+        attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [request-review-view {:application-id application-id
-                          :selected-reviewers selected-reviewers
-                          :potential-reviewers potential-reviewers
-                          :comment comment
-                          :on-set-comment #(rf/dispatch [::set-comment %])
-                          :on-set-reviewers #(rf/dispatch [::set-selected-reviewers %])
+                          :disabled (empty? selected-reviewers)
                           :on-send #(rf/dispatch [::send-request-review {:application-id application-id
                                                                          :reviewers selected-reviewers
                                                                          :comment comment

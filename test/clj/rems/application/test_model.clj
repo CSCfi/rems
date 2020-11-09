@@ -409,7 +409,7 @@
                          events/validate-events
                          save-sample-events!
                          (reduce model/application-view nil)
-                         ;; permissions are tested separately
+                         ;; permissions are tested separately in rems.application.test-master-workflow
                          permissions/cleanup)]
     (is (contains? model/states (:application/state application)))
     application))
@@ -978,8 +978,9 @@
           expected-application (merge submitted-application
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
-                                       :application/invitation-tokens {token {:name "Mr. Member"
-                                                                              :email "member@example.com"}}})]
+                                       :application/invitation-tokens {token {:event/actor "applicant"
+                                                                              :application/member {:name "Mr. Member"
+                                                                                                   :email "member@example.com"}}}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> member uninvited"
@@ -1037,6 +1038,74 @@
                                            :application/events events
                                            :application/members #{}
                                            :application/past-members #{{:userid "member"}}})]
+          (is (= expected-application (recreate expected-application))))))))
+
+(deftest test-application-view-actor-invitations
+  (testing "> reviewer invited"
+    (let [token "abcd1234"
+          new-event {:event/type :application.event/reviewer-invited
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/reviewer {:name "Mr. Reviewer"
+                                            :email "reviewer@example.com"}
+                     :invitation/token token}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/invitation-tokens {token {:event/actor "handler"
+                                                                              :application/reviewer {:name "Mr. Reviewer"
+                                                                                                     :email "reviewer@example.com"}}}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> reviewer joined"
+        (let [new-event {:event/type :application.event/reviewer-joined
+                         :event/time (DateTime. 5000)
+                         :event/actor "new-reviewer"
+                         :application/id 1
+                         :application/request-id review-request-id
+                         :invitation/token token}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/invitation-tokens {}
+                                           :application/todo :waiting-for-review
+                                           :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
+          (is (= expected-application (recreate expected-application)))))))
+  (testing "> decider invited"
+    (let [token "abcd1234"
+          new-event {:event/type :application.event/decider-invited
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/decider {:name "Mr. Decider"
+                                           :email "decider@example.com"}
+                     :invitation/token token}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/invitation-tokens {token {:event/actor "handler"
+                                                                              :application/decider {:name "Mr. Decider"
+                                                                                                    :email "decider@example.com"}}}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> decider joined"
+        (let [new-event {:event/type :application.event/decider-joined
+                         :event/time (DateTime. 5000)
+                         :event/actor "new-decider"
+                         :application/id 1
+                         :application/request-id review-request-id
+                         :invitation/token token}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/invitation-tokens {}
+                                           :application/todo :waiting-for-decision
+                                           :rems.application.model/latest-decision-request-by-user {"new-decider" review-request-id}})]
           (is (= expected-application (recreate expected-application))))))))
 
 ;;;; Tests for enriching
@@ -1519,15 +1588,26 @@
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
 
     (testing "invitation tokens are not visible to anybody"
-      (let [application (model/application-view application {:event/type :application.event/member-invited
-                                                             :application/member {:name "member"
-                                                                                  :email "member@example.com"}
-                                                             :invitation/token "secret"})
+      (let [application (-> application
+                            (model/application-view {:event/type :application.event/member-invited
+                                                     :event/actor "applicant"
+                                                     :application/member {:name "member"
+                                                                          :email "member@example.com"}
+                                                     :invitation/token "secret"})
+                            (model/application-view {:event/type :application.event/reviewer-invited
+                                                     :event/actor "handler"
+                                                     :application/reviewer {:name "new-reviewer"
+                                                                            :email "reviewer@example.com"}
+                                                     :invitation/token "clandestine"}))
             enriched (model/enrich-with-injections application injections)]
         (testing "- original"
-          (is (= #{"secret" nil} (set (map :invitation/token (:application/events enriched)))))
-          (is (= {"secret" {:name "member"
-                            :email "member@example.com"}}
+          (is (= #{"secret" "clandestine" nil} (set (map :invitation/token (:application/events enriched)))))
+          (is (= {"secret" {:event/actor "applicant"
+                            :application/member {:name "member"
+                                                 :email "member@example.com"}}
+                  "clandestine" {:event/actor "handler"
+                                 :application/reviewer {:name "new-reviewer"
+                                                        :email "reviewer@example.com"}}}
                  (:application/invitation-tokens enriched)))
           (is (= nil
                  (:application/invited-members enriched))))
@@ -1556,6 +1636,8 @@
       (testing "reviewer sees all applicant attributes"
         (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                (:application/applicant application)))))
+
+    ;; TODO test :application/todo for invited actors
 
     (let [application (-> application
                           (model/application-view {:event/type :application.event/decision-requested

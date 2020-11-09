@@ -3,7 +3,7 @@
             [goog.string]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.action :refer [button-wrapper]]
+            [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -834,7 +834,7 @@
                                        :notification-email "notification@example.com"
                                        :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                                        :address "Testikatu 1, 00100 Helsinki"
-                                       :researcher-status-by :so}
+                                       :researcher-status-by "so"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])

@@ -1,11 +1,13 @@
 (ns rems.actions.add-licenses
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [fetch post!]]))
+
+(def ^:private action-form-id "add-licenses")
 
 (rf/reg-fx
  ::fetch-licenses
@@ -19,9 +21,9 @@
  (fn
    [{:keys [db]} _]
    {:db (assoc db
-               ::comment ""
                ::potential-licenses #{}
                ::selected-licenses #{})
+    :dispatch [:rems.actions.components/set-comment action-form-id ""]
     ::fetch-licenses #(rf/dispatch [::set-potential-licenses %])}))
 
 (defn- assoc-all-titles
@@ -41,10 +43,6 @@
 (rf/reg-sub ::selected-licenses (fn [db _] (::selected-licenses db)))
 (rf/reg-event-db ::set-selected-licenses (fn [db [_ licenses]] (assoc db ::selected-licenses (sort-by :id licenses))))
 
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
-
-(def ^:private action-form-id "add-licenses")
 (def ^:private dropdown-id "add-licenses-dropdown")
 
 ;; The API allows us to add attachments to the add-licenses command,
@@ -73,7 +71,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn add-licenses-view
-  [{:keys [selected-licenses potential-licenses comment language on-set-comment on-set-licenses on-send]}]
+  [{:keys [selected-licenses potential-licenses language on-set-licenses on-send]}]
   [action-form-view action-form-id
    (text :t.actions/add-licenses)
    [[button-wrapper {:id "add-licenses"
@@ -81,10 +79,8 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [action-comment {:id action-form-id
-                     :label (text :t.form/add-comments-shown-to-applicant)
-                     :comment comment
-                     :on-comment on-set-comment}]
+    [comment-field {:field-key action-form-id
+                    :label (text :t.form/add-comments-shown-to-applicant)}]
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/licenses-selection)]
      [dropdown/dropdown
@@ -99,13 +95,11 @@
 (defn add-licenses-form [application-id on-finished]
   (let [selected-licenses @(rf/subscribe [::selected-licenses])
         potential-licenses @(rf/subscribe [::potential-licenses])
-        comment @(rf/subscribe [::comment])
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         language @(rf/subscribe [:language])]
     [add-licenses-view {:selected-licenses selected-licenses
                         :potential-licenses potential-licenses
-                        :comment comment
                         :language language
-                        :on-set-comment #(rf/dispatch [::set-comment %])
                         :on-set-licenses #(rf/dispatch [::set-selected-licenses %])
                         :on-send #(rf/dispatch [::send-add-licenses {:application-id application-id
                                                                      :licenses selected-licenses

@@ -1,24 +1,15 @@
 (ns rems.actions.remove-member
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::reset-form
- (fn [{:keys [db]} [_ element-id]]
-   {:db (assoc-in db [::comment element-id] "")}))
+ (fn [_ [_ element-id]]
+   {:dispatch [:rems.actions.components/set-comment (str element-id "-comment") ""]}))
 
-(rf/reg-sub
- ::comment
- (fn [db [_ element-id]]
-   (get-in db [::comment element-id])))
-
-(rf/reg-event-db
- ::set-comment
- (fn [db [_ element-id value]]
-   (assoc-in db [::comment element-id] value)))
 
 ;; The API allows us to add attachments to these commands
 ;; but this is left out from the UI for simplicity
@@ -49,24 +40,20 @@
                   :on-click #(rf/dispatch [::reset-form element-id])}])
 
 (defn- remove-member-view
-  [{:keys [element-id comment on-set-comment on-send]}]
+  [{:keys [element-id on-send]}]
   [action-form-view (str element-id "-form")
    (text :t.actions/remove-member)
    [[button-wrapper {:id (str element-id "-submit")
                      :text (text :t.actions/remove-member)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [action-comment {:id (str element-id "-comment")
-                    :label (text :t.form/add-comments-shown-to-applicant)
-                    :comment comment
-                    :on-comment on-set-comment}]
+   [comment-field {:field-key (str element-id "-comment")
+                   :label (text :t.form/add-comments-shown-to-applicant)}]
    {:collapse-id element-id}])
 
 (defn remove-member-form [element-id member application-id on-finished]
-  (let [comment @(rf/subscribe [::comment element-id])]
+  (let [comment @(rf/subscribe [:rems.actions.components/comment (str element-id "-comment")])]
     [remove-member-view {:element-id element-id
-                         :comment comment
-                         :on-set-comment #(rf/dispatch [::set-comment element-id %])
                          :on-send #(rf/dispatch [::remove-member {:application-id application-id
                                                                   :collapse-id (str element-id "-form")
                                                                   :comment comment

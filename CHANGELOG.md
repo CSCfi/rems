@@ -19,6 +19,7 @@ Changes since v2.13
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
 - Catalogue item editor didn't properly show forms, resources or workflows if they were disabled or archived (#2335)
+- Add vertical margins around search field for better readability (#2330)
 - Workflow editor didn't properly show forms that were disabled or archived (#2335)
 - Check file extensions ignoring case (#2392)
 - Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)

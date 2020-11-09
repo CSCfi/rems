@@ -40,7 +40,6 @@
             :remove-member "Ta bort deltagare"
             :request-decision "Begär beslut"
             :request-review "Begär granskning"
-            :request-selection "Skicka begäran till"
             :request-selections "Skicka begäranden till"
             :resources-selection "Välj resurser som ansökan gäller:"
             :return "Sänd tillbaka till sökande"
@@ -145,8 +144,10 @@
                           :copied-to "%1 kopierade ansökan som ny ansökan."
                           :created "%1 skapade ny ansökan."
                           :decided "%1 behandlade ansökan."
-                          :deleted "%1 raderade utkastet."
+                          :decider-invited "%1 bjöd in %2 som beslutare." ; TODO check
+                          :decider-joined "%1 blev beslutare." ; TODO check
                           :decision-requested "%1 begärde beslut från användare %2."
+                          :deleted "%1 raderade utkastet."
                           :draft-saved "%1 sparade utkast för ansökan."
                           :external-id-assigned "%1 lade till externt id %2."
                           :licenses-accepted "%1 accepterade licenserna."
@@ -162,6 +163,8 @@
                           :returned "%1 returnerade ansökan för korrigering."
                           :review-requested "%1 begärde granskning av %2."
                           :reviewed "%1 granskade ansökan."
+                          :reviewer-invited "%1 bjöd in %2 som granskare." ; TODO check
+                          :reviewer-joined "%1 blev granskare." ; TODO check
                           :revoked "%1 återkallade rättigheter."
                           :submitted "%1 lämnade in ansökan."
                           :unknown "Okänd"}
@@ -303,6 +306,8 @@
                                   :message-to-handler "%1,\n\n%4 har lämnat in ansökan %3 om användningsrätt till följande resurs(er) %5.\n\nDu kan granska ansökningen här: %6"}
           :decided {:subject "(%3) Beslut skickat"
                     :message "%1,\n\n%2 har fattat beslut angående %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
+          :decider-invited {:subject "Inbjudan att delta i behandling av ansökan %3" ; TODO check
+                            :message "%1,\n\nDu är inbjuden att delta i handling av %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen här: %4"} ; TODO check
           :decision-requested {:subject "(%3) Begäran om beslut"
                                :message "%1,\n\n%2 har begärt ett beslut av dig gällande %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :footer "\n\nDetta är ett automatiskt meddelande. Svara inte på detta meddelande."
@@ -320,6 +325,8 @@
                              :message "%1,\n\n%2 har bett dig granska %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
           :reviewed {:subject "Ansökan %3 granskad"
                      :message "%1,\n\n%2 har granskat %4s ansökan %3.\n\nDu kan granska ansökningen här: %6"}
+          :reviewer-invited {:subject "Inbjudan att delta i behandling av ansökan %3" ; TODO check
+                             :message "%1,\n\nDu är inbjuden att delta i handling av %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen här: %4"} ; TODO check
           :reviewer-reminder {:application "%1, skickad av %2"
                               :message "%1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska ansökningarna här:  %3"
                               :subject "Ansökningar väntar på granskning"}}

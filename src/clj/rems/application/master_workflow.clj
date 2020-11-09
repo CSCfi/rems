@@ -42,7 +42,9 @@
     :application.command/assign-external-id
     :application.command/change-resources
     :application.command/remove-member
+    :application.command/invite-decider
     :application.command/invite-member
+    :application.command/invite-reviewer
     :application.command/uninvite-member
     :application.command/request-review
     :application.command/request-decision
@@ -153,6 +155,11 @@
   (-> application
       (permissions/give-role-to-users :reviewer (:application/reviewers event))))
 
+(defmethod application-permissions-view :application.event/reviewer-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :reviewer [(:event/actor event)])))
+
 (defmethod application-permissions-view :application.event/reviewed
   [application event]
   (-> application
@@ -163,6 +170,11 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :decider (:application/deciders event))))
+
+(defmethod application-permissions-view :application.event/decider-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :decider [(:event/actor event)])))
 
 (defmethod application-permissions-view :application.event/decided
   [application event]
