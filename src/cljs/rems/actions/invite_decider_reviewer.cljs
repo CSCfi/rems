@@ -1,7 +1,7 @@
 (ns rems.actions.invite-decider-reviewer
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view button-wrapper command!
-                                             email-field name-field]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view button-wrapper command!
+                                             comment-field email-field name-field]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]))
 
@@ -35,8 +35,8 @@
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-decider
                  {:application-id application-id
-                  ;;:comment comment ; TODO
-                  ;;:attachments attachments ; TODO
+                  :comment comment
+                  :attachments attachments
                   :decider decider}
                  {:description description
                   :collapse decider-form-id
@@ -51,8 +51,8 @@
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-reviewer
                  {:application-id application-id
-                  ;;:comment comment ; TODO
-                  ;;:attachments attachments ; TODO
+                  :comment comment
+                  :attachments attachments
                   :reviewer reviewer}
                  {:description description
                   :collapse reviewer-form-id
@@ -70,7 +70,7 @@
                   :on-click #(rf/dispatch [::open-form :reviewer])}])
 
 (defn invite-decider-reviewer-view
-  [{:keys [role on-send]}]
+  [{:keys [role application-id on-send]}]
   [action-form-view
    (case role
      :decider decider-form-id
@@ -86,18 +86,29 @@
                      :on-click on-send}]]
    [:<>
     [name-field {:field-key field-key}]
-    [email-field {:field-key field-key}]]]) ; TODO comment, attachments
+    [email-field {:field-key field-key}]
+    [comment-field {:field-key field-key
+                    :label (text :t.form/add-comments-not-shown-to-applicant)}]
+    [action-attachment {:field-key field-key
+                        :application-id application-id}]]])
 
 (defn invite-decider-reviewer-form [application-id on-finished]
   (let [role @(rf/subscribe [::role])
         name @(rf/subscribe [:rems.actions.components/name field-key])
-        email @(rf/subscribe [:rems.actions.components/email field-key])]
+        email @(rf/subscribe [:rems.actions.components/email field-key])
+        comment @(rf/subscribe [:rems.actions.components/comment field-key])
+        attachments @(rf/subscribe [:rems.actions.components/attachments field-key])]
     (when role
-      [invite-decider-reviewer-view {:role role
+      [invite-decider-reviewer-view {:application-id application-id
+                                     :role role
                                      :on-send #(rf/dispatch (case role
                                                               :decider [::send-invite-decider {:application-id application-id
                                                                                                :decider {:name name :email email}
+                                                                                               :comment comment
+                                                                                               :attachments attachments
                                                                                                :on-finished on-finished}]
                                                               :reviewer [::send-invite-reviewer {:application-id application-id
                                                                                                  :reviewer {:name name :email email}
+                                                                                                 :comment comment
+                                                                                                 :attachments attachments
                                                                                                  :on-finished on-finished}]))}])))
