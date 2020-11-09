@@ -178,10 +178,14 @@
         (:application.event/member-added
          :application.event/member-invited
          :application.event/member-removed
-         :application.event/member-uninvited
-         :application.event/decider-invited
-         :application.event/reviewer-invited)
+         :application.event/member-uninvited)
         (application-util/get-member-name (:application/member event))
+
+        :application.event/decider-invited
+        (application-util/get-member-name (:application/decider event))
+
+        :application.event/reviewer-invited
+        (application-util/get-member-name (:application/reviewer event))
 
         :application.event/resources-changed
         (str/join ", " (mapv #(localized (:catalogue-item/title %))
