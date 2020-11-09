@@ -27,7 +27,9 @@
                      :submission-failed "Submission failed. Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
+            :invite-decider "Invite decider by email"
             :invite-member "Invite member"
+            :invite-reviewer "Invite reviewer by email"
             :licenses-selection "Add terms of use"
             :load-application-states "Load application states"
             :member "Member"

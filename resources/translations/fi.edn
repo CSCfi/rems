@@ -27,7 +27,9 @@
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :handled-applications "Käsitellyt hakemukset"
+            :invite-decider "Kutsu päättäjä sähköpostitse"
             :invite-member "Kutsu jäsen"
+            :invite-reviewer "Kutsu katselmoija sähköpostitse"
             :licenses-selection "Lisää käyttöehtoja"
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"

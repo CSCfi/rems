@@ -27,7 +27,9 @@
                      :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :handled-applications "Behandlade ansökningar"
+            :invite-decider "Bjud in beslutare via e-post" ; TODO check
             :invite-member "Bjud in deltagare"
+            :invite-reviewer "Bjud in granskare via e-post" ; TODO check
             :licenses-selection "Lägg till licenser"
             :load-application-states "Ladda status för ansökningarna"
             :member "Deltagare"
