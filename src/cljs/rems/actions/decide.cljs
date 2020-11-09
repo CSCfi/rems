@@ -8,7 +8,7 @@
 (rf/reg-event-fx
  ::open-form
  (fn [_ _]
-   {:dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+   {:dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx

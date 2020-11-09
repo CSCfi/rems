@@ -23,7 +23,7 @@
    {:db (assoc db
                ::potential-licenses #{}
                ::selected-licenses #{})
-    :dispatch [:rems.actions.components/set-comment action-form-id nil]
+    :dispatch [:rems.actions.components/set-comment action-form-id ""]
     ::fetch-licenses #(rf/dispatch [::set-potential-licenses %])}))
 
 (defn- assoc-all-titles

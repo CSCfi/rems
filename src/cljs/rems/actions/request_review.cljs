@@ -11,7 +11,7 @@
    [_ _]
    {:dispatch-n [[:rems.actions.components/reviewers]
                  [:rems.actions.components/set-users action-form-id nil]
-                 [:rems.actions.components/set-comment action-form-id nil]
+                 [:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx

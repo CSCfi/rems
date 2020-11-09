@@ -9,7 +9,7 @@
 (rf/reg-event-fx
  ::open-form
  (fn [_ _]
-   {:dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+   {:dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-comment-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 
@@ -38,7 +38,7 @@
    [[button-wrapper {:id action-form-id
                      :text (text :t.actions/remark)
                      :class "btn-primary"
-                     :on-click on-send}]]
+                     :on-click on-send}]] ;; TODO disable submit if comment field is empty?
    [:div
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)

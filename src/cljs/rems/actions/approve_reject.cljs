@@ -18,7 +18,7 @@
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db ::entitlement-end (default-end (get-in db [:config :entitlement-default-length-days])))
-    :dispatch-n [[:rems.actions.components/set-comment action-form-id nil]
+    :dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-sub ::entitlement-end (fn [db _] (::entitlement-end db)))
