@@ -19,7 +19,7 @@
 
 (rf/reg-sub ::role (fn [db _] (get db ::role)))
 
-(defn- validate-member [{:keys [name email]}] ; TODO rename
+(defn- validate-invitation [{:keys [name email]}]
   (when (or (empty? name)
             (empty? email))
     [{:type :t.actions/name-and-email-required}]))
@@ -31,7 +31,7 @@
  ::send-invite-decider
  (fn [_ [_ {:keys [decider comment attachments application-id on-finished]}]]
    (let [description [text :t.actions/invite-decider]]
-     (if-let [errors (validate-member decider)]
+     (if-let [errors (validate-invitation decider)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-decider
                  {:application-id application-id
@@ -47,7 +47,7 @@
  ::send-invite-reviewer
  (fn [_ [_ {:keys [reviewer comment attachments application-id on-finished]}]]
    (let [description [text :t.actions/invite-reviewer]]
-     (if-let [errors (validate-member reviewer)]
+     (if-let [errors (validate-invitation reviewer)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-reviewer
                  {:application-id application-id
