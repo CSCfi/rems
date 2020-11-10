@@ -702,10 +702,13 @@
                                                                                        {:form 2 :field "1" :value "baz"}])])
                    (fail-command submit-command injections))))))
 
-    (testing "cannot submit draft if catalogue item is disabled"
+    (testing "can submit draft even if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
-        (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 2}]}
-               (fail-command disabled submit-command injections)))))
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
+               (ok-command disabled submit-command injections)))))
 
     (testing "non-applicant cannot submit"
       (let [application (apply-events application [(assoc licenses-accepted-event :event/actor "non-applicant")])]
