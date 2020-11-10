@@ -44,18 +44,17 @@
   (rf/dispatch [::fetch-application application-id full-reload?]))
 
 (defn- disabled-items-warning [application]
-  (when-some [resources (->> (:application/resources application)
-                             (filter #(or (not (:catalogue-item/enabled %))
-                                          (:catalogue-item/expired %)
-                                          (:catalogue-item/archived %)))
-                             seq)]
-    [:div.alert.alert-warning
-     (if (contains? (:application/permissions application) :see-everything)
-       (text :t.form/alert-disabled-resources-handler)
-       (text :t.form/alert-disabled-resources-applicant))
-     (into [:ul]
-           (for [resource resources]
-             [:li (localized (:catalogue-item/title resource))]))]))
+  (when (contains? (:application/permissions application) :see-everything) ; don't show to applicants
+    (when-some [resources (->> (:application/resources application)
+                               (filter #(or (not (:catalogue-item/enabled %))
+                                            (:catalogue-item/expired %)
+                                            (:catalogue-item/archived %)))
+                               seq)]
+      [:div.alert.alert-warning
+       (text :t.form/alert-disabled-resources)
+       (into [:ul]
+             (for [resource resources]
+               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
