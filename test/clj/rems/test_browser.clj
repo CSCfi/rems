@@ -887,7 +887,7 @@
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
-                   "(optional)")))
+                           "(optional)")))
       (testing "info collapse can be toggled"
         (let [button (first (btu/query-all {:tag :button :fn/has-class :info-button}))]
           (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
