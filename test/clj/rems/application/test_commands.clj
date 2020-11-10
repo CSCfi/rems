@@ -236,6 +236,19 @@
                               :catalogue-item-ids [999999]}
                          injections))))
 
+  (testing "error: disabled catalogue item"
+    (is (= {:errors [{:type :disabled-catalogue-item
+                      :catalogue-item-id 2}]}
+           (fail-command nil {:type :application.command/create
+                              :actor applicant-user-id
+                              :catalogue-item-ids [1 2]}
+                         (assoc injections
+                                :get-catalogue-item
+                                (fn [id]
+                                  (merge (dummy-get-catalogue-item id)
+                                         (when (= id 2)
+                                           {:enabled false}))))))))
+
   (testing "catalogue items with different forms"
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id

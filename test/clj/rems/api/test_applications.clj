@@ -475,12 +475,10 @@
 (deftest test-application-create
   (let [api-key "42"
         user-id "alice"
-        application-id (-> (request :post "/api/applications/create")
-                           (authenticate "42" user-id)
-                           (json-body {:catalogue-item-ids [(test-helpers/create-catalogue-item! {})]})
-                           handler
-                           read-ok-body
-                           :application-id)]
+        cat-id (test-helpers/create-catalogue-item! {})
+        application-id (:application-id
+                        (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                                  "42" user-id))]
 
     (testing "creating"
       (is (some? application-id))
@@ -515,7 +513,17 @@
       (is (response-is-ok?
            (-> (request :get (str "/api/applications/" application-id))
                (authenticate api-key "reporter")
-               handler))))))
+               handler))))
+
+    (testing "can't create application for disabled catalogue item"
+      (with-user "owner"
+        (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                :enabled false}))
+      (rems.db.applications/reload-cache!)
+      (is (= {:success false
+              :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
+             (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                       "42" user-id))))))
 
 (deftest test-application-delete
   (let [api-key "42"
@@ -579,6 +587,7 @@
                                    (catalogue/set-catalogue-item-archived! {:id cat-id
                                                                             :archived %}))]
     (testing "submit with archived & disabled catalogue item succeeds"
+      ;; draft needs to be created before disabling & archiving
       (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
         (is (:success (enable-catalogue-item! false)))
         (is (:success (archive-catalogue-item! true)))
@@ -587,10 +596,10 @@
                (send-command user-id {:type :application.command/submit
                                       :application-id app-id})))))
     (testing "submit with normal catalogue item succeeds"
+      (is (:success (enable-catalogue-item! true)))
+      (is (:success (archive-catalogue-item! false)))
+      (rems.db.applications/reload-cache!)
       (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
-        (is (:success (enable-catalogue-item! true)))
-        (is (:success (archive-catalogue-item! false)))
-        (rems.db.applications/reload-cache!)
         (is (= {:success true}
                (send-command user-id {:type :application.command/submit
                                       :application-id app-id})))))))
