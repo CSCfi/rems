@@ -887,16 +887,17 @@
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
-                           "(optional)")))
+                           "(optional)"))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
       (testing "info collapse can be toggled"
         (let [button (first (btu/query-all {:tag :button :fn/has-class :info-button}))]
-          (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
           (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
           (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
           (btu/click-el button)
           (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
           (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
           (btu/click-el button)
+          (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
           (change-language :fi)
           (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
           (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
