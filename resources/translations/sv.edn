@@ -19,7 +19,6 @@
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
             :errors {:already-member "Användare är deltar redan."
-                     :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
                      :duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."

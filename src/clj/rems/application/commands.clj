@@ -210,16 +210,15 @@
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
-(defn- disabled-catalogue-items-error [application]
-  ;; resubmitting is fine even if catalogue item is disabled
-  (when (= :application.state/draft (getx application :application/state))
-    (let [errors (for [item (:application/resources application)
-                       :when (or (not (getx item :catalogue-item/enabled))
-                                 (getx item :catalogue-item/archived)
-                                 (getx item :catalogue-item/expired))]
-                   {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
-      (when (not (empty? errors))
-        {:errors (vec errors)}))))
+(defn- disabled-catalogue-items-error [ids injections]
+  (let [errors (for [id ids
+                     :let [item ((getx injections :get-catalogue-item) id)]
+                     :when (or (not (getx item :enabled))
+                               (getx item :archived) ; TODO is this correct? besides, doesn't archived imply disabled?
+                               (getx item :expired))]
+                 {:type :disabled-catalogue-item :catalogue-item-id (getx item :id)})]
+    (when (seq errors)
+      {:errors (vec errors)})))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)
@@ -326,6 +325,7 @@
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items catalogue-item-ids injections)
       (unbundlable-catalogue-items catalogue-item-ids injections)
+      (disabled-catalogue-items-error catalogue-item-ids injections)
       (let [workflow-id (-> (first catalogue-item-ids)
                             get-catalogue-item
                             :wfid)
@@ -374,7 +374,6 @@
 (defmethod command-handler :application.command/submit
   [cmd application injections]
   (or (merge-with concat
-                  (disabled-catalogue-items-error application)
                   (licenses-not-accepted-error application (:actor cmd))
                   (validation-error application))
       (ok {:event/type :application.event/submitted})))
