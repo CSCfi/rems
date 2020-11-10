@@ -336,7 +336,8 @@
          :add-comments-shown-to-applicant "Kommentar, synlig för sökande"
          :add-remark "Anteckning (dold eller synlig för sökande)"
          :alert-blacklisted-users "Dessa användare har blockerats från någon av de ansökta resurserna"
-         :alert-disabled-resources "Resurser som inte längre är tillgängliga:"
+         :alert-disabled-resources-applicant "Följande resurser är inte längre tillgängliga. Överväga att ansöka till andra resurser. Du kan ändå lämna in den här ansökningen om du vill." ; TODO check
+         :alert-disabled-resources-handler "Resurser som inte längre är tillgängliga:"
          :application "Ansökan"
          :attachment-remove "Ta bort"
          :attachments "Bilagor"
