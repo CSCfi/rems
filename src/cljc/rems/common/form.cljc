@@ -182,15 +182,14 @@
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
 (defn- validate-not-present [field key]
-  (when (contains? field key)
-    {key {key :unsupported}}))
+   (when (contains? field key)
+     {key {key :t.form.validation/unsupported}}))
 
 (defn- validate-fields [fields languages]
   (letfn [(validate-field [index field]
             {index (or (validate-field-type field)
                        (merge
                         (validate-localized-text-field field :field/title languages)
-                       ;; (validate-label-info-text field :field/info-text languages)
                         (if (supports-placeholder? field)
                           (validate-optional-localized-field field :field/placeholder languages)
                           (validate-not-present field :field/placeholder)
@@ -304,8 +303,9 @@
                      (assoc-in [:form/fields 0 :field/type] :label)
                      (assoc-in [:form/fields 0 :field/placeholder :fi] "")
                      (assoc-in [:form/fields 0 :field/info-text :fi] ""))]
-        (is (= {:form/fields {0 {
-                                 :field/info-text :t.form.validation/unsuppoprted}}}
+        (is (= {:form/fields {0 {:field/max-length {:field/max-length :t.form.validation/unsupported}
+                                 :field/placeholder {:field/placeholder :t.form.validation/unsupported}
+                                 :field/info-text {:field/info-text :t.form.validation/unsupported}}}}
                (validate-form-template form languages)))))
 
     (testing "privacy, & options shouldn't be present if they are not applicable"
