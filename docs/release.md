@@ -64,3 +64,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 11. Press "Attach binaries" to upload the `rems.jar` you got in step 8.
 
 12. Press "Publish release".
+
+## Updating dependencies
+
+After the release is done we want to update all the dependencies to the latest available versions.
