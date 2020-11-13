@@ -107,6 +107,7 @@
 
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
+             :when (btu/visible-el? row)
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
                    v (btu/first-value-of-el row [{:css ".form-control"}
                                                  {:css ".dropdown-container"}
