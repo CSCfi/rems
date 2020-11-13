@@ -177,7 +177,7 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form-template (get-in db [::form :data]) (:languages db))
+         form-errors (validate-form-template (build-request (get-in db [::form :data]) (:languages db)) (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
