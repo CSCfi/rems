@@ -314,8 +314,8 @@
                           :field/type :header
                           :field/privacy :invalid
                           :field/options [{:invalid-key :value}]}])]
-        (is (= {:form/fields {0 {:field/privacy :unsupported
-                                 :field/options :unsupported}}}
+        (is (= {:form/fields {0 {:field/privacy {:field/privacy :t.form.validation/unsupported}
+                                 :field/options {:field/options :t.form.validation/unsupported}}}}
                (validate-form-template form languages)))))
 
     (testing "option fields"

@@ -177,13 +177,14 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form-template (build-request (get-in db [::form :data]) (:languages db)) (:languages db))
+         form-preview-data (build-request (get-in db [::form :data]) (:languages db))
+         form-errors (validate-form-template form-preview-data (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
          description [page-title edit?]
-         request (merge (build-request (get-in db [::form :data]) (:languages db))
+         request (merge form-preview-data
                         (when edit?
                           {:form/id (::form-id db)}))]
      (when-not form-errors
