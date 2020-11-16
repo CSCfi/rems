@@ -43,7 +43,7 @@
                                                     :sv "sv placeholder"}}]}]
     (api-key/add-api-key! api-key)
     (test-helpers/create-user! {:eppn owner} :owner)
-    (test-helpers/create-user! {:eppn org-owner :organizations [{:organization/id "organization1"}]})
+    (test-helpers/create-user! {:eppn org-owner})
     (test-helpers/create-organization! {:actor owner
                                         :organization/id "organization1"
                                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
@@ -212,7 +212,7 @@
         user-id "owner"]
     (api-key/add-api-key! api-key)
     (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/create-user! {:eppn "organization-owner1" :organizations [{:organization/id "organization1"}]})
+    (test-helpers/create-user! {:eppn "organization-owner1"})
     (test-helpers/create-organization! {:actor user-id
                                         :organization/id "organization1"
                                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
@@ -280,7 +280,7 @@
   (let [api-key "42"
         user-id "owner"]
     (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/create-user! {:eppn "organization-owner1" :organizations [{:organization/id "organization1"}]})
+    (test-helpers/create-user! {:eppn "organization-owner1"})
     (test-helpers/create-organization! {:actor user-id
                                         :organization/id "organization1"
                                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
@@ -340,8 +340,8 @@
         org-owner "organization-owner1"]
     (api-key/add-api-key! api-key)
     (test-helpers/create-user! {:eppn owner} :owner)
-    (test-helpers/create-user! {:eppn org-owner :organizations [{:organization/id "organization1"}]})
-    (test-helpers/create-user! {:eppn "organization-owner2" :organizations [{:organization/id "organization2"}]})
+    (test-helpers/create-user! {:eppn org-owner})
+    (test-helpers/create-user! {:eppn "organization-owner2"})
     (test-helpers/create-organization! {:actor owner
                                         :organization/id "organization1"
                                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}

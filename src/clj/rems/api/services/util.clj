@@ -1,31 +1,28 @@
 (ns rems.api.services.util
   (:require [clojure.test :refer [deftest is testing]]
+            [rems.api.services.organizations :as organizations]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.context :as context]))
+            [rems.context :as context]
+            [rems.util :refer [getx-user-id]]))
 
 (defn- forbidden-organization? [organization]
-  (let [user-organizations (map :organization/id (:organizations context/*user*))
-        not-owner? (not (contains? context/*roles* :owner))
-        not-handler? (not (contains? context/*roles* :handler))
-        incorrect-organization? (not (contains? (set user-organizations) (:organization/id organization)))]
+  (let [not-owner? (not (contains? context/*roles* :owner))
+        not-handler? (not (contains? context/*roles* :handler)) ;; handlers have read-only access to all orgs
+        organization-owners (set (map :userid (:organization/owners organization)))
+        not-organization-owner? (not (contains? organization-owners (getx-user-id)))]
     (and not-owner?
          not-handler? ;; TODO: keeping old behaviour where handlers can see everything for now
-         (or incorrect-organization?
-             ;; XXX: Special case to forbid an organization owner with
-             ;;   no organizations defined from creating or accessing items with
-             ;;   no organization defined. Consider disallowing undefined
-             ;;   organizations to be able to remove this.
-             (and (nil? (:organization/id organization)) (empty? user-organizations))))))
+         not-organization-owner?)))
 
 (defn check-allowed-organization! [organization]
   (assert (:organization/id organization) {:error "invalid organization"
                                            :organization organization})
-  (when (forbidden-organization? organization)
+  (when (forbidden-organization? (organizations/get-organization-raw organization))
     (throw-forbidden (str "no access to organization " (pr-str (:organization/id organization))))))
 
 (deftest test-forbidden-organization?
   (testing "for owner, all organizations are permitted"
-    (binding [context/*user* {:organizations [{:organization/id "own organization"}]}
+    (binding [context/*user* {:eppn "x"}
               context/*roles* #{:owner}]
       (is (not (forbidden-organization? {:organization/id "own organization"})))
       (is (not (forbidden-organization? {:organization/id "not own organization"})))
@@ -33,7 +30,7 @@
       (is (not (forbidden-organization? {:organization/id nil})))))
 
   (testing "for handler, all organizations are permitted"
-    (binding [context/*user* {:organizations [{:organization/id "own organization"}]}
+    (binding [context/*user* {:eppn "x"}
               context/*roles* #{:handler}]
       (is (not (forbidden-organization? {:organization/id "own organization"})))
       (is (not (forbidden-organization? {:organization/id "not own organization"})))
@@ -41,25 +38,18 @@
       (is (not (forbidden-organization? {:organization/id nil})))))
 
   (testing "for owner who is also an organization owner, all organizations are permitted"
-    (binding [context/*user* {:organizations [{:organization/id "own organization"}]}
-              context/*roles* #{:owner :organization-owner}]
+    (binding [context/*user* {:eppn "x"}
+              context/*roles* #{:owner}]
       (is (not (forbidden-organization? {:organization/id "own organization"})))
-      (is (not (forbidden-organization? {:organization/id "not own organization"})))
+      (is (not (forbidden-organization? {:organization/id "not own organization" :organization/owners [{:userid "x"}]})))
       (is (not (forbidden-organization? {:organization/id ""})))
       (is (not (forbidden-organization? {:organization/id nil})))))
 
   (testing "for organization owner, only own organizations are permitted"
-    (binding [context/*user* {:organizations [{:organization/id "own organization"} {:organization/id "other own organization"}]}
-              context/*roles* #{:organization-owner}]
-      (is (not (forbidden-organization? {:organization/id "own organization"})))
-      (is (not (forbidden-organization? {:organization/id "other own organization"})))
-      (is (forbidden-organization? {:organization/id "not own organization"}))
-      (is (forbidden-organization? {:organization/id ""}))
-      (is (forbidden-organization? {:organization/id nil}))))
-
-  (testing "for organization owner with no organization defined, all organizations are forbidden"
-    (binding [context/*user* {}
-              context/*roles* #{:organization-owner}]
-      (is (forbidden-organization? {:organization/id "own organization"}))
+    (binding [context/*user* {:eppn "x"}
+              context/*roles* #{}]
+      (is (not (forbidden-organization? {:organization/id "own organization" :organization/owners [{:userid "x"}]})))
+      (is (not (forbidden-organization? {:organization/id "other own organization" :organization/owners [{:userid "y"} {:userid "x"}]})))
+      (is (forbidden-organization? {:organization/id "not own organization" :organization/owners [{:userid "y"}]}))
       (is (forbidden-organization? {:organization/id ""}))
       (is (forbidden-organization? {:organization/id nil})))))
