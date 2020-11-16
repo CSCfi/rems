@@ -128,9 +128,9 @@
                     (is (= (get-in command-with-given-field-id [:form/fields 0 :field/id]) ; field/id "not" in previous comparison
                            (get-in form-template [:form/fields 0 :field/id]))))))))
           (testing "get all"
-          (let [data (api-call :get "/api/forms" nil
-                               api-key user-id)]
-            (is (:form/id (first data))))))))
+            (let [data (api-call :get "/api/forms" nil
+                                 api-key user-id)]
+              (is (:form/id (first data))))))))
     (testing "create as organization owner with incorrect organization"
       (let [response (api-response :post "/api/forms/create"
                                    (assoc command :organization {:organization/id "organization2"})
