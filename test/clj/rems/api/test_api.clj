@@ -3,10 +3,11 @@
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :once api-fixture)
+(use-fixtures :once api-fixture-without-data)
 
 (deftest test-api-not-found
   (testing "unknown endpoint"
@@ -29,6 +30,9 @@
           (is (response-is-not-found? resp)))))))
 
 (deftest test-api-key-security
+  (api-key/add-api-key! "42" {})
+  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:eppn "owner"} :owner)
   (testing ":api-key role"
     (testing "available for valid api key"
       (is (response-is-ok? (-> (request :post "/api/email/send-reminders")
@@ -101,6 +105,8 @@
                                                    "47" "owner"))))))
 
 (deftest test-health-api
+  ;; create at least one event
+  (test-helpers/create-application! {:actor "alice"})
   (let [body (-> (request :get "/api/health")
                  handler
                  read-ok-body)]
@@ -114,6 +120,8 @@
   (is true))
 
 (deftest data-exception-test
+  (api-key/add-api-key! "42" {})
+  (test-helpers/create-user! {:eppn "owner"} :owner)
   (testing "a broken license without an organization"
     (let [license-id (:id (db/create-license! {:owneruserid "owner"
                                                :modifieruserid "owner"
