@@ -19,7 +19,6 @@
             :delete "Poista luonnos"
             :delete-intro [:div.intro [:p "Haluatko pysyvästi poistaa tämän hakemusluonnoksen?"]]
             :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
-                     :disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
                      :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
@@ -337,7 +336,7 @@
          :add-comments-shown-to-applicant "Kommentoi (näkyy hakijalle)"
          :add-remark "Lisää huomio (näytetään tai piilotetaan hakijalta)"
          :alert-blacklisted-users "Nämä jäsenet ovat joittenkin haettujen resurssien kieltolistalla:"
-         :alert-disabled-resources "Resurssit eivät ole enää saatavilla:"
+         :alert-disabled-resources "Hakemus sisältää pois käytöstä olevia aineistoja:"
          :application "Tiedot"
          :attachment-remove "Poista"
          :attachments "Liitteet"
