@@ -955,22 +955,24 @@
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(optional)"))
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
+
       (testing "info collapse can be toggled"
-        (let [button (first (btu/query-all {:tag :button :fn/has-class :info-button}))]
-          (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
-          (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
-          (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-          (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
-          (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-          (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-          (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
-          (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
-          (change-language :fi)
-          (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
-          (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
-          (btu/click-el button)
-          (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
-          (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"})))))
+        (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+        (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
+          ;; TODO: figure out what to wait for
+        (Thread/sleep 500)
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
+        (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
+        (change-language :fi)
+        (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
 
     (testing "edit form"
       (change-language :en)
@@ -987,7 +989,7 @@
 
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
-        (btu/scroll-query-el (first (btu/query-all {:tag :label :class :application-field-label})) {"block" "center"})
+        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
 
       (testing "check that error message is present on field empty"
