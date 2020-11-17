@@ -182,8 +182,8 @@
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
 (defn- validate-not-present [field key]
-   (when (contains? field key)
-     {key {key :t.form.validation/unsupported}}))
+  (when (contains? field key)
+    {key {key :t.form.validation/unsupported}}))
 
 (defn- validate-fields [fields languages]
   (letfn [(validate-field [index field]
@@ -192,28 +192,22 @@
                         (validate-localized-text-field field :field/title languages)
                         (if (supports-placeholder? field)
                           (validate-optional-localized-field field :field/placeholder languages)
-                          (validate-not-present field :field/placeholder)
-                        )
+                          (validate-not-present field :field/placeholder))
                         (if (supports-info-text? field)
                           (validate-optional-localized-field field :field/info-text languages)
-                          (validate-not-present field :field/info-text)
-                        )
+                          (validate-not-present field :field/info-text))
                         (if (supports-max-length? field)
                           (validate-max-length (:field/max-length field))
-                          (validate-not-present field :field/max-length)
-                        )
+                          (validate-not-present field :field/max-length))
                         (if (supports-options? field)
                           (validate-options (:field/options field) languages)
-                          (validate-not-present field :field/options)
-                        )
+                          (validate-not-present field :field/options))
                         (if (supports-privacy? field)
                           (validate-privacy field fields)
-                          (validate-not-present field :field/privacy)
-                        )
+                          (validate-not-present field :field/privacy))
                         (if (supports-visibility? field)
                           (validate-visibility field fields)
-                          (validate-not-present field :field/visibility)
-                          )))})]
+                          (validate-not-present field :field/visibility))))})]
     (apply merge (map-indexed validate-field fields))))
 
 (defn- nil-if-empty [m]
