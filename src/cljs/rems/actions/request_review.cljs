@@ -1,6 +1,6 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.actions.components :refer [action-attachment action-button action-link comment-field action-form-view button-wrapper command! user-selection]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-review")
@@ -22,22 +22,22 @@
               :comment comment
               :reviewers (map :userid reviewers)
               :attachments attachments}
-             {:description [text :t.actions/request-review]
+             {:description [text :t.actions/request-review-menu]
               :collapse action-form-id
               :on-finished on-finished})
    {}))
 
-(defn request-review-action-button []
-  [action-button {:id action-form-id
-                  :text (text :t.actions/request-review)
-                  :on-click #(rf/dispatch [::open-form])}])
+(defn request-review-action-link []
+  [action-link {:id action-form-id
+                :text (str "... " (text :t.actions/request-review-suffix))
+                :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-review-view
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
-   (text :t.actions/request-review)
+   [:span (text :t.actions/request-review-menu) " " (text :t.actions/request-review-suffix)]
    [[button-wrapper {:id "request-review-button"
-                     :text (text :t.actions/request-review)
+                     :text (text :t.actions/request-review-menu)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]

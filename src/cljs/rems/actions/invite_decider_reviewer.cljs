@@ -1,6 +1,6 @@
 (ns rems.actions.invite-decider-reviewer
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view button-wrapper command!
+            [rems.actions.components :refer [action-attachment action-link action-form-view button-wrapper command!
                                              comment-field email-field name-field]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]))
@@ -30,7 +30,7 @@
 (rf/reg-event-fx
  ::send-invite-decider
  (fn [_ [_ {:keys [decider comment attachments application-id on-finished]}]]
-   (let [description [text :t.actions/invite-decider]]
+   (let [description [text :t.actions/request-decision-menu]]
      (if-let [errors (validate-invitation decider)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-decider
@@ -46,7 +46,7 @@
 (rf/reg-event-fx
  ::send-invite-reviewer
  (fn [_ [_ {:keys [reviewer comment attachments application-id on-finished]}]]
-   (let [description [text :t.actions/invite-reviewer]]
+   (let [description [text :t.actions/request-review-menu]]
      (if-let [errors (validate-invitation reviewer)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-reviewer
@@ -59,15 +59,15 @@
                   :on-finished on-finished})))
    {}))
 
-(defn invite-decider-action-button []
-  [action-button {:id decider-form-id
-                  :text (text :t.actions/invite-decider)
-                  :on-click #(rf/dispatch [::open-form :decider])}])
+(defn invite-decider-action-link []
+  [action-link {:id decider-form-id
+                :text (str "... " (text :t.actions/invite-decider-suffix))
+                :on-click #(rf/dispatch [::open-form :decider])}])
 
-(defn invite-reviewer-action-button []
-  [action-button {:id reviewer-form-id
-                  :text (text :t.actions/invite-reviewer)
-                  :on-click #(rf/dispatch [::open-form :reviewer])}])
+(defn invite-reviewer-action-link []
+  [action-link {:id reviewer-form-id
+                :text (str "... " (text :t.actions/invite-reviewer-suffix))
+                :on-click #(rf/dispatch [::open-form :reviewer])}])
 
 (defn invite-decider-reviewer-view
   [{:keys [role application-id on-send disabled]}]
@@ -76,12 +76,12 @@
      :decider decider-form-id
      :reviewer reviewer-form-id)
    (case role
-     :decider (text :t.actions/invite-decider)
-     :reviewer (text :t.actions/invite-reviewer))
+     :decider (str (text :t.actions/request-decision-menu) " " (text :t.actions/invite-decider-suffix))
+     :reviewer (str (text :t.actions/request-review-menu) " " (text :t.actions/invite-decider-suffix)))
    [[button-wrapper {:id "invite-decider-reviewer"
                      :text (case role
-                             :decider (text :t.actions/invite-decider)
-                             :reviewer (text :t.actions/invite-reviewer))
+                             :decider (text :t.actions/request-decision-menu)
+                             :reviewer (text :t.actions/request-review-menu))
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]

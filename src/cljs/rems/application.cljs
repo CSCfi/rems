@@ -11,12 +11,12 @@
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.delete :refer [delete-action-button delete-form]]
-            [rems.actions.invite-decider-reviewer :refer [invite-decider-action-button invite-reviewer-action-button invite-decider-reviewer-form]]
+            [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-reviewer-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
-            [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
-            [rems.actions.request-review :refer [request-review-action-button request-review-form]]
+            [rems.actions.request-decision :refer [request-decision-action-link request-decision-form]]
+            [rems.actions.request-review :refer [request-review-action-link request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
@@ -672,15 +672,35 @@
                 [invite-member-form application-id (partial reload! application-id)]
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
+(defn- request-review-dropdown []
+  [:div.btn-group
+   [:button.btn.btn-secondary.dropdown-toggle
+    {:data-toggle :dropdown}
+    (text :t.actions/request-review-menu)]
+   [:div.dropdown-menu
+    [request-review-action-link]
+    [invite-reviewer-action-link]]])
+
+(defn- request-decision-dropdown []
+  [:div.btn-group
+   [:button.btn.btn-secondary.dropdown-toggle
+    {:data-toggle :dropdown}
+    (text :t.actions/request-decision-menu)]
+   [:div.dropdown-menu
+    [request-decision-action-link]
+    [invite-decider-action-link]]])
+
 (defn- action-buttons [application]
   (let [commands-and-actions [:application.command/save-draft [save-button]
                               :application.command/submit [submit-button]
                               :application.command/return [return-action-button]
-                              :application.command/request-review [request-review-action-button]
-                              :application.command/invite-reviewer [invite-reviewer-action-button]
+                              ;; this assumes that request-review and invite-reviewer are both possible or neither is
+                              :application.command/request-review [request-review-dropdown]
+                              :application.command/invite-reviewer [request-review-dropdown]
                               :application.command/review [review-action-button]
-                              :application.command/request-decision [request-decision-action-button]
-                              :application.command/invite-decider [invite-decider-action-button]
+                              ;; ditto for decision
+                              :application.command/request-decision [request-decision-dropdown]
+                              :application.command/invite-decider [request-decision-dropdown]
                               :application.command/decide [decide-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]

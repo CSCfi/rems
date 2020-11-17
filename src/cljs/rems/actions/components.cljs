@@ -185,10 +185,18 @@
 
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn
-   {:type :button
-    :id (action-button-id id)
+   {:id (action-button-id id)
     :class (str (or class "btn-secondary")
                 " btn-opens-more")
+    :data-toggle "collapse"
+    :data-target (str "#" (action-collapse-id id))
+    :on-click on-click}
+   text])
+
+(defn action-link [{:keys [id text on-click]}]
+  [:a.dropdown-item
+   {:id (action-button-id id)
+    :href "#"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}

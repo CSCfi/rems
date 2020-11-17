@@ -1,6 +1,6 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.actions.components :refer [action-attachment action-link comment-field action-form-view button-wrapper command! user-selection]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-decision")
@@ -21,22 +21,22 @@
               :comment comment
               :attachments attachments
               :deciders (map :userid deciders)}
-             {:description [text :t.actions/request-decision]
+             {:description [text :t.actions/request-decision-menu]
               :collapse action-form-id
               :on-finished on-finished})
    {}))
 
-(defn request-decision-action-button []
-  [action-button {:id action-form-id
-                  :text (text :t.actions/request-decision)
-                  :on-click #(rf/dispatch [::open-form])}])
+(defn request-decision-action-link []
+  [action-link {:id action-form-id
+                :text (str "... " (text :t.actions/request-decision-suffix))
+                :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-decision-view
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
-   (text :t.actions/request-decision)
+   [:span (text :t.actions/request-decision-menu) " " (text :t.actions/request-decision-suffix)]
    [[button-wrapper {:id "request-decision"
-                     :text (text :t.actions/request-decision)
+                     :text (text :t.actions/request-decision-menu)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]
