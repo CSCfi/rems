@@ -26,6 +26,7 @@ Changes since v2.13
 - Workflow editor didn't properly show forms that were disabled or archived (#2335)
 - Check file extensions ignoring case (#2392)
 - Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)
+- Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
