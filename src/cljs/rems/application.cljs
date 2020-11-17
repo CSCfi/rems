@@ -45,21 +45,17 @@
   (rf/dispatch [::fetch-application application-id full-reload?]))
 
 (defn- disabled-items-warning [application]
-  ;; show error for drafts (which can't be submitted)
-  ;; show warning for handlers and similar users
-  (let [draft? (= :application.state/draft (:application/state application))
-        see-everything? (contains? (:application/permissions application) :see-everything)]
-    (when (or draft? see-everything?)
-      (when-some [resources (->> (:application/resources application)
-                                 (filter #(or (not (:catalogue-item/enabled %))
-                                              (:catalogue-item/expired %)
-                                              (:catalogue-item/archived %)))
-                                 seq)]
-        [:div.alert {:class (if draft? :alert-danger :alert-warning)}
-         (text :t.form/alert-disabled-resources)
-         (into [:ul]
-               (for [resource resources]
-                 [:li (localized (:catalogue-item/title resource))]))]))))
+  (when (contains? (:application/permissions application) :see-everything) ; don't show to applicants
+    (when-some [resources (->> (:application/resources application)
+                               (filter #(or (not (:catalogue-item/enabled %))
+                                            (:catalogue-item/expired %)
+                                            (:catalogue-item/archived %)))
+                               seq)]
+      [:div.alert.alert-warning
+       (text :t.form/alert-disabled-resources)
+       (into [:ul]
+             (for [resource resources]
+               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))

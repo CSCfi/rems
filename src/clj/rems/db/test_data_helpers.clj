@@ -217,5 +217,3 @@
                        :application-id app-id
                        :actor actor})
     app-id))
-
-

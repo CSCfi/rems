@@ -19,7 +19,6 @@
             :delete "Delete draft"
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
             :errors {:already-member "User is already a member of this application"
-                     :disabled-catalogue-item "Resource no longer available."
                      :duplicate-id "Id is already in use."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
@@ -344,7 +343,7 @@
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
          :add-remark "Add remark (shown or hidden to applicant)"
          :alert-blacklisted-users "These members of the application are blacklisted for some of the applied resources:"
-         :alert-disabled-resources "Resources no longer available:"
+         :alert-disabled-resources "Application contains disabled catalogue items:"
          :application "Application"
          :attachment-remove "Remove"
          :attachments "Attachments"

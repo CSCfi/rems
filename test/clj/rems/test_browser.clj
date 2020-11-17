@@ -18,6 +18,7 @@
             [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
             [rems.config]
+            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users :as users]
             [rems.db.user-settings :as user-settings]
@@ -71,6 +72,12 @@
   (btu/wait-page-loaded)
   (btu/screenshot "applications-page.png"))
 
+(defn go-to-application [application-id]
+  (btu/go (str (btu/get-server-url) "application/" application-id))
+  (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
+  (btu/wait-page-loaded)
+  (btu/screenshot "application-page.png"))
+
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
 
@@ -107,6 +114,7 @@
 
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
+             :when (btu/visible-el? row)
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
                    v (btu/first-value-of-el row [{:css ".form-control"}
                                                  {:css ".dropdown-container"}
@@ -359,6 +367,64 @@
               (btu/gather-axe-results)
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
+
+(deftest test-applicant-member-invite-action
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-applicant-member-invite-action")))
+  (btu/with-postmortem
+    (login-as "alice")
+    (go-to-application (btu/context-get :application-id))
+
+    (testing "invite member"
+      (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
+      (btu/scroll-and-click :invite-member-action-button)
+      (btu/wait-visible [:actions-invite-member {:fn/has-text "Invite member"}])
+      (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
+      (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
+      (btu/scroll-and-click :invite-member)
+      (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
+      (btu/scroll-and-click :invite0-info-more-link)
+      (btu/wait-visible :invite0-infocollapse)
+
+      (is (= {"Name" "John Smith"
+              "Email (from identity provider)" "john.smith@generic.name"}
+             (slurp-fields :invite0-info)))
+      (is (string? (-> (btu/context-get :application-id)
+                       applications/get-application-internal
+                       :application/invitation-tokens
+                       keys
+                       first)))
+      (is (= {:event/actor "alice"
+              :application/member {:name "John Smith"
+                                   :email "john.smith@generic.name"}}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/invitation-tokens
+                 vals
+                 first)))
+      (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant invited John Smith to the application."})))
+
+    (testing "uninvite member"
+      (is (not (btu/visible? :actions-invite0-remove-member-form)))
+      (btu/scroll-and-click :invite0-remove-member-form-action-button)
+      (btu/wait-visible :actions-invite0-remove-member-form)
+      (btu/fill-human :comment-invite0-remove-member-comment "sorry but no")
+      (btu/scroll-and-click :invite0-remove-member-submit)
+      (btu/wait-visible [{:css ".alert-success" :fn/has-text "Remove member: Success"}])
+      (btu/wait-invisible :actions-invite0-remove-member-form)
+      (btu/wait-invisible :invite0-info)
+
+      (is (empty? (-> (btu/context-get :application-id)
+                      applications/get-application-internal
+                      :application/invitation-tokens)))
+      (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
+      (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
 
 (deftest test-handling
   (testing "submit test data with API"

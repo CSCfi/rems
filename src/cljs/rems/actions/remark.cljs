@@ -32,13 +32,14 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn remark-view
-  [{:keys [application-id on-send]}]
+  [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
    [[button-wrapper {:id action-form-id
                      :text (text :t.actions/remark)
                      :class "btn-primary"
-                     :on-click on-send}]] ;; TODO disable submit if comment field is empty?
+                     :disabled disabled
+                     :on-click on-send}]]
    [:div
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)
@@ -51,6 +52,7 @@
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         public @(rf/subscribe [:rems.actions.components/comment-public action-form-id])]
     [remark-view {:application-id application-id
+                  :disabled (and (empty? comment) (empty? attachments))
                   :on-send #(rf/dispatch [::send-remark {:application-id application-id
                                                          :comment comment
                                                          :public public
