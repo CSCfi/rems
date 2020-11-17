@@ -70,7 +70,7 @@
                   :on-click #(rf/dispatch [::open-form :reviewer])}])
 
 (defn invite-decider-reviewer-view
-  [{:keys [role application-id on-send]}]
+  [{:keys [role application-id on-send disabled]}]
   [action-form-view
    (case role
      :decider decider-form-id
@@ -83,7 +83,8 @@
                              :decider (text :t.actions/invite-decider)
                              :reviewer (text :t.actions/invite-reviewer))
                      :class "btn-primary"
-                     :on-click on-send}]]
+                     :on-click on-send
+                     :disabled disabled}]]
    [:<>
     [comment-field {:field-key field-key
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
@@ -101,6 +102,7 @@
     (when role
       [invite-decider-reviewer-view {:application-id application-id
                                      :role role
+                                     :disabled (empty? email)
                                      :on-send #(rf/dispatch (case role
                                                               :decider [::send-invite-decider {:application-id application-id
                                                                                                :decider {:name name :email email}
