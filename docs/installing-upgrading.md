@@ -65,6 +65,12 @@ Some pointers for common tasks:
     docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
     docker-compose -f docker-compose-build.yml up -d app
 
+### COMMANDS environment variable may be populated with any rems commands
+
+- Empty `COMMANDS` variable as well as `run` command starts rems
+- For commands with arguments, use parenthis (). Examples:
+    COMMANDS="migrate (api-key add <api-key>)"
+    COMMANDS="migrate test-data (grant-role <role> <userid>) run"
 
 ### Access REMS
 
