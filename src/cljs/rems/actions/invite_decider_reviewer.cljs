@@ -86,12 +86,12 @@
                      :on-click on-send
                      :disabled disabled}]]
    [:<>
+    [name-field {:field-key field-key}]
+    [email-field {:field-key field-key}]
     [comment-field {:field-key field-key
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
     [action-attachment {:field-key field-key
-                        :application-id application-id}]
-    [name-field {:field-key field-key}]
-    [email-field {:field-key field-key}]]])
+                        :application-id application-id}]]])
 
 (defn invite-decider-reviewer-form [application-id on-finished]
   (let [role @(rf/subscribe [::role])

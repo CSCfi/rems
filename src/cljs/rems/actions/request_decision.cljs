@@ -41,12 +41,12 @@
                      :on-click on-send
                      :disabled disabled}]]
    [:div
+    [user-selection {:field-key action-form-id
+                     :subscription [:rems.actions.components/deciders]}]
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
     [action-attachment {:field-key action-form-id
-                        :application-id application-id}]
-    [user-selection {:field-key action-form-id
-                     :subscription [:rems.actions.components/deciders]}]]])
+                        :application-id application-id}]]])
 
 (defn request-decision-form [application-id on-finished]
   (let [selected-deciders @(rf/subscribe [:rems.actions.components/users action-form-id])
