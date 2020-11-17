@@ -82,25 +82,27 @@
 (rf/reg-sub ::email (fn [db [_ field-key]] (get-in db [::email field-key])))
 (rf/reg-event-db ::set-email (fn [db [_ field-key value]] (assoc-in db [::email field-key] value)))
 
-(defn- text-field-view [{:keys [id label value on-change]}]
+(defn- input-field-view [{:keys [type id label value on-change]}]
   [:div.form-group.field
    [:label {:for id} label]
-   [:input.form-control {:type :text
+   [:input.form-control {:type type
                          :id id
                          :value value
                          :on-change #(on-change (.. % -target -value))}]])
 
 (defn name-field [{:keys [field-key]}]
-  [text-field-view {:id (str "name-" field-key)
-                    :label (text :t.actions/member-name)
-                    :value @(rf/subscribe [::name field-key])
-                    :on-change #(rf/dispatch [::set-name field-key %])}])
+  [input-field-view {:type :text
+                     :id (str "name-" field-key)
+                     :label (text :t.actions/member-name)
+                     :value @(rf/subscribe [::name field-key])
+                     :on-change #(rf/dispatch [::set-name field-key %])}])
 
 (defn email-field [{:keys [field-key]}]
-  [text-field-view {:id (str "email-" field-key)
-                    :label (text :t.actions/member-email)
-                    :value @(rf/subscribe [::email field-key])
-                    :on-change #(rf/dispatch [::set-email field-key %])}])
+  [input-field-view {:type :email
+                     :id (str "email-" field-key)
+                     :label (text :t.actions/member-email)
+                     :value @(rf/subscribe [::email field-key])
+                     :on-change #(rf/dispatch [::set-email field-key %])}])
 
 ;; attachments in suitable format for api:
 (rf/reg-sub ::attachments (fn [db [_ field-key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments field-key]))))
