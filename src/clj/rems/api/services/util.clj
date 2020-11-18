@@ -44,7 +44,7 @@
         (is (not (forbidden-organization? org-carl)))
         (is (not (forbidden-organization? org-bob-carl)))))
 
-    (testing "for owner, all organizations are permitted"
+    (testing "for owner who is also an organization owner, all organizations are permitted"
       (binding [context/*user* {:eppn "bob"}
                 context/*roles* #{:owner}]
         (is (not (forbidden-organization? org-empty)))
