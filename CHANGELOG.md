@@ -26,6 +26,7 @@ Changes since v2.13
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 - Experimental permissions API that produces GA4GH Visas is now documented in [docs/ga4gh-visas.md](docs/ga4gh-visas.md)
 - OIDC scopes are configurable via `:oidc-scopes`. See [docs/configuration.md](docs/configuration.md).
+- In docker-entrypoint script `CMD` environment variable may be used instead of `COMMANDS`. `CMD` allows REMS commands with arguments to be used. See [docs/installing-upgrading.md](docs/installing-upgrading.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 
