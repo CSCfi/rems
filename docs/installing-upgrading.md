@@ -68,7 +68,8 @@ Some pointers for common tasks:
 ### CMD environment variable may be populated with any rems commands
 
 - Command `run` as well as empty `CMD` (and `COMMANDS`) parameter starts rems
-- Example CMD varibale values:
+- Example `CMD` varibale values:
+
     CMD="migrate;api-key add <api-key>"
     CMD="migrate;test-data;grant-role <role> <userid>;run"
 
