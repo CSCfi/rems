@@ -1055,9 +1055,13 @@
 
         (btu/scroll-and-click :save)
 
-        (btu/visible? {:tag :textarea :id :fields-0-info-text-sv :fn/has-class :is-invalid})
-        (btu/visible? {:tag :div :class :invalid-feedback :fn/has-text "Field \"Field description (optional)\" is required."})
-        (btu/visible? {:tag :div :class :alert-danger :fn/has-text "Submission failed."})
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/has-text "Edit form"})
+        (is (btu/visible? {:id :fields-0-info-text-sv :fn/has-class :is-invalid}))
+        ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."}))
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
 
         (btu/scroll-and-click :save)
