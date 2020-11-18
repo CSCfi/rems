@@ -296,6 +296,7 @@
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
+  (wait-visible q)
   (doseq [c text]
     (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)
