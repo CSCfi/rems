@@ -2,6 +2,8 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [find-first update-existing]]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.testing-util :refer [fixed-time-fixture]]
             [ring.mock.request :refer :all])
   (:import [org.joda.time DateTime DateTimeZone DateTimeUtils]))
@@ -12,7 +14,7 @@
 
 (use-fixtures
   :each
-  api-fixture
+  api-fixture-without-data
   (fixed-time-fixture test-time1))
 
 (deftest organizations-api-test
@@ -29,14 +31,11 @@
                                              nil
                                              api-key userid)
                                    (map #(update-existing % :organization/last-modified parse-date))))]
-
-    (testing "finds test data"
-      (let [data (api-call :get "/api/organizations"
-                           nil
-                           api-key owner)]
-        (is (= #{"default" "abc" "hus" "thl" "csc" "nbn" "organization1" "organization2"}
-               (set (map :organization/id data))))))
-
+    (api-key/add-api-key! api-key)
+    (test-helpers/create-user! {:eppn user})
+    (test-helpers/create-user! {:eppn owner :commonName "Owner" :mail "owner@example.com"} :owner)
+    (test-helpers/create-user! {:eppn org-owner1 :commonName "Organization Owner 1" :mail "organization-owner1@example.com"})
+    (test-helpers/create-user! {:eppn org-owner2 :commonName "Organization Owner 2" :mail "organization-owner2@example.com"})
     (testing "create organization"
       (let [data (api-call :post "/api/organizations/create"
                            {:organization/id "organizations-api-test-org"
@@ -59,7 +58,7 @@
                   :organization/name {:fi "Organisaatiot API Test ORG"
                                       :en "Organizations API Test ORG"}
                   :organization/short-name {:fi "ORG" :en "ORG"}
-                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}]
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}]
                   :organization/last-modified test-time1
                   :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization.test.org"
@@ -104,8 +103,8 @@
                   :organization/name {:fi "Organisaatiot API Test ORG 2"
                                       :en "Organizations API Test ORG 2"}
                   :organization/short-name {:fi "ORG2" :en "ORG2"}
-                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
-                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}]
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
+                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2"}]
                   :organization/last-modified test-time2
                   :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization2.test.org"
@@ -133,10 +132,10 @@
                   :organization/name {:fi "Organisaatiot API Test ORG 3"
                                       :en "Organizations API Test ORG 3"}
                   :organization/short-name {:fi "ORG3" :en "ORG3"}
-                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
-                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}] ; owners is not changed
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
+                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2"}] ; owners is not changed
                   :organization/last-modified test-time3
-                  :organization/modifier {:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
+                  :organization/modifier {:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
                   :organization/review-emails [{:email "test@organization3.test.org"
                                                 :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
                                                        :en "Organizations 3 API Test ORG Reviewers"}}]
@@ -146,6 +145,8 @@
                  (get-org owner "organizations-api-test-org"))))))))
 
 (deftest organization-api-status-test
+  (api-key/add-api-key! "42")
+  (test-helpers/create-user! {:eppn "owner" :commonName "Owner" :mail "owner@example.com"} :owner)
   (api-call :post "/api/organizations/create"
             {:organization/id "organizations-api-test-org"
              :organization/name {:fi "Organisaatiot API Test ORG"
@@ -181,6 +182,9 @@
     (is (= {:enabled true :archived false} (get-status)))))
 
 (deftest organizations-api-security-test
+  (api-key/add-api-key! "42")
+  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:eppn "owner"} :owner)
   (testing "without authentication"
     (testing "list"
       (let [response (api-response :get "/api/organizations")]
@@ -278,7 +282,9 @@
   (let [api-key "42"
         owner "owner"
         org-owner1 "organization-owner1"]
-
+    (api-key/add-api-key! api-key)
+    (test-helpers/create-user! {:eppn owner} :owner)
+    (test-helpers/create-user! {:eppn org-owner1})
     (testing "trying to create a duplicate fails" ; separate test because it will leave the transaction in an errored state
       (let [_response1 (api-call :post "/api/organizations/create"
                                  {:organization/id "duplicate-organizations-api-test-org"

@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-blacklist
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -9,7 +10,7 @@
 
 (use-fixtures
   :once
-  api-fixture
+  api-fixture-without-data
   (fn [f]
     ;; TODO this needs to be in the future so that we can use the
     ;; catalogue item we create. The DB time isn't overridden and
@@ -48,6 +49,9 @@
       assert-response-is-ok))
 
 (deftest test-blacklist
+  (api-key/add-api-key! "42")
+  (test-helpers/create-user! {:eppn +command-user+ :commonName "Owner" :mail "owner@example.com"} :owner)
+  (test-helpers/create-user! {:eppn +fetch-user+} :reporter)
   (test-helpers/create-user! {:eppn "user1" :email ""})
   (test-helpers/create-user! {:eppn "user2" :email ""})
   (test-helpers/create-user! {:eppn "user3" :email ""})

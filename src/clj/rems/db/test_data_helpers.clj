@@ -71,13 +71,18 @@
     (assert (:success result) {:command command :result result})
     (:organization/id result)))
 
+(defn ensure-default-organization! []
+  (when-not (organizations/get-organization-raw {:organization/id "default"})
+    (create-organization! {}))
+  {:organization/id "default"})
+
 (defn create-license! [{:keys [actor organization]
                         :license/keys [type title link text attachment-id]
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization {:organization/id "default"})
+                                            :organization (or organization (ensure-default-organization!))
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
@@ -98,7 +103,7 @@
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
-                        :organization (or organization {:organization/id "default"})
+                        :organization (or organization (ensure-default-organization!))
                         :license/title {:fi "Liitelisenssi" :en "Attachment license"}
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
@@ -112,7 +117,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:organization (or organization {:organization/id "default"})
+                                    {:organization (or organization (ensure-default-organization!))
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -123,7 +128,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization {:organization/id "default"})
+                                             :organization (or organization (ensure-default-organization!))
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -135,7 +140,7 @@
         result (with-user actor
                  (workflow/create-workflow!
                   {:user-id actor
-                   :organization (or organization {:organization/id "default"})
+                   :organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)
                    :forms forms
@@ -157,7 +162,7 @@
                  (catalogue/create-catalogue-item!
                   {:resid (or resource-id (create-resource! {:organization organization}))
                    :form (or form-id (create-form! {:organization organization}))
-                   :organization (or organization {:organization/id "default"})
+                   :organization (or organization (ensure-default-organization!))
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
