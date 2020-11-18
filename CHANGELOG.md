@@ -35,6 +35,7 @@ Changes since v2.13
 - REMS now reads GA4GH Passports on login and stores the ResearcherStatus of the user. See [docs/ga4gh-visas.md](docs/ga4gh-visas.md). (#2124)
 - Automated accessibility test report using [axe](https://www.deque.com/axe/) (#2263)
 - Settings page renamed to Profile, now also contains info about user attributes.
+- In docker-entrypoint script `CMD` environment variable may be used instead of `COMMANDS`. `CMD` allows REMS commands with arguments to be used. See [docs/installing-upgrading.md](docs/installing-upgrading.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 
