@@ -48,13 +48,13 @@ Some pointers for common tasks:
 ### Option 1: Run REMS from dockerhub
 
     docker-compose up -d db
-    docker-compose run --rm -e COMMANDS="migrate test-data" app
+    docker-compose run --rm -e CMD="migrate;test-data" app
     docker-compose up -d app
 
 ### Option 1.1: Use config file simple-config.edn instead of environment variables
 
     docker-compose -f docker-compose-config.yml up -d db
-    docker-compose -f docker-compose-config.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-config.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-config.yml up -d app
 
 ### Option 2: Build REMS image locally
@@ -62,15 +62,15 @@ Some pointers for common tasks:
     lein uberjar
     docker-compose -f docker-compose-build.yml build
     docker-compose -f docker-compose-build.yml up -d db
-    docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-build.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-build.yml up -d app
 
-### COMMANDS environment variable may be populated with any rems commands
+### CMD environment variable may be populated with any rems commands
 
-- Empty `COMMANDS` variable as well as `run` command starts rems
-- For commands with arguments, use parenthis (). Examples:
-    COMMANDS="migrate (api-key add <api-key>)"
-    COMMANDS="migrate test-data (grant-role <role> <userid>) run"
+- Command `run` as well as empty `CMD` (and `COMMANDS`) parameter starts rems
+- Example CMD varibale values:
+    CMD="migrate;api-key add <api-key>"
+    CMD="migrate;test-data;grant-role <role> <userid>;run"
 
 ### Access REMS
 
