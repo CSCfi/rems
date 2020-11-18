@@ -65,9 +65,8 @@ Some pointers for common tasks:
     docker-compose -f docker-compose-build.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-build.yml up -d app
 
-### CMD environment variable may be populated with any rems commands
-
-Command `run` as well as empty `CMD` (and `COMMANDS`) parameter starts rems. Example `CMD` varibale values:
+### REMS Commands
+You can use the `CMD` environment variable to specify a sequence of REMS administration commands to run. An empty `CMD` or the command run starts the REMS server. Example `CMD` variable values:
 
     CMD=""
     CMD="migrate;run"
