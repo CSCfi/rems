@@ -18,6 +18,7 @@ Changes since v2.13
 - Drafts can now be submitted for disabled catalogue items. A warning is shown for handlers when viewing an application for a disabled catalogue item. (#2436)
 - New drafts can no longer be created for disabled catalogue items. (#2436)
 - Empty reviews and remarks can't be sent via the UI anymore. Either a comment or an attachment must be provided. (#2433)
+- Application members are sorted by name
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
