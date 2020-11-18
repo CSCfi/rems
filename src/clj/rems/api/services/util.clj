@@ -21,35 +21,52 @@
     (throw-forbidden (str "no access to organization " (pr-str (:organization/id organization))))))
 
 (deftest test-forbidden-organization?
-  (testing "for owner, all organizations are permitted"
-    (binding [context/*user* {:eppn "x"}
-              context/*roles* #{:owner}]
-      (is (not (forbidden-organization? {:organization/id "own organization"})))
-      (is (not (forbidden-organization? {:organization/id "not own organization"})))
-      (is (not (forbidden-organization? {:organization/id ""})))
-      (is (not (forbidden-organization? {:organization/id nil})))))
+  (let [org-empty {:organization/id ""}
+        org-nobody {:organization/id "organization with no owners" :organization/owners []}
+        org-bob {:organization/id "organization owned by bob" :organization/owners [{:userid "bob"}]}
+        org-carl {:organization/id "organization owned by bob" :organization/owners [{:userid "carl"}]}
+        org-bob-carl {:organization/id "organization owned by bob and carl" :organization/owners [{:userid "bob"} {:userid "carl"}]}]
+    (testing "for owner, all organizations are permitted"
+      (binding [context/*user* {:eppn "owner"}
+                context/*roles* #{:owner}]
+        (is (not (forbidden-organization? org-empty)))
+        (is (not (forbidden-organization? org-nobody)))
+        (is (not (forbidden-organization? org-bob)))
+        (is (not (forbidden-organization? org-carl)))
+        (is (not (forbidden-organization? org-bob-carl)))))
 
-  (testing "for handler, all organizations are permitted"
-    (binding [context/*user* {:eppn "x"}
-              context/*roles* #{:handler}]
-      (is (not (forbidden-organization? {:organization/id "own organization"})))
-      (is (not (forbidden-organization? {:organization/id "not own organization"})))
-      (is (not (forbidden-organization? {:organization/id ""})))
-      (is (not (forbidden-organization? {:organization/id nil})))))
+    (testing "for handler, all organizations are permitted"
+      (binding [context/*user* {:eppn "bob"}
+                context/*roles* #{:handler}]
+        (is (not (forbidden-organization? org-empty)))
+        (is (not (forbidden-organization? org-nobody)))
+        (is (not (forbidden-organization? org-bob)))
+        (is (not (forbidden-organization? org-carl)))
+        (is (not (forbidden-organization? org-bob-carl)))))
 
-  (testing "for owner who is also an organization owner, all organizations are permitted"
-    (binding [context/*user* {:eppn "x"}
-              context/*roles* #{:owner}]
-      (is (not (forbidden-organization? {:organization/id "own organization"})))
-      (is (not (forbidden-organization? {:organization/id "not own organization" :organization/owners [{:userid "x"}]})))
-      (is (not (forbidden-organization? {:organization/id ""})))
-      (is (not (forbidden-organization? {:organization/id nil})))))
+    (testing "for owner, all organizations are permitted"
+      (binding [context/*user* {:eppn "bob"}
+                context/*roles* #{:owner}]
+        (is (not (forbidden-organization? org-empty)))
+        (is (not (forbidden-organization? org-nobody)))
+        (is (not (forbidden-organization? org-bob)))
+        (is (not (forbidden-organization? org-carl)))
+        (is (not (forbidden-organization? org-bob-carl)))))
 
-  (testing "for organization owner, only own organizations are permitted"
-    (binding [context/*user* {:eppn "x"}
-              context/*roles* #{}]
-      (is (not (forbidden-organization? {:organization/id "own organization" :organization/owners [{:userid "x"}]})))
-      (is (not (forbidden-organization? {:organization/id "other own organization" :organization/owners [{:userid "y"} {:userid "x"}]})))
-      (is (forbidden-organization? {:organization/id "not own organization" :organization/owners [{:userid "y"}]}))
-      (is (forbidden-organization? {:organization/id ""}))
-      (is (forbidden-organization? {:organization/id nil})))))
+    (testing "for organization owner, only own organizations are permitted"
+      (binding [context/*user* {:eppn "bob"}
+                context/*roles* #{}]
+        (is (forbidden-organization? org-empty))
+        (is (forbidden-organization? org-nobody))
+        (is (not (forbidden-organization? org-bob)))
+        (is (forbidden-organization? org-carl))
+        (is (not (forbidden-organization? org-bob-carl)))))
+
+    (testing "for other user, no organizations are permitted"
+      (binding [context/*user* {:eppn "alice"}
+                context/*roles* #{}]
+        (is (forbidden-organization? org-empty))
+        (is (forbidden-organization? org-nobody))
+        (is (forbidden-organization? org-bob))
+        (is (forbidden-organization? org-carl))
+        (is (forbidden-organization? org-bob-carl))))))
