@@ -11,7 +11,10 @@
   :once
   api-fixture
   (fn [f]
-    (DateTimeUtils/setCurrentMillisFixed 10000)
+    ;; TODO this needs to be in the future so that we can use the
+    ;; catalogue item we create. The DB time isn't overridden and
+    ;; catalogue-item start defaults to now().
+    (DateTimeUtils/setCurrentMillisFixed (.getTime #inst "2100-01-01"))
     (f)
     (DateTimeUtils/setCurrentMillisSystem)))
 
@@ -73,17 +76,17 @@
       (is (= [{:blacklist/resource {:resource/ext-id "A"}
                :blacklist/user {:userid "user1" :name nil :email nil}
                :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
-               :blacklist/added-at "1970-01-01T00:00:10.000Z"
+               :blacklist/added-at "2100-01-01T00:00:00.000Z"
                :blacklist/comment "bad"}
               {:blacklist/resource {:resource/ext-id "B"}
                :blacklist/user {:userid "user1" :name nil :email nil}
                :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
-               :blacklist/added-at "1970-01-01T00:00:10.000Z"
+               :blacklist/added-at "2100-01-01T00:00:00.000Z"
                :blacklist/comment "quite bad"}
               {:blacklist/resource {:resource/ext-id "B"}
                :blacklist/user {:userid "user2" :name nil :email nil}
                :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
-               :blacklist/added-at "1970-01-01T00:00:10.000Z"
+               :blacklist/added-at "2100-01-01T00:00:00.000Z"
                :blacklist/comment "very bad"}]
              (fetch {}))))
     (testing "application is updated when user is added to blacklist"

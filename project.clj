@@ -54,6 +54,7 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [org.postgresql/postgresql "42.2.16"]
                  [org.webjars.bower/tether "1.4.4"]
+                 [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
                  [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/diff-match-patch "1.0.4"]
@@ -146,7 +147,6 @@
                                                    :infer-externs :true ;; for window.rems.hooks to work
                                                    :externs ["react/externs/react.js"]}}}}
              :aot :all
-             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources" "target/uberjar/resources"]}

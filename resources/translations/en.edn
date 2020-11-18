@@ -19,7 +19,6 @@
             :delete "Delete draft"
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
             :errors {:already-member "User is already a member of this application"
-                     :disabled-catalogue-item "Resource no longer available."
                      :duplicate-id "Id is already in use."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
@@ -40,7 +39,6 @@
             :remove-member "Remove member"
             :request-decision "Request decision"
             :request-review "Request review"
-            :request-selection "Send request to"
             :request-selections "Send requests to"
             :resources-selection "Resources included in the application:"
             :return "Return to applicant"
@@ -127,6 +125,7 @@
                    :name "Name"
                    :notification-email "Email (set by user)"
                    :organization "Organization"
+                   :researcher-status "Applicant researcher status"
                    :username "Username"}
   :applications {:all-applications "All applications"
                  :applicant "Applicant"
@@ -146,6 +145,8 @@
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
+                          :decider-invited "%1 invited %2 to decide."
+                          :decider-joined "%1 accepted the invitation to decide."
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
@@ -163,6 +164,8 @@
                           :returned "%1 requested changes to the application."
                           :review-requested "%1 requested a review from %2."
                           :reviewed "%1 reviewed the application."
+                          :reviewer-invited "%1 invited %2 to review the application."
+                          :reviewer-joined "%1 accepted the invitation to review."
                           :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
@@ -304,6 +307,9 @@
                                   :message-to-handler "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
+          ;; generic text shared by decider-invited and reviewer-invited at the moment
+          :decider-invited {:subject "Invitation to participate in handling application %3"
+                            :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :decision-requested {:subject "(%3) Decision request"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."
@@ -321,6 +327,8 @@
                              :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :reviewed {:subject "(%3) Application has been reviewed"
                      :message "Dear %1,\n\n%2 has reviewed the application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :reviewer-invited {:subject "Invitation to participate in handling application %3"
+                             :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :reviewer-reminder {:application "%1, submitted by %2"
                               :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
                               :subject "Applications pending review"}}
@@ -331,7 +339,7 @@
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
          :add-remark "Add remark (shown or hidden to applicant)"
          :alert-blacklisted-users "These members of the application are blacklisted for some of the applied resources:"
-         :alert-disabled-resources "Resources no longer available:"
+         :alert-disabled-resources "Application contains disabled catalogue items:"
          :application "Application"
          :attachment-remove "Remove"
          :attachments "Attachments"
@@ -391,7 +399,7 @@
                :change-language "Change language to %1"
                :home "Home"
                :logout "Sign out"
-               :settings "Settings"
+               :profile "Profile"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
@@ -407,15 +415,17 @@
            :phase-revoked "Phase revoked:"
            :rejected "Rejected"
            :revoked "Revoked"}
+  :profile {:idp-email "Email address from identity provider"
+            :no-email "(no email address)"
+            :notification-email "Use another email address for notifications"
+            :save "Save"
+            :settings "Settings"
+            :warning-about-missing-email [:<> "You will need to " [:a {:href "/settings"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
+            :your-details "Your user details"}
   :search {:clear-search "Clear search"
            :example-searches "Example searches"
            :learn-more "Learn more"
            :search "Search"}
-  :settings {:idp-email "Email address from identity provider"
-             :no-email "(no email address)"
-             :notification-email "Use another email address for notifications"
-             :save "Save"
-             :warning-about-missing-email [:<> "You will need to " [:a {:href "/settings"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
           :all-rows-selected "All rows selected"

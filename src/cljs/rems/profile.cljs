@@ -1,11 +1,13 @@
-(ns rems.settings
+(ns rems.profile
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
+            [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch put!]])
+            [rems.user :as user]
+            [rems.util :refer [put!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
@@ -34,7 +36,7 @@
 (rf/reg-event-fx
  ::save
  (fn [{:keys [db]} _]
-   (let [description [text :t.settings/save]]
+   (let [description [text :t.profile/save]]
      (put! "/api/user-settings"
            {:params (::form db)
             :handler (flash-message/default-success-handler :top description
@@ -54,43 +56,51 @@
 
 (defn- missing-email-warning-dialog []
   [:div.alert.alert-warning
-   (text :t.settings/warning-about-missing-email)])
+   (text :t.profile/warning-about-missing-email)])
 
 (defn missing-email-warning []
   (when @(rf/subscribe [::missing-email?])
     [missing-email-warning-dialog]))
 
-(defn settings-page []
+(defn profile-page []
   (let [identity @(rf/subscribe [:identity])
         form @(rf/subscribe [::form])]
     [:<>
-     [document-title (text :t.navigation/settings)]
+     [document-title (text :t.navigation/profile)]
      [flash-message/component :top]
-     (if @(rf/subscribe [::user-settings :fetching?])
-       [spinner/big]
-       [:form
-        {:on-submit (fn [event]
-                      (.preventDefault event)
-                      (rf/dispatch [::save]))}
+     [collapsible/component
+      {:title (text :t.profile/settings)
+       :always (if @(rf/subscribe [::user-settings :fetching?])
+                 [spinner/big]
+                 [:form
+                  {:on-submit (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [::save]))}
 
-        [:div.form-group
-         (text :t.settings/idp-email) ": " (or (:email (:user identity))
-                                               [:span.text-muted (text :t.settings/no-email)])]
+                  [:div.form-group
+                   (text :t.profile/idp-email) ": " (or (:email (:user identity))
+                                                        [:span.text-muted (text :t.profile/no-email)])]
 
-        (let [id "notification-email"]
-          [:div.form-group
-           [:label {:for id} (text :t.settings/notification-email) ":"]
-           [:input.form-control
-            {:type "email"
-             :id id
-             :value (:notification-email form)
-             :on-change (fn [event]
-                          (let [value (.. event -target -value)]
-                            (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
+                  (let [id "notification-email"]
+                    [:div.form-group
+                     [:label {:for id} (text :t.profile/notification-email) ":"]
+                     [:input.form-control
+                      {:type "email"
+                       :id id
+                       :value (:notification-email form)
+                       :on-change (fn [event]
+                                    (let [value (.. event -target -value)]
+                                      (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
 
-        [:button.btn.btn-primary
-         {:type "submit"}
-         (text :t.settings/save)]])]))
+                  [:button.btn.btn-primary
+                   {:type "submit"}
+                   (text :t.profile/save)]])}]
+     [:div.mt-3
+      [collapsible/component
+       {:title (text :t.profile/your-details)
+        :always [:<>
+                 [user/username (:user identity)]
+                 [user/attributes (:user identity)]]}]]]))
 
 (defn guide []
   [:div

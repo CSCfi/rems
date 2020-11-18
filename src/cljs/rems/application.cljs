@@ -3,7 +3,7 @@
             [goog.string]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.action :refer [button-wrapper]]
+            [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -34,6 +34,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
+            [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -43,21 +44,17 @@
   (rf/dispatch [::fetch-application application-id full-reload?]))
 
 (defn- disabled-items-warning [application]
-  ;; show error for drafts (which can't be submitted)
-  ;; show warning for handlers and similar users
-  (let [draft? (= :application.state/draft (:application/state application))
-        see-everything? (contains? (:application/permissions application) :see-everything)]
-    (when (or draft? see-everything?)
-      (when-some [resources (->> (:application/resources application)
-                                 (filter #(or (not (:catalogue-item/enabled %))
-                                              (:catalogue-item/expired %)
-                                              (:catalogue-item/archived %)))
-                                 seq)]
-        [:div.alert {:class (if draft? :alert-danger :alert-warning)}
-         (text :t.form/alert-disabled-resources)
-         (into [:ul]
-               (for [resource resources]
-                 [:li (localized (:catalogue-item/title resource))]))]))))
+  (when (contains? (:application/permissions application) :see-everything) ; don't show to applicants
+    (when-some [resources (->> (:application/resources application)
+                               (filter #(or (not (:catalogue-item/enabled %))
+                                            (:catalogue-item/expired %)
+                                            (:catalogue-item/archived %)))
+                               seq)]
+      [:div.alert.alert-warning
+       (text :t.form/alert-disabled-resources)
+       (into [:ul]
+             (for [resource resources]
+               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
@@ -602,39 +599,18 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
-                    (:userid attributes) (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))
-        organization-by-id @(rf/subscribe [:organization-by-id])
-        language @(rf/subscribe [:language])
-        extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))
-        organization-name-if-known (fn [organization]
-                                     (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
-                                       (get-in known-organization [:organization/short-name language])
-                                       (:organization/id organization)))]
+                    user-id (text :t.applicant-info/member)
+                    :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
       :always [:div
                [:h3 title]
-               (when-let [name (get-member-name attributes)]
-                 [info-field (text :t.applicant-info/name) name {:inline? true}])
+               [user/username attributes]
                (when-not (nil? accepted-licenses?)
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
-      :collapse (into [:div
-                       (when user-id
-                         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
-                       (when-let [mail (:notification-email attributes)]
-                         [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
-                       (when-let [mail (:email attributes)]
-                         [info-field (text :t.applicant-info/email) mail {:inline? true}])
-                       (when-let [organizations (seq (:organizations attributes))]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])]
-                      (for [[k v] other-attributes]
-                        (let [title (or (localized (get-in extra-attributes [(name k) :name]))
-                                        k)]
-                          [info-field title v {:inline? true}])))
+      :collapse [user/attributes attributes]
       :footer (let [element-id (str element-id "-remove-member")]
                 [:div {:id element-id}
                  (when can-remove?
@@ -670,14 +646,14 @@
                            :accepted-licenses? (when (not= :application.state/draft (:application/state application))
                                                  (accepted-licenses? application (:userid applicant)))}]]
             (concat
-             (for [[index member] (map-indexed vector members)]
+             (for [[index member] (map-indexed vector (sort-by :name members))]
                [member-info {:element-id (str "member" index)
                              :attributes member
                              :application application
                              :group? true
                              :can-remove? can-remove?
                              :accepted-licenses? (accepted-licenses? application (:userid member))}])
-             (for [[index invited-member] (map-indexed vector invited-members)]
+             (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
@@ -853,7 +829,8 @@
                                        :name "Deve Loper"
                                        :notification-email "notification@example.com"
                                        :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
-                                       :address "Testikatu 1, 00100 Helsinki"}
+                                       :address "Testikatu 1, 00100 Helsinki"
+                                       :researcher-status-by "so"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])

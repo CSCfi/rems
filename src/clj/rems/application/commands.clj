@@ -66,6 +66,14 @@
 (s/defschema DecideCommand
   (assoc CommandWithComment
          :decision (s/enum :approved :rejected)))
+(s/defschema InviteReviewerCommand
+  (assoc CommandWithComment
+         :reviewer {:name s/Str
+                    :email s/Str}))
+(s/defschema InviteDeciderCommand
+  (assoc CommandWithComment
+         :decider {:name s/Str
+                   :email s/Str}))
 (s/defschema InviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
@@ -117,7 +125,9 @@
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
    :application.command/delete DeleteCommand
+   :application.command/invite-decider InviteDeciderCommand
    :application.command/invite-member InviteMemberCommand
+   :application.command/invite-reviewer InviteReviewerCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
@@ -200,16 +210,15 @@
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
-(defn- disabled-catalogue-items-error [application]
-  ;; resubmitting is fine even if catalogue item is disabled
-  (when (= :application.state/draft (getx application :application/state))
-    (let [errors (for [item (:application/resources application)
-                       :when (or (not (getx item :catalogue-item/enabled))
-                                 (getx item :catalogue-item/archived)
-                                 (getx item :catalogue-item/expired))]
-                   {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
-      (when (not (empty? errors))
-        {:errors (vec errors)}))))
+(defn- disabled-catalogue-items-error [ids injections]
+  (let [errors (for [id ids
+                     :let [item ((getx injections :get-catalogue-item) id)]
+                     :when (or (not (getx item :enabled))
+                               (getx item :archived) ; TODO is this correct? besides, doesn't archived imply disabled?
+                               (getx item :expired))]
+                 {:type :disabled-catalogue-item :catalogue-item-id (getx item :id)})]
+    (when (seq errors)
+      {:errors (vec errors)})))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)
@@ -256,13 +265,6 @@
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))
-
-(defn- valid-invitation-token? [application token]
-  (contains? (:application/invitation-tokens application) token))
-
-(defn- invitation-token-error [application token]
-  (when-not (valid-invitation-token? application token)
-    {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
 (defn- member? [userid application]
   (some #(= userid (:userid %))
@@ -323,6 +325,7 @@
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items catalogue-item-ids injections)
       (unbundlable-catalogue-items catalogue-item-ids injections)
+      (disabled-catalogue-items-error catalogue-item-ids injections)
       (let [workflow-id (-> (first catalogue-item-ids)
                             get-catalogue-item
                             :wfid)
@@ -371,7 +374,6 @@
 (defmethod command-handler :application.command/submit
   [cmd application injections]
   (or (merge-with concat
-                  (disabled-catalogue-items-error application)
                   (licenses-not-accepted-error application (:actor cmd))
                   (validation-error application))
       (ok {:event/type :application.event/submitted})))
@@ -492,14 +494,48 @@
        :application/member (:member cmd)
        :invitation/token (secure-token)}))
 
+(defmethod command-handler :application.command/invite-decider
+  [cmd _application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/decider-invited
+                                :application/decider (:decider cmd)
+                                :invitation/token ((getx injections :secure-token))}))
+
+(defmethod command-handler :application.command/invite-reviewer
+  [cmd _application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/reviewer-invited
+                                :application/reviewer (:reviewer cmd)
+                                :invitation/token ((getx injections :secure-token))}))
+
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
-  (or (already-member-error application (:actor cmd))
-      (invitation-token-error application (:token cmd))
+  (let [token (:token cmd)
+        invitation (get-in application [:application/invitation-tokens token])]
+    (cond
+      (:application/member invitation)
+      (or (already-member-error application (:actor cmd))
+          (ok-with-data {:application-id (:application-id cmd)}
+                        [{:event/type :application.event/member-joined
+                          :application/id (:application-id cmd)
+                          :invitation/token (:token cmd)}]))
+
+      (:application/reviewer invitation)
       (ok-with-data {:application-id (:application-id cmd)}
-                    [{:event/type :application.event/member-joined
+                    [{:event/type :application.event/reviewer-joined
                       :application/id (:application-id cmd)
-                      :invitation/token (:token cmd)}])))
+                      :invitation/token (:token cmd)
+                      :application/request-id (UUID/randomUUID)}])
+
+      (:application/decider invitation)
+      (ok-with-data {:application-id (:application-id cmd)}
+                    [{:event/type :application.event/decider-joined
+                      :application/id (:application-id cmd)
+                      :invitation/token (:token cmd)
+                      :application/request-id (UUID/randomUUID)}])
+
+      :else
+      {:errors [{:type :t.actions.errors/invalid-token :token token}]})))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application injections]
@@ -513,10 +549,9 @@
 
 (defmethod command-handler :application.command/uninvite-member
   [cmd application injections]
-  (or (when-not (contains? (set (map (juxt :name :email)
+  (or (when-not (contains? (set (map :application/member
                                      (vals (:application/invitation-tokens application))))
-                           [(:name (:member cmd))
-                            (:email (:member cmd))])
+                           (:member cmd))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
       (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/member-uninvited
@@ -587,8 +622,8 @@
   (-> event
       (update :application/id (fn [app-id]
                                 (or app-id (:application-id cmd))))
-      (assoc :event/time (:time cmd)
-             :event/actor (:actor cmd))))
+      (assoc :event/time (:time cmd))
+      (update :event/actor #(or % (:actor cmd)))))
 
 (defn- finalize-events [result cmd]
   (update-present result :events (fn [events]

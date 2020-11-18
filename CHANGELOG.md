@@ -15,17 +15,26 @@ Changes since v2.13
 ### Changes
 - The development login page now uses the actual app styles.
 - Changed the translations of the request recipients (now accounts for the singular or plural depending on the request type).
+- Drafts can now be submitted for disabled catalogue items. A warning is shown for handlers when viewing an application for a disabled catalogue item. (#2436)
+- New drafts can no longer be created for disabled catalogue items. (#2436)
+- Empty reviews and remarks can't be sent via the UI anymore. Either a comment or an attachment must be provided. (#2433)
+- Application members are sorted by name
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
 - Catalogue item editor didn't properly show forms, resources or workflows if they were disabled or archived (#2335)
+- Add vertical margins around search field for better readability (#2330)
 - Workflow editor didn't properly show forms that were disabled or archived (#2335)
 - Check file extensions ignoring case (#2392)
+- Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
 - Experimental permissions API that produces GA4GH Visas is now documented in [docs/ga4gh-visas.md](docs/ga4gh-visas.md)
 - OIDC scopes are configurable via `:oidc-scopes`. See [docs/configuration.md](docs/configuration.md).
+- REMS now reads GA4GH Passports on login and stores the ResearcherStatus of the user. See [docs/ga4gh-visas.md](docs/ga4gh-visas.md). (#2124)
+- Automated accessibility test report using [axe](https://www.deque.com/axe/) (#2263)
+- Settings page renamed to Profile, now also contains info about user attributes.
 - In docker-entrypoint script `CMD` environment variable may be used instead of `COMMANDS`. `CMD` allows REMS commands with arguments to be used. See [docs/installing-upgrading.md](docs/installing-upgrading.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17

@@ -214,6 +214,8 @@
                  "application.command/add-member"
                  "application.command/remove-member"
                  "application.command/invite-member"
+                 "application.command/invite-decider"
+                 "application.command/invite-reviewer"
                  "application.command/uninvite-member"
                  "application.command/change-resources"
                  "application.command/close"
@@ -235,6 +237,8 @@
                      "application.command/add-member"
                      "application.command/remove-member"
                      "application.command/invite-member"
+                     "application.command/invite-decider"
+                     "application.command/invite-reviewer"
                      "application.command/uninvite-member"
                      "application.command/change-resources"
                      "application.command/close"
@@ -471,12 +475,10 @@
 (deftest test-application-create
   (let [api-key "42"
         user-id "alice"
-        application-id (-> (request :post "/api/applications/create")
-                           (authenticate "42" user-id)
-                           (json-body {:catalogue-item-ids [(test-helpers/create-catalogue-item! {})]})
-                           handler
-                           read-ok-body
-                           :application-id)]
+        cat-id (test-helpers/create-catalogue-item! {})
+        application-id (:application-id
+                        (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                                  "42" user-id))]
 
     (testing "creating"
       (is (some? application-id))
@@ -511,7 +513,17 @@
       (is (response-is-ok?
            (-> (request :get (str "/api/applications/" application-id))
                (authenticate api-key "reporter")
-               handler))))))
+               handler))))
+
+    (testing "can't create application for disabled catalogue item"
+      (with-user "owner"
+        (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                :enabled false}))
+      (rems.db.applications/reload-cache!)
+      (is (= {:success false
+              :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
+             (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                       "42" user-id))))))
 
 (deftest test-application-delete
   (let [api-key "42"
@@ -568,35 +580,105 @@
         user-id "alice"
         form-id (test-helpers/create-form! {})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
-        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})
         enable-catalogue-item! #(with-user owner
                                   (catalogue/set-catalogue-item-enabled! {:id cat-id
                                                                           :enabled %}))
         archive-catalogue-item! #(with-user owner
                                    (catalogue/set-catalogue-item-archived! {:id cat-id
                                                                             :archived %}))]
-    (testing "submit with disabled catalogue item fails"
-      (is (:success (enable-catalogue-item! false)))
-      (rems.db.applications/reload-cache!)
-      (is (= {:success false
-              :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
-             (send-command user-id {:type :application.command/submit
-                                    :application-id app-id}))))
-    (testing "submit with archived catalogue item fails"
-      (is (:success (enable-catalogue-item! true)))
-      (is (:success (archive-catalogue-item! true)))
-      (rems.db.applications/reload-cache!)
-      (is (= {:success false
-              :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
-             (send-command user-id {:type :application.command/submit
-                                    :application-id app-id}))))
+    (testing "submit with archived & disabled catalogue item succeeds"
+      ;; draft needs to be created before disabling & archiving
+      (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
+        (is (:success (enable-catalogue-item! false)))
+        (is (:success (archive-catalogue-item! true)))
+        (rems.db.applications/reload-cache!)
+        (is (= {:success true}
+               (send-command user-id {:type :application.command/submit
+                                      :application-id app-id})))))
     (testing "submit with normal catalogue item succeeds"
       (is (:success (enable-catalogue-item! true)))
       (is (:success (archive-catalogue-item! false)))
       (rems.db.applications/reload-cache!)
+      (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
+        (is (= {:success true}
+               (send-command user-id {:type :application.command/submit
+                                      :application-id app-id})))))))
+
+(deftest test-application-invitations
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"
+        app-id (test-helpers/create-application! {:actor applicant})]
+    (testing "invite member for draft as applicant"
       (is (= {:success true}
-             (send-command user-id {:type :application.command/submit
-                                    :application-id app-id}))))))
+             (send-command applicant {:type :application.command/invite-member
+                                      :application-id app-id
+                                      :member {:name "Member 1" :email "member1@example.com"}}))))
+    (testing "accept member invitation for draft"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            member "member1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key member)))
+        (testing ", member is able to fetch application and see themselves"
+          (is (= #{member}
+                 (->> (get-application-for-user app-id member)
+                      :application/members
+                      (mapv :userid)
+                      set))))))
+    (testing "submit application"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "invite reviewer as handler"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/invite-reviewer
+                                    :application-id app-id
+                                    :reviewer {:name "Member 2" :email "member2@example.com"}}))))
+    (testing "accept handler invitation"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            reviewer "reviewer1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key reviewer)))
+        (testing ", reviewer is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/review"
+                  "application.command/remark"]
+                 (:application/permissions (get-application-for-user app-id reviewer)))))))
+    (testing "invite decider as handler"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/invite-decider
+                                    :application-id app-id
+                                    :decider {:name "Member 3" :email "member3@example.com"}}))))
+    (testing "accept handler invitation"
+      (let [token (-> (rems.db.applications/get-application-internal app-id)
+                      :application/events
+                      last
+                      :invitation/token)
+            decider "decider1"]
+        (is token)
+        (is (= {:success true
+                :application-id app-id}
+               (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                         api-key decider)))
+        (testing ", decider is able to fetch application and can submit a review"
+          (is (= ["see-everything"
+                  "application.command/reject"
+                  "application.command/decide"
+                  "application.command/remark"
+                  "application.command/approve"]
+                 (:application/permissions (get-application-for-user app-id decider)))))))))
 
 (deftest test-application-validation
   (let [user-id "alice"
@@ -733,6 +815,7 @@
                "application.command/assign-external-id"
                "application.command/change-resources"
                "application.command/close"
+               "application.command/invite-reviewer"
                "application.command/invite-member"
                "application.command/remark"
                "application.command/remove-member"
@@ -838,7 +921,8 @@
                 :name "Alice Applicant"
                 :email "alice@example.com"
                 :organizations [{:organization/id "default"}]
-                :nickname "In Wonderland"}
+                :nickname "In Wonderland"
+                :researcher-status-by "so"}
                (:application/applicant application)
                (get-in application [:application/events 0 :event/actor-attributes])))
         (is (= {:userid "developer"
@@ -1647,7 +1731,7 @@
               :application/blacklist []
               :application/id app-id
               :application/todo nil
-              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}]}
+              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
               :application/members []
               :application/resources [{:catalogue-item/start "REDACTED"
                                        :catalogue-item/end nil
@@ -1672,7 +1756,7 @@
                                    :form/title "notifications"
                                    :form/id form-id}]
               :application/events [{:application/external-id "2010/1"
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/id app-id
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :workflow/type "workflow/default"
@@ -1688,14 +1772,14 @@
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}]}
                                    {:event/id 100
                                     :event/type "application.event/licenses-accepted"
                                     :event/time "2010-01-01T00:00:00.000Z"
                                     :event/actor "alice"
                                     :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}]}
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/accepted-licenses []}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)

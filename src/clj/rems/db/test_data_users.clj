@@ -27,7 +27,7 @@
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer" :nickname "The Dev"}
-   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland"}
+   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
    "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
@@ -81,4 +81,3 @@
    "W6OKPQGANG6QK54GRF7AOOGMZL7M6IVH" {:eppn "W6OKPQGANG6QK54GRF7AOOGMZL7M6IVH" :mail "RDorganizationowner1@mailinator.com" :commonName "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "D4ZJM7XNXKGFQABRQILDI6EYHLJRLYSF" {:eppn "D4ZJM7XNXKGFQABRQILDI6EYHLJRLYSF" :mail "RDorganizationowner2@mailinator.com" :commonName "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
    "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" {:eppn "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" :mail "RDowner@mailinator.com" :commonName "RDowner REMSDEMO"}})
-

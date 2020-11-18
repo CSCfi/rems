@@ -75,15 +75,17 @@
 (defmethod application-base-view :application.event/member-invited
   [application event]
   (-> application
-      (update :application/invitation-tokens assoc (:invitation/token event) (:application/member event))))
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
+                (select-keys event [:event/actor :application/member]))))
 
 (defmethod application-base-view :application.event/member-uninvited
   [application event]
   (-> application
       (update :application/invitation-tokens (fn [invitations]
                                                (->> invitations
-                                                    (remove (fn [[_token member]]
-                                                              (= member (:application/member event))))
+                                                    (remove (fn [[_token invitation]]
+                                                              (= (:application/member invitation)
+                                                                 (:application/member event))))
                                                     (into {}))))))
 
 (defmethod application-base-view :application.event/member-joined
@@ -103,6 +105,39 @@
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
+(defmethod application-base-view :application.event/decider-invited
+  [application event]
+  (-> application
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
+                (select-keys event [:event/actor :application/decider]))))
+
+(defmethod application-base-view :application.event/reviewer-invited
+  [application event]
+  (-> application
+      (assoc-in [:application/invitation-tokens (:invitation/token event)]
+                (select-keys event [:event/actor :application/reviewer]))))
+
+(defn- update-todo-for-requests [application]
+  (assoc application :application/todo
+         (cond
+           (seq (::latest-review-request-by-user application)) :waiting-for-review
+           (seq (::latest-decision-request-by-user application)) :waiting-for-decision
+           :else :no-pending-requests)))
+
+(defmethod application-base-view :application.event/decider-joined
+  [application event]
+  (-> application
+      (update :application/invitation-tokens dissoc (:invitation/token event))
+      (assoc-in [::latest-decision-request-by-user (:event/actor event)] (:application/request-id event))
+      (update-todo-for-requests)))
+
+(defmethod application-base-view :application.event/reviewer-joined
+  [application event]
+  (-> application
+      (update :application/invitation-tokens dissoc (:invitation/token event))
+      (assoc-in [::latest-review-request-by-user (:event/actor event)] (:application/request-id event))
+      (update-todo-for-requests)))
+
 (defmethod application-base-view :application.event/submitted
   [application event]
   (-> application
@@ -121,16 +156,6 @@
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
       (assoc :application/state :application.state/returned)
       (assoc :application/todo nil)))
-
-(defn- update-todo-for-requests [application]
-  (assoc application :application/todo
-         (cond
-           (not (empty? (::latest-review-request-by-user application)))
-           :waiting-for-review
-           (not (empty? (::latest-decision-request-by-user application)))
-           :waiting-for-decision
-           :else
-           :no-pending-requests)))
 
 (defmethod application-base-view :application.event/review-requested
   [application event]
@@ -246,7 +271,9 @@
     {:permission :application.command/create}
     {:permission :application.command/decide}
     {:permission :application.command/delete}
+    {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
+    {:permission :application.command/invite-reviewer}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -274,6 +301,7 @@
     {:permission :application.command/create}
     {:permission :application.command/delete}
     {:permission :application.command/invite-member}
+    {:permission :application.command/invite-reviewer}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -611,7 +639,11 @@
   (-> application
       ;; the keys of the invitation-tokens map are secret
       (dissoc :application/invitation-tokens)
-      (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
+      (assoc :application/invited-members (->> application
+                                               :application/invitation-tokens
+                                               vals
+                                               (keep :application/member)
+                                               set))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
 (defn- may-see-private-answers? [roles]

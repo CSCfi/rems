@@ -47,7 +47,7 @@
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.common.roles :as roles]
-            [rems.settings :refer [settings-page missing-email-warning]]
+            [rems.profile :refer [profile-page missing-email-warning]]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [navigate! fetch replace-url! set-location!]]
@@ -249,7 +249,7 @@
    :new-application new-application-page
    :applications applications-page
    :extra-pages extra-pages
-   :settings settings-page
+   :profile profile-page
    :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
@@ -303,7 +303,8 @@
   (let [on-update (fn [this]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
                       (when grab-focus?
-                        (when-let [element (.querySelector js/document "#main-content")]
+                        (when-let [element (or (.querySelector js/document "h1")
+                                               (.querySelector js/document "#main-content"))]
                           (focus/focus element)
                           (rf/dispatch [::focus-grabbed])))))]
     (r/create-class
@@ -488,9 +489,9 @@
   (rf/dispatch [:rems.extra-pages/enter-page page-id])
   (rf/dispatch [:set-active-page :extra-pages]))
 
-(secretary/defroute "/settings" []
-  (rf/dispatch [:rems.settings/enter-page])
-  (rf/dispatch [:set-active-page :settings]))
+(secretary/defroute "/profile" []
+  (rf/dispatch [:rems.profile/enter-page])
+  (rf/dispatch [:set-active-page :profile]))
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))

@@ -10,9 +10,11 @@
             [rems.testing-util :refer [with-fixed-time utc-fixture]]
             [rems.text :refer [with-language]]))
 
-(use-fixtures :once
+(use-fixtures
+  :once
   utc-fixture
   test-db-fixture)
+
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard

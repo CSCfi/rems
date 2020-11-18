@@ -179,4 +179,5 @@
 
  ;; Options used only for development
  :render-css-file? false
- :test-database-url nil}
+ :test-database-url nil
+ :accessibility-report false} ; should the axe accessibility tooling be included?
