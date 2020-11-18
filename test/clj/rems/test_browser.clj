@@ -29,14 +29,15 @@
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
-(use-fixtures :each btu/fixture-driver)
+(use-fixtures :each btu/fixture-refresh-driver)
 
 (use-fixtures
   :once
   btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
   btu/smoke-test
-  btu/accessibility-report-fixture)
+  btu/accessibility-report-fixture
+  btu/fixture-init-driver)
 
 ;;; common functionality
 
