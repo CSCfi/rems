@@ -120,7 +120,16 @@
       (testing "archive"
         (is (response-is-forbidden? (api-response :put "/api/resources/archived"
                                                   {:id id :archived true}
-                                                  api-key "organization-owner2")))))))
+                                                  api-key "organization-owner2")))))
+    (testing "handler"
+      (testing "disable"
+        (is (response-is-forbidden? (api-response :put "/api/resources/enabled"
+                                                  {:id id :enabled false}
+                                                  api-key "handler"))))
+      (testing "archive"
+        (is (response-is-forbidden? (api-response :put "/api/resources/archived"
+                                                  {:id id :archived true}
+                                                  api-key "handler")))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"

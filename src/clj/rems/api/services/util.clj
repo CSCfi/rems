@@ -7,11 +7,9 @@
 
 (defn- forbidden-organization? [organization]
   (let [not-owner? (not (contains? context/*roles* :owner))
-        not-handler? (not (contains? context/*roles* :handler)) ;; handlers have read-only access to all orgs
         organization-owners (set (map :userid (:organization/owners organization)))
         not-organization-owner? (not (contains? organization-owners (getx-user-id)))]
     (and not-owner?
-         not-handler? ;; TODO: keeping old behaviour where handlers can see everything for now
          not-organization-owner?)))
 
 (defn check-allowed-organization! [organization]
@@ -35,15 +33,6 @@
         (is (not (forbidden-organization? org-carl)))
         (is (not (forbidden-organization? org-bob-carl)))))
 
-    (testing "for handler, all organizations are permitted"
-      (binding [context/*user* {:eppn "bob"}
-                context/*roles* #{:handler}]
-        (is (not (forbidden-organization? org-empty)))
-        (is (not (forbidden-organization? org-nobody)))
-        (is (not (forbidden-organization? org-bob)))
-        (is (not (forbidden-organization? org-carl)))
-        (is (not (forbidden-organization? org-bob-carl)))))
-
     (testing "for owner who is also an organization owner, all organizations are permitted"
       (binding [context/*user* {:eppn "bob"}
                 context/*roles* #{:owner}]
@@ -60,7 +49,16 @@
         (is (forbidden-organization? org-nobody))
         (is (not (forbidden-organization? org-bob)))
         (is (forbidden-organization? org-carl))
-        (is (not (forbidden-organization? org-bob-carl)))))
+        (is (not (forbidden-organization? org-bob-carl))))
+
+      (testing ", even if they are a handler"
+        (binding [context/*user* {:eppn "bob"}
+                  context/*roles* #{:handler}]
+          (is (forbidden-organization? org-empty))
+          (is (forbidden-organization? org-nobody))
+          (is (not (forbidden-organization? org-bob)))
+          (is (forbidden-organization? org-carl))
+          (is (not (forbidden-organization? org-bob-carl))))))
 
     (testing "for other user, no organizations are permitted"
       (binding [context/*user* {:eppn "alice"}
