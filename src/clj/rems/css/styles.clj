@@ -67,6 +67,31 @@
    (stylesheet/at-font-face {:font-family "'Roboto Slab'"
                              :src "url('/font/Roboto.woff2') format('woff2')"
                              :font-weight 400
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Luciole Regular'"
+                             :src "url('/font/Luciole/Luciole-Regular.eot') format('embedded-opentype'),
+                                   url('/font/Luciole/Luciole-Regular.woff2') format('woff2'),
+                                   url('/font/Luciole/Luciole-Regular.woff') format('woff'),
+                                   url('/font/Luciole/Luciole-Regular.ttf') format('truetype'),
+                                   url('/font/Luciole/Luciole-Regular.svg#svgFontName') format('svg')"
+                             :font-weight 400
+                             :font-style "normal"
+                             })
+   (stylesheet/at-font-face {:font-family "'Luciole Bold'"
+                             :src "url('/font/Luciole/Luciole-Bold.eot') format('embedded-opentype'),
+                                   url('/font/Luciole/Luciole-Bold.woff2') format('woff2'),
+                                   url('/font/Luciole/Luciole-Bold.woff') format('woff'),
+                                   url('/font/Luciole/Luciole-Bold.ttf') format('truetype'),
+                                   url('/font/Luciole/Luciole-Bold.svg#svgFontName') format('svg')"
+                             :font-weight 400
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Luciole Italic'"
+                             :src "url('/font/Luciole/Luciole-Italic.eot') format('embedded-opentype'),
+                                   url('/font/Luciole/Luciole-Italic.woff2') format('woff2'),
+                                   url('/font/Luciole/Luciole-Italic.woff') format('woff'),
+                                   url('/font/Luciole/Luciole-Italic.ttf') format('truetype'),
+                                   url('/font/Luciole/Luciole-Italic.svg#svgFontName') format('svg')"
+                             :font-weight 400
                              :font-style "normal"})))
 
 (defn- generate-form-placeholder-styles []
