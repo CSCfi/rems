@@ -7,9 +7,14 @@
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :each api-fixture)
+(use-fixtures :each api-fixture-without-data)
 
 (deftest test-audit-log
+  (api-key/add-api-key! "42" {})
+  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:eppn "malice"})
+  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:eppn "reporter"} :reporter)
   (let [time-a (atom nil)
         app-id (test-helpers/create-application! {:actor "alice"})]
 

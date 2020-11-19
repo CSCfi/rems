@@ -112,11 +112,16 @@
          :url url
          :mode mode
          :seed (random-seed))
-  (enable-downloads! (get-driver))
+  (enable-downloads! (get-driver)))
+
+(defn refresh-driver!
+  "Refreshes an existing driver and cleans up."
+  []
+  (assert (get-driver) "must have initialized driver already!")
   ;; start with a clean slate
   (et/delete-cookies (get-driver)))
 
-(defn fixture-driver
+(defn fixture-init-driver
   "Executes a test running a fresh driver except when in development."
   [f]
   (letfn [(run []
@@ -128,6 +133,12 @@
       (catch SocketException e
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
+
+(defn fixture-refresh-driver
+  "Executes a test running with a re-used but clean and refreshed driver."
+  [f]
+  (refresh-driver!)
+  (f))
 
 (defn smoke-test [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
@@ -285,6 +296,7 @@
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
+  (wait-visible q)
   (doseq [c text]
     (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)

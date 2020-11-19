@@ -29,14 +29,15 @@
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
-(use-fixtures :each btu/fixture-driver)
+(use-fixtures :each btu/fixture-refresh-driver)
 
 (use-fixtures
   :once
   btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
   btu/smoke-test
-  btu/accessibility-report-fixture)
+  btu/accessibility-report-fixture
+  btu/fixture-init-driver)
 
 ;;; common functionality
 
@@ -425,6 +426,57 @@
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
+
+(deftest test-applicant-member-remove-action
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:handlers ["handler"]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
+                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-applicant-member-remove-action"))
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"})
+    (test-helpers/create-user! {:eppn "ionna" :commonName "Ionna Insprucker" :mail "ionna@ins.mail"})
+    (test-helpers/create-user! {:eppn "jade" :commonName "Jade Jenner" :mail "jade80@mail.name"})
+    (test-helpers/create-user! {:eppn "kayla" :commonName "Kayla Kale" :mail "kale@is.good"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "ionna"}
+                            :actor "handler"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "jade"}
+                            :actor "handler"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "kayla"}
+                            :actor "handler"}))
+  (btu/with-postmortem
+    (login-as "alice")
+    (go-to-application (btu/context-get :application-id))
+
+    (testing "remove second member jade"
+      (is (not (btu/visible? :actions-member1-remove-member-form)))
+      (btu/scroll-and-click :member1-remove-member-form-action-button)
+      (btu/wait-visible :actions-member1-remove-member-form)
+      (btu/fill-human :comment-member1-remove-member-comment "not in research group anymore")
+      (btu/scroll-and-click :member1-remove-member-submit)
+      (btu/wait-visible [{:css ".alert-success" :fn/has-text "Remove member: Success"}])
+      (btu/wait-invisible :actions-member1-remove-member-form)
+      (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
+
+      (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
+               {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/members)))
+      (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}))
+      (is (btu/visible? {:css "div.event-comment" :fn/text "not in research group anymore"})))))
 
 (deftest test-handling
   (testing "submit test data with API"
@@ -1004,9 +1056,13 @@
 
         (btu/scroll-and-click :save)
 
-        (btu/visible? {:tag :textarea :id :fields-0-info-text-sv :fn/has-class :is-invalid})
-        (btu/visible? {:tag :div :class :invalid-feedback :fn/has-text "Field \"Field description (optional)\" is required."})
-        (btu/visible? {:tag :div :class :alert-danger :fn/has-text "Submission failed."})
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/has-text "Edit form"})
+        (is (btu/visible? {:id :fields-0-info-text-sv :fn/has-class :is-invalid}))
+        ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."}))
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
 
         (btu/scroll-and-click :save)
