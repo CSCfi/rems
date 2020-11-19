@@ -38,7 +38,17 @@
             :remark-public "Visa anteckning för sökande"
             :remove-member "Ta bort deltagare"
             :request-decision "Begär beslut"
+            :request-decision-dropdown "Begär beslut"
+            :request-decision-dropdown-from-user "från existerande användare..." ; TODO check
+            :request-decision-dropdown-via-email "via e-post..." ; TODO check
+            :request-decision-from-user "Begär beslut från existerande användare" ; TODO check
+            :request-decision-via-email "Begär beslut via e-post" ; TODO check
             :request-review "Begär granskning"
+            :request-review-dropdown "Begär granskning"
+            :request-review-dropdown-from-user "från existerande användare..." ; TODO check
+            :request-review-dropdown-via-email "via e-post..." ; TODO check
+            :request-review-from-user "Begär granskning från existerande användare" ; TODO check
+            :request-review-via-email "Begär granskning via e-post" ; TODO check
             :request-selections "Skicka begäranden till"
             :resources-selection "Välj resurser som ansökan gäller:"
             :return "Sänd tillbaka till sökande"

@@ -37,6 +37,9 @@ Changes since v2.13
 - Automated accessibility test report using [axe](https://www.deque.com/axe/) (#2263)
 - Settings page renamed to Profile, now also contains info about user attributes.
 - In docker-entrypoint script `CMD` environment variable may be used instead of `COMMANDS`. `CMD` allows REMS commands with arguments to be used. See [docs/installing-upgrading.md](docs/installing-upgrading.md).
+- Deciders and reviewers can now be invited via email. (#2040)
+  - New `invite-decider` and `invite-reviewer` commands in the API & UI
+  - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 

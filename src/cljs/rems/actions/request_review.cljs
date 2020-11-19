@@ -1,6 +1,6 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.actions.components :refer [action-attachment action-button action-link comment-field action-form-view button-wrapper command! user-selection]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-review")
@@ -27,27 +27,27 @@
               :on-finished on-finished})
    {}))
 
-(defn request-review-action-button []
-  [action-button {:id action-form-id
-                  :text (text :t.actions/request-review)
-                  :on-click #(rf/dispatch [::open-form])}])
+(defn request-review-action-link []
+  [action-link {:id action-form-id
+                :text (text :t.actions/request-review-dropdown-from-user)
+                :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-review-view
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
-   (text :t.actions/request-review)
+   (text :t.actions/request-review-from-user)
    [[button-wrapper {:id "request-review-button"
                      :text (text :t.actions/request-review)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]
    [:div
+    [user-selection {:field-key action-form-id
+                     :subscription [:rems.actions.components/reviewers]}]
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
     [action-attachment {:field-key action-form-id
-                        :application-id application-id}]
-    [user-selection {:field-key action-form-id
-                     :subscription [:rems.actions.components/reviewers]}]]])
+                        :application-id application-id}]]])
 
 (defn request-review-form [application-id on-finished]
   (let [selected-reviewers @(rf/subscribe [:rems.actions.components/users action-form-id])

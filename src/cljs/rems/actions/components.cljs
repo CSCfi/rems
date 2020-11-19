@@ -76,6 +76,34 @@
                             :public @(rf/subscribe [::comment-public field-key])
                             :on-set-public #(rf/dispatch [::set-comment-public field-key %])}])])
 
+(rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))
+(rf/reg-event-db ::set-name (fn [db [_ field-key value]] (assoc-in db [::name field-key] value)))
+
+(rf/reg-sub ::email (fn [db [_ field-key]] (get-in db [::email field-key])))
+(rf/reg-event-db ::set-email (fn [db [_ field-key value]] (assoc-in db [::email field-key] value)))
+
+(defn- input-field-view [{:keys [type id label value on-change]}]
+  [:div.form-group.field
+   [:label {:for id} label]
+   [:input.form-control {:type type
+                         :id id
+                         :value value
+                         :on-change #(on-change (.. % -target -value))}]])
+
+(defn name-field [{:keys [field-key]}]
+  [input-field-view {:type :text
+                     :id (str "name-" field-key)
+                     :label (text :t.actions/member-name)
+                     :value @(rf/subscribe [::name field-key])
+                     :on-change #(rf/dispatch [::set-name field-key %])}])
+
+(defn email-field [{:keys [field-key]}]
+  [input-field-view {:type :email
+                     :id (str "email-" field-key)
+                     :label (text :t.actions/member-email)
+                     :value @(rf/subscribe [::email field-key])
+                     :on-change #(rf/dispatch [::set-email field-key %])}])
+
 ;; attachments in suitable format for api:
 (rf/reg-sub ::attachments (fn [db [_ field-key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments field-key]))))
 ;; attachments with filenames for rendering:
@@ -157,10 +185,18 @@
 
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn
-   {:type :button
-    :id (action-button-id id)
+   {:id (action-button-id id)
     :class (str (or class "btn-secondary")
                 " btn-opens-more")
+    :data-toggle "collapse"
+    :data-target (str "#" (action-collapse-id id))
+    :on-click on-click}
+   text])
+
+(defn action-link [{:keys [id text on-click]}]
+  [:a.dropdown-item
+   {:id (action-button-id id)
+    :href "#"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}
