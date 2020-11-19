@@ -22,22 +22,22 @@
               :comment comment
               :reviewers (map :userid reviewers)
               :attachments attachments}
-             {:description [text :t.actions/request-review-menu]
+             {:description [text :t.actions/request-review]
               :collapse action-form-id
               :on-finished on-finished})
    {}))
 
 (defn request-review-action-link []
   [action-link {:id action-form-id
-                :text (str "... " (text :t.actions/request-review-suffix))
+                :text (text :t.actions/request-review-dropdown-from-user)
                 :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-review-view
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
-   [:span (text :t.actions/request-review-menu) " " (text :t.actions/request-review-suffix)]
+   (text :t.actions/request-review-from-user)
    [[button-wrapper {:id "request-review-button"
-                     :text (text :t.actions/request-review-menu)
+                     :text (text :t.actions/request-review)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]

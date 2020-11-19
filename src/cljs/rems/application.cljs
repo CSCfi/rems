@@ -672,7 +672,7 @@
   [:div.btn-group
    [:button.btn.btn-secondary.dropdown-toggle
     {:data-toggle :dropdown}
-    (text :t.actions/request-review-menu)]
+    (text :t.actions/request-review-dropdown)]
    [:div.dropdown-menu
     [request-review-action-link]
     [invite-reviewer-action-link]]])
@@ -681,7 +681,7 @@
   [:div.btn-group
    [:button.btn.btn-secondary.dropdown-toggle
     {:data-toggle :dropdown}
-    (text :t.actions/request-decision-menu)]
+    (text :t.actions/request-decision-dropdown)]
    [:div.dropdown-menu
     [request-decision-action-link]
     [invite-decider-action-link]]])

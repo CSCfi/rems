@@ -21,22 +21,22 @@
               :comment comment
               :attachments attachments
               :deciders (map :userid deciders)}
-             {:description [text :t.actions/request-decision-menu]
+             {:description [text :t.actions/request-decision]
               :collapse action-form-id
               :on-finished on-finished})
    {}))
 
 (defn request-decision-action-link []
   [action-link {:id action-form-id
-                :text (str "... " (text :t.actions/request-decision-suffix))
+                :text (text :t.actions/request-decision-dropdown-from-user)
                 :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-decision-view
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
-   [:span (text :t.actions/request-decision-menu) " " (text :t.actions/request-decision-suffix)]
+   (text :t.actions/request-decision-from-user)
    [[button-wrapper {:id "request-decision"
-                     :text (text :t.actions/request-decision-menu)
+                     :text (text :t.actions/request-decision)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]

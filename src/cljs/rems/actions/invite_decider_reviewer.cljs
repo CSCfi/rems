@@ -30,7 +30,7 @@
 (rf/reg-event-fx
  ::send-invite-decider
  (fn [_ [_ {:keys [decider comment attachments application-id on-finished]}]]
-   (let [description [text :t.actions/request-decision-menu]]
+   (let [description [text :t.actions/request-decision]]
      (if-let [errors (validate-invitation decider)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-decider
@@ -46,7 +46,7 @@
 (rf/reg-event-fx
  ::send-invite-reviewer
  (fn [_ [_ {:keys [reviewer comment attachments application-id on-finished]}]]
-   (let [description [text :t.actions/request-review-menu]]
+   (let [description [text :t.actions/request-review]]
      (if-let [errors (validate-invitation reviewer)]
        (flash-message/show-error! :actions (flash-message/format-errors errors))
        (command! :application.command/invite-reviewer
@@ -61,12 +61,12 @@
 
 (defn invite-decider-action-link []
   [action-link {:id decider-form-id
-                :text (str "... " (text :t.actions/invite-decider-suffix))
+                :text (text :t.actions/request-decision-dropdown-via-email)
                 :on-click #(rf/dispatch [::open-form :decider])}])
 
 (defn invite-reviewer-action-link []
   [action-link {:id reviewer-form-id
-                :text (str "... " (text :t.actions/invite-reviewer-suffix))
+                :text (text :t.actions/request-review-dropdown-via-email)
                 :on-click #(rf/dispatch [::open-form :reviewer])}])
 
 (defn invite-decider-reviewer-view
@@ -76,12 +76,12 @@
      :decider decider-form-id
      :reviewer reviewer-form-id)
    (case role
-     :decider (str (text :t.actions/request-decision-menu) " " (text :t.actions/invite-decider-suffix))
-     :reviewer (str (text :t.actions/request-review-menu) " " (text :t.actions/invite-decider-suffix)))
+     :decider (text :t.actions/request-decision-via-email)
+     :reviewer (text :t.actions/request-review-via-email))
    [[button-wrapper {:id "invite-decider-reviewer"
                      :text (case role
-                             :decider (text :t.actions/request-decision-menu)
-                             :reviewer (text :t.actions/request-review-menu))
+                             :decider (text :t.actions/request-decision)
+                             :reviewer (text :t.actions/request-review))
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]
