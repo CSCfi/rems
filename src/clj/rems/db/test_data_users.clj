@@ -33,7 +33,7 @@
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organizations [{:organization/id "frank"}]}
-   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
+   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1"}
    "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})

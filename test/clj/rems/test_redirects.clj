@@ -3,6 +3,7 @@
             [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -10,7 +11,7 @@
 
 (use-fixtures
   :once
-  api-fixture
+  api-fixture-without-data
   (fn [f]
     ;; need to set an explicit public-url since dev and test configs use different ports
     (with-redefs [rems.config/env (assoc rems.config/env :public-url "https://public.url/")]
@@ -89,6 +90,8 @@
                        :attachment/type "text/plain"})
 
 (deftest test-attachment-download
+  (api-key/add-api-key! "42" {})
+  (test-helpers/create-user! {:eppn "alice"})
   (with-redefs [attachment/get-application-attachment (fn [& args]
                                                         (is (= ["alice" 123] args))
                                                         dummy-attachment)]
@@ -115,6 +118,8 @@
         (is (= "not found" (:body response)))))))
 
 (deftest test-license-attachment-download
+  (api-key/add-api-key! "42" {})
+  (test-helpers/create-user! {:eppn "alice"})
   (with-redefs [licenses/get-application-license-attachment (fn [& args]
                                                               (is (= ["alice" 1023 3 :en] args))
                                                               dummy-attachment)]

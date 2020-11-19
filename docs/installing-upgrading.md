@@ -48,13 +48,13 @@ Some pointers for common tasks:
 ### Option 1: Run REMS from dockerhub
 
     docker-compose up -d db
-    docker-compose run --rm -e COMMANDS="migrate test-data" app
+    docker-compose run --rm -e CMD="migrate;test-data" app
     docker-compose up -d app
 
 ### Option 1.1: Use config file simple-config.edn instead of environment variables
 
     docker-compose -f docker-compose-config.yml up -d db
-    docker-compose -f docker-compose-config.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-config.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-config.yml up -d app
 
 ### Option 2: Build REMS image locally
@@ -62,9 +62,16 @@ Some pointers for common tasks:
     lein uberjar
     docker-compose -f docker-compose-build.yml build
     docker-compose -f docker-compose-build.yml up -d db
-    docker-compose -f docker-compose-build.yml run --rm -e COMMANDS="migrate test-data" app
+    docker-compose -f docker-compose-build.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-build.yml up -d app
 
+### REMS Commands
+The `CMD` environment variable can be used to specify a sequence of REMS administration commands to run. An empty `CMD` (and `COMMANDS`) variable or the command `run` starts the REMS server. Example `CMD` variable values:
+
+    CMD=""
+    CMD="migrate;run"
+    CMD="migrate;api-key add <api-key>"
+    CMD="migrate;test-data;grant-role <role> <userid>;run"
 
 ### Access REMS
 

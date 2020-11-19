@@ -29,14 +29,15 @@
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
-(use-fixtures :each btu/fixture-driver)
+(use-fixtures :each btu/fixture-refresh-driver)
 
 (use-fixtures
   :once
   btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
   btu/smoke-test
-  btu/accessibility-report-fixture)
+  btu/accessibility-report-fixture
+  btu/fixture-init-driver)
 
 ;;; common functionality
 
@@ -425,6 +426,57 @@
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
+
+(deftest test-applicant-member-remove-action
+  (testing "submit test data with API"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:handlers ["handler"]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
+                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-applicant-member-remove-action"))
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"})
+    (test-helpers/create-user! {:eppn "ionna" :commonName "Ionna Insprucker" :mail "ionna@ins.mail"})
+    (test-helpers/create-user! {:eppn "jade" :commonName "Jade Jenner" :mail "jade80@mail.name"})
+    (test-helpers/create-user! {:eppn "kayla" :commonName "Kayla Kale" :mail "kale@is.good"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "ionna"}
+                            :actor "handler"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "jade"}
+                            :actor "handler"})
+    (test-helpers/command! {:type :application.command/add-member
+                            :application-id (btu/context-get :application-id)
+                            :member {:userid "kayla"}
+                            :actor "handler"}))
+  (btu/with-postmortem
+    (login-as "alice")
+    (go-to-application (btu/context-get :application-id))
+
+    (testing "remove second member jade"
+      (is (not (btu/visible? :actions-member1-remove-member-form)))
+      (btu/scroll-and-click :member1-remove-member-form-action-button)
+      (btu/wait-visible :actions-member1-remove-member-form)
+      (btu/fill-human :comment-member1-remove-member-comment "not in research group anymore")
+      (btu/scroll-and-click :member1-remove-member-submit)
+      (btu/wait-visible [{:css ".alert-success" :fn/has-text "Remove member: Success"}])
+      (btu/wait-invisible :actions-member1-remove-member-form)
+      (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
+
+      (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
+               {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/members)))
+      (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}))
+      (is (btu/visible? {:css "div.event-comment" :fn/text "not in research group anymore"})))))
 
 (deftest test-handling
   (testing "submit test data with API"
@@ -949,13 +1001,34 @@
              (slurp-fields :form)))
       (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
+        (btu/wait-visible {:tag :button :fn/has-class :info-button})
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(optional)"))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
+
+      (testing "info collapse can be toggled"
+        (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
+        (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
+          ;; TODO: figure out what to wait for
+        (Thread/sleep 500)
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
+        (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
+        (change-language :fi)
+        (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
+        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
+        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
 
     (testing "edit form"
+      (change-language :en)
+      (btu/wait-visible {:tag :h1 :fn/text "Form"})
       (btu/scroll-and-click {:fn/has-class :edit-form})
       (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
 
@@ -967,9 +1040,34 @@
         (btu/fill-human :fields-0-title-sv "Description (SV)")
 
         (btu/scroll-and-click :save)
-        (btu/wait-visible {:tag :h1 :fn/text "Form"})
         (btu/wait-page-loaded)
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))))
+        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
+
+      (testing "check that error message is present on field empty"
+        (btu/scroll-and-click {:fn/has-class :edit-form})
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+
+        (btu/scroll-and-click :fields-0-type-description)
+        (btu/fill-human :fields-0-info-text-en "Info text (EN)")
+        (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
+        (btu/fill-human :fields-0-info-text-sv " ")
+
+        (btu/scroll-and-click :save)
+
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/has-text "Edit form"})
+        (is (btu/visible? {:id :fields-0-info-text-sv :fn/has-class :is-invalid}))
+        ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
+        (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."}))
+        (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
+
+        (btu/scroll-and-click :save)
+        (btu/wait-page-loaded)
+        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})))
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
@@ -978,6 +1076,7 @@
                 :form/title "Form editor test"
                 :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
                                :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
                                :field/id "fld3"
                                :field/max-length nil

@@ -647,14 +647,14 @@
                            :accepted-licenses? (when (not= :application.state/draft (:application/state application))
                                                  (accepted-licenses? application (:userid applicant)))}]]
             (concat
-             (for [[index member] (map-indexed vector members)]
+             (for [[index member] (map-indexed vector (sort-by :name members))]
                [member-info {:element-id (str "member" index)
                              :attributes member
                              :application application
                              :group? true
                              :can-remove? can-remove?
                              :accepted-licenses? (accepted-licenses? application (:userid member))}])
-             (for [[index invited-member] (map-indexed vector invited-members)]
+             (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
