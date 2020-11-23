@@ -321,7 +321,7 @@
    [:a
     :button
     {:cursor :pointer
-     :color (get-theme-attribute :link-color "#007bff")}
+     :color (get-theme-attribute :link-color "#025b96")}
     [:&:hover {:color (get-theme-attribute :link-hover-color :color4)}]]
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
