@@ -120,10 +120,10 @@
         email @(rf/subscribe [:rems.actions.components/email reviewer-form-id])
         comment @(rf/subscribe [:rems.actions.components/comment reviewer-form-id])
         attachments @(rf/subscribe [:rems.actions.components/attachments reviewer-form-id])]
-     [invite-reviewer-view {:application-id application-id
-                            :disabled (empty? email)
-                            :on-send #(rf/dispatch [::send-invite-reviewer {:application-id application-id
-                                                                            :reviewer {:name name :email email}
-                                                                            :comment comment
-                                                                            :attachments attachments
-                                                                            :on-finished on-finished}])}]))
+    [invite-reviewer-view {:application-id application-id
+                           :disabled (empty? email)
+                           :on-send #(rf/dispatch [::send-invite-reviewer {:application-id application-id
+                                                                           :reviewer {:name name :email email}
+                                                                           :comment comment
+                                                                           :attachments attachments
+                                                                           :on-finished on-finished}])}]))
