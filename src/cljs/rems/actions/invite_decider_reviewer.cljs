@@ -72,16 +72,16 @@
 (defn invite-decider-reviewer-view
   [{:keys [role application-id on-send disabled]}]
   [action-form-view
-   (case role
-     :decider decider-form-id
-     :reviewer reviewer-form-id)
-   (case role
-     :decider (text :t.actions/request-decision-via-email)
-     :reviewer (text :t.actions/request-review-via-email))
+   (if (= :decider role)
+     decider-form-id
+     reviewer-form-id)
+   (if (= :decider role)
+     (text :t.actions/request-decision-via-email)
+     (text :t.actions/request-review-via-email))
    [[button-wrapper {:id "invite-decider-reviewer"
-                     :text (case role
-                             :decider (text :t.actions/request-decision)
-                             :reviewer (text :t.actions/request-review))
+                     :text (if (= :decider role)
+                             (text :t.actions/request-decision)
+                             (text :t.actions/request-review))
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]
@@ -99,18 +99,17 @@
         email @(rf/subscribe [:rems.actions.components/email field-key])
         comment @(rf/subscribe [:rems.actions.components/comment field-key])
         attachments @(rf/subscribe [:rems.actions.components/attachments field-key])]
-    (when role
-      [invite-decider-reviewer-view {:application-id application-id
-                                     :role role
-                                     :disabled (empty? email)
-                                     :on-send #(rf/dispatch (case role
-                                                              :decider [::send-invite-decider {:application-id application-id
-                                                                                               :decider {:name name :email email}
+    [invite-decider-reviewer-view {:application-id application-id
+                                   :role role
+                                   :disabled (empty? email)
+                                   :on-send #(rf/dispatch (case role
+                                                            :decider [::send-invite-decider {:application-id application-id
+                                                                                             :decider {:name name :email email}
+                                                                                             :comment comment
+                                                                                             :attachments attachments
+                                                                                             :on-finished on-finished}]
+                                                            :reviewer [::send-invite-reviewer {:application-id application-id
+                                                                                               :reviewer {:name name :email email}
                                                                                                :comment comment
                                                                                                :attachments attachments
-                                                                                               :on-finished on-finished}]
-                                                              :reviewer [::send-invite-reviewer {:application-id application-id
-                                                                                                 :reviewer {:name name :email email}
-                                                                                                 :comment comment
-                                                                                                 :attachments attachments
-                                                                                                 :on-finished on-finished}]))}])))
+                                                                                               :on-finished on-finished}]))}]))
