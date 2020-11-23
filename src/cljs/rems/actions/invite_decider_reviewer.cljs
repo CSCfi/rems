@@ -94,22 +94,24 @@
                         :application-id application-id}]]])
 
 (defn invite-decider-reviewer-form [application-id on-finished]
-  (let [role @(rf/subscribe [::role])
-        name @(rf/subscribe [:rems.actions.components/name field-key])
+  (let [name @(rf/subscribe [:rems.actions.components/name field-key])
         email @(rf/subscribe [:rems.actions.components/email field-key])
         comment @(rf/subscribe [:rems.actions.components/comment field-key])
         attachments @(rf/subscribe [:rems.actions.components/attachments field-key])]
-    [invite-decider-reviewer-view {:application-id application-id
-                                   :role role
-                                   :disabled (empty? email)
-                                   :on-send #(rf/dispatch (case role
-                                                            :decider [::send-invite-decider {:application-id application-id
-                                                                                             :decider {:name name :email email}
-                                                                                             :comment comment
-                                                                                             :attachments attachments
-                                                                                             :on-finished on-finished}]
-                                                            :reviewer [::send-invite-reviewer {:application-id application-id
-                                                                                               :reviewer {:name name :email email}
-                                                                                               :comment comment
-                                                                                               :attachments attachments
-                                                                                               :on-finished on-finished}]))}]))
+    [:<>
+     [invite-decider-reviewer-view {:application-id application-id
+                                    :role :decider
+                                    :disabled (empty? email)
+                                    :on-send #(rf/dispatch [::send-invite-decider {:application-id application-id
+                                                                                   :decider {:name name :email email}
+                                                                                   :comment comment
+                                                                                   :attachments attachments
+                                                                                   :on-finished on-finished}])}]
+     [invite-decider-reviewer-view {:application-id application-id
+                                    :role :reviewer
+                                    :disabled (empty? email)
+                                    :on-send #(rf/dispatch [::send-invite-reviewer {:application-id application-id
+                                                                                    :reviewer {:name name :email email}
+                                                                                    :comment comment
+                                                                                    :attachments attachments
+                                                                                    :on-finished on-finished}])}]]))
