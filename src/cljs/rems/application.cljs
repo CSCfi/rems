@@ -11,7 +11,7 @@
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.delete :refer [delete-action-button delete-form]]
-            [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-reviewer-form]]
+            [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
@@ -723,7 +723,8 @@
         forms [[:div#actions-forms.mt-3
                 [request-review-form app-id reload]
                 [request-decision-form app-id reload]
-                [invite-decider-reviewer-form app-id reload]
+                [invite-decider-form app-id reload]
+                [invite-reviewer-form app-id reload]
                 [review-form app-id reload]
                 [remark-form app-id reload]
                 [close-form app-id show-comment-field? reload]
