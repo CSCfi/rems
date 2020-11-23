@@ -6,13 +6,10 @@
             [rems.text :refer [text]]))
 
 
-(def ^:private field-key "invite-decider-reviewer")
-
 (rf/reg-event-fx
  ::open-form
- (fn [{:keys [db]} [_ role]]
-   {:db (assoc db ::role role)
-    :dispatch-n [[:rems.actions.components/set-name field-key ""]
+ (fn [{:keys [db]} [_ field-key]]
+   {:dispatch-n [[:rems.actions.components/set-name field-key ""]
                  [:rems.actions.components/set-email field-key ""]
                  [:rems.actions.components/set-comment field-key ""]
                  [:rems.actions.components/set-attachments field-key []]]}))
@@ -62,55 +59,71 @@
 (defn invite-decider-action-link []
   [action-link {:id decider-form-id
                 :text (text :t.actions/request-decision-dropdown-via-email)
-                :on-click #(rf/dispatch [::open-form :decider])}])
+                :on-click #(rf/dispatch [::open-form decider-form-id])}])
 
 (defn invite-reviewer-action-link []
   [action-link {:id reviewer-form-id
                 :text (text :t.actions/request-review-dropdown-via-email)
-                :on-click #(rf/dispatch [::open-form :reviewer])}])
+                :on-click #(rf/dispatch [::open-form reviewer-form-id])}])
 
-(defn invite-decider-reviewer-view
-  [{:keys [role application-id on-send disabled]}]
+(defn invite-decider-view
+  [{:keys [application-id on-send disabled]}]
   [action-form-view
-   (case role
-     :decider decider-form-id
-     :reviewer reviewer-form-id)
-   (case role
-     :decider (text :t.actions/request-decision-via-email)
-     :reviewer (text :t.actions/request-review-via-email))
-   [[button-wrapper {:id "invite-decider-reviewer"
-                     :text (case role
-                             :decider (text :t.actions/request-decision)
-                             :reviewer (text :t.actions/request-review))
+   decider-form-id
+   (text :t.actions/request-decision-via-email)
+   [[button-wrapper {:id "invite-decider"
+                     :text (text :t.actions/request-decision)
                      :class "btn-primary"
                      :on-click on-send
                      :disabled disabled}]]
    [:<>
-    [name-field {:field-key field-key}]
-    [email-field {:field-key field-key}]
-    [comment-field {:field-key field-key
+    [name-field {:field-key decider-form-id}]
+    [email-field {:field-key decider-form-id}]
+    [comment-field {:field-key decider-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]
-    [action-attachment {:field-key field-key
+    [action-attachment {:field-key decider-form-id
                         :application-id application-id}]]])
 
-(defn invite-decider-reviewer-form [application-id on-finished]
-  (let [role @(rf/subscribe [::role])
-        name @(rf/subscribe [:rems.actions.components/name field-key])
-        email @(rf/subscribe [:rems.actions.components/email field-key])
-        comment @(rf/subscribe [:rems.actions.components/comment field-key])
-        attachments @(rf/subscribe [:rems.actions.components/attachments field-key])]
-    (when role
-      [invite-decider-reviewer-view {:application-id application-id
-                                     :role role
-                                     :disabled (empty? email)
-                                     :on-send #(rf/dispatch (case role
-                                                              :decider [::send-invite-decider {:application-id application-id
-                                                                                               :decider {:name name :email email}
-                                                                                               :comment comment
-                                                                                               :attachments attachments
-                                                                                               :on-finished on-finished}]
-                                                              :reviewer [::send-invite-reviewer {:application-id application-id
-                                                                                                 :reviewer {:name name :email email}
-                                                                                                 :comment comment
-                                                                                                 :attachments attachments
-                                                                                                 :on-finished on-finished}]))}])))
+(defn invite-reviewer-view
+  [{:keys [application-id on-send disabled]}]
+  [action-form-view
+   reviewer-form-id
+   (text :t.actions/request-review-via-email)
+   [[button-wrapper {:id "invite-reviewer"
+                     :text (text :t.actions/request-review)
+                     :class "btn-primary"
+                     :on-click on-send
+                     :disabled disabled}]]
+   [:<>
+    [name-field {:field-key reviewer-form-id}]
+    [email-field {:field-key reviewer-form-id}]
+    [comment-field {:field-key reviewer-form-id
+                    :label (text :t.form/add-comments-not-shown-to-applicant)}]
+    [action-attachment {:field-key reviewer-form-id
+                        :application-id application-id}]]])
+
+(defn invite-decider-form [application-id on-finished]
+  (let [name @(rf/subscribe [:rems.actions.components/name decider-form-id])
+        email @(rf/subscribe [:rems.actions.components/email decider-form-id])
+        comment @(rf/subscribe [:rems.actions.components/comment decider-form-id])
+        attachments @(rf/subscribe [:rems.actions.components/attachments decider-form-id])]
+    [invite-decider-view {:application-id application-id
+                          :disabled (empty? email)
+                          :on-send #(rf/dispatch [::send-invite-decider {:application-id application-id
+                                                                         :decider {:name name :email email}
+                                                                         :comment comment
+                                                                         :attachments attachments
+                                                                         :on-finished on-finished}])}]))
+
+(defn invite-reviewer-form [application-id on-finished]
+  (let [name @(rf/subscribe [:rems.actions.components/name reviewer-form-id])
+        email @(rf/subscribe [:rems.actions.components/email reviewer-form-id])
+        comment @(rf/subscribe [:rems.actions.components/comment reviewer-form-id])
+        attachments @(rf/subscribe [:rems.actions.components/attachments reviewer-form-id])]
+    [invite-reviewer-view {:application-id application-id
+                           :disabled (empty? email)
+                           :on-send #(rf/dispatch [::send-invite-reviewer {:application-id application-id
+                                                                           :reviewer {:name name :email email}
+                                                                           :comment comment
+                                                                           :attachments attachments
+                                                                           :on-finished on-finished}])}]))
