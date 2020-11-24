@@ -15,7 +15,10 @@
   (str (:root-path context) dest))
 
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-link" (if active? " active" ""))} (url-dest path) title])
+  [atoms/link {:class (str "nav-link" (if active? " active" ""))
+               :data-toggle "collapse"
+               :data-target ".navbar-collapse.show"}
+   (url-dest path) title])
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
