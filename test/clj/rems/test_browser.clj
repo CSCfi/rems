@@ -549,6 +549,77 @@
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
+(deftest test-invite-decider
+  (testing "create test data"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-invite-decider"))
+    (test-helpers/submit-application (btu/context-get :application-id) "alice")
+    (test-helpers/create-user! {:eppn "new-reviewer" :commonName "New Reviewer"}))
+  (btu/with-postmortem
+    (testing "handler invites reviewer"
+      (login-as "developer")
+      (go-to-application (btu/context-get :application-id))
+      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"})
+
+      (btu/scroll-and-click :request-decision-dropdown)
+      (btu/wait-visible :invite-decider-action-button)
+      (btu/scroll-and-click :invite-decider-action-button)
+
+      (btu/wait-visible :name-invite-decider)
+      (btu/fill-human :name-invite-decider "anybody will do")
+      (btu/fill-human :email-invite-decider "user@example.com")
+      (btu/scroll-and-click :invite-decider)
+      (btu/wait-visible {:css ".alert-success"})
+      (logout))
+    (testing "get invite token"
+      (let [[token invitation] (-> (btu/context-get :application-id)
+                                   applications/get-application-internal
+                                   :application/invitation-tokens
+                                   first)]
+        (is (string? token))
+        (is (= {:application/decider {:name "anybody will do" :email "user@example.com"}
+                :event/actor "developer"}
+               invitation))
+        (btu/context-assoc! :token token)))
+    (testing "accept invitation"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
+      (btu/wait-visible {:css ".login-btn"})
+      (btu/scroll-and-click {:css ".login-btn"})
+      (btu/wait-visible [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (btu/wait-page-loaded)
+      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"}))
+    (testing "check decider-joined event"
+      (is (= {:event/type :application.event/decider-joined
+              :event/actor "new-reviewer"}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:event/actor :event/type])))))
+    (testing "submit decision"
+      (btu/scroll-and-click :decide-action-button)
+      (btu/wait-visible :comment-decide)
+      (btu/fill-human :comment-decide "ok")
+      (btu/scroll-and-click :decide-approve)
+      (btu/wait-page-loaded)
+      (btu/wait-visible {:css ".alert-success"}))
+    (testing "check decision event"
+      (is (= {:application/decision :approved
+              :application/comment "ok"
+              :event/actor "new-reviewer"
+              :event/type :application.event/decided}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:application/decision :application/comment :event/actor :event/type])))))))
+
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}

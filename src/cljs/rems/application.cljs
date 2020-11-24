@@ -670,7 +670,7 @@
 
 (defn- request-review-dropdown []
   [:div.btn-group
-   [:button.btn.btn-secondary.dropdown-toggle
+   [:button#request-review-dropdown.btn.btn-secondary.dropdown-toggle
     {:data-toggle :dropdown}
     (text :t.actions/request-review-dropdown)]
    [:div.dropdown-menu
@@ -679,7 +679,7 @@
 
 (defn- request-decision-dropdown []
   [:div.btn-group
-   [:button.btn.btn-secondary.dropdown-toggle
+   [:button#request-decision-dropdown.btn.btn-secondary.dropdown-toggle
     {:data-toggle :dropdown}
     (text :t.actions/request-decision-dropdown)]
    [:div.dropdown-menu
