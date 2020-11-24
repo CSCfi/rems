@@ -588,7 +588,6 @@
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
       (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
-      (btu/wait-page-loaded)
       (btu/wait-visible {:css ".login-btn"})
       (btu/scroll-and-click {:css ".login-btn"})
       (btu/wait-visible [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
