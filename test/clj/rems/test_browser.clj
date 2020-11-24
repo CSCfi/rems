@@ -1511,3 +1511,15 @@
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                  (slurp-fields :organization))))))))
+
+(deftest test-small-navbar
+  (btu/with-postmortem
+    (login-as "alice")
+    (btu/set-window-size 400 600) ; small enough for mobile
+    (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
+    (btu/wait-invisible :small-navbar)
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/wait-visible :small-navbar)
+    (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Applications"})))
