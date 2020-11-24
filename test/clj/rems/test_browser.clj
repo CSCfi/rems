@@ -566,7 +566,6 @@
       (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"})
 
       (btu/scroll-and-click :request-decision-dropdown)
-      (Thread/sleep 100) ;; need to wait for dropdown to expand
       (btu/wait-visible :invite-decider-action-button)
       (btu/scroll-and-click :invite-decider-action-button)
 
