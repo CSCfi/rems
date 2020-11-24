@@ -86,7 +86,7 @@
    [:div.navbar [user-widget (:user identity)]]])
 
 (defn navbar-small [user]
-  [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up user])
+  [navbar-items :div#small-navbar.collapse.navbar-collapse.hidden-md-up user])
 
 (defn skip-navigation []
   [:a.skip-navigation
