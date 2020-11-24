@@ -259,13 +259,6 @@ INSERT INTO attachment
 VALUES
 (:application, :user, :filename, :type, :data);
 
--- :name copy-attachments! :!
-INSERT INTO attachment
-(appId, modifierUserId, filename, type, data)
-SELECT :to-id, modifierUserId, filename, type, data
-FROM attachment
-WHERE appId = :from-id;
-
 -- :name get-attachment :? :1
 SELECT appid, filename, modifierUserId, type, data FROM attachment
 WHERE id = :id;
