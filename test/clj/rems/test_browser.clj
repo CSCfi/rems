@@ -1520,6 +1520,11 @@
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (btu/wait-visible :small-navbar)
+    (btu/screenshot "small-navbar.png")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (btu/wait-visible {:tag :h1 :fn/text "Applications"})))
+    (btu/wait-visible {:tag :h1 :fn/text "Applications"})
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})))
