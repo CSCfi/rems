@@ -1526,8 +1526,8 @@
                             :actor "alice"}))
   (btu/with-postmortem
     (login-as "alice")
+    (go-to-catalogue)
     (btu/set-window-size 400 600) ; small enough for mobile
-    (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (btu/wait-visible :small-navbar)
