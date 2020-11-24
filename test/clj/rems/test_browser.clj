@@ -695,9 +695,11 @@
       (login-as "alice")
       (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"}))
 
-    (testing "changing language while logged i"
+    (testing "changing language while logged in"
       (change-language :en)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"}))
+
+    (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true))) ; avoid no assertions warning
 
 (defn create-license []
@@ -1173,7 +1175,9 @@
                 (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                           {:as :json
                            :headers {"x-rems-api-key" "42"
-                                     "x-rems-user-id" "handler"}}))))))))
+                                     "x-rems-user-id" "handler"}}))))))
+    (user-settings/delete-user-settings! "owner"))) ; clear language settings
+
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
@@ -1539,4 +1543,5 @@
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})
+    (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true)))  ; avoid no assertions warning

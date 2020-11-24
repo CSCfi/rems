@@ -452,6 +452,10 @@ VALUES (:user, :settings::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET settings = :settings::jsonb;
 
+-- :name delete-user-settings! :!
+DELETE FROM user_settings
+WHERE userId = :user
+
 -- :name get-users :? :*
 SELECT userId
 FROM users;
