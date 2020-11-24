@@ -1513,6 +1513,17 @@
                  (slurp-fields :organization))))))))
 
 (deftest test-small-navbar
+  (testing "create a test application with the API to have another page to navigate to"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-small-navbar"))
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"}))
   (btu/with-postmortem
     (login-as "alice")
     (btu/set-window-size 400 600) ; small enough for mobile
