@@ -1,15 +1,18 @@
 (ns rems.db.test-data-users
   (:require [clojure.test :refer :all]
             [rems.application.approver-bot :as approver-bot]
+            [rems.application.bonafide-bot :as bonafide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.testing-util :refer [with-user]]))
 
 (def +bot-users+
   {:approver-bot approver-bot/bot-userid
+   :bonafide-bot bonafide-bot/bot-userid
    :rejecter-bot rejecter-bot/bot-userid})
 
 (def +bot-user-data+
   {approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}
+   bonafide-bot/bot-userid {:eppn bonafide-bot/bot-userid :commonName "Bona Fide Bot"}
    rejecter-bot/bot-userid {:eppn rejecter-bot/bot-userid :commonName "Rejecter Bot"}})
 
 (def +fake-users+

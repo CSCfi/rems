@@ -523,6 +523,34 @@
      :auto-approve auto-approve
      :organization-owner organization-owner}))
 
+(defn- create-bonafide-catalogue-item! [users]
+  (let [owner (:owner users)
+        bot (:bonafide-bot users)
+        res (create-resource! {:resource-ext-id "bonafide"
+                               :organization {:organization/id "default"}
+                               :actor owner})
+        form (create-form! {:actor owner
+                            :form/title "Bona Fide form"
+                            :organization {:organization/id "default"}
+                            :form/fields [{:field/type :email
+                                           :field/title {:fi "Suosittelijan sähköpostiosoite"
+                                                         :en "Referer's email address"
+                                                         :sv "sv"}
+                                           :field/optional false}]})
+        wf (create-workflow! {:actor owner
+                              :organization {:organization/id "default"}
+                              :title "Bona Fide workflow"
+                              :type :workflow/default
+                              :handlers [bot]})]
+    (create-catalogue-item! {:actor owner
+                             :organization {:organization/id "default"}
+                             :title {:en "Apply for Bona Fide researcher status"
+                                     :fi "Hae Bona Fide tutkija -statusta"
+                                     :sv "sv"}
+                             :resource-id res
+                             :form-id form
+                             :workflow-id wf})))
+
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
@@ -937,6 +965,7 @@
                              :form-id form
                              :organization {:organization/id "nbn"}
                              :workflow-id (:auto-approve workflows)})
+    (create-bonafide-catalogue-item! (merge users +bot-users+))
     (let [thl-res (create-resource! {:resource-ext-id "thl"
                                      :organization {:organization/id "thl"}
                                      :actor owner})
