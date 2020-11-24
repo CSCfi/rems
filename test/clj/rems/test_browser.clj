@@ -1527,4 +1527,5 @@
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})))
+    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})
+    (is true)))  ; avoid no assertions warning
