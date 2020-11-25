@@ -66,3 +66,6 @@
           :settings (settings->json (merge old-settings validated))})
         {:success true})
       {:success false})))
+
+(defn delete-user-settings! [user]
+  (db/delete-user-settings! {:user user}))

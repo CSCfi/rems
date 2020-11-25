@@ -29,6 +29,7 @@ Changes since v2.13
 - Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)
 - Inconsistencies organization owner logic. (#2441)
 - Fix accessibility problems with aria-required attribute placement and increase default link contrast (#2431)
+- Small navbar is now properly closed after a link is clicked (#1194)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)

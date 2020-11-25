@@ -15,7 +15,10 @@
   (str (:root-path context) dest))
 
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-link" (if active? " active" ""))} (url-dest path) title])
+  [atoms/link {:class (str "nav-link" (if active? " active" ""))
+               :data-toggle "collapse"
+               :data-target ".navbar-collapse.show"}
+   (url-dest path) title])
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
@@ -37,20 +40,19 @@
      [:span
       [:i.fa.fa-user.mr-1]
       [:span.user-name (:name user)]]
-     [atoms/link {:id "settings", :class "nav-link"} (url-dest "/profile")
+     [atoms/link {:id "settings" :class "nav-link"} (url-dest "/profile")
       [:span {:aria-label (text :t.navigation/profile)}
        [:i.fa.fa-cog.mr-1]
        [:span.icon-description (text :t.navigation/profile)]]]
-     [atoms/link {:id "logout", :class "nav-link"} (url-dest "/logout")
+     [atoms/link {:id "logout" :class "nav-link"} (url-dest "/logout")
       [:span {:aria-label (text :t.navigation/logout)}
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
-(defn navbar-extra-pages [page-id]
+(defn navbar-extra-pages []
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
-        language @(rf/subscribe [:language])
-        extra-page-id @(rf/subscribe [:rems.extra-pages/page-id])]
+        language @(rf/subscribe [:language])]
     (when extra-pages
       (for [page extra-pages]
         (let [url (or (page :url)
@@ -58,7 +60,7 @@
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text])))))
 
-(defn navbar-items [e page-id identity]
+(defn navbar-items [e identity]
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
@@ -74,34 +76,34 @@
                 [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)
                 [nav-link "/administration" (text :t.navigation/administration)])]
-             (navbar-extra-pages page-id))
+             (navbar-extra-pages))
      [language-switcher]]))
 
-(defn navbar-normal [page-id identity]
+(defn navbar-normal [identity]
   [:nav.navbar-flex
    [:div.navbar.navbar-expand-sm.flex-fill
     [:button.navbar-toggler
      {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 page-id identity]]
+    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 identity]]
    [:div.navbar [user-widget (:user identity)]]])
 
-(defn navbar-small [page-id user]
-  [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-id user])
+(defn navbar-small [user]
+  [navbar-items :div#small-navbar.collapse.navbar-collapse.hidden-md-up user])
 
 (defn skip-navigation []
   [:a.skip-navigation
    {:href "#main-content"}
    (text :t.navigation/skip-navigation)])
 
-(defn navigation-widget [page-id]
+(defn navigation-widget []
   (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
      [skip-navigation]
      [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.navbar-wrapper.container-fluid
-      [navbar-normal page-id identity]
-      [navbar-small page-id identity]]
+      [navbar-normal identity]
+      [navbar-small identity]]
      [:div.navbar-bottom-bar]]))
 
 (defn guide []

@@ -695,9 +695,11 @@
       (login-as "alice")
       (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"}))
 
-    (testing "changing language while logged i"
+    (testing "changing language while logged in"
       (change-language :en)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"}))
+
+    (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true))) ; avoid no assertions warning
 
 (defn create-license []
@@ -1173,7 +1175,9 @@
                 (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                           {:as :json
                            :headers {"x-rems-api-key" "42"
-                                     "x-rems-user-id" "handler"}}))))))))
+                                     "x-rems-user-id" "handler"}}))))))
+    (user-settings/delete-user-settings! "owner"))) ; clear language settings
+
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
@@ -1511,3 +1515,33 @@
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                  (slurp-fields :organization))))))))
+
+(deftest test-small-navbar
+  (testing "create a test application with the API to have another page to navigate to"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-small-navbar"))
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"}))
+  (btu/with-postmortem
+    (login-as "alice")
+    (go-to-catalogue)
+    (btu/set-window-size 400 600) ; small enough for mobile
+    (btu/wait-invisible :small-navbar)
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/wait-visible :small-navbar)
+    (btu/screenshot "small-navbar.png")
+    (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Applications"})
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})
+    (user-settings/delete-user-settings! "alice") ; clear language settings
+    (is true)))  ; avoid no assertions warning

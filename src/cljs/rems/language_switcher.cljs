@@ -25,7 +25,9 @@
                            :on-click (fn []
                                        (rf/dispatch [:rems.user-settings/set-language language])
                                        (rf/dispatch [:rems.spa/user-triggered-navigation]))
-                           :aria-label (text-format :t.navigation/change-language lang-str)}
+                           :aria-label (text-format :t.navigation/change-language lang-str)
+                           :data-toggle "collapse"
+                           :data-target ".navbar-collapse.show"}
                   lang-str]]))))))
 
 (defn guide []
