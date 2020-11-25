@@ -49,3 +49,5 @@ is found in the passport, REMS sets the user attribute
 If an applicant has `researcher-status-by` with value `"so"` or
 `"system"`, REMS shows the handler a "Applicant researcher status"
 checkbox in the applicant details.
+
+See also Bona Fide bot in [bots.md](bots.md).

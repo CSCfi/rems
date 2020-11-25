@@ -1,6 +1,8 @@
 (ns rems.application.bonafide-bot
   "A bot that enables workflows where a user can ask another user to vouch
-   for their bona fide researcher status."
+   for their bona fide researcher status.
+
+   See also: docs/bonafide.md, docs/ga4gh-visas.md"
   (:require [clojure.test :refer [deftest is testing]]
             [clj-time.core :as time]
             [rems.common.application-util :as application-util]
