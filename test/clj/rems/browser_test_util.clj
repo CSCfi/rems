@@ -147,6 +147,7 @@
     (f)))
 
 (defn- create-test-data [f]
+  (test-helpers/assert-no-existing-data!)
   (api-key/add-api-key! 42 {:comment "test data"})
   ;; Organizations
   (test-helpers/create-organization! {:actor "owner"})
