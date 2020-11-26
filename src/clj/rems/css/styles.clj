@@ -83,7 +83,7 @@
                                    url('/font/Luciole/Luciole-Bold.woff') format('woff'),
                                    url('/font/Luciole/Luciole-Bold.ttf') format('truetype'),
                                    url('/font/Luciole/Luciole-Bold.svg#svgFontName') format('svg')"
-                             :font-weight 400
+                             :font-weight 700
                              :font-style "normal"})
    (stylesheet/at-font-face {:font-family "'Luciole Italic'"
                              :src "url('/font/Luciole/Luciole-Italic.eot') format('embedded-opentype'),
@@ -239,7 +239,7 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(def ^:private dashed-form-group
+(defn- dashed-form-group []
   {:position "relative"
    :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
@@ -247,7 +247,7 @@
    :margin-top 0
    :margin-bottom (u/px 16)})
 
-(def ^:private solid-form-group
+(defn- solid-form-group []
   {:position "relative"
    :border "2px solid #eee"
    :margin 0
@@ -353,7 +353,8 @@
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {:font-family (get-theme-attribute :font-family "'Lato', sans-serif")
+   [:body {:font-family "'Luciole Regular', sans-serif"
+           ;; :font-family (get-theme-attribute :font-family "'Luciole Regular', sans-serif")
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
