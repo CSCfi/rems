@@ -336,7 +336,7 @@
         grab-focus? @(rf/subscribe [::grab-focus?])]
     (lazy-load-data!)
     [:div
-     [nav/navigation-widget page-id]
+     [nav/navigation-widget]
      [logo]
      [main-content page-id grab-focus?]
      [footer]]))

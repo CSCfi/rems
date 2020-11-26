@@ -157,6 +157,9 @@
        :t.applications.events/unknown)
      (application-util/get-member-name (:event/actor-attributes event)))))
 
+(defn localize-invitation [{:keys [name email]}]
+  (str name " <" email ">"))
+
 (defn localize-event [event]
   (let [event-type (:event/type event)]
     (str
@@ -176,12 +179,18 @@
         (:application/external-id event)
 
         (:application.event/member-added
-         :application.event/member-invited
-         :application.event/member-removed
-         :application.event/member-uninvited
-         :application.event/decider-invited
-         :application.event/reviewer-invited)
+         :application.event/member-removed)
         (application-util/get-member-name (:application/member event))
+
+        (:application.event/member-invited
+         :application.event/member-uninvited)
+        (localize-invitation (:application/member event))
+
+        :application.event/decider-invited
+        (localize-invitation (:application/decider event))
+
+        :application.event/reviewer-invited
+        (localize-invitation (:application/reviewer event))
 
         :application.event/resources-changed
         (str/join ", " (mapv #(localized (:catalogue-item/title %))

@@ -259,13 +259,6 @@ INSERT INTO attachment
 VALUES
 (:application, :user, :filename, :type, :data);
 
--- :name copy-attachments! :!
-INSERT INTO attachment
-(appId, modifierUserId, filename, type, data)
-SELECT :to-id, modifierUserId, filename, type, data
-FROM attachment
-WHERE appId = :from-id;
-
 -- :name get-attachment :? :1
 SELECT appid, filename, modifierUserId, type, data FROM attachment
 WHERE id = :id;
@@ -458,6 +451,10 @@ INSERT INTO user_settings (userId, settings)
 VALUES (:user, :settings::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET settings = :settings::jsonb;
+
+-- :name delete-user-settings! :!
+DELETE FROM user_settings
+WHERE userId = :user
 
 -- :name get-users :? :*
 SELECT userId

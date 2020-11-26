@@ -124,7 +124,6 @@
       {:id (str "container-" (field-name opts))}
       (when fieldset
         {:tab-index -1
-         :aria-required (not optional)
          :aria-invalid (when validation true)
          :aria-describedby (when validation
                              (str (field-name opts) "-error"))}))
@@ -188,6 +187,7 @@
                            :name (field-name opts)
                            :placeholder placeholder
                            :required (not optional)
+                           :aria-required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (field-name opts) "-error"))
@@ -207,6 +207,7 @@
                 :name (field-name opts)
                 :placeholder placeholder
                 :required (not optional)
+                :aria-required (not optional)
                 :aria-invalid (when validation true)
                 :aria-describedby (when validation
                                     (str (field-name opts) "-error"))
@@ -227,6 +228,7 @@
                            :class (when validation "is-invalid")
                            :value value
                            :required (not optional)
+                           :aria-required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (field-name opts) "-error"))
@@ -253,6 +255,7 @@
                                   :class (when validation "is-invalid")
                                   :value value
                                   :required (not optional)
+                                  :aria-required (not optional)
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (field-name opts) "-error"))
@@ -269,6 +272,7 @@
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [value (:field/value opts)
         options (:field/options opts)
+        optional (:field-/optional opts)
         selected-keys (decode-option-keys value)]
     [field-wrapper
      (assoc opts
@@ -293,6 +297,8 @@
                                           :name option-id
                                           :class (when validation "is-invalid")
                                           :value key
+                                          :required (not optional)
+                                          :aria-required (not optional)
                                           :checked (contains? selected-keys key)
                                           :on-change on-change}]
                 [:label.form-check-label {:for option-id}

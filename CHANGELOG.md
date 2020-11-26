@@ -28,8 +28,9 @@ Changes since v2.13
 - Check file extensions ignoring case (#2392)
 - Fixed `java -jar rems.jar help`. See [docs/installing-upgrading.md](docs/installing-upgrading.md)
 - Inconsistencies organization owner logic. (#2441)
+- Fix accessibility problems with aria-required attribute placement and increase default link contrast (#2431)
+- Small navbar is now properly closed after a link is clicked (#1194)
 - Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
-
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
@@ -39,6 +40,9 @@ Changes since v2.13
 - Automated accessibility test report using [axe](https://www.deque.com/axe/) (#2263)
 - Settings page renamed to Profile, now also contains info about user attributes.
 - In docker-entrypoint script `CMD` environment variable may be used instead of `COMMANDS`. `CMD` allows REMS commands with arguments to be used. See [docs/installing-upgrading.md](docs/installing-upgrading.md).
+- Deciders and reviewers can now be invited via email. (#2040)
+  - New `invite-decider` and `invite-reviewer` commands in the API & UI
+  - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 

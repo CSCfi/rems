@@ -386,8 +386,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (btu/wait-visible [:actions-invite-member {:fn/has-text "Invite member"}])
-      (btu/fill-human [:actions-invite-member :member-name] "John Smith")
-      (btu/fill-human [:actions-invite-member :member-email] "john.smith@generic.name")
+      (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
+      (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (btu/scroll-and-click :invite0-info-more-link)
@@ -549,6 +549,77 @@
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
 
+(deftest test-invite-decider
+  (testing "create test data"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-invite-decider"))
+    (test-helpers/submit-application (btu/context-get :application-id) "alice")
+    (test-helpers/create-user! {:eppn "new-reviewer" :commonName "New Reviewer"}))
+  (btu/with-postmortem
+    (testing "handler invites reviewer"
+      (login-as "developer")
+      (go-to-application (btu/context-get :application-id))
+      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"})
+
+      (btu/scroll-and-click :request-decision-dropdown)
+      (btu/wait-visible :invite-decider-action-button)
+      (btu/scroll-and-click :invite-decider-action-button)
+
+      (btu/wait-visible :name-invite-decider)
+      (btu/fill-human :name-invite-decider "anybody will do")
+      (btu/fill-human :email-invite-decider "user@example.com")
+      (btu/scroll-and-click :invite-decider)
+      (btu/wait-visible {:css ".alert-success"})
+      (logout))
+    (testing "get invite token"
+      (let [[token invitation] (-> (btu/context-get :application-id)
+                                   applications/get-application-internal
+                                   :application/invitation-tokens
+                                   first)]
+        (is (string? token))
+        (is (= {:application/decider {:name "anybody will do" :email "user@example.com"}
+                :event/actor "developer"}
+               invitation))
+        (btu/context-assoc! :token token)))
+    (testing "accept invitation"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
+      (btu/wait-visible {:css ".login-btn"})
+      (btu/scroll-and-click {:css ".login-btn"})
+      (btu/wait-visible [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (btu/wait-page-loaded)
+      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"}))
+    (testing "check decider-joined event"
+      (is (= {:event/type :application.event/decider-joined
+              :event/actor "new-reviewer"}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:event/actor :event/type])))))
+    (testing "submit decision"
+      (btu/scroll-and-click :decide-action-button)
+      (btu/wait-visible :comment-decide)
+      (btu/fill-human :comment-decide "ok")
+      (btu/scroll-and-click :decide-approve)
+      (btu/wait-page-loaded)
+      (btu/wait-visible {:css ".alert-success"}))
+    (testing "check decision event"
+      (is (= {:application/decision :approved
+              :application/comment "ok"
+              :event/actor "new-reviewer"
+              :event/type :application.event/decided}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:application/decision :application/comment :event/actor :event/type])))))))
+
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
@@ -624,9 +695,11 @@
       (login-as "alice")
       (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"}))
 
-    (testing "changing language while logged i"
+    (testing "changing language while logged in"
       (change-language :en)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"}))
+
+    (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true))) ; avoid no assertions warning
 
 (defn create-license []
@@ -1102,7 +1175,9 @@
                 (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                           {:as :json
                            :headers {"x-rems-api-key" "42"
-                                     "x-rems-user-id" "handler"}}))))))))
+                                     "x-rems-user-id" "handler"}}))))))
+    (user-settings/delete-user-settings! "owner"))) ; clear language settings
+
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
@@ -1440,3 +1515,33 @@
                   "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
                   "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
                  (slurp-fields :organization))))))))
+
+(deftest test-small-navbar
+  (testing "create a test application with the API to have another page to navigate to"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)]
+                                                                    "test-small-navbar"))
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id (btu/context-get :application-id)
+                            :actor "alice"}))
+  (btu/with-postmortem
+    (login-as "alice")
+    (go-to-catalogue)
+    (btu/set-window-size 400 600) ; small enough for mobile
+    (btu/wait-invisible :small-navbar)
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/wait-visible :small-navbar)
+    (btu/screenshot "small-navbar.png")
+    (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Applications"})
+    (btu/scroll-and-click {:css ".navbar-toggler"})
+    (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
+    (btu/wait-invisible :small-navbar) ; menu should be hidden
+    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})
+    (user-settings/delete-user-settings! "alice") ; clear language settings
+    (is true)))  ; avoid no assertions warning

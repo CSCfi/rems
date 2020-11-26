@@ -418,6 +418,10 @@
 
   Returns the test report.
 
+  Ignores:
+  - all divs of body except #app like #figwheel-heads-up-container and a re-frisk unnamed div
+  - our development tooling like .dev-reload-button
+
   See https://www.deque.com/axe/"
   []
   (let [result (js-async "
@@ -425,7 +429,8 @@
     var callback = args[args.length-1];
     window.axe.configure({'reporter': 'v2'});
     window.axe.run({ exclude:[['.dev-reload-button'],
-                              ['#figwheel-heads-up-container']]})
+                              ['body > div:not(#app)']]})
+
     .then(callback);")]
     result))
 

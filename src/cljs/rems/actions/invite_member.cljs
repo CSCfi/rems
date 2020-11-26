@@ -1,24 +1,19 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view button-wrapper collapse-action-form
+                                             email-field name-field]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
-(rf/reg-event-db
- ::open-form
- (fn [db _]
-   (assoc db
-          ::name ""
-          ::email "")))
-
-(rf/reg-event-db ::set-name (fn [db [_ name]] (assoc db ::name name)))
-(rf/reg-sub ::name (fn [db _] (::name db)))
-
-(rf/reg-event-db ::set-email (fn [db [_ email]] (assoc db ::email email)))
-(rf/reg-sub ::email (fn [db _] (::email db)))
 
 (def ^:private action-form-id "invite-member")
+
+(rf/reg-event-fx
+ ::open-form
+ (fn [_ _]
+   {:dispatch-n [[:rems.actions.components/set-name action-form-id ""]
+                 [:rems.actions.components/set-email action-form-id ""]]}))
 
 (defn- validate-member [{:keys [name email]}]
   (when (or (empty? name)
@@ -48,18 +43,8 @@
                   :text (text :t.actions/invite-member)
                   :on-click #(rf/dispatch [::open-form])}])
 
-;; TODO refactor to common input-field ?
-(defn input-field [{:keys [id label placeholder value type on-change]}]
-  [:div.form-group.field
-   [:label {:for id} label]
-   [:input.form-control {:type type
-                         :id id
-                         :placeholder placeholder
-                         :value value
-                         :on-change on-change}]])
-
 (defn invite-member-view
-  [{:keys [name email on-send]}]
+  [{:keys [on-send]}]
   [action-form-view action-form-id
    (text :t.actions/invite-member)
    [[button-wrapper {:id "invite-member"
@@ -68,23 +53,13 @@
                      :on-click on-send}]]
    [:div
     [flash-message/component :invite-member-errors]
-    [input-field {:id "member-name"
-                  :label (text :t.actions/member-name)
-                  :value name
-                  :type :text
-                  :on-change #(rf/dispatch [::set-name (.. % -target -value)])}]
-    [input-field {:id "member-email"
-                  :label (text :t.actions/member-email)
-                  :value email
-                  :type :text
-                  :on-change #(rf/dispatch [::set-email (.. % -target -value)])}]]
+    [name-field {:field-key action-form-id}]
+    [email-field {:field-key action-form-id}]]
    {:collapse-id "member-action-forms"}])
 
 (defn invite-member-form [application-id on-finished]
-  (let [name @(rf/subscribe [::name])
-        email @(rf/subscribe [::email])]
-    [invite-member-view {:name name
-                         :email email
-                         :on-send #(rf/dispatch [::send-invite-member {:application-id application-id
+  (let [name @(rf/subscribe [:rems.actions.components/name action-form-id])
+        email @(rf/subscribe [:rems.actions.components/email action-form-id])]
+    [invite-member-view {:on-send #(rf/dispatch [::send-invite-member {:application-id application-id
                                                                        :member {:name name :email email}
                                                                        :on-finished on-finished}])}]))
