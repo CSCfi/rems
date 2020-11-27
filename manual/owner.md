@@ -118,7 +118,7 @@ Note that you will still have to add another application form when you create a 
 
 The applicant will see the application forms in two parts: one form that has the questions connected to a workflow and the other regarding the resource they are applying access to.
 
-![Workflow form](img/workloadform.png)
+![Workflow form](img/workflowform.png)
 
 ### 3. Create a license
 
@@ -179,7 +179,7 @@ You can enable disabled items.
 
 Archiving **hides the item from the administration view and from the applicants**. If you want to view archived items select **Display archived**. We recommend archiving old items that are not in use anymore.
 
-![Display archived](img/display.md)
+![Display archived](img/display.png)
 
 You can unarchive archived items.
 
