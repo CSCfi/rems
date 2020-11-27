@@ -12,7 +12,7 @@ You can find all the resources you can apply for access from the Catalogue tab w
 
 1. Start the application process by adding one or more resources to your shopping cart.
 If the resources have the same application form, they will be bundled together automatically. This means that you can apply for access rights to several resources with just one application form.
-[](img/bundle.png)
+![Bundle resources](img/bundle.png)
 2. Select **Apply** to continue to the application form.
 3. Follow the instructions on the application form and fill in the required fields. If you have questions regarding a specific application form, please contact the resource owner.
 4. If you are a part of a research group and other group members also need access rights, remember to invite them to your application by selecting **Invite member**.
@@ -45,13 +45,13 @@ During the approval process, a handler can:
 
 You can follow the approval process and read the possible comments from the application’s Events-section.
 
-[](img/events.png)
+![Event list](img/events.png)
 
 ### Application states
 
 You can find all your applications and see their state from Applications tab. The states are explained below. You will receive an email notification whenever the state of your application changes.
 
-[](img/state.png)
+![Application state](img/state.png)
 
 **Approved**: After your application has been approved and you have been granted access rights, it is up to the resource owner to deliver the resource to you. The method of delivery depends on the resource and the resource owner.
 
@@ -74,7 +74,7 @@ If you feel that you have been falsely added to the blacklist, please contact th
 
 You can see and edit your email address in Settings tab in the top right corner of the page.
 
-[](img/settings.png)
+![Settings](img/settings.png)
 
 You will be notified when:
 
