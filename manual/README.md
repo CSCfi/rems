@@ -4,7 +4,7 @@ Resource Entitlement Management System (REMS) is an open source tool for managin
 
 The resources in REMS do not necessarily have to be in electronic data sets. It is possible to manage access to basically anything as long as it is identified by an identifier. This includes for example research datasets and biological samples.
 
-REMS is a service developed by [CSC -- IT Center for Science Ltd.](https://www.csc.fi/en/home) and [Nitor](https://www.nitor.com/en).
+REMS is a service developed by [CSC – IT Center for Science Ltd.](https://www.csc.fi/en/home) and [Nitor](https://www.nitor.com/en).
 
 You can test how REMS works [using our demo environment](https://remsdemo.csc.fi/).
 
