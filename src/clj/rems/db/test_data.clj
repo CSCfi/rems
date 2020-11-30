@@ -776,12 +776,6 @@
                       :comment ""})))))
     (log/info "Performance test applications created")))
 
-(defn assert-no-existing-data! []
-  (assert (empty? (db/get-application-events {}))
-          "You have existing applications, refusing to continue. An empty database is needed.")
-  (assert (empty? (db/get-catalogue-items {}))
-          "You have existing catalogue items, refusing to continue. An empty database is needed."))
-
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)

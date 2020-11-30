@@ -15,8 +15,10 @@
   (:import [org.joda.time Duration ReadableInstant]))
 
 (defn reset-db-fixture [f]
-  (f)
-  (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))
+  (try
+    (f)
+    (finally
+      (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))))
 
 (defn test-db-fixture [f]
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down

@@ -222,3 +222,11 @@
                        :application-id app-id
                        :actor actor})
     app-id))
+
+(defn assert-no-existing-data! []
+  (assert (empty? (db/get-organizations {}))
+          "You have existing oranizations, refusing to continue. An empty database is needed.")
+  (assert (empty? (db/get-application-events {}))
+          "You have existing applications, refusing to continue. An empty database is needed.")
+  (assert (empty? (db/get-catalogue-items {}))
+          "You have existing catalogue items, refusing to continue. An empty database is needed."))
