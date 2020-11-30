@@ -141,9 +141,7 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (and (common-form/supports-info-text?  field)
-                    (not-any? (fn [lang] (str/blank? (get (:field/info-text field) lang)))
-                              languages))
+         (when (common-form/supports-info-text? field)
            {:field/info-text (build-localized-string (:field/info-text field) languages)})
          (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
@@ -177,13 +175,14 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form-template (get-in db [::form :data]) (:languages db))
+         request (build-request (get-in db [::form :data]) (:languages db))
+         form-errors (validate-form-template request (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
          description [page-title edit?]
-         request (merge (build-request (get-in db [::form :data]) (:languages db))
+         request (merge request
                         (when edit?
                           {:form/id (::form-id db)}))]
      (when-not form-errors

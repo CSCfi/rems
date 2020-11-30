@@ -177,28 +177,6 @@
                  :field/max-length "12"
                  :field/placeholder {:en "en placeholder"
                                      :fi "fi placeholder"}}]
-        fields-empty-info-text [{:field/id "fld1"
-                                 :field/index 0
-                                 :field/title {:en "en title"
-                                               :fi "fi title"}
-                                 :field/info-text {:en ""
-                                                   :fi ""}
-                                 :field/optional true
-                                 :field/type :text
-                                 :field/max-length "12"
-                                 :field/placeholder {:en "en placeholder"
-                                                     :fi "fi placeholder"}}]
-        fields-one-empty-info-text [{:field/id "fld1"
-                                     :field/index 0
-                                     :field/title {:en "en title"
-                                                   :fi "fi title"}
-                                     :field/info-text {:en "en info text"
-                                                       :fi ""}
-                                     :field/optional true
-                                     :field/type :text
-                                     :field/max-length "12"
-                                     :field/placeholder {:en "en placeholder"
-                                                         :fi "fi placeholder"}}]
         languages [:en :fi]]
     (testing "basic fields"
       (is (= [{:field/id "fld1"
@@ -214,26 +192,33 @@
 
              (mapv #(build-request-field % languages) fields)))
 
-      (is (= [{:field/id "fld1"
-               :field/title {:en "en title"
-                             :fi "fi title"}
-               :field/optional true
-               :field/type :text
-               :field/max-length 12
-               :field/placeholder {:en "en placeholder"
-                                   :fi "fi placeholder"}}]
+      (testing "empty info texts should be passed on"
+        (is (= [{:field/id "fld1"
+                 :field/title {:en "en title"
+                               :fi "fi title"}
+                 :field/info-text {:en ""
+                                   :fi ""}
+                 :field/optional true
+                 :field/type :text
+                 :field/max-length 12
+                 :field/placeholder {:en "en placeholder"
+                                     :fi "fi placeholder"}}]
 
-             (mapv #(build-request-field % languages) fields-empty-info-text)))
-      (is (= [{:field/id "fld1"
-               :field/title {:en "en title"
-                             :fi "fi title"}
-               :field/optional true
-               :field/type :text
-               :field/max-length 12
-               :field/placeholder {:en "en placeholder"
-                                   :fi "fi placeholder"}}]
+               (mapv #(build-request-field % languages)
+                     (assoc-in fields [0 :field/info-text] {:en "" :fi ""}))))
+        (is (= [{:field/id "fld1"
+                 :field/title {:en "en title"
+                               :fi "fi title"}
+                 :field/info-text {:en "en info text"
+                                   :fi ""}
+                 :field/optional true
+                 :field/type :text
+                 :field/max-length 12
+                 :field/placeholder {:en "en placeholder"
+                                     :fi "fi placeholder"}}]
 
-             (mapv #(build-request-field % languages) fields-one-empty-info-text))))))
+               (mapv #(build-request-field % languages)
+                     (assoc-in fields [0 :field/info-text :fi] ""))))))))
 
 (deftest build-request-test
   (let [form {:organization {:organization/id "abc"}
@@ -249,17 +234,7 @@
                              :field/max-length "12"
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
-        fields-empty-info-text {:organization {:organization/id "abc"}
-                                :form/title "the title"
-                                :form/fields [{:field/id "fld1"
-                                               :field/index 0
-                                               :field/title {:en "en title"
-                                                             :fi "fi title"}
-                                               :field/optional true
-                                               :field/type :text
-                                               :field/max-length "12"
-                                               :field/placeholder {:en "en placeholder"
-                                                                   :fi "fi placeholder"}}]}
+
         languages [:en :fi]]
 
     (testing "basic form"
@@ -277,18 +252,21 @@
                                                  :fi "fi placeholder"}}]}
              (build-request form languages))))
 
-    (testing "basic form without input field "
+    (testing "with empty info text"
       (is (= {:organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en ""
+                                               :fi ""}
                              :field/optional true
                              :field/type :text
                              :field/max-length 12
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
-             (build-request fields-empty-info-text languages))))
+             (build-request (assoc-in form [:form/fields 0 :field/info-text] {:en "" :fi ""})
+                            languages))))
 
     (testing "trim strings"
       (is (= {:organization {:organization/id "abc"}

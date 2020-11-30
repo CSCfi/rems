@@ -380,7 +380,8 @@
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :required " \"%1\" är ett obligatoriskt fält."
-                      :toolong "För långt innehåll i fält \"%1\"."}}
+                      :toolong "För långt innehåll i fält \"%1\"."
+                      :unsupported "Field \"%1\" is not supported."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"
