@@ -301,7 +301,6 @@
              (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text" :fi ""}) languages)
              (validate-form-template (assoc-in form [:form/fields 0 :field/info-text] {:en "en info text"}) languages))))
 
-    ;; fix here
     (testing "placeholder & max-length & info text shouldn't be present if they are not applicable"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
