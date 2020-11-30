@@ -217,6 +217,8 @@
       (is (= [{:field/id "fld1"
                :field/title {:en "en title"
                              :fi "fi title"}
+               :field/info-text {:en ""
+                                 :fi ""}
                :field/optional true
                :field/type :text
                :field/max-length 12
@@ -227,6 +229,8 @@
       (is (= [{:field/id "fld1"
                :field/title {:en "en title"
                              :fi "fi title"}
+               :field/info-text {:en "en info text"
+                                 :fi ""}
                :field/optional true
                :field/type :text
                :field/max-length 12
@@ -283,6 +287,8 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
+                             :field/info-text {:en ""
+                                               :fi ""}
                              :field/optional true
                              :field/type :text
                              :field/max-length 12
