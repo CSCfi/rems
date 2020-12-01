@@ -19,6 +19,62 @@
         (mapcat :form/fields
                 (:application/forms application))))
 
+(deftest test-find-email-address
+  (testing "no email field"
+    (is (nil?
+         (find-email-address {:application/forms [{:form/id 1
+                                                   :form/fields [{:field/id 1
+                                                                  :field/type :text
+                                                                  :field/value "xxx"}
+                                                                 {:field/id 2
+                                                                  :field/type :date
+                                                                  :field/value "2020-01-01"}]}]}))))
+  (testing "unique email field"
+    (is (= "user@example.com"
+           (find-email-address {:application/forms [{:form/id 1
+                                                     :form/fields [{:field/id 1
+                                                                    :field/type :text
+                                                                    :field/value "xxx"}
+                                                                   {:field/id 2
+                                                                    :field/type :email
+                                                                    :field/value "user@example.com"}
+                                                                   {:field/id 3
+                                                                    :field/type :date
+                                                                    :field/value "2020-01-01"}]}]}))))
+  (testing "multiple email fields"
+    (is (= "user@example.com"
+           (find-email-address {:application/forms [{:form/id 1
+                                                     :form/fields [{:field/id 1
+                                                                    :field/type :text
+                                                                    :field/value "xxx"}
+                                                                   {:field/id 2
+                                                                    :field/type :email
+                                                                    :field/value "user@example.com"}
+                                                                   {:field/id 3
+                                                                    :field/type :date
+                                                                    :field/value "2020-01-01"}
+                                                                   {:field/id 4
+                                                                    :field/type :email
+                                                                    :field/value "wrong@example.com"}]}]}))))
+  (testing "multiple forms"
+    (is (= "user@example.com"
+           (find-email-address {:application/forms [{:form/id 1
+                                                     :form/fields [{:field/id 1
+                                                                    :field/type :text
+                                                                    :field/value "xxx"}]}
+                                                    {:form/id 2
+                                                     :form/fields [{:field/id 2
+                                                                    :field/type :email
+                                                                    :field/value "user@example.com"}
+                                                                   {:field/id 3
+                                                                    :field/type :date
+                                                                    :field/value "2020-01-01"}]}
+                                                    {:form/id 3
+                                                     :form/fields [{:field/id 4
+                                                                    :field/type :email
+                                                                    :field/value "wrong@example.com"}]}]})))))
+
+
 (defn- may-give-bonafide-status? [user-attributes]
   (contains? #{"so" "system"} (:researcher-status-by user-attributes)))
 
