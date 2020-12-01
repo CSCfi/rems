@@ -81,7 +81,7 @@ b58996c504c5638798eb6b511e6f49af | {"eppn": "user@example.com", "name": "Example
 
 An API call impersonating the handler adds the user as a reviewer,
 referring to the user by their eppn. Note how `x-rems-user-id` must
-always be an internal REMS user id. (TODO should we allow external ids?)
+always be an internal REMS user id (but see Open questions).
 
 ```
 POST /api/applications/request-review
@@ -168,6 +168,14 @@ at a time. This should probably be in the same release as step 3.
 Should we switch all APIs that take userids to a structured
 `{"userid": "abc123"}` form? Then we could specify users more
 explicitly like `{"eppn": "user@example.com"}`.
+
+## `x-rems-user-id`
+
+Should we allow external user ids in `x-rems-user-id`?
+
+## User search API
+
+Should we have an API for searching / resolving users?
 
 ## Migration
 
