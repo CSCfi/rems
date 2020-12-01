@@ -1,8 +1,8 @@
-(ns rems.application.bonafide-bot
+(ns rems.application.bona-fide-bot
   "A bot that enables workflows where a user can ask another user to vouch
    for their bona fide researcher status.
 
-   See also: docs/bonafide.md, docs/ga4gh-visas.md"
+   See also: docs/bots.md, docs/ga4gh-visas.md"
   (:require [clojure.test :refer [deftest is testing]]
             [clj-time.core :as time]
             [rems.common.application-util :as application-util]
@@ -10,7 +10,7 @@
             [rems.db.users :as users]
             [rems.testing-util :refer [with-fixed-time]]))
 
-(def bot-userid "bonafide-bot")
+(def bot-userid "bona-fide-bot")
 
 (defn- find-email-address [application]
   (some (fn [field]
@@ -75,7 +75,7 @@
                                                                     :field/value "wrong@example.com"}]}]})))))
 
 
-(defn- may-give-bonafide-status? [user-attributes]
+(defn- may-give-bona-fide-status? [user-attributes]
   (contains? #{"so" "system"} (:researcher-status-by user-attributes)))
 
 (defn- generate-commands [event actor-attributes application]
@@ -91,7 +91,7 @@
           :decider {:name "Referer"
                     :email email}}])
       :application.event/decided
-      (when (may-give-bonafide-status? actor-attributes)
+      (when (may-give-bona-fide-status? actor-attributes)
         [{:type (case (:application/decision event)
                   :approved :application.command/approve
                   :rejected :application.command/reject)
@@ -126,7 +126,7 @@
             (is (= [{:type :application.command/invite-decider
                      :time (time/date-time 2010)
                      :application-id 1234
-                     :actor "bonafide-bot"
+                     :actor "bona-fide-bot"
                      :decider {:name "Referer" :email "referer92@example.com"}}]
                    (generate-commands event
                                       applicant-attributes
@@ -155,18 +155,18 @@
                     (is (= [{:type :application.command/approve
                              :time (time/date-time 2010)
                              :application-id 1234
-                             :actor "bonafide-bot"}]
+                             :actor "bona-fide-bot"}]
                            (generate-commands event referer-attributes application))))
                   (testing "referer rejects"
                     (is (= [{:type :application.command/reject
                              :time (time/date-time 2010)
                              :application-id 1234
-                             :actor "bonafide-bot"}]
+                             :actor "bona-fide-bot"}]
                            (generate-commands (assoc event :application/decision :rejected) referer-attributes application)))))))))))))
 
 
 
-(defn run-bonafide-bot [new-events]
+(defn run-bona-fide-bot [new-events]
   (doall (mapcat #(generate-commands %
                                      (users/get-user (:event/actor %))
                                      (applications/get-application (:application/id %)))

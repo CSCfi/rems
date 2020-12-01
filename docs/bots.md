@@ -57,7 +57,7 @@ curl -X POST -H "content-type: application/json" -H "x-rems-api-key: 42" -H "x-r
 
 ## Bona Fide bot
 
-User id: `bonafide-bot`
+User id: `bona-fide-bot`
 
 The Bona Fide bot is used for granting peer-verified GA4GH
 ResearcherStatus visas. See [ga4gh-visas.md](ga4gh-visas.md) for more

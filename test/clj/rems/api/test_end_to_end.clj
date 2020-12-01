@@ -3,7 +3,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
-            [rems.application.bonafide-bot :as bonafide-bot]
+            [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
@@ -610,28 +610,28 @@
             (is (= "application.state/rejected" (:application/state (api-call :get (str "/api/applications/" app-3) nil
                                                                               api-key applicant-id))))))))))
 
-(deftest test-bonafide-bot
+(deftest test-bona-fide-bot
   (let [api-key "42"
         owner-id "owner"
-        applicant-id "bonafide-applicant"
+        applicant-id "bona-fide-applicant"
         applicant-attributes {:userid applicant-id
                               :name "Bona Fide Applicant"
                               :email "applicant@example.com"}
-        referer-id "bonafide-referer"
+        referer-id "bona-fide-referer"
         referer-attributes {:userid referer-id
                             :name "Bona Fide Referer"
                             :email "referer@example.com"
                             :researcher-status-by "so"}
-        bot-attributes {:userid bonafide-bot/bot-userid
+        bot-attributes {:userid bona-fide-bot/bot-userid
                         :email nil
-                        :name "bonafide bot"}]
+                        :name "bona fide bot"}]
     (testing "create users"
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
       (api-call :post "/api/users/create" referer-attributes api-key owner-id)
       (api-call :post "/api/users/create" bot-attributes api-key owner-id))
     (let [resource-id
           (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
-                                                               :resid "bonafide"
+                                                               :resid "bona fide"
                                                                :licenses []}
                                 api-key owner-id))
 
@@ -647,9 +647,9 @@
                              api-key owner-id))
           workflow-id (extract-id
                        (api-call :post "/api/workflows/create" {:organization {:organization/id "default"}
-                                                                :title "bonafide workflow"
+                                                                :title "bona fide workflow"
                                                                 :type :workflow/default
-                                                                :handlers [bonafide-bot/bot-userid]}
+                                                                :handlers [bona-fide-bot/bot-userid]}
                                  api-key owner-id))
 
           catalogue-item-id (extract-id
@@ -657,7 +657,7 @@
                                                                             :resid resource-id
                                                                             :form form-id
                                                                             :wfid workflow-id
-                                                                            :localizations {:en {:title "bonafide catalogue item"}}}
+                                                                            :localizations {:en {:title "bona fide catalogue item"}}}
                                        api-key owner-id))
           app-id (testing "create application"
                    (:application-id
@@ -683,7 +683,7 @@
                   :application/id app-id
                   :application/decider {:name "Referer"
                                         :email "referer@example.com"}
-                  :event/actor bonafide-bot/bot-userid}
+                  :event/actor bona-fide-bot/bot-userid}
                  (select-keys event [:event/type :application/id :application/decider :event/actor])))
           (is (string? token)))
         (testing "post decision as referer"

@@ -523,10 +523,10 @@
      :auto-approve auto-approve
      :organization-owner organization-owner}))
 
-(defn- create-bonafide-catalogue-item! [users]
+(defn- create-bona-fide-catalogue-item! [users]
   (let [owner (:owner users)
-        bot (:bonafide-bot users)
-        res (create-resource! {:resource-ext-id "bonafide"
+        bot (:bona-fide-bot users)
+        res (create-resource! {:resource-ext-id "bona-fide"
                                :organization {:organization/id "default"}
                                :actor owner})
         form (create-form! {:actor owner
@@ -965,7 +965,7 @@
                              :form-id form
                              :organization {:organization/id "nbn"}
                              :workflow-id (:auto-approve workflows)})
-    (create-bonafide-catalogue-item! (merge users +bot-users+))
+    (create-bona-fide-catalogue-item! (merge users +bot-users+))
     (let [thl-res (create-resource! {:resource-ext-id "thl"
                                      :organization {:organization/id "thl"}
                                      :actor owner})
