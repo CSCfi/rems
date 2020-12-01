@@ -629,11 +629,10 @@
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
       (api-call :post "/api/users/create" referer-attributes api-key owner-id)
       (api-call :post "/api/users/create" bot-attributes api-key owner-id))
-    (let [resource-id
-          (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
-                                                               :resid "bona fide"
-                                                               :licenses []}
-                                api-key owner-id))
+    (let [resource-id (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
+                                                                           :resid "bona fide"
+                                                                           :licenses []}
+                                            api-key owner-id))
 
           form-id (extract-id
                    (api-call :post "/api/forms/create" {:organization {:organization/id "default"}
