@@ -630,45 +630,40 @@
       (api-call :post "/api/users/create" referer-attributes api-key owner-id)
       (api-call :post "/api/users/create" bot-attributes api-key owner-id))
     (let [resource-id
-          (extract-id
-           (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
-                                                    :resid "bonafide"
-                                                    :licenses []}
-                     api-key owner-id))
+          (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
+                                                               :resid "bonafide"
+                                                               :licenses []}
+                                api-key owner-id))
 
-          form-id
-          (extract-id
-           (api-call :post "/api/forms/create" {:organization {:organization/id "default"}
-                                                :form/title "e2e"
-                                                :form/fields [{:field/type :email
-                                                               :field/id "referer email"
-                                                               :field/title {:en "referer"
-                                                                             :fi "referer"
-                                                                             :sv "referer"}
-                                                               :field/optional false}]}
-                     api-key owner-id))
-          workflow-id
-          (extract-id
-           (api-call :post "/api/workflows/create" {:organization {:organization/id "default"}
-                                                    :title "bonafide workflow"
-                                                    :type :workflow/default
-                                                    :handlers [bonafide-bot/bot-userid]}
-                     api-key owner-id))
+          form-id (extract-id
+                   (api-call :post "/api/forms/create" {:organization {:organization/id "default"}
+                                                        :form/title "e2e"
+                                                        :form/fields [{:field/type :email
+                                                                       :field/id "referer email"
+                                                                       :field/title {:en "referer"
+                                                                                     :fi "referer"
+                                                                                     :sv "referer"}
+                                                                       :field/optional false}]}
+                             api-key owner-id))
+          workflow-id (extract-id
+                       (api-call :post "/api/workflows/create" {:organization {:organization/id "default"}
+                                                                :title "bonafide workflow"
+                                                                :type :workflow/default
+                                                                :handlers [bonafide-bot/bot-userid]}
+                                 api-key owner-id))
 
-          catalogue-item-id
-          (extract-id
-           (api-call :post "/api/catalogue-items/create" {:organization {:organization/id "default"}
-                                                          :resid resource-id
-                                                          :form form-id
-                                                          :wfid workflow-id
-                                                          :localizations {:en {:title "bonafide catalogue item"}}}
-                     api-key owner-id))
-          app-id
-          (testing "create application"
-            (:application-id
-             (assert-success
-              (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
-                        api-key applicant-id))))]
+          catalogue-item-id (extract-id
+                             (api-call :post "/api/catalogue-items/create" {:organization {:organization/id "default"}
+                                                                            :resid resource-id
+                                                                            :form form-id
+                                                                            :wfid workflow-id
+                                                                            :localizations {:en {:title "bonafide catalogue item"}}}
+                                       api-key owner-id))
+          app-id (testing "create application"
+                   (:application-id
+                    (assert-success
+                     (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                               api-key applicant-id))))]
       (testing "fill & submit application"
         (assert-success
          (api-call :post "/api/applications/save-draft" {:application-id app-id
