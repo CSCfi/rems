@@ -76,4 +76,4 @@ logs in to rems and performs the _decide_ action. At this point:
   `"by": "system"`, see from their IDP, [ga4gh-visas.md](ga4gh-visas.md)):
   - and if the decider posted an approve decision: the bot approves the application
   - and if the decider posted a reject decision: the bot rejects the application
-- If the decider doesn't have a ResearcherStatus visa, nothing happens.
+- If the decider doesn't have a ResearcherStatus visa, the bot rejects the application

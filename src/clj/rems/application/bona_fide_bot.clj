@@ -91,13 +91,13 @@
           :decider {:name "Referer"
                     :email email}}])
       :application.event/decided
-      (when (may-give-bona-fide-status? actor-attributes)
-        [{:type (case (:application/decision event)
-                  :approved :application.command/approve
-                  :rejected :application.command/reject)
-          :time (time/now)
-          :application-id (:application/id event)
-          :actor bot-userid}])
+      [{:type (if (and (may-give-bona-fide-status? actor-attributes)
+                       (= :approved (:application/decision event)))
+                :application.command/approve
+                :application.command/reject)
+        :time (time/now)
+        :application-id (:application/id event)
+        :actor bot-userid}]
 
       [])))
 
@@ -148,10 +148,14 @@
           (testing "bot is handler,"
             (let [application {:application/workflow {:workflow.dynamic/handlers [{:userid bot-userid}]}}]
               (testing "referer does not have researcher status"
-                (is (empty? (generate-commands event referer-attributes application))))
+                (is (= [{:type :application.command/reject
+                         :time (time/date-time 2010)
+                         :application-id 1234
+                         :actor "bona-fide-bot"}]
+                       (generate-commands event referer-attributes application))))
               (testing "referer has researcher status,"
                 (let [referer-attributes (assoc referer-attributes :researcher-status-by "so")]
-                  (testing "refer approves"
+                  (testing "referer approves"
                     (is (= [{:type :application.command/approve
                              :time (time/date-time 2010)
                              :application-id 1234
