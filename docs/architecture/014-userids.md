@@ -4,17 +4,23 @@ Authors: @opqdonut @Macroz @jaakkocsc
 
 # Background
 
-TODO
+Currently REMS uses the userid received from the OIDC server (from the
+`sub` claim or another claim based on configuration), and uses this
+userid as the internal database key for that user. The userid is
+embedded in application events, workflows, etc.
 
 ## Problems with the current approach
 
 - The `sub` attribute might be opaque and not usable between systems, e.g. when sending entitlements to other systems
-- Different login methods may have different formats for externally referrable fields
+- Different login methods may have different formats for external user identifiers
 - Different login methods might use conflicting values for claims
   - E.g. `foo@csc.fi` via HAKA or CSC SSO (TODO: do we know of cases like this?)
 - A single user might have multiple external identifiers (TODO: do we know of cases like this?)
 
 ## Use cases for user identities
+
+A user identifier can be used for multiple things. We might want to
+use different identifiers for different purposes.
 
 - Referring to users inside REMS data (e.g. workflow handler)
 - Referring to users in API responses (e.g. workflow handler)
@@ -28,7 +34,9 @@ We'll add internal random user ids to REMS. This internal user id will
 be the key that users are referred to within REMS. The user's external
 id will be stored in the attributes JSON blob.
 
-TODO: a good index is needed for performance
+This will allow us more flexibility in the future when identity
+requirements and use cases change, and might also make all sorts of
+migrations easier (since internal user ids don't need to be touched).
 
 ## Login
 
@@ -142,7 +150,32 @@ ids to be used when pushing entitlements to other Elixir services.
 
 This can be accomplished by setting `:oidc-userid-attributes` to `["elixirId" "old_sub"]`.
 
-## 3. Add internal ids
+## 3. Use internal ids everywhere
 
-Implement the full internal ids solution described in this ADR in
-2021Q1.
+Implement the "Login" section of this ADR, and also write the
+necessary database migrations (see also Migration under Open questions
+below).
+
+## 4. Support for external ids in APIs
+
+Implement the "User identity resolution" section of this ADR, one API
+at a time. This should probably be in the same release as step 3.
+
+# Open questions
+
+## API format
+
+Should we switch all APIs that take userids to a structured
+`{"userid": "abc123"}` form? Then we could specify users more
+explicitly like `{"eppn": "user@example.com"}`.
+
+## Migration
+
+Should we migrate existing userids to new random values or keep them
+as-is?
+
+## Database indexes
+
+A good index is needed for performance when looking up users based on
+attributes. Is storing the data in JSONB fine or should we also add
+new columns?
