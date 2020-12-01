@@ -43,6 +43,7 @@ Changes since v2.13
 - Deciders and reviewers can now be invited via email. (#2040)
   - New `invite-decider` and `invite-reviewer` commands in the API & UI
   - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
+- Experimental bona fide bot for granting peer-verified ResearcherStatus visas. See [docs/bots.md](docs/bots.md).
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 
