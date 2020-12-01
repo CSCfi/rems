@@ -65,7 +65,7 @@ background.
 
 The Bona Fide bot is designed to be used with
 - a _default workflow_ that has the bot as a handler (and optionally some human handlers)
-- a catalogue item that has a form that has an email field
+- a catalogue item that has a form that has an email field (in case of multiple email fields, the _first one_ is used)
 
 When an application gets submitted for the catalogue item, the bot
 sends a _decision request_ to the email address it extracts from the
