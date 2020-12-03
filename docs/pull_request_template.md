@@ -1,38 +1,30 @@
-# Definition of Done / Review checklist
+# Checklist for author
+
+Remove items that aren't applicable, check items that are done.
 
 ## Reviewability
-- [ ] link to issue
-- [ ] note if PR is on top of other PR
-- [ ] note if related change in rems-deploy repo
-- [ ] consider adding screenshots for ease of review
+- [ ] Link to issue
+- [ ] Note if PR is on top of other PR
+- [ ] Note if related change in rems-deploy repo
+- [ ] Consider adding screenshots for ease of review
 
-## API
-- [ ] API is documented and shows up in Swagger UI
+## Backwards compatibility
 - [ ] API is backwards compatible or completely new
-- [ ] Events are backwards compatible
+- [ ] Events are backwards compatible _or_ have migrations
+- [ ] Config is backwards compatible
 
 ## Documentation
-- [ ] update changelog if necessary
-- [ ] add or update docstrings for namespaces and functions
-- [ ] components are added to guide page
-- [ ] documentation _at least_ for config options (i.e. docs folder)
+- [ ] Update changelog if necessary
+- [ ] API is documented and shows up in Swagger UI
+- [ ] Components are added to guide page
+- [ ] Update docs/ (if applicable)
+- [ ] Update manual/ (if applicable)
 - [ ] ADR for major architectural decisions or experiments
-
-## Different installations
-- [ ] new configuration options added to rems-deploy repository
-- [ ] instance specific translations (i.e. LBR kielivara)
+- [ ] New config options in config-defaults.edn
 
 ## Testing
-- [ ] complex logic is unit tested
-- [ ] valuable features are integration / browser / acceptance tested automatically
-
-## Accessibility
-- [ ] all icons have the aria-label attribute
-- [ ] all fields have a label
-- [ ] errors are linked to fields with aria-describedby
-- [ ] contrast is checked
-- [ ] conscious decision about where to move focus after an action
+- [ ] Complex logic is unit tested
+- [ ] Valuable features are integration / browser / acceptance tested automatically
 
 ## Follow-up
-- [ ] new tasks are created for pending or remaining tasks
-- [ ] no critical TODOs left to implement
+- [ ] New tasks are created for pending or remaining tasks
