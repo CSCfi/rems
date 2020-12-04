@@ -31,6 +31,7 @@ Changes since v2.13
 - Fix accessibility problems with aria-required attribute placement and increase default link contrast (#2431)
 - Small navbar is now properly closed after a link is clicked (#1194)
 - Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
+- Fixed exporting an application to PDF when there are multiple attachments in one field. (#2469)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
