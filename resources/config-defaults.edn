@@ -38,13 +38,15 @@
  ;; Show link to an alternative login service
  :alternative-login-url nil
 
- ;; For :oidc authentication
+ ;; For :oidc authentication, see docs/configuration.md for more details
  :oidc-domain nil
  :oidc-client-id nil
  :oidc-client-secret nil
  ;; Which scopes to pass to the authorization endpoint
  :oidc-scopes "openid profile email"
- ;; Which id-token attribute to use as the rems userid
+ ;; Which id-token attribute to use as the rems userid. Can be either
+ ;; single attribute or ["multiple" "attributes"] that are searched in
+ ;; order and the first non-empty one used.
  :oidc-userid-attribute "sub"
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
  ;; Example:
