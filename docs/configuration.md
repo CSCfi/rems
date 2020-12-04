@@ -19,7 +19,8 @@ Currently the only real authentication method is OpenId Connect (e.g. Auth0). Th
 
 The `:oidc` authentication method has the following configuration options:
 
-* `:oidc-domain` – the openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
+: `:oidc-metadata-url` - URL of the OAuth Server Metadata JSON document. See [RFC 8414](https://tools.ietf.org/html/rfc8414). Typically of the form `https://my.oidc.service/.well-known/openid-configuration`.
+* `:oidc-domain` – DEPRECATED, prefer `:oidc-configuration-url`. The openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
 * `:oidc-client-id`
 * `:oidc-client-secret`
 * `:oidc-scopes` - which scopes to request, defaults to `"openid profile email"`

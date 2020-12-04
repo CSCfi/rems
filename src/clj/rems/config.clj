@@ -62,6 +62,8 @@
   (assert (contains? (set (:languages config)) (:default-language config))
           (str ":default-language should be one of :languages: "
                (pr-str (select-keys config [:default-language :languages]))))
+  (when (:oidc-domain config)
+    (log/warn ":oidc-domain is deprecated, prefer :oidc-metadata-url"))
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
     (log/warn "Unrecognized values in :disable-commands :" (pr-str invalid-commands))
     (log/warn "Supported-values:" (pr-str commands/command-names)))
@@ -86,13 +88,17 @@
                          (parse-config)
                          (validate-config)))
 
-(defn get-oidc-config [oidc-domain]
-  (-> (http/get
-       (str "https://"
-            oidc-domain
-            "/.well-known/openid-configuration"))
+(defn- oidc-metadata-url []
+  (or (:oidc-metadata-url env)
+      (when-let [domain (env :oidc-comain)]
+        (str "https://"
+             domain
+             "/.well-known/openid-configuration"))))
+
+(defn get-oidc-metadata [url]
+  (-> (http/get url)
       (:body)
       (json/parse-string)))
 
-(defstate oidc-configuration :start (when-let [oidc-domain (env :oidc-domain)]
-                                      (get-oidc-config oidc-domain)))
+(defstate oidc-configuration :start (when-let [url (oidc-metadata-url)]
+                                      (get-oidc-metadata url)))
