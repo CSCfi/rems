@@ -121,7 +121,8 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
-            [to-create-organization]
+            [roles/show-when #{:owner}
+             [to-create-organization]]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
             [status-flags/disabled-and-archived-explanation]]
            [organizations-list]])))
