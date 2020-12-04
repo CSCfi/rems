@@ -95,10 +95,5 @@
              domain
              "/.well-known/openid-configuration"))))
 
-(defn get-oidc-metadata [url]
-  (-> (http/get url)
-      (:body)
-      (json/parse-string)))
-
 (defstate oidc-configuration :start (when-let [url (oidc-metadata-url)]
-                                      (get-oidc-metadata url)))
+                                      (:body (http/get url {:as :json}))))
