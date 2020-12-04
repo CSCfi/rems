@@ -9,7 +9,7 @@
  ;; Open ID Connect settings
  ; These allow login to http://localhost:3000/oidc-callback only
  ;:authentication :oidc
- :oidc-domain "remsdev.eu.auth0.com"
+ :oidc-metadata-url "https://remsdev.eu.auth0.com/.well-known/openid-configuration"
  :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
  :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
  ;; some attributes that google oauth returns:
