@@ -137,6 +137,9 @@ the userid.
 
 This is backwards compatible with current behaviour.
 
+[Issue #2366](https://github.com/CSCfi/rems/issues/2366),
+[PR #2471](https://github.com/CSCfi/rems/pull/2471)
+
 ## 2. Workaround for THL instance
 
 The `sub` attributes are going to change when the identity provider
