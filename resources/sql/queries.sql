@@ -60,6 +60,11 @@ UPDATE catalogue_item
 SET (endt) = (:end)
 WHERE id = :id;
 
+-- :name set-catalogue-item-organization! :!
+UPDATE catalogue_item
+SET organization = :organization
+WHERE id = :id;
+
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item

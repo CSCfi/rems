@@ -31,6 +31,8 @@ Changes since v2.13
 - Fix accessibility problems with aria-required attribute placement and increase default link contrast (#2431)
 - Small navbar is now properly closed after a link is clicked (#1194)
 - Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
+- Catalogue item organization can be edited (#2333)
+- Hide organization creation button from non-owners who don't have the right to create organizations
 - Fixed exporting an application to PDF when there are multiple attachments in one field. (#2469)
 
 ### Additions
@@ -45,6 +47,7 @@ Changes since v2.13
   - New `invite-decider` and `invite-reviewer` commands in the API & UI
   - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
 - Experimental bona fide bot for granting peer-verified ResearcherStatus visas. See [docs/bots.md](docs/bots.md).
+- The `:oidc-userid-attribute` configuration option can now contain a list of attributes to try in order. See [docs/configuration.md](docs/configuration.md). (#2366)
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 

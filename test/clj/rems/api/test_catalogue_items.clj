@@ -74,6 +74,8 @@
   (let [api-key "42"
         owner "owner"
         user "alice"
+        changed-organization1 (test-helpers/create-organization! {:organization/id "changed-organization1" :organization/owners [{:userid "organization-owner1"}]})
+        changed-organization2 (test-helpers/create-organization! {:organization/id "changed-organization2" :organization/owners [{:userid "organization-owner1"}]})
         form-id (test-helpers/create-form! {:organization {:organization/id "organization1"}})
         wf-id (test-helpers/create-workflow! {:organization {:organization/id "organization1"}})
         res-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})]
@@ -113,6 +115,7 @@
             (let [response (-> (request :put "/api/catalogue-items/edit")
                                (authenticate api-key owner)
                                (json-body {:id id
+                                           :organization {:organization/id changed-organization1}
                                            :localizations {:sv {:title "Sv title 2"
                                                                 :infourl nil}
                                                            :fi {:title "Fi title"
@@ -130,6 +133,7 @@
                                handler
                                read-ok-body)]
                   (is (= id (:id data)))
+                  (is (= changed-organization1 (get-in data [:organization :organization/id])))
                   (is (= {:title "En title"
                           :infourl nil}
                          (dissoc (get-in data [:localizations :en]) :id :langcode)))
@@ -143,6 +147,7 @@
             (let [response (-> (request :put "/api/catalogue-items/edit")
                                (authenticate api-key "organization-owner1")
                                (json-body {:id id
+                                           :organization {:organization/id changed-organization2}
                                            :localizations {:sv {:title "Sv title 2"
                                                                 :infourl nil}
                                                            :fi {:title "Fi title 2"
@@ -150,6 +155,18 @@
                                handler
                                read-ok-body)]
               (is (:success response) (pr-str response))))
+          (testing "... and edit (as organization owner but no rights to target org)"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key "organization-owner1")
+                               (json-body {:id id
+                                           :organization {:organization/id "organization2"}
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title 2"
+                                                                :infourl "http://info.fi"}}})
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "no access to organization \"organization2\"" (read-body response)))))
           (testing "... and edit (as organization owner for another organization)"
             (let [response (-> (request :put "/api/catalogue-items/edit")
                                (authenticate api-key "organization-owner2")
@@ -160,7 +177,7 @@
                                                                 :infourl "http://info.fi"}}})
                                handler)]
               (is (response-is-forbidden? response))
-              (is (= "no access to organization \"organization1\"" (read-body response))))))))
+              (is (= "no access to organization \"changed-organization2\"" (read-body response))))))))
 
     (testing "edit nonexisting"
       (let [response (-> (request :put "/api/catalogue-items/edit")

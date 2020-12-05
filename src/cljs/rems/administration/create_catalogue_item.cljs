@@ -98,6 +98,7 @@
         description [text :t.administration/edit-catalogue-item]]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
+                    :organization (:organization request)
                     :localizations (:localizations request)}
            :handler (flash-message/default-success-handler
                      :top
