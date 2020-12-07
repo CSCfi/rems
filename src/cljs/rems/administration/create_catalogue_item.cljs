@@ -116,16 +116,17 @@
  (fn [db _]
    (merge
     db
-    (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
-      (when-let [workflows (get-in db [::workflows :data])]
-        (when-let [resources (get-in db [::resources :data])]
-          (when-let [forms (get-in db [::forms :data])]
-            {::form {:workflow (item-by-id workflows :id wfid)
-                     :resource (item-by-id resources :id resource-id)
-                     :form (item-by-id forms :form/id formid)
-                     :organization organization
-                     :title (map-vals :title localizations)
-                     :infourl (map-vals :infourl localizations)}})))))))
+    (when (::editing? db)
+      (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
+        (when-let [workflows (get-in db [::workflows :data])]
+          (when-let [resources (get-in db [::resources :data])]
+            (when-let [forms (get-in db [::forms :data])]
+              {::form {:workflow (item-by-id workflows :id wfid)
+                       :resource (item-by-id resources :id resource-id)
+                       :form (item-by-id forms :form/id formid)
+                       :organization organization
+                       :title (map-vals :title localizations)
+                       :infourl (map-vals :infourl localizations)}}))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
