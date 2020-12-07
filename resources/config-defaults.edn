@@ -161,6 +161,9 @@
  ;; :disable-commands [:application.command/assign-external-id :application.command/change-resources]
  :disable-commands []
 
+ ;; Show "Assign external id" action button in UI for handlers
+ :enable-assign-external-id-ui false
+
  ;; Experimental features
 
  ;; enable /api/applications/:id/experimental/pdf

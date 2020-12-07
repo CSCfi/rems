@@ -703,7 +703,8 @@
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
                               :application.command/revoke [revoke-action-button]
-                              :application.command/assign-external-id [assign-external-id-button]
+                              :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
+                                                                        [assign-external-id-button])
                               :application.command/close [close-action-button]
                               :application.command/delete [delete-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
