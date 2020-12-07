@@ -7,6 +7,7 @@
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
+            [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
@@ -702,6 +703,7 @@
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
                               :application.command/revoke [revoke-action-button]
+                              :application.command/assign-external-id [assign-external-id-button]
                               :application.command/close [close-action-button]
                               :application.command/delete [delete-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
@@ -732,6 +734,7 @@
                 [decide-form app-id reload]
                 [return-form app-id reload]
                 [approve-reject-form app-id reload]
+                [assign-external-id-form app-id reload]
                 [delete-form app-id #(do (flash-message/show-default-success! :top [text :t.actions/delete])
                                          (navigate! "/catalogue"))]]]]
     (when (seq actions)
@@ -976,6 +979,7 @@
                                                       :application.command/approve
                                                       :application.command/reject
                                                       :application.command/revoke
+                                                      :application.command/assign-external-id
                                                       :application.command/close
                                                       :application.command/copy-as-new}
                            :application/attachments [{:attachment/filename "foo.txt"} {:attachment/filename "bar.txt"}]}])
