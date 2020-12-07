@@ -24,6 +24,7 @@
    :application-id-column (s/enum :id :external-id)
    :catalogue-is-public s/Bool
    :extra-pages [ExtraPage]
+   :enable-assign-external-id-ui s/Bool
    :entitlement-default-length-days (s/maybe s/Int)
    :languages [s/Keyword]
    :default-language s/Keyword
@@ -65,7 +66,8 @@
                             :entitlement-default-length-days
                             :extra-pages
                             :languages
-                            :oidc-extra-attributes])))
+                            :oidc-extra-attributes
+                            :enable-assign-external-id-ui])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
