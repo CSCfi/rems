@@ -33,6 +33,7 @@ Changes since v2.13
 - Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
 - Catalogue item organization can be edited (#2333)
 - Hide organization creation button from non-owners who don't have the right to create organizations
+- Fixed exporting an application to PDF when there are multiple attachments in one field. (#2469)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
