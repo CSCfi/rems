@@ -106,8 +106,8 @@
    [document-title (text :t.catalogue/catalogue)]
    [flash-message/component :top]
    (text :t.catalogue/intro)
-   (if (or @(rf/subscribe [::full-catalogue ::fetching?])
-           @(rf/subscribe [::draft-applications ::fetching?]))
+   (if (or @(rf/subscribe [::full-catalogue :fetching?])
+           @(rf/subscribe [::draft-applications :fetching?]))
      [spinner/big]
      [:div
       (when @(rf/subscribe [:logged-in])

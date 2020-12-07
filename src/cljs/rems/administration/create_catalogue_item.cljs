@@ -259,10 +259,10 @@
   (let [languages @(rf/subscribe [:languages])
         editing? @(rf/subscribe [::editing?])
         catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
-        loading? (or @(rf/subscribe [::workflows ::fetching?])
-                     @(rf/subscribe [::resources ::fetching?])
-                     @(rf/subscribe [::forms ::fetching?])
-                     @(rf/subscribe [::catalogue-item ::fetching?]))
+        loading? (or @(rf/subscribe [::workflows :fetching?])
+                     @(rf/subscribe [::resources :fetching?])
+                     @(rf/subscribe [::forms :fetching?])
+                     @(rf/subscribe [::catalogue-item :fetching?]))
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
