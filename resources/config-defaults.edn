@@ -38,8 +38,12 @@
  ;; Show link to an alternative login service
  :alternative-login-url nil
 
- ;; For :oidc authentication, see docs/configuration.md for more details
+ ;; For :oidc authentication
+ ;; DEPRECATED, prefer :oidc-configuration-url instead
  :oidc-domain nil
+ ;; URL to OAuth Server Metadata metadata JSON, e.g.
+ ;;  :oidc-metadata-url "https://my.oidc.service/.well-known/openid-configuration"
+ :oidc-metadata-url nil
  :oidc-client-id nil
  :oidc-client-secret nil
  ;; Which scopes to pass to the authorization endpoint
