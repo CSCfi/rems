@@ -19,6 +19,7 @@ Changes since v2.13
 - New drafts can no longer be created for disabled catalogue items. (#2436)
 - Empty reviews and remarks can't be sent via the UI anymore. Either a comment or an attachment must be provided. (#2433)
 - Application members are sorted by name
+- New `:oidc-metadata-url` config option replaces `:oidc-domain`. The old `:oidc-domain` option is still supported for now but will emit a warning. See [docs/configuration.md](docs/configuration.md). (#2462)
 
 ### Fixes
 - New organizations can be immediately used for creating resources etc. Previously a reload of the page was needed. (#2359)
@@ -32,7 +33,9 @@ Changes since v2.13
 - Small navbar is now properly closed after a link is clicked (#1194)
 - Fixed an issue where changing field type to label after entering field description crashes form editor (#2399)
 - Catalogue item organization can be edited (#2333)
+- Catalogue item editor now starts empty when creating a new item after editing. (#2333)
 - Hide organization creation button from non-owners who don't have the right to create organizations
+- Fixed exporting an application to PDF when there are multiple attachments in one field. (#2469)
 
 ### Additions
 - All fields can have an info text, shown if the small icon is clicked. (#1863)
@@ -47,6 +50,7 @@ Changes since v2.13
   - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
 - Experimental bona fide bot for granting peer-verified ResearcherStatus visas. See [docs/bots.md](docs/bots.md).
 - Assign external id button can now be shown for handlers with the `:enable-assign-external-ui` config flag (defaults to `false`). See [resources/config-defaults.edn](resources/config-defaults.edn). (#2476)
+- The `:oidc-userid-attribute` configuration option can now contain a list of attributes to try in order. See [docs/configuration.md](docs/configuration.md). (#2366)
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 

@@ -3,6 +3,7 @@
   (:require [clj-pdf.core :refer :all]
             [clj-time.core :as time]
             [clojure.string :as str]
+            [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
             [rems.text :refer [localized localize-decision localize-event localize-state localize-time text with-language]]
             [rems.util :refer [getx getx-in]])
@@ -88,7 +89,10 @@
       :attachment
       (if (empty? value)
         value
-        (get filenames (Integer/parseInt value)))
+        (->> value
+             (form/parse-attachment-ids)
+             (map filenames)
+             (str/join ", ")))
 
       (:field/value field))))
 

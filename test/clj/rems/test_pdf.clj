@@ -46,23 +46,28 @@
                                                           :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
-      (let [attachment (:id (db/save-attachment! {:application application-id
-                                                  :user handler
-                                                  :filename "attachment.pdf"
-                                                  :type "application/pdf"
-                                                  :data (byte-array 0)}))]
+      (let [attachment-1 (:id (db/save-attachment! {:application application-id
+                                                    :user handler
+                                                    :filename "attachment.pdf"
+                                                    :type "application/pdf"
+                                                    :data (byte-array 0)}))
+            attachment-2 (:id (db/save-attachment! {:application application-id
+                                                    :user handler
+                                                    :filename "picture.png"
+                                                    :type "image/png"
+                                                    :data (byte-array 0)}))]
         ;; two draft-saved events
         (test-helpers/fill-form! {:time (time/date-time 2000)
                                   :actor applicant
                                   :application-id application-id
                                   :field-value "pdf test"
-                                  :attachment attachment
+                                  :attachment attachment-1
                                   :optional-fields true})
         (test-helpers/fill-form! {:time (time/date-time 2000)
                                   :actor applicant
                                   :application-id application-id
                                   :field-value "pdf test"
-                                  :attachment attachment
+                                  :attachment (str attachment-1 "," attachment-2)
                                   :optional-fields true}))
       (test-helpers/accept-licenses! {:time (time/date-time 2000)
                                       :actor applicant
@@ -137,7 +142,7 @@
                 [[:paragraph pdf/field-style "Email field"]
                  [:paragraph "user@example.com"]]
                 [[:paragraph pdf/field-style "Attachment"]
-                 [:paragraph "attachment.pdf"]]
+                 [:paragraph "attachment.pdf, picture.png"]]
                 [[:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
                  [:paragraph "First option"]]
                 [[:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
@@ -168,6 +173,6 @@
       (is (some?
            (with-language :en
              #(do
-                  ;; uncomment this to get a pdf file to look at
+                ;; uncomment this to get a pdf file to look at
                 #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
                 (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id)))))))))
