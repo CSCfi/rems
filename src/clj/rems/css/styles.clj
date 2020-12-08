@@ -75,8 +75,7 @@
                                    url('/font/Luciole/Luciole-Regular.ttf') format('truetype'),
                                    url('/font/Luciole/Luciole-Regular.svg#svgFontName') format('svg')"
                              :font-weight 400
-                             :font-style "normal"
-                             })
+                             :font-style "normal"})
    (stylesheet/at-font-face {:font-family "'Luciole Bold'"
                              :src "url('/font/Luciole/Luciole-Bold.eot') format('embedded-opentype'),
                                    url('/font/Luciole/Luciole-Bold.woff2') format('woff2'),
@@ -349,21 +348,17 @@
         typeOffset (calculateTypeOffset lineHeight fontSize descenderHeightScale)
         topSpace (- lineHeight (* capHeight fontSize))
         heightCorrection (if (> topSpace gridRowHeight)
-                            (- topSpace (mod topSpace gridRowHeight))
-                            0)
+                           (- topSpace (mod topSpace gridRowHeight))
+                           0)
         preventCollapse 1]
-     (list
-      [:.fix-font-position
-       {
-        :line-height (str lineHeight "px;")
-        :padding-top (str preventCollapse "px;")
-       }
-       ["&:before" {
-                    :content "''"
-                    :margin-top (str 12 "px;")
-                    :display "block"
-                    :height "0px"}]
-       ])))
+    (list
+     [:.fix-font-position
+      {:line-height (str lineHeight "px;")
+       :padding-top (str preventCollapse "px;")}
+      ["&:before" {:content "''"
+                   :margin-top (str 12 "px;")
+                   :display "block"
+                   :height "0px"}]])))
 
 (defn build-screen []
   (list
@@ -374,14 +369,13 @@
     {:cursor :pointer
      :color (get-theme-attribute :link-color "#025b96")}
     [:&:hover {:color (get-theme-attribute :link-hover-color :color4)}]]
-     (basekick 16 1 0.11 0.75 6 4)
+   (basekick 16 1 0.11 0.75 6 4)
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {
-           :font-family "'Luciole Regular'"
+   [:body {:font-family "'Luciole Regular'"
           ;;  (get-theme-attribute :font-family "'Lato', sans-serif")
            ;; :font-family "'Lato', sans-serif"
            :min-height (u/percent 100)
