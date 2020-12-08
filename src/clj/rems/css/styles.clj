@@ -83,7 +83,7 @@
                                    url('/font/Luciole/Luciole-Bold.woff') format('woff'),
                                    url('/font/Luciole/Luciole-Bold.ttf') format('truetype'),
                                    url('/font/Luciole/Luciole-Bold.svg#svgFontName') format('svg')"
-                             :font-weight 700
+                             :font-weight 400
                              :font-style "normal"})
    (stylesheet/at-font-face {:font-family "'Luciole Italic'"
                              :src "url('/font/Luciole/Luciole-Italic.eot') format('embedded-opentype'),
@@ -239,7 +239,7 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(defn- dashed-form-group []
+(def ^:private dashed-form-group
   {:position "relative"
    :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
@@ -247,7 +247,7 @@
    :margin-top 0
    :margin-bottom (u/px 16)})
 
-(defn- solid-form-group []
+(def ^:private solid-form-group
   {:position "relative"
    :border "2px solid #eee"
    :margin 0
@@ -339,6 +339,32 @@
   ["100%"
    {:opacity "0.0"}])
 
+(defn calculateTypeOffset [lineHeight fontSize descenderHeightScale]
+  (let [lineHeightScale (/ lineHeight fontSize)]
+    (+ (/ (- lineHeightScale  1) 2) descenderHeightScale)))
+
+(defn basekick [baseFontSize typeSizeModifier descenderHeightScale capHeight typeRowSpan gridRowHeight]
+  (let [fontSize (* typeSizeModifier baseFontSize)
+        lineHeight (* typeRowSpan gridRowHeight)
+        typeOffset (calculateTypeOffset lineHeight fontSize descenderHeightScale)
+        topSpace (- lineHeight (* capHeight fontSize))
+        heightCorrection (if (> topSpace gridRowHeight)
+                            (- topSpace (mod topSpace gridRowHeight))
+                            0)
+        preventCollapse 1]
+     (list
+      [:.fix-font-position
+       {
+        :line-height (str lineHeight "px;")
+        :padding-top (str preventCollapse "px;")
+       }
+       ["&:before" {
+                    :content "''"
+                    :margin-top (str 12 "px;")
+                    :display "block"
+                    :height "0px"}]
+       ])))
+
 (defn build-screen []
   (list
    (generate-at-font-faces)
@@ -348,13 +374,16 @@
     {:cursor :pointer
      :color (get-theme-attribute :link-color "#025b96")}
     [:&:hover {:color (get-theme-attribute :link-hover-color :color4)}]]
+     (basekick 16 1 0.11 0.75 6 4)
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {:font-family "'Luciole Regular', sans-serif"
-           ;; :font-family (get-theme-attribute :font-family "'Luciole Regular', sans-serif")
+   [:body {
+           :font-family "'Luciole Regular'"
+          ;;  (get-theme-attribute :font-family "'Lato', sans-serif")
+           ;; :font-family "'Lato', sans-serif"
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
