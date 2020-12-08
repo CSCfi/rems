@@ -24,7 +24,7 @@
   (not (contains? #{:label :header} (:field/type field))))
 
 (defn supports-info-text? [field]
-  (not (contains? #{:label} (:field/type field))))
+  (not (contains? #{:label :header} (:field/type field))))
 
 (defn supports-visibility? [field]
   true) ; at the moment all field types
