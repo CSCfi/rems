@@ -94,6 +94,11 @@ create the following <b>en.edn</b> file to the new translations folder.
                    :applicants "Students"}}}
 ```
 
+See [resources/translations/en.edn](../resources/translations/en.edn)
+for a list of all translation keys and their format parameters. Format
+parameters are pieces of text like `%3` that get replaced with certain
+information.
+
 ## Themes
 
 Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [example-theme/theme.edn](https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn) for an example.
