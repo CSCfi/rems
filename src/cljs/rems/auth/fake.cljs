@@ -8,6 +8,6 @@
    (text :t.login/fake-title)
    (text :t.login/fake-text)
    [:div.text-center
-    [atoms/link {:class "btn btn-primary btn-lg login-btn"}
+    [atoms/link {:class "btn btn-primary btn-lg login-btn fix-font-position"}
      (nav/url-dest "/fake-login")
      (text :t.login/login)]]])

@@ -15,7 +15,7 @@
   (str (:root-path context) dest))
 
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-link" (if active? " active" ""))
+  [atoms/link {:class (str "nav-link" (if active? " active" "") " fix-font-position")
                :data-toggle "collapse"
                :data-target ".navbar-collapse.show"}
    (url-dest path) title])
