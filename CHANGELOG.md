@@ -9,6 +9,7 @@ have notable changes.
 ### Changes
 
 ### Fixes
+- Fixed small issues in the form editor regarding validating empty values and field description (#2399)
 
 ### Additions
 
