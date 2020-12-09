@@ -32,7 +32,9 @@
                                     [:div.container.img]]]
                                   [:div.login.row.d-flex.justify-content-center.align-items-center
                                    [:div.col-md-8
-                                    [:h1.text-center "Development Login"]
+                                    [:h1 {:tabIndex 0
+                                          :class "text-center"}
+                                      "Development Login"]
                                     [:div.users.d-flex.flex-wrap.justify-content-stretch.align-items-start
                                      (->> (map :userid (db/get-users))
                                           (remove #(str/starts-with? % "perftester"))

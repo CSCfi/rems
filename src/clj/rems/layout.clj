@@ -91,7 +91,7 @@ window.rems = {
     [:div.col-lg-12
      [:div.centering.text-center
       [:div.text-center
-       [:h1
+       [:h1 {:tabIndex 0}
         [:span.text-danger (str "Error: " (error-details :status))]
         [:hr]
         (when-let [title (error-details :title)]
