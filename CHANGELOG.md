@@ -6,6 +6,14 @@ have notable changes.
 
 ## Unreleased
 
+### Changes
+
+### Fixes
+
+### Additions
+
+## v2.14 "Itätuulentie" 2020-12-09
+
 Changes since v2.13
 
 ### Breaking changes
