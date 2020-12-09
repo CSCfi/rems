@@ -3,7 +3,7 @@
   (:require [rems.util :refer [visibility-ratio]]))
 
 (defn focus [element]
-  (.setAttribute element "tabindex" "-1")
+  (.setAttribute element "tabindex" "0")
   (.focus element))
 
 (defn focus-without-scroll [element]
