@@ -22,8 +22,10 @@
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
             :errors {:already-member "User is already a member of this application"
                      :duplicate-id "Id is already in use."
+                     ;; %1 - invitation token
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
+                     ;; %1 - organization name
                      :organization-does-not-exist "Organization \"%1\" does not exist"
                      :submission-failed "Submission failed. Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
@@ -100,6 +102,7 @@
                    :id "Id"
                    :last-modified "Last modified"
                    :license "License"
+                   ;; %1 - license name
                    :license-field "License \"%1\""
                    :license-name "License name"
                    :licenses "Licenses"
@@ -116,6 +119,7 @@
                    :reports "Reports"
                    :resource "Resource"
                    :resources "Resources"
+                   ;; %1 - number
                    :review-email-n "Review email %1"
                    :review-emails "Review emails"
                    :save "Save"
@@ -150,21 +154,28 @@
                  ;;   code to match the term in UI.
                  :description "Title"
                  :empty "No applications."
+                 ;; %1 - date
                  :entitlement-end "Access rights end %1."
+                 ;; Format parameters for all events:
+                 ;; %1 - name of event actor
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "%1 copied the application from an old application."
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
                           :decided "%1 filed a decision for the application."
+                          ;; %2 - name & email of decider
                           :decider-invited "%1 invited %2 to decide."
                           :decider-joined "%1 accepted the invitation to decide."
+                          ;; %2 - name of decider
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
                           :draft-saved "%1 saved the application as a draft."
+                          ;; %2 - external id
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."
                           :licenses-added "%1 added terms of use."
+                          ;; %2 - member name
                           :member-added "%1 added %2 to the application."
                           :member-invited "%1 invited %2 to the application."
                           :member-joined "%1 joined to the application."
@@ -172,10 +183,13 @@
                           :member-uninvited "%1 removed %2 from the application."
                           :rejected "%1 rejected the application."
                           :remarked "%1 added a remark."
+                          ;; %2 - comma-separated list of catalogue item anems
                           :resources-changed "%1 changed the resources. New resources: %2."
                           :returned "%1 requested changes to the application."
+                          ;; %2 - name of reviewer
                           :review-requested "%1 requested a review from %2."
                           :reviewed "%1 reviewed the application."
+                          ;; %2 - name & email of reviewer
                           :reviewer-invited "%1 invited %2 to review the application."
                           :reviewer-joined "%1 accepted the invitation to review."
                           :revoked "%1 revoked the entitlement."
@@ -215,10 +229,15 @@
                          :waiting-for-your-decision "Waiting for your decision"
                          :waiting-for-your-review "Waiting for your review"}
                  :view "View"
+                 ;; %1 - application id
+                 ;; %2 - application description
                  :view-application-with-description "View application %1: %2"
+                 ;; %1 - application id
+                 ;; %2 - comma-separated list of catalogue item names
                  :view-application-without-description "View application %1 for resources: %2"}
   :cart {:add "Add to cart"
          :apply "Apply"
+         ;; %1 - number of resources
          :apply-for-bundle "Apply for %1 resources as a bundle "
          :header "%1 resources in the cart"
          :intro [:div.intro [:p "Apply for access rights by adding resources to the cart. Resources using the same application are bundled together in the cart."]]
@@ -238,6 +257,8 @@
                 :form-selection "Form"}
   :create-form {:add-form-field "Add field"
                 :add-option "Add option"
+                ;; %1 - field number
+                ;; %2 - field title
                 :field-n "Field %1: %2"
                 :field-title "Field title"
                 :field-type "Field type"
@@ -246,6 +267,7 @@
                 :maxlength "Maximum length in characters (optional)"
                 :option-key "ID code"
                 :option-label "Label"
+                ;; %1 - option number
                 :option-n "Option %1"
                 :optional "Optional field"
                 :placeholder "Placeholder text (optional)"
@@ -289,6 +311,13 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
+  ;; Format parameters for all emails (unless otherwise noted):
+  ;; %1 - name of recipient
+  ;; %2 - name of event actor
+  ;; %3 - id of application (+ description of application if available)
+  ;; %4 - name of applicant
+  ;; %5 - catalogue items of application, comma separated list
+  ;; %6 - link to application
   :email {:application-approved {:subject-to-applicant "Your application %3 has been approved"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision at %6"
                                  :subject-to-handler "(%3) Application has been approved"
@@ -320,6 +349,10 @@
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
           ;; generic text shared by decider-invited and reviewer-invited at the moment
+          ;; %1 - name of invited person, as entered in application
+          ;; %2 - applicant name
+          ;; %3 - application id (+ description if available)
+          ;; %4 - invitation link
           :decider-invited {:subject "Invitation to participate in handling application %3"
                             :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :decision-requested {:subject "(%3) Decision request"
@@ -330,6 +363,10 @@
                              :subject "Applications in progress"}
           :member-added {:subject "Added as a member of an application %3"
                          :message "Dear %1,\n\nYou've been added as a member of application %3, submitted by %4.\n\nYou can view application and accept the terms of use at %6"}
+          ;; %1 - name of member, as entered in application
+          ;; %2 - applicant name
+          ;; %3 - application id (+ description if available)
+          ;; %4 - invitation link
           :member-invited {:subject "Invitation to participate in application %3"
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :regards "\n\nKind regards,\n\nREMS\n"
@@ -368,6 +405,7 @@
          :has-accepted-licenses "Terms of use accepted."
          :invalid-attachment "Attachment file type not allowed."
          :licenses "Terms of use"
+         ;; %1 - number
          :maxlength "(max %1 characters)"
          :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
          :optional "(optional)"
@@ -381,6 +419,7 @@
          :success "Success"
          :upload "Upload an attachment"
          :upload-extensions "Allowed file types"
+         ;; %1 - field name
          :validation {:invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
@@ -409,6 +448,7 @@
                :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
+               ;; %1 - name of language
                :change-language "Change language to %1"
                :home "Home"
                :logout "Sign out"
@@ -444,6 +484,7 @@
           :all-rows-selected "All rows selected"
           :no-rows-selected "No rows selected"
           :some-rows-selected "Some rows selected"
+          ;; %1 - number
           :show-all-n-rows "Show all %1 rows"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
