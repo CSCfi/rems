@@ -86,6 +86,7 @@ Changes since v2.13
 - Added missing decision text to pdf event list.
 - More compatible CSV reports. Line returns are removed from field values and CSV lines are separated with CRLF. (#2311)
 - Fixed editing a catalogue item. (#2321)
+- Fixed browser focus for navigation with Tab key (#2367)
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
