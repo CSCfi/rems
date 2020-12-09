@@ -54,3 +54,26 @@ Example of creating the bot user with the API.
 ```sh
 curl -X POST -H "content-type: application/json" -H "x-rems-api-key: 42" -H "x-rems-user-id: owner" http://localhost:3000/api/users/create --data '{"userid": "rejecter-bot", "name": "Rejecter Bot", "email": null}'
 ```
+
+## Bona Fide bot
+
+User id: `bona-fide-bot`
+
+The Bona Fide bot is used for granting peer-verified GA4GH
+ResearcherStatus visas. See [ga4gh-visas.md](ga4gh-visas.md) for more
+background.
+
+The Bona Fide bot is designed to be used with
+- a _default workflow_ that has the bot as a handler (and optionally some human handlers)
+- a catalogue item that has a form that has an email field (in case of multiple email fields, the _first one_ is used)
+
+When an application gets submitted for the catalogue item, the bot
+sends a _decision request_ to the email address it extracts from the
+application. Then the bot waits until the recipient of the request
+logs in to rems and performs the _decide_ action. At this point:
+
+- If the decider has a ResearcherStatus visa (with `"by": "so"` or
+  `"by": "system"`, see from their IDP, [ga4gh-visas.md](ga4gh-visas.md)):
+  - and if the decider posted an approve decision: the bot approves the application
+  - and if the decider posted a reject decision: the bot rejects the application
+- If the decider doesn't have a ResearcherStatus visa, the bot rejects the application

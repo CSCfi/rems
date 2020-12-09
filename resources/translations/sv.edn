@@ -8,6 +8,8 @@
             :approve "Godkänn"
             :approve-end-date "Datum då rättigheterna upphör (valfritt)"
             :approve-reject "Godkänn eller avslå"
+            :assign-external-id "Ange externt id" ;; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
+            :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
@@ -380,7 +382,8 @@
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :required " \"%1\" är ett obligatoriskt fält."
-                      :toolong "För långt innehåll i fält \"%1\"."}}
+                      :toolong "För långt innehåll i fält \"%1\"."
+                      :unsupported "Field \"%1\" is not supported."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"

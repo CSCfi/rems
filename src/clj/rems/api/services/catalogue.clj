@@ -46,8 +46,12 @@
       :organization
       util/check-allowed-organization!))
 
-(defn edit-catalogue-item! [{:keys [id localizations]}]
+(defn edit-catalogue-item! [{:keys [id localizations organization]}]
   (check-allowed-to-edit! id)
+  (when (:organization/id organization)
+    (util/check-allowed-organization! organization)
+    (db/set-catalogue-item-organization! {:id id
+                                          :organization (:organization/id organization)}))
   (doseq [[langcode localization] localizations]
     (db/upsert-catalogue-item-localization!
      (merge {:id id

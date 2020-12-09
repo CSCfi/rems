@@ -11,7 +11,7 @@ You do not need to create a user account to log in to the service because REMS u
 You can find all the resources you can apply for access from the Catalogue tab when you are logged in. The Catalogue tab also shows your unfinished applications. Continue filling in an application by selecting **View**.
 
 1. Start the application process by adding one or more resources to your shopping cart.
-If the resources have the same application form, they will be bundled together automatically. This means that you can apply for access rights to several resources with just one application form.
+If many items can be applied for together with one application, they will be automatically bundled together for you. Otherwise you can always do multiple applications.
 ![Bundle resources](img/bundle.png)
 2. Select **Apply** to continue to the application form.
 3. Follow the instructions on the application form and fill in the required fields. If you have questions regarding a specific application form, please contact the resource owner.
@@ -53,12 +53,18 @@ You can find all your applications and see their state from Applications tab. Th
 
 ![Application state](img/state.png)
 
+**Draft**: Your application is still a draft and can't be seen by the handlers. You can continue working on your application, or you can delete it completely from the system.
+
+**Submitted**: The application has been sent to handlers and can not be edited anymore, unless specifically requested by the handler.
+
 **Approved**: After your application has been approved and you have been granted access rights, it is up to the resource owner to deliver the resource to you. The method of delivery depends on the resource and the resource owner.
 
 **Rejected**: To see why your application was rejected navigate to the application and select **View**. Handler’s comments will be shown in the Events-section.
 
 **Returned**: If the handler needs additional information regarding your application, they can return your application to you.  
 To edit the application, follow the link in the email or log in to REMS, navigate to the application and select **View**. You can see the handler’s comments in the Events-section. Make the changes the handler has requested and select **Send application**.
+
+**Revoked**: Your application, and thus your access rights, have been revoked by the handler.
 
 ## When you have been granted access rights
 

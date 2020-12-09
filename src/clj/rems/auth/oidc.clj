@@ -1,5 +1,6 @@
 (ns rems.auth.oidc
   (:require [clj-http.client :as http]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
@@ -21,6 +22,26 @@
 
 (defn logout-url []
   "/oidc-logout")
+
+(defn- get-userid [id-data]
+  (let [attr (getx env :oidc-userid-attribute)
+        attrs (if (string? attr)
+                [attr]
+                attr)]
+    (some #(get id-data (keyword %)) attrs)))
+
+(deftest test-get-userid
+  (with-redefs [env {:oidc-userid-attribute "atr"}]
+    (is (nil? (get-userid {:sub "123"})))
+    (is (= "456" (get-userid {:sub "123" :atr "456"}))))
+  (with-redefs [env {:oidc-userid-attribute ["atr"]}]
+    (is (nil? (get-userid {:sub "123"})))
+    (is (= "456" (get-userid {:sub "123" :atr "456"}))))
+  (with-redefs [env {:oidc-userid-attribute ["atr" "sub" "fallback"]}]
+    (is (= "123" (get-userid {:sub "123"})))
+    (is (= "456" (get-userid {:sub "123" :atr "456"})))
+    (is (= "456" (get-userid {:sub "123" :atr "456" :fallback "78"})))
+    (is (= "78" (get-userid {:fallback "78"})))))
 
 (defn oidc-callback [request]
   (let [response (-> (http/post (:token_endpoint oidc-configuration)
@@ -47,7 +68,7 @@
         ;; locale – could be used to set preferred lang on first login
         ;; email – non-unique (!) email
         id-data (jwt/validate id-token issuer audience now)
-        identity-base {:eppn (get id-data (keyword (getx env :oidc-userid-attribute)))
+        identity-base {:eppn (get-userid id-data)
                        ;; need to maintain a fallback list of name attributes since identity
                        ;; providers differ in what they give us
                        :commonName (some id-data [:name :unique_name :family_name])

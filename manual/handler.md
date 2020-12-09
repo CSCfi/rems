@@ -14,7 +14,7 @@ You will receive email notifications about new and resubmitted applications.
 
 To start processing applications, follow the link in the email or log in to REMS and navigate to Actions tab to see all the applications that are waiting for approval. Select **View** to open the application you want to process.
 
-You do not have to follow any specific order when you process the applications.The approval process is fully dynamic
+You do not have to follow any specific order when you process the applications. The approval process is fully dynamic.
 
 :exclamation: Note! These are general instructions about the approval process. The actual practices may vary depending on the approving organisation.
 
@@ -22,7 +22,7 @@ You do not have to follow any specific order when you process the applications.T
 
 You can approve or reject the application right away if the applicant has provided all the needed information. The applicant will receive an email notification about the decision.
 
-If the applicant has added members to their application, the members will get access rights after they have accepted the terms of use and the application has been approved.
+If the applicant has added members to their application, the members will get access rights too when the application is approved, if they have accepted the terms of use. Any member not having accepted the terms of use by that time will get access rights after they log in to REMS and accept the terms of use.
 
 :exclamation: Note! Once you approve or reject the application, the decision is final. You cannot edit it later.
 
@@ -41,10 +41,6 @@ To request for a decision or a review, locate the user in the drop-down list or 
 ![Request](img/request.png) ![Review](img/review.png)
 
 The requested user will receive an email notification about a review or a decision request.
-
-:exclamation: Note! You can only **find users that have previously logged in to REMS or have been added using the API** (Application Programming Interface). [Read more about how to use REMS through the API here](https://github.com/CSCfi/rems/blob/master/docs/using-the-api.md).
-
-If you cannot find the user you were looking for, please ask them to log in to REMS and try again.
 
 You can still approve or reject the application even if the requested user has not reviewed the application.
 
@@ -66,7 +62,7 @@ If an application is somehow inappropriate, we recommend closing it.
 
 Deleting applications is not possible because we want to always provide a full history of the application process.
 
-You can find closed applications Actions>Processed applications.
+You can find closed applications Actions > Processed applications.
 
 You can also edit the applications:
 
@@ -80,7 +76,7 @@ You can comment on the application throughout the application process by selecti
 
 You are still able to manage the applicant’s access rights after you have processed the application.
 
-You can find the processed applications from Actions>Processed applications. Processed applications show all the applications that have been approved, rejected, closed, or returned to the applicant by any handler. Select **View** to open a specific application.
+You can find the processed applications from Actions > Processed applications. Processed applications show all the applications that have been approved, rejected, closed, or returned to the applicant by any handler. Select **View** to open a specific application.
 
 ### Closing an application
 
@@ -92,7 +88,7 @@ When the applicant and the application members do not need the access rights any
 
 If the applicant has been granted access rights but they misuse them,  you can revoke the applicant’s rights by selecting **Revoke entitlement**.
 
-Revoking will add the applicant and all the members to a blacklist. This means that if any of them try to apply for access rights to the same resource again, REMS will warn the application handlers. You can find the blacklist from Administration>Blacklist.
+Revoking will add the applicant and all the members to a blacklist. This means that if any of them try to apply for access rights to the same resource again, REMS will warn the application handlers. You can find the blacklist from Administration > Blacklist.
 
 A resource owner can edit the blacklist.
 

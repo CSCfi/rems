@@ -3,7 +3,9 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
+            [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
+            [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
@@ -607,3 +609,91 @@
           (testing "and it doesn't get rejected"
             (is (= "application.state/rejected" (:application/state (api-call :get (str "/api/applications/" app-3) nil
                                                                               api-key applicant-id))))))))))
+
+(deftest test-bona-fide-bot
+  (let [api-key "42"
+        owner-id "owner"
+        applicant-id "bona-fide-applicant"
+        applicant-attributes {:userid applicant-id
+                              :name "Bona Fide Applicant"
+                              :email "applicant@example.com"}
+        referer-id "bona-fide-referer"
+        referer-attributes {:userid referer-id
+                            :name "Bona Fide Referer"
+                            :email "referer@example.com"
+                            :researcher-status-by "so"}
+        bot-attributes {:userid bona-fide-bot/bot-userid
+                        :email nil
+                        :name "bona fide bot"}]
+    (testing "create users"
+      (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
+      (api-call :post "/api/users/create" referer-attributes api-key owner-id)
+      (api-call :post "/api/users/create" bot-attributes api-key owner-id))
+    (let [resource-id (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
+                                                                           :resid "bona fide"
+                                                                           :licenses []}
+                                            api-key owner-id))
+
+          form-id (extract-id
+                   (api-call :post "/api/forms/create" {:organization {:organization/id "default"}
+                                                        :form/title "e2e"
+                                                        :form/fields [{:field/type :email
+                                                                       :field/id "referer email"
+                                                                       :field/title {:en "referer"
+                                                                                     :fi "referer"
+                                                                                     :sv "referer"}
+                                                                       :field/optional false}]}
+                             api-key owner-id))
+          workflow-id (extract-id
+                       (api-call :post "/api/workflows/create" {:organization {:organization/id "default"}
+                                                                :title "bona fide workflow"
+                                                                :type :workflow/default
+                                                                :handlers [bona-fide-bot/bot-userid]}
+                                 api-key owner-id))
+
+          catalogue-item-id (extract-id
+                             (api-call :post "/api/catalogue-items/create" {:organization {:organization/id "default"}
+                                                                            :resid resource-id
+                                                                            :form form-id
+                                                                            :wfid workflow-id
+                                                                            :localizations {:en {:title "bona fide catalogue item"}}}
+                                       api-key owner-id))
+          app-id (testing "create application"
+                   (:application-id
+                    (assert-success
+                     (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                               api-key applicant-id))))]
+      (testing "fill & submit application"
+        (assert-success
+         (api-call :post "/api/applications/save-draft" {:application-id app-id
+                                                         :field-values [{:form form-id
+                                                                         :field "referer email"
+                                                                         :value "referer@example.com"}]}
+                   api-key applicant-id))
+        (assert-success
+         (api-call :post "/api/applications/submit" {:application-id app-id}
+                   api-key applicant-id)))
+      (let [event (-> (applications/get-application-internal app-id)
+                      :application/events
+                      last)
+            token (:invitation/token event)]
+        (testing "check that bot has requested decision"
+          (is (= {:event/type :application.event/decider-invited
+                  :application/id app-id
+                  :application/decider {:name "Referer"
+                                        :email "referer@example.com"}
+                  :event/actor bona-fide-bot/bot-userid}
+                 (select-keys event [:event/type :application/id :application/decider :event/actor])))
+          (is (string? token)))
+        (testing "post decision as referer"
+          (assert-success
+           (api-call :post (str "/api/applications/accept-invitation?invitation-token=" token) nil
+                     api-key referer-id))
+          (assert-success
+           (api-call :post "/api/applications/decide" {:application-id app-id
+                                                       :decision :approved}
+                     api-key referer-id)))
+        (testing "check that application was approved"
+          (let [application (api-call :get (str "/api/applications/" app-id) nil
+                                      api-key applicant-id)]
+            (is (= "application.state/approved" (:application/state application)))))))))

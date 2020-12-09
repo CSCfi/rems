@@ -523,6 +523,34 @@
      :auto-approve auto-approve
      :organization-owner organization-owner}))
 
+(defn- create-bona-fide-catalogue-item! [users]
+  (let [owner (:owner users)
+        bot (:bona-fide-bot users)
+        res (create-resource! {:resource-ext-id "bona-fide"
+                               :organization {:organization/id "default"}
+                               :actor owner})
+        form (create-form! {:actor owner
+                            :form/title "Bona Fide form"
+                            :organization {:organization/id "default"}
+                            :form/fields [{:field/type :email
+                                           :field/title {:fi "Suosittelijan sähköpostiosoite"
+                                                         :en "Referer's email address"
+                                                         :sv "sv"}
+                                           :field/optional false}]})
+        wf (create-workflow! {:actor owner
+                              :organization {:organization/id "default"}
+                              :title "Bona Fide workflow"
+                              :type :workflow/default
+                              :handlers [bot]})]
+    (create-catalogue-item! {:actor owner
+                             :organization {:organization/id "default"}
+                             :title {:en "Apply for Bona Fide researcher status"
+                                     :fi "Hae Bona Fide tutkija -statusta"
+                                     :sv "sv"}
+                             :resource-id res
+                             :form-id form
+                             :workflow-id wf})))
+
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
@@ -776,12 +804,6 @@
                       :comment ""})))))
     (log/info "Performance test applications created")))
 
-(defn assert-no-existing-data! []
-  (assert (empty? (db/get-application-events {}))
-          "You have existing applications, refusing to continue. An empty database is needed.")
-  (assert (empty? (db/get-catalogue-items {}))
-          "You have existing catalogue items, refusing to continue. An empty database is needed."))
-
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
@@ -937,6 +959,7 @@
                              :form-id form
                              :organization {:organization/id "nbn"}
                              :workflow-id (:auto-approve workflows)})
+    (create-bona-fide-catalogue-item! (merge users +bot-users+))
     (let [thl-res (create-resource! {:resource-ext-id "thl"
                                      :organization {:organization/id "thl"}
                                      :actor owner})

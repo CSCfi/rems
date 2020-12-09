@@ -22,9 +22,10 @@
 
 (defn with-fixed-time [date f]
   (DateTimeUtils/setCurrentMillisFixed (.getMillis date))
-  (let [result (f)]
-    (DateTimeUtils/setCurrentMillisSystem)
-    result))
+  (try
+    (f)
+    (finally
+      (DateTimeUtils/setCurrentMillisSystem))))
 
 (defn fixed-time-fixture [date]
   (fn [f]

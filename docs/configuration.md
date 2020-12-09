@@ -19,11 +19,15 @@ Currently the only real authentication method is OpenId Connect (e.g. Auth0). Th
 
 The `:oidc` authentication method has the following configuration options:
 
-* `:oidc-domain` – the openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
+: `:oidc-metadata-url` - URL of the OAuth Server Metadata JSON document. See [RFC 8414](https://tools.ietf.org/html/rfc8414). Typically of the form `https://my.oidc.service/.well-known/openid-configuration`.
+* `:oidc-domain` – DEPRECATED, prefer `:oidc-configuration-url`. The openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
 * `:oidc-client-id`
 * `:oidc-client-secret`
 * `:oidc-scopes` - which scopes to request, defaults to `"openid profile email"`
-* `:oidc-userid-attribute` – which id-token attribute to use as the REMS userid. Defaults to `"sub"`.
+* `:oidc-userid-attribute` – which id-token attribute to use as the
+  REMS userid. Can be a single attribute, or a sequence of multiple
+  attributes, which are searched in order and the first non-empty one
+  used. Defaults to `"sub"`.
 * `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
@@ -89,6 +93,11 @@ create the following <b>en.edn</b> file to the new translations folder.
   :applicant-info {:applicant "Student"
                    :applicants "Students"}}}
 ```
+
+See [resources/translations/en.edn](../resources/translations/en.edn)
+for a list of all translation keys and their format parameters. Format
+parameters are pieces of text like `%3` that get replaced with certain
+information.
 
 ## Themes
 

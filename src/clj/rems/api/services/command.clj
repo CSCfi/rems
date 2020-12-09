@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [rems.api.services.blacklist :as blacklist]
             [rems.application.approver-bot :as approver-bot]
+            [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.commands :as commands]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.application-util :as application-util]
@@ -43,6 +44,7 @@
    (entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
+   (bona-fide-bot/run-bona-fide-bot new-events)
    (event-notification/queue-notifications! new-events)
    (delete-applications new-events)))
 

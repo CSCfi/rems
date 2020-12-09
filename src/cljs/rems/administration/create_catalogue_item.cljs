@@ -98,6 +98,7 @@
         description [text :t.administration/edit-catalogue-item]]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
+                    :organization (:organization request)
                     :localizations (:localizations request)}
            :handler (flash-message/default-success-handler
                      :top
@@ -115,16 +116,17 @@
  (fn [db _]
    (merge
     db
-    (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
-      (when-let [workflows (get-in db [::workflows :data])]
-        (when-let [resources (get-in db [::resources :data])]
-          (when-let [forms (get-in db [::forms :data])]
-            {::form {:workflow (item-by-id workflows :id wfid)
-                     :resource (item-by-id resources :id resource-id)
-                     :form (item-by-id forms :form/id formid)
-                     :organization organization
-                     :title (map-vals :title localizations)
-                     :infourl (map-vals :infourl localizations)}})))))))
+    (when (::editing? db)
+      (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
+        (when-let [workflows (get-in db [::workflows :data])]
+          (when-let [resources (get-in db [::resources :data])]
+            (when-let [forms (get-in db [::forms :data])]
+              {::form {:workflow (item-by-id workflows :id wfid)
+                       :resource (item-by-id resources :id resource-id)
+                       :form (item-by-id forms :form/id formid)
+                       :organization organization
+                       :title (map-vals :title localizations)
+                       :infourl (map-vals :infourl localizations)}}))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
@@ -257,10 +259,10 @@
   (let [languages @(rf/subscribe [:languages])
         editing? @(rf/subscribe [::editing?])
         catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
-        loading? (or @(rf/subscribe [::workflows ::fetching?])
-                     @(rf/subscribe [::resources ::fetching?])
-                     @(rf/subscribe [::forms ::fetching?])
-                     @(rf/subscribe [::catalogue-item ::fetching?]))
+        loading? (or @(rf/subscribe [::workflows :fetching?])
+                     @(rf/subscribe [::resources :fetching?])
+                     @(rf/subscribe [::forms :fetching?])
+                     @(rf/subscribe [::catalogue-item :fetching?]))
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]

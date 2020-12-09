@@ -20,9 +20,10 @@ When you add resources to REMS, you have to create:
 
 - **Application form**: applicants use to apply for access rights
 - **Workflow**: select how the applications will be handled
-- **Licences** (optional): set terms of use for your resources
-- **Resource**
-- and combine these items together by **creating a catalogue item**
+- **Licences**: (optional): set terms of use for your resources
+- **Resource**: a technical identifier for the data set, for example a Universal Resource Name (URN)
+
+and combine these items together by **creating a catalogue item**.
 
 Having separate items increases flexibility and reduces manual work because when you have created the items once, you can reuse them and form new catalogue items by combining different items.
   
@@ -101,7 +102,7 @@ Assign handlers for a workflow by searching the user by their username or locati
 
 :exclamation: Note! You can **only find handlers that have previously logged in to REMS or have been added using the API**. If you cannot find the handler you were looking for, please ask them to log in to REMS and try again.
 
-:point_up: Pro tip: It is also possible to make approving and rejecting automatic by selecting **Approver Bot** and **Rejecter Bot** as handlers. Approver Bot will automatically **approve all applications  where all the required fields have been filled**.  Rejecter Bot will reject the application if the applicant or any of the members attached to the application are on the blacklist.
+:point_up: Pro tip: It is also possible to make approving and rejecting automatic by selecting **Approver Bot** and **Rejecter Bot** as handlers. Approver Bot will automatically **approve all applications  where all the required fields have been filled**.  Rejecter Bot will reject the application if the applicant or any of the members attached to the application are on the blacklist. See [here](docs/bots.md) for more information.
 
 Handlers do not get notified when they have been assigned as a handler but they receive emails about new applications.
 
@@ -147,7 +148,7 @@ Give your catalogue item a descriptive name. Thus, it will be easier for the app
 
 **After you have created a catalogue item, you have to enable it**. The catalogue item is disabled at first so that you can edit it before anyone will be able to apply access to it. After enabling, the applicant will see it as a resource in Catalogue tab and can apply for access to it.
 
-:point_up: Pro tip: If you want to see how an applicant sees the catalogue items, you can navigate to the Applications tab.
+:point_up: Pro tip: If you want to see how an applicant sees the catalogue items, you can navigate to the Catalog tab.
 
 #### Editing catalogue items
 

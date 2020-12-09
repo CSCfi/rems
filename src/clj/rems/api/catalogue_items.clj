@@ -39,6 +39,7 @@
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
+   (s/optional-key :organization) OrganizationId
    :localizations WriteCatalogueItemLocalizations})
 
 (s/defschema CreateCatalogueItemResponse

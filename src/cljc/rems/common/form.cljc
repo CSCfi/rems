@@ -116,8 +116,18 @@
 (defn- validate-optional-localized-field [m key languages]
   (let [validated (mapv #(validate-text-field (get m key) %) languages)]
     ;; partial translations are not allowed
-    (when (not-empty (remove identity validated))
+    (when (some nil? validated)
       {key (apply merge validated)})))
+
+(deftest test-validate-optional-localized-field
+  (is (= {:foo nil}
+         (validate-optional-localized-field {:foo {:fi "FI" :en "EN"}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-optional-localized-field {:foo {:fi "FI"}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-optional-localized-field {:foo {:fi "FI" :en ""}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-optional-localized-field {:foo {:fi "FI" :en " "}} :foo [:fi :en]))))
 
 (def ^:private max-length-range [0 32767])
 
@@ -183,7 +193,7 @@
 
 (defn- validate-not-present [field key]
   (when (contains? field key)
-    {key :unsupported}))
+    {key :t.form.validation/unsupported}))
 
 (defn- validate-fields [fields languages]
   (letfn [(validate-field [index field]
@@ -296,9 +306,9 @@
                      (assoc-in [:form/fields 0 :field/type] :label)
                      (assoc-in [:form/fields 0 :field/placeholder :fi] "")
                      (assoc-in [:form/fields 0 :field/info-text :fi] ""))]
-        (is (= {:form/fields {0 {:field/placeholder :unsupported
-                                 :field/max-length :unsupported
-                                 :field/info-text :unsupported}}}
+        (is (= {:form/fields {0 {:field/max-length :t.form.validation/unsupported
+                                 :field/placeholder :t.form.validation/unsupported
+                                 :field/info-text :t.form.validation/unsupported}}}
                (validate-form-template form languages)))))
 
     (testing "privacy, & options shouldn't be present if they are not applicable"
@@ -307,8 +317,8 @@
                           :field/type :header
                           :field/privacy :invalid
                           :field/options [{:invalid-key :value}]}])]
-        (is (= {:form/fields {0 {:field/privacy :unsupported
-                                 :field/options :unsupported}}}
+        (is (= {:form/fields {0 {:field/privacy :t.form.validation/unsupported
+                                 :field/options :t.form.validation/unsupported}}}
                (validate-form-template form languages)))))
 
     (testing "option fields"

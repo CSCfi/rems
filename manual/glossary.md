@@ -48,7 +48,7 @@ An owner is a user who lists and manages their data resources in REMS. Owners ca
 Owner role is always assigned by the REMS admins.
 
 **Reporter**
-Reporter is a user who can view all applications. Reporters are only available when using REMS API.
+Reporter is a user who can only view all applications. Can be used for e.g. a supervisor who should only monitor the application process.
 
 **Reviewer**
 Reviewer is a user who can review and comment on applications but cannot approve or reject them. Handlers invite reviewers to evaluate applications.
