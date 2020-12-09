@@ -131,8 +131,10 @@
   (get-in field [:field/title lang]))
 
 (defn build-localized-string [lstr languages]
-  (into {} (for [language languages]
-             [language (trim-when-string (get lstr language ""))])))
+  (let [v (into {} (for [language languages]
+                     [language (trim-when-string (get lstr language ""))]))]
+    (when-not (every? str/blank? (vals v))
+      v)))
 
 (defn- build-request-field [field languages]
   (merge {:field/id (:field/id field)
@@ -142,9 +144,11 @@
                             (boolean (:field/optional field))
                             false)}
          (when (common-form/supports-info-text? field)
-           {:field/info-text (build-localized-string (:field/info-text field) languages)})
+           (when-let [v (build-localized-string (:field/info-text field) languages)]
+             {:field/info-text v}))
          (when (common-form/supports-placeholder? field)
-           {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
+           (when-let [v (build-localized-string (:field/placeholder field) languages)]
+             {:field/placeholder v}))
          (when (common-form/supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
          (when (common-form/supports-options? field)

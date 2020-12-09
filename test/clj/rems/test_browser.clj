@@ -1147,8 +1147,7 @@
         (is (= {:form/id form-id
                 :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
-                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
-                               :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
                                :field/id "fld3"

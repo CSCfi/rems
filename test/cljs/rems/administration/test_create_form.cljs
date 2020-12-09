@@ -192,12 +192,10 @@
 
              (mapv #(build-request-field % languages) fields)))
 
-      (testing "empty info texts should be passed on"
+      (testing "empty info texts should be passed on except when all empty"
         (is (= [{:field/id "fld1"
                  :field/title {:en "en title"
                                :fi "fi title"}
-                 :field/info-text {:en ""
-                                   :fi ""}
                  :field/optional true
                  :field/type :text
                  :field/max-length 12
@@ -258,8 +256,6 @@
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
-                             :field/info-text {:en ""
-                                               :fi ""}
                              :field/optional true
                              :field/type :text
                              :field/max-length 12
@@ -307,13 +303,13 @@
                            [:form/fields 0 :field/optional]))))
 
     (testing "placeholder is optional"
-      (is (= {:en "" :fi ""}
-             (getx-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] nil) languages)
-                      [:form/fields 0 :field/placeholder])
-             (getx-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] {:en ""}) languages)
-                      [:form/fields 0 :field/placeholder])
-             (getx-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] {:en "" :fi ""}) languages)
-                      [:form/fields 0 :field/placeholder]))))
+      (is (= nil
+             (get-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] nil) languages)
+                     [:form/fields 0 :field/placeholder])
+             (get-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] {:en ""}) languages)
+                     [:form/fields 0 :field/placeholder])
+             (get-in (build-request (assoc-in form [:form/fields 0 :field/placeholder] {:en "" :fi ""}) languages)
+                     [:form/fields 0 :field/placeholder]))))
 
     (testing "max length is optional"
       (is (nil? (getx-in (build-request (assoc-in form [:form/fields 0 :field/max-length] "") languages)
@@ -443,8 +439,11 @@
     (testing "localizations are copied as-is"
       (is (= {:en "x", :fi "y"}
              (build-localized-string {:en "x", :fi "y"} languages))))
-    (testing "missing localizations default to empty string"
-      (is (= {:en "", :fi ""}
+    (testing "missing localization defaults to an empty string"
+      (is (= {:en "x", :fi ""}
+             (build-localized-string {:en "x"} languages))))
+    (testing "missing all localizations is nil"
+      (is (= nil
              (build-localized-string {} languages))))
     (testing "additional languages are excluded"
       (is (= {:en "x", :fi "y"}
