@@ -35,6 +35,10 @@
       (or attr-value (recur (rest attr-names))))))
 
 (def content-width (u/px 1200))
+(def logo-height-menu (u/px 40))
+(def logo-height (u/px 150))
+(def menu-height 56)
+(def recalculated-menu-height (u/px (int (+ menu-height 12))))
 
 (defn resolve-image [path]
   (when path
@@ -96,14 +100,16 @@
                            :background-size :contain
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
-                         [:.logo
-                          {:height (u/px 150)}]))
+                         [:.logo {:height logo-height
+                                  :min-height logo-height}]))
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
                         [:.commands {:white-space "nowrap"}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
-                        [:body {:scroll-behavior :auto}])))
+                        [:body {:scroll-behavior :auto}])
+   (stylesheet/at-media {:max-width (u/px 480)}
+                        [:.navbar-brand {:display "none"}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -350,12 +356,13 @@
     [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
+           :min-height "100vh"
            :height (u/percent 100)}]
    [:body {:font-family (get-theme-attribute :font-family "'Lato', sans-serif")
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
-           :padding-top (u/px 56)
+           :padding-top recalculated-menu-height
            :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
    [:h1 {:margin-bottom (u/rem 2)}]
@@ -369,7 +376,7 @@
    [:.fixed-top {:background-color "#fff"
                  :border-bottom (get-theme-attribute :header-border "3px solid #ccc")
                  :box-shadow (get-theme-attribute :header-shadow :table-shadow)
-                 :min-height (u/px 56)}]
+                 :min-height menu-height}]
    [:.skip-navigation {:position :absolute
                        :left (u/em -1000)}
     [:&:active
@@ -381,11 +388,11 @@
                     :min-height (u/px 300)
                     :max-width content-width
                     :flex-grow 1
-                    ;; Height of navigation + logo, to avoid page content going under
+                    ;; Height of navigation, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
-                    :padding-top (u/px 212)
-                    :margin-top (u/px -212)}]
+                    :padding-top recalculated-menu-height
+                    :margin-top (u/px (- (int (+ menu-height 6))))}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
            :font-weight (button-navbar-font-weight)}]
@@ -555,6 +562,25 @@
                    :flex-direction "row"
                    :justify-content "space-between"
                    :min-width "100%"}]
+
+   ;; Logo, login, etc.
+   [:.logo-menu {:height logo-height-menu
+                 :background-color (get-theme-attribute :logo-bgcolor)
+                 :width "100px"}]
+   [:.logo {:height logo-height
+            :background-color (get-theme-attribute :logo-bgcolor)
+            :width "100%"
+            :margin "0 auto"}]
+   [(s/descendant :.logo :.img) (s/descendant :.logo-menu :.img) {:height "100%"
+                                                                  :background-color (get-theme-attribute :logo-bgcolor)
+                                                                  :background-image (get-logo-image context/*lang*)
+                                                                  :-webkit-background-size :contain
+                                                                  :-moz-o-background-size :contain
+                                                                  :-o-background-size :contain
+                                                                  :background-size :contain
+                                                                  :background-repeat :no-repeat
+                                                                  :background-position [[:center :center]]
+                                                                  :background-origin (get-theme-attribute :logo-content-origin)}]
    ;; Footer
    (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
      [:footer {:width "100%"
@@ -571,24 +597,6 @@
                             :bottom 0
                             :right (u/px 140)}]])
 
-   ;; Logo, login, etc.
-   [:.logo {:height (u/px 140)
-            :background-color (get-theme-attribute :logo-bgcolor)
-            :padding "0 20px"
-            :margin-bottom (u/em 1)}]
-   [(s/descendant :.logo :.img) {:height "100%"
-                                 :background-color (get-theme-attribute :logo-bgcolor)
-                                 :background-image (get-logo-image context/*lang*)
-                                 :-webkit-background-size :contain
-                                 :-moz-o-background-size :contain
-                                 :-o-background-size :contain
-                                 :background-size :contain
-                                 :background-repeat :no-repeat
-                                 :background-position [[:center :center]]
-                                 :background-origin (get-theme-attribute :logo-content-origin)
-                                 :padding-left (u/px 20)
-                                 :padding-right (u/px 20)
-                                 :padding-top (u/px 8)}]
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"

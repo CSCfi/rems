@@ -60,14 +60,16 @@
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text])))))
 
+(defn logo [menu-navigation?]
+  [:div {:class (str "navbar-brand" (if menu-navigation? " logo-menu" " logo"))}
+   [:div.img]])
+
 (defn navbar-items [e identity]
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
         catalogue-is-public (:catalogue-is-public config)]
     [e (into [:div.navbar-nav.mr-auto
-              (when-not (:user identity)
-                [nav-link "/" (text :t.navigation/home) :exact])
               (when (or (roles/is-logged-in? roles) catalogue-is-public)
                 [nav-link "/catalogue" (text :t.navigation/catalogue)])
               (when (roles/show-applications? roles)
@@ -80,13 +82,17 @@
      [language-switcher]]))
 
 (defn navbar-normal [identity]
-  [:nav.navbar-flex
-   [:div.navbar.navbar-expand-sm.flex-fill
-    [:button.navbar-toggler
-     {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
-     "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 identity]]
-   [:div.navbar [user-widget (:user identity)]]])
+  (let [theme @(rf/subscribe [:theme])]
+    [:nav.navbar-flex
+     [:div.navbar.navbar-expand-sm.flex-fill
+      (if (:upper-left-logo theme)
+        [logo (:upper-left-logo theme)]
+        nil)
+      [:button.navbar-toggler
+       {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
+       "\u2630"]
+      [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 identity]]
+     [:div.navbar [user-widget (:user identity)]]]))
 
 (defn navbar-small [user]
   [navbar-items :div#small-navbar.collapse.navbar-collapse.hidden-md-up user])
@@ -100,7 +106,8 @@
   (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
      [skip-navigation]
-     [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
+     [:div.navbar-top-bar
+      [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.navbar-wrapper.container-fluid
       [navbar-normal identity]
       [navbar-small identity]]

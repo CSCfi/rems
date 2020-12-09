@@ -295,9 +295,6 @@
       [dev-reload-button])
     [:div.footer-text (text :t/footer)]]])
 
-(defn logo []
-  [:div.logo [:div.container.img]])
-
 (defn main-content [_page-id _grab-focus?]
   (let [on-update (fn [this]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
@@ -332,11 +329,13 @@
 
 (defn page []
   (let [page-id @(rf/subscribe [:page])
-        grab-focus? @(rf/subscribe [::grab-focus?])]
+        grab-focus? @(rf/subscribe [::grab-focus?])
+        theme @(rf/subscribe [:theme])]
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]
-     [logo]
+     (when-not (:upper-left-logo theme)
+       [nav/logo])
      [main-content page-id grab-focus?]
      [footer]]))
 
