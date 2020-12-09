@@ -48,13 +48,10 @@ Changes since v2.13
 - Deciders and reviewers can now be invited via email. (#2040)
   - New `invite-decider` and `invite-reviewer` commands in the API & UI
   - Commands are available to the handler on submitted applications. See [permission table](docs/application-permissions.md).
-<<<<<<< HEAD
 - The first version of REMS [user manual](manual/)
-=======
 - Experimental bona fide bot for granting peer-verified ResearcherStatus visas. See [docs/bots.md](docs/bots.md).
 - Assign external id button can now be shown for handlers with the `:enable-assign-external-ui` config flag (defaults to `false`). See [resources/config-defaults.edn](resources/config-defaults.edn). (#2476)
 - The `:oidc-userid-attribute` configuration option can now contain a list of attributes to try in order. See [docs/configuration.md](docs/configuration.md). (#2366)
->>>>>>> 9aae0981b4fe5f329a0ea0076207536937316aa9
 
 ## v2.13 "Etelätuulentie" 2020-09-17
 
