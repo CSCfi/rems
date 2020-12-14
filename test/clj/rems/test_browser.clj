@@ -1031,9 +1031,9 @@
       (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
       (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
       (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
-      (btu/fill-human :fields-0-info-text-en "Info text (EN)")
-      (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
-      (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
+      (btu/fill-human :fields-0-info-text-en "") ; should not get passed as is blank
+      (btu/fill-human :fields-0-info-text-fi " ")
+      (btu/fill-human :fields-0-info-text-sv "")
       (btu/scroll-and-click :fields-0-type-texta)
       (btu/scroll-and-click :fields-0-optional)
       (btu/fill-human :fields-0-max-length "127")
@@ -1147,8 +1147,7 @@
         (is (= {:form/id form-id
                 :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
                 :form/title "Form editor test"
-                :form/fields [{:field/placeholder {:fi "" :en "" :sv ""}
-                               :field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
+                :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
                                :field/id "fld3"
@@ -1156,7 +1155,6 @@
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
                                :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
-                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "texta"
                                :field/id "fld1"
                                :field/max-length 127
