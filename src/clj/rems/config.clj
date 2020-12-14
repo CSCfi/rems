@@ -90,7 +90,7 @@
 
 (defn- oidc-metadata-url []
   (or (:oidc-metadata-url env)
-      (when-let [domain (env :oidc-comain)]
+      (when-let [domain (env :oidc-domain)]
         (str "https://"
              domain
              "/.well-known/openid-configuration"))))
