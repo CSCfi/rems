@@ -58,8 +58,11 @@ The most important things for a nice screen reader experience are:
 - we try to order the DOM in an order that makes sense
   (e.g. the Actions menu comes after the other application information)
 
-## Mac OS specific settings
 
-It has bee discovered that in order to properly test/use a11y features, such as  `:focus` outline, on Mac OS Catalina, you should have Accessibility settings explicitly enabled in your OS settings. Please, refer to these resources for instructions: 
-- [here](https://www.scottohara.me/blog/2014/10/03/link-tabbing-firefox-osx.html)
-- [here](https://www.a11yproject.com/posts/2017-12-29-macos-browser-keyboard-navigation/)
+
+
+### Mac OS specific settings
+
+It has been discovered that in order to properly test/use accessibility features, such as  `:focus` outline, on Mac OS Catalina, you should have Accessibility settings explicitly enabled in your OS settings. Please, refer to these resources for instructions: 
+  - [No, tabbing is not broken. Yes, I was confused too.](https://www.scottohara.me/blog/2014/10/03/link-tabbing-firefox-osx.html)
+  - [Browser Keyboard Navigation in macOS](https://www.a11yproject.com/posts/2017-12-29-macos-browser-keyboard-navigation/)
