@@ -9,6 +9,7 @@ have notable changes.
 ### Changes
 
 ### Fixes
+- Reading of `:oidc-domain` config option was broken in v2.14, now fixed. (#2489)
 
 ### Additions
 
