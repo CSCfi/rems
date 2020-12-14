@@ -596,7 +596,11 @@
 
 (def ^:private sensitive-events #{:application.event/review-requested
                                   :application.event/reviewed
+                                  :application.event/reviewer-invited
+                                  :application.event/reviewer-joined
                                   :application.event/decided
+                                  :application.event/decider-invited
+                                  :application.event/decider-joined
                                   :application.event/decision-requested})
 (deftest test-sensitive-events
   (let [public-events #{:application.event/approved
@@ -604,8 +608,6 @@
                         :application.event/copied-from
                         :application.event/copied-to
                         :application.event/created
-                        :application.event/decider-invited
-                        :application.event/decider-joined
                         :application.event/deleted
                         :application.event/draft-saved
                         :application.event/external-id-assigned
@@ -620,8 +622,6 @@
                         :application.event/remarked
                         :application.event/resources-changed
                         :application.event/returned
-                        :application.event/reviewer-invited
-                        :application.event/reviewer-joined
                         :application.event/revoked
                         :application.event/submitted}]
     (is (= #{}
