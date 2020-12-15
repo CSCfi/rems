@@ -6,7 +6,7 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.14
+Changes since v2.14.1
 
 ### Changes
 
