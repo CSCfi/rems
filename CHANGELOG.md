@@ -6,14 +6,24 @@ have notable changes.
 
 ## Unreleased
 
+Changes since v2.14
+
 ### Changes
+
+### Fixes
+
+### Additions
+
+## v2.14.1 "Itätuulentie 2" 2020-12-15
+
+This is a bugfix release for v2.14.
+
+Change since v2.14
 
 ### Fixes
 - Fixed small issues in the form editor regarding validating empty values and field description (#2399)
 - Reading of `:oidc-domain` config option was broken in v2.14, now fixed. (#2489)
 - Hide decider/reviewer invitation events from applicant.
-
-### Additions
 
 ## v2.14 "Itätuulentie" 2020-12-09
 
