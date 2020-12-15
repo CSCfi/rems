@@ -23,7 +23,7 @@ Change since v2.14
 ### Fixes
 - Fixed small issues in the form editor regarding validating empty values and field description (#2399)
 - Reading of `:oidc-domain` config option was broken in v2.14, now fixed. (#2489)
-- Hide decider/reviewer invitation events from applicant.
+- Hide decider/reviewer invitation events from applicant. (#2485)
 
 ## v2.14 "Itätuulentie" 2020-12-09
 
