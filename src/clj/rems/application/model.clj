@@ -1,5 +1,6 @@
 (ns rems.application.model
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
             [medley.core :refer [find-first map-vals update-existing]]
             [rems.application.events :as events]
@@ -593,12 +594,46 @@
 
 ;;;; Authorization
 
+(def ^:private sensitive-events #{:application.event/review-requested
+                                  :application.event/reviewed
+                                  :application.event/reviewer-invited
+                                  :application.event/reviewer-joined
+                                  :application.event/decided
+                                  :application.event/decider-invited
+                                  :application.event/decider-joined
+                                  :application.event/decision-requested})
+(deftest test-sensitive-events
+  (let [public-events #{:application.event/approved
+                        :application.event/closed
+                        :application.event/copied-from
+                        :application.event/copied-to
+                        :application.event/created
+                        :application.event/deleted
+                        :application.event/draft-saved
+                        :application.event/external-id-assigned
+                        :application.event/licenses-accepted
+                        :application.event/licenses-added
+                        :application.event/member-added
+                        :application.event/member-invited
+                        :application.event/member-joined
+                        :application.event/member-removed
+                        :application.event/member-uninvited
+                        :application.event/rejected
+                        :application.event/remarked
+                        :application.event/resources-changed
+                        :application.event/returned
+                        :application.event/revoked
+                        :application.event/submitted}]
+    (is (= #{}
+           (set/intersection sensitive-events public-events)))
+    (is (= #{}
+           (set/difference (set events/event-types)
+                           (set/union public-events sensitive-events)))
+        "seems like a new event has been added; is public or sensitive?")))
+
 (defn- hide-sensitive-events [events]
   (->> events
-       (remove (comp #{:application.event/review-requested
-                       :application.event/reviewed
-                       :application.event/decided
-                       :application.event/decision-requested}
+       (remove (comp sensitive-events
                      :event/type))
        (remove #(and (= :application.event/remarked
                         (:event/type %))

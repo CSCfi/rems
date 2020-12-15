@@ -11,6 +11,7 @@ have notable changes.
 ### Fixes
 - Fixed small issues in the form editor regarding validating empty values and field description (#2399)
 - Reading of `:oidc-domain` config option was broken in v2.14, now fixed. (#2489)
+- Hide decider/reviewer invitation events from applicant.
 
 ### Additions
 
