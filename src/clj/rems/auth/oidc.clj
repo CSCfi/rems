@@ -78,10 +78,14 @@
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
 
         user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
-                    (-> (http/get url
-                                  {:headers {"Authorization" (str "Bearer " access-token)}})
-                        :body
-                        json/parse-string))
+                    (try
+                      (-> (http/get url
+                                    {:headers {"Authorization" (str "Bearer " access-token)}})
+                          :body
+                          json/parse-string)
+                      (catch Exception e
+                        (log/warn "Fetching user info failed" e)
+                        {})))
         researcher-status-attributes (when-let [by (ga4gh/passport->researcher-status-by user-info)]
                                        {:researcher-status-by by})]
     (when (:log-authentication-details env)
