@@ -12,7 +12,7 @@
             [rems.layout :as layout]
             [rems.util :refer [getx-user-id]]
             [ring.util.codec :refer [url-encode]]
-            [ring.util.response :refer [content-type not-found bad-request redirect response]])
+            [ring.util.response :refer [content-type header not-found bad-request redirect response]])
   (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
@@ -48,7 +48,8 @@
 
 (defroutes normal-routes
   (GET "/" []
-    (layout/home-page))
+    (-> (layout/home-page)
+        (header "Cache-Control" "no-store")))
 
   ;; TODO should these redirects have swagger documentation?
 
