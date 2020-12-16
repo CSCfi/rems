@@ -51,7 +51,9 @@
                                               (getx env :oidc-client-secret)]
                                  :form-params {:grant_type "authorization_code"
                                                :code (get-in request [:params :code])
-                                               :redirect_uri (str (getx env :public-url) "oidc-callback")}})
+                                               :redirect_uri (str (getx env :public-url) "oidc-callback")}
+                                 :save-request? true
+                                 :debug-body true})
                      ;; FIXME Complains about Invalid cookie header in logs
                      ;; TODO Unhandled responses for token endpoint:
                      ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
