@@ -25,7 +25,9 @@ window.rems = {
   (str "/css/" (name language) "/screen.css"))
 
 (defn- cache-bust [filename]
-  (str filename "?" (:revision git/+version+)))
+  (str filename "?" (or (:revision git/+version+)
+                        ;; for dev mode
+                        (System/currentTimeMillis))))
 
 (defn- page-template
   [content & [app-content]]
