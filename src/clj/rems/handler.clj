@@ -22,7 +22,9 @@
 (defn public-routes []
   (routes
    (home/home-routes)
-   (auth/auth-routes)))
+   ;; never cache authentication results
+   ;; TODO this is a slightly hacky place to do this
+   (middleware/wrap-no-cache (auth/auth-routes))))
 
 (defroutes secured-routes
   entitlements/entitlements-routes)
