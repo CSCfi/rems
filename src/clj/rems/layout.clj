@@ -24,6 +24,9 @@ window.rems = {
 (defn- css-filename [language]
   (str "/css/" (name language) "/screen.css"))
 
+(defn- cache-bust [filename]
+  (str filename "?" (:revision git/+version+)))
+
 (defn- page-template
   [content & [app-content]]
   (html5 [:html {:lang "en"}
@@ -36,7 +39,7 @@ window.rems = {
                      #(text :t.header/title))]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
-           (include-css (css-filename (env :default-language)))]
+           (include-css (cache-bust (css-filename (env :default-language))))]
           [:body
            [:div#app app-content]
            (include-js "/assets/font-awesome/js/fontawesome.js")
@@ -78,7 +81,7 @@ window.rems = {
     [:script {:type "text/javascript"}
      (format "var csrfToken = '%s';" (when (bound? #'*anti-forgery-token*)
                                        *anti-forgery-token*))]
-    (include-js (str "/js/app.js?" (:revision git/+version+)))
+    (include-js (cache-bust "/js/app.js"))
     [:script {:type "text/javascript"}
      (format "rems.app.setIdentity(%s);"
              (json/generate-string {:user (when context/*user*
