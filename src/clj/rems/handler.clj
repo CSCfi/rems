@@ -89,10 +89,6 @@
 (def home-route
   (GET "/" [] (layout/home-page)))
 
-;; TODO this should be an API
-(defroutes secured-routes
-  entitlements/entitlements-routes)
-
 (defn extra-script-routes [{:keys [root files]}]
   (let [files (set files)]
     (fn [request]
@@ -103,12 +99,13 @@
   (routes
    home-route
    (wrap-login-redirect (routes attachment-routes
-                                redirects))
+                                redirects
+                                ;; TODO /entitlements.csv should be an API
+                                entitlements/entitlements-routes))
    styles/css-routes
    ;; never cache authentication results
    ;; TODO this is a slightly hacky place to do this
    (middleware/wrap-no-cache (auth/auth-routes))
-   (wrap-routes #'secured-routes middleware/wrap-restricted)
    #'api-routes
    (extra-script-routes (:extra-scripts env))
    (if-let [path (:extra-static-resources env)]
