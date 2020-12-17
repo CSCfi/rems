@@ -39,13 +39,16 @@
     (update-in workflow [:workflow :handlers] #(map :userid %))
     workflow))
 
-(defn edit-workflow! [{:keys [id title handlers]}]
+(defn edit-workflow! [{:keys [id organization title handlers]}]
   (let [workflow (unrich-workflow (workflow/get-workflow id))
         workflow-body (cond-> (:workflow workflow)
                         handlers (assoc :handlers handlers))]
     (util/check-allowed-organization! (:organization workflow))
+    (when organization
+      (util/check-allowed-organization! organization))
     (db/edit-workflow! {:id id
                         :title title
+                        :organization (:organization/id organization)
                         :workflow (json/generate-string workflow-body)}))
   (applications/reload-cache!)
   {:success true})

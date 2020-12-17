@@ -80,10 +80,12 @@
 (defn- valid-edit-request? [request]
   (and (number? (:id request))
        (seq (:handlers request))
+       (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:title request)))))
 
 (defn build-edit-request [id form]
-  (let [request {:id id
+  (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
+                 :id id
                  :title (:title form)
                  :handlers (map :userid (:handlers form))}]
     (when (valid-edit-request? request)
@@ -134,7 +136,6 @@
 (defn- workflow-organization-field []
   [fields/organization-field {:id "organization-dropdown"
                               :value @(rf/subscribe [::selected-organization])
-                              :readonly @(rf/subscribe [::editing?])
                               :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- workflow-title-field []
