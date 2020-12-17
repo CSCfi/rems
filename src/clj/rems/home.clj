@@ -48,8 +48,7 @@
 
 (defroutes normal-routes
   (GET "/" []
-    (-> (layout/home-page)
-        (header "Cache-Control" "no-store")))
+    (layout/home-page))
 
   ;; TODO should these redirects have swagger documentation?
 

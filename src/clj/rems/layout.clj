@@ -70,7 +70,10 @@ window.rems = {
   [content & [params]]
   (let [content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
-        headers (:headers params {})]
+        ;; we don't want to cache any HTML pages since they contain
+        ;; references to cache-busted app.js and screen.css
+        headers (merge {"Cache-Control" "no-store"}
+                       (:headers params))]
     (response/content-type
      {:status status
       :headers headers

@@ -20,6 +20,16 @@
         (is (.contains body "app.js?abcd1234")))
       (testing "cache-busting for screen.css"
         (is (.contains body "screen.css?abcd1234")))))
+  (testing "Cache-Control header for /redirect"
+    (let [response (-> (request :get "/redirect")
+                       handler)]
+      (is (= 200 (:status response)))
+      (is (= "no-store" (get-in response [:headers "Cache-Control"])))))
+  (testing "Cache-Control header for /fake-login"
+    (let [response (-> (request :get "/fake-login")
+                       handler)]
+      (is (= 200 (:status response)))
+      (is (= "no-store" (get-in response [:headers "Cache-Control"])))))
   (testing "default Cache-Control header"
     (let [response (-> (request :get "/img/rems_logo_en.png")
                        handler)]
