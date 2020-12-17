@@ -86,6 +86,9 @@
                         :title "Page not found"})
   (layout/home-page))
 
+(def home-route
+  (GET "/" [] (layout/home-page)))
+
 ;; TODO this should be an API
 (defroutes secured-routes
   entitlements/entitlements-routes)
@@ -98,9 +101,8 @@
 
 (defn app-routes []
   (routes
-   (wrap-login-redirect (routes (GET "/" []
-                                     (layout/home-page))
-                                attachment-routes
+   home-route
+   (wrap-login-redirect (routes attachment-routes
                                 redirects))
    styles/css-routes
    ;; never cache authentication results
