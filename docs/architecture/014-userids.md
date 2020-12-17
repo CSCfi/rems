@@ -57,7 +57,7 @@ When somebody uses the userid `xyz` in an API call, REMS searches for the user l
 2. Iterate through every attribute `attr` in `:oidc-user-attributes`, in order
    1. If there is a user with `attr: xyz`, use that user
    2. If not, keep iterating
-3. If no user was found, return HTTP 400 Bad Request
+3. If no user was found, or multiple users were found, return HTTP 400 Bad Request
 
 # Examples
 
@@ -172,6 +172,10 @@ Should we switch all APIs that take userids to a structured
 `{"userid": "abc123"}` form? Then we could specify users more
 explicitly like `{"eppn": "user@example.com"}`.
 
+Alternatively, we could make the APIs polymorphic so that you can
+specify a user as `"userid"` or `{"attr": "value"}`. This would be
+backwards-compatible but make the code more complex.
+
 ## `x-rems-user-id`
 
 Should we allow external user ids in `x-rems-user-id`?
@@ -190,3 +194,5 @@ as-is?
 A good index is needed for performance when looking up users based on
 attributes. Is storing the data in JSONB fine or should we also add
 new columns?
+
+We can also use Lucene to implement user searching.
