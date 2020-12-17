@@ -103,10 +103,12 @@
 (defn app-routes []
   (routes
    home-route
-   (wrap-login-redirect (routes attachment-routes
-                                redirects
-                                ;; TODO /entitlements.csv should be an API
-                                entitlements/entitlements-routes))
+   (middleware/wrap-no-cache
+    (wrap-login-redirect
+     (routes attachment-routes
+             redirects
+             ;; TODO /entitlements.csv should be an API
+             entitlements/entitlements-routes)))
    styles/css-routes
    ;; never cache authentication results
    ;; TODO this is a slightly hacky place to do this
