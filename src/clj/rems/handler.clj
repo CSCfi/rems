@@ -19,7 +19,7 @@
             [rems.middleware :as middleware]
             [rems.util :refer [getx-user-id never-match-route]]
             [ring.util.codec :refer [url-encode]]
-            [ring.util.response :refer [content-type file-response not-found bad-request redirect response]])
+            [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
     (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
@@ -40,23 +40,6 @@
       (not (apply = (mapv :wfid items))) (-> (bad-request "Unbundlable catalogue items: workflows don't match")
                                              (content-type "text/plain"))
       :else (redirect (str "/application?items=" (str/join "," (mapv :id items)))))))
-
-(defn render-css
-  "Helper function for rendering styles that has parameters for
-  easy memoization purposes."
-  [language]
-  (log/info (str "Rendering stylesheet for language " language))
-  (-> (styles/screen-css)
-      (response)
-      (content-type "text/css")))
-
-(mount/defstate memoized-render-css
-  :start (memoize render-css))
-
-(defroutes css-routes
-  (GET "/css/:language/screen.css" [language]
-    (binding [context/*lang* (keyword language)]
-      (memoized-render-css context/*lang*))))
 
 (defroutes redirects
   (GET "/accept-invitation" [token]
@@ -119,7 +102,7 @@
                                      (layout/home-page))
                                 attachment-routes
                                 redirects))
-   css-routes
+   styles/css-routes
    ;; never cache authentication results
    ;; TODO this is a slightly hacky place to do this
    (middleware/wrap-no-cache (auth/auth-routes))

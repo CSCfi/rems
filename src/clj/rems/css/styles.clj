@@ -9,6 +9,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
+            [compojure.core :refer [GET defroutes]]
             [garden.color :as c]
             [garden.core :as g]
             [garden.def :refer [defkeyframes]]
@@ -18,7 +19,8 @@
             [medley.core :refer [map-vals remove-vals]]
             [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.context :as context]))
+            [rems.context :as context]
+            [ring.util.response :as response]))
 
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme with fallbacks.
@@ -877,3 +879,20 @@
       (binding [context/*lang* language]
         (render-css-file language
                          (screen-css))))))
+
+(defn render-css
+  "Helper function for rendering styles that has parameters for
+  easy memoization purposes."
+  [language]
+  (log/info (str "Rendering stylesheet for language " language))
+  (-> (screen-css)
+      (response/response)
+      (response/content-type "text/css")))
+
+(mount/defstate memoized-render-css
+  :start (memoize render-css))
+
+(defroutes css-routes
+  (GET "/css/:language/screen.css" [language]
+    (binding [context/*lang* (keyword language)]
+      (memoized-render-css context/*lang*))))
