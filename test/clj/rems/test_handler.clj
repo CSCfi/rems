@@ -25,4 +25,9 @@
                        handler)]
       (is (= 200 (:status response)))
       (is (= (str "max-age=" (* 60 60 23))
-             (get-in response [:headers "Cache-Control"]))))))
+             (get-in response [:headers "Cache-Control"])))))
+  (testing "api Cache-Control header"
+    (let [response (-> (request :get "/api/health")
+                       handler)]
+      (is (= 200 (:status response)))
+      (is (= "no-store" (get-in response [:headers "Cache-Control"]))))))

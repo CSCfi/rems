@@ -215,9 +215,16 @@
   "In case a Cache-Control header is missing, add a default of 23h"
   [handler]
   (fn [request]
-    (-> request
-        handler
-        (update :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))})))))
+    (let [response (handler request)]
+      (when response
+        (update response :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))}))))))
+
+(defn wrap-no-cache
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (when response
+        (header response "Cache-Control" "no-store")))))
 
 (defn wrap-defaults-settings []
   (-> site-defaults
