@@ -211,6 +211,13 @@
          :when identity]
      (users/format-user identity))))
 
+(defn wrap-cache-control
+  "In case a Cache-Control header is missing, add a default of 23h"
+  [handler]
+  (fn [request]
+    (-> request
+        handler
+        (update :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))})))))
 
 (defn wrap-defaults-settings []
   (-> site-defaults
@@ -234,5 +241,6 @@
       auth/wrap-auth
       wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
+      wrap-cache-control
       wrap-internal-error
       wrap-request-context))
