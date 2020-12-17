@@ -16,9 +16,9 @@
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
-            [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.logging :refer [with-mdc]]
+            [rems.middleware.dev :refer [wrap-dev]]
             [rems.util :refer [get-user-id getx-user-id update-present]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -236,7 +236,8 @@
       (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
 
 (defn wrap-base [handler]
-  (-> ((:middleware +defaults+) handler)
+  (-> handler
+      ((if (:dev env) wrap-dev identity))
       wrap-fix-location-header
       wrap-unauthorized-and-forbidden
       wrap-logging
