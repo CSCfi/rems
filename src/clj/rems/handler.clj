@@ -95,6 +95,11 @@
       (when (contains? files (:uri request))
         (file-response (:uri request) {:root root})))))
 
+(defn- static-resources [path]
+  (if path
+    (route/files "/" {:root path})
+    never-match-route))
+
 (defn app-routes []
   (routes
    home-route
@@ -108,12 +113,8 @@
    (middleware/wrap-no-cache (auth/auth-routes))
    #'api-routes
    (extra-script-routes (:extra-scripts env))
-   (if-let [path (:extra-static-resources env)]
-     (route/files "/" {:root path})
-     never-match-route)
-   (if-let [path (:theme-static-resources env)]
-     (route/files "/" {:root path})
-     never-match-route)
+   (static-resources (:extra-static-resources env))
+   (static-resources (:theme-static-resources env))
    not-found-handler))
 
 ;; we use mount to construct the app so that middleware can access mount state
