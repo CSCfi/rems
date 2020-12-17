@@ -20,7 +20,7 @@
             [rems.util :refer [getx-user-id never-match-route]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
-    (:import [rems.auth UnauthorizedException]))
+  (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
@@ -54,7 +54,7 @@
     (redirect "/redirect"))
 
   (GET "/favicon.ico" []
-       (redirect "/img/favicon.ico")))
+    (redirect "/img/favicon.ico")))
 
 (defroutes attachment-routes
   (GET "/applications/attachment/:attachment-id" [attachment-id]
