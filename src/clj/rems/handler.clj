@@ -53,12 +53,12 @@
 (mount/defstate memoized-render-css
   :start (memoize render-css))
 
-(defroutes home-normal-routes
-  (GET "/" []
-    (layout/home-page))
+(defroutes css-routes
+  (GET "/css/:language/screen.css" [language]
+    (binding [context/*lang* (keyword language)]
+      (memoized-render-css context/*lang*))))
 
-  ;; TODO should these redirects have swagger documentation?
-
+(defroutes redirects
   (GET "/accept-invitation" [token]
     (redirect (str "/application/accept-invitation/" token)))
 
@@ -67,6 +67,13 @@
       (apply-for-resources resource)
       (apply-for-resources [resource])))
 
+  (GET "/landing_page" [] ; DEPRECATED: legacy url redirect
+    (redirect "/redirect"))
+
+  (GET "/favicon.ico" []
+       (redirect "/img/favicon.ico")))
+
+(defroutes attachment-routes
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
       (api-util/check-user)
@@ -81,18 +88,7 @@
       (api-util/check-user)
       (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
         (attachment/download attachment)
-        (api-util/not-found-text-response))))
-
-  (GET "/landing_page" [] ; DEPRECATED: legacy url redirect
-    (redirect "/redirect"))
-
-  (GET "/favicon.ico" []
-    (redirect "/img/favicon.ico")))
-
-(defroutes css-routes
-  (GET "/css/:language/screen.css" [language]
-    (binding [context/*lang* (keyword language)]
-      (memoized-render-css context/*lang*))))
+        (api-util/not-found-text-response)))))
 
 (defn wrap-login-redirect [handler]
   (fn [req]
@@ -101,32 +97,15 @@
       (catch UnauthorizedException _
         (redirect (str "/?redirect=" (url-encode (:uri req))))))))
 
-(defn home-routes []
-  (routes (-> home-normal-routes
-              wrap-login-redirect)
-          css-routes))
-
 (defn not-found-handler [_req]
   ;; TODO: serve 404 for routes which the frontend doesn't recognize
   #_(layout/error-page {:status 404
                         :title "Page not found"})
   (layout/home-page))
 
-(defn public-routes []
-  (routes
-   (home-routes)
-   ;; never cache authentication results
-   ;; TODO this is a slightly hacky place to do this
-   (middleware/wrap-no-cache (auth/auth-routes))))
-
+;; TODO this should be an API
 (defroutes secured-routes
   entitlements/entitlements-routes)
-
-(defn normal-routes []
-  (routes
-   (public-routes)
-   (wrap-routes #'secured-routes middleware/wrap-restricted)
-   #'api-routes))
 
 (defn extra-script-routes [{:keys [root files]}]
   (let [files (set files)]
@@ -136,8 +115,17 @@
 
 (defn app-routes []
   (routes
+   (wrap-login-redirect (routes (GET "/" []
+                                     (layout/home-page))
+                                attachment-routes
+                                redirects))
+   css-routes
+   ;; never cache authentication results
+   ;; TODO this is a slightly hacky place to do this
+   (middleware/wrap-no-cache (auth/auth-routes))
+   (wrap-routes #'secured-routes middleware/wrap-restricted)
+   #'api-routes
    (extra-script-routes (:extra-scripts env))
-   (normal-routes)
    (if-let [path (:extra-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
