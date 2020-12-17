@@ -113,15 +113,6 @@
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
 
-(defn on-restricted-page [request response]
-  (assoc (redirect "/login")
-         :session (assoc (:session response) :redirect-to (:uri request))))
-
-(defn wrap-restricted
-  [handler]
-  (restrict handler {:handler authenticated?
-                     :on-error on-restricted-page}))
-
 (defn wrap-i18n
   "Sets context/*lang*"
   [handler]
