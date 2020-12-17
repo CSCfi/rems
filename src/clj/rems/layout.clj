@@ -1,10 +1,10 @@
 (ns rems.layout
   (:require [hiccup.page :refer [html5 include-css include-js]]
+            [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.users :as users]
             [rems.json :as json]
-            [rems.read-gitlog :as read-gitlog]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
@@ -78,7 +78,7 @@ window.rems = {
     [:script {:type "text/javascript"}
      (format "var csrfToken = '%s';" (when (bound? #'*anti-forgery-token*)
                                        *anti-forgery-token*))]
-    (include-js (str "/js/app.js?" (:revision (read-gitlog/read-current-version))))
+    (include-js (str "/js/app.js?" (:revision git/+version+)))
     [:script {:type "text/javascript"}
      (format "rems.app.setIdentity(%s);"
              (json/generate-string {:user (when context/*user*

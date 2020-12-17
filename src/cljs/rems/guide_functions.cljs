@@ -2,8 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer-macros [deftest is]]
             [rems.common.util :as common-util]
-            [rems.common.git :as git])
-  (:require-macros [rems.read-gitlog :refer [read-current-version]]))
+            [rems.common.git :as git]))
 
 (defn- remove-indentation [docstring]
   (str/join "\n" (for [line (str/split (str "  " docstring) #"\n")]
@@ -13,7 +12,7 @@
   (let [file (common-util/normalize-file-path (:file meta))
         link-text (str file ":" (:line meta) ":" (:column meta))
         path (str file "#L" (:line meta))
-        href (if-let [{:keys [revision]} (read-current-version)]
+        href (if-let [{:keys [revision]} git/+version+]
                (str git/+tree-url+ revision "/" path)
                (str git/+master-url+ path))]
     [:a {:href href} link-text]))
