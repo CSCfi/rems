@@ -18,6 +18,7 @@
             [rems.layout :as layout]
             [rems.middleware :as middleware]
             [rems.util :refer [getx-user-id never-match-route]]
+            [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
   (:import [rems.auth UnauthorizedException]))
@@ -100,6 +101,11 @@
     (route/files "/" {:root path})
     never-match-route))
 
+(def ^:private webjar-handler
+  ;; Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
+  ;; Weirdly ring-webjars only exposes a middleware and not a route.
+  (wrap-webjars never-match-route))
+
 (defn app-routes []
   (routes
    home-route
@@ -117,6 +123,7 @@
    (extra-script-routes (:extra-scripts env))
    (static-resources (:extra-static-resources env))
    (static-resources (:theme-static-resources env))
+   webjar-handler
    not-found-handler))
 
 ;; we use mount to construct the app so that middleware can access mount state

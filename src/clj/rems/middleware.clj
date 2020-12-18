@@ -24,7 +24,6 @@
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]])
   (:import [javax.servlet ServletContext]
@@ -238,7 +237,6 @@
       wrap-user
       wrap-api-key-or-csrf-token
       auth/wrap-auth
-      wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
       wrap-cache-control
       wrap-internal-error
