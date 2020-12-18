@@ -218,6 +218,7 @@
 
 (defn wrap-defaults-settings []
   (-> site-defaults
+      (dissoc :static) ;; we handle serving static resources in rems.handler
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
       (assoc-in [:session :flash] true)

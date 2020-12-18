@@ -18,6 +18,7 @@
             [rems.layout :as layout]
             [rems.middleware :as middleware]
             [rems.util :refer [getx-user-id never-match-route]]
+            [ring.middleware.resource :refer [resource-request]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
@@ -106,6 +107,9 @@
   ;; Weirdly ring-webjars only exposes a middleware and not a route.
   (wrap-webjars never-match-route))
 
+(def ^:private resource-handler
+  (route/resources "/" {:root "public"}))
+
 (defn app-routes []
   (routes
    home-route
@@ -120,6 +124,8 @@
    ;; TODO this is a slightly hacky place to do this
    (middleware/wrap-no-cache (auth/auth-routes))
    #'api-routes
+   ;; TODO should we disable logging of resource requests?
+   resource-handler
    (extra-script-routes (:extra-scripts env))
    (static-resources (:extra-static-resources env))
    (static-resources (:theme-static-resources env))
