@@ -8,6 +8,7 @@
             [luminus.repl-server :as repl]
             [mount.core :as mount]
             [rems.application.search :as search]
+            [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
@@ -106,6 +107,7 @@
         An empty list means all methods and paths are allowed."
   [& args]
   (exit-on-signals!)
+  (log/info "REMS" git/+version+)
   (let [usage #(do
                  (println "Usage:")
                  (println (:doc (meta #'-main))))]

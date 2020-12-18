@@ -16,9 +16,9 @@
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
-            [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.logging :refer [with-mdc]]
+            [rems.middleware.dev :refer [wrap-dev]]
             [rems.util :refer [get-user-id getx-user-id update-present]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -113,15 +113,6 @@
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
 
-(defn on-restricted-page [request response]
-  (assoc (redirect "/login")
-         :session (assoc (:session response) :redirect-to (:uri request))))
-
-(defn wrap-restricted
-  [handler]
-  (restrict handler {:handler authenticated?
-                     :on-error on-restricted-page}))
-
 (defn wrap-i18n
   "Sets context/*lang*"
   [handler]
@@ -211,6 +202,20 @@
          :when identity]
      (users/format-user identity))))
 
+(defn wrap-cache-control
+  "In case a Cache-Control header is missing, add a default of 23h"
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (when response
+        (update response :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))}))))))
+
+(defn wrap-no-cache
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (when response
+        (header response "Cache-Control" "no-store")))))
 
 (defn wrap-defaults-settings []
   (-> site-defaults
@@ -222,7 +227,8 @@
       (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
 
 (defn wrap-base [handler]
-  (-> ((:middleware +defaults+) handler)
+  (-> handler
+      ((if (:dev env) wrap-dev identity))
       wrap-fix-location-header
       wrap-unauthorized-and-forbidden
       wrap-logging
@@ -234,5 +240,6 @@
       auth/wrap-auth
       wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
+      wrap-cache-control
       wrap-internal-error
       wrap-request-context))

@@ -1,4 +1,5 @@
 (ns rems.read-gitlog
+  "Macros for rems.common.git"
   (:require [clojure.java.io :as io]
             [clojure.string :as str])
   (:import [java.io IOException]))

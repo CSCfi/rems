@@ -52,7 +52,6 @@
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [navigate! fetch replace-url! set-location!]]
             [secretary.core :as secretary])
-  (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
 
 (defn- fetch-translations! []
@@ -149,7 +148,7 @@
    {:dispatch [:set-active-page :not-found]}))
 
 (defn version-info []
-  (if-let [{:keys [version revision]} (read-current-version)]
+  (if-let [{:keys [version revision]} git/+version+]
     (do (println "Version: " version)
         (println (str git/+commits-url+ revision)))
     (println "Version information not available")))
