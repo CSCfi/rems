@@ -16,7 +16,7 @@
             [rems.email.core] ;; to enable email polling
             [rems.entitlements :as entitlements]
             [rems.layout :as layout]
-            [rems.middleware :as middleware]
+            [rems.middleware :refer [wrap-cacheable wrap-base]]
             [rems.util :refer [getx-user-id never-match-route]]
             [ring.middleware.resource :refer [resource-request]]
             [ring.middleware.webjars :refer [wrap-webjars]]
@@ -113,25 +113,24 @@
 (defn app-routes []
   (routes
    home-route
-   (middleware/wrap-no-cache
-    (wrap-login-redirect
-     (routes attachment-routes
-             redirects
-             ;; TODO /entitlements.csv should be an API
-             entitlements/entitlements-routes)))
+   (wrap-login-redirect
+    (routes attachment-routes
+            redirects
+            ;; TODO /entitlements.csv should be an API
+            entitlements/entitlements-routes))
+   (auth/auth-routes)
    styles/css-routes
-   ;; never cache authentication results
-   ;; TODO this is a slightly hacky place to do this
-   (middleware/wrap-no-cache (auth/auth-routes))
    #'api-routes
    ;; TODO should we disable logging of resource requests?
-   resource-handler
-   (extra-script-routes (:extra-scripts env))
-   (static-resources (:extra-static-resources env))
-   (static-resources (:theme-static-resources env))
-   webjar-handler
+   (wrap-cacheable
+    (routes
+     resource-handler
+     (extra-script-routes (:extra-scripts env))
+     (static-resources (:extra-static-resources env))
+     (static-resources (:theme-static-resources env))
+     webjar-handler))
    not-found-handler))
 
 ;; we use mount to construct the app so that middleware can access mount state
 (mount/defstate handler
-  :start (middleware/wrap-base (app-routes)))
+  :start (wrap-base (app-routes)))

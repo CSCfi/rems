@@ -202,19 +202,20 @@
      (users/format-user identity))))
 
 (defn wrap-cache-control
-  "In case a Cache-Control header is missing, add a default of 23h"
+  "In case a Cache-Control header is missing, add a default of no-store"
   [handler]
   (fn [request]
     (let [response (handler request)]
       (when response
-        (update response :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))}))))))
+        (update response :headers (partial merge {"Cache-Control" "no-store"}))))))
 
-(defn wrap-no-cache
+(defn wrap-cacheable
+  "Set a Cache-Control max-age of 23h to mark the response as cacheable."
   [handler]
   (fn [request]
     (let [response (handler request)]
       (when response
-        (header response "Cache-Control" "no-store")))))
+        (header response "Cache-Control" (str "max-age=" (* 60 60 23)))))))
 
 (defn wrap-defaults-settings []
   (-> site-defaults

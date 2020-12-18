@@ -26,7 +26,6 @@
             [rems.auth.auth :as auth]
             [rems.db.core :as db]
             [rems.json :refer [muuntaja]]
-            [rems.middleware :refer [wrap-no-cache]]
             [rems.util :refer [get-user-id]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
@@ -140,8 +139,7 @@
     {;; TODO: should this be in rems.middleware?
      :formats muuntaja
      :middleware [cors-middleware
-                  transaction-middleware
-                  wrap-no-cache]
+                  transaction-middleware]
      :exceptions {:handlers {UnauthorizedException unauthorized-handler
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
