@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.14.1
 
 ### Changes
+- The actions area has been adjusted to work better on small screens. (#2501)
 
 ### Fixes
 
