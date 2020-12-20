@@ -771,8 +771,8 @@
    ;; working around garden minifier bug that causes 1800.0px to lose the px (1800px works fine)
    ;; https://github.com/noprompt/garden/issues/120
    [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
-   [:#float-actions {:position :sticky
-                     :top "100px"}]
+   [:#actions {:position :sticky
+               :top "85px"}]
    [:.reload-indicator {:position :fixed
                         :bottom "15px"
                         :right "15px"
