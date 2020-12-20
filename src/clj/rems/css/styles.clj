@@ -144,6 +144,27 @@
                    :border-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
                    :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
 
+(defn- generate-actions-float-sizes
+  "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
+  and to avoid yet another random JS-library we make the element scrollable on certain sizes.
+
+  We also do not want these styles to affect the mobile layout (i.e. more narrow than 992) where the actions
+  is at the bottom of everything and has any height available."
+  []
+  (list
+   (stylesheet/at-media {:min-width (u/px 992)
+                         :max-height (u/px 1080)}
+                        [:#actions ; make buttons here smaller on small screens
+                         [:.btn {:font-size "0.875rem" ; duplicates bootstrap style btn-sm
+                                 :padding "0.25rem 0.5rem"
+                                 :line-height 1.5
+                                 :border-radius "0.2rem"}]])
+   (for [height (range 1080 500 -100)]
+     (stylesheet/at-media {:min-width (u/px 992)
+                           :max-height (u/px height)}
+                          [:#actions {:overflow-y :auto
+                                      :max-height (u/px (- height 200))}]))))
+
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
   ;; 'large text' and thus requires smaller contrast ratio for
@@ -819,6 +840,7 @@
      {:color "#555"})]
 
    (generate-phase-styles)
+   (generate-actions-float-sizes)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
    ;; print styling
