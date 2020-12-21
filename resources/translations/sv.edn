@@ -430,7 +430,7 @@
             :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
             :save "Spara"
             :settings "Inställningar"
-            :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
+            :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"

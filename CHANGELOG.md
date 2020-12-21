@@ -12,6 +12,7 @@ Changes since v2.14.1
 
 ### Fixes
 - Various HTTP caching issues resolved. Users should no longer get an old app.js from their browser cache. (#2484)
+- Fixed link in the "You will need to add an email address to your settings" notificaiton. (#2503)
 
 ### Additions
 
