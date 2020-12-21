@@ -160,7 +160,8 @@
                                  :line-height 1.5
                                  :border-radius "0.2rem"}]])
    (stylesheet/at-media {:min-width (u/px 992)}
-                        [:#actions {:overflow-y :auto
+                        [:#actions {:overflow-x :hidden
+                                    :overflow-y :auto
                                     :max-height "calc(100vh - 150px)"}])))
 
 (defn- button-navbar-font-weight []
