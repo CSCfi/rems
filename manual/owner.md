@@ -106,7 +106,7 @@ Assign handlers for a workflow by searching the user by their username or locati
 
 Handlers do not get notified when they have been assigned as a handler but they receive emails about new applications.
 
-:exclamation: Note! After saving a workflow, you cannot edit anything else than its name and the handlers.  
+:exclamation: Note! After saving a workflow, you cannot edit anything else than its name, organization and the handlers.  
 
 #### Adding a form to a workflow
 
@@ -152,7 +152,7 @@ Give your catalogue item a descriptive name. Thus, it will be easier for the app
 
 #### Editing catalogue items
 
-You can edit the catalogue item’s name and links to additional information by selecting edit.
+You can edit the catalogue item’s name, organization and links to additional information by selecting edit.
 
 :exclamation: Note! After saving, you cannot edit form, workflow or resource connected to the catalogue item. Editing is also not possible when some part of the catalogue item is disabled.
 
