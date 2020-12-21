@@ -147,7 +147,7 @@
 (defn- generate-actions-float-menu
   "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
   and to avoid yet another random JS-library we make the element scrollable with a dynamic max-height. This can
-  break if the 150px space is not enough anymore but works for now.
+  break if the 105px space is not enough anymore but works for now.
 
   We also do not want these styles to affect the mobile layout (i.e. more narrow than 992) where the actions
   is at the bottom of everything and has any height available."
@@ -163,7 +163,7 @@
    (stylesheet/at-media {:min-width (u/px 992)}
                         [:#actions {:overflow-x :hidden
                                     :overflow-y :auto
-                                    :max-height "calc(100vh - 150px)"}])))
+                                    :max-height "calc(100vh - 105px)"}])))
 
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
