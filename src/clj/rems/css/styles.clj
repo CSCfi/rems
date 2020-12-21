@@ -144,7 +144,7 @@
                    :border-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
                    :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
 
-(defn- generate-actions-float-sizes
+(defn- generate-actions-float-menu
   "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
   and to avoid yet another random JS-library we make the element scrollable on certain sizes.
 
@@ -159,11 +159,10 @@
                                  :padding "0.25rem 0.5rem"
                                  :line-height 1.5
                                  :border-radius "0.2rem"}]])
-   (for [height (range 1080 500 -100)]
-     (stylesheet/at-media {:min-width (u/px 992)
-                           :max-height (u/px height)}
-                          [:#actions {:overflow-y :auto
-                                      :max-height (u/px (- height 200))}]))))
+   (stylesheet/at-media {:min-width (u/px 992)
+                         :max-height (u/px 1080)}
+                        [:#actions {:overflow-y :auto
+                                    :max-height "calc(100vh - 150px)"}])))
 
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
@@ -840,7 +839,7 @@
      {:color "#555"})]
 
    (generate-phase-styles)
-   (generate-actions-float-sizes)
+   (generate-actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
    ;; print styling
