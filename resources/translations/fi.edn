@@ -430,7 +430,7 @@
             :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
             :save "Tallenna"
             :settings "Asetukset"
-            :warning-about-missing-email [:<> "Sinun on " [:a {:href "/settings"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
+            :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
   :search {:clear-search "Tyhjennä hakuehdot"
            :example-searches "Esimerkkihakuja"
