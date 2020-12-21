@@ -808,10 +808,9 @@
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
      [:div.mt-3 [application-fields application edit-application]]]
-    [:div.col-lg-4
-     [:div#float-actions.mb-3
-      [flash-message/component :actions]
-      [actions-form application]]]]])
+    [:div.col-lg-4.spaced-vertically-3
+     [flash-message/component :actions]
+     [actions-form application]]]])
 
 ;;;; Entrypoint
 

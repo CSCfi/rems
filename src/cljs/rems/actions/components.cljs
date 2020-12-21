@@ -179,7 +179,7 @@
                   :ref (fn [elem]
                          (when elem
                            (.on (js/$ elem) "shown.bs.collapse" #(.focus elem))))}
-   [:h3.mt-5 title]
+   [:h3.mt-3 title]
    content
    (into [:div.col.commands [cancel-action-button id]] buttons)])
 

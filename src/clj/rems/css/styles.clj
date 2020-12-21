@@ -146,6 +146,27 @@
                    :border-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
                    :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
 
+(defn- generate-actions-float-menu
+  "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
+  and to avoid yet another random JS-library we make the element scrollable with a dynamic max-height. This can
+  break if the 105px space is not enough anymore but works for now.
+
+  We also do not want these styles to affect the mobile layout (i.e. more narrow than 992) where the actions
+  is at the bottom of everything and has any height available."
+  []
+  (list
+   (stylesheet/at-media {:min-width (u/px 992)
+                         :max-height (u/px 1080)}
+                        [:#actions ; make buttons here smaller on small screens
+                         [:.btn {:font-size "0.875rem" ; duplicates bootstrap style btn-sm
+                                 :padding "0.25rem 0.5rem"
+                                 :line-height 1.5
+                                 :border-radius "0.2rem"}]])
+   (stylesheet/at-media {:min-width (u/px 992)}
+                        [:#actions {:overflow-x :hidden
+                                    :overflow-y :auto
+                                    :max-height "calc(100vh - 105px)"}])))
+
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
   ;; 'large text' and thus requires smaller contrast ratio for
@@ -773,8 +794,8 @@
    ;; working around garden minifier bug that causes 1800.0px to lose the px (1800px works fine)
    ;; https://github.com/noprompt/garden/issues/120
    [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
-   [:#float-actions {:position :sticky
-                     :top "100px"}]
+   [:#actions {:position :sticky
+               :top "85px"}]
    [:.reload-indicator {:position :fixed
                         :bottom "15px"
                         :right "15px"
@@ -821,6 +842,7 @@
      {:color "#555"})]
 
    (generate-phase-styles)
+   (generate-actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
    ;; print styling
