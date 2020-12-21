@@ -159,8 +159,7 @@
                                  :padding "0.25rem 0.5rem"
                                  :line-height 1.5
                                  :border-radius "0.2rem"}]])
-   (stylesheet/at-media {:min-width (u/px 992)
-                         :max-height (u/px 1080)}
+   (stylesheet/at-media {:min-width (u/px 992)}
                         [:#actions {:overflow-y :auto
                                     :max-height "calc(100vh - 150px)"}])))
 
