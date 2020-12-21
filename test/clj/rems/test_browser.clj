@@ -1212,7 +1212,7 @@
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3.png")
-      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown}))) ; readonly field
+      (select-option "Organization" "Default")
       (fill-form-field "Title" " v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
@@ -1225,7 +1225,7 @@
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "NBN"
+      (is (= {"Organization" "The Default Organization"
               "Title" (str (btu/context-get :workflow-title) " v2")
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
