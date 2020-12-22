@@ -18,6 +18,7 @@
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
+   (s/optional-key :organization) OrganizationId
    ;; type can't change
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [UserId]})

@@ -16,6 +16,7 @@ Changes since v2.14.1
 - Fixed link in the "You will need to add an email address to your settings" notificaiton. (#2503)
 
 ### Additions
+- Workflow organization can now be edited (#2333)
 
 ## v2.14.1 "Itätuulentie 2" 2020-12-15
 

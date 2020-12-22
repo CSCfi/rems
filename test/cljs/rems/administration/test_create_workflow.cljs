@@ -68,8 +68,9 @@
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test
-  (is (= {:id 3 :title "t" :handlers ["a" "b"]}
-         (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (= {:id 3 :organization {:organization/id "o"} :title "t" :handlers ["a" "b"]}
+         (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-edit-request 3 {:title "" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-edit-request 3 {:title "t" :handlers []}))))
+  (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers []}))))

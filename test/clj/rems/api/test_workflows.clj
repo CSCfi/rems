@@ -190,6 +190,19 @@
         (is (= #{"handler" "carl"}
                (application->handler-user-ids app)))))
 
+    (testing "change organization, temporarily"
+      (assert-success (api-call :put "/api/workflows/edit"
+                                {:id wfid :organization {:organization/id "organization2"}}
+                                api-key user-id))
+      (is (= (assoc expected
+                    :organization {:organization/id "organization2"
+                                   :organization/short-name {:en "ORG 2" :fi "ORG 2" :sv "ORG 2"}
+                                   :organization/name {:en "Organization 2" :fi "Organization 2" :sv "Organization 2"}})
+             (fetch api-key user-id wfid)))
+      (assert-success (api-call :put "/api/workflows/edit"
+                                {:id wfid :organization {:organization/id "organization1"}}
+                                api-key user-id)))
+
     (testing "change title"
       (is (true? (:success (api-call :put "/api/workflows/edit"
                                      {:id wfid :title "x"}

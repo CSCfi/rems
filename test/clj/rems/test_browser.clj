@@ -1182,11 +1182,12 @@
     (login-as "owner")
     (go-to-admin "Workflows")
     (testing "create workflow"
+      (btu/context-assoc! :workflow-title (str "test-workflow-create-edit " (btu/get-seed)))
       (btu/scroll-and-click :create-workflow)
       (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Title" "test-workflow-create-edit")
+      (fill-form-field "Title" (btu/context-get :workflow-title))
       (btu/scroll-and-click :type-decider)
       (btu/wait-page-loaded)
       (select-option "Handlers" "handler")
@@ -1200,7 +1201,7 @@
       (btu/screenshot "test-workflow-create-edit-2.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title" "test-workflow-create-edit"
+              "Title" (btu/context-get :workflow-title)
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
@@ -1211,8 +1212,8 @@
       (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3.png")
-      (is (= "NBN" (btu/get-element-text {:tag :div :id :organization-dropdown}))) ; readonly field
-      (fill-form-field "Title" "-v2") ;; fill-form-field appends text to existing value
+      (select-option "Organization" "Default")
+      (fill-form-field "Title" " v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
@@ -1224,8 +1225,8 @@
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "NBN"
-              "Title" "test-workflow-create-edit-v2"
+      (is (= {"Organization" "The Default Organization"
+              "Title" (str (btu/context-get :workflow-title) " v2")
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"

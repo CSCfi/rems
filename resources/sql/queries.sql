@@ -343,6 +343,9 @@ SET
 /*~ (when (:workflow params) */
   workflowBody = :workflow::jsonb,
 /*~ ) ~*/
+/*~ (when (:organization params) */
+  organization = :organization,
+/*~ ) ~*/
   id = id
 WHERE id = :id;
 
