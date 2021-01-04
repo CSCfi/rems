@@ -39,7 +39,7 @@
                ::form-errors nil
                ::form-id form-id
                ::edit-form? edit-form?)
-    :dispatch-n [(when form-id [::form form-id])]}))
+    :dispatch-n [(when form-id [::form])]}))
 
 (fetcher/reg-fetcher ::form "/api/forms/:id" {:path-params (fn [db] {:id (::form-id db)})})
 
