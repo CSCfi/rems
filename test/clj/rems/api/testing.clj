@@ -131,6 +131,7 @@
 (defn ensure-string [val]
   (cond
     (instance? java.io.InputStream val) (slurp val)
+    (instance? java.io.File val) (slurp val)
     :else val))
 
 (defn read-body [{body :body :as response}]

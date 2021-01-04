@@ -24,7 +24,6 @@
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]])
   (:import [javax.servlet ServletContext]
@@ -203,22 +202,24 @@
      (users/format-user identity))))
 
 (defn wrap-cache-control
-  "In case a Cache-Control header is missing, add a default of 23h"
+  "In case a Cache-Control header is missing, add a default of no-store"
   [handler]
   (fn [request]
     (let [response (handler request)]
       (when response
-        (update response :headers (partial merge {"Cache-Control" (str "max-age=" (* 60 60 23))}))))))
+        (update response :headers (partial merge {"Cache-Control" "no-store"}))))))
 
-(defn wrap-no-cache
+(defn wrap-cacheable
+  "Set a Cache-Control max-age of 23h to mark the response as cacheable."
   [handler]
   (fn [request]
     (let [response (handler request)]
       (when response
-        (header response "Cache-Control" "no-store")))))
+        (header response "Cache-Control" (str "max-age=" (* 60 60 23)))))))
 
 (defn wrap-defaults-settings []
   (-> site-defaults
+      (dissoc :static) ;; we handle serving static resources in rems.handler
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
       (assoc-in [:session :flash] true)
@@ -238,7 +239,6 @@
       wrap-user
       wrap-api-key-or-csrf-token
       auth/wrap-auth
-      wrap-webjars ;; serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
       (wrap-defaults (wrap-defaults-settings))
       wrap-cache-control
       wrap-internal-error

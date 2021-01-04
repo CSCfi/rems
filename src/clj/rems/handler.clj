@@ -16,8 +16,10 @@
             [rems.email.core] ;; to enable email polling
             [rems.entitlements :as entitlements]
             [rems.layout :as layout]
-            [rems.middleware :as middleware]
+            [rems.middleware :refer [wrap-cacheable wrap-base]]
             [rems.util :refer [getx-user-id never-match-route]]
+            [ring.middleware.resource :refer [resource-request]]
+            [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
   (:import [rems.auth UnauthorizedException]))
@@ -100,25 +102,45 @@
     (route/files "/" {:root path})
     never-match-route))
 
+(def ^:private webjar-handler
+  ;; Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
+  ;; Weirdly ring-webjars only exposes a middleware and not a route.
+  (wrap-webjars never-match-route))
+
+(def ^:private resource-handler
+  (route/resources "/" {:root "public"}))
+
+(defn- dev-js-handler
+  "In dev mode, serve compiled js files without caching. This is needed
+  because figwheel injects a reference to app.js without our
+  cache-busting query parameter."
+  []
+  (if (:dev env)
+    (route/resources "/js" {:root "public/js"})
+    never-match-route))
+
 (defn app-routes []
   (routes
    home-route
-   (middleware/wrap-no-cache
-    (wrap-login-redirect
-     (routes attachment-routes
-             redirects
-             ;; TODO /entitlements.csv should be an API
-             entitlements/entitlements-routes)))
+   (wrap-login-redirect
+    (routes attachment-routes
+            redirects
+            ;; TODO /entitlements.csv should be an API
+            entitlements/entitlements-routes))
+   (auth/auth-routes)
    styles/css-routes
-   ;; never cache authentication results
-   ;; TODO this is a slightly hacky place to do this
-   (middleware/wrap-no-cache (auth/auth-routes))
    #'api-routes
-   (extra-script-routes (:extra-scripts env))
-   (static-resources (:extra-static-resources env))
-   (static-resources (:theme-static-resources env))
+   (dev-js-handler)
+   ;; TODO should we disable logging of resource requests?
+   (wrap-cacheable
+    (routes
+     resource-handler
+     (extra-script-routes (:extra-scripts env))
+     (static-resources (:extra-static-resources env))
+     (static-resources (:theme-static-resources env))
+     webjar-handler))
    not-found-handler))
 
 ;; we use mount to construct the app so that middleware can access mount state
 (mount/defstate handler
-  :start (middleware/wrap-base (app-routes)))
+  :start (wrap-base (app-routes)))
