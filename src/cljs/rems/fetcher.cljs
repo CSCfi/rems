@@ -76,6 +76,7 @@
     (rf/reg-event-fx
      id
      (fn [{:keys [db]} [_ query]]
+       (assert (or (nil? query) (map? query)) (pr-str query))
        ;; do only one fetch at a time - will retry after the pending fetch is finished
        (when-not (get-in db [id :fetching?])
          (fetch (process-path-params url (path-params db))
