@@ -785,7 +785,7 @@
 (defn- previous-applications [applicant]
   ;; print mode forces the collapsible open, so fetch the content proactively
   ;; TODO figure out a better solution
-  (rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
+  (rf/dispatch [::previous-applications {:query (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")}])
   [collapsible/component
    {:id "previous-applications"
     :title (text :t.form/previous-applications)
