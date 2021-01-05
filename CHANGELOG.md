@@ -10,6 +10,7 @@ Changes since v2.14.1
 
 ### Changes
 - The actions area has been adjusted to work better on small screens. (#2501)
+- Copying a draft application will now create a new draft but without a link to the previous (draft) application. (#2496)
 
 ### Fixes
 - Various HTTP caching issues resolved. Users should no longer get an old app.js from their browser cache. (#2484)
