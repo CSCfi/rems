@@ -1775,49 +1775,81 @@
                        :application/forms [{:form/id 3}]
                        :workflow/id 1
                        :workflow/type :workflow/default}
-        application (apply-events nil [created-event
-                                       {:event/type :application.event/draft-saved
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id
-                                        :application/field-values [{:form 3 :field "text" :value "1"}
-                                                                   {:form 3 :field "attachment" :value "2"}]}])]
-    (testing "creates a new application with the same form answers"
-      (is (= [{:event/type :application.event/created
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id new-app-id
-               :application/external-id new-external-id
-               :application/resources [{:catalogue-item/id 1
-                                        :resource/ext-id "res1"}
-                                       {:catalogue-item/id 2
-                                        :resource/ext-id "res2"}]
-               :application/licenses [{:license/id 1} {:license/id 2}]
-               :application/forms [{:form/id 1}]
-               :workflow/id 1
-               :workflow/type :workflow/default}
-              {:event/type :application.event/draft-saved
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id new-app-id
-               :application/field-values [{:form 3 :field "text" :value "1"}
-                                          {:form 3 :field "attachment" :value "102"}]}
-              {:event/type :application.event/copied-from
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id new-app-id
-               :application/copied-from {:application/id app-id
-                                         :application/external-id "2018/55"}}
-              {:event/type :application.event/copied-to
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id app-id
-               :application/copied-to {:application/id new-app-id
-                                       :application/external-id new-external-id}}]
-             (ok-command application
-                         {:type :application.command/copy-as-new
-                          :actor applicant-user-id}
-                         injections))))))
+        draft-saved-event {:event/type :application.event/draft-saved
+                           :event/time test-time
+                           :event/actor applicant-user-id
+                           :application/id app-id
+                           :application/field-values [{:form 3 :field "text" :value "1"}
+                                                      {:form 3 :field "attachment" :value "2"}]}
+        submitted-event {:event/type :application.event/submitted
+                         :event/time test-time
+                         :event/actor applicant-user-id
+                         :application/id app-id}
+        draft-application (apply-events nil [created-event
+                                             draft-saved-event])
+        submitted-application (apply-events draft-application [submitted-event])]
+    (testing "creates a new draft-application with the same form answers"
+      (testing "for a draft it is just another draft"
+        (is (= [{:event/type :application.event/created
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id new-app-id
+                 :application/external-id new-external-id
+                 :application/resources [{:catalogue-item/id 1
+                                          :resource/ext-id "res1"}
+                                         {:catalogue-item/id 2
+                                          :resource/ext-id "res2"}]
+                 :application/licenses [{:license/id 1} {:license/id 2}]
+                 :application/forms [{:form/id 1}]
+                 :workflow/id 1
+                 :workflow/type :workflow/default}
+                {:event/type :application.event/draft-saved
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id new-app-id
+                 :application/field-values [{:form 3 :field "text" :value "1"}
+                                            {:form 3 :field "attachment" :value "102"}]}]
+               (ok-command draft-application
+                           {:type :application.command/copy-as-new
+                            :actor applicant-user-id}
+                           injections))))
+
+      (testing "for a submitted application it points to a previous draft application"
+        (is (= [{:event/type :application.event/created
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id new-app-id
+                 :application/external-id new-external-id
+                 :application/resources [{:catalogue-item/id 1
+                                          :resource/ext-id "res1"}
+                                         {:catalogue-item/id 2
+                                          :resource/ext-id "res2"}]
+                 :application/licenses [{:license/id 1} {:license/id 2}]
+                 :application/forms [{:form/id 1}]
+                 :workflow/id 1
+                 :workflow/type :workflow/default}
+                {:event/type :application.event/draft-saved
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id new-app-id
+                 :application/field-values [{:form 3 :field "text" :value "1"}
+                                            {:form 3 :field "attachment" :value "102"}]}
+                {:event/type :application.event/copied-from
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id new-app-id
+                 :application/copied-from {:application/id app-id
+                                           :application/external-id "2018/55"}}
+                {:event/type :application.event/copied-to
+                 :event/time test-time
+                 :event/actor applicant-user-id
+                 :application/id app-id
+                 :application/copied-to {:application/id new-app-id
+                                         :application/external-id new-external-id}}]
+               (ok-command submitted-application
+                           {:type :application.command/copy-as-new
+                            :actor applicant-user-id}
+                           injections)))))))
 
 (deftest test-delete
   (let [draft-application (apply-events nil [dummy-created-event])

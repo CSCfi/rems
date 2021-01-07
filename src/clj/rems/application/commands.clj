@@ -588,19 +588,20 @@
       (let [created-event (:event created-event-or-errors)
             old-app-id (:application/id application)
             new-app-id (:application/id created-event)
-            values (copy-field-values! (getx injections :copy-attachment!) application new-app-id)]
-        (ok-with-data
-         {:application-id new-app-id}
-         [created-event
-          {:event/type :application.event/draft-saved
-           :application/id new-app-id
-           :application/field-values values}
-          {:event/type :application.event/copied-from
-           :application/id new-app-id
-           :application/copied-from (select-keys application [:application/id :application/external-id])}
-          {:event/type :application.event/copied-to
-           :application/id old-app-id
-           :application/copied-to (select-keys created-event [:application/id :application/external-id])}])))))
+            values (copy-field-values! (getx injections :copy-attachment!) application new-app-id)
+            events (concat [created-event
+                            {:event/type :application.event/draft-saved
+                             :application/id new-app-id
+                             :application/field-values values}]
+                           ;; tracking copied applications applies to submitted applications only
+                           (when-not (= :application.state/draft (:application/state application))
+                             [{:event/type :application.event/copied-from
+                               :application/id new-app-id
+                               :application/copied-from (select-keys application [:application/id :application/external-id])}
+                              {:event/type :application.event/copied-to
+                               :application/id old-app-id
+                               :application/copied-to (select-keys created-event [:application/id :application/external-id])}]))]
+        (ok-with-data {:application-id new-app-id} events)))))
 
 (defmethod command-handler :application.command/assign-external-id
   [cmd _application _injections]
