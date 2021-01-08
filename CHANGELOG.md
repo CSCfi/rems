@@ -6,7 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.14.1
+Changes since v2.15
+
+### Changes
+
+### Fixes
+
+### Additions
+
+## v2.15 "Tapiolantie" 2021-01-08
 
 ### Changes
 - The actions area has been adjusted to work better on small screens. (#2501)
@@ -14,11 +22,11 @@ Changes since v2.14.1
 
 ### Fixes
 - Various HTTP caching issues resolved. Users should no longer get an old app.js from their browser cache. (#2484)
-- Fixed link in the "You will need to add an email address to your settings" notificaiton. (#2503)
-- Previous application history shown to the handler is now correctly limited to the members of the application (#2470)
+- Fixed link in the "You will need to add an email address to your settings" notification. (#2503)
+- Previous application history shown to the handler is now correctly limited to the members of the application. (#2470)
 
 ### Additions
-- Workflow organization can now be edited (#2333)
+- Workflow organization can now be edited. (#2333)
 
 ## v2.14.1 "Itätuulentie 2" 2020-12-15
 
