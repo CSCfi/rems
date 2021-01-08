@@ -44,11 +44,21 @@ lein figwheel
 
 Point your browser to <http://localhost:3000>
 
-You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`. 
+You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`.
 
 You should start in the development profile i.e. set `Cider Lein Parameters` to `with-profile +dev repl :headless`
 
 We have had success with other editors as well.
+
+## Building an uberjar
+
+To build a deployable uberjar, run
+
+```
+lein uberjar
+```
+
+after which you can find the jar at `target/uberjar/rems.jar`. See [installing-upgrading.md](installing-upgrading.md) for more info on deploying an uberjar.
 
 ## Running tests
 
