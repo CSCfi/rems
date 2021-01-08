@@ -13,6 +13,7 @@ Changes since v2.15
 ### Fixes
 
 ### Additions
+- The browser tests will now fail if there are any accessibility violations. (#2463)
 
 ## v2.15 "Tapiolantie" 2021-01-08
 
