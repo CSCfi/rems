@@ -451,13 +451,18 @@
   (try
     (f)
     (finally
-      (doseq [k (->> (context-get :axe)
-                     (mapcat keys)
-                     distinct)
-              :let [filename (str (str/lower-case (name k)) ".json")
-                    content (->> (context-get :axe)
-                                 (mapcat #(get % k))
-                                 distinct
-                                 (sort-by :impact))]]
-        (spit (io/file (:accessibility-report-dir @test-context) filename)
-              (json/generate-string-pretty content))))))
+      (let [violations (atom nil)]
+        (doseq [k (->> (context-get :axe)
+                       (mapcat keys)
+                       distinct)
+                :let [filename (str (str/lower-case (name k)) ".json")
+                      content (->> (context-get :axe)
+                                   (mapcat #(get % k))
+                                   distinct
+                                   (sort-by :impact))]]
+          (spit (io/file (:accessibility-report-dir @test-context) filename)
+                (json/generate-string-pretty content))
+          (when (and (= :violations k) (seq content))
+            (reset! violations content)))
+        (when (seq @violations)
+          (throw (Exception. (str "\n\n\nThere are accessibility violations: " (count @violations) "\n\n\n"))))))))

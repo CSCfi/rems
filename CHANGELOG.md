@@ -15,6 +15,7 @@ Changes since v2.15
 - CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
 
 ### Additions
+- The browser tests will now fail if there are any accessibility violations. (#2463)
 
 ## v2.15 "Tapiolantie" 2021-01-08
 
