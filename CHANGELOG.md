@@ -12,6 +12,8 @@ Changes since v2.15
 
 ### Fixes
 
+- CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
+
 ### Additions
 
 ## v2.15 "Tapiolantie" 2021-01-08
