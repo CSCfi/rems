@@ -102,7 +102,7 @@
   :figwheel {:http-server-root "public"
              :server-logfile "log/figwheel_server.log"
              :nrepl-port 7002
-             :css-dirs ["target/resources/public/css"]
+             :css-dirs ["target/resources/public/css/en" "target/resources/public/css/fi" "target/resources/public/css/sv"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
   :npm {:devDependencies [;; cljs testing

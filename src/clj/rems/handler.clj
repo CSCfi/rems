@@ -103,8 +103,8 @@
     never-match-route))
 
 (def ^:private webjar-handler
-  ;; Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
-  ;; Weirdly ring-webjars only exposes a middleware and not a route.
+  "Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>.
+   Weirdly ring-webjars only exposes a middleware and not a route."
   (wrap-webjars never-match-route))
 
 (def ^:private resource-handler
@@ -128,12 +128,12 @@
             ;; TODO /entitlements.csv should be an API
             entitlements/entitlements-routes))
    (auth/auth-routes)
-   styles/css-routes
    #'api-routes
    (dev-js-handler)
    ;; TODO should we disable logging of resource requests?
    (wrap-cacheable
     (routes
+     styles/css-routes ; figwheel livereload does cache-busting for the css, so we don't need a dev-css-handler hack
      resource-handler
      (extra-script-routes (:extra-scripts env))
      (static-resources (:extra-static-resources env))

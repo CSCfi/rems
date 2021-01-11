@@ -26,7 +26,7 @@ window.rems = {
 
 (defn- cache-bust [filename]
   (str filename "?" (or (:revision git/+version+)
-                        ;; for dev mode
+                        ;; cache busting not strictly needed for dev mode, see rems.handler/dev-js-handler
                         (System/currentTimeMillis))))
 
 (defn- page-template

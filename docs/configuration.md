@@ -105,6 +105,8 @@ Custom themes can be used by creating a file, for example `my-custom-theme.edn`,
 
 To quickly validate that all UI components look right navigate to `/guide`. See it in action at <https://rems-demo.rahtiapp.fi/guide>.
 
+Note! REMS sets a Cache-Control max-age of 23 hours for static resources (`:theme-static-resources`, `:extra-static-resources`). Consider using a different filename when updating static resource to avoid caching issues.
+
 ## Extra pages
 
 Extra pages can be added to the navigation bar using `:extra-pages` configuration parameter. Each extra page can be either a link to an external url or it can show the content of a markdown file to the user. See `:extra-pages` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for examples of how to define the extra pages.
