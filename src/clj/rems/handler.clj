@@ -103,8 +103,8 @@
     never-match-route))
 
 (def ^:private webjar-handler
-  ;; Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>
-  ;; Weirdly ring-webjars only exposes a middleware and not a route.
+  "Serves our webjar (https://www.webjars.org/) dependencies as /assets/<webjar>/<file>.
+   Weirdly ring-webjars only exposes a middleware and not a route."
   (wrap-webjars never-match-route))
 
 (def ^:private resource-handler
