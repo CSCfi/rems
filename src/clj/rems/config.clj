@@ -95,5 +95,23 @@
              domain
              "/.well-known/openid-configuration"))))
 
+(defn fetch-and-check-oidc-config [url]
+  (try
+    (let [resp (http/get url {:accept :json})
+          body (:body resp)
+          content-type (get-in resp [:headers "Content-Type"] "")]
+      (assert (.startsWith content-type "application/json")
+              (str "Expected application/json content type, got " content-type))
+      (let [configuration (json/parse-string body)]
+        (assert (contains? configuration :authorization_endpoint)
+                "OIDC configuration did not contain \"authorization_endpoint\"")
+        (assert (contains? configuration :token_endpoint)
+                "OIDC configuration did not contain \"token_endpoint\"")
+        (assert (contains? configuration :issuer)
+                "OIDC configuration did not contain \"issuer\"")
+        configuration))
+    (catch Throwable t
+      (throw (Error. (str "Failed to fetch valid OIDC configuration from " url) t)))))
+
 (defstate oidc-configuration :start (when-let [url (oidc-metadata-url)]
-                                      (:body (http/get url {:as :json}))))
+                                      (fetch-and-check-oidc-config url)))
