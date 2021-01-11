@@ -128,12 +128,12 @@
             ;; TODO /entitlements.csv should be an API
             entitlements/entitlements-routes))
    (auth/auth-routes)
-   styles/css-routes
    #'api-routes
    (dev-js-handler)
    ;; TODO should we disable logging of resource requests?
    (wrap-cacheable
     (routes
+     styles/css-routes ; figwheel livereload does cache-busting for the css, so we don't need a dev-css-handler hack
      resource-handler
      (extra-script-routes (:extra-scripts env))
      (static-resources (:extra-static-resources env))
