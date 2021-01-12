@@ -13,6 +13,7 @@ Changes since v2.15
 ### Fixes
 
 - CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
+- OIDC signing keys are now always fetched on login, fixing issues with OIDC key rotation requiring a REMS restart. (#2497)
 
 ### Additions
 - The browser tests will now fail if there are any accessibility violations. (#2463)

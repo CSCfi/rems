@@ -7,16 +7,21 @@
             [rems.common.util :refer [getx index-by]]
             [rems.config :refer [oidc-configuration]]))
 
-(mount/defstate ^:dynamic oidc-public-keys
-  :start (when-let [jwks-uri (:jwks_uri oidc-configuration)]
-           (getx (http/get jwks-uri
-                           {:as :json})
-                 :body)))
+;; Could consider caching this if it is a performance bottleneck.
+;; However our OIDC login already has like 3 roundtrips to the OIDC
+;; server so one more won't hurt that much. We will need to fetch new
+;; keys occasionally in case REMS is running over an OIDC key
+;; rotation.
+(defn- fetch-jwks []
+  (when-let [jwks-uri (:jwks_uri oidc-configuration)]
+    (getx (http/get jwks-uri {:as :json}) :body)))
+
+(defn- indexed-jwks []
+  (index-by [:kid] (getx (fetch-jwks) :keys)))
 
 (defn- fetch-public-key [jwt]
   (let [key-id (:kid (buddy-jwe/decode-header jwt))
-        jwk (getx (index-by [:kid] (getx oidc-public-keys :keys))
-                  key-id)]
+        jwk (getx (indexed-jwks) key-id)]
     (buddy-keys/jwk->public-key jwk)))
 
 (defn sign [claims secret & [opts]]
