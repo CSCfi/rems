@@ -17,6 +17,8 @@ Changes since v2.15
 ### Additions
 - The browser tests will now fail if there are any accessibility violations. (#2463)
 
+- The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
+
 ## v2.15 "Tapiolantie" 2021-01-08
 
 ### Changes
