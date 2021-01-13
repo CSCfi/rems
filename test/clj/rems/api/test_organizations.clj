@@ -36,6 +36,12 @@
     (test-helpers/create-user! {:eppn owner :commonName "Owner" :mail "owner@example.com"} :owner)
     (test-helpers/create-user! {:eppn org-owner1 :commonName "Organization Owner 1" :mail "organization-owner1@example.com"})
     (test-helpers/create-user! {:eppn org-owner2 :commonName "Organization Owner 2" :mail "organization-owner2@example.com"})
+    (testing "fetch nonexistent"
+      (let [resp (api-response :get "/api/organizations/9999999999999999"
+                               nil
+                               api-key owner)]
+        (is (response-is-not-found? resp))
+        (is (= {:error "not found"} (read-body resp)))))
     (testing "create organization"
       (let [data (api-call :post "/api/organizations/create"
                            {:organization/id "organizations-api-test-org"
