@@ -38,9 +38,10 @@
 (defn get-license
   "Get a single license by id"
   [id]
-  (->> (db/get-license {:id id})
-       (format-license)
-       (localize-license (get-license-localizations))))
+  (when-let [license (db/get-license {:id id})]
+    (->> license
+         (format-license)
+         (localize-license (get-license-localizations)))))
 
 (defn get-all-licenses
   "Get all licenses.

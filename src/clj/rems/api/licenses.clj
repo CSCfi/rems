@@ -56,7 +56,9 @@
       :roles +admin-read-roles+
       :path-params [license-id :- (describe s/Int "license id")]
       :return License
-      (ok (licenses/get-license license-id)))
+      (if-let [license (licenses/get-license license-id)]
+        (ok license)
+        (not-found-json-response)))
 
     (POST "/create" []
       :summary "Create license"

@@ -19,7 +19,12 @@
   (let [api-key "42"
         owner "owner"
         org-owner "organization-owner1"]
-
+    (testing "fetch nonexistent"
+      (let [resp (api-response :get "/api/licenses/99999999"
+                               nil
+                               api-key owner)]
+        (is (response-is-not-found? resp))
+        (is (= {:error "not found"} (read-body resp)))))
     (testing "can't create license as organization owner with incorrect organization"
       (is (response-is-forbidden? (api-response :post "/api/licenses/create"
                                                 {:licensetype "link"
