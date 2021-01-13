@@ -38,7 +38,7 @@
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
-(def recalculated-menu-height (u/px (int (+ menu-height 12))))
+(def recalculated-menu-height (u/px (+ menu-height 12)))
 
 (defn resolve-image [path]
   (when path
@@ -100,16 +100,14 @@
                            :background-size :contain
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
-                         [:.logo {:height logo-height
-                                  :min-height logo-height}]))
+                         [:.logo {:height logo-height}]))
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
-                        [:.commands {:white-space "nowrap"}])
+                        [:.commands {:white-space "nowrap"}]
+                        [:.navbar-brand {:display "none"}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
-                        [:body {:scroll-behavior :auto}])
-   (stylesheet/at-media {:max-width (u/px 480)}
-                        [:.navbar-brand {:display "none"}])))
+                        [:body {:scroll-behavior :auto}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -356,7 +354,6 @@
     [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
-           :min-height "100vh"
            :height (u/percent 100)}]
    [:body {:font-family (get-theme-attribute :font-family "'Lato', sans-serif")
            :min-height (u/percent 100)
@@ -365,7 +362,8 @@
            :padding-top recalculated-menu-height
            :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
-   [:h1 {:margin-bottom (u/rem 2)}]
+   [:h1 {:margin-bottom (u/rem 2)
+         :margin-top (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
            :flex 1
            :display :flex}]
@@ -388,11 +386,11 @@
                     :min-height (u/px 300)
                     :max-width content-width
                     :flex-grow 1
-                    ;; Height of navigation, to avoid page content going under
+                    ;; Height of navigation + logo, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
-                    :padding-top recalculated-menu-height
-                    :margin-top (u/px (- (int (+ menu-height 6))))}]
+                    :padding-top (u/px 212)
+                    :margin-top (u/px -212)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
            :font-weight (button-navbar-font-weight)}]
@@ -570,7 +568,9 @@
    [:.logo {:height logo-height
             :background-color (get-theme-attribute :logo-bgcolor)
             :width "100%"
-            :margin "0 auto"}]
+            :margin "0 auto"
+            :padding "0 20px"
+            :margin-bottom (u/em 1)}]
    [(s/descendant :.logo :.img) (s/descendant :.logo-menu :.img) {:height "100%"
                                                                   :background-color (get-theme-attribute :logo-bgcolor)
                                                                   :background-image (get-logo-image context/*lang*)

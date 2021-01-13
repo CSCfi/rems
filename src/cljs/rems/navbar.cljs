@@ -61,7 +61,7 @@
           [nav-link url text])))))
 
 (defn logo [menu-navigation?]
-  [:div {:class (str "navbar-brand" (if menu-navigation? " logo-menu" " logo"))}
+  [:div {:class (str (if menu-navigation? "navbar-brand logo-menu" "logo"))}
    [:div.img]])
 
 (defn navbar-items [e identity]
@@ -87,9 +87,8 @@
   (let [theme @(rf/subscribe [:theme])]
     [:nav.navbar-flex
      [:div.navbar.navbar-expand-sm.flex-fill
-      (if (:upper-left-logo theme)
-        [logo (:upper-left-logo theme)]
-        nil)
+      (when (:navbar-logo theme)
+        [logo (:navbar-logo theme)])
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]
@@ -108,8 +107,7 @@
   (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
      [skip-navigation]
-     [:div.navbar-top-bar
-      [:div.navbar-top-left] [:div.navbar-top-right]]
+     [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.navbar-wrapper.container-fluid
       [navbar-normal identity]
       [navbar-small identity]]

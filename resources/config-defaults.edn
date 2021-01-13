@@ -125,7 +125,7 @@
          :color3 "#000"
          :color4 "#000"
          ;; navigation type options
-         :upper-left-logo false}
+         :navbar-logo false}
 
  ;; Optional extra static resources directory.
  :extra-static-resources nil

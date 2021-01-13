@@ -334,7 +334,9 @@
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]
-     (when-not (:upper-left-logo theme)
+    ;;  (when-not (:navbar-logo theme)
+    ;;    [nav/logo])
+     (when (= page-id :home)
        [nav/logo])
      [main-content page-id grab-focus?]
      [footer]]))
