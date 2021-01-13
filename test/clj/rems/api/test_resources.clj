@@ -39,6 +39,12 @@
         licid-org2 (test-helpers/create-license! {:organization {:organization/id "organization2"}})
         resid "resource-api-test"]
 
+    (testing "fetch nonexistent"
+      (let [response (api-response :get "/api/resources/9999999" nil
+                                   api-key owner)]
+        (is (response-is-not-found? response))
+        (is (= {:error "not found"} (read-body response)))))
+
     (doseq [user-id [owner org-owner]]
       (testing "create"
         (let [result (api-call :post "/api/resources/create"

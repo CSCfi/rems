@@ -13,9 +13,8 @@
    :archived archived})
 
 (defn get-resource [id]
-  (-> {:id id}
-      db/get-resource
-      format-resource))
+  (when-let [resource (db/get-resource {:id id})]
+    (format-resource resource)))
 
 (defn get-resources [filters]
   (->> (db/get-resources)

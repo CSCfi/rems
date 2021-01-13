@@ -15,8 +15,8 @@
          (transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-resource [id]
-  (->> (resource/get-resource id)
-       join-dependencies))
+  (when-let [resource (resource/get-resource id)]
+    (join-dependencies resource)))
 
 (defn get-resources [filters]
   (->> (resource/get-resources filters)
