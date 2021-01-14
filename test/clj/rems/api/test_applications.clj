@@ -8,6 +8,7 @@
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.json]
@@ -17,8 +18,13 @@
            java.util.zip.ZipInputStream))
 
 (use-fixtures
-  :once
-  api-fixture)
+  :each
+  api-fixture
+  ;; TODO should this fixture have a name?
+  (fn [f]
+    (test-data/create-test-api-key!)
+    (test-data/create-test-users-and-roles!)
+    (f)))
 
 ;;; shared helpers
 

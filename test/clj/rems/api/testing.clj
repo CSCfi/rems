@@ -6,7 +6,7 @@
             [clojure.test :refer :all]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
-            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [rems.middleware]
             [rems.standalone]
@@ -32,16 +32,12 @@
    #'rems.middleware/session-store
    #'rems.handler/handler))
 
-(def api-fixture-without-data
+(def api-fixture
   (join-fixtures [test-db-fixture
                   rollback-db-fixture
                   handler-fixture
                   search-index-fixture
                   caches-fixture]))
-
-(def api-fixture
-  (join-fixtures [api-fixture-without-data
-                  test-data-fixture]))
 
 (defn authenticate [request api-key user-id]
   (-> request

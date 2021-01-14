@@ -4,7 +4,7 @@
             [medley.core :refer [dissoc-in]]
             [rems.config]
             [rems.api.services.command :as command]
-            [rems.api.testing :refer [api-fixture-without-data api-call]]
+            [rems.api.testing :refer [api-fixture api-call]]
             [rems.db.events]
             [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
@@ -14,7 +14,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest test-notify!
   (with-open [server (stub/start! {"/ok" {:status 200}

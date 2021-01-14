@@ -9,7 +9,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data
+  api-fixture
   owners-fixture)
 
 (defn- create-resource! [command api-key user-id]

@@ -44,18 +44,6 @@
   (mount/start #'rems.db.applications/all-applications-cache)
   (f))
 
-(defn test-data-fixture [f]
-  ;; no specific teardown for test-data-fixture. tests rely on the
-  ;; teardown of reset-db-fixture or rollback-db-fixture to keep a
-  ;; clean db
-  (try
-    (test-data/create-test-data!)
-    ;; kaocha is bad at reporting errors in fixtures, so let's catch and print errors here
-    (catch Throwable t
-      (println "ERROR: Generating test data failed!")
-      (.printStackTrace t)))
-  (f))
-
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
 (defn owners-fixture [f]

@@ -14,7 +14,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data
+  api-fixture
   (fixed-time-fixture test-time1))
 
 (deftest organizations-api-test

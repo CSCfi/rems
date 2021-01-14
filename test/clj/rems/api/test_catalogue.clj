@@ -1,8 +1,10 @@
 (ns ^:integration rems.api.test-catalogue
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
+            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
+            [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -10,15 +12,19 @@
   api-fixture)
 
 (deftest catalogue-api-test
-  (let [api-key "42"
-        user-id "alice"]
-    (let [data (-> (request :get "/api/catalogue/")
-                   (authenticate api-key user-id)
-                   handler
-                   read-ok-body)]
-      (is (some #(str/starts-with? (:resid %) "urn:") data)))))
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
+  (let [res (test-helpers/create-resource! {:resource-ext-id "urn:1234"})]
+    (test-helpers/create-catalogue-item! {:actor "owner" :resource-id res}))
+  (let [items (-> (request :get "/api/catalogue/")
+                  (authenticate test-data/+test-api-key+ "alice")
+                  handler
+                  read-ok-body)]
+    (is (= ["urn:1234"] (map :resid items)))))
 
 (deftest catalogue-api-security-test
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (testing "catalogue-is-public true"
     (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public true)]
       (is (api-call :get "/api/catalogue" nil nil nil) "should work without authentication")

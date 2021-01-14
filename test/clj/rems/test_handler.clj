@@ -1,7 +1,7 @@
 (ns ^:integration rems.test-handler
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
-            [rems.api.testing :refer [api-fixture-without-data read-ok-body]]
+            [rems.api.testing :refer [api-fixture read-ok-body]]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.handler :refer :all]
@@ -9,7 +9,7 @@
 
 ;; we shouldn't need the db here, but there is no handler-without-db
 ;; fixture at the moment
-(use-fixtures :once api-fixture-without-data)
+(use-fixtures :once api-fixture)
 
 (deftest test-caching
   (with-redefs [git/+version+ {:version "0.0.0" :revision "abcd1234"}]

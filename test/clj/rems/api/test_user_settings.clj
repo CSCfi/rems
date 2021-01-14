@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-user-settings
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
@@ -11,6 +12,7 @@
   api-fixture)
 
 (deftest user-settings-api-test
+  (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))]
     (test-helpers/create-user! {:eppn user-id})
 
