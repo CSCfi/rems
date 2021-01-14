@@ -6,7 +6,7 @@
             [clojure.test :refer :all]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
-            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [rems.middleware]
             [rems.standalone]
