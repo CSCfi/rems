@@ -1059,10 +1059,13 @@
                            :organization/owners [{:userid organization-owner2}]
                            :organization/review-emails []})))
 
+(defn create-test-api-key! []
+  (api-key/add-api-key! +test-api-key+ {:comment "test data"}))
+
 (defn create-owners!
   "Create an owner, two organization owners, and their organizations."
   []
-  (api-key/add-api-key! +test-api-key+ {:comment "test data"})
+  (create-test-api-key!)
   (create-user! (+fake-user-data+ "owner") :owner)
   (create-user! (+fake-user-data+ "organization-owner1"))
   (create-user! (+fake-user-data+ "organization-owner2"))
@@ -1082,7 +1085,7 @@
 
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (api-key/add-api-key! +test-api-key+ {:comment "test data"})
+  (create-test-api-key!)
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)
