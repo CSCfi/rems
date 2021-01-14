@@ -4,14 +4,14 @@
             [rems.api.testing :refer :all]
             [rems.db.outbox :as outbox]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
-  api-fixture)
+  :each
+  api-fixture-without-data)
 
-(def api-key "42")
 (def user-id "developer")
 
 (defn- create-application-in-review! []
@@ -25,19 +25,29 @@
                             :reviewers ["carl"]
                             :comment ""})))
 
+(defn- create-application-in-progress! []
+  (let [wf (test-helpers/create-workflow! {:handlers ["developer" "handler"]})
+        cat-id (test-helpers/create-catalogue-item! {:workflow-id wf})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor "alice"})]
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id app-id
+                            :actor "alice"})))
+
 (deftest test-send-handler-reminder
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
+  (create-application-in-progress!)
   (testing "sends emails"
     (let [outbox-emails (atom [])]
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-handler-reminder")
-                       (authenticate api-key user-id)
+                       (authenticate test-data/+test-api-key+ user-id)
                        handler
                        read-ok-body)]
           (is (= "OK" body))
           (is (= [{:subject "Applications in progress", :to-user "developer"}
-                  {:subject "Applications in progress", :to-user "handler"}
-                  {:subject "Applications in progress", :to-user "rejecter-bot"}]
+                  {:subject "Applications in progress", :to-user "handler"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
                       (sort-by :to-user))))))))
@@ -50,6 +60,8 @@
       (is (logged-in? response)))))
 
 (deftest test-send-reviewer-reminder
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (create-application-in-review!)
 
   (testing "sends emails"
@@ -57,7 +69,7 @@
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-reviewer-reminder")
-                       (authenticate api-key user-id)
+                       (authenticate test-data/+test-api-key+ user-id)
                        handler
                        read-ok-body)]
           (is (= "OK" body))
@@ -74,21 +86,23 @@
       (is (logged-in? response)))))
 
 (deftest test-send-reminders
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (create-application-in-review!)
+  (create-application-in-progress!)
 
   (testing "sends emails"
     (let [outbox-emails (atom [])]
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-reminders")
-                       (authenticate api-key user-id)
+                       (authenticate test-data/+test-api-key+ user-id)
                        handler
                        read-ok-body)]
           (is (= "OK" body))
           (is (= [{:subject "Applications pending review", :to-user "carl"}
                   {:subject "Applications in progress", :to-user "developer"}
-                  {:subject "Applications in progress", :to-user "handler"}
-                  {:subject "Applications in progress", :to-user "rejecter-bot"}]
+                  {:subject "Applications in progress", :to-user "handler"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
                       (sort-by :to-user))))))))
