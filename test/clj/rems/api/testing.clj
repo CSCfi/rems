@@ -32,7 +32,7 @@
    #'rems.middleware/session-store
    #'rems.handler/handler))
 
-(def api-fixture-without-data
+(def api-fixture
   (join-fixtures [test-db-fixture
                   rollback-db-fixture
                   handler-fixture

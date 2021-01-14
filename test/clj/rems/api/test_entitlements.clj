@@ -12,7 +12,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest entitlements-test
   (testing "set up data"

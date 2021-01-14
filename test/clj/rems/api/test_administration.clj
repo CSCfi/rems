@@ -7,7 +7,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data
+  api-fixture
   owners-fixture)
 
 (def user-id "owner")

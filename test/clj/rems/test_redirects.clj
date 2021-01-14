@@ -11,7 +11,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data
+  api-fixture
   (fn [f]
     ;; need to set an explicit public-url since dev and test configs use different ports
     (with-redefs [rems.config/env (assoc rems.config/env :public-url "https://public.url/")]

@@ -10,7 +10,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data)
+  api-fixture)
 
 (def user-id "developer")
 

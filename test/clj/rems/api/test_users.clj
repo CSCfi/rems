@@ -11,7 +11,7 @@
 
 (use-fixtures
   :each ;; active-api-test needs a fresh session store
-  api-fixture-without-data
+  api-fixture
   owners-fixture)
 
 (deftest users-api-test

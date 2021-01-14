@@ -10,7 +10,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data
+  api-fixture
   (fn [f]
     ;; TODO this needs to be in the future so that we can use the
     ;; catalogue item we create. The DB time isn't overridden and

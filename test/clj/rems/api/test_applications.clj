@@ -19,7 +19,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data
+  api-fixture
   ;; TODO should this fixture have a name?
   (fn [f]
     (test-data/create-test-api-key!)

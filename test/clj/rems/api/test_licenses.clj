@@ -7,7 +7,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data
+  api-fixture
   owners-fixture)
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))

@@ -13,7 +13,7 @@
 
 (use-fixtures
   :each
-  api-fixture-without-data
+  api-fixture
   owners-fixture)
 
 (defn- fixup-field-visible-type [field]

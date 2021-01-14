@@ -9,7 +9,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest user-settings-api-test
   (test-data/create-test-api-key!)

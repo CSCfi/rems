@@ -14,7 +14,7 @@
             [rems.json :as json]
             [stub-http.core :as stub]))
 
-(use-fixtures :each api-fixture-without-data)
+(use-fixtures :each api-fixture)
 
 (defn extract-id [resp]
   (assert-success resp)

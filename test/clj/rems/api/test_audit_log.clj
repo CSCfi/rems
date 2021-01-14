@@ -7,7 +7,7 @@
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :each api-fixture-without-data)
+(use-fixtures :each api-fixture)
 
 (deftest test-audit-log
   (api-key/add-api-key! "42" {})

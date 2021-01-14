@@ -9,7 +9,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest catalogue-api-test
   (test-data/create-test-api-key!)

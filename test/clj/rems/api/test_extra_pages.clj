@@ -6,7 +6,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest extra-pages-api-test
   (let [api-key "42"

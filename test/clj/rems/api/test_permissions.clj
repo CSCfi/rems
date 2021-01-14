@@ -14,7 +14,7 @@
 
 (use-fixtures
   :once
-  api-fixture-without-data)
+  api-fixture)
 
 (deftest jwk-api
   (let [data (api-call :get "/api/jwk" nil nil nil)]
