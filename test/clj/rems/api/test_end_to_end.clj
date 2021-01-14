@@ -5,14 +5,16 @@
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
+            [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
             [stub-http.core :as stub]))
 
-(use-fixtures :each api-fixture)
+(use-fixtures :each api-fixture-without-data)
 
 (defn extract-id [resp]
   (assert-success resp)
@@ -56,6 +58,10 @@
                                     :email "applicant@example.com"
                                     :ssn "012345-0123"}]
 
+          (testing "create owner & api key"
+            (test-helpers/create-user! {:eppn owner-id} :owner)
+            (api-key/add-api-key! api-key))
+
           (testing "create organization"
             (api-call :post "/api/organizations/create"
                       {:organization/id "e2e"
@@ -64,6 +70,7 @@
                        :organization/owners []
                        :organization/review-emails []}
                       api-key owner-id))
+
           (testing "create users"
             (api-call :post "/api/users/create" handler-attributes api-key owner-id)
             (api-call :post "/api/users/create" applicant-attributes api-key owner-id))
@@ -376,6 +383,11 @@
         rejecter-attributes {:userid rejecter-bot/bot-userid
                              :email nil
                              :name "rejecter"}]
+
+    (testing "create owner & api key"
+      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (api-key/add-api-key! api-key))
+
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
@@ -491,6 +503,11 @@
         rejecter-attributes {:userid rejecter-bot/bot-userid
                              :email nil
                              :name "rejecter"}]
+
+    (testing "create owner & api key"
+      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (api-key/add-api-key! api-key))
+
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
@@ -625,10 +642,16 @@
         bot-attributes {:userid bona-fide-bot/bot-userid
                         :email nil
                         :name "bona fide bot"}]
+
+    (testing "create owner & api key"
+      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (api-key/add-api-key! api-key))
+
     (testing "create users"
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
       (api-call :post "/api/users/create" referer-attributes api-key owner-id)
       (api-call :post "/api/users/create" bot-attributes api-key owner-id))
+
     (let [resource-id (extract-id (api-call :post "/api/resources/create" {:organization {:organization/id "default"}
                                                                            :resid "bona fide"
                                                                            :licenses []}
