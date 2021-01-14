@@ -12,8 +12,6 @@
   :each
   api-fixture)
 
-(def user-id "developer")
-
 (defn- create-application-in-review! []
   (let [app-id (test-helpers/create-application! {:actor "alice"})]
     (test-helpers/command! {:type :application.command/submit
@@ -42,7 +40,7 @@
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-handler-reminder")
-                       (authenticate test-data/+test-api-key+ user-id)
+                       (authenticate test-data/+test-api-key+ "developer")
                        handler
                        read-ok-body)]
           (is (= "OK" body))
@@ -54,7 +52,7 @@
 
   (testing "requires API key"
     (let [response (-> (request :post "/api/email/send-handler-reminder")
-                       (add-login-cookies user-id)
+                       (add-login-cookies "developer")
                        handler)]
       (is (response-is-forbidden? response))
       (is (logged-in? response)))))
@@ -69,7 +67,7 @@
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-reviewer-reminder")
-                       (authenticate test-data/+test-api-key+ user-id)
+                       (authenticate test-data/+test-api-key+ "developer")
                        handler
                        read-ok-body)]
           (is (= "OK" body))
@@ -80,7 +78,7 @@
 
   (testing "requires API key"
     (let [response (-> (request :post "/api/email/send-reviewer-reminder")
-                       (add-login-cookies user-id)
+                       (add-login-cookies "developer")
                        handler)]
       (is (response-is-forbidden? response))
       (is (logged-in? response)))))
@@ -96,7 +94,7 @@
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-reminders")
-                       (authenticate test-data/+test-api-key+ user-id)
+                       (authenticate test-data/+test-api-key+ "developer")
                        handler
                        read-ok-body)]
           (is (= "OK" body))
@@ -109,7 +107,7 @@
 
   (testing "requires API key"
     (let [response (-> (request :post "/api/email/send-reminders")
-                       (add-login-cookies user-id)
+                       (add-login-cookies "developer")
                        handler)]
       (is (response-is-forbidden? response))
       (is (logged-in? response)))))

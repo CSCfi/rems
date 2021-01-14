@@ -10,79 +10,77 @@
   api-fixture
   owners-fixture)
 
-(def user-id "owner")
-
 (deftest test-archiving-disabling
   (let [license-id (:id (api-call :post "/api/licenses/create" {:licensetype "text" :organization {:organization/id "organization2"} :localizations {}}
-                                  +test-api-key+ user-id))
+                                  +test-api-key+ "owner"))
         resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization {:organization/id "organization2"} :licenses [license-id]}
-                                   +test-api-key+ user-id))
+                                   +test-api-key+ "owner"))
         form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"} :form/title "form update test" :form/fields []}
-                               +test-api-key+ user-id))
+                               +test-api-key+ "owner"))
         wf-form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"} :form/title "workflow form update test" :form/fields []}
-                                  +test-api-key+ user-id))
+                                  +test-api-key+ "owner"))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization {:organization/id "organization2"} :title "default workflow"
                                     :forms [{:form/id wf-form-id}]
-                                    :type :workflow/default :handlers [user-id]}
-                                   +test-api-key+ user-id))
+                                    :type :workflow/default :handlers ["owner"]}
+                                   +test-api-key+ "owner"))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
                                     {:form form-id
                                      :resid resource-id
                                      :wfid workflow-id
                                      :organization {:organization/id "organization2"}
                                      :localizations {}}
-                                    +test-api-key+ user-id))
+                                    +test-api-key+ "owner"))
 
         resource-archived! #(api-call :put "/api/resources/archived"
                                       {:id resource-id
                                        :archived %}
-                                      +test-api-key+ user-id)
+                                      +test-api-key+ "owner")
 
         resource-enabled! #(api-call :put "/api/resources/enabled"
                                      {:id resource-id
                                       :enabled %}
-                                     +test-api-key+ user-id)
+                                     +test-api-key+ "owner")
 
         catalogue-item-archived! #(api-call :put "/api/catalogue-items/archived"
                                             {:id catalogue-id
                                              :archived %}
-                                            +test-api-key+ user-id)
+                                            +test-api-key+ "owner")
 
         catalogue-item-enabled! #(api-call :put "/api/catalogue-items/enabled"
                                            {:id catalogue-id
                                             :enabled %}
-                                           +test-api-key+ user-id)
+                                           +test-api-key+ "owner")
 
         form-archived! #(api-call :put "/api/forms/archived"
                                   {:id %1
                                    :archived %2}
-                                  +test-api-key+ user-id)
+                                  +test-api-key+ "owner")
 
         form-enabled! #(api-call :put "/api/forms/enabled"
                                  {:id %1
                                   :enabled %2}
-                                 +test-api-key+ user-id)
+                                 +test-api-key+ "owner")
 
         license-archived! #(api-call :put "/api/licenses/archived"
                                      {:id license-id
                                       :archived %}
-                                     +test-api-key+ user-id)
+                                     +test-api-key+ "owner")
 
         license-enabled! #(api-call :put "/api/licenses/enabled"
                                     {:id license-id
                                      :enabled %}
-                                    +test-api-key+ user-id)
+                                    +test-api-key+ "owner")
 
         workflow-archived! #(api-call :put "/api/workflows/archived"
                                       {:id workflow-id
                                        :archived %}
-                                      +test-api-key+ user-id)
+                                      +test-api-key+ "owner")
 
         workflow-enabled! #(api-call :put "/api/workflows/enabled"
                                      {:id workflow-id
                                       :enabled %}
-                                     +test-api-key+ user-id)]
+                                     +test-api-key+ "owner")]
     (is license-id)
     (is resource-id)
     (is form-id)
