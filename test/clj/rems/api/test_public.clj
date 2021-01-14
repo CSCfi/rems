@@ -6,7 +6,7 @@
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture-without-data)
 
 (deftest service-translations-test
   (let [api-key "42"
