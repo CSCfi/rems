@@ -8,9 +8,11 @@
             [mount.core :as mount]
             [rems.application.search]
             [rems.config :refer [env]]
+            [rems.db.api-key :as api-key]
             [rems.db.applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.locales])
   (:import [org.joda.time Duration ReadableInstant]))
 
@@ -52,6 +54,12 @@
     (catch Throwable t
       (println "ERROR: Generating test data failed!")
       (.printStackTrace t)))
+  (f))
+
+(def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
+
+(defn owners-fixture [f]
+  (test-data/create-owners!)
   (f))
 
 (defn rollback-db-fixture [f]

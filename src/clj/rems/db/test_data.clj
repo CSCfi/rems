@@ -16,6 +16,8 @@
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
+(def +test-api-key+ "42")
+
 ;;; generate test data
 
 (defn- create-users-and-roles! [users attrs]
@@ -1057,9 +1059,33 @@
                            :organization/owners [{:userid organization-owner2}]
                            :organization/review-emails []})))
 
+(defn create-test-api-key! []
+  (api-key/add-api-key! +test-api-key+ {:comment "test data"}))
+
+(defn create-owners!
+  "Create an owner, two organization owners, and their organizations."
+  []
+  (create-test-api-key!)
+  (create-user! (+fake-user-data+ "owner") :owner)
+  (create-user! (+fake-user-data+ "organization-owner1"))
+  (create-user! (+fake-user-data+ "organization-owner2"))
+  (create-organization! {:actor "owner" :users +fake-users+})
+  (create-organization! {:actor "owner"
+                         :organization/id "organization1"
+                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                         :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
+                         :organization/owners [{:userid "organization-owner1"}]
+                         :organization/review-emails []})
+  (create-organization! {:actor "owner"
+                         :organization/id "organization2"
+                         :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
+                         :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
+                         :organization/owners [{:userid "organization-owner2"}]
+                         :organization/review-emails []}))
+
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (api-key/add-api-key! 42 {:comment "test data"})
+  (create-test-api-key!)
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)

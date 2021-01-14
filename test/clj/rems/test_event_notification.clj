@@ -4,16 +4,17 @@
             [medley.core :refer [dissoc-in]]
             [rems.config]
             [rems.api.services.command :as command]
-            [rems.api.testing :refer [api-fixture api-call]]
+            [rems.api.testing :refer [api-fixture-without-data api-call]]
             [rems.db.events]
+            [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
             [stub-http.core :as stub]))
 
 (use-fixtures
-  :once
-  api-fixture)
+  :each
+  api-fixture-without-data)
 
 (deftest test-notify!
   (with-open [server (stub/start! {"/ok" {:status 200}
@@ -44,6 +45,8 @@
 
 (deftest test-event-notification
   ;; this is an integration test from commands to notifications
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (with-open [server (stub/start! {"/created" {:status 200}
                                    "/all" {:status 200}})]
     (with-redefs [rems.config/env (assoc rems.config/env
@@ -120,6 +123,8 @@
                    (:event/type (:data req))))))))))
 
 (deftest test-event-notification-ordering
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (with-open [server (stub/start! {"/" {:status 200}})]
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :event-notification-targets [{:url (str (:uri server) "/")}])]
