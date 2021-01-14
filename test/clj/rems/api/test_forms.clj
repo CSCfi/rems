@@ -7,12 +7,14 @@
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
 (use-fixtures
   :each
-  api-fixture-without-data)
+  api-fixture-without-data
+  owners-fixture)
 
 (defn- fixup-field-visible-type [field]
   (if (get-in field [:field/visibility :visibility/type])
@@ -41,14 +43,6 @@
                                 :field/placeholder {:en "en placeholder"
                                                     :fi "fi placeholder"
                                                     :sv "sv placeholder"}}]}]
-    (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn owner} :owner)
-    (test-helpers/create-user! {:eppn org-owner})
-    (test-helpers/create-organization! {:actor owner
-                                        :organization/id "organization1"
-                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                                        :organization/owners [{:userid org-owner}]})
     (doseq [user-id [owner org-owner]]
       (testing user-id
         (testing "not found"
@@ -183,9 +177,6 @@
                                  {:field/type :attachment
                                   :field/title localized
                                   :field/optional false}]}]
-    (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/ensure-default-organization!)
 
     (is (= (:vs (:field/type schema/FieldTemplate))
            (set (map :field/type (:form/fields form-spec))))
@@ -210,14 +201,6 @@
 (deftest form-editable-test
   (let [api-key "42"
         user-id "owner"]
-    (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/create-user! {:eppn "organization-owner1"})
-    (test-helpers/create-organization! {:actor user-id
-                                        :organization/id "organization1"
-                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                                        :organization/owners [{:userid "organization-owner1"}]})
     (let [form-id (:id (api-call :post "/api/forms/create"
                                  {:organization {:organization/id "organization1"}
                                   :form/title "form editable test"
@@ -279,18 +262,6 @@
 (deftest form-edit-test
   (let [api-key "42"
         user-id "owner"]
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/create-user! {:eppn "organization-owner1"})
-    (test-helpers/create-organization! {:actor user-id
-                                        :organization/id "organization1"
-                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                                        :organization/owners [{:userid "organization-owner1"}]})
-    (test-helpers/create-organization! {:actor user-id
-                                        :organization/id "abc"
-                                        :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
-                                        :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}})
-    (api-key/add-api-key! api-key)
     (let [form-id (:id (api-call :post "/api/forms/create"
                                  {:organization {:organization/id "organization1"}
                                   :form/title "form edit test"
@@ -323,35 +294,19 @@
       (testing "owner can change title and organization"
         (is (true? (:success (api-call :put "/api/forms/edit"
                                        {:form/id form-id
-                                        :organization {:organization/id "abc"}
+                                        :organization {:organization/id "organization2"}
                                         :form/title "I am owner"
                                         :form/fields []}
                                        api-key user-id))))
         (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
-          (is (= {:organization/id "abc"
-                  :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
-                  :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}}
-                 (:organization form)))
+          (is (= "organization2"
+                 (:organization/id (:organization form))))
           (is (= "I am owner" (:form/title form))))))))
 
 (deftest form-enabled-archived-test
   (let [api-key "42"
         owner "owner"
         org-owner "organization-owner1"]
-    (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn owner} :owner)
-    (test-helpers/create-user! {:eppn org-owner})
-    (test-helpers/create-user! {:eppn "organization-owner2"})
-    (test-helpers/create-organization! {:actor owner
-                                        :organization/id "organization1"
-                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                                        :organization/owners [{:userid org-owner}]})
-    (test-helpers/create-organization! {:actor owner
-                                        :organization/id "organization2"
-                                        :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
-                                        :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
-                                        :organization/owners [{:userid "organization-owner2"}]})
     (let [form-id (-> (request :post "/api/forms/create")
                       (authenticate api-key owner)
                       (json-body {:organization {:organization/id "organization1"}
@@ -400,9 +355,6 @@
 (deftest option-form-item-test
   (let [api-key "42"
         user-id "owner"]
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/ensure-default-organization!)
-    (api-key/add-api-key! api-key)
     (testing "create"
       (let [command {:organization {:organization/id "default"}
                      :form/title (str "form title " (UUID/randomUUID))
@@ -459,9 +411,6 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/privacy :public}]}]
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/ensure-default-organization!)
-    (api-key/add-api-key! api-key)
     (testing "creating"
       (testing "invalid request"
         (is (not (failure-response? (api-response :post "/api/forms/create"
@@ -540,9 +489,6 @@
                                 :field/visibility {:visibility/type :only-if
                                                    :visibility/field {:field/id "fld3"}
                                                    :visibility/values ["c" "d"]}}]}]
-    (test-helpers/create-user! {:eppn user-id} :owner)
-    (test-helpers/ensure-default-organization!)
-    (api-key/add-api-key! api-key)
     (testing "creating"
       (testing "invalid request"
         (is (not (failure-response? (api-response :post "/api/forms/create"
@@ -634,8 +580,6 @@
                      (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
-  (api-key/add-api-key! "42")
-  (test-helpers/create-user! {:eppn "owner"} :owner)
   (db/set-form-template-archived! {:id (test-helpers/create-form! {:form/title "archived 1"
                                                                    :form/keys []})
                                    :archived true})
@@ -664,8 +608,6 @@
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest test-form-missing-languages
-  (api-key/add-api-key! "42")
-  (test-helpers/create-user! {:eppn "owner"} :owner)
   (let [id (with-redefs [rems.api.services.form/validation-error (constantly nil)] ;; disable validation
              (test-helpers/create-form! {:form/title "invalid form"
                                          :form/fields [{:field/id "fld1"
@@ -718,14 +660,13 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:organization {:organization/id "abc"}
+                         (json-body {:organization {:organization/id "organization1"}
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
   (test-helpers/create-user! {:eppn "alice"})
-  (api-key/add-api-key! "42")
   (testing "without owner role"
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
@@ -737,7 +678,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:organization {:organization/id "abc"}
+                         (json-body {:organization {:organization/id "organization1"}
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
