@@ -39,10 +39,6 @@
                   search-index-fixture
                   caches-fixture]))
 
-(def api-fixture
-  (join-fixtures [api-fixture-without-data
-                  test-data-fixture]))
-
 (defn authenticate [request api-key user-id]
   (-> request
       (assoc-in [:headers "x-rems-api-key"] api-key)
