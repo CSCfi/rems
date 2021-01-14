@@ -4,6 +4,8 @@
             [buddy.core.keys :as buddy-keys]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.config]
             [rems.ga4gh :as ga4gh]
             [rems.handler :refer [handler]]
@@ -12,7 +14,7 @@
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture-without-data)
 
 (deftest jwk-api
   (let [data (api-call :get "/api/jwk" nil nil nil)]
@@ -27,68 +29,83 @@
   (s/validate ga4gh/VisaClaim visa))
 
 (defn- validate-alice-result [data]
-  (doseq [visa (:ga4gh_passport_v1 data)]
-    (let [header (buddy-jws/decode-header visa)
-          key (buddy-keys/jwk->public-key (rems.config/env :ga4gh-visa-public-key))
-          data (buddy-jwt/unsign visa key {:alg :rs256})]
-      (is (= (str (:public-url rems.config/env) "api/jwk") (:jku header)))
-      (is (= "JWT" (:typ header)))
-      (is (= "2011-04-29" (:kid header)))
-      (validate-visa data)
-      (is (= "alice" (:sub data)))
-      (is (= "urn:nbn:fi:lb-201403262" (get-in data [:ga4gh_visa_v1 :value]))))))
+  (let [visas (:ga4gh_passport_v1 data)
+        visa (first visas)
+        header (buddy-jws/decode-header visa)
+        key (buddy-keys/jwk->public-key (rems.config/env :ga4gh-visa-public-key))
+        data (buddy-jwt/unsign visa key {:alg :rs256})]
+    (is (= 1 (count visas)))
+    (is visa)
+    (is (= (str (:public-url rems.config/env) "api/jwk") (:jku header)))
+    (is (= "JWT" (:typ header)))
+    (is (= "2011-04-29" (:kid header)))
+    (validate-visa data)
+    (is (= "alice" (:sub data)))
+    (is (= "urn:nbn:fi:lb-201403262" (get-in data [:ga4gh_visa_v1 :value])))))
 
 (deftest permissions-test-content
-  (let [api-key "42"]
-    (testing "all for alice as handler"
-      (let [data (-> (request :get "/api/permissions/alice")
-                     (authenticate api-key "handler")
-                     handler
-                     read-ok-body)]
-        (validate-alice-result data)))
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
+  (let [res-id (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"})
+        wf-id (test-helpers/create-workflow! {:handlers ["handler"]})
+        cat-id (test-helpers/create-catalogue-item! {:resource-id res-id :workflow-id wf-id})
+        application (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor "alice"})]
+    (test-helpers/submit-application application "alice")
+    (test-helpers/command! {:type :application.command/approve
+                            :application-id application
+                            :actor "handler"}))
 
-    (testing "all for alice as owner"
-      (let [data (-> (request :get "/api/permissions/alice")
-                     (authenticate api-key "owner")
-                     handler
-                     read-ok-body)]
-        (validate-alice-result data)))
+  (testing "all for alice as handler"
+    (let [data (-> (request :get "/api/permissions/alice")
+                   (authenticate test-data/+test-api-key+ "handler")
+                   handler
+                   read-ok-body)]
+      (validate-alice-result data)))
 
-    (testing "without user not found is returned"
-      (let [response (-> (request :get "/api/permissions")
-                         (authenticate api-key "handler")
-                         handler)
-            body (read-body response)]
-        (is (= "not found" body))))))
+  (testing "all for alice as owner"
+    (let [data (-> (request :get "/api/permissions/alice")
+                   (authenticate test-data/+test-api-key+ "owner")
+                   handler
+                   read-ok-body)]
+      (validate-alice-result data)))
+
+  (testing "without user not found is returned"
+    (let [response (-> (request :get "/api/permissions")
+                       (authenticate test-data/+test-api-key+ "handler")
+                       handler)
+          body (read-body response)]
+      (is (= "not found" body)))))
 
 (deftest permissions-test-security
-  (let [api-key "42"]
-    (testing "listing without authentication"
-      (let [response (-> (request :get (str "/api/permissions/userx"))
-                         handler)
-            body (read-body response)]
-        (is (= "unauthorized" body))))
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
+  (testing "listing without authentication"
+    (let [response (-> (request :get (str "/api/permissions/userx"))
+                       handler)
+          body (read-body response)]
+      (is (= "unauthorized" body))))
 
-    (testing "listing without appropriate role"
-      (let [response (-> (request :get (str "/api/permissions/alice"))
-                         (authenticate api-key "approver1")
-                         handler)
-            body (read-body response)]
-        (is (= "forbidden" body))))
+  (testing "listing without appropriate role"
+    (let [response (-> (request :get (str "/api/permissions/alice"))
+                       (authenticate test-data/+test-api-key+ "approver1")
+                       handler)
+          body (read-body response)]
+      (is (= "forbidden" body))))
 
-    (testing "all for alice as malice"
-      (let [response (-> (request :get (str "/api/permissions/alice"))
-                         (authenticate api-key "malice")
-                         handler)
-            body (read-body response)]
-        (is (= "forbidden" body))))))
+  (testing "all for alice as malice"
+    (let [response (-> (request :get (str "/api/permissions/alice"))
+                       (authenticate test-data/+test-api-key+ "malice")
+                       handler)
+          body (read-body response)]
+      (is (= "forbidden" body)))))
 
 (deftest permissions-test-api-disabled
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
   (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api false)]
-    (let [api-key "42"]
-      (testing "when permissions api is disabled"
-        (let [response (-> (request :get "/api/permissions/alice")
-                           (authenticate api-key "handler")
-                           handler)
-              body (read-body response)]
-          (is (= "permissions api not implemented" body)))))))
+    (testing "when permissions api is disabled"
+      (let [response (-> (request :get "/api/permissions/alice")
+                         (authenticate test-data/+test-api-key+ "owner")
+                         handler)
+            body (read-body response)]
+        (is (= "permissions api not implemented" body))))))
