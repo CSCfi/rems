@@ -8,11 +8,13 @@
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"
-       :aria-label (text :t.link/opens-in-new-window)}])
+       ;;:aria-label (text :t.link/opens-in-new-window)
+       }])
 
 (defn file-download []
   [:i {:class "fa fa-file-download"
-       :aria-label (text :t.link/download-file)}])
+       ;;:aria-label (text :t.link/download-file)
+       }])
 
 (defn link [opts uri title]
   [:a (merge opts {:href uri})
@@ -26,7 +28,8 @@
                         :asc ["fa-arrow-up" :t.table/ascending-order]
                         :desc ["fa-arrow-down" :t.table/descending-order])]
     [:i.fa {:class class
-            :aria-label (text label)}]))
+            ;;:aria-label (text label)
+            }]))
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])
@@ -36,7 +39,8 @@
 
 (defn success-symbol []
   ;; fa-stack has weird spacing, try to fix it by unsetting line-height (which is 2em by default)
-  [:span.fa-stack {:aria-label (text :t.form/success) :style {:line-height :inherit}}
+  [:span.fa-stack {;;:aria-label (text :t.form/success)
+                   :style {:line-height :inherit}}
    [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
    [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
 
@@ -75,8 +79,8 @@
       :class [:checkbox class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
       :tabIndex 0
       :role :checkbox
-      :aria-checked value
-      :aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
+      ;;:aria-checked value
+      ;;:aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
       :on-click wrapped-on-change
       :on-key-press #(when (= (.-key %) " ")
                        (wrapped-on-change %))}]))
