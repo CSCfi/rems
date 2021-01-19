@@ -46,47 +46,6 @@ are only shown to users handling the application, and super-users like
 the owner and reporter. In praticular, application members cannot see
 the additional user properties of each other.
 
-#### OIDC Hostname issues
-
-If you are using docker-compose to spin up your IdP alongside REMS, you may run into hostname issues pertaining to `:oidc-metadata-url` when using a browser. Keycloak generates the redirect URLs served at the `./well-known/openid-configuration` endpoint based on the hostname of the incoming request. But if this hostname is relative to a set of docker containers, it might not make sense to the browser from which you are accessing REMS and the Keycloak IdP.
-
-For example, suppose your `docker-compose.yaml` has a Keycloak IdP configured as follows:
-```
-services:
-  keycloak:
-    ports:
-      - "3002:8080"
-```
-Then, in your REMS config file, you must set something like:
-```
-:oidc-metadata-url "http://keycloak:8080/auth/realms/my-realm/.well-known/openid-configuration"`.
-```
-If you instead set it to something like:
-```
-:oidc-metadata-url "http://localhost:3002/auth/realms/dycons-researcher-idp/.well-known/openid-configuration"
-```
-then REMS will crash with a `Connection Refused` exception early in runtime. This is fairly typical Docker networking.
-
-Using the `keycloak:8080` hostname, the problem arises when a user attempts to Login to REMS. REMS requests authentication redirection URLs from Keycloak at the `keycloak:8080` address. Keycloak then generates those URLs using the `keycloak:8080` hostname used in the request. However, `keycloak:8080` is meaningless to the user's browser, which does not have access to the docker-compose network namespace. The browser is unable to find Keycloak at that address.
-
-This can be resolved with the process outlined below, which forces keycloak to generate the URLs served at `.well-known/openid-configuration` with a predetermined hostname, one that the browser is able to find (`localhost:3002` in this example).
-1) Copy `/opt/jboss/keycloak/standalone/configuration/standalone-ha.xml` from your keycloak container to your host
-2) In your local copy of `standalone-ha.xml`, replace this line:
-```
-<property name="frontendUrl" value="${keycloak.frontendUrl:}"/>
-```
-with this line:
-```
-<property name="frontendUrl" value="http://localhost:3002/auth/"/>
-```
-This is assuming you want Keycloak to authenticate at `localhost:3002`. Amend the hostname as needed, but make sure the value for `frontendUrl` terminates with `/auth/`.
-3) Mount your local copy of `standalone-ha.xml` to the keycloak container, ex. via your keycloak's `Dockerfile`:
-```
-ADD ./standalone-ha.xml /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml
-```
-
-REMS will still be able to connect to keycloak at `keycloak:8080` at runtime, but the `.well-known/openid-configuration` Keycloak endpoint will serve URLs with the `frontendUrl` base URL you set.
-
 ### Development login (`:fake`)
 
 This option should not be used in production. Keep also in mind that anyone with access to the dev/test server using development authentication can login with your fake credentials.
