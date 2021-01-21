@@ -124,7 +124,6 @@
          :color2 "#555"
          :color3 "#000"
          :color4 "#000"
-         ;; navigation type options
          :navbar-logo false}
 
  ;; Optional extra static resources directory.
