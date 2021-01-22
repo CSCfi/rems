@@ -52,6 +52,9 @@
 (defn get-logo-name-sm [lang]
   (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
 
+(defn get-logo-navigation [lang]
+  (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-navigation")) :logo-name-navigation)))
+
 (defn- generate-at-font-faces []
   (list
    (stylesheet/at-font-face {:font-family "'Lato'"
@@ -526,9 +529,13 @@
      :letter-spacing (u/rem 0.015)
      :padding-left 0
      :padding-right 0
-     :color (get-theme-attribute :navbar-color "#111")}
+     :color (get-theme-attribute :navbar-color "#111")
+     :justify-content "space-between"}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
+   [:#administration-menu
+    [:.nav-link
+     {:padding ".5rem 0"}]]
    [:.navbar-top-bar {:width (u/percent 100)
                       :height (u/px 4)
                       :display :flex
@@ -582,7 +589,7 @@
                                  :background-origin (get-theme-attribute :logo-content-origin)}]
    [(s/descendant :.logo-menu :.img) {:height "100%"
                                       :background-color (get-theme-attribute :logo-bgcolor)
-                                      :background-image (get-logo-name-sm context/*lang*)
+                                      :background-image (get-logo-navigation context/*lang*)
                                       :-webkit-background-size :contain
                                       :-moz-o-background-size :contain
                                       :-o-background-size :contain

@@ -123,8 +123,7 @@
  :theme {:color1 "#eee"
          :color2 "#555"
          :color3 "#000"
-         :color4 "#000"
-         :navbar-logo false}
+         :color4 "#000"}
 
  ;; Optional extra static resources directory.
  :extra-static-resources nil

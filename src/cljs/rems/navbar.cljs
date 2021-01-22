@@ -87,8 +87,8 @@
   (let [theme @(rf/subscribe [:theme])]
     [:nav.navbar-flex
      [:div.navbar.navbar-expand-sm.flex-fill
-      (when (:navbar-logo theme)
-        [logo (:navbar-logo theme)])
+      (when-not (str/blank? (:logo-name-navigation theme))
+        [logo (:logo-name-navigation theme)])
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]

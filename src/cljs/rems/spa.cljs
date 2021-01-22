@@ -1,5 +1,6 @@
 (ns rems.spa
   (:require [accountant.core :as accountant]
+            [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [promesa.core :as p]
@@ -334,7 +335,7 @@
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]
-     (when (or (= page-id :home) (not (:navbar-logo theme)))
+     (when (or (= page-id :home) (str/blank? (:logo-name-navigation theme)))
        [nav/logo])
      [main-content page-id grab-focus?]
      [footer]]))
