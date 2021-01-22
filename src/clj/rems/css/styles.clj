@@ -38,7 +38,6 @@
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
-(def recalculated-menu-height (u/px (+ menu-height 12)))
 
 (defn resolve-image [path]
   (when path
@@ -100,12 +99,12 @@
                            :background-size :contain
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
-                         [:.logo {:height logo-height}]))
+                         [:.logo {:height logo-height}]
+                         [:.navbar-brand {:display "none"}]))
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
-                        [:.commands {:white-space "nowrap"}]
-                        [:.navbar-brand {:display "none"}])
+                        [:.commands {:white-space "nowrap"}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
@@ -359,7 +358,7 @@
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
-           :padding-top recalculated-menu-height
+           :padding-top (u/px (+ menu-height 12))
            :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
    [:h1 {:margin-bottom (u/rem 2)
@@ -571,16 +570,26 @@
             :margin "0 auto"
             :padding "0 20px"
             :margin-bottom (u/em 1)}]
-   [(s/descendant :.logo :.img) (s/descendant :.logo-menu :.img) {:height "100%"
-                                                                  :background-color (get-theme-attribute :logo-bgcolor)
-                                                                  :background-image (get-logo-image context/*lang*)
-                                                                  :-webkit-background-size :contain
-                                                                  :-moz-o-background-size :contain
-                                                                  :-o-background-size :contain
-                                                                  :background-size :contain
-                                                                  :background-repeat :no-repeat
-                                                                  :background-position [[:center :center]]
-                                                                  :background-origin (get-theme-attribute :logo-content-origin)}]
+   [(s/descendant :.logo :.img) {:height "100%"
+                                 :background-color (get-theme-attribute :logo-bgcolor)
+                                 :background-image (get-logo-image context/*lang*)
+                                 :-webkit-background-size :contain
+                                 :-moz-o-background-size :contain
+                                 :-o-background-size :contain
+                                 :background-size :contain
+                                 :background-repeat :no-repeat
+                                 :background-position [[:center :center]]
+                                 :background-origin (get-theme-attribute :logo-content-origin)}]
+   [(s/descendant :.logo-menu :.img) {:height "100%"
+                                      :background-color (get-theme-attribute :logo-bgcolor)
+                                      :background-image (get-logo-name-sm context/*lang*)
+                                      :-webkit-background-size :contain
+                                      :-moz-o-background-size :contain
+                                      :-o-background-size :contain
+                                      :background-size :contain
+                                      :background-repeat :no-repeat
+                                      :background-position [[:center :center]]
+                                      :background-origin (get-theme-attribute :logo-content-origin)}]
    ;; Footer
    (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
      [:footer {:width "100%"
