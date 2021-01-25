@@ -85,9 +85,11 @@
            :external-id {:value (:application/external-id app)
                          :sort-value (application-util/parse-sortable-external-id (:application/external-id app))}
            :external-and-assigned-id {:display-value [:<>
-                                                      [:span.text-nowrap (:application/assigned-external-id app)]
-                                                      (when (:application/generated-external-id app)
-                                                        [:<> [:br] [:span.text-nowrap (:application/generated-external-id app)]])]
+                                                      (when (:application/assigned-external-id app)
+                                                        [:<>
+                                                         [:span.text-nowrap (:application/assigned-external-id app)]
+                                                         [:br]])
+                                                      [:span.text-nowrap (:application/generated-external-id app)]]
                                       :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
                                                    (:application/generated-external-id app)]}
            :description {:value (:application/description app)
