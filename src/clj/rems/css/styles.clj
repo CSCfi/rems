@@ -103,7 +103,7 @@
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
                          [:.logo {:height logo-height}]
-                         [:.navbar-brand {:display "none"}]))
+                         [:.logo-menu {:display "none"}]))
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
