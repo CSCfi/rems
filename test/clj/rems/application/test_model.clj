@@ -441,6 +441,7 @@
 
 (def created-application {:application/id 1
                           :application/external-id "extid"
+                          :application/generated-external-id "extid"
                           :application/state :application.state/draft
                           :application/todo nil
                           :application/created (DateTime. 1000)
@@ -534,7 +535,8 @@
                            {:application/last-activity (DateTime. 4000)
                             :application/events (conj (:application/events submitted-application)
                                                       event)
-                            :application/external-id "ext123"})]
+                            :application/external-id "ext123"
+                            :application/assigned-external-id "ext123"})]
     (is (= application (recreate application)))))
 
 (def approved-event {:event/type :application.event/approved
@@ -1115,6 +1117,7 @@
 (deftest test-enrich-with-injections
   (is (= {:application/id 1
           :application/external-id "extid"
+          :application/generated-external-id "extid"
           :application/state :application.state/approved
           :application/todo nil
           :application/created (DateTime. 1000)

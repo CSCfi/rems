@@ -21,7 +21,7 @@
 (s/defschema GetConfigResponse
   {:authentication s/Keyword
    :alternative-login-url (s/maybe s/Str)
-   :application-id-column (s/enum :id :external-id)
+   :application-id-column (s/enum :id :external-id :external-and-assigned-id)
    :catalogue-is-public s/Bool
    :extra-pages [ExtraPage]
    :enable-assign-external-id-ui s/Bool

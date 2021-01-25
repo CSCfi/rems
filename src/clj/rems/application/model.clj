@@ -33,6 +33,7 @@
   (-> application
       (assoc :application/id (:application/id event)
              :application/external-id (:application/external-id event)
+             :application/generated-external-id (:application/external-id event)
              :application/state :application.state/draft
              :application/todo nil
              :application/created (:event/time event)
@@ -235,7 +236,9 @@
 
 (defmethod application-base-view :application.event/external-id-assigned
   [application event]
-  (assoc application :application/external-id (:application/external-id event)))
+  (assoc application
+         :application/external-id (:application/external-id event)
+         :application/assigned-external-id (:application/external-id event)))
 
 (defmethod application-base-view :application.event/deleted
   [application _event]
