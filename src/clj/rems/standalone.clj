@@ -31,7 +31,9 @@
   ^{:on-reload :noop}
   http-server
   :start
-  (http/start (assoc env :handler handler/handler))
+  (http/start {:handler handler/handler
+               :send-server-version? false
+               :port (:port env)})
   :stop
   (when http-server (http/stop http-server)))
 
