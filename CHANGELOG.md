@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.15
 
 ### Changes
+- REMS no longer sends the Server: HTTP header to avoid leaking version information. (#2216)
 - Text descriptions of some events in the log were phrased better. The created event also shows the original external id. (#2614)
 
 ### Fixes
