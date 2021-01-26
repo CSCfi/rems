@@ -22,7 +22,7 @@ Changes since v2.15
 
 - The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
 
-- The navigation menu brand logo is now configurable. You can see ` :logo-name-navigation ` configuration variable that if provided with alogo image adds logo to the top navigation menu. [configuration.md](docs/configuration.md). (#2363)
+- The navbar can be configured to show a logo image. When the `:navbar-logo-name` config is provided, the logo is shown in the navbar (top navigation menu). This logo also can be customized per language like the regular logo. (#2363)
 
 ## v2.15 "Tapiolantie" 2021-01-08
 

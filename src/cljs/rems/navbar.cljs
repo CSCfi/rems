@@ -60,8 +60,12 @@
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text])))))
 
-(defn logo [menu-navigation?]
-  [:div {:class (str (if menu-navigation? "navbar-brand logo-menu" "logo"))}
+(defn logo []
+  [:div {:class "logo"}
+   [:div.img]])
+
+(defn logo-navigation []
+  [:div {:class "navbar-brand logo-menu"}
    [:div.img]])
 
 (defn navbar-items [e identity]
@@ -84,11 +88,13 @@
      [language-switcher]]))
 
 (defn navbar-normal [identity]
-  (let [theme @(rf/subscribe [:theme])]
+  (let [theme @(rf/subscribe [:theme])
+        lang @(rf/subscribe [:user-language])]
     [:nav.navbar-flex
      [:div.navbar.navbar-expand-sm.flex-fill
-      (when-not (str/blank? (:logo-name-navigation theme))
-        [logo (:logo-name-navigation theme)])
+      (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
+                (:navbar-logo-name theme))
+        [logo-navigation])
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]

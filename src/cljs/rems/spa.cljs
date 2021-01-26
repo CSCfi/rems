@@ -94,6 +94,11 @@
  (fn [db _]
    (:theme db)))
 
+(rf/reg-sub
+ :user-language
+ (fn [db _]
+   (:language (:user-settings db))))
+
 (rf/reg-event-db
  :initialize-db
  (fn [_ _]
@@ -331,11 +336,14 @@
 (defn page []
   (let [page-id @(rf/subscribe [:page])
         grab-focus? @(rf/subscribe [::grab-focus?])
-        theme @(rf/subscribe [:theme])]
+        theme @(rf/subscribe [:theme])
+        lang @(rf/subscribe [:user-language])]
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]
-     (when (or (= page-id :home) (str/blank? (:logo-name-navigation theme)))
+     (when (or (= page-id :home)
+               (and (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
+                    (not (:navbar-logo-name theme))))
        [nav/logo])
      [main-content page-id grab-focus?]
      [footer]]))

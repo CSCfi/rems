@@ -19,7 +19,7 @@
      (text :t.administration/back)]))
 
 (defn navigator []
-  [:div#administration-menu.navbar.mb-3.mr-auto.ml-auto
+  [:div#administration-menu.navbar.mb-4.mr-auto.ml-auto
    [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items)]
    [navbar/nav-link "/administration/resources" (text :t.administration/resources)]
    [navbar/nav-link "/administration/forms" (text :t.administration/forms)]

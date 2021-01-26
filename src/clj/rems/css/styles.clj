@@ -52,8 +52,8 @@
 (defn get-logo-name-sm [lang]
   (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
 
-(defn get-logo-navigation [lang]
-  (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-navigation")) :logo-name-navigation)))
+(defn get-navbar-logo [lang]
+  (resolve-image (get-theme-attribute (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))
 
 (defn- generate-at-font-faces []
   (list
@@ -589,7 +589,7 @@
                                  :background-origin (get-theme-attribute :logo-content-origin)}]
    [(s/descendant :.logo-menu :.img) {:height "100%"
                                       :background-color (get-theme-attribute :logo-bgcolor)
-                                      :background-image (get-logo-navigation context/*lang*)
+                                      :background-image (get-navbar-logo context/*lang*)
                                       :-webkit-background-size :contain
                                       :-moz-o-background-size :contain
                                       :-o-background-size :contain
