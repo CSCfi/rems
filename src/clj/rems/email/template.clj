@@ -23,7 +23,7 @@
 (defn- format-application-for-email [application]
   (str
    (case (util/getx env :application-id-column)
-     :external-and-assigned-id (:application/external-id application)
+     :generated-and-assigned-external-id (:application/external-id application)
      :external-id (:application/external-id application)
      :id (:application/id application))
    (when-not (empty? (:application/description application))
