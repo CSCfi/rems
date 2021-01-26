@@ -161,6 +161,14 @@
       :reagent-render (fn [title]
                         [:h1 title])})))
 
+(defn logo []
+  [:div {:class "logo"}
+   [:div.img]])
+
+(defn logo-navigation []
+  [:div {:class "navbar-brand logo-menu"}
+   [:div.img]])
+
 (defn guide []
   (let [state (reagent/atom false)
         on-change #(swap! state not)]

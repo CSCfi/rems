@@ -60,14 +60,6 @@
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text])))))
 
-(defn logo []
-  [:div {:class "logo"}
-   [:div.img]])
-
-(defn logo-navigation []
-  [:div {:class "navbar-brand logo-menu"}
-   [:div.img]])
-
 (defn navbar-items [e identity]
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
@@ -94,7 +86,7 @@
      [:div.navbar.navbar-expand-sm.flex-fill
       (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
                 (:navbar-logo-name theme))
-        [logo-navigation])
+        [atoms/logo-navigation])
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]

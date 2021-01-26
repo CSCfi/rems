@@ -33,7 +33,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :refer [document-title logo]]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -344,7 +344,7 @@
      (when (or (= page-id :home)
                (and (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
                     (not (:navbar-logo-name theme))))
-       [nav/logo])
+       [logo])
      [main-content page-id grab-focus?]
      [footer]]))
 
