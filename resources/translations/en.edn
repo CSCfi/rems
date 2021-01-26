@@ -453,6 +453,7 @@
                :home "Home"
                :logout "Sign out"
                :profile "Profile"
+               :settings "Settings"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}

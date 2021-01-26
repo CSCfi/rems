@@ -410,6 +410,7 @@
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :profile "Profiili"
+               :settings "Asetukset"
                :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}

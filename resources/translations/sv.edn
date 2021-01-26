@@ -410,6 +410,7 @@
                :home "Ingångssida"
                :logout "Logga ut"
                :profile "Profil" ; TODO check
+               :settings "Inställningar"
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
