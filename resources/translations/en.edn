@@ -160,9 +160,9 @@
                  ;; %1 - name of event actor
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
-                          :copied-from "%1 copied the application from an old application."
+                          :copied-from "This application is a copy of an old application."
                           :copied-to "%1 copied the application to a new application."
-                          :created "%1 created a new application."
+                          :created "%1 created application %2."
                           :decided "%1 filed a decision for the application."
                           ;; %2 - name & email of decider
                           :decider-invited "%1 invited %2 to decide."
@@ -170,7 +170,7 @@
                           ;; %2 - name of decider
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
-                          :draft-saved "%1 saved the application as a draft."
+                          :draft-saved "%1 saved a draft."
                           ;; %2 - external id
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."
