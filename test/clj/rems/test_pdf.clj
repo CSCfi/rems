@@ -157,7 +157,7 @@
                  [:paragraph "pdf test"]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
-                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil nil]
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]
                  [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil nil]
                  [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil nil]
                  [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil nil]
