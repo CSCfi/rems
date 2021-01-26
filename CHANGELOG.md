@@ -9,9 +9,9 @@ have notable changes.
 Changes since v2.15
 
 ### Changes
+- Text descriptions of some events in the log were phrased better. The created event also shows the original external id. (#2614)
 
 ### Fixes
-
 - CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
 - OIDC signing keys are now always fetched on login, fixing issues with OIDC key rotation requiring a REMS restart. (#2497)
 - /api/resource/<id>, /api/license/<id> and /api/organization/<id> now return HTTP 404 responses if id is not found.
