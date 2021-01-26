@@ -47,10 +47,8 @@
     (format-external-id (allocate-external-id! id-prefix))))
 
 (defn allocate-application-ids! [time]
-  (let [external-id (application-external-id! time)]
-    {:application/id (:id (db/create-application!))
-     :application/generated-external-id external-id
-     :application/external-id external-id}))
+  {:application/id (:id (db/create-application!))
+   :application/external-id (application-external-id! time)})
 
 ;;; Running commands
 
