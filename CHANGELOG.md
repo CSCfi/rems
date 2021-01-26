@@ -20,7 +20,7 @@ Changes since v2.15
 - The browser tests will now fail if there are any accessibility violations. (#2463)
 
 - The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
-- The handler is shown both the assigned external id and the original REMS generated external id. These have also been added as new values to the data model and the original `:application/external-id` kept as it is. (#2614)
+- The handler can be shown both the assigned external id and the original REMS generated external id. This behavior can be enabled by changing the `:application-id-column` config to `:external-and-assigned-id`. These have also been added as new values to the data model and the original `:application/external-id` kept as it is. (#2614)
 
 ## v2.15 "Tapiolantie" 2021-01-08
 
