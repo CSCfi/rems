@@ -94,11 +94,6 @@
  (fn [db _]
    (:theme db)))
 
-(rf/reg-sub
- :user-language
- (fn [db _]
-   (:language (:user-settings db))))
-
 (rf/reg-event-db
  :initialize-db
  (fn [_ _]
@@ -337,7 +332,7 @@
   (let [page-id @(rf/subscribe [:page])
         grab-focus? @(rf/subscribe [::grab-focus?])
         theme @(rf/subscribe [:theme])
-        lang @(rf/subscribe [:user-language])]
+        lang @(rf/subscribe [:language])]
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]

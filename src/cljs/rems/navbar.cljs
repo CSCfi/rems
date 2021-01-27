@@ -81,7 +81,7 @@
 
 (defn navbar-normal [identity]
   (let [theme @(rf/subscribe [:theme])
-        lang @(rf/subscribe [:user-language])]
+        lang @(rf/subscribe [:language])]
     [:nav.navbar-flex
      [:div.navbar.navbar-expand-sm.flex-fill
       (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
