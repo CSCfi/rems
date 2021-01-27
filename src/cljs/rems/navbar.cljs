@@ -37,13 +37,11 @@
 (defn user-widget [user]
   (when user
     [:div.user-widget.px-2.px-sm-0
-     [:span
-      [:i.fa.fa-user.mr-1]
-      [:span.user-name (:name user)]]
-     [atoms/link {:id "settings" :class "nav-link"} (url-dest "/profile")
+     [nav-link
+      "/profile"
       [:span {:aria-label (text :t.navigation/profile)}
-       [:i.fa.fa-cog.mr-1]
-       [:span.icon-description (text :t.navigation/profile)]]]
+       [:i.fa.fa-user.mr-1]
+       [:span.icon-description (:name user)]]]
      [atoms/link {:id "logout" :class "nav-link"} (url-dest "/logout")
       [:span {:aria-label (text :t.navigation/logout)}
        [:i.fa.fa-sign-out-alt.mr-1]
