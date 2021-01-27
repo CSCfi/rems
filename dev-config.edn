@@ -28,6 +28,7 @@
                                     :filename "about-sv.md"}}}]
  :extra-pages-path "./test-data/extra-pages"
  :application-deadline-days 4
+ :application-id-column :generated-and-assigned-external-id
  :enable-assign-external-id-ui true
  :enable-pdf-api true
  :enable-permissions-api true

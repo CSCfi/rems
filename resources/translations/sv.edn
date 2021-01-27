@@ -151,15 +151,15 @@
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
                  :events {:approved "%1 godkände ansökan."
                           :closed "%1 stängde ansökan."
-                          :copied-from "%1 kopierade ansökan från en tidigare ansökan."
+                          :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."
-                          :created "%1 skapade ny ansökan."
+                          :created "%1 skapade ansökan %2."
                           :decided "%1 behandlade ansökan."
                           :decider-invited "%1 bjöd in %2 som beslutare." ; TODO check
                           :decider-joined "%1 blev beslutare." ; TODO check
                           :decision-requested "%1 begärde beslut från användare %2."
                           :deleted "%1 raderade utkastet."
-                          :draft-saved "%1 sparade utkast för ansökan."
+                          :draft-saved "%1 sparade ett utkast."
                           :external-id-assigned "%1 lade till externt id %2."
                           :licenses-accepted "%1 accepterade licenserna."
                           :licenses-added "%1 lade till licenser."

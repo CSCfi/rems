@@ -1730,6 +1730,7 @@
               :application/modified "2010-01-01T00:00:00.000Z"
               :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}
               :application/external-id "2010/1"
+              :application/generated-external-id "2010/1"
               :application/workflow {:workflow/type "workflow/default"
                                      :workflow/id workflow-id
                                      :workflow.dynamic/handlers

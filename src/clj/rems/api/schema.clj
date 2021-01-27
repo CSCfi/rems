@@ -247,7 +247,11 @@
 
 (s/defschema Application
   {:application/id s/Int
-   :application/external-id s/Str
+   :application/external-id (rjs/field
+                             s/Str
+                             {:description "Assigned external id if it exists, otherwise the generated one"})
+   (s/optional-key :application/assigned-external-id) s/Str
+   (s/optional-key :application/generated-external-id) s/Str
    :application/state s/Keyword
    :application/todo (s/maybe (s/enum :new-application
                                       :no-pending-requests

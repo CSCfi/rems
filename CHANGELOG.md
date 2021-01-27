@@ -10,9 +10,9 @@ Changes since v2.15
 
 ### Changes
 - REMS no longer sends the Server: HTTP header to avoid leaking version information. (#2216)
+- Text descriptions of some events in the log were phrased better. The created event also shows the original external id. (#2614)
 
 ### Fixes
-
 - CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
 - OIDC signing keys are now always fetched on login, fixing issues with OIDC key rotation requiring a REMS restart. (#2497)
 - /api/resource/<id>, /api/license/<id> and /api/organization/<id> now return HTTP 404 responses if id is not found.
@@ -21,6 +21,7 @@ Changes since v2.15
 - The browser tests will now fail if there are any accessibility violations. (#2463)
 
 - The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
+- The handler can be shown both the assigned external id and the original REMS generated external id. This behavior can be enabled by changing the `:application-id-column` config to `:generated-and-assigned-external-id`. These have also been added as new values to the data model and the original `:application/external-id` kept as it is. (#2614)
 
 ## v2.15 "Tapiolantie" 2021-01-08
 

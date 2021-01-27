@@ -101,7 +101,7 @@
  :event-notification-targets []
 
  ;; Which database column to show as the application id.
- ;; Options: :id, :external-id
+ ;; Options: :id, :external-id, :generated-and-assigned-external-id
  :application-id-column :external-id
 
  ;; List of supported languages. They will be selectable in the UI.

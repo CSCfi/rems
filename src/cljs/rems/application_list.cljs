@@ -21,7 +21,7 @@
 (defn format-application-id [config application]
   (let [id-column (get config :application-id-column :id)]
     (case id-column
-      :external-id (:application/external-id application)
+      (:external-id :generated-and-assigned-external-id) (:application/external-id application)
       :id (:application/id application)
       (:application/id application))))
 
@@ -84,6 +84,14 @@
            :id {:value (:application/id app)}
            :external-id {:value (:application/external-id app)
                          :sort-value (application-util/parse-sortable-external-id (:application/external-id app))}
+           :generated-and-assigned-external-id {:display-value [:<>
+                                                                (when (:application/assigned-external-id app)
+                                                                  [:<>
+                                                                   [:span.text-nowrap (:application/assigned-external-id app)]
+                                                                   [:br]])
+                                                                [:span.text-nowrap (:application/generated-external-id app)]]
+                                                :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
+                                                             (:application/generated-external-id app)]}
            :description {:value (:application/description app)
                          :td [:td.description (format-description app)]}
            :resource {:value (format-catalogue-items app)}
@@ -130,6 +138,8 @@
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
                      {:key :external-id
+                      :title (text :t.applications/id)}
+                     {:key :generated-and-assigned-external-id
                       :title (text :t.applications/id)}
                      {:key :description
                       :title (text :t.applications/description)}

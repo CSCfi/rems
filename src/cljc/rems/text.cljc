@@ -175,6 +175,9 @@
         (str/join ", " (mapv application-util/get-member-name
                              (:application/deciders event)))
 
+        :application.event/created
+        (:application/external-id event)
+
         :application.event/external-id-assigned
         (:application/external-id event)
 
