@@ -20,13 +20,6 @@
                :data-target ".navbar-collapse.show"}
    (url-dest path) title])
 
-(defn- nav-link-impl-opts [opts path title & [active?]]
-  [atoms/link (merge opts {:class (str "nav-link" (if active? " active" ""))
-                           :data-toggle "collapse"
-                           :data-target ".navbar-collapse.show"})
-   (url-dest path) title])
-
-
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
 
@@ -41,27 +34,11 @@
                   (str/starts-with? location path))]
     [nav-link-impl path title active?]))
 
-
-(defn nav-link-options
-  "A link to path that is shown as active when the current browser location matches the path.
-
-   By default checks if path is a prefix of location, but if match-mode is :exact,
-   checks that path is exactly location."
-  [opts path title & [match-mode]]
-  (let [location @(rf/subscribe [:path])
-        active? (case match-mode
-                  :exact
-                  (= location path)
-                  ;; default: prefix
-                  (str/starts-with? location path))]
-    [nav-link-impl-opts opts path title active?]))
-
 (defn user-widget [user]
   (when user
     [:div.user-widget.px-2.px-sm-0
-     [nav-link-options
-      {:id "settings" :class "nav-link"}
-      (url-dest "/profile")
+     [nav-link
+      "/profile"
       [:span {:aria-label (text :t.navigation/profile)}
        [:i.fa.fa-user.mr-1]
        [:span.icon-description (:name user)]]]
