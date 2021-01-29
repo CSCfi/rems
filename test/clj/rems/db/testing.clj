@@ -54,22 +54,3 @@
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
     (f)))
-
-(defn get-database-time []
-  (:now (db/get-database-time)))
-
-(defn sync-with-database-time
-  "When the database runs on a different machine or VM than
-   the application (e.g. Docker for Mac), the database clock may be
-   ahead of the application clock, in which case newly created entities
-   may be incorrectly flagged as expired, because their creation time
-   seems to be in the future. This helper method can be called after
-   creating such entities in flaky tests to guarantee that the application
-   clock has caught up with the database clock."
-  []
-  (let [db-time (get-database-time)
-        app-time (time/now)
-        diff (.getMillis (Duration. ^ReadableInstant app-time ^ReadableInstant db-time))]
-    (when (pos? diff)
-      (log/info "The application clock is" diff "ms behind the database")
-      (Thread/sleep (+ 1 diff)))))

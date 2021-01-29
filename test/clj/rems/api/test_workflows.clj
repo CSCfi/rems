@@ -7,7 +7,7 @@
             [rems.db.core :as db]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [sync-with-database-time owners-fixture +test-api-key+]]
+            [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.handler :refer [handler]]
             [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
@@ -71,7 +71,6 @@
                 body (create-workflow user-id "organization1" :workflow/default [{:form/id form-id}])
                 id (:id body)]
             (is (number? id))
-            (sync-with-database-time)
             (testing "and fetch"
               (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id :form/title "workflow form"}])
                      (fetch +test-api-key+ user-id id))))))
@@ -95,7 +94,6 @@
           (let [body (create-workflow user-id "organization1" :workflow/decider [])
                 id (:id body)]
             (is (< 0 id))
-            (sync-with-database-time)
             (testing "and fetch"
               (is (= (-> expected
                          (assoc-in [:workflow :type] "workflow/decider"))
@@ -140,7 +138,6 @@
                                  {:id wfid
                                   :archived %1}
                                  +test-api-key+ %2)]
-    (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
     (testing "as owner"
@@ -195,7 +192,6 @@
                                                   :actor "tester"})
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
-    (sync-with-database-time)
     (testing "application is initialized with the correct set of handlers"
       (let [app (applications/get-application app-id)]
         (is (= #{"handler" "carl"}

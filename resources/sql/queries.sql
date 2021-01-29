@@ -214,8 +214,8 @@ DELETE FROM catalogue_item_application
 WHERE id = :application;
 
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId, approvedby, endt)
-VALUES (:application, :user, :resource, :approvedby,
+INSERT INTO entitlement (catAppId, userId, resId, approvedby, start, endt)
+VALUES (:application, :user, :resource, :approvedby, :start,
 /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
 );
 
@@ -296,9 +296,9 @@ WHERE id = :id;
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
-(modifierUserId, filename, type, data)
+(modifierUserId, filename, type, data, start)
 VALUES
-(:user, :filename, :type, :data);
+(:user, :filename, :type, :data, :start);
 
 -- :name remove-license-attachment! :!
 DELETE FROM license_attachment WHERE id = :id;
@@ -553,9 +553,6 @@ WHERE prefix = :prefix
 -- :name add-external-id! :!
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
-
--- :name get-database-time :? :1
-SELECT now();
 
 -- :name add-blacklist-event! :!
 INSERT INTO blacklist_event (eventdata)

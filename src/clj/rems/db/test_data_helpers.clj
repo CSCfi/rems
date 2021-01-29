@@ -95,11 +95,13 @@
   (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
                                                            :filename "license-fi.txt"
                                                            :type "text/plain"
-                                                           :data (.getBytes "Suomenkielinen lisenssi.")}))
+                                                           :data (.getBytes "Suomenkielinen lisenssi.")
+                                                           :start (time/now)}))
         en-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
                                                            :filename "license-en.txt"
                                                            :type "text/plain"
-                                                           :data (.getBytes "License in English.")}))]
+                                                           :data (.getBytes "License in English.")
+                                                           :start (time/now)}))]
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
