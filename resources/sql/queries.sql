@@ -296,9 +296,9 @@ WHERE id = :id;
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
-(modifierUserId, filename, type, data)
+(modifierUserId, filename, type, data, start)
 VALUES
-(:user, :filename, :type, :data);
+(:user, :filename, :type, :data, :start);
 
 -- :name remove-license-attachment! :!
 DELETE FROM license_attachment WHERE id = :id;

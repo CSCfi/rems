@@ -1,6 +1,7 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
-  (:require [rems.api.services.dependencies :as dependencies]
+  (:require [clj-time.core :as time]
+            [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
@@ -38,7 +39,8 @@
      (db/create-license-attachment! {:user user-id
                                      :filename filename
                                      :type content-type
-                                     :data byte-array})
+                                     :data byte-array
+                                     :start (time/now)})
      [:id])))
 
 (defn remove-license-attachment! [attachment-id]
