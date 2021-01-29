@@ -554,9 +554,6 @@ WHERE prefix = :prefix
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
 
--- :name get-database-time :? :1
-SELECT now();
-
 -- :name add-blacklist-event! :!
 INSERT INTO blacklist_event (eventdata)
 VALUES (:eventdata::jsonb);
