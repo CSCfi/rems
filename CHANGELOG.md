@@ -11,7 +11,7 @@ Changes since v2.15
 ### Changes
 - REMS no longer sends the Server: HTTP header to avoid leaking version information. (#2216)
 - Text descriptions of some events in the log were phrased better. The created event also shows the original external id. (#2614)
-- REMS no longer uses the database time when creating rows. Requires migration, but does not change visible behaviour. (#2540)
+- REMS now consistently uses the application server clock when creating timestemps. Previously, database time was used in some situations, leading to minor inconsistencies. Requires migration, but does not change visible behaviour. (#2540)
 
 ### Fixes
 - CSS files are now marked as cacheable by browsers. In v2.15 they were mistakenly marked as uncacheable. (#2484)
