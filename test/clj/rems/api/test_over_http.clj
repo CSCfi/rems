@@ -1,7 +1,6 @@
 (ns ^:integration rems.api.test-over-http
   "API tests that use a full HTTP server."
   (:require [clj-http.client :as http]
-            [clj-time.core]
             [clojure.test :refer :all]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
@@ -9,7 +8,6 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.json :as json]
             [rems.event-notification :as event-notification]
-            [rems.testing-util]
             [stub-http.core :as stub])
   (:import [java.net URL]))
 
