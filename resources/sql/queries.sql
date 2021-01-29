@@ -214,8 +214,8 @@ DELETE FROM catalogue_item_application
 WHERE id = :application;
 
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId, approvedby, endt)
-VALUES (:application, :user, :resource, :approvedby,
+INSERT INTO entitlement (catAppId, userId, resId, approvedby, start, endt)
+VALUES (:application, :user, :resource, :approvedby, :start,
 /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
 );
 

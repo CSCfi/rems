@@ -114,6 +114,7 @@
                           :user user-id
                           :resource resource-id
                           :approvedby actor
+                          :start (time/now) ; TODO should ideally come from the command time
                           :end end})
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))

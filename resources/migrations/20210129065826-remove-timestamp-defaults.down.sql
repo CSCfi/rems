@@ -1,0 +1,10 @@
+ALTER TABLE audit_log ALTER COLUMN time SET DEFAULT now();
+--;;
+ALTER TABLE catalogue_item ALTER COLUMN start SET DEFAULT now();
+--;;
+ALTER TABLE entitlement ALTER COLUMN start SET DEFAULT now();
+--;;
+ALTER TABLE license_attachment ALTER COLUMN start SET DEFAULT now();
+--;;
+ALTER TABLE organization ALTER COLUMN modified SET DEFAULT now();
+--;;

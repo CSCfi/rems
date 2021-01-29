@@ -1,0 +1,10 @@
+ALTER TABLE audit_log ALTER COLUMN time DROP DEFAULT;
+--;;
+ALTER TABLE catalogue_item ALTER COLUMN start DROP DEFAULT;
+--;;
+ALTER TABLE entitlement ALTER COLUMN start DROP DEFAULT;
+--;;
+ALTER TABLE license_attachment ALTER COLUMN start DROP DEFAULT;
+--;;
+ALTER TABLE organization ALTER COLUMN modified DROP DEFAULT;
+--;;
