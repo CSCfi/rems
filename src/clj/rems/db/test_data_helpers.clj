@@ -151,7 +151,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization]
+(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start]
                                :as command}]
   (let [actor (or actor (create-owner!))
         localizations (into {}
@@ -160,7 +160,8 @@
                                      :infourl (get infourl lang)}]))
         result (with-user actor
                  (catalogue/create-catalogue-item!
-                  {:resid (or resource-id (create-resource! {:organization organization}))
+                  {:start (or start (time/now))
+                   :resid (or resource-id (create-resource! {:organization organization}))
                    :form (or form-id (create-form! {:organization organization}))
                    :organization (or organization (ensure-default-organization!))
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
