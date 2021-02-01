@@ -80,10 +80,13 @@
                    (when first-time? ; to avoid an infinite loop if the settings fail to save (e.g. unsupported language in cookies)
                      [[:check-if-should-save-language!]]))})))
 
-(defn fetch-user-settings! []
+(defn fetch-user-settings! [opts]
   (fetch "/api/user-settings"
-         {:handler #(rf/dispatch-sync [:loaded-user-settings %])
-          :error-handler (flash-message/default-error-handler :top "Fetch user settings")}))
+         (merge opts
+                {:handler #(rf/dispatch-sync [:loaded-user-settings %])}
+                (if-not :hide-error-modal?
+                  {:error-handler (flash-message/default-error-handler :top "Fetch user settings")}
+                  {:error-handler nil}))))
 
 (rf/reg-event-fx
  ::save-user-language!

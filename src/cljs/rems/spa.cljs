@@ -186,6 +186,11 @@
  (fn [db _]
    (::grab-focus? db)))
 
+(rf/reg-sub
+ ::identity?
+ (fn [db _]
+   (:identity db)))
+
 (rf/reg-event-fx
  :after-translations-are-loaded
  (fn [{:keys [db]} [_ on-loaded]]
@@ -563,7 +568,7 @@
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
               (config/fetch-config!)
-              (fetch-user-settings!)])
+              (fetch-user-settings! {:default-error-handler? true :hide-error-modal? true})])
       ;; all preceding code must use `rf/dispatch-sync` to avoid
       ;; the first render flashing with e.g. missing translations
       (p/finally (fn []
