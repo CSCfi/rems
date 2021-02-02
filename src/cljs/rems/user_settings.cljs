@@ -83,6 +83,7 @@
 (rf/reg-event-fx
  :flash-message-error
  (fn [_ user-settings-error]
+   ;; TODO: refactor this part
    ;; this doesnt work
    ;; (flash-message/default-error-handler :top "Fetch user settings")
    ;; this works
@@ -94,9 +95,9 @@
  (fn [{:keys [db]} [_ user-settings-error]]
    (let [logged-in? (:user (:identity db))]
      (if-not logged-in?
+       {:db db}
        {:db db
-        :dispatch-n [[:flash-message-error user-settings-error]]}
-       {:db db}))))
+        :dispatch [:flash-message-error user-settings-error]}))))
 
 (defn fetch-user-settings! [opts]
   (fetch "/api/user-settings"
