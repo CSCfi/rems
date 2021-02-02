@@ -186,11 +186,6 @@
  (fn [db _]
    (::grab-focus? db)))
 
-(rf/reg-sub
- ::identity?
- (fn [db _]
-   (:identity db)))
-
 (rf/reg-event-fx
  :after-translations-are-loaded
  (fn [{:keys [db]} [_ on-loaded]]
