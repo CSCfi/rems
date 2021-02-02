@@ -80,13 +80,32 @@
                    (when first-time? ; to avoid an infinite loop if the settings fail to save (e.g. unsupported language in cookies)
                      [[:check-if-should-save-language!]]))})))
 
+(rf/reg-event-fx
+ :flash-message-error
+ (fn [_]
+   ;; this doesnt work
+   ;; (flash-message/default-error-handler :top "Fetch user settings")
+   ;; this works
+   (flash-message/show-default-error! :top "Fetch user settings")
+   {}))
+
+(rf/reg-event-fx
+ :loaded-user-settings-fail
+ (fn [{:keys [db]} [_ user-settings-error]]
+   (let [first-time? (not (:user-settings db))
+         logged-in? (:user (:identity db))]
+      (js/console.log "first-time?" (clj->js first-time?) "logged-in?" logged-in?)
+      (if-not logged-in?
+       {:db db}
+       {:db db
+        :dispatch-n [[:flash-message-error]]}
+      ))))
+
 (defn fetch-user-settings! [opts]
   (fetch "/api/user-settings"
          (merge opts
                 {:handler #(rf/dispatch-sync [:loaded-user-settings %])}
-                (if-not :hide-error-modal?
-                  {:error-handler (flash-message/default-error-handler :top "Fetch user settings")}
-                  {:error-handler nil}))))
+                {:error-handler #(rf/dispatch-sync [:loaded-user-settings-fail %])})))
 
 (rf/reg-event-fx
  ::save-user-language!
