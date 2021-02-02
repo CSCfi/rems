@@ -35,6 +35,9 @@
       (or attr-value (recur (rest attr-names))))))
 
 (def content-width (u/px 1200))
+(def logo-height-menu (u/px 40))
+(def logo-height (u/px 150))
+(def menu-height 56)
 
 (defn resolve-image [path]
   (when path
@@ -48,6 +51,9 @@
 
 (defn get-logo-name-sm [lang]
   (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
+
+(defn get-navbar-logo [lang]
+  (resolve-image (get-theme-attribute (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))
 
 (defn- generate-at-font-faces []
   (list
@@ -96,8 +102,8 @@
                            :background-size :contain
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
-                         [:.logo
-                          {:height (u/px 150)}]))
+                         [:.logo {:height logo-height}]
+                         [:.logo-menu {:display "none"}]))
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
@@ -355,10 +361,11 @@
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
-           :padding-top (u/px 56)
+           :padding-top (u/px (+ menu-height 12))
            :scroll-behavior :smooth}]
    [:h1 :h2 {:font-weight 400}]
-   [:h1 {:margin-bottom (u/rem 2)}]
+   [:h1 {:margin-bottom (u/rem 2)
+         :margin-top (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
            :flex 1
            :display :flex}]
@@ -369,7 +376,7 @@
    [:.fixed-top {:background-color "#fff"
                  :border-bottom (get-theme-attribute :header-border "3px solid #ccc")
                  :box-shadow (get-theme-attribute :header-shadow :table-shadow)
-                 :min-height (u/px 56)}]
+                 :min-height menu-height}]
    [:.skip-navigation {:position :absolute
                        :left (u/em -1000)}
     [:&:active
@@ -523,9 +530,13 @@
      :letter-spacing (u/rem 0.015)
      :padding-left 0
      :padding-right 0
-     :color (get-theme-attribute :navbar-color "#111")}
+     :color (get-theme-attribute :navbar-color "#111")
+     :justify-content "space-between"}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
+   [:#administration-menu
+    [:.nav-link
+     {:padding ".5rem 0"}]]
    [:.navbar-top-bar {:width (u/percent 100)
                       :height (u/px 4)
                       :display :flex
@@ -556,6 +567,37 @@
                    :flex-direction "row"
                    :justify-content "space-between"
                    :min-width "100%"}]
+
+   ;; Logo, login, etc.
+   [:.logo-menu {:height logo-height-menu
+                 :background-color (get-theme-attribute :logo-bgcolor)
+                 :width "100px"}]
+   [:.logo {:height logo-height
+            :background-color (get-theme-attribute :logo-bgcolor)
+            :width "100%"
+            :margin "0 auto"
+            :padding "0 20px"
+            :margin-bottom (u/em 1)}]
+   [(s/descendant :.logo :.img) {:height "100%"
+                                 :background-color (get-theme-attribute :logo-bgcolor)
+                                 :background-image (get-logo-image context/*lang*)
+                                 :-webkit-background-size :contain
+                                 :-moz-o-background-size :contain
+                                 :-o-background-size :contain
+                                 :background-size :contain
+                                 :background-repeat :no-repeat
+                                 :background-position [[:center :center]]
+                                 :background-origin (get-theme-attribute :logo-content-origin)}]
+   [(s/descendant :.logo-menu :.img) {:height "100%"
+                                      :background-color (get-theme-attribute :logo-bgcolor)
+                                      :background-image (get-navbar-logo context/*lang*)
+                                      :-webkit-background-size :contain
+                                      :-moz-o-background-size :contain
+                                      :-o-background-size :contain
+                                      :background-size :contain
+                                      :background-repeat :no-repeat
+                                      :background-position [[:center :center]]
+                                      :background-origin (get-theme-attribute :logo-content-origin)}]
    ;; Footer
    (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
      [:footer {:width "100%"
@@ -572,24 +614,6 @@
                             :bottom 0
                             :right (u/px 140)}]])
 
-   ;; Logo, login, etc.
-   [:.logo {:height (u/px 140)
-            :background-color (get-theme-attribute :logo-bgcolor)
-            :padding "0 20px"
-            :margin-bottom (u/em 1)}]
-   [(s/descendant :.logo :.img) {:height "100%"
-                                 :background-color (get-theme-attribute :logo-bgcolor)
-                                 :background-image (get-logo-image context/*lang*)
-                                 :-webkit-background-size :contain
-                                 :-moz-o-background-size :contain
-                                 :-o-background-size :contain
-                                 :background-size :contain
-                                 :background-repeat :no-repeat
-                                 :background-position [[:center :center]]
-                                 :background-origin (get-theme-attribute :logo-content-origin)
-                                 :padding-left (u/px 20)
-                                 :padding-right (u/px 20)
-                                 :padding-top (u/px 8)}]
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"

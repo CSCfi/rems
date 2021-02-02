@@ -30,7 +30,6 @@
  (fn [db _]
    (get-current-language db)))
 
-
 (rf/reg-sub
  :languages
  (fn [db _]

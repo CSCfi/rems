@@ -1,5 +1,6 @@
 (ns rems.spa
   (:require [accountant.core :as accountant]
+            [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [promesa.core :as p]
@@ -32,7 +33,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :refer [document-title logo]]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -295,9 +296,6 @@
       [dev-reload-button])
     [:div.footer-text (text :t/footer)]]])
 
-(defn logo []
-  [:div.logo [:div.container.img]])
-
 (defn main-content [_page-id _grab-focus?]
   (let [on-update (fn [this]
                     (let [[_ _page-id grab-focus?] (r/argv this)]
@@ -332,11 +330,16 @@
 
 (defn page []
   (let [page-id @(rf/subscribe [:page])
-        grab-focus? @(rf/subscribe [::grab-focus?])]
+        grab-focus? @(rf/subscribe [::grab-focus?])
+        theme @(rf/subscribe [:theme])
+        lang @(rf/subscribe [:language])]
     (lazy-load-data!)
     [:div
      [nav/navigation-widget]
-     [logo]
+     (when (or (= page-id :home)
+               (and (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
+                    (not (:navbar-logo-name theme))))
+       [logo])
      [main-content page-id grab-focus?]
      [footer]]))
 

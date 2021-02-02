@@ -24,6 +24,8 @@ Changes since v2.15
 - The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
 - The handler can be shown both the assigned external id and the original REMS generated external id. This behavior can be enabled by changing the `:application-id-column` config to `:generated-and-assigned-external-id`. These have also been added as new values to the data model and the original `:application/external-id` kept as it is. (#2614)
 
+- The navbar can be configured to show a logo image. When the `:navbar-logo-name` config is provided, the logo is shown in the navbar (top navigation menu). This logo also can be customized per language like the regular logo. (#2363)
+
 ## v2.15 "Tapiolantie" 2021-01-08
 
 ### Changes
