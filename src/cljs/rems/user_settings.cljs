@@ -82,30 +82,27 @@
 
 (rf/reg-event-fx
  :flash-message-error
- (fn [_]
+ (fn [_ user-settings-error]
    ;; this doesnt work
    ;; (flash-message/default-error-handler :top "Fetch user settings")
    ;; this works
-   (flash-message/show-default-error! :top "Fetch user settings")
+   (flash-message/show-default-error! :top (str "Fetch user settings" "wtf"))
    {}))
 
 (rf/reg-event-fx
  :loaded-user-settings-fail
  (fn [{:keys [db]} [_ user-settings-error]]
-   (let [first-time? (not (:user-settings db))
-         logged-in? (:user (:identity db))]
-      (js/console.log "first-time?" (clj->js first-time?) "logged-in?" logged-in?)
-      (if-not logged-in?
-       {:db db}
+   (let [logged-in? (:user (:identity db))]
+     (if-not logged-in?
        {:db db
-        :dispatch-n [[:flash-message-error]]}
-      ))))
+        :dispatch-n [[:flash-message-error user-settings-error]]}
+       {:db db}))))
 
 (defn fetch-user-settings! [opts]
   (fetch "/api/user-settings"
          (merge opts
                 {:handler #(rf/dispatch-sync [:loaded-user-settings %])}
-                {:error-handler #(rf/dispatch-sync [:loaded-user-settings-fail %])})))
+                {:error-handler #(rf/dispatch [:loaded-user-settings-fail %])})))
 
 (rf/reg-event-fx
  ::save-user-language!

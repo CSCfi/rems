@@ -89,8 +89,8 @@
      (GET url (-> (merge {:response-format :transit}
                          opts
                          (if (:default-error-handler? opts)
-                          {:error-handler (:error-handler opts)}
-                          {:error-handler (wrap-default-error-handler (:error-handler opts))}))
+                           {:error-handler (:error-handler opts)}
+                           {:error-handler (wrap-default-error-handler (:error-handler opts))}))
                   (update :handler append-handler resolve)
                   (update :error-handler append-handler reject))))))
 
