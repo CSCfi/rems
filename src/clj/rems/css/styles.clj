@@ -272,7 +272,7 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(defn- dashed-form-group []
+(defn- generate-dashed-form-group []
   {:position "relative"
    :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
@@ -280,7 +280,7 @@
    :margin-top 0
    :margin-bottom (u/px 16)})
 
-(defn- solid-form-group []
+(defn- generate-solid-form-group []
   {:position "relative"
    :border "2px solid #eee"
    :margin 0
@@ -712,11 +712,11 @@
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
-   [:.dashed-group (dashed-form-group)]
-   [:.solid-group (solid-form-group)]
+   [:.dashed-group (generate-dashed-form-group)]
+   [:.solid-group (generate-solid-form-group)]
 
    ;; workflow editor
-   [:.workflow-round (dashed-form-group)
+   [:.workflow-round (generate-dashed-form-group)
     [:h2 {:font-weight 400
           :font-size (u/rem 1.4)}]]
    [:.next-workflow-arrow {:position "absolute"
@@ -729,7 +729,7 @@
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
-   [:.form-field (dashed-form-group)]
+   [:.form-field (generate-dashed-form-group)]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
@@ -738,10 +738,10 @@
     [:* {:margin-left (u/em 0.25)}]]
    [:.new-form-field {:text-align "center"}]
 
-   [:.form-field-visibility (assoc (dashed-form-group)
+   [:.form-field-visibility (assoc (generate-dashed-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
-   [:.form-field-option (assoc (dashed-form-group)
+   [:.form-field-option (assoc (generate-dashed-form-group)
                                :margin-left 0
                                :margin-right 0)]
    [:.new-form-field-option {:text-align "center"}]
