@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.15
+Changes since v2.16
+
+## v2.16 "Länsiväylä" 2021-02-04
 
 ### Changes
 - REMS no longer sends the Server: HTTP header to avoid leaking version information. (#2216)
@@ -20,11 +22,10 @@ Changes since v2.15
 
 ### Additions
 - The browser tests will now fail if there are any accessibility violations. (#2463)
-
 - The OIDC configuration is now validated, and REMS refuses to start without a valid OIDC configuration. See the `:oidc-metadata-url` configuration variable and [configuration.md](docs/configuration.md). (#2519)
 - The handler can be shown both the assigned external id and the original REMS generated external id. This behavior can be enabled by changing the `:application-id-column` config to `:generated-and-assigned-external-id`. These have also been added as new values to the data model and the original `:application/external-id` kept as it is. (#2614)
-
 - The navbar can be configured to show a logo image. When the `:navbar-logo-name` config is provided, the logo is shown in the navbar (top navigation menu). This logo also can be customized per language like the regular logo. (#2363)
+
 
 ## v2.15 "Tapiolantie" 2021-01-08
 
