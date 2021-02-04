@@ -122,10 +122,7 @@
      :background-position [[:center :center]]
      :background-origin (get-theme-attribute :logo-content-origin)}]
    [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
-   [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]))
-
-(defn- generate-logo-media-queries []
-  (list
+   [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
    (stylesheet/at-media {:max-width (u/px 480)}
                         (list
                          [(s/descendant :.logo :.img)
@@ -634,7 +631,6 @@
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
    (generate-media-queries)
-   (generate-logo-media-queries)
    [:.example-page {:margin (u/rem 2)}]
    [(s/> :.example-page :h1) {:margin "4rem 0"}]
    [(s/> :.example-page :h2) {:margin-top (u/rem 8)
