@@ -90,9 +90,41 @@
 (defn- generate-media-queries []
   (list
    (stylesheet/at-media {:max-width (u/px 480)}
+                        [(s/descendant :.rems-table.cart :tr)
+                         {:border-bottom "none"}])
+   (stylesheet/at-media {:max-width (u/px 870)}
+                        [:.user-widget [:.icon-description {:display "none"}]])
+   (stylesheet/at-media {:min-width (u/px 480)}
+                        [:.commands {:white-space "nowrap"}])
+   (stylesheet/at-media {:prefers-reduced-motion :reduce}
+                        [:body {:scroll-behavior :auto}])))
+
+(defn- generate-logo-styles []
+  (list
+   [:.logo-menu {:height logo-height-menu
+                 :background-color (get-theme-attribute :logo-bgcolor)
+                 :width "100px"}]
+   [:.logo {:height logo-height
+            :background-color (get-theme-attribute :logo-bgcolor)
+            :width "100%"
+            :margin "0 auto"
+            :padding "0 20px"
+            :margin-bottom (u/em 1)}]
+   [(s/descendant :.logo :.img)
+    (s/descendant :.logo-menu :.img)
+    {:height "100%"
+     :background-color (get-theme-attribute :logo-bgcolor)
+     :-webkit-background-size :contain
+     :-moz-o-background-size :contain
+     :-o-background-size :contain
+     :background-size :contain
+     :background-repeat :no-repeat
+     :background-position [[:center :center]]
+     :background-origin (get-theme-attribute :logo-content-origin)}]
+   [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
+   [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
+   (stylesheet/at-media {:max-width (u/px 480)}
                         (list
-                         [(s/descendant :.rems-table.cart :tr)
-                          {:border-bottom "none"}]
                          [(s/descendant :.logo :.img)
                           {:background-color (get-theme-attribute :logo-bgcolor)
                            :background-image (get-logo-name-sm context/*lang*)
@@ -103,13 +135,7 @@
                            :background-repeat :no-repeat
                            :background-position [[:center :center]]}]
                          [:.logo {:height logo-height}]
-                         [:.logo-menu {:display "none"}]))
-   (stylesheet/at-media {:max-width (u/px 870)}
-                        [:.user-widget [:.icon-description {:display "none"}]])
-   (stylesheet/at-media {:min-width (u/px 480)}
-                        [:.commands {:white-space "nowrap"}])
-   (stylesheet/at-media {:prefers-reduced-motion :reduce}
-                        [:body {:scroll-behavior :auto}])))
+                         [:.logo-menu {:display "none"}]))))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -243,7 +269,7 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(def ^:private dashed-form-group
+(defn- generate-dashed-form-group []
   {:position "relative"
    :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
@@ -251,7 +277,7 @@
    :margin-top 0
    :margin-bottom (u/px 16)})
 
-(def ^:private solid-form-group
+(defn- generate-solid-form-group []
   {:position "relative"
    :border "2px solid #eee"
    :margin 0
@@ -569,35 +595,7 @@
                    :min-width "100%"}]
 
    ;; Logo, login, etc.
-   [:.logo-menu {:height logo-height-menu
-                 :background-color (get-theme-attribute :logo-bgcolor)
-                 :width "100px"}]
-   [:.logo {:height logo-height
-            :background-color (get-theme-attribute :logo-bgcolor)
-            :width "100%"
-            :margin "0 auto"
-            :padding "0 20px"
-            :margin-bottom (u/em 1)}]
-   [(s/descendant :.logo :.img) {:height "100%"
-                                 :background-color (get-theme-attribute :logo-bgcolor)
-                                 :background-image (get-logo-image context/*lang*)
-                                 :-webkit-background-size :contain
-                                 :-moz-o-background-size :contain
-                                 :-o-background-size :contain
-                                 :background-size :contain
-                                 :background-repeat :no-repeat
-                                 :background-position [[:center :center]]
-                                 :background-origin (get-theme-attribute :logo-content-origin)}]
-   [(s/descendant :.logo-menu :.img) {:height "100%"
-                                      :background-color (get-theme-attribute :logo-bgcolor)
-                                      :background-image (get-navbar-logo context/*lang*)
-                                      :-webkit-background-size :contain
-                                      :-moz-o-background-size :contain
-                                      :-o-background-size :contain
-                                      :background-size :contain
-                                      :background-repeat :no-repeat
-                                      :background-position [[:center :center]]
-                                      :background-origin (get-theme-attribute :logo-content-origin)}]
+   (generate-logo-styles)
    ;; Footer
    (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
      [:footer {:width "100%"
@@ -710,11 +708,11 @@
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
-   [:.dashed-group dashed-form-group]
-   [:.solid-group solid-form-group]
+   [:.dashed-group (generate-dashed-form-group)]
+   [:.solid-group (generate-solid-form-group)]
 
    ;; workflow editor
-   [:.workflow-round dashed-form-group
+   [:.workflow-round (generate-dashed-form-group)
     [:h2 {:font-weight 400
           :font-size (u/rem 1.4)}]]
    [:.next-workflow-arrow {:position "absolute"
@@ -727,7 +725,7 @@
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
-   [:.form-field dashed-form-group]
+   [:.form-field (generate-dashed-form-group)]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
@@ -736,10 +734,10 @@
     [:* {:margin-left (u/em 0.25)}]]
    [:.new-form-field {:text-align "center"}]
 
-   [:.form-field-visibility (assoc dashed-form-group
+   [:.form-field-visibility (assoc (generate-dashed-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
-   [:.form-field-option (assoc dashed-form-group
+   [:.form-field-option (assoc (generate-dashed-form-group)
                                :margin-left 0
                                :margin-right 0)]
    [:.new-form-field-option {:text-align "center"}]
