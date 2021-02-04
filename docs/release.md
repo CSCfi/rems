@@ -72,16 +72,16 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 ## Updating dependencies
 
 After the release is done we want to update all the dependencies to the latest available versions.
-As per current suggestion, do it via:
-  - ```lein ancient```
+You can do it via:
+  - Check for new versions of packages with ```lein ancient```
   - make sure you do not update dependencies that have no-update comment in ```project.clj```
-  - The suggested algorythms is:
+  - The recommended order is:
     - ```clojure/clojurescript```
     - backend
     - frontend
     - ```reframe/reagent```
 
-**note:** Be careful upgrading ```reagent``` and ```re-frame``` due to the extensive testing.
+**note:** Be careful upgrading ```reagent``` and ```re-frame```due to extensive testing required!
 
 
 ## Clean the Project board
