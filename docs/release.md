@@ -36,7 +36,9 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
 3. Create a pull request for those changes
 
-4. After the branch is merged to master, fetch and checkout the new master
+4. After the branch is merged to master:
+
+   `git checkout master; git pull`
 
 5. Tag the branch, e.g.,
 
@@ -46,25 +48,42 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
    `git push origin v2.6`
 
-7. Get the `rems.jar` package for the release from CircleCI.
-   You can do this manually or using `rems-deploy/scripts/fetch_from_circle.sh`
+7. Wait for the release to build on CircleCI.
 
-8. Go to the github page for the release, e.g.,
+8. Get the `rems.jar` package for the release from CircleCI.
+   You can do this manually or using `../rems-deploy/scripts/fetch_from_circle.sh tags/v2.6`
+
+9. Go to the github page for the release, e.g.,
 
    https://github.com/CSCfi/rems/releases/tag/v2.6
 
-9. From "Edit tag", change the name of the tag to the release title,
+10. From "Edit tag", change the name of the tag to the release title,
    e.g., "Kalevalantie".
 
-10. Copy changes under the new release from CHANGELOG.md to "Description"
+11. Copy changes under the new release from CHANGELOG.md to "Description"
     field:
 
     - Change lines starting with `###` to `##` for better formatting
 
-11. Press "Attach binaries" to upload the `rems.jar` you got in step 8.
+12. Press "Attach binaries" to upload the `rems.jar` you got in step 8.
 
-12. Press "Publish release".
+13. Press "Publish release".
 
 ## Updating dependencies
 
 After the release is done we want to update all the dependencies to the latest available versions.
+You can do it via:
+  - Check for new versions of packages with ```lein ancient```
+  - make sure you do not update dependencies that have no-update comment in ```project.clj```
+  - The recommended order is:
+    - ```clojure/clojurescript```
+    - backend
+    - frontend
+    - ```reframe/reagent```
+
+**note:** Be careful upgrading ```reagent``` and ```re-frame```due to extensive testing required!
+
+
+## Clean the Project board
+
+Clean accepted column in the project board after release is done ("archive all cards" action).
