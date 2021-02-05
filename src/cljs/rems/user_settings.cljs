@@ -99,9 +99,9 @@
        {:db db
         :dispatch [:flash-message-error user-settings-error]}))))
 
-(defn fetch-user-settings! [opts]
+(defn fetch-user-settings! []
   (fetch "/api/user-settings"
-         (merge opts
+         (merge {:default-error-handler? true}
                 {:handler #(rf/dispatch-sync [:loaded-user-settings %])}
                 {:error-handler #(rf/dispatch [:loaded-user-settings-fail %])})))
 

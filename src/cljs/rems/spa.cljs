@@ -563,7 +563,7 @@
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
               (config/fetch-config!)
-              (fetch-user-settings! {:default-error-handler? true})])
+              (fetch-user-settings!)])
       ;; all preceding code must use `rf/dispatch-sync` to avoid
       ;; the first render flashing with e.g. missing translations
       (p/finally (fn []
