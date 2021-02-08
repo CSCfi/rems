@@ -41,10 +41,22 @@
 
   (testing "find by ID"
     (let [app-id (test-helpers/create-application! {:actor "alice"})
-          app (applications/get-application app-id)]
+          app (applications/get-application app-id)
+          generated (:application/generated-external-id app)
+          assigned "1980/0.1234-ext5"]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor "alice"})
+      (test-helpers/command! {:type :application.command/assign-external-id
+                              :application-id app-id
+                              :actor "developer"
+                              :external-id assigned})
       (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
+      (is (= #{app-id} (search/find-applications (str "\"" assigned "\""))) "assigned ID, any field")
       (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
-      (is (= #{app-id} (search/find-applications (str "id:\"" (:application/external-id app) "\""))) "external ID")))
+      (is (= #{app-id} (search/find-applications (str "id:\"" generated "\""))) "generated external ID")
+      (is (= #{app-id} (search/find-applications (str "id:\"" assigned "\""))) "assigned external ID")
+      (is (= #{app-id} (search/find-applications (str "id:1980"))) "fragment of assigned external ID")))
 
   (testing "find by title"
     (let [form-id (test-helpers/create-form! {:form/fields [{:field/id "abc"
