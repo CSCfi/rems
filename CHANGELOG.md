@@ -8,6 +8,13 @@ have notable changes.
 
 Changes since v2.16
 
+### Changes
+
+### Fixes
+- Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)
+
+### Additions
+
 ## v2.16 "Länsiväylä" 2021-02-04
 
 ### Changes

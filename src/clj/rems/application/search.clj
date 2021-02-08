@@ -50,7 +50,8 @@
 
 (defn- index-terms-for-application [app]
   {:id (->> [(:application/id app)
-             (:application/external-id app)]
+             (:application/assigned-external-id app)
+             (:application/generated-external-id app)]
             (str/join " "))
    :applicant (->> (indexed-member-attributes (:application/applicant app))
                    (str/join " "))
