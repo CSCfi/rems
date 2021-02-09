@@ -791,6 +791,22 @@
                {:column "col2" :value "bar"}]]
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 1 :form/fields 2 :field/value]))))
+    (testing "column name validation for table fields"
+      (is (= {:success false
+              :errors [{:type "t.form.validation/invalid-value",
+                        :form-id form-id2,
+                        :field-id "table"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "table"
+                                                    :value [[{:column "col1" :value "1"}
+                                                             {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "foo"}
+                                                             {:column "colx" :value "bar"}]]}]}))))
     (testing "save-draft fails with non-existing value of option list"
       (is (= {:success false
               :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}

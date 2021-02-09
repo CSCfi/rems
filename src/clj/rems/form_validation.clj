@@ -27,6 +27,19 @@
   (and (= (:field/type field) :option)
        (not (option-value-valid? field))))
 
+(defn- invalid-column-value? [field]
+  (when (= (:field/type field) :table)
+    (let [columns (set (map :key (:field/columns field)))
+          row-ok? (fn [row] (every? columns (map :column row)))
+          value (:field/value field)]
+      ;; Schema validation guarantees that it's either a s/Str or
+      ;; a [[{:column s/Str :value s/Str}]] so we don't need to check
+      ;; the shape of the data here. However, the default value
+      ;; for :field/value is "", which we do need to tolerate.
+      (if (string? value)
+        (not (str/blank? value))
+        (not (every? row-ok? (:field/value field)))))))
+
 ;; TODO: validate that attachments are actually valid?
 (defn- invalid-attachment-value? [field]
   (and (= (:field/type field) :attachment)
@@ -47,7 +60,8 @@
                        :type     :t.form.validation/toolong}
     (invalid-option-value? field) {:field-id (:field/id field)
                                    :type     :t.form.validation/invalid-value}
-    ;; TODO validate columns
+    (invalid-column-value? field) {:field-id (:field/id field)
+                                   :type     :t.form.validation/invalid-value} ; TODO better error?
     (invalid-attachment-value? field) {:field-id (:field/id field)
                                        :type     :t.form.validation/invalid-value}))
 

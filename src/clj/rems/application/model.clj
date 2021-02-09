@@ -410,7 +410,7 @@
 
 (defn- enrich-form [form get-form-template]
   (let [form-template (get-form-template (:form/id form))
-        default-fields (map #(assoc % :field/value "")
+        default-fields (map #(assoc % :field/value "") ;; TODO the default of "" is bad for tables
                             (:form/fields form-template))
         fields (merge-lists-by :field/id
                                default-fields

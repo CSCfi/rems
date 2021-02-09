@@ -330,4 +330,27 @@
                                         :field/type     :email
                                         :field/optional true
                                         :field/visible  true
-                                        :field/value    "invalid.email"}])))))
+                                        :field/value    "invalid.email"}]))))
+
+  (testing "table validation"
+    (let [fields [{:field/id "tbl"
+                   :field/type :table
+                   :field/visible true
+                   :field/columns [{:key "col1"} {:key "col2"}]}]]
+      (testing "valid cases"
+        (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] ""))))
+        (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] []))))
+        (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] [[]]))))
+        (is (nil? (validate-fields-for-draft
+                   (assoc-in fields [0 :field/value] [[{:column "col1" :value "val11"} {:column "col2" :value "val21"}]
+                                                      [{:column "col1" :value "val12"} {:column "col2" :value "val22"}]])))))
+      (testing "invalid cases"
+        ;; we don't need to test cases here that violate the Field
+        ;; schema, schema checking catches those
+        (is (= [{:field-id "tbl", :type :t.form.validation/invalid-value}]
+               (validate-fields-for-draft (assoc-in fields [0 :field/value] "string"))
+               (validate-fields-for-draft
+                (assoc-in fields [0 :field/value] [[{:column "colx" :value "val22"}]]))
+               (validate-fields-for-draft
+                (assoc-in fields [0 :field/value] [[{:column "col1" :value "val11"} {:column "col2" :value "val21"}]
+                                                   [{:column "col1" :value "val12"} {:column "colx" :value "val22"}]]))))))))
