@@ -60,13 +60,13 @@
 (defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby]}]
   {:iss (:public-url env)
    :sub userid
-   :iat (clj-time.coerce/to-long (time/now))
-   :exp (clj-time.coerce/to-long (or end (time/plus (time/now) +default-length+)))
+   :iat (clj-time.coerce/to-epoch (time/now))
+   :exp (clj-time.coerce/to-epoch (or end (time/plus (time/now) +default-length+)))
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
                    :source (:public-url env)
                    :by "dac" ; the Data Access Commitee acts via REMS
-                   :asserted (clj-time.coerce/to-long start)}})
+                   :asserted (clj-time.coerce/to-epoch start)}})
 
 (deftest test-entitlement->visa-claims
   (with-redefs [env {:public-url "https://rems.example/"}]
@@ -74,23 +74,23 @@
       (fn []
         (is (= {:iss "https://rems.example/"
                 :sub "user@example.com"
-                :iat (clj-time.coerce/to-long "2010")
-                :exp (clj-time.coerce/to-long "2011")
+                :iat (clj-time.coerce/to-epoch "2010")
+                :exp (clj-time.coerce/to-epoch "2011")
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
                                 :by "dac"
-                                :asserted (clj-time.coerce/to-long "2009")}}
+                                :asserted (clj-time.coerce/to-epoch "2009")}}
                (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :userid "user@example.com"})))
         (is (= {:iss "https://rems.example/"
                 :sub "user@example.com"
-                :iat (clj-time.coerce/to-long "2010")
-                :exp (clj-time.coerce/to-long "2010-06-02")
+                :iat (clj-time.coerce/to-epoch "2010")
+                :exp (clj-time.coerce/to-epoch "2010-06-02")
                 :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                                 :value "urn:1234"
                                 :source "https://rems.example/"
                                 :by "dac"
-                                :asserted (clj-time.coerce/to-long "2009")}}
+                                :asserted (clj-time.coerce/to-epoch "2009")}}
                (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :end (time/date-time 2010 6 2) :userid "user@example.com"})))))))
 
 (defn- entitlement->visa [entitlement]

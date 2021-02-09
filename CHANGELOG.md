@@ -12,6 +12,7 @@ Changes since v2.16
 
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)
+- GA4GH Visa (output by the experimental /api/permissions API) timestamps are now in seconds, instead of milliseconds. (#2554)
 
 ### Additions
 
