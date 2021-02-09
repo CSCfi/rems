@@ -195,6 +195,7 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
+     (js/console.log "yay" (clj->js (first resources)))
      [:label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
@@ -207,7 +208,13 @@
          :item-label #(str (:resid %)
                            " (org: "
                            (get-in % [:organization :organization/short-name language])
-                           ")")
+                           ") "
+                           (when (not-empty (:licenses %))
+                             (str " (licenses: "
+                                  (mapv (fn [item]
+                                          (:title ((keyword language) (:localizations item))))
+                                        (:licenses %))
+                                  ")"))) 
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
