@@ -32,14 +32,22 @@
   (and (= (:field/type field) :attachment)
        (not (every? number? (form/parse-attachment-ids (:field/value field))))))
 
+(defn- string-required? [field]
+  (and (not= :table (:field/type field))
+       (not (string? (:field/value field)))
+       (not (nil? (:field/value field)))))
+
 (defn- validate-field-content [field]
   (cond
+    (string-required? field) {:field-id (:field/id field)
+                              :type :t.form.validation/invalid-value} ; TODO better error?
     (invalid-email-address? field) {:field-id (:field/id field)
                                     :type     :t.form.validation/invalid-email}
     (too-long? field) {:field-id (:field/id field)
                        :type     :t.form.validation/toolong}
     (invalid-option-value? field) {:field-id (:field/id field)
                                    :type     :t.form.validation/invalid-value}
+    ;; TODO validate columns
     (invalid-attachment-value? field) {:field-id (:field/id field)
                                        :type     :t.form.validation/invalid-value}))
 

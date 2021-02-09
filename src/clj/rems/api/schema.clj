@@ -202,7 +202,8 @@
 
 (s/defschema Field
   (assoc FieldTemplate
-         :field/value s/Str
+         ;; TODO check that this looks nice in swagger
+         :field/value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
          :field/visible s/Bool
          :field/private s/Bool
          (s/optional-key :field/previous-value) s/Str))

@@ -712,6 +712,14 @@
                                                                           :sv "fri"}
                                                             :field/type :text
                                                             :field/optional true}
+                                                           {:field/id "table"
+                                                            :field/type :table
+                                                            :field/title {:en "table" :fi "table" :sv "table"}
+                                                            :field/optional true
+                                                            :field/columns [{:key "col1"
+                                                                             :label {:en "col1" :fi "col1" :sv "col1"}}
+                                                                            {:key "col2"
+                                                                             :label {:en "col2" :fi "col2" :sv "col2"}}]}
                                                            {:field/id "optionlist"
                                                             :field/title {:en "Option list."
                                                                           :fi "Valintalista."
@@ -758,7 +766,31 @@
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
-
+    (testing "can't set value of text field to JSON"
+      (is (= {:success false
+              :errors [{:form-id form-id :field-id "req1" :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "req1" :value [[{:column "foo" :value "bar"}]]}]}))))
+    (testing "can set value of table field to JSON"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "table"
+                                                    :value [[{:column "col1" :value "1"}
+                                                             {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "foo"}
+                                                             {:column "col2" :value "bar"}]]}]})))
+      (is (= [[{:column "col1" :value "1"}
+               {:column "col2" :value "2"}]
+              [{:column "col1" :value "foo"}
+               {:column "col2" :value "bar"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 1 :form/fields 2 :field/value]))))
     (testing "save-draft fails with non-existing value of option list"
       (is (= {:success false
               :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}

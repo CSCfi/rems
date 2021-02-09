@@ -102,7 +102,7 @@
   (assoc CommandBase
          :field-values [{:form FormId
                          :field FieldId
-                         :value s/Str}]))
+                         :value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])}]))
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand

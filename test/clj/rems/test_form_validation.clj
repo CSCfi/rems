@@ -239,6 +239,16 @@
       (is (nil? (validate-fields-for-draft [(assoc field :field/value "1")])))
       (is (nil? (validate-fields-for-draft [(assoc field :field/value "1,2,3")])))))
 
+  (testing "string required for"
+    (doseq [type [:text :texta :date :email :attachment :description]]
+      (testing type
+        (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+               (validate-fields-for-draft [{:field/id "fld1" :field/visible true :field/type type :field/value 1}])))
+        (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+               (validate-fields-for-draft [{:field/id "fld1" :field/visible true :field/type type :field/value {:foo "bar"}}])))
+        (is (= [{:type :t.form.validation/invalid-value :field-id "fld1"}]
+               (validate-fields-for-draft [{:field/id "fld1" :field/visible true :field/type type :field/value [{:foo "bar"}]}]))))))
+
   (testing "error: field input selected option is invalid"
     (is (= [{:type :t.form.validation/invalid-value :field-id "1"}]
            (validate-fields-for-draft [{:field/id       "1"
