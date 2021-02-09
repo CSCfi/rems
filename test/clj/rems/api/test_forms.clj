@@ -162,6 +162,13 @@
                                                   {:key "b" :label localized}
                                                   {:key "c" :label localized}
                                                   {:key "d" :label localized}]}
+                                 {:field/type :table
+                                  :field/title localized
+                                  :field/optional false
+                                  :field/columns [{:key "col1"
+                                                   :label localized}
+                                                  {:key "col2"
+                                                   :label localized}]}
                                  {:field/type :label
                                   :field/title localized
                                   :field/optional true}

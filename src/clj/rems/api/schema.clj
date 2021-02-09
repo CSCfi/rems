@@ -176,11 +176,13 @@
 ;;; template for a form field, before answering
 (s/defschema FieldTemplate
   {:field/id FieldId
-   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
+   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta :table)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
    (s/optional-key :field/options) [{:key s/Str
+                                     :label LocalizedString}]
+   (s/optional-key :field/columns) [{:key s/Str
                                      :label LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/privacy) (rjs/field
