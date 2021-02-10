@@ -408,9 +408,9 @@
                                                 :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
            (when-not readonly
              [[:tr [:th {:colspan (count columns)}
-                    [:a {:on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} "Add row"]
+                    [:a {:on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} (text :t.form/add-row)]
                     " "
-                    [:a {:on-click #(on-change (vec (butlast rows)))} "Remove row"]]]])))))
+                    [:a {:on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]])))))
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
   (let [n-rows (max (count rows) (count previous-rows))
