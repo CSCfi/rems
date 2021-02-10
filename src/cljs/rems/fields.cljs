@@ -412,6 +412,19 @@
                     " "
                     [:a {:on-click #(on-change (vec (butlast rows)))} "Remove row"]]]])))))
 
+(defn- table-diff [{:keys [columns rows previous-rows]}]
+  (let [n-rows (max (count rows) (count previous-rows))
+        column-keys (mapv :key columns)]
+    (into [:table.table
+           [:thead
+            (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+          (concat
+           (for [row-i (range n-rows)]
+             (into [:tr]
+                   (for [key column-keys]
+                     [:td [diff-field {:value (get-in rows [row-i key])
+                                       :previous-value (get-in previous-rows [row-i key])}]])))))))
+
 (defn- mogrify [value]
   (if (= value "")
     []
@@ -428,7 +441,10 @@
   [field-wrapper (assoc field
                         :readonly-component [table-view {:readonly true
                                                          :columns (:field/columns field)
-                                                         :rows (mogrify (:field/value field))}])
+                                                         :rows (mogrify (:field/value field))}]
+                        :diff-component [table-diff {:columns (:field/columns field)
+                                                     :previous-rows (mogrify (:field/previous-value field))
+                                                     :rows (mogrify (:field/value field))}])
    [table-view {:columns (:field/columns field)
                 :rows (mogrify (:field/value field))
                 :on-change #(on-change (unmogrify %))}]])
