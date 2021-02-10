@@ -206,7 +206,7 @@
          :field/value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
          :field/visible s/Bool
          :field/private s/Bool
-         (s/optional-key :field/previous-value) s/Str))
+         (s/optional-key :field/previous-value) (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])))
 
 (s/defschema FormTemplate
   {:form/id s/Int

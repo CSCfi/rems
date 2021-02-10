@@ -918,7 +918,17 @@
                                     :application-id app-id})))
       (is (= [[{:value "f" :column "foo"} {:value "b" :column "bar"} {:value "x" :column "xyz"}]]
              (get-in (get-application-for-user app-id user-id)
-                     [:application/forms 0 :form/fields 1 :field/value]))))))
+                     [:application/forms 0 :form/fields 1 :field/value]))))
+    (testing "can return"
+      (is (= {:success true}
+             (send-command "developer" {:type :application.command/return
+                                        :application-id app-id})))
+      (is (= [[{:value "f" :column "foo"} {:value "b" :column "bar"} {:value "x" :column "xyz"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields 1 :field/value])))
+      (is (= [[{:value "f" :column "foo"} {:value "b" :column "bar"} {:value "x" :column "xyz"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields 1 :field/previous-value]))))))
 
 
 (deftest test-decider-workflow
