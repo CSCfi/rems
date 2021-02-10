@@ -437,7 +437,6 @@
                row))))
 
 (defn table-field [{:keys [on-change] :as field}]
-  ;; TODO diff
   [field-wrapper (assoc field
                         :readonly-component [table-view {:readonly true
                                                          :columns (:field/columns field)
