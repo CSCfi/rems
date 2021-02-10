@@ -4,7 +4,7 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [add-symbol attachment-link close-symbol textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.common.util :refer [getx]]
+            [rems.common.util :refer [build-index getx]]
             [rems.dropdown :as dropdown]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.common.roles :as roles]
@@ -392,6 +392,49 @@
          :item-selected? item-selected?
          :on-change on-change}])]))
 
+(defn- table-view [{:keys [readonly columns rows on-set-value]}]
+  (let [n-cols (count columns)
+        n-rows (count rows)]
+    (into [:table.table
+           [:thead
+            (into [:tr] (for [c columns] [:th (localized (:label c))]))]]
+          (concat
+           (for [row-i (range n-rows)]
+             (into [:tr]
+                   (for [column-i (range n-cols)]
+                     [:td [:input {:type text
+                                   :disabled readonly
+                                   :value (get-in rows [row-i column-i])
+                                   :on-change #(on-set-value (assoc-in rows [row-i column-i] (event-value %)))}]])))
+           (when-not readonly
+             [[:tr [:th {:colspan (count columns)}
+                    [:a {:on-click #(on-set-value (conj rows (repeat n-cols "")))} "Add row"]
+                    " "
+                    [:a {:on-click #(on-set-value (vec (butlast rows)))} "Remove row"]]]])))))
+
+(defn- mogrify [columns value]
+  (if (= value "")
+    []
+    (vec (for [row value]
+           (let [cells (build-index {:keys [:column] :value-fn :value} row)]
+             (vec (for [c columns]
+                    (get cells (:key c)))))))))
+
+(defn- unmogrify [columns table]
+  (vec (for [row table]
+         (mapv (fn [column value] {:column (:key column) :value value})
+               columns
+               row))))
+
+(defn table-field [{:keys [on-change] :as field}]
+  [field-wrapper (assoc field
+                        :readonly-component [table-view {:readonly true
+                                                         :columns (:field/columns field)
+                                                         :rows (mogrify (:field/columns field) (:field/value field))}])
+   [:<>
+    [table-view {:columns (:field/columns field)
+                 :rows (mogrify (:field/columns field) (:field/value field))
+                 :on-change #(on-change (unmogrify (:field/columns field) %))}]]])
 
 (defn unsupported-field
   [f]
@@ -412,6 +455,7 @@
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]
+      :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]
       [unsupported-field f])))
