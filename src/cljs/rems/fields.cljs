@@ -392,49 +392,46 @@
          :item-selected? item-selected?
          :on-change on-change}])]))
 
-(defn- table-view [{:keys [readonly columns rows on-set-value]}]
-  (let [n-cols (count columns)
-        n-rows (count rows)]
+(defn- table-view [{:keys [readonly columns rows on-change]}]
+  (let [n-rows (count rows)
+        column-keys (mapv :key columns)]
     (into [:table.table
            [:thead
-            (into [:tr] (for [c columns] [:th (localized (:label c))]))]]
+            (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
           (concat
            (for [row-i (range n-rows)]
              (into [:tr]
-                   (for [column-i (range n-cols)]
+                   (for [key column-keys]
                      [:td [:input {:type text
                                    :disabled readonly
-                                   :value (get-in rows [row-i column-i])
-                                   :on-change #(on-set-value (assoc-in rows [row-i column-i] (event-value %)))}]])))
+                                   :value (get-in rows [row-i key])
+                                   :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
            (when-not readonly
              [[:tr [:th {:colspan (count columns)}
-                    [:a {:on-click #(on-set-value (conj rows (repeat n-cols "")))} "Add row"]
+                    [:a {:on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} "Add row"]
                     " "
-                    [:a {:on-click #(on-set-value (vec (butlast rows)))} "Remove row"]]]])))))
+                    [:a {:on-click #(on-change (vec (butlast rows)))} "Remove row"]]]])))))
 
-(defn- mogrify [columns value]
+(defn- mogrify [value]
   (if (= value "")
     []
     (vec (for [row value]
-           (let [cells (build-index {:keys [:column] :value-fn :value} row)]
-             (vec (for [c columns]
-                    (get cells (:key c)))))))))
+           (build-index {:keys [:column] :value-fn :value} row)))))
 
-(defn- unmogrify [columns table]
+(defn- unmogrify [table]
   (vec (for [row table]
-         (mapv (fn [column value] {:column (:key column) :value value})
-               columns
+         (mapv (fn [[column value]] {:column column :value value})
                row))))
 
 (defn table-field [{:keys [on-change] :as field}]
+  ;; TODO diff
   [field-wrapper (assoc field
                         :readonly-component [table-view {:readonly true
                                                          :columns (:field/columns field)
-                                                         :rows (mogrify (:field/columns field) (:field/value field))}])
-   [:<>
-    [table-view {:columns (:field/columns field)
-                 :rows (mogrify (:field/columns field) (:field/value field))
-                 :on-change #(on-change (unmogrify (:field/columns field) %))}]]])
+                                                         :rows (mogrify (:field/value field))}])
+   [table-view {:columns (:field/columns field)
+                :rows (mogrify (:field/value field))
+                :on-change #(on-change (unmogrify %))}]])
 
 (defn unsupported-field
   [f]
