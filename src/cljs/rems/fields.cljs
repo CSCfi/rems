@@ -395,17 +395,17 @@
 (defn- table-view [{:keys [readonly columns rows on-change]}]
   (let [n-rows (count rows)
         column-keys (mapv :key columns)]
-    (into [:table.table
+    (into [:table.table.table-sm.table-borderless
            [:thead
             (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
           (concat
            (for [row-i (range n-rows)]
              (into [:tr]
                    (for [key column-keys]
-                     [:td [:input {:type text
-                                   :disabled readonly
-                                   :value (get-in rows [row-i key])
-                                   :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
+                     [:td [:input.form-control {:type :text
+                                                :disabled readonly
+                                                :value (get-in rows [row-i key])
+                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
            (when-not readonly
              [[:tr [:th {:colspan (count columns)}
                     [:a {:on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} "Add row"]
@@ -415,7 +415,7 @@
 (defn- table-diff [{:keys [columns rows previous-rows]}]
   (let [n-rows (max (count rows) (count previous-rows))
         column-keys (mapv :key columns)]
-    (into [:table.table
+    (into [:table.table.table-sm.table-borderless
            [:thead
             (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
           (concat
