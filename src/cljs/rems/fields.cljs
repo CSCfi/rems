@@ -392,7 +392,7 @@
          :item-selected? item-selected?
          :on-change on-change}])]))
 
-(defn- table-view [{:keys [readonly columns rows on-change]}]
+(defn- table-view [{:keys [id readonly columns rows on-change]}]
   (let [n-rows (count rows)
         column-keys (mapv :key columns)]
     (into [:table.table.table-sm.table-borderless
@@ -403,14 +403,17 @@
              (into [:tr]
                    (for [key column-keys]
                      [:td [:input.form-control {:type :text
+                                                :id (str id "-row" row-i "-" key)
                                                 :disabled readonly
                                                 :value (get-in rows [row-i key])
                                                 :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
            (when-not readonly
              [[:tr [:th {:colspan (count columns)}
-                    [:a {:on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} (text :t.form/add-row)]
+                    [:a {:id (str id "-add-row")
+                         :on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} (text :t.form/add-row)]
                     " "
-                    [:a {:on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]])))))
+                    [:a {:id (str id "-remove-row")
+                         :on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]])))))
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
   (let [n-rows (max (count rows) (count previous-rows))
@@ -438,13 +441,15 @@
 
 (defn table-field [{:keys [on-change] :as field}]
   [field-wrapper (assoc field
-                        :readonly-component [table-view {:readonly true
+                        :readonly-component [table-view {:id (field-name field)
+                                                         :readonly true
                                                          :columns (:field/columns field)
                                                          :rows (mogrify (:field/value field))}]
                         :diff-component [table-diff {:columns (:field/columns field)
                                                      :previous-rows (mogrify (:field/previous-value field))
                                                      :rows (mogrify (:field/value field))}])
-   [table-view {:columns (:field/columns field)
+   [table-view {:id (field-name field)
+                :columns (:field/columns field)
                 :rows (mogrify (:field/value field))
                 :on-change #(on-change (unmogrify %))}]])
 
