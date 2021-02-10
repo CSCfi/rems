@@ -393,40 +393,37 @@
          :on-change on-change}])]))
 
 (defn- table-view [{:keys [id readonly columns rows on-change]}]
-  (let [n-rows (count rows)
-        column-keys (mapv :key columns)]
-    (into [:table.table.table-sm.table-borderless
-           [:thead
-            (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
-          (concat
-           (for [row-i (range n-rows)]
-             (into [:tr]
-                   (for [key column-keys]
-                     [:td [:input.form-control {:type :text
-                                                :id (str id "-row" row-i "-" key)
-                                                :disabled readonly
-                                                :value (get-in rows [row-i key])
-                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
-           (when-not readonly
-             [[:tr [:th {:colspan (count columns)}
-                    [:a {:id (str id "-add-row")
-                         :on-click #(on-change (conj rows (zipmap column-keys (repeat ""))))} (text :t.form/add-row)]
-                    " "
-                    [:a {:id (str id "-remove-row")
-                         :on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]])))))
+  (into [:table.table.table-sm.table-borderless
+         [:thead
+          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+        (concat
+         (for [row-i (range (count rows))]
+           (into [:tr]
+                 (for [{:keys [key label]} columns]
+                   [:td [:input.form-control {:type :text
+                                              :aria-label (localized label)
+                                              :id (str id "-row" row-i "-" key)
+                                              :disabled readonly
+                                              :value (get-in rows [row-i key])
+                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
+         (when-not readonly
+           [[:tr [:th {:colspan (count columns)}
+                  [:a {:id (str id "-add-row")
+                       :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))} (text :t.form/add-row)]
+                  " "
+                  [:a {:id (str id "-remove-row")
+                       :on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]]))))
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
-  (let [n-rows (max (count rows) (count previous-rows))
-        column-keys (mapv :key columns)]
-    (into [:table.table.table-sm.table-borderless
-           [:thead
-            (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
-          (concat
-           (for [row-i (range n-rows)]
-             (into [:tr]
-                   (for [key column-keys]
-                     [:td [diff-field {:value (get-in rows [row-i key])
-                                       :previous-value (get-in previous-rows [row-i key])}]])))))))
+  (into [:table.table.table-sm.table-borderless
+         [:thead
+          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+        (concat
+         (for [row-i (range (count rows))]
+           (into [:tr]
+                 (for [{:keys [key]} columns]
+                   [:td [diff-field {:value (get-in rows [row-i key])
+                                     :previous-value (get-in previous-rows [row-i key])}]]))))))
 
 (defn- mogrify [value]
   (if (= value "")
