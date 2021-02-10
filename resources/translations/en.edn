@@ -255,8 +255,13 @@
              :show-more "Show more"}
   :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
-  :create-form {:add-form-field "Add field"
+  :create-form {:add-column "Add column"
+                :add-form-field "Add field"
                 :add-option "Add option"
+                ;; %1 - column number
+                :column-n "Column %1"
+                :column-key "ID code"
+                :column-label "Label"
                 ;; %1 - field number
                 ;; %2 - field title
                 :field-n "Field %1: %2"
@@ -283,6 +288,7 @@
                 :type-multiselect "Multi-select list"
                 :type-option "Option list"
                 :type-privacy "Privacy"
+                :type-table "Table"
                 :type-text "Text field"
                 :type-texta "Text area"
                 :type-visibility "Visible"
