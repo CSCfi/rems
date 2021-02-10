@@ -7,7 +7,10 @@
 (defn- required? [field]
   (and (not (:field/optional field))
        (not (contains? #{:header :label} (:field/type field)))
-       (str/blank? (:field/value field))))
+       ;; TODO decide what to do about required table fields
+       (if (string? (:field/value field))
+         (str/blank? (:field/value field))
+         (empty? (:field/value field)))))
 
 (defn- too-long? [field]
   (and (:field/max-length field)

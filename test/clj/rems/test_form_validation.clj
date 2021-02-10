@@ -163,7 +163,25 @@
                                          :field/type     :email
                                          :field/optional true
                                          :field/visible  true
-                                         :field/value    "invalid.email"}])))))
+                                         :field/value    "invalid.email"}]))))
+
+  (testing "table validation"
+    (let [fields [{:field/id "tbl"
+                   :field/type :table
+                   :field/visible true
+                   :field/optional true
+                   :field/columns [{:key "col1"} {:key "col2"}]}]]
+      (testing "optional"
+        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] ""))))
+        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] []))))
+        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}]])))))
+      (testing "required"
+        (let [required (assoc-in fields [0 :field/optional] false)]
+          (is (= [{:field-id "tbl", :type :t.form.validation/required}]
+                 (validate-fields-for-submit (assoc-in required [0 :field/value] ""))))
+          (is (= [{:field-id "tbl", :type :t.form.validation/required}]
+                 (validate-fields-for-submit (assoc-in required [0 :field/value] []))))
+          (is (nil? (validate-fields-for-submit (assoc-in required [0 :field/value] [[{:column "col1" :value "1"}]])))))))))
 
 (deftest test-validate-fields-for-draft
   (testing "required fields do not need to be filled at draft stage"
@@ -336,6 +354,7 @@
     (let [fields [{:field/id "tbl"
                    :field/type :table
                    :field/visible true
+                   :field/optional true
                    :field/columns [{:key "col1"} {:key "col2"}]}]]
       (testing "valid cases"
         (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] ""))))
