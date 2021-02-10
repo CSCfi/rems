@@ -188,14 +188,33 @@
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
+(defn resourse-dropdown [r language counts]
+  (str (:resid r)
+      ;; when organisation is found, show organisation
+       (when (get-in r [:organization :short-name (keyword language)])
+         (str/join " " [" (org:"
+                        (get-in r [:organization :short-name (keyword language)])
+                        ")"]))
+      ;; when duplicate is found, show duplicate
+       (when (> (get counts (:resid r)) 1)
+         ;; when licenses are found, show licences, but only if it is duplicate
+         (when (not-empty (:licenses r))
+           (str/join " "
+                     [" (licenses:"
+                      (str/join ", " (mapv
+                                      (fn [l] (:title ((keyword language) (:localizations l))))
+                                      (:licenses r)))
+                      ")"])))))
+
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
+        counts (frequencies (map :resid resources))
         editing? @(rf/subscribe [::editing?])
         selected-resource @(rf/subscribe [::selected-resource])
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     (js/console.log "yay" (clj->js (first resources)))
+     (js/console.log "yay" (clj->js resources))
      [:label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
@@ -205,16 +224,7 @@
         {:id resource-dropdown-id
          :items (->> resources (filter :enabled) (remove :archived))
          :item-key :id
-         :item-label #(str (:resid %)
-                           " (org: "
-                           (get-in % [:organization :organization/short-name language])
-                           ") "
-                           (when (not-empty (:licenses %))
-                             (str " (licenses: "
-                                  (mapv (fn [item]
-                                          (:title ((keyword language) (:localizations item))))
-                                        (:licenses %))
-                                  ")"))) 
+         :item-label #(resourse-dropdown % language counts)
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
