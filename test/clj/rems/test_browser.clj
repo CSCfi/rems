@@ -299,6 +299,7 @@
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
         (btu/check-box "Option3")
+        ;; leave "Table" empty
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
 
@@ -352,6 +353,7 @@
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
+                      ["table" ""]
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]]
