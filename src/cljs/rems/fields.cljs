@@ -820,4 +820,39 @@
                     :field/id "1"
                     :field/type :description
                     :field/title {:en "Title"}
-                    :field/placeholder {:en "placeholder"}}])])
+                    :field/placeholder {:en "placeholder"}}])
+   (example "field of type \"table\""
+            [field {:form/id 35
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "non-editable field of type \"table\""
+            [field {:readonly true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "diff for field of type \"table\""
+            [field {:diff true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/previous-value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                           [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbxxxxbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "yyyyy"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]
+                                  [{:column "col1" :value "1"} {:column "col2" :value "2"} {:column "col3" :value "3"}]]}])])
