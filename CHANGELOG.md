@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.16
 
+### Breaking changes
+- A new form field type "table" is now available. A table has a predefined set of columns, and applicants can fill in as many rows as they wish. **You can not roll back to an earlier release once your database contains applications with filled-in table fields. You will need to fix the database manually.** (#2551)
+
 ### Changes
 
 ### Fixes
@@ -15,7 +18,6 @@ Changes since v2.16
 - GA4GH Visa (output by the experimental /api/permissions API) timestamps are now in seconds, instead of milliseconds. (#2554)
 
 ### Additions
-- A new form field type "table" is now available. A table has a predefined set of columns, and applicants can fill in as many rows as they wish. (#2551)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
