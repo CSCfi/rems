@@ -327,6 +327,12 @@
         (testing "check a field answer"
           (is (= "Test name" (btu/get-element-text description-field-selector))))
 
+        (testing "check that table field values are visible"
+          (is (= "a" (btu/value-of (keyword (str table-field-id "-row0-col1")))))
+          (is (= "b" (btu/value-of (keyword (str table-field-id "-row0-col2")))))
+          (is (= "c" (btu/value-of (keyword (str table-field-id "-row1-col1")))))
+          (is (= "d" (btu/value-of (keyword (str table-field-id "-row1-col2"))))))
+
         (testing "fetch application from API"
           (let [application (get-application-from-api (btu/context-get :application-id))]
             (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application)))
