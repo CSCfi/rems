@@ -425,13 +425,20 @@
                    [:td [diff-field {:value (get-in rows [row-i key])
                                      :previous-value (get-in previous-rows [row-i key])}]]))))))
 
-(defn- mogrify [value]
+(defn- table-from-backend
+  "Convert
+     [[{:column \"a\" :value \"x\"} {:column \"b\" :value \"y\"}]]
+   to
+     [{\"a\" \"x\", \"b\" \"y\"}]"
+  [value]
   (if (= value "")
     []
     (vec (for [row value]
            (build-index {:keys [:column] :value-fn :value} row)))))
 
-(defn- unmogrify [table]
+(defn- table-to-backend
+  "Inverse of table-from-backend"
+  [table]
   (vec (for [row table]
          (mapv (fn [[column value]] {:column column :value value})
                row))))
@@ -441,14 +448,14 @@
                         :readonly-component [table-view {:id (field-name field)
                                                          :readonly true
                                                          :columns (:field/columns field)
-                                                         :rows (mogrify (:field/value field))}]
+                                                         :rows (table-from-backend (:field/value field))}]
                         :diff-component [table-diff {:columns (:field/columns field)
-                                                     :previous-rows (mogrify (:field/previous-value field))
-                                                     :rows (mogrify (:field/value field))}])
+                                                     :previous-rows (table-from-backend (:field/previous-value field))
+                                                     :rows (table-from-backend (:field/value field))}])
    [table-view {:id (field-name field)
                 :columns (:field/columns field)
-                :rows (mogrify (:field/value field))
-                :on-change #(on-change (unmogrify %))}]])
+                :rows (table-from-backend (:field/value field))
+                :on-change #(on-change (table-to-backend %))}]])
 
 (defn unsupported-field
   [f]
