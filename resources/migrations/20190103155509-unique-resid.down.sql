@@ -1,1 +1,1 @@
-drop index resource_resid_u;
+drop index if exists resource_resid_u;
