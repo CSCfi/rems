@@ -15,6 +15,7 @@ Changes since v2.16
 - GA4GH Visa (output by the experimental /api/permissions API) timestamps are now in seconds, instead of milliseconds. (#2554)
 
 ### Additions
+- A new form field type "table" is now available. A table has a predefined set of columns, and applicants can fill in as many rows as they wish. (#2551)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
