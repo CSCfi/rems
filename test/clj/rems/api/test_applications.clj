@@ -835,7 +835,7 @@
 
 (deftest test-table
   ;; Adding the table field required changes to many API schemas since
-  ;; the table values aren't just plain strings )like the values for
+  ;; the table values aren't just plain strings (like the values for
   ;; other fields). This test is mostly here to verify table values
   ;; work everywhere in the API.
   ;;
