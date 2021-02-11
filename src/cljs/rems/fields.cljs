@@ -411,9 +411,13 @@
                   (when-not readonly
                     [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
          (when-not readonly
-           [[:tr [:th {:colspan (count columns)}
-                  [:a {:id (str id "-add-row")
-                       :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))} (text :t.form/add-row)]]]]))))
+           [[:tr [:td {:colspan (count columns)}
+                  [:button.btn.btn-outline-secondary.btn-block
+                   {:id (str id "-add-row")
+                    :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
+                   [add-symbol]
+                   " "
+                   (text :t.form/add-row)]]]]))))
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
   (into [:table.table.table-sm.table-borderless
