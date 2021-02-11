@@ -13,6 +13,8 @@ Changes since v2.16
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)
 - GA4GH Visa (output by the experimental /api/permissions API) timestamps are now in seconds, instead of milliseconds. (#2554)
+- The REMS `reset` command line command now works even when you have duplicate resource ids in the database. (#2557)
+  - In practice, this means that REMS will not recreate the unique constraint on resource ids, even when rolling back to old database schema versions.
 
 ### Additions
 

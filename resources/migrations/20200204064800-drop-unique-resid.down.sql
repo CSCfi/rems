@@ -1,2 +1,3 @@
--- NB! this might fail if db contains duplicate resids.
-CREATE UNIQUE INDEX resource_resid_u ON resource (organization, resid);
+-- We can't recreate the unique constraint since it would fail if the db contains duplicate resources.
+-- We basically can't support rolling back this migration in general.
+-- Luckily nothing really breaks if the constraint is missing.
