@@ -7,7 +7,10 @@
 (defn- required? [field]
   (and (not (:field/optional field))
        (not (contains? #{:header :label} (:field/type field)))
-       ;; TODO decide what to do about required table fields
+       ;; TODO decide what to do about required table fields. At the
+       ;; moment, any non-empty value is enough for a required table,
+       ;; that is, you need to add at least one row (but it can be
+       ;; empty).
        (if (string? (:field/value field))
          (str/blank? (:field/value field))
          (empty? (:field/value field)))))

@@ -202,7 +202,11 @@
 
 (s/defschema Field
   (assoc FieldTemplate
-         ;; TODO check that this looks nice in swagger
+         ;; TODO cond-pre generates a x-oneOf schema, which is
+         ;; correct, but swagger-ui doesn't render it. We would need
+         ;; to switch from Swagger 2.0 specs to OpenAPI 3 specs to get
+         ;; swagger-ui support. However ring-swagger only supports
+         ;; Swagger 2.0.
          :field/value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
          :field/visible s/Bool
          :field/private s/Bool
