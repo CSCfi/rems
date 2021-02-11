@@ -377,7 +377,6 @@
          :please-wait "Odota hetkinen"
          :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
-         :remove-row "Poista rivi"
          :required "*"
          :resources "Resurssit"
          :save "Tallenna luonnos"

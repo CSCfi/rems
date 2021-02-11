@@ -2,6 +2,7 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [build-index getx]]
@@ -399,20 +400,20 @@
         (concat
          (for [row-i (range (count rows))]
            (into [:tr]
-                 (for [{:keys [key label]} columns]
-                   [:td [:input.form-control {:type :text
-                                              :aria-label (localized label)
-                                              :id (str id "-row" row-i "-" key)
-                                              :disabled readonly
-                                              :value (get-in rows [row-i key])
-                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])))
+                 (concat
+                  (for [{:keys [key label]} columns]
+                    [:td [:input.form-control {:type :text
+                                               :aria-label (localized label)
+                                               :id (str id "-row" row-i "-" key)
+                                               :disabled readonly
+                                               :value (get-in rows [row-i key])
+                                               :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
+                  (when-not readonly
+                    [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
          (when-not readonly
            [[:tr [:th {:colspan (count columns)}
                   [:a {:id (str id "-add-row")
-                       :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))} (text :t.form/add-row)]
-                  " "
-                  [:a {:id (str id "-remove-row")
-                       :on-click #(on-change (vec (butlast rows)))} (text :t.form/remove-row)]]]]))))
+                       :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))} (text :t.form/add-row)]]]]))))
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
   (into [:table.table.table-sm.table-borderless

@@ -377,7 +377,6 @@
          :please-wait "Var god vänta"
          :previous-applications "Sökandes tidigare ansökningar"
          :previous-value "Föregående"
-         :remove-row "Ta bort rad"
          :required "*"
          :resources "Resurser"
          :save "Spara utkast"
