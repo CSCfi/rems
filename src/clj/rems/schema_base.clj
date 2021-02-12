@@ -4,7 +4,8 @@
   Be careful when adding things here: we don't want to couple the API
   schema too tightly to internal schemas!"
   (:require [ring.swagger.json-schema :as rjs]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import (org.joda.time DateTime)))
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
@@ -22,3 +23,10 @@
 ;; Swagger 2.0.
 (s/defschema FieldValue
   (s/cond-pre s/Str [[{:column s/Str :value s/Str}]]))
+
+(s/defschema EventBase
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
+   :event/time DateTime
+   :event/actor UserId
+   :application/id s/Int})

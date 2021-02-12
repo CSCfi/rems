@@ -2,14 +2,13 @@
   (:require [rems.application.events :as events]
             [rems.db.core :as db]
             [rems.json :as json]
-            [medley.core :refer [map-keys map-vals]]
-            [rems.util :refer [update-present]]
+            [rems.schema-base :as schema-base]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
             [schema.utils]))
 
 (def ^:private coerce-event-commons
-  (coerce/coercer! (st/open-schema events/EventBase) json/coercion-matcher))
+  (coerce/coercer! (st/open-schema schema-base/EventBase) json/coercion-matcher))
 
 (def ^:private coerce-event-specifics
   (coerce/coercer! events/Event json/coercion-matcher))

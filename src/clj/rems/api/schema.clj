@@ -1,8 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require [rems.application.events :as events]
-            [rems.application.commands :as commands]
-            [rems.schema-base :refer [FieldId FieldValue FormId UserId]]
+  (:require [rems.application.commands :as commands]
+            [rems.schema-base :refer [EventBase FieldId FieldValue FormId UserId]]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -93,7 +92,7 @@
 (s/defschema ResourceLicense License)
 
 (s/defschema Event
-  (assoc events/EventBase
+  (assoc EventBase
          :event/actor-attributes UserWithAttributes
          s/Keyword s/Any))
 

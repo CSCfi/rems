@@ -2,16 +2,9 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
-            [rems.schema-base :refer [FieldId FieldValue FormId User UserId]]
+            [rems.schema-base :refer [EventBase FieldId FieldValue FormId User UserId]]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
-
-(s/defschema EventBase
-  {(s/optional-key :event/id) s/Int
-   :event/type s/Keyword
-   :event/time DateTime
-   :event/actor UserId
-   :application/id s/Int})
 
 (s/defschema EventAttachment
   {:attachment/id s/Int})
