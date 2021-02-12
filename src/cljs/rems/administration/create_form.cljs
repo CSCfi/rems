@@ -125,6 +125,28 @@
  (fn [db [_ field-index option-index]]
    (update-in db [::form :data :form/fields field-index :field/options] items/move-down option-index)))
 
+;; TODO column code is an exact duplication of option code
+
+(rf/reg-event-db
+ ::add-form-field-column
+ (fn [db [_ field-index]]
+   (update-in db [::form :data :form/fields field-index :field/columns] items/add {})))
+
+(rf/reg-event-db
+ ::remove-form-field-column
+ (fn [db [_ field-index column-index]]
+   (update-in db [::form :data :form/fields field-index :field/columns] items/remove column-index)))
+
+(rf/reg-event-db
+ ::move-form-field-column-up
+ (fn [db [_ field-index column-index]]
+   (update-in db [::form :data :form/fields field-index :field/columns] items/move-up column-index)))
+
+(rf/reg-event-db
+ ::move-form-field-column-down
+ (fn [db [_ field-index column-index]]
+   (update-in db [::form :data :form/fields field-index :field/columns] items/move-down column-index)))
+
 ;;;; form submit
 
 (defn- localized-field-title [field lang]
@@ -153,6 +175,10 @@
            {:field/max-length (parse-int (:field/max-length field))})
          (when (common-form/supports-options? field)
            {:field/options (for [{:keys [key label]} (:field/options field)]
+                             {:key key
+                              :label (build-localized-string label languages)})})
+         (when (common-form/supports-columns? field)
+           {:field/columns (for [{:keys [key label]} (:field/columns field)]
                              {:key key
                               :label (build-localized-string label languages)})})
          (when (common-form/supports-privacy? field)
@@ -310,6 +336,47 @@
           [[:div.form-field-option.new-form-field-option
             [add-form-field-option-button field-index]]])))
 
+;; TODO column code is an exact duplication of option code
+;; TODO column code reuses some option styles
+
+(defn- add-form-field-column-button [field-index]
+  [:a.add-option {:href "#"
+                  :on-click (fn [event]
+                              (.preventDefault event)
+                              (rf/dispatch [::add-form-field-column field-index]))}
+   (text :t.create-form/add-column)])
+
+(defn- remove-form-field-column-button [field-index column-index]
+  [items/remove-button #(rf/dispatch [::remove-form-field-column field-index column-index])])
+
+(defn- move-form-field-column-up-button [field-index column-index]
+  [items/move-up-button #(rf/dispatch [::move-form-field-column-up field-index column-index])])
+
+(defn- move-form-field-column-down-button [field-index column-index]
+  [items/move-down-button #(rf/dispatch [::move-form-field-column-down field-index column-index])])
+
+(defn- form-field-column-field [field-index column-index]
+  [:div.form-field-option
+   [:div.form-field-header
+    [:h4 (text-format :t.create-form/column-n (inc column-index))]
+    [:div.form-field-controls
+     [move-form-field-column-up-button field-index column-index]
+     [move-form-field-column-down-button field-index column-index]
+     [remove-form-field-column-button field-index column-index]]]
+   [text-field context {:keys [:form/fields field-index :field/columns column-index :key]
+                        :label (text :t.create-form/column-key)
+                        :normalizer normalize-option-key}]
+   [localized-text-field context {:keys [:form/fields field-index :field/columns column-index :label]
+                                  :label (text :t.create-form/column-label)}]])
+
+(defn- form-field-column-fields [field-index]
+  (let [form @(rf/subscribe [::form-data])]
+    (into (into [:div]
+                (for [column-index (range (count (get-in form [:form/fields field-index :field/columns])))]
+                  [form-field-column-field field-index column-index]))
+          [[:div.form-field-option.new-form-field-option
+            [add-form-field-column-button field-index]]])))
+
 (defn- form-fields-that-can-be-used-in-visibility [form]
   (filter #(contains? {:option :multiselect} (:field/type %))
           (:form/fields form)))
@@ -441,6 +508,7 @@
                                          {:value :texta :label (text :t.create-form/type-texta)}
                                          {:value :option :label (text :t.create-form/type-option)}
                                          {:value :multiselect :label (text :t.create-form/type-multiselect)}
+                                         {:value :table :label (text :t.create-form/type-table)}
                                          {:value :date :label (text :t.create-form/type-date)}
                                          {:value :email :label (text :t.create-form/type-email)}
                                          {:value :attachment :label (text :t.create-form/type-attachment)}
@@ -579,6 +647,8 @@
               [form-field-max-length-field index])
             (when (common-form/supports-options? field)
               [form-field-option-fields index])
+            (when (common-form/supports-columns? field)
+              [form-field-column-fields index])
             (when (common-form/supports-privacy? field)
               [form-field-privacy index])
             (when (common-form/supports-visibility? field)

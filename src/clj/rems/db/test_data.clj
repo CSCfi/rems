@@ -157,6 +157,20 @@
                              :fi "Kolmas vaihtoehto"
                              :sv "Tredje alternativ"}}]}
 
+   {:field/type :table
+    :field/title {:en "Table"
+                  :fi "Taulukko"
+                  :sv "Tabell"}
+    :field/optional true
+    :field/columns [{:key "col1"
+                     :label {:en "First"
+                             :fi "Ensimmäinen"
+                             :sv "Första"}}
+                    {:key "col2"
+                     :label {:en "Second"
+                             :fi "Toinen"
+                             :sv "Andra"}}]}
+
    {:field/type :label
     :field/title {:en "The following field types can have a max length."
                   :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."

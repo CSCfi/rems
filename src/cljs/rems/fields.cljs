@@ -2,9 +2,10 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.common.util :refer [getx]]
+            [rems.common.util :refer [build-index getx]]
             [rems.dropdown :as dropdown]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.common.roles :as roles]
@@ -392,6 +393,74 @@
          :item-selected? item-selected?
          :on-change on-change}])]))
 
+(defn- table-view [{:keys [id readonly columns rows on-change]}]
+  (into [:table.table.table-sm.table-borderless
+         [:thead
+          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+        (concat
+         (for [row-i (range (count rows))]
+           (into [:tr]
+                 (concat
+                  (for [{:keys [key label]} columns]
+                    [:td [:input.form-control {:type :text
+                                               :aria-label (localized label)
+                                               :id (str id "-row" row-i "-" key)
+                                               :disabled readonly
+                                               :value (get-in rows [row-i key])
+                                               :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
+                  (when-not readonly
+                    [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+         (when-not readonly
+           [[:tr [:td {:colspan (count columns)}
+                  [:button.btn.btn-outline-secondary.btn-block
+                   {:id (str id "-add-row")
+                    :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
+                   [add-symbol]
+                   " "
+                   (text :t.form/add-row)]]]]))))
+
+(defn- table-diff [{:keys [columns rows previous-rows]}]
+  (into [:table.table.table-sm.table-borderless
+         [:thead
+          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+        (concat
+         (for [row-i (range (count rows))]
+           (into [:tr]
+                 (for [{:keys [key]} columns]
+                   [:td [diff-field {:value (get-in rows [row-i key])
+                                     :previous-value (get-in previous-rows [row-i key])}]]))))))
+
+(defn- table-from-backend
+  "Convert
+     [[{:column \"a\" :value \"x\"} {:column \"b\" :value \"y\"}]]
+   to
+     [{\"a\" \"x\", \"b\" \"y\"}]"
+  [value]
+  (if (= value "")
+    []
+    (vec (for [row value]
+           (build-index {:keys [:column] :value-fn :value} row)))))
+
+(defn- table-to-backend
+  "Inverse of table-from-backend"
+  [table]
+  (vec (for [row table]
+         (mapv (fn [[column value]] {:column column :value value})
+               row))))
+
+(defn table-field [{:keys [on-change] :as field}]
+  [field-wrapper (assoc field
+                        :readonly-component [table-view {:id (field-name field)
+                                                         :readonly true
+                                                         :columns (:field/columns field)
+                                                         :rows (table-from-backend (:field/value field))}]
+                        :diff-component [table-diff {:columns (:field/columns field)
+                                                     :previous-rows (table-from-backend (:field/previous-value field))
+                                                     :rows (table-from-backend (:field/value field))}])
+   [table-view {:id (field-name field)
+                :columns (:field/columns field)
+                :rows (table-from-backend (:field/value field))
+                :on-change #(on-change (table-to-backend %))}]])
 
 (defn unsupported-field
   [f]
@@ -412,6 +481,7 @@
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]
+      :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]
       [unsupported-field f])))
@@ -762,4 +832,39 @@
                     :field/id "1"
                     :field/type :description
                     :field/title {:en "Title"}
-                    :field/placeholder {:en "placeholder"}}])])
+                    :field/placeholder {:en "placeholder"}}])
+   (example "field of type \"table\""
+            [field {:form/id 35
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "non-editable field of type \"table\""
+            [field {:readonly true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "diff for field of type \"table\""
+            [field {:diff true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/previous-value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
+                                           [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]
+                    :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbxxxxbb"} {:column "col3" :value "ccccccc"}]
+                                  [{:column "col1" :value "yyyyy"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]
+                                  [{:column "col1" :value "1"} {:column "col2" :value "2"} {:column "col3" :value "3"}]]}])])

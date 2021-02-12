@@ -22,8 +22,11 @@
 (deftest test-event-serialization
   (testing "round trip serialization"
     (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
-                                                (generators/large-integer* {:min 0}))}]
-      (doseq [event (sg/sample 100 events/Event generators)]
+                                                (generators/large-integer* {:min 0}))}
+          ;; The default max-size of 100 was too much: ran out of heap
+          ;; space when generating DraftSavedEvent
+          max-size 30]
+      (doseq [event (take 100 (generators/sample-seq (sg/generator events/Event generators) max-size))]
         (is (= event (-> event db-events/event->json db-events/json->event))))))
 
   (testing "event->json validates events"

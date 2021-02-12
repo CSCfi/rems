@@ -176,11 +176,13 @@
 ;;; template for a form field, before answering
 (s/defschema FieldTemplate
   {:field/id FieldId
-   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
+   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta :table)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
    (s/optional-key :field/options) [{:key s/Str
+                                     :label LocalizedString}]
+   (s/optional-key :field/columns) [{:key s/Str
                                      :label LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/privacy) (rjs/field
@@ -200,10 +202,15 @@
 
 (s/defschema Field
   (assoc FieldTemplate
-         :field/value s/Str
+         ;; TODO cond-pre generates a x-oneOf schema, which is
+         ;; correct, but swagger-ui doesn't render it. We would need
+         ;; to switch from Swagger 2.0 specs to OpenAPI 3 specs to get
+         ;; swagger-ui support. However ring-swagger only supports
+         ;; Swagger 2.0.
+         :field/value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
          :field/visible s/Bool
          :field/private s/Bool
-         (s/optional-key :field/previous-value) s/Str))
+         (s/optional-key :field/previous-value) (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])))
 
 (s/defschema FormTemplate
   {:form/id s/Int

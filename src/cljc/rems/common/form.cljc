@@ -29,6 +29,9 @@
 (defn supports-visibility? [field]
   true) ; at the moment all field types
 
+(defn supports-columns? [field]
+  (= :table (:field/type field)))
+
 (defn- generate-field-ids
   "Generate a set of unique field ids taking into account what have been given already.
 
@@ -99,7 +102,7 @@
               (str/blank? (:organization/id organization)))
       {:organization :t.form.validation/required})))
 
-(def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta})
+(def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta :table})
 
 (defn- validate-field-type [m]
   (let [type (keyword (get m :field/type))]
@@ -149,6 +152,10 @@
 
 (defn- validate-options [options languages]
   {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+
+(defn- validate-columns [options languages]
+  ;; columns have the same syntax as options for now
+  {:field/columns (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
 
 (defn- field-option-keys [field]
   (set (map :key (:field/options field))))
@@ -212,6 +219,9 @@
                         (if (supports-options? field)
                           (validate-options (:field/options field) languages)
                           (validate-not-present field :field/options))
+                        (if (supports-columns? field)
+                          (validate-columns (:field/columns field) languages)
+                          (validate-not-present field :field/columns))
                         (if (supports-privacy? field)
                           (validate-privacy field fields)
                           (validate-not-present field :field/privacy))
@@ -374,6 +384,33 @@
                                                                 :fi :t.form.validation/required}}}}}}
                    empty-label
                    nil-label))))))
+
+    (testing "table"
+      (let [form (assoc form :form/fields
+                        [{:field/type :table
+                          :field/title {:en "en" :fi "fi"}
+                          :field/columns [{:key "col1"
+                                           :label {:en "en" :fi "fi"}}
+                                          {:key "col2"
+                                           :label {:en "en" :fi "fi"}}]
+                          :field/optional false}])]
+        (testing "valid form"
+          (is (empty? (validate-form-template form languages))))
+
+        (testing "missing title localization"
+          (is (= {:form/fields {0 {:field/title {:en :t.form.validation/required}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] nil) languages))))
+
+        (testing "missing column localization"
+          (is (= {:form/fields {0 {:field/columns {0 {:label {:en :t.form.validation/required}}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :label :en] "") languages)
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :label :en] nil) languages))))
+
+        (testing "missing column key"
+          (is (= {:form/fields {0 {:field/columns {0 {:key :t.form.validation/required}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :key] nil) languages)
+                 (validate-form-template (update-in form [:form/fields 0 :field/columns 0] dissoc :key) languages))))))
 
     (testing "visible"
       (let [form (assoc form :form/fields

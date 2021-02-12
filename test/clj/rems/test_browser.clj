@@ -271,8 +271,12 @@
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
             attachment-field (get-in application [:application/forms 0 :form/fields 7])
             attachment-field-id (str "form-" form-id "-field-" (:field/id attachment-field))
-            attachment-field-upload-selector (keyword (str "upload-" attachment-field-id "-input"))]
-        (is (= "attachment" (:field/type attachment-field))) ;; sanity check
+            attachment-field-upload-selector (keyword (str "upload-" attachment-field-id "-input"))
+            table-field (get-in application [:application/forms 0 :form/fields 11])
+            table-field-id (str "form-" form-id "-field-" (:field/id table-field))]
+        ;; sanity checks:
+        (is (= "attachment" (:field/type attachment-field)))
+        (is (= "table" (:field/type table-field)))
 
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
@@ -299,6 +303,16 @@
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
         (btu/check-box "Option3")
+        ;; fill in two rows for the table
+        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
+        (btu/wait-visible (keyword (str table-field-id "-row0-col1")))
+        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
+        (btu/wait-visible (keyword (str table-field-id "-row1-col1")))
+        (btu/fill-human (keyword (str table-field-id "-row0-col1")) "a")
+        (btu/fill-human (keyword (str table-field-id "-row0-col2")) "b")
+        (btu/fill-human (keyword (str table-field-id "-row1-col1")) "c")
+        (btu/fill-human (keyword (str table-field-id "-row1-col2")) "d")
+
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
 
@@ -312,6 +326,12 @@
 
         (testing "check a field answer"
           (is (= "Test name" (btu/get-element-text description-field-selector))))
+
+        (testing "check that table field values are visible"
+          (is (= "a" (btu/value-of (keyword (str table-field-id "-row0-col1")))))
+          (is (= "b" (btu/value-of (keyword (str table-field-id "-row0-col2")))))
+          (is (= "c" (btu/value-of (keyword (str table-field-id "-row1-col1")))))
+          (is (= "d" (btu/value-of (keyword (str table-field-id "-row1-col2"))))))
 
         (testing "fetch application from API"
           (let [application (get-application-from-api (btu/context-get :application-id))]
@@ -352,6 +372,8 @@
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
+                      ["table" [[{:column "col1", :value "a"} {:column "col2", :value "b"}]
+                                [{:column "col1", :value "c"} {:column "col2", :value "d"}]]]
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]]

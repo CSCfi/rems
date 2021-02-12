@@ -86,7 +86,7 @@
          :event/type (s/enum :application.event/draft-saved)
          :application/field-values [{:form FormId
                                      :field FieldId
-                                     :value s/Str}]))
+                                     :value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])}]))
 (s/defschema ExternalIdAssignedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/external-id-assigned)

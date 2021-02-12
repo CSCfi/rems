@@ -712,6 +712,14 @@
                                                                           :sv "fri"}
                                                             :field/type :text
                                                             :field/optional true}
+                                                           {:field/id "table"
+                                                            :field/type :table
+                                                            :field/title {:en "table" :fi "table" :sv "table"}
+                                                            :field/optional true
+                                                            :field/columns [{:key "col1"
+                                                                             :label {:en "col1" :fi "col1" :sv "col1"}}
+                                                                            {:key "col2"
+                                                                             :label {:en "col2" :fi "col2" :sv "col2"}}]}
                                                            {:field/id "optionlist"
                                                             :field/title {:en "Option list."
                                                                           :fi "Valintalista."
@@ -758,7 +766,47 @@
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
-
+    (testing "can't set value of text field to JSON"
+      (is (= {:success false
+              :errors [{:form-id form-id :field-id "req1" :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "req1" :value [[{:column "foo" :value "bar"}]]}]}))))
+    (testing "can set value of table field to JSON"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "table"
+                                                    :value [[{:column "col1" :value "1"}
+                                                             {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "foo"}
+                                                             {:column "col2" :value "bar"}]]}]})))
+      (is (= [[{:column "col1" :value "1"}
+               {:column "col2" :value "2"}]
+              [{:column "col1" :value "foo"}
+               {:column "col2" :value "bar"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 1 :form/fields 2 :field/value]))))
+    (testing "column name validation for table fields"
+      (is (= {:success false
+              :errors [{:type "t.form.validation/invalid-value",
+                        :form-id form-id2,
+                        :field-id "table"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "table"
+                                                    :value [[{:column "col1" :value "1"}
+                                                             {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "foo"}
+                                                             {:column "colx" :value "bar"}]]}]}))))
     (testing "save-draft fails with non-existing value of option list"
       (is (= {:success false
               :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
@@ -784,6 +832,104 @@
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
+
+(deftest test-table
+  ;; Adding the table field required changes to many API schemas since
+  ;; the table values aren't just plain strings (like the values for
+  ;; other fields). This test is mostly here to verify table values
+  ;; work everywhere in the API.
+  ;;
+  ;; Table validations are mostly tested in test-application-validation
+  (let [form-id (test-helpers/create-form!
+                 {:form/fields [{:field/id "opt"
+                                 :field/type :table
+                                 :field/title {:en "table" :fi "table" :sv "table"}
+                                 :field/optional true
+                                 :field/columns [{:key "col1"
+                                                  :label {:en "col1" :fi "col1" :sv "col1"}}
+                                                 {:key "col2"
+                                                  :label {:en "col2" :fi "col2" :sv "col2"}}]}
+                                {:field/id "req"
+                                 :field/type :table
+                                 :field/title {:en "required table" :fi "table" :sv "table"}
+                                 :field/optional false
+                                 :field/columns [{:key "foo"
+                                                  :label {:en "foo" :fi "foo" :sv "foo"}}
+                                                 {:key "bar"
+                                                  :label {:en "bar" :fi "bar" :sv "bar"}}
+                                                 {:key "xyz"
+                                                  :label {:en "xyz" :fi "xyz" :sv "xyz"}}]}]})
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
+        user-id "alice"
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
+                                                  :actor user-id})]
+    (testing "save a draft"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt"
+                                                    :value [[{:column "col1" :value "1"} {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "1"} {:column "col2" :value "2"}]]}
+                                                   {:form form-id :field "req" :value []}]})))
+      (is (= [{:field/id "opt"
+               :field/type "table"
+               :field/title {:en "table" :fi "table" :sv "table"}
+               :field/optional true
+               :field/visible true
+               :field/private false
+               :field/columns [{:key "col1"
+                                :label {:en "col1" :fi "col1" :sv "col1"}}
+                               {:key "col2"
+                                :label {:en "col2" :fi "col2" :sv "col2"}}]
+               :field/value [[{:column "col1" :value "1"} {:column "col2" :value "2"}]
+                             [{:column "col1" :value "1"} {:column "col2" :value "2"}]]}
+              {:field/id "req"
+               :field/type "table"
+               :field/title {:en "required table" :fi "table" :sv "table"}
+               :field/optional false
+               :field/visible true
+               :field/private false
+               :field/columns [{:key "foo"
+                                :label {:en "foo" :fi "foo" :sv "foo"}}
+                               {:key "bar"
+                                :label {:en "bar" :fi "bar" :sv "bar"}}
+                               {:key "xyz"
+                                :label {:en "xyz" :fi "xyz" :sv "xyz"}}]
+               :field/value []}]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields]))))
+    (testing "can't submit no rows in required table"
+      (is (= {:success false
+              :errors [{:type "t.form.validation/required" :form-id form-id :field-id "req"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+    (testing "save a new draft"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt"
+                                                    :value [[{:column "col1" :value "1"} {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value ""} {:column "col2" :value "2"}]]}
+                                                   {:form form-id :field "req"
+                                                    :value [[{:column "foo" :value "f"} {:column "bar" :value ""} {:column "xyz" :value "x"}]]}]}))))
+    (testing "can submit, even with empty column values"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id})))
+      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields 1 :field/value]))))
+    (testing "can return"
+      (is (= {:success true}
+             (send-command "developer" {:type :application.command/return
+                                        :application-id app-id})))
+      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields 1 :field/value])))
+      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+             (get-in (get-application-for-user app-id user-id)
+                     [:application/forms 0 :form/fields 1 :field/previous-value]))))))
+
 
 (deftest test-decider-workflow
   (let [applicant "alice"

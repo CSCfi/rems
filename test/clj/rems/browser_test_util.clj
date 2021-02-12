@@ -368,7 +368,7 @@
 (defn wait-for-downloads [string-or-regex]
   (wait-predicate #(seq (downloaded-files string-or-regex))))
 
-(defn- value-of-el
+(defn value-of-el
   "Return the \"value\" an element `el`.
 
   Value is the first of
@@ -398,6 +398,11 @@
 
        (remove nil?) ; we want false but not nil
        first))
+
+(defn value-of
+  "Like value-of-el, but with a selector"
+  [selector]
+  (value-of-el (query selector)))
 
 (defn first-value-of-el
   "Return the first non-nil value of `el`.
