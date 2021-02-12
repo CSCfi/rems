@@ -12,7 +12,7 @@ Changes since v2.16
 - A new form field type "table" is now available. A table has a predefined set of columns, and applicants can fill in as many rows as they wish. **You can not roll back to an earlier release once your database contains applications with filled-in table fields. You will need to fix the database manually.** (#2551)
 
 ### Changes
-- Form titles are now deprecated. Prefer the new `internal-name` or name and `external-title` or title fields instead. The external title is shown to applicants in the heading of the form and internal name used throughout the administration. The API supports the old style for now. (#2066)
+- Forms now have both an internal name as well as a localized title instead of the non-localized title. The old style form titles are now deprecated in the API and a migration copies the title to the internal name. Prefer the new `internal-name` or `external-title` fields instead. The external title is shown to applicants in the application and internal name used throughout the administration. The API supports the old style for now. (#2066)
 
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)
