@@ -321,7 +321,7 @@
 
     (testing "missing internal-name"
       (is (= :t.form.validation/required
-             (:form/internal-name (validate-form-template (dissoc form :form/internal-name ) languages))
+             (:form/internal-name (validate-form-template (dissoc form :form/internal-name) languages))
              (:form/internal-name (validate-form-template (assoc-in form [:form/internal-name] "") languages)))))
 
     (testing "missing external-title"
