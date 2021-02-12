@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+            [rems.api.schema :as schema]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.command :as command]
             [rems.api.services.licenses :as licenses]
@@ -35,35 +35,35 @@
   {:catalogue-item-ids [s/Int]})
 
 (s/defschema CreateApplicationResponse
-  (assoc SuccessResponse
+  (assoc schema/SuccessResponse
          (s/optional-key :application-id) s/Int))
 
 (s/defschema Applicant
-  UserWithAttributes)
+  schema/UserWithAttributes)
 
 (s/defschema Reviewer
-  UserWithAttributes)
+  schema/UserWithAttributes)
 
 (s/defschema Reviewers
   [Reviewer])
 
 (s/defschema Decider
-  UserWithAttributes)
+  schema/UserWithAttributes)
 
 (s/defschema Deciders
   [Decider])
 
 (s/defschema AcceptInvitationResult
-  (assoc SuccessResponse
+  (assoc schema/SuccessResponse
          (s/optional-key :application-id) s/Int
          (s/optional-key :errors) [s/Any]))
 
 (s/defschema SaveAttachmentResponse
-  (assoc SuccessResponse
+  (assoc schema/SuccessResponse
          (s/optional-key :id) s/Int))
 
 (s/defschema CopyAsNewResponse
-  (assoc SuccessResponse
+  (assoc schema/SuccessResponse
          (s/optional-key :application-id) s/Int))
 
 ;; Api implementation
@@ -102,7 +102,7 @@
        :summary ~(str "Submit a `" (name command) "` command for an application. " additional-doc)
        :roles #{:logged-in}
        :body [request# ~schema]
-       :return SuccessResponse
+       :return schema/SuccessResponse
        (ok (api-command ~command request#)))))
 
 (defn accept-invitation [invitation-token]
@@ -120,7 +120,7 @@
     (GET "/" []
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
-      :return [ApplicationOverview]
+      :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-my-applications (getx-user-id))
                (filter-with-search query))))))
@@ -132,7 +132,7 @@
     (GET "/" []
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
-      :return [ApplicationOverview]
+      :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-all-applications (getx-user-id))
                (filter-with-search query))))
@@ -140,7 +140,7 @@
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
       :roles #{:logged-in}
-      :return [ApplicationOverview]
+      :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-todos (getx-user-id))
                (filter-with-search query))))
@@ -148,7 +148,7 @@
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
-      :return [ApplicationOverview]
+      :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-handled-todos (getx-user-id))
                (filter-with-search query))))
@@ -254,7 +254,7 @@
       :summary "Get application by `application-id`. Application is customized for the requesting user (e.g. event visibility, permissions, etc)."
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
-      :responses {200 {:schema Application}
+      :responses {200 {:schema schema/Application}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (ok app)
@@ -264,7 +264,7 @@
       :summary "Get application by `application-id`. Unlike the /api/applications/:application-id endpoint, the data here isn't customized for the requesting user (see schema for details). Suitable for integrations and exporting applications."
       :roles #{:reporter :owner}
       :path-params [application-id :- (describe s/Int "application id")]
-      :responses {200 {:schema ApplicationRaw}
+      :responses {200 {:schema schema/ApplicationRaw}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application application-id)]
         (ok app)

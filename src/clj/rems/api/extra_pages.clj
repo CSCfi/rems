@@ -1,7 +1,6 @@
 (ns rems.api.extra-pages
   (:require [clojure.java.io :as io]
             [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
             [rems.config :refer [env]]
             [rems.common.util :refer [index-by]]
