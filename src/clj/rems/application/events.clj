@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
-            [rems.schema-base :refer [FieldId FieldValue FormId UserId]]
+            [rems.schema-base :refer [FieldId FieldValue FormId User UserId]]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
 
@@ -98,7 +98,7 @@
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/member-added)
-         :application/member {:userid UserId}))
+         :application/member User))
 (s/defschema MemberInvitedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/member-invited)
@@ -112,7 +112,7 @@
 (s/defschema MemberRemovedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-removed)
-         :application/member {:userid UserId}))
+         :application/member User))
 (s/defschema MemberUninvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-uninvited)

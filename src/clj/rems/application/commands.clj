@@ -7,7 +7,7 @@
             [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
-            [rems.schema-base :refer [FieldId FieldValue FormId UserId]]
+            [rems.schema-base :refer [FieldId FieldValue FormId User UserId]]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
@@ -43,7 +43,7 @@
          :licenses [s/Int]))
 (s/defschema AddMemberCommand
   (assoc CommandBase
-         :member {:userid UserId}))
+         :member User))
 (s/defschema ApproveCommand
   (assoc CommandWithComment
          (s/optional-key :entitlement-end) DateTime))
@@ -81,7 +81,7 @@
          :public s/Bool))
 (s/defschema RemoveMemberCommand
   (assoc CommandWithComment
-         :member {:userid UserId}))
+         :member User))
 (s/defschema RequestReviewCommand
   (assoc CommandWithComment
          :reviewers [UserId]))

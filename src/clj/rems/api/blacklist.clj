@@ -16,7 +16,7 @@
 
 (s/defschema BlacklistCommand
   {:blacklist/resource {:resource/ext-id s/Str}
-   :blacklist/user {:userid schema-base/UserId}
+   :blacklist/user schema-base/User
    :comment s/Str})
 
 (s/defschema BlacklistEntryWithDetails
