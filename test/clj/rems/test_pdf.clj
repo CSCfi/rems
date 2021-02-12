@@ -148,15 +148,15 @@
                   [:paragraph "attachment.pdf, picture.png"]]
                  [[:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
                   [:paragraph "First option"]]
-                [[:paragraph pdf/field-style "Table"]
-                 [:paragraph
-                  [:table {:header ["First" "Second"]}
-                   ["pdf test" "pdf test"]
-                   ["pdf test" "pdf test"]]]]
                  [[:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
                   [:paragraph "pdf test"]]
                  [[:paragraph pdf/field-style "Multi-select list"]
                   [:paragraph "First option"]]
+                 [[:paragraph pdf/field-style "Table"]
+                  [:paragraph
+                   [:table {:header ["First" "Second"]}
+                    ["pdf test" "pdf test"]
+                    ["pdf test" "pdf test"]]]]
                  [[:paragraph pdf/label-field-style "The following field types can have a max length."]
                   [:paragraph ""]]
                  [[:paragraph pdf/field-style "Text field with max length"]
