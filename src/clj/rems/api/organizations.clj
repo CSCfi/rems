@@ -1,18 +1,18 @@
 (ns rems.api.organizations
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [OrganizationArchivedCommand OrganizationEnabledCommand OrganizationFull SuccessResponse UserWithAttributes]]
+            [rems.api.schema :as schema]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.api.services.organizations :as organizations]
-            [rems.schema-base :refer [User]]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
 (s/defschema CreateOrganizationCommand
-  (-> OrganizationFull
+  (-> schema/OrganizationFull
       (dissoc :organization/modifier
               :organization/last-modifier)
-      (assoc (s/optional-key :organization/owners) [User])))
+      (assoc (s/optional-key :organization/owners) [schema-base/User])))
 
 (s/defschema CreateOrganizationResponse
   {:success s/Bool
@@ -27,7 +27,7 @@
    (s/optional-key :errors) [s/Any]})
 
 ;; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(s/defschema AvailableOwner UserWithAttributes)
+(s/defschema AvailableOwner schema/UserWithAttributes)
 (s/defschema AvailableOwners [AvailableOwner])
 
 (def organizations-api
@@ -40,7 +40,7 @@
       :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}
                      {disabled :- (describe s/Bool "whether to include disabled organizations") false}
                      {archived :- (describe s/Bool "whether to include archived organizations") false}]
-      :return [OrganizationFull]
+      :return [schema/OrganizationFull]
       (ok (organizations/get-organizations (merge {:userid (getx-user-id)
                                                    :owner owner}
                                                   (when-not disabled {:enabled true})
@@ -64,15 +64,15 @@
     (PUT "/archived" []
       :summary "Archive or unarchive the organization"
       :roles #{:owner}
-      :body [command OrganizationArchivedCommand]
-      :return SuccessResponse
+      :body [command schema/OrganizationArchivedCommand]
+      :return schema/SuccessResponse
       (ok (organizations/set-organization-archived! (getx-user-id) command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable the organization"
       :roles #{:owner}
-      :body [command OrganizationEnabledCommand]
-      :return SuccessResponse
+      :body [command schema/OrganizationEnabledCommand]
+      :return schema/SuccessResponse
       (ok (organizations/set-organization-enabled! (getx-user-id) command)))
 
     (GET "/available-owners" []
@@ -85,7 +85,7 @@
       :summary "Get an organization. Returns more information for owners and handlers."
       :roles #{:logged-in}
       :path-params [organization-id :- (describe s/Str "organization id")]
-      :return OrganizationFull
+      :return schema/OrganizationFull
       (if-let [org (organizations/get-organization (getx-user-id) {:organization/id organization-id})]
         (ok org)
         (not-found-json-response)))))

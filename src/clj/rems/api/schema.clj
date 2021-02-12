@@ -1,7 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
   (:require [rems.application.commands :as commands]
-            [rems.schema-base :refer [EventBase FieldId FieldValue FormId UserId]]
+            [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -26,7 +26,7 @@
 (s/defschema OrganizationId {:organization/id s/Str})
 
 (s/defschema UserWithAttributes
-  {:userid UserId
+  {:userid schema-base/UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
    (s/optional-key :organizations) [OrganizationId]
@@ -63,7 +63,7 @@
   {:id s/Int
    :wfid s/Int
    (s/optional-key :workflow-name) s/Str
-   :formid FormId
+   :formid schema-base/FormId
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
@@ -92,7 +92,7 @@
 (s/defschema ResourceLicense License)
 
 (s/defschema Event
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/actor-attributes UserWithAttributes
          s/Keyword s/Any))
 
@@ -159,8 +159,8 @@
 (s/defschema Workflow
   {:id s/Int
    :organization OrganizationOverview
-   :owneruserid UserId
-   :modifieruserid UserId
+   :owneruserid schema-base/UserId
+   :modifieruserid schema-base/UserId
    :title s/Str
    :workflow s/Any
    :licenses [License]
@@ -171,7 +171,7 @@
 
 ;;; template for a form field, before answering
 (s/defschema FieldTemplate
-  {:field/id FieldId
+  {:field/id schema-base/FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta :table)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
@@ -186,7 +186,7 @@
                                     {:description "Public by default"})
    (s/optional-key :field/visibility) (rjs/field
                                        {:visibility/type (s/enum :always :only-if)
-                                        (s/optional-key :visibility/field) {:field/id FieldId}
+                                        (s/optional-key :visibility/field) {:field/id schema-base/FieldId}
                                         (s/optional-key :visibility/values) [s/Str]}
                                        {:description "Always visible by default"})
    (s/optional-key :field/info-text) LocalizedString})
@@ -194,14 +194,14 @@
 (s/defschema NewFieldTemplate
   (-> FieldTemplate
       (dissoc :field/id)
-      (assoc (s/optional-key :field/id) FieldId)))
+      (assoc (s/optional-key :field/id) schema-base/FieldId)))
 
 (s/defschema Field
   (assoc FieldTemplate
-         :field/value FieldValue
+         :field/value schema-base/FieldValue
          :field/visible s/Bool
          :field/private s/Bool
-         (s/optional-key :field/previous-value) FieldValue))
+         (s/optional-key :field/previous-value) schema-base/FieldValue))
 
 (s/defschema FormTemplate
   {:form/id s/Int
@@ -276,7 +276,7 @@
                                             {:description "Which members of this application are blacklisted for which resources"})
    :application/resources [V2Resource]
    :application/licenses [V2License]
-   :application/accepted-licenses (s/maybe {UserId #{s/Int}})
+   :application/accepted-licenses (s/maybe {schema-base/UserId #{s/Int}})
    :application/events [Event]
    :application/description s/Str
    :application/forms [Form]

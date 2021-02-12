@@ -1,6 +1,6 @@
 (ns rems.db.organizations
   (:require [medley.core :refer [update-existing]]
-            [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
+            [rems.api.schema :as schema]
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.db.users :as users]
@@ -21,10 +21,10 @@
                                                               (dissoc :organization/id)))})))
 
 (def ^:private coerce-organization-overview
-  (coerce/coercer! OrganizationOverview json/coercion-matcher))
+  (coerce/coercer! schema/OrganizationOverview json/coercion-matcher))
 
 (def ^:private coerce-organization-full
-  (coerce/coercer! OrganizationFull json/coercion-matcher))
+  (coerce/coercer! schema/OrganizationFull json/coercion-matcher))
 
 (defn- parse-organization [raw]
   (merge

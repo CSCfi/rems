@@ -1,9 +1,9 @@
 (ns rems.db.blacklist
-  (:require [rems.schema-base :refer [UserId]]
-            [rems.db.core :as db]
+  (:require [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.db.users :as users]
             [rems.json :as json]
+            [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [schema.utils])
@@ -15,8 +15,8 @@
   {(s/optional-key :event/id) s/Int
    :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
    :event/time DateTime
-   :event/actor UserId
-   :userid UserId
+   :event/actor schema-base/UserId
+   :userid schema-base/UserId
    :resource/ext-id ResourceId
    :event/comment (s/maybe s/Str)})
 

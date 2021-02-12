@@ -1,10 +1,10 @@
 (ns rems.api.users
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [OrganizationId SuccessResponse UserWithAttributes]]
+            [rems.api.schema :as schema]
             [rems.api.util] ; required for route :roles
             [rems.db.users :as users]
             [rems.middleware :as middleware]
-            [rems.schema-base :refer [UserId]]
+            [rems.schema-base :as schema-base]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -12,10 +12,10 @@
   ;; we can't use UserWithAttributes here since UserWithAttributes
   ;; contains :notification-email which isn't part of user
   ;; attributes (but instead comes from user settings)
-  {:userid UserId
+  {:userid schema-base/UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organizations) [OrganizationId]
+   (s/optional-key :organizations) [schema/OrganizationId]
    s/Keyword s/Any})
 
 (def users-api
@@ -26,12 +26,12 @@
       :summary "Create or update user"
       :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
-      :return SuccessResponse
+      :return schema/SuccessResponse
       (users/add-user! command)
       (ok {:success true}))
 
     (GET "/active" []
       :summary "List active users"
       :roles #{:owner}
-      :return [UserWithAttributes]
+      :return [schema/UserWithAttributes]
       (ok (middleware/get-active-users)))))

@@ -7,7 +7,7 @@
             [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
-            [rems.schema-base :refer [FieldId FieldValue FormId User UserId]]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
@@ -18,7 +18,7 @@
 
 (s/defschema CommandInternal
   {:type s/Keyword
-   :actor UserId
+   :actor schema-base/UserId
    :time DateTime})
 
 (s/defschema CommandBase
@@ -43,7 +43,7 @@
          :licenses [s/Int]))
 (s/defschema AddMemberCommand
   (assoc CommandBase
-         :member User))
+         :member schema-base/User))
 (s/defschema ApproveCommand
   (assoc CommandWithComment
          (s/optional-key :entitlement-end) DateTime))
@@ -81,13 +81,13 @@
          :public s/Bool))
 (s/defschema RemoveMemberCommand
   (assoc CommandWithComment
-         :member User))
+         :member schema-base/User))
 (s/defschema RequestReviewCommand
   (assoc CommandWithComment
-         :reviewers [UserId]))
+         :reviewers [schema-base/UserId]))
 (s/defschema RequestDecisionCommand
   (assoc CommandWithComment
-         :deciders [UserId]))
+         :deciders [schema-base/UserId]))
 (s/defschema ReturnCommand
   CommandWithComment)
 (s/defschema ReviewCommand
@@ -96,9 +96,9 @@
   CommandWithComment)
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         :field-values [{:form FormId
-                         :field FieldId
-                         :value FieldValue}]))
+         :field-values [{:form schema-base/FormId
+                         :field schema-base/FieldId
+                         :value schema-base/FieldValue}]))
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand

@@ -1,6 +1,6 @@
 (ns rems.api.user-settings
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+            [rems.api.schema :as schema]
             [rems.db.user-settings :as user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]))
@@ -18,5 +18,5 @@
       :summary "Update user settings"
       :roles #{:logged-in}
       :body [settings user-settings/PartialUserSettings]
-      :return SuccessResponse
+      :return schema/SuccessResponse
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))))
