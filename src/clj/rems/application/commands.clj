@@ -7,6 +7,7 @@
             [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
@@ -15,14 +16,9 @@
 
 ;;; Schemas
 
-;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
-(def UserId s/Str)
-(def FormId s/Int)
-(def FieldId s/Str)
-
 (s/defschema CommandInternal
   {:type s/Keyword
-   :actor UserId
+   :actor schema-base/UserId
    :time DateTime})
 
 (s/defschema CommandBase
@@ -47,7 +43,7 @@
          :licenses [s/Int]))
 (s/defschema AddMemberCommand
   (assoc CommandBase
-         :member {:userid UserId}))
+         :member schema-base/User))
 (s/defschema ApproveCommand
   (assoc CommandWithComment
          (s/optional-key :entitlement-end) DateTime))
@@ -85,13 +81,13 @@
          :public s/Bool))
 (s/defschema RemoveMemberCommand
   (assoc CommandWithComment
-         :member {:userid UserId}))
+         :member schema-base/User))
 (s/defschema RequestReviewCommand
   (assoc CommandWithComment
-         :reviewers [UserId]))
+         :reviewers [schema-base/UserId]))
 (s/defschema RequestDecisionCommand
   (assoc CommandWithComment
-         :deciders [UserId]))
+         :deciders [schema-base/UserId]))
 (s/defschema ReturnCommand
   CommandWithComment)
 (s/defschema ReviewCommand
@@ -100,9 +96,9 @@
   CommandWithComment)
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         :field-values [{:form FormId
-                         :field FieldId
-                         :value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])}]))
+         :field-values [{:form schema-base/FormId
+                         :field schema-base/FieldId
+                         :value schema-base/FieldValue}]))
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand

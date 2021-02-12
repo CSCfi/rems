@@ -1,6 +1,6 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+            [rems.api.schema :as schema]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
@@ -18,7 +18,7 @@
    (s/optional-key :attachment-id) (rjs/describe (s/maybe s/Int) "For licenses of type attachment")})
 
 (s/defschema LicenseLocalizations
-  (rjs/field {Language LicenseLocalization}
+  (rjs/field {schema/Language LicenseLocalization}
              {:description "Licence localizations keyed by language"
               :example {:en {:title "English title"
                              :textcontent "English content"}
@@ -27,7 +27,7 @@
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
-   :organization OrganizationId
+   :organization schema/OrganizationId
    :localizations LicenseLocalizations})
 
 (s/defschema AttachmentMetadata
@@ -47,7 +47,7 @@
       :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]
-      :return Licenses
+      :return schema/Licenses
       (ok (licenses/get-all-licenses (merge (when-not disabled {:enabled true})
                                             (when-not archived {:archived false})))))
 
@@ -55,7 +55,7 @@
       :summary "Get license"
       :roles +admin-read-roles+
       :path-params [license-id :- (describe s/Int "license id")]
-      :return License
+      :return schema/License
       (if-let [license (licenses/get-license license-id)]
         (ok license)
         (not-found-json-response)))
@@ -70,15 +70,15 @@
     (PUT "/archived" []
       :summary "Archive or unarchive license"
       :roles +admin-write-roles+
-      :body [command ArchivedCommand]
-      :return SuccessResponse
+      :body [command schema/ArchivedCommand]
+      :return schema/SuccessResponse
       (ok (licenses/set-license-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable license"
       :roles +admin-write-roles+
-      :body [command EnabledCommand]
-      :return SuccessResponse
+      :body [command schema/EnabledCommand]
+      :return schema/SuccessResponse
       (ok (licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" []
@@ -93,7 +93,7 @@
       :summary "Remove an attachment that could have been used in a license."
       :roles +admin-write-roles+
       :query-params [attachment-id :- (describe s/Int "attachment id")]
-      :return SuccessResponse
+      :return schema/SuccessResponse
       (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
 
     (GET "/attachments/:attachment-id" []
