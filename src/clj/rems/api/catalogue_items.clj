@@ -6,6 +6,7 @@
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
             [rems.db.core :as db]
+            [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -19,7 +20,7 @@
    (s/optional-key :infourl) (s/maybe s/Str)})
 
 (s/defschema WriteCatalogueItemLocalizations
-  (rjs/field {schema/Language CatalogueItemLocalization}
+  (rjs/field {schema-base/Language CatalogueItemLocalization}
              {:description "Localizations keyed by language"
               :example {:fi {:title "Title in Finnish"
                              :infourl "http://example.fi"}
@@ -32,14 +33,14 @@
   {:form s/Int
    :resid s/Int
    :wfid s/Int
-   :organization schema/OrganizationId
+   :organization schema-base/OrganizationId
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
-   (s/optional-key :organization) schema/OrganizationId
+   (s/optional-key :organization) schema-base/OrganizationId
    :localizations WriteCatalogueItemLocalizations})
 
 (s/defschema CreateCatalogueItemResponse

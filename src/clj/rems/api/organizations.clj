@@ -9,7 +9,7 @@
             [schema.core :as s]))
 
 (s/defschema CreateOrganizationCommand
-  (-> schema/OrganizationFull
+  (-> schema-base/OrganizationFull
       (dissoc :organization/modifier
               :organization/last-modifier)
       (assoc (s/optional-key :organization/owners) [schema-base/User])))
@@ -27,7 +27,7 @@
    (s/optional-key :errors) [s/Any]})
 
 ;; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(s/defschema AvailableOwner schema/UserWithAttributes)
+(s/defschema AvailableOwner schema-base/UserWithAttributes)
 (s/defschema AvailableOwners [AvailableOwner])
 
 (def organizations-api
@@ -40,7 +40,7 @@
       :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}
                      {disabled :- (describe s/Bool "whether to include disabled organizations") false}
                      {archived :- (describe s/Bool "whether to include archived organizations") false}]
-      :return [schema/OrganizationFull]
+      :return [schema-base/OrganizationFull]
       (ok (organizations/get-organizations (merge {:userid (getx-user-id)
                                                    :owner owner}
                                                   (when-not disabled {:enabled true})
@@ -85,7 +85,7 @@
       :summary "Get an organization. Returns more information for owners and handlers."
       :roles #{:logged-in}
       :path-params [organization-id :- (describe s/Str "organization id")]
-      :return schema/OrganizationFull
+      :return schema-base/OrganizationFull
       (if-let [org (organizations/get-organization (getx-user-id) {:organization/id organization-id})]
         (ok org)
         (not-found-json-response)))))

@@ -12,6 +12,7 @@
   {:language (:default-language env)
    :notification-email nil})
 
+;; TODO should this be in schema-base?
 (s/defschema UserSettings
   {:language s/Keyword
    :notification-email (s/maybe s/Str)})
