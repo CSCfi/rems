@@ -270,6 +270,12 @@
              (build-request (assoc-in form [:form/fields 0 :field/info-text] {:en "" :fi ""})
                             languages))))
 
+    (testing "with missing title"
+      (is (= {:form/external-title {:en "en external title" :fi ""}}
+             (select-keys (build-request (assoc-in form [:form/external-title :fi] "") languages) [:form/external-title])))
+      (is (= {:form/external-title {:en "en external title" :fi nil}}
+             (select-keys (build-request (assoc-in form [:form/external-title :fi] nil) languages) [:form/external-title]))))
+
     (testing "trim strings"
       (is (= {:organization {:organization/id "abc"}
               :form/internal-name "the name"
