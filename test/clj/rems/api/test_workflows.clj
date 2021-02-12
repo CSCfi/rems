@@ -64,7 +64,10 @@
                                                       +test-api-key+ user-id)))))
 
         (testing "create default workflow with form"
-          (let [form-id (test-helpers/create-form! {:form/title "workflow form"
+          (let [form-id (test-helpers/create-form! {:form/internal-name "workflow form"
+                                                    :form/external-title {:en "Workflow Form EN"
+                                                                          :fi "Workflow Form FI"
+                                                                          :sv "Workflow Form SV"}
                                                     :form/fields [{:field/type :text
                                                                    :field/title {:fi "fi" :sv "sv" :en "en"}
                                                                    :field/optional true}]})
@@ -72,7 +75,11 @@
                 id (:id body)]
             (is (number? id))
             (testing "and fetch"
-              (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id :form/title "workflow form"}])
+              (is (= (assoc-in expected [:workflow :forms] [{:form/id form-id
+                                                             :form/internal-name "workflow form"
+                                                             :form/external-title {:en "Workflow Form EN"
+                                                                                   :fi "Workflow Form FI"
+                                                                                   :sv "Workflow Form SV"}}])
                      (fetch +test-api-key+ user-id id))))))
 
         (testing "create default workflow with invalid form"

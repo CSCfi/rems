@@ -19,7 +19,9 @@
 (def ^:private get-form-template
   {40 {:form/id 40
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organisation"} :organization/short-name {:fi "ORG" :en "ORG"}}
-       :form/title "form title"
+       :form/internal-name "form name"
+       :form/external-title {:en "en form title"
+                             :fi "fi form title"}
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
@@ -44,7 +46,9 @@
        :archived false}
    41 {:form/id 41
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
-       :form/title "form title 2"
+       :form/internal-name "form name 2"
+       :form/external-title {:en "en form title 2"
+                             :fi "fi form title 2"}
        :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
@@ -1228,7 +1232,10 @@
           :application/role-permissions nil
           :application/description "foo"
           :application/forms [{:form/id 40
-                               :form/title "form title"
+                               :form/title "form name" ; deprecated
+                               :form/internal-name "form name"
+                               :form/external-title {:en "en form title"
+                                                     :fi "fi form title"}
                                :form/fields [{:field/id "41"
                                               :field/value "foo"
                                               :field/type :description

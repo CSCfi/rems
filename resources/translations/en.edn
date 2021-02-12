@@ -96,10 +96,12 @@
                    :errors {:dependencies-archived "Archived dependencies:"
                             :in-use-by "It is in use by:"}
                    :export-applications "Export applications"
+                   :external-title "Title"
                    :form "Form"
                    :forms "Forms"
                    :has-errors "Errors"
                    :id "Id"
+                   :internal-name "Name"
                    :last-modified "Last modified"
                    :license "License"
                    ;; %1 - license name
@@ -258,6 +260,7 @@
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"
+                :collapse-aria-label "Info about "
                 ;; %1 - column number
                 :column-n "Column %1"
                 :column-key "ID code"
@@ -268,7 +271,6 @@
                 :field-title "Field title"
                 :field-type "Field type"
                 :info-text "Field description (optional)"
-                :collapse-aria-label "Info about "
                 :maxlength "Maximum length in characters (optional)"
                 :option-key "ID code"
                 :option-label "Label"
@@ -278,7 +280,6 @@
                 :placeholder "Placeholder text (optional)"
                 :privacy {:private "Private"
                           :public "Public"}
-                :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Application title"

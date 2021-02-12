@@ -15,9 +15,19 @@
                                   +test-api-key+ "owner"))
         resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization {:organization/id "organization2"} :licenses [license-id]}
                                    +test-api-key+ "owner"))
-        form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"} :form/title "form update test" :form/fields []}
+        form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"}
+                                                          :form/internal-name "form update test"
+                                                          :form/external-title {:en "en form update test"
+                                                                                :fi "fi form update test"
+                                                                                :sv "sv form update test"}
+                                                          :form/fields []}
                                +test-api-key+ "owner"))
-        wf-form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"} :form/title "workflow form update test" :form/fields []}
+        wf-form-id (:id (api-call :post "/api/forms/create" {:organization {:organization/id "organization2"}
+                                                             :form/internal-name "workflow form update test"
+                                                             :form/external-title {:en "en workflow form update test"
+                                                                                   :fi "fi workflow form update test"
+                                                                                   :sv "sv workflow form update test"}
+                                                             :form/fields []}
                                   +test-api-key+ "owner"))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization {:organization/id "organization2"} :title "default workflow"
@@ -149,13 +159,21 @@
               :errors [{:type "t.administration.errors/dependencies-archived",
                         :resources [{:id resource-id, :resid "test"}]
                         :workflows [{:id workflow-id, :title "default workflow"}]
-                        :forms [{:form/id form-id, :form/title "form update test"}]}]}
+                        :forms [{:form/id form-id
+                                 :form/internal-name "form update test"
+                                 :form/external-title {:fi "fi form update test"
+                                                       :en "en form update test"
+                                                       :sv "sv form update test"}}]}]}
              (catalogue-item-archived! false))))
 
     (testing "cannot unarchive a workflow with a form that's archived"
       (is (= {:success false
               :errors [{:type "t.administration.errors/dependencies-archived"
-                        :forms [{:form/id wf-form-id :form/title "workflow form update test"}]}]}
+                        :forms [{:form/id wf-form-id
+                                 :form/internal-name "workflow form update test"
+                                 :form/external-title {:fi "fi workflow form update test"
+                                                       :en "en workflow form update test"
+                                                       :sv "sv workflow form update test"}}]}]}
              (workflow-archived! false))))
 
     (testing "can archive a license that's not in use"

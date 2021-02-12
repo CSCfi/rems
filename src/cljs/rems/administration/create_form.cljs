@@ -191,7 +191,8 @@
 
 (defn build-request [form languages]
   {:organization {:organization/id (get-in form [:organization :organization/id])}
-   :form/title (trim-when-string (:form/title form))
+   :form/internal-name (trim-when-string (:form/internal-name form))
+   :form/external-title (build-localized-string (:form/external-title form) languages)
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
 ;;;; form validation
@@ -278,9 +279,13 @@
                               :value @(rf/subscribe [::selected-organization])
                               :on-change #(rf/dispatch [::set-selected-organization %])}])
 
-(defn- form-title-field []
-  [text-field context {:keys [:form/title]
-                       :label (text :t.create-form/title)}])
+(defn- form-internal-name-field []
+  [text-field context {:keys [:form/internal-name]
+                       :label (text :t.administration/internal-name)}])
+
+(defn- form-external-title-field []
+  [localized-text-field context {:keys [:form/external-title]
+                                 :label (text :t.administration/external-title)}])
 
 (defn- form-field-title-field [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/title]
@@ -602,9 +607,13 @@
            [:li [:a {:href "#" :on-click (focus-input-field "organization")}
                  (text-format (:organization form-errors) (text :t.administration/organization))]])
 
-         (when (:form/title form-errors)
-           [:li [:a {:href "#" :on-click (focus-input-field "title")}
-                 (text-format (:form/title form-errors) (text :t.create-form/title))]])]
+         (when (:form/internal-name form-errors)
+           [:li [:a {:href "#" :on-click (focus-input-field "internal-name")}
+                 (text-format (:form/internal-name form-errors) (text :t.administration/internal-name))]])
+
+         (when (:form/external-title form-errors)
+           [:li [:a {:href "#" :on-click (focus-input-field "external-title")}
+                 (text-format (:form/external-title form-errors) (text :t.administration/external-title))]])]
 
         (for [[field-index field-errors] (into (sorted-map) (:form/fields form-errors))]
           (let [field (get-in form [:form/fields field-index])]
@@ -717,7 +726,8 @@
             :title (page-title edit-form?)
             :always [:div
                      [form-organization-field]
-                     [form-title-field]
+                     [form-internal-name-field]
+                     [form-external-title-field]
                      [form-fields (:form/fields form)]
                      [:div.col.commands
                       [cancel-button]

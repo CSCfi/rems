@@ -15,7 +15,11 @@
 
 (deftest catalogue-items-api-test
   (let [user-id "alice"
-        form-id (test-helpers/create-form! {:form/title "form name" :organization {:organization/id "organization1"}})
+        form-id (test-helpers/create-form! {:form/internal-name "form name"
+                                            :form/external-title {:en "Form Title EN"
+                                                                  :fi "Form Title FI"
+                                                                  :sv "Form Title SV"}
+                                            :organization {:organization/id "organization1"}})
         ;; can create catalogue items with mixed organizations:
         wf-id (test-helpers/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
         res-id (test-helpers/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
@@ -239,9 +243,9 @@
 
 (deftest change-form-test
   (let [resource-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})
-        old-form-id (test-helpers/create-form! {:form/title "old form"
+        old-form-id (test-helpers/create-form! {:form/internal-name "old form"
                                                 :organization {:organization/id "organization1"}})
-        new-form-id (test-helpers/create-form! {:form/title "new form"
+        new-form-id (test-helpers/create-form! {:form/internal-name "new form"
                                                 :organization {:organization/id "organization1"}})
         old-catalogue-item-id (test-helpers/create-catalogue-item!
                                {:organization {:organization/id "organization1"}
@@ -281,7 +285,7 @@
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))))
     (testing "can change to form that's in another organization"
-      (let [form-id (test-helpers/create-form! {:form/title "wrong organization"
+      (let [form-id (test-helpers/create-form! {:form/internal-name "wrong organization"
                                                 :organization {:organization/id "organization2"}})
             response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate +test-api-key+ "owner")

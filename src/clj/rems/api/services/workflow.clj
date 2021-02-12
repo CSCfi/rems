@@ -68,7 +68,7 @@
 
 ;; TODO more systematic joining for these needed. Now we just add the title for the UI
 (defn- enrich-workflow-form [item]
-  (select-keys (dependencies/enrich-dependency item) [:form/id :form/title]))
+  (select-keys (dependencies/enrich-dependency item) [:form/id :form/internal-name :form/external-title]))
 
 (defn- join-workflow-forms [workflow]
   (update-in workflow [:workflow :forms] (partial mapv enrich-workflow-form)))

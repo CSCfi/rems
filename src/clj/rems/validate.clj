@@ -28,7 +28,7 @@
     (when (and (:enabled template)
                (not (:archived template)))
       (when-let [errors (common-form/validate-form-template template (:languages env))]
-        (log/warn "Languages missing from form template" (:form/id template) (pr-str (:form/title template))
+        (log/warn "Languages missing from form template" (:form/id template) (pr-str (:form/internal-name template))
                   errors)))))
 
 (defn validate-organizations []

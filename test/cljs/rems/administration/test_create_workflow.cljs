@@ -24,7 +24,7 @@
     (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
-                :forms [{:form/id 13 :form/title "form title"}]
+                :forms [{:form/id 13 :form/internal-name "form title"}]
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization {:organization/id "abc"}
@@ -40,7 +40,7 @@
     (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/decider
-                :forms [{:form/id 13 :form/title "form title"}]
+                :forms [{:form/id 13 :form/internal-name "form title"}]
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization {:organization/id "abc"}

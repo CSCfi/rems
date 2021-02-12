@@ -804,6 +804,7 @@
       (is (some #(= (btu/context-get :resid) (get % "title"))
                 (slurp-rows :resources))))))
 
+
 (defn create-form []
   (testing "create form"
     (btu/with-postmortem
@@ -812,7 +813,10 @@
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Form name" (btu/context-get :form-name))
+      (fill-form-field "Name" (btu/context-get :form-name))
+      (fill-form-field "EN" (str (btu/context-get :form-name) " EN"))
+      (fill-form-field "FI" (str (btu/context-get :form-name) " FI"))
+      (fill-form-field "SV" (str (btu/context-get :form-name) " SV"))
       ;; TODO: create fields
       (btu/screenshot "about-to-create-form.png")
       (btu/scroll-and-click :save)
@@ -821,11 +825,14 @@
       (btu/screenshot "created-form.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title" (btu/context-get :form-name)
+              "Name" (btu/context-get :form-name)
+              "Title (EN)" (str (btu/context-get :form-name) " EN")
+              "Title (FI)" (str (btu/context-get :form-name) " FI")
+              "Title (SV)" (str (btu/context-get :form-name) " SV")
               "Active" true}
              (slurp-fields :form)))
       (go-to-admin "Forms")
-      (is (some #(= (btu/context-get :form-name) (get % "title"))
+      (is (some #(= (btu/context-get :form-name) (get % "internal-name"))
                 (slurp-rows :forms))))))
 
 (defn create-workflow []
@@ -951,7 +958,10 @@
                                                                   :handlers ["handler"]}))
     (btu/context-assoc! :resource (test-helpers/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"
                                                                   :organization {:organization/id (btu/context-get :organization-id)}}))
-    (btu/context-assoc! :form (test-helpers/create-form! {:form/title "test-edit-catalogue-item form"
+    (btu/context-assoc! :form (test-helpers/create-form! {:form/internal-name "test-edit-catalogue-item form"
+                                                          :form/external-title {:en "Test Edit Catalogue Item Form EN"
+                                                                                :fi "Test Edit Catalogue Item Form FI"
+                                                                                :sv "Test Edit Catalogue Item Form SV"}
                                                           :form/fields []
                                                           :form/organization {:organization/id (btu/context-get :organization-id)}}))
     (btu/context-assoc! :catalogue-item (test-helpers/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
@@ -1043,7 +1053,10 @@
       (btu/scroll-and-click :create-form)
       (btu/wait-visible {:tag :h1 :fn/text "Create form"})
       (select-option "Organization" "nbn")
-      (fill-form-field "Form name" "Form editor test")
+      (fill-form-field "Name" "Form editor test")
+      (fill-form-field "EN" "Form Editor Test (EN)")
+      (fill-form-field "FI" "Form Editor Test (FI)")
+      (fill-form-field "SV" "Form Editor Test (SV)")
       (btu/scroll-and-click {:class :add-form-field})
       ;; using ids to fill the fields because the label structure is complicated
       (btu/wait-visible :fields-0-title-en)
@@ -1091,7 +1104,10 @@
       (btu/wait-visible {:tag :h1 :fn/text "Form"})
       (btu/wait-page-loaded)
       (is (= {"Organization" "NBN"
-              "Title" "Form editor test"
+              "Name" "Form editor test"
+              "Title (EN)" "Form Editor Test (EN)"
+              "Title (FI)" "Form Editor Test (FI)"
+              "Title (SV)" "Form Editor Test (SV)"
               "Active" true}
              (slurp-fields :form)))
       (testing "preview"
@@ -1109,7 +1125,7 @@
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
         (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-          ;; TODO: figure out what to wait for
+        ;; TODO: figure out what to wait for
         (Thread/sleep 500)
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
@@ -1168,7 +1184,11 @@
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
         (is (= {:form/id form-id
                 :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
-                :form/title "Form editor test"
+                :form/internal-name "Form editor test"
+                :form/external-title {:en "Form Editor Test (EN)"
+                                      :fi "Form Editor Test (FI)"
+                                      :sv "Form Editor Test (SV)"}
+                :form/title "Form editor test" ; deprecated
                 :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
@@ -1313,7 +1333,10 @@
   (btu/with-postmortem
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
-      (btu/context-assoc! :form-id (test-helpers/create-form! {:form/title (btu/context-get :form-title)
+      (btu/context-assoc! :form-id (test-helpers/create-form! {:form/internal-name (btu/context-get :form-title)
+                                                               :form/external-title {:en (str (btu/context-get :form-title) " EN")
+                                                                                     :fi (str (btu/context-get :form-title) " FI")
+                                                                                     :sv (str (btu/context-get :form-title) " SV")}
                                                                :form/fields [{:field/id "desc"
                                                                               :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                               :field/optional false

@@ -1,9 +1,10 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.services.form :as form]
-            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate OrganizationId SuccessResponse]]
+            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview LocalizedString NewFieldTemplate OrganizationId SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [ring.swagger.json-schema :as rjs]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -11,11 +12,15 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:form/id :organization :form/title :form/errors :enabled :archived]))))
+     (select-keys form [:form/id :organization :form/title :form/internal-name :form/external-title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
   {:organization OrganizationId
-   :form/title s/Str
+   (s/optional-key :form/title) (rjs/field (s/maybe s/Str)
+                                           {:deprecate true
+                                            :description "DEPRECATED, use internal name and external title instead"})
+   (s/optional-key :form/internal-name) s/Str
+   (s/optional-key :form/external-title) LocalizedString
    :form/fields [NewFieldTemplate]})
 
 (s/defschema EditFormCommand

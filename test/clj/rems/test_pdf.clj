@@ -34,7 +34,10 @@
         ;; TODO attachment license
         resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"
                                                  :license-ids [lic1 lic2]})
-        form (test-helpers/create-form! {:form/title  "Form"
+        form (test-helpers/create-form! {:form/internal-name  "Form"
+                                         :form/external-title {:en "Form"
+                                                               :fi  "Lomake"
+                                                               :sv "Blankett"}
                                          :form/fields test-data/all-field-types-example})
         catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
                                                              :title {:en "Catalogue item"
@@ -125,41 +128,41 @@
               [[:heading pdf/heading-style "Terms of use"]
                [[:paragraph "Google license"]
                 [:paragraph "Text license"]]]
-              [[:heading pdf/heading-style "Application"]
-               [[[:paragraph pdf/label-field-style
-                  "This form demonstrates all possible field types. (This text itself is a label field.)"]
-                 [:paragraph ""]]
-                [[:paragraph pdf/field-style "Application title field"]
-                 [:paragraph "pdf test"]]
-                [[:paragraph pdf/field-style "Text field"]
-                 [:paragraph "pdf test"]]
-                [[:paragraph pdf/field-style "Text area"]
-                 [:paragraph "pdf test"]]
-                [[:paragraph pdf/header-field-style "Header"]
-                 [:paragraph ""]]
-                [[:paragraph pdf/field-style "Date field"]
-                 [:paragraph "2002-03-04"]]
-                [[:paragraph pdf/field-style "Email field"]
-                 [:paragraph "user@example.com"]]
-                [[:paragraph pdf/field-style "Attachment"]
-                 [:paragraph "attachment.pdf, picture.png"]]
-                [[:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
-                 [:paragraph "First option"]]
-                [[:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
-                 [:paragraph "pdf test"]]
-                [[:paragraph pdf/field-style "Multi-select list"]
-                 [:paragraph "First option"]]
+              [[[:heading pdf/heading-style "Form"]
+                [[[:paragraph pdf/label-field-style
+                   "This form demonstrates all possible field types. (This text itself is a label field.)"]
+                  [:paragraph ""]]
+                 [[:paragraph pdf/field-style "Application title field"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph pdf/field-style "Text field"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph pdf/field-style "Text area"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph pdf/header-field-style "Header"]
+                  [:paragraph ""]]
+                 [[:paragraph pdf/field-style "Date field"]
+                  [:paragraph "2002-03-04"]]
+                 [[:paragraph pdf/field-style "Email field"]
+                  [:paragraph "user@example.com"]]
+                 [[:paragraph pdf/field-style "Attachment"]
+                  [:paragraph "attachment.pdf, picture.png"]]
+                 [[:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
+                  [:paragraph "First option"]]
                 [[:paragraph pdf/field-style "Table"]
                  [:paragraph
                   [:table {:header ["First" "Second"]}
                    ["pdf test" "pdf test"]
                    ["pdf test" "pdf test"]]]]
-                [[:paragraph pdf/label-field-style "The following field types can have a max length."]
-                 [:paragraph ""]]
-                [[:paragraph pdf/field-style "Text field with max length"]
-                 [:paragraph "pdf test"]]
-                [[:paragraph pdf/field-style "Text area with max length"]
-                 [:paragraph "pdf test"]]]]
+                 [[:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph pdf/field-style "Multi-select list"]
+                  [:paragraph "First option"]]
+                 [[:paragraph pdf/label-field-style "The following field types can have a max length."]
+                  [:paragraph ""]]
+                 [[:paragraph pdf/field-style "Text field with max length"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph pdf/field-style "Text area with max length"]
+                  [:paragraph "pdf test"]]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
                 [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]

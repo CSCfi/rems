@@ -97,7 +97,10 @@
                 (testing "create workflow form"
                   (extract-id
                    (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
-                                                        :form/title "e2e wf"
+                                                        :form/internal-name "e2e wf"
+                                                        :form/external-title {:en "en e2e wf"
+                                                                              :fi "fi e2e wf"
+                                                                              :sv "sv e2e wf"}
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
                                                                        :field/title {:en "text field"
@@ -110,7 +113,10 @@
                 (testing "create form"
                   (extract-id
                    (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
-                                                        :form/title "e2e"
+                                                        :form/internal-name "e2e"
+                                                        :form/external-title {:en "en e2e"
+                                                                              :fi "fi e2e"
+                                                                              :sv "en e2e"}
                                                         :form/fields [{:field/type :text
                                                                        :field/title {:en "text field"
                                                                                      :fi "tekstikenttä"
@@ -122,7 +128,10 @@
                 (testing "create form 2"
                   (extract-id
                    (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
-                                                        :form/title "e2e 2"
+                                                        :form/internal-name "e2e 2"
+                                                        :form/external-title {:en "en e2e 2"
+                                                                              :fi "fi e2e 2"
+                                                                              :sv "en e2e 2"}
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
                                                                        :field/title {:en "text field 2"
@@ -406,7 +415,10 @@
           (testing "create form"
             (extract-id
              (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
-                                                  :form/title "e2e"
+                                                  :form/internal-name "e2e"
+                                                  :form/external-title {:en "en e2e"
+                                                                        :fi "fi e2e"
+                                                                        :sv "en e2e"}
                                                   :form/fields [{:field/type :text
                                                                  :field/title {:en "text field"
                                                                                :fi "tekstikenttä"
@@ -525,7 +537,10 @@
           (testing "create form"
             (extract-id
              (api-call :post "/api/forms/create" {:organization {:organization/id "e2e"}
-                                                  :form/title "e2e"
+                                                  :form/internal-name "e2e"
+                                                  :form/external-title {:en "en e2e"
+                                                                        :fi "fi e2e"
+                                                                        :sv "en e2e"}
                                                   :form/fields [{:field/type :text
                                                                  :field/title {:en "text field"
                                                                                :fi "tekstikenttä"
@@ -659,7 +674,10 @@
 
           form-id (extract-id
                    (api-call :post "/api/forms/create" {:organization {:organization/id "default"}
-                                                        :form/title "e2e"
+                                                        :form/internal-name "e2e"
+                                                        :form/external-title {:en "en e2e"
+                                                                              :fi "fi e2e"
+                                                                              :sv "en e2e"}
                                                         :form/fields [{:field/type :email
                                                                        :field/id "referer email"
                                                                        :field/title {:en "referer"

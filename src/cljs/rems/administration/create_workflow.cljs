@@ -210,12 +210,12 @@
          :values (for [form (map (partial item-by-id all-forms :form/id) selected-form-ids)]
                    [atoms/link nil
                     (str "/administration/forms/" (:form/id form))
-                    (:form/title form)])}]
+                    (:form/internal-name form)])}]
        [dropdown/dropdown
         {:id id
          :items (->> all-forms (filter :enabled) (remove :archived))
          :item-key :form/id
-         :item-label :form/title
+         :item-label :form/internal-name
          :item-selected? #(contains? selected-form-ids (:form/id %))
          ;; TODO support ordering multiple forms
          :multi? true

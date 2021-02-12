@@ -8,6 +8,7 @@
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
+            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
@@ -114,13 +115,17 @@
   (db/create-workflow-license! {:wfid wfid :licid licid}))
 
 (defn create-form! [{:keys [actor organization]
-                     :form/keys [title fields]
+                     :form/keys [internal-name external-title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
                                     {:organization (or organization (ensure-default-organization!))
-                                     :form/title (or title "FORM")
+                                     :form/internal-name (or internal-name "FORM")
+                                     :form/external-title (or external-title
+                                                              (into {}
+                                                                    (for [lang (:languages env)]
+                                                                      [lang (str (name lang) " Form")])))
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
     (:id result)))

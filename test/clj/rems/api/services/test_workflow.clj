@@ -24,7 +24,10 @@
   (with-user "owner"
     (test-helpers/create-organization! {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}})
     (testing "default workflow with forms"
-      (let [form-id (test-helpers/create-form! {:form/title "workflow form"
+      (let [form-id (test-helpers/create-form! {:form/internal-name "workflow form"
+                                                :form/external-title {:en "Workflow Form EN"
+                                                                      :fi "Workflow Form FI"
+                                                                      :sv "Workflow Form SV"}
                                                 :form/fields [{:field/type :text
                                                                :field/title {:fi "fi" :sv "sv" :en "en"}
                                                                :field/optional true}]})
@@ -39,7 +42,11 @@
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms [{:form/id form-id :form/title "workflow form"}]}
+                           :forms [{:form/id form-id
+                                    :form/internal-name "workflow form"
+                                    :form/external-title {:en "Workflow Form EN"
+                                                          :fi "Workflow Form FI"
+                                                          :sv "Workflow Form SV"}}]}
                 :licenses []
                 :owneruserid "owner"
                 :modifieruserid "owner"

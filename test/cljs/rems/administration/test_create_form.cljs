@@ -220,7 +220,9 @@
 
 (deftest build-request-test
   (let [form {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the name"
+              :form/external-title {:en "en external title"
+                                    :fi "fi external title"}
               :form/fields [{:field/id "fld1"
                              :field/index 0
                              :field/title {:en "en title"
@@ -237,7 +239,9 @@
 
     (testing "basic form"
       (is (= {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the name"
+              :form/external-title {:en "en external title"
+                                    :fi "fi external title"}
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
@@ -252,7 +256,9 @@
 
     (testing "with empty info text"
       (is (= {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the name"
+              :form/external-title {:en "en external title"
+                                    :fi "fi external title"}
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
@@ -266,7 +272,9 @@
 
     (testing "trim strings"
       (is (= {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the name"
+              :form/external-title {:en "en external title"
+                                    :fi "fi external title"}
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
@@ -277,18 +285,22 @@
                              :field/max-length 12
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
-             (build-request (assoc form :form/title " the title\t\n") languages))))
+             (build-request (assoc form :form/internal-name " the name\t\n") languages))))
 
     (testing "zero fields"
       (is (= {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the name"
+              :form/external-title {:en "en external title"
+                                    :fi "fi external title"}
               :form/fields []}
              (build-request (assoc-in form [:form/fields] []) languages))))
 
     (testing "date fields"
       (let [form (assoc-in form [:form/fields 0 :field/type] :date)]
         (is (= {:organization {:organization/id "abc"}
-                :form/title "the title"
+                :form/internal-name "the name"
+                :form/external-title {:en "en external title"
+                                      :fi "fi external title"}
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}
@@ -327,7 +339,9 @@
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}]))]
         (is (= {:organization {:organization/id "abc"}
-                :form/title "the title"
+                :form/internal-name "the name"
+                :form/external-title {:en "en external title"
+                                      :fi "fi external title"}
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}
@@ -353,7 +367,9 @@
                                                                  :label {:en "Bacon"
                                                                          :fi "Pekonia"}}]))]
         (is (= {:organization {:organization/id "abc"}
-                :form/title "the title"
+                :form/internal-name "the name"
+                :form/external-title {:en "en external title"
+                                      :fi "fi external title"}
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
                                              :fi "fi title"}

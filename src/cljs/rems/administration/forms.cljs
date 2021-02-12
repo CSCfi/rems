@@ -88,7 +88,8 @@
    (map (fn [form]
           {:key (:form/id form)
            :organization {:value (get-in form [:organization :organization/short-name language])}
-           :title {:value (:form/title form)}
+           :internal-name {:value (get-in form [:form/internal-name])}
+           :external-title {:value (get-in form [:form/external-title language])}
            :active (let [checked? (status-flags/active? form)]
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
@@ -111,8 +112,8 @@
   (let [forms-table {:id ::forms
                      :columns [{:key :organization
                                 :title (text :t.administration/organization)}
-                               {:key :title
-                                :title (text :t.administration/title)}
+                               {:key :internal-name
+                                :title (text :t.administration/internal-name)}
                                {:key :active
                                 :title (text :t.administration/active)
                                 :filterable? false}

@@ -1,5 +1,6 @@
 (ns rems.api.services.form
   (:require [clojure.test :refer :all]
+            [clojure.tools.logging :as log]
             [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.common.form :as common-form]
@@ -18,11 +19,28 @@
     {:success false
      :errors [error-map]}))
 
+;; TODO remove once deprecation gone
+(defn- migrate-title [form languages]
+  (if (:form/title form)
+    (do (log/warn "Legacy command with :form/title " form)
+        (-> form
+            (assoc :form/internal-name (:form/title form)
+                   :form/external-title (into {} (for [lang languages]
+                                                   [lang (:form/title form)])))
+            (dissoc :form/title)))
+    form))
+
+(deftest test-migrate-title
+  (is (= {:form/internal-name "title"
+          :form/external-title {:en "title"
+                                :fi "title"}}
+         (migrate-title {:form/title "title"} [:en :fi]))))
+
 (defn create-form! [user-id form]
   (let [organization (:organization form)]
     (util/check-allowed-organization! organization)
     (or (validation-error form)
-        (let [form-id (form/save-form-template! user-id form)]
+        (let [form-id (form/save-form-template! user-id (migrate-title form (:languages env)))]
           ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
           (dependencies/reset-cache!)
           {:success (not (nil? form-id))

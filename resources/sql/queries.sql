@@ -12,7 +12,7 @@ SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enab
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
-, form.title AS "form-name"
+, form.formdata->>'form/internal-name' AS "form-name"
 /*~ ) ~*/
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
@@ -149,7 +149,8 @@ SET (catid, langcode, title) = (:id, :langcode, :title)
 SELECT
   id,
   organization,
-  title,
+  formdata->>'form/internal-name' AS title,
+  formdata::TEXT,
   fields::TEXT,
   enabled,
   archived
@@ -159,7 +160,7 @@ FROM form_template;
 SELECT
   id,
   organization,
-  title,
+  formdata::TEXT,
   fields::TEXT,
   enabled,
   archived
@@ -168,22 +169,22 @@ WHERE id = :id;
 
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(organization, title, modifierUserId, ownerUserId, fields)
+(organization, modifierUserId, ownerUserId, fields, formdata)
 VALUES
 (:organization,
- :title,
  :user,
  :user,
- :fields::jsonb
+ :fields::jsonb,
+ :formdata::jsonb
 );
 
 -- :name edit-form-template! :!
 UPDATE form_template
-SET (organization, title, modifierUserId, fields) =
+SET (organization, modifierUserId, fields, formdata) =
 (:organization,
- :title,
  :user,
- :fields::jsonb)
+ :fields::jsonb,
+ :formdata::jsonb)
 WHERE
 id = :id;
 

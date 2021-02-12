@@ -10,7 +10,7 @@
   ([item language]
    (or (get-localized-title item language)
        (:resid item)
-       (:form/title item)
+       (:form/internal-name item)
        (:title item)
        (localized (:organization/name item)))))
 

@@ -69,7 +69,7 @@
       {:id form-dropdown-id
        :items forms
        :item-key :form/id
-       :item-label :form/title
+       :item-label :form/internal-name
        :item-selected? item-selected?
        :on-change #(rf/dispatch [::set-selected-form-id (:form/id %)])}]]))
 

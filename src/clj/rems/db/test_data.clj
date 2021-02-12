@@ -40,7 +40,10 @@
   (with-user actor
     (let [id (create-form! {:actor actor
                             :organization {:organization/id "nbn"}
-                            :form/title "Archived form, should not be seen by applicants"})]
+                            :form/internal-name "Archived form, should not be seen by applicants"
+                            :form/external-title {:en "Archived form, should not be seen by applicants"
+                                                  :fi "Archived form, should not be seen by applicants"
+                                                  :sv "Archived form, should not be seen by applicants"}})]
       (form/set-form-archived! {:id id :archived true}))))
 
 (defn- create-disabled-license! [{:keys [actor organization]}]
@@ -199,20 +202,25 @@
 
 (defn create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
-  [actor organization title]
+  [actor organization internal-name external-title]
   (create-form!
    {:actor actor
     :organization organization
-    :form/title title
+    :form/internal-name internal-name
+    :form/external-title external-title
     :form/fields all-field-types-example}))
 
 ;; TODO translate to swedish?
+;; TODO remove
 (defn create-thl-demo-form!
   [users]
   (create-form!
    {:actor (users :owner)
     :organization {:organization/id "thl"}
-    :form/title "THL form"
+    :form/internal-name "THL form"
+    :form/external-title {:en "Form"
+                          :fi "Lomake"
+                          :sv "Blankett"}
     :form/fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"
                                  :sv "TODO"}
@@ -502,7 +510,10 @@
                                      :type :workflow/default
                                      :handlers handlers
                                      :forms [{:form/id (create-form! {:actor owner
-                                                                      :form/title "Workflow form"
+                                                                      :form/internal-name "Workflow form"
+                                                                      :form/external-title {:en "Workflow form"
+                                                                                            :fi "Työvuon lomake"
+                                                                                            :sv "Blankett för arbetsflöde"}
                                                                       :organization {:organization/id "nbn"}
                                                                       :form/fields [{:field/type :description
                                                                                      :field/title {:fi "Kuvaus"
@@ -546,7 +557,10 @@
                                :organization {:organization/id "default"}
                                :actor owner})
         form (create-form! {:actor owner
-                            :form/title "Bona Fide form"
+                            :form/internal-name "Bona Fide form"
+                            :form/external-title {:en "Form"
+                                                  :fi "Lomake"
+                                                  :sv "Blankett"}
                             :organization {:organization/id "default"}
                             :form/fields [{:field/type :email
                                            :field/title {:fi "Suosittelijan sähköpostiosoite"
@@ -736,7 +750,10 @@
         form-id (create-form!
                  {:actor owner
                   :organization {:organization/id "perf"}
-                  :form/title "Performance tests"
+                  :form/internal-name "Performance tests"
+                  :form/external-title {:en "Performance tests EN"
+                                        :fi "Performance tests FI"
+                                        :sv "Performance tests SV"}
                   :form/fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"
                                                :sv "Projektets namn"}
@@ -882,10 +899,15 @@
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
                                         :licid license-organization-owner})
 
-        form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types")
+        form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
+                                                                                                                       :fi "Esimerkkilomake kaikin kenttätyypein"
+                                                                                                                       :sv "Exempelblankett med alla fälttyper"})
         form-private-thl (create-form! {:actor owner
                                         :organization {:organization/id "thl"}
-                                        :form/title "Simple form"
+                                        :form/internal-name "Simple form"
+                                        :form/external-title {:en "Form"
+                                                              :fi "Lomake"
+                                                              :sv "Blankett"}
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
                                                                      :sv "Textfält"}
@@ -895,7 +917,10 @@
                                                        :field/privacy :private}]})
         form-private-hus (create-form! {:actor owner
                                         :organization {:organization/id "hus"}
-                                        :form/title "Simple form"
+                                        :form/internal-name "Simple form"
+                                        :form/external-title {:en "Form"
+                                                              :fi "Lomake"
+                                                              :sv "Blankett"}
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
                                                                      :sv "Textfält"}
@@ -903,7 +928,9 @@
                                                        :field/type :text
                                                        :field/max-length 100
                                                        :field/privacy :private}]})
-        form-organization-owner (create-all-field-types-example-form! organization-owner1 {:organization/id "organization1"} "Owned by organization owner")]
+        form-organization-owner (create-all-field-types-example-form! organization-owner1 {:organization/id "organization1"} "Owned by organization owner" {:en "Owned by organization owner"
+                                                                                                                                                            :fi "Omistaja organization owner"
+                                                                                                                                                            :sv "Ägare organization owner"})]
     (create-archived-form! owner)
 
     ;; Create catalogue items

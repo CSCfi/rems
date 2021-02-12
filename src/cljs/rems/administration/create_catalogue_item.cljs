@@ -222,12 +222,12 @@
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
-                                 :value (:form/title form)}])
+                                 :value (:form/internal-name form)}])
        [dropdown/dropdown
         {:id form-dropdown-id
          :items (->> forms (filter :enabled) (remove :archived))
          :item-key :form/id
-         :item-label #(str (:form/title %)
+         :item-label #(str (:form/internal-name %)
                            " (org: "
                            (get-in % [:organization :organization/short-name language])
                            ")")
