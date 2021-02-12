@@ -16,13 +16,18 @@
 
 (def FormId s/Int)
 
-;; TODO cond-pre generates a x-oneOf schema, which is
+;; cond-pre generates a x-oneOf schema, which is
 ;; correct, but swagger-ui doesn't render it. We would need
 ;; to switch from Swagger 2.0 specs to OpenAPI 3 specs to get
 ;; swagger-ui support. However ring-swagger only supports
 ;; Swagger 2.0.
+;;
+;; As a workaround, add a manual description
 (s/defschema FieldValue
-  (s/cond-pre s/Str [[{:column s/Str :value s/Str}]]))
+  (rjs/field
+   (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
+   {:example "value"
+    :description "A string for most fields, or [[{\"column\": string, \"value\": string}]] for table fields"}))
 
 (s/defschema EventBase
   {(s/optional-key :event/id) s/Int
