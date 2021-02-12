@@ -2,6 +2,7 @@
   "Shared schema definitions for the API"
   (:require [rems.application.events :as events]
             [rems.application.commands :as commands]
+            [rems.schema-base :refer [FieldId FormId UserId]]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -23,8 +24,6 @@
                         :en 2}
               :description "Integers keyed by languages"}))
 
-(def UserId s/Str)
-(s/defschema User {:userid UserId})
 (s/defschema OrganizationId {:organization/id s/Str})
 
 (s/defschema UserWithAttributes
@@ -65,7 +64,7 @@
   {:id s/Int
    :wfid s/Int
    (s/optional-key :workflow-name) s/Str
-   :formid s/Int
+   :formid FormId
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
@@ -170,8 +169,6 @@
    :archived s/Bool})
 
 (def not-neg? (partial <= 0))
-
-(def FieldId s/Str)
 
 ;;; template for a form field, before answering
 (s/defschema FieldTemplate

@@ -8,6 +8,7 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.users :as users]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
@@ -15,7 +16,7 @@
 
 (s/defschema BlacklistCommand
   {:blacklist/resource {:resource/ext-id s/Str}
-   :blacklist/user {:userid schema/UserId}
+   :blacklist/user {:userid schema-base/UserId}
    :comment s/Str})
 
 (s/defschema BlacklistEntryWithDetails
@@ -38,7 +39,7 @@
     (GET "/" []
       :summary "Get blacklist entries"
       :roles +admin-read-roles+
-      :query-params [{user :- schema/UserId nil}
+      :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
       (->> (blacklist/get-blacklist {:userid user

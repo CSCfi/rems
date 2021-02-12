@@ -1,8 +1,9 @@
 (ns rems.api.organizations
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [OrganizationArchivedCommand OrganizationEnabledCommand OrganizationFull SuccessResponse User UserWithAttributes]]
+            [rems.api.schema :refer [OrganizationArchivedCommand OrganizationEnabledCommand OrganizationFull SuccessResponse UserWithAttributes]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.api.services.organizations :as organizations]
+            [rems.schema-base :refer [User]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

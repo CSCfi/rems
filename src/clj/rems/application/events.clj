@@ -2,13 +2,9 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
+            [rems.schema-base :refer [FieldId FormId UserId]]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
-
-;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
-(def UserId s/Str)
-(def FormId s/Int)
-(def FieldId s/Str)
 
 (s/defschema EventBase
   {(s/optional-key :event/id) s/Int

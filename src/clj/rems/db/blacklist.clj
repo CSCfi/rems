@@ -1,5 +1,5 @@
 (ns rems.db.blacklist
-  (:require [rems.api.schema :refer [UserId]]
+  (:require [rems.schema-base :refer [UserId]]
             [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.db.users :as users]

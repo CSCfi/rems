@@ -7,6 +7,7 @@
             [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
+            [rems.schema-base :refer [FieldId FormId UserId]]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
@@ -14,11 +15,6 @@
            [org.joda.time DateTime]))
 
 ;;; Schemas
-
-;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
-(def UserId s/Str)
-(def FormId s/Int)
-(def FieldId s/Str)
 
 (s/defschema CommandInternal
   {:type s/Keyword
