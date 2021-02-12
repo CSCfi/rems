@@ -1,6 +1,6 @@
 (ns rems.api.resources
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+            [rems.api.schema :as schema]
             [rems.api.services.resource :as resource]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
@@ -13,18 +13,18 @@
   {:id s/Int
    :owneruserid s/Str
    :modifieruserid s/Str
-   :organization OrganizationOverview
+   :organization schema/OrganizationOverview
    :resid s/Str
    :enabled s/Bool
    :archived s/Bool
-   :licenses [ResourceLicense]})
+   :licenses [schema/ResourceLicense]})
 
 (s/defschema Resources
   [Resource])
 
 (s/defschema CreateResourceCommand
   {:resid s/Str
-   :organization OrganizationId
+   :organization schema/OrganizationId
    :licenses [s/Int]})
 
 (s/defschema CreateResourceResponse
@@ -64,13 +64,13 @@
     (PUT "/archived" []
       :summary "Archive or unarchive resource"
       :roles +admin-write-roles+
-      :body [command ArchivedCommand]
-      :return SuccessResponse
+      :body [command schema/ArchivedCommand]
+      :return schema/SuccessResponse
       (ok (resource/set-resource-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable resource"
       :roles +admin-write-roles+
-      :body [command EnabledCommand]
-      :return SuccessResponse
+      :body [command schema/EnabledCommand]
+      :return schema/SuccessResponse
       (ok (resource/set-resource-enabled! command)))))

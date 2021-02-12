@@ -2,26 +2,15 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
-
-;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
-(def UserId s/Str)
-(def FormId s/Int)
-(def FieldId s/Str)
-
-(s/defschema EventBase
-  {(s/optional-key :event/id) s/Int
-   :event/type s/Keyword
-   :event/time DateTime
-   :event/actor UserId
-   :application/id s/Int})
 
 (s/defschema EventAttachment
   {:attachment/id s/Int})
 
 (s/defschema EventWithComment
-  (assoc EventBase
+  (assoc schema-base/EventBase
          (s/optional-key :application/comment) s/Str
          (s/optional-key :event/attachments) [EventAttachment]))
 
@@ -43,14 +32,14 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
-         :application/reviewers [UserId]))
+         :application/reviewers [schema-base/UserId]))
 (s/defschema CopiedFromEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/copied-from)
          :application/copied-from {:application/id s/Int
                                    :application/external-id s/Str}))
 (s/defschema CopiedToEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/copied-to)
          :application/copied-to {:application/id s/Int
                                  :application/external-id s/Str}))
@@ -59,13 +48,13 @@
     :workflow/default
     :workflow/master})
 (s/defschema CreatedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/created)
          :application/external-id s/Str
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]
-         :application/forms [{:form/id FormId}]
+         :application/forms [{:form/id schema-base/FormId}]
          :workflow/id s/Int
          :workflow/type (apply s/enum workflow-types)))
 (s/defschema DecidedEvent
@@ -77,22 +66,22 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
-         :application/deciders [UserId]))
+         :application/deciders [schema-base/UserId]))
 (s/defschema DeletedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/deleted)))
 (s/defschema DraftSavedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/draft-saved)
-         :application/field-values [{:form FormId
-                                     :field FieldId
-                                     :value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])}]))
+         :application/field-values [{:form schema-base/FormId
+                                     :field schema-base/FieldId
+                                     :value schema-base/FieldValue}]))
 (s/defschema ExternalIdAssignedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/external-id-assigned)
          :application/external-id s/Str))
 (s/defschema LicensesAcceptedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
 (s/defschema LicensesAddedEvent
@@ -100,23 +89,23 @@
          :event/type (s/enum :application.event/licenses-added)
          :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-added)
-         :application/member {:userid UserId}))
+         :application/member schema-base/User))
 (s/defschema MemberInvitedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-invited)
          :application/member {:name s/Str
                               :email s/Str}
          :invitation/token s/Str))
 (s/defschema MemberJoinedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-joined)
          :invitation/token s/Str))
 (s/defschema MemberRemovedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-removed)
-         :application/member {:userid UserId}))
+         :application/member schema-base/User))
 (s/defschema MemberUninvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-uninvited)
@@ -130,7 +119,7 @@
          ;; TODO allocate request-id already here?
          :invitation/token s/Str))
 (s/defschema ReviewerJoinedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/reviewer-joined)
          :application/request-id s/Uuid
          :invitation/token s/Str))
@@ -142,7 +131,7 @@
          ;; TODO allocate request-id already here?
          :invitation/token s/Str))
 (s/defschema DeciderJoinedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/decider-joined)
          :application/request-id s/Uuid
          :invitation/token s/Str))
@@ -156,7 +145,7 @@
 (s/defschema ResourcesChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/resources-changed)
-         :application/forms [{:form/id FormId}]
+         :application/forms [{:form/id schema-base/FormId}]
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))
@@ -167,7 +156,7 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/revoked)))
 (s/defschema SubmittedEvent
-  (assoc EventBase
+  (assoc schema-base/EventBase
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas

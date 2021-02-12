@@ -1,7 +1,7 @@
 (ns rems.api.catalogue-items
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+            [rems.api.schema :as schema]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
@@ -11,7 +11,7 @@
             [schema.core :as s]))
 
 (s/defschema GetCatalogueItemsResponse
-  [CatalogueItem])
+  [schema/CatalogueItem])
 
 (s/defschema CatalogueItemLocalization
   {:title s/Str
@@ -19,7 +19,7 @@
    (s/optional-key :infourl) (s/maybe s/Str)})
 
 (s/defschema WriteCatalogueItemLocalizations
-  (rjs/field {Language CatalogueItemLocalization}
+  (rjs/field {schema/Language CatalogueItemLocalization}
              {:description "Localizations keyed by language"
               :example {:fi {:title "Title in Finnish"
                              :infourl "http://example.fi"}
@@ -32,14 +32,14 @@
   {:form s/Int
    :resid s/Int
    :wfid s/Int
-   :organization OrganizationId
+   :organization schema/OrganizationId
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
-   (s/optional-key :organization) OrganizationId
+   (s/optional-key :organization) schema/OrganizationId
    :localizations WriteCatalogueItemLocalizations})
 
 (s/defschema CreateCatalogueItemResponse
@@ -91,7 +91,7 @@
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
       :path-params [item-id :- (describe s/Int "catalogue item")]
-      :responses {200 {:schema CatalogueItem}
+      :responses {200 {:schema schema/CatalogueItem}
                   404 {:schema s/Any :description "Not found"}}
 
       (check-user)
@@ -110,7 +110,7 @@
       :summary "Edit a catalogue item"
       :roles +admin-write-roles+
       :body [command EditCatalogueItemCommand]
-      :return SuccessResponse
+      :return schema/SuccessResponse
       (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
         (not-found-json-response)
         (ok (catalogue/edit-catalogue-item! command))))
@@ -118,13 +118,13 @@
     (PUT "/archived" []
       :summary "Archive or unarchive catalogue item"
       :roles +admin-write-roles+
-      :body [command ArchivedCommand]
-      :return SuccessResponse
+      :body [command schema/ArchivedCommand]
+      :return schema/SuccessResponse
       (ok (catalogue/set-catalogue-item-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable catalogue item"
       :roles +admin-write-roles+
-      :body [command EnabledCommand]
-      :return SuccessResponse
+      :body [command schema/EnabledCommand]
+      :return schema/SuccessResponse
       (ok (catalogue/set-catalogue-item-enabled! command)))))

@@ -1,7 +1,7 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
             [medley.core :refer [map-keys filter-vals remove-keys]]
-            [rems.api.schema :refer [FieldTemplate FormData]]
+            [rems.api.schema :as schema]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.db.core :as db]
@@ -11,13 +11,13 @@
   (:import rems.InvalidRequestException))
 
 (def ^:private coerce-fields
-  (coerce/coercer! [FieldTemplate] coerce/string-coercion-matcher))
+  (coerce/coercer! [schema/FieldTemplate] coerce/string-coercion-matcher))
 
 (defn- deserialize-fields [fields-json]
   (coerce-fields (json/parse-string fields-json)))
 
 (def ^:private coerce-formdata
-  (coerce/coercer! FormData coerce/string-coercion-matcher))
+  (coerce/coercer! schema/FormData coerce/string-coercion-matcher))
 
 (defn- deserialize-formdata [row]
   (merge (dissoc row :formdata)
@@ -102,7 +102,7 @@
   (map normalize-field-definition fields))
 
 (def ^:private validate-fields
-  (s/validator [FieldTemplate]))
+  (s/validator [schema/FieldTemplate]))
 
 (defn- serialize-fields [form]
   (->> (:form/fields form)
