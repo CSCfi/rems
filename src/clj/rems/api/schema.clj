@@ -2,7 +2,7 @@
   "Shared schema definitions for the API"
   (:require [rems.application.events :as events]
             [rems.application.commands :as commands]
-            [rems.schema-base :refer [FieldId FormId UserId]]
+            [rems.schema-base :refer [FieldId FieldValue FormId UserId]]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -199,15 +199,10 @@
 
 (s/defschema Field
   (assoc FieldTemplate
-         ;; TODO cond-pre generates a x-oneOf schema, which is
-         ;; correct, but swagger-ui doesn't render it. We would need
-         ;; to switch from Swagger 2.0 specs to OpenAPI 3 specs to get
-         ;; swagger-ui support. However ring-swagger only supports
-         ;; Swagger 2.0.
-         :field/value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])
+         :field/value FieldValue
          :field/visible s/Bool
          :field/private s/Bool
-         (s/optional-key :field/previous-value) (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])))
+         (s/optional-key :field/previous-value) FieldValue))
 
 (s/defschema FormTemplate
   {:form/id s/Int

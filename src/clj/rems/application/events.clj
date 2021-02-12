@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
-            [rems.schema-base :refer [FieldId FormId UserId]]
+            [rems.schema-base :refer [FieldId FieldValue FormId UserId]]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
 
@@ -82,7 +82,7 @@
          :event/type (s/enum :application.event/draft-saved)
          :application/field-values [{:form FormId
                                      :field FieldId
-                                     :value (s/cond-pre s/Str [[{:column s/Str :value s/Str}]])}]))
+                                     :value FieldValue}]))
 (s/defschema ExternalIdAssignedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/external-id-assigned)
