@@ -412,7 +412,7 @@
                     [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
          (when-not readonly
            [[:tr [:td {:colspan (count columns)}
-                  [:button.btn.btn-outline-secondary.btn-block
+                  [:button.btn.btn-outline-secondary
                    {:id (str id "-add-row")
                     :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
                    [add-symbol]
