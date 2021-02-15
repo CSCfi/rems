@@ -911,22 +911,35 @@
                                                     :value [[{:column "col1" :value "1"} {:column "col2" :value "2"}]
                                                             [{:column "col1" :value ""} {:column "col2" :value "2"}]]}
                                                    {:form form-id :field "req"
-                                                    :value [[{:column "foo" :value "f"} {:column "bar" :value ""} {:column "xyz" :value "x"}]]}]}))))
-    (testing "can submit, even with empty column values"
-      (is (= {:success true}
-             (send-command user-id {:type :application.command/submit
-                                    :application-id app-id})))
-      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+                                                    :value [[{:column "foo" :value "f"} {:column "bar" :value "b"} {:column "xyz" :value "x"}]]}]})))
+      (is (= [[{:column "foo" :value "f"} {:column "bar" :value "b"} {:column "xyz" :value "x"}]]
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 0 :form/fields 1 :field/value]))))
+    (testing "can't submit with empty column values"
+      (is (= {:success false
+              :errors [{:type "t.form.validation/column-values-missing" :form-id form-id :field-id "opt"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+    (testing "can submit with all columns set"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt"
+                                                    :value [[{:column "col1" :value "1"} {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "1"} {:column "col2" :value "2"}]]}
+                                                   {:form form-id :field "req"
+                                                    :value [[{:column "foo" :value "f"} {:column "bar" :value "b"} {:column "xyz" :value "x"}]]}]})))
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
     (testing "can return"
       (is (= {:success true}
              (send-command "developer" {:type :application.command/return
                                         :application-id app-id})))
-      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+      (is (= [[{:value "f" :column "foo"} {:value "b" :column "bar"} {:value "x" :column "xyz"}]]
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 0 :form/fields 1 :field/value])))
-      (is (= [[{:value "f" :column "foo"} {:value "" :column "bar"} {:value "x" :column "xyz"}]]
+      (is (= [[{:value "f" :column "foo"} {:value "b" :column "bar"} {:value "x" :column "xyz"}]]
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 0 :form/fields 1 :field/previous-value]))))))
 
