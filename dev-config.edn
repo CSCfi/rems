@@ -3,7 +3,7 @@
  :database-url "postgresql://localhost/rems?user=rems"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-dev"
- :theme-path "example-theme/theme.edn"
+ :theme-path "../rems-deploy/themes/theme-thl/theme.edn"
  :authentication :fake
  :log-authentication-details true
  ;; Open ID Connect settings
@@ -16,7 +16,7 @@
  :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
                          {:attribute "picture"}]
 
- :languages [:en :fi :sv]
+ :languages [:en]
  :public-url "http://localhost:3000/"
  :render-css-file? true
  :extra-pages [{:id "about"

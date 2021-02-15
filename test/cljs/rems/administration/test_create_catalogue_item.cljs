@@ -67,13 +67,14 @@
                                                      :textcontent "Be fast."
                                                      :title "Second License"}}}]
                     :modifieruserid "owner"
-                    :organization {:id "nbn"
-                                   :name {:en "NBN"
-                                          :fi "NBN"
-                                          :sv "NBN"}
-                                   :short-name {:en "NBN en"
-                                                :fi "NBN fi"
-                                                :sv "NBN sv"}}
+                    :organization {:organization/id "nbn"
+                                   :organization/name {:en "NBN"
+                                                       :fi "NBN"
+                                                       :sv "NBN"}
+                                   :organization/short-name
+                                   {:en "NBN en"
+                                    :fi "NBN fi"
+                                    :sv "NBN sv"}}
                     :owneruserid "owner"}
                    {:resid "y"
                     :licenses [{:archived false
@@ -90,13 +91,13 @@
                                 :localizations {:en {:attachment-id nil
                                                      :textcontent "Be fast."
                                                      :title "Second License"}}}]
-                    :organization {:id "nbn"
-                                   :name {:en "NBN"
-                                          :fi "NBN"
-                                          :sv "NBN"}
-                                   :short-name {:en "NBN en"
-                                                :fi "NBN fi"
-                                                :sv "NBN sv"}}}
+                    :organization {:organization/id "nbn"
+                                   :organization/name {:en "NBN"
+                                                       :fi "NBN"
+                                                       :sv "NBN"}
+                                   :organization/short-name {:en "NBN en"
+                                                             :fi "NBN fi"
+                                                             :sv "NBN sv"}}}
                    {:resid "y"
                     :licenses [{:archived false
                                 :enabled true
@@ -110,6 +111,12 @@
         counts (frequencies (map :resid resourses))]
     (testing "sorting resources"
       (is (not (empty? (map resourse-dropdown resourses))))
+      (is (= ["x (org: NBN en )"
+              "y (org: NBN en ) (licenses: Performance License, Second License )"
+              "y (licenses: Performance License )"
+              "u"
+              "z"]
+             (map #(resourse-dropdown % "en" counts) resourses)))
       (is (= ["x (org: NBN en )"
               "y (org: NBN en ) (licenses: Performance License, Second License )"
               "y (licenses: Performance License )"

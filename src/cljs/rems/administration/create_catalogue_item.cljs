@@ -189,22 +189,23 @@
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
 (defn resourse-dropdown [r language counts]
-  (str (:resid r)
+  (let [organisation? (get-in r [:organization :organization/short-name (keyword language)])
+        duplicate? (> (get counts (:resid r)) 1)
+        licenses? (not-empty (:licenses r))]
+    (str (:resid r)
       ;; when organisation is found, show organisation
-       (when (get-in r [:organization :short-name (keyword language)])
-         (str/join " " [" (org:"
-                        (get-in r [:organization :short-name (keyword language)])
-                        ")"]))
+         (when organisation?
+           (str/join " " [" (org:" organisation? ")"]))
       ;; when duplicate is found, show duplicate
-       (when (> (get counts (:resid r)) 1)
+         (when duplicate?
          ;; when licenses are found, show licences, but only if it is duplicate
-         (when (not-empty (:licenses r))
-           (str/join " "
-                     [" (licenses:"
-                      (str/join ", " (mapv
-                                      (fn [l] (:title ((keyword language) (:localizations l))))
-                                      (:licenses r)))
-                      ")"])))))
+           (when licenses?
+             (str/join " "
+                       [" (licenses:"
+                        (str/join ", " (mapv
+                                        (fn [l] (:title ((keyword language) (:localizations l))))
+                                        (:licenses r)))
+                        ")"]))))))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
@@ -214,7 +215,7 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     (js/console.log "yay" (clj->js resources))
+     (js/console.log "yay" (clj->js (get-in (first resources) [:organization :id])))
      [:label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]

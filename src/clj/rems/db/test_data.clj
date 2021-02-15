@@ -898,8 +898,8 @@
         res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
                                                         :organization {:organization/id "hus"
                                                                        :organization/short-name {:en "HUS en"
-                                                                                    :fi "HUS fi"
-                                                                                    :sv "HUS sv"}}
+                                                                                                 :fi "HUS fi"
+                                                                                                 :sv "HUS sv"}}
                                                         :actor owner
                                                         :license-ids [license1 extra-license attachment-license]})
         res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"
