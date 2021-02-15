@@ -80,12 +80,20 @@
        :type     :t.form.validation/invalid-value})))
 
 (defn- wrong-value-type-error [field]
-  (when-not (= :table (:field/type field))
-    (when (and (not (string? (:field/value field)))
-               (not (nil? (:field/value field))))
-      ;; TODO more specific error?
-      {:field-id (:field/id field)
-       :type :t.form.validation/invalid-value})))
+  (let [value (:field/value field)]
+    (case (:field/type field)
+      :table
+      (when-not (or (= "" value)
+                    (nil? value)
+                    (sequential? value))
+        {:field-id (:field/id field)
+         :type :t.form.validation/invalid-value})
+
+      ;; default
+      (when-not (or (nil? (:field/value field))
+                    (string? (:field/value field)))
+        {:field-id (:field/id field)
+         :type :t.form.validation/invalid-value}))))
 
 (defn- validate-field-content [field]
   (or (wrong-value-type-error field)
