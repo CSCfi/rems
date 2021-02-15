@@ -4,16 +4,28 @@
             [rems.common.form :as form]
             [rems.common.util :refer [+email-regex+]]))
 
+(defn- all-columns-set? [field]
+  (let [valid-row? (fn [cells] (every? #(not (str/blank? (:value %))) cells))]
+    (or (= "" (:field/value field)) ; need to tolerate the default value
+        (every? valid-row? (:field/value field)))))
+
 (defn- required? [field]
-  (and (not (:field/optional field))
-       (not (contains? #{:header :label} (:field/type field)))
-       ;; TODO decide what to do about required table fields. At the
-       ;; moment, any non-empty value is enough for a required table,
-       ;; that is, you need to add at least one row (but it can be
-       ;; empty).
-       (if (string? (:field/value field))
-         (str/blank? (:field/value field))
-         (empty? (:field/value field)))))
+  (case (:field/type field)
+    (:header :label)
+    false
+
+    :table
+    (or
+     ;; a non-optional table must have at least one row
+     (and (not (:field/optional field))
+          (empty? (:field/value field)))
+     ;; all tables must have all columns set for all fields
+     ;; TODO we should generate a different error and not :t.form.validation/required
+     (not (all-columns-set? field)))
+
+    ;; default:
+    (and (not (:field/optional field))
+         (str/blank? (:field/value field)))))
 
 (defn- too-long? [field]
   (and (:field/max-length field)
@@ -36,7 +48,7 @@
 (defn- invalid-column-value? [field]
   (when (= (:field/type field) :table)
     (let [columns (set (map :key (:field/columns field)))
-          row-ok? (fn [row] (every? columns (map :column row)))
+          row-ok? (fn [row] (= columns (set (map :column row))))
           value (:field/value field)]
       ;; Schema validation guarantees that it's either a s/Str or
       ;; a [[{:column s/Str :value s/Str}]] so we don't need to check
