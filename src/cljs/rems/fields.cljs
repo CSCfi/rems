@@ -394,41 +394,47 @@
          :on-change on-change}])]))
 
 (defn- table-view [{:keys [id readonly columns rows on-change]}]
-  (into [:table.table.table-sm.table-borderless
-         [:thead
-          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
-        (concat
-         (for [row-i (range (count rows))]
-           (into [:tr]
-                 (concat
-                  (for [{:keys [key label]} columns]
-                    [:td [:input.form-control {:type :text
-                                               :aria-label (localized label)
-                                               :id (str id "-row" row-i "-" key)
-                                               :disabled readonly
-                                               :value (get-in rows [row-i key])
-                                               :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
-                  (when-not readonly
-                    [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
-         (when-not readonly
-           [[:tr [:td {:colspan (count columns)}
-                  [:button.btn.btn-outline-secondary.btn-block
-                   {:id (str id "-add-row")
-                    :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
-                   [add-symbol]
-                   " "
-                   (text :t.form/add-row)]]]]))))
+  [:table.table.table-sm.table-borderless
+   [:thead
+    (into [:tr]
+          (concat
+           (for [column columns] [:th (localized (:label column))])
+           (when-not readonly
+             [[:th {:style {:width "2em"}}]])))]
+   (into [:tbody]
+         (concat
+          (for [row-i (range (count rows))]
+            (into [:tr]
+                  (concat
+                   (for [{:keys [key label]} columns]
+                     [:td [:input.form-control {:type :text
+                                                :aria-label (localized label)
+                                                :id (str id "-row" row-i "-" key)
+                                                :disabled readonly
+                                                :value (get-in rows [row-i key])
+                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
+                   (when-not readonly
+                     [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+          (when-not readonly
+            [[:tr [:td {:col-span (count columns)}
+                   [:button.btn.btn-outline-secondary
+                    {:id (str id "-add-row")
+                     :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
+                    [add-symbol]
+                    " "
+                    (text :t.form/add-row)]]]])))])
 
 (defn- table-diff [{:keys [columns rows previous-rows]}]
-  (into [:table.table.table-sm.table-borderless
-         [:thead
-          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
-        (concat
-         (for [row-i (range (count rows))]
-           (into [:tr]
-                 (for [{:keys [key]} columns]
-                   [:td [diff-field {:value (get-in rows [row-i key])
-                                     :previous-value (get-in previous-rows [row-i key])}]]))))))
+  [:table.table.table-sm.table-borderless
+   [:thead
+    (into [:tr] (for [column columns] [:th (localized (:label column))]))]
+   (into [:tbody]
+         (concat
+          (for [row-i (range (max (count rows) (count previous-rows)))]
+            (into [:tr]
+                  (for [{:keys [key]} columns]
+                    [:td [diff-field {:value (get-in rows [row-i key])
+                                      :previous-value (get-in previous-rows [row-i key])}]])))))])
 
 (defn- table-from-backend
   "Convert
