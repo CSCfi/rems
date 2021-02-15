@@ -5,7 +5,7 @@
             [rems.common.util :refer [+email-regex+]]))
 
 (defn- all-columns-set? [field]
-  (let [valid-row? (fn [cells] (every? #(not (str/blank? (:value %))) cells))]
+  (let [valid-row? #(not-any? str/blank? (map :value %))]
     (or (= "" (:field/value field)) ; need to tolerate the default value
         (every? valid-row? (:field/value field)))))
 
