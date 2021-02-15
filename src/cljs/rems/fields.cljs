@@ -428,7 +428,7 @@
          [:thead
           (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
         (concat
-         (for [row-i (range (count rows))]
+         (for [row-i (range (max (count rows) (count previous-rows)))]
            (into [:tr]
                  (for [{:keys [key]} columns]
                    [:td [diff-field {:value (get-in rows [row-i key])
