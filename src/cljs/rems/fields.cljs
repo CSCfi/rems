@@ -396,7 +396,11 @@
 (defn- table-view [{:keys [id readonly columns rows on-change]}]
   (into [:table.table.table-sm.table-borderless
          [:thead
-          (into [:tr] (for [column columns] [:th (localized (:label column))]))]]
+          (into [:tr]
+                (concat
+                 (for [column columns] [:th (localized (:label column))])
+                 (when-not readonly
+                   [[:th {:style {:width "2em"}}]])))]]
         (concat
          (for [row-i (range (count rows))]
            (into [:tr]
@@ -409,7 +413,7 @@
                                                :value (get-in rows [row-i key])
                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
                   (when-not readonly
-                    [[:td [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+                    [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
          (when-not readonly
            [[:tr [:td {:colspan (count columns)}
                   [:button.btn.btn-outline-secondary
