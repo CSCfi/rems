@@ -427,7 +427,8 @@
          :upload "Upload an attachment"
          :upload-extensions "Allowed file types"
          ;; %1 - field name
-         :validation {:invalid-email "Invalid email address."
+         :validation {:column-values-missing "All columns must have values."
+                      :invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."

@@ -22,10 +22,10 @@
        {:field-id (:field/id field)
         :type     :t.form.validation/required})
      ;; all tables must have all columns set for all fields
-     ;; TODO we should generate a different error and not :t.form.validation/required
+     ;; TODO consider pointing out the column
      (when (not (all-columns-set? field))
        {:field-id (:field/id field)
-       :type     :t.form.validation/required}))
+        :type     :t.form.validation/column-values-missing}))
 
     ;; default:
     (when (and (not (:field/optional field))

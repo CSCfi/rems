@@ -385,7 +385,7 @@
                                                                                {:column "col2" :value "1"}
                                                                                {:column "col3" :value "1"}]])))
             "missing columns")
-        (is (= [{:field-id "tbl", :type :t.form.validation/required}]
+        (is (= [{:field-id "tbl", :type :t.form.validation/column-values-missing}]
                (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
                                                                                {:column "col2" :value ""}]]))
                (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
