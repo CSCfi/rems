@@ -4,6 +4,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -13,7 +14,7 @@
   {:id s/Int
    :owneruserid s/Str
    :modifieruserid s/Str
-   :organization schema/OrganizationOverview
+   :organization schema-base/OrganizationOverview
    :resid s/Str
    :enabled s/Bool
    :archived s/Bool
@@ -24,7 +25,7 @@
 
 (s/defschema CreateResourceCommand
   {:resid s/Str
-   :organization schema/OrganizationId
+   :organization schema-base/OrganizationId
    :licenses [s/Int]})
 
 (s/defschema CreateResourceResponse

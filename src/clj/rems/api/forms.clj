@@ -4,6 +4,7 @@
             [rems.api.schema :as schema]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -14,7 +15,7 @@
      (select-keys form [:form/id :organization :form/title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
-  {:organization schema/OrganizationId
+  {:organization schema-base/OrganizationId
    :form/title s/Str
    :form/fields [schema/NewFieldTemplate]})
 

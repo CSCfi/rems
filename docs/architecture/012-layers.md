@@ -124,3 +124,20 @@ Notable pieces of code that don't fit into the API-Services-DB layering (and don
 - Database migrations (`rems.migrations.*`)
 - Supporting API implementation like `rems.auth.*`, `rems.middleware`
   etc.
+
+## Amendment: Schemas
+
+Date: 2021-02-15
+Authors: @opqdonut @Macroz
+
+This layering should also apply to schemas. We want to make it
+possible to separate DB schemas from API schemas, and make it apparent
+when they are shared.
+
+In particular:
+
+- `rems.api.schema` should only be used from `rems.api.*` namespaces. It should be used for common schema fragments that many APIs share. Also big or important schemas can live in `rems.api.schema` for discoverability.
+- `rems.api.*` namespaces that define APIs can also contain schemas for those APIs, if the schemas don't need to be shared.
+- `rems.schema-base` contains common schemas that can be used everywhere.
+- `rems.schema-base` and `rems.api.schema` shouldn't depend on any api, db or service components.
+- Schemas used for JSON in the DB should be in `rems.schema-base` or the `rems.db.*` namespace for that feature.

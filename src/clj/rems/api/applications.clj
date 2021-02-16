@@ -21,6 +21,7 @@
             [rems.db.users :as users]
             [rems.experimental.pdf :as experimental-pdf]
             [rems.pdf :as pdf]
+            [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
@@ -39,16 +40,16 @@
          (s/optional-key :application-id) s/Int))
 
 (s/defschema Applicant
-  schema/UserWithAttributes)
+  schema-base/UserWithAttributes)
 
 (s/defschema Reviewer
-  schema/UserWithAttributes)
+  schema-base/UserWithAttributes)
 
 (s/defschema Reviewers
   [Reviewer])
 
 (s/defschema Decider
-  schema/UserWithAttributes)
+  schema-base/UserWithAttributes)
 
 (s/defschema Deciders
   [Decider])

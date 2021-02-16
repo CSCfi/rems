@@ -15,7 +15,7 @@
   {:userid schema-base/UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organizations) [schema/OrganizationId]
+   (s/optional-key :organizations) [schema-base/OrganizationId]
    s/Keyword s/Any})
 
 (def users-api
@@ -33,5 +33,5 @@
     (GET "/active" []
       :summary "List active users"
       :roles #{:owner}
-      :return [schema/UserWithAttributes]
+      :return [schema-base/UserWithAttributes]
       (ok (middleware/get-active-users)))))
