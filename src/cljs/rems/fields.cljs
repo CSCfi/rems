@@ -463,7 +463,12 @@
                                                      :rows (table-from-backend (:field/value field))}])
    [table-view {:id (field-name field)
                 :columns (:field/columns field)
-                :rows (table-from-backend (:field/value field))
+                :rows (let [rows (table-from-backend (:field/value field))]
+                        ;; always show at least one row for a required field
+                        (if (and (not (:field/optional field))
+                                 (empty? rows))
+                          [(zipmap (mapv :key (:field/columns field)) (repeat ""))]
+                          rows))
                 :on-change #(on-change (table-to-backend %))}]])
 
 (defn unsupported-field
