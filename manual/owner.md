@@ -26,7 +26,7 @@ When you add resources to REMS, you have to create:
 and combine these items together by **creating a catalogue item**.
 
 Having separate items increases flexibility and reduces manual work because when you have created the items once, you can reuse them and form new catalogue items by combining different items.
-  
+
 You have to **connect each item you create to an organisation**. You can use the **default organisation** for all the items. If your organisation has many departments or faculties that have their own resources, we recommend creating separate organisations for each department.
 
 ![Owner process](img/rems_owner.png)
@@ -55,6 +55,7 @@ Application forms are totally customisable. You can create different fields, suc
 **Application title**: Use this field if you want the applicants to provide a name for their application.
 **Option list**: Use option list if you want the applicant to choose one of the given options. ID-code is the identifier for the option. It is shown, for example in the reports, but the applicant will only see the label fields. For example: You can put “Y” as an ID-code for Yes-option and “N” for No-option.
 **Multi-select list**: Use a multi-select list if you want the applicant to choose one or more of the given options.
+**Table**: You choose a set of columns for the table. The applicant can add as many rows as they wish. All columns are required for each row. You can require the applicant to fill in at least one row, if you wish.
 **Email address**: Email address field will validate the email the applicant has provided.
 **Attachment**: Applicant can add one or multiple attachments.
 **Label**: Use labels as descriptive texts if you want to give the applicant additional information, such as instructions, regarding some field.
@@ -68,13 +69,13 @@ Placeholder texts: It is possible to add placeholder text to most of the fields.
 
 :point_up: Pro tip: If you have already created application forms before, you can use an old form as a template by navigating to Administration>Forms and selecting a form and **Copy as new**.
 
-#### Creating optional fields
+#### Creating conditional fields
 
 You can create fields that are hidden or shown to the applicant depending on their answers.
 
 For example, you can create an option list “Do you want to add attachments?” Yes - No. If the applicant chooses “Yes” the attachment field is shown to the applicant. If they choose “No” they will not see the attachment field.
 
-:exclamation: Note! Optional fields only work with Option list.
+:exclamation: Note! Conditional fields only work with Option list.
 
 1. Create an **Option list** and fill in the options
 ![Option list](img/optionlist1.png) ![Option list](img/optionlist2.png)
@@ -83,7 +84,7 @@ For example, you can create an option list “Do you want to add attachments?”
 3. In the another field, select Visible>Only if
 ![Option list](img/optionlist4.png)
 4. Field: Locate the Option list you created earlier from the drop-down list
-5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses Yes-option in the Field 1. "Do you want to add attachments?".  
+5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses Yes-option in the Field 1. "Do you want to add attachments?".
 ![Option list](img/optionlist5.png)
 
 You can test how the fields work on the Preview-section on the right of the page
@@ -106,7 +107,7 @@ Assign handlers for a workflow by searching the user by their username or locati
 
 Handlers do not get notified when they have been assigned as a handler but they receive emails about new applications.
 
-:exclamation: Note! After saving a workflow, you cannot edit anything else than its name, organization and the handlers.  
+:exclamation: Note! After saving a workflow, you cannot edit anything else than its name, organization and the handlers.
 
 #### Adding a form to a workflow
 
@@ -126,7 +127,7 @@ The applicant will see the application forms in two parts: one form that has the
 You can create three types of licenses:
 
 - **External link**: Provide a link to an external page with terms of use. Use links, for example, when you want to license your resources using standardised licenses, such as [Creative Commons](https://creativecommons.org/choose/?lang=en).
-- **Inline text**: Write the terms of use in the application form. The applicant will see it as normal text in the application form.  
+- **Inline text**: Write the terms of use in the application form. The applicant will see it as normal text in the application form.
 - **Attachment**: Upload a license file. We recommed using PDF-format.
 
 Licences are optional.
@@ -194,7 +195,7 @@ Handlers are warned if the catalogue item the applicant has applied for access, 
 
 Organisations are useful if your organisation has for example multiple departments that have their own resources.
 
-1. Give your organisation an ID. ID is needed when you use REMS API. A good ID is short but recognisable, for example for the organisation CSC – IT Center for Science, it would be “csc”.  
+1. Give your organisation an ID. ID is needed when you use REMS API. A good ID is short but recognisable, for example for the organisation CSC – IT Center for Science, it would be “csc”.
 2. Give your organisation a short name. This is shown in the list view. This should be a recognisable abbreviation of your organisation’s name. For example, for the organisation CSC – IT Center for Science, it would be “CSC”.
 3. Give your organisation’s full name in the **Title** field. For example, for the organisation CSC – IT Center for Science, it would be “CSC – IT Center for Science”.
 4. Assign organisation owners to manage organisations’ resources. Organisation owners can only create and edit resources in the organisations they are owners of.
