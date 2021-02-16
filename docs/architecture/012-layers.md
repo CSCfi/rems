@@ -136,7 +136,7 @@ when they are shared.
 
 In particular:
 
-- `rems.api.schema` should only be used from `rems.api.*` namespaces. It should be used for common schema fragments that many APIs share. Also big or importat schemas can live in `rems.api.schema` for discoverability.
+- `rems.api.schema` should only be used from `rems.api.*` namespaces. It should be used for common schema fragments that many APIs share. Also big or important schemas can live in `rems.api.schema` for discoverability.
 - `rems.api.*` namespaces that define APIs can also contain schemas for those APIs, if the schemas don't need to be shared.
 - `rems.schema-base` contains common schemas that can be used everywhere.
 - `rems.schema-base` and `rems.api.schema` shouldn't depend on any api, db or service components.
