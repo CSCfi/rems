@@ -270,7 +270,10 @@
                                      :form/external-title {:en "Foo" :fi ""}} [:en :fi])))
   (is (= nil
          (validate-form-name-fields {:form/internal-name "foo"
-                                     :form/external-title {:en "Foo" :fi "Foo"}} [:en :fi]))))
+                                     :form/external-title {:en "Foo" :fi "Foo"}} [:en :fi])))
+  (is (= nil
+         (validate-form-name-fields {:form/title "Foo"} [:en :fi]))
+      "deprecated but still ok"))
 
 (defn validate-form-template [form languages]
   (-> (merge (validate-organization-field form)
