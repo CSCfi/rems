@@ -442,10 +442,8 @@
    to
      [{\"a\" \"x\", \"b\" \"y\"}]"
   [value]
-  (if (= value "")
-    []
-    (vec (for [row value]
-           (build-index {:keys [:column] :value-fn :value} row)))))
+  (vec (for [row value]
+         (build-index {:keys [:column] :value-fn :value} row))))
 
 (defn- table-to-backend
   "Inverse of table-from-backend"

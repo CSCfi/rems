@@ -6,8 +6,7 @@
 
 (defn- all-columns-set? [field]
   (let [valid-row? #(not-any? str/blank? (map :value %))]
-    (or (= "" (:field/value field)) ; need to tolerate the default value
-        (every? valid-row? (:field/value field)))))
+    (every? valid-row? (:field/value field))))
 
 (defn- required-error [field]
   (case (:field/type field)
@@ -21,8 +20,7 @@
                 (empty? (:field/value field)))
        {:field-id (:field/id field)
         :type     :t.form.validation/required})
-     ;; all tables must have all columns set for all fields
-     ;; TODO consider pointing out the column
+     ;; all tables must have all columns set for all rows
      (when (not (all-columns-set? field))
        {:field-id (:field/id field)
         :type     :t.form.validation/column-values-missing}))
@@ -62,12 +60,9 @@
           row-ok? (fn [row] (= columns (set (map :column row))))
           value (:field/value field)]
       ;; Schema validation guarantees that it's either a s/Str or
-      ;; a [[{:column s/Str :value s/Str}]] so we don't need to check
-      ;; the shape of the data here. However, the default value
-      ;; for :field/value is "", which we do need to tolerate.
-      (when (or (and (string? value)
-                     (not (str/blank? value)))
-                (not (every? row-ok? (:field/value field))))
+      ;; a [[{:column s/Str :value s/Str}]], and we've ruled out s/Str
+      ;; in wrong-value-type-error
+      (when (not (every? row-ok? (:field/value field)))
         ;; TODO more specific error?
         {:field-id (:field/id field)
          :type     :t.form.validation/invalid-value}))))
@@ -83,9 +78,7 @@
   (let [value (:field/value field)]
     (case (:field/type field)
       :table
-      (when-not (or (= "" value)
-                    (nil? value)
-                    (sequential? value))
+      (when-not (sequential? value)
         {:field-id (:field/id field)
          :type :t.form.validation/invalid-value})
 

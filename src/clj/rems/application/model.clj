@@ -408,10 +408,16 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
+(defn- add-default-value [field]
+  (assoc field :field/value
+         (case (:field/type field)
+           :table []
+           ;; default
+           "")))
+
 (defn- enrich-form [form get-form-template]
   (let [form-template (get-form-template (:form/id form))
-        default-fields (map #(assoc % :field/value "") ;; TODO the default of "" is bad for tables
-                            (:form/fields form-template))
+        default-fields (map add-default-value (:form/fields form-template))
         fields (merge-lists-by :field/id
                                default-fields
                                (:form/fields form))]
@@ -694,6 +700,8 @@
     (assoc field :field/private false)
     (-> field
         (assoc :field/private true)
+        ;; TODO "" for table is technically wrong, but doesn't matter
+        ;; in practice since the field isn't rendered in the UI
         (update-existing :field/value (constantly ""))
         (update-existing :field/previous-value (constantly "")))))
 

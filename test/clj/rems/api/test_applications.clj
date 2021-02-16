@@ -863,6 +863,10 @@
         user-id "alice"
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                   :actor user-id})]
+    (testing "default values"
+      (let [app (get-application-for-user app-id user-id)]
+        (is (= [] (get-in app [:application/forms 0 :form/fields 0 :field/value])))
+        (is (= [] (get-in app [:application/forms 0 :form/fields 1 :field/value])))))
     (testing "save a draft"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
