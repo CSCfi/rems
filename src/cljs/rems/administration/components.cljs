@@ -111,17 +111,20 @@
 
 (defn checkbox
   "A single checkbox, on its own line."
-  [context {:keys [keys label]}]
+  [context {:keys [keys label negate?]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        val-fn (if negate?
+                 (comp not boolean)
+                 boolean)
         id (keys-to-id keys)]
     [:div.form-group.field
      [:div.form-check
       [:input.form-check-input {:id id
                                 :type "checkbox"
-                                :checked (boolean (get-in form keys))
+                                :checked (val-fn (get-in form keys))
                                 :on-change #(rf/dispatch [(:update-form context)
                                                           keys
-                                                          (.. % -target -checked)])}]
+                                                          (val-fn (.. % -target -checked))])}]
       [:label.form-check-label {:for id}
        label]]]))
 

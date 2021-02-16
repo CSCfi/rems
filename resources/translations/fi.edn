@@ -253,6 +253,7 @@
                 :placeholder "Esimerkkiteksti (valinnainen)"
                 :privacy {:private "Salainen"
                           :public "Julkinen"}
+                :required-table "Vaadi vähintään yksi rivi"
                 :title "Lomakkeen nimi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
