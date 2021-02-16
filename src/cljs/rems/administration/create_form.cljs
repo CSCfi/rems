@@ -598,6 +598,17 @@
                       (for [[lang error] (:label option-errors)]
                         (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
                                                 (text-format error (str (text :t.create-form/option-label)
+                                                                        " (" (.toUpperCase (name lang)) ")")))))]])
+            (for [[column-id column-errors] (into (sorted-map) (:field/columns field-errors))]
+              [:li (text-format :t.create-form/column-n (inc column-id))
+               [:ul
+                (when (:key column-errors)
+                  (format-validation-link (str "fields-" field-index "-column-" column-id "-key")
+                                          (text-format (:key column-errors) (text :t.create-form/option-key))))
+                (into [:<>]
+                      (for [[lang error] (:label column-errors)]
+                        (format-validation-link (str "fields-" field-index "-column-" column-id "-label-" (name lang))
+                                                (text-format error (str (text :t.create-form/option-label)
                                                                         " (" (.toUpperCase (name lang)) ")")))))]])))]))
 
 (defn format-validation-errors [form-errors form lang]
