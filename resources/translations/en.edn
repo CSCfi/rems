@@ -278,6 +278,7 @@
                 :placeholder "Placeholder text (optional)"
                 :privacy {:private "Private"
                           :public "Public"}
+                :required-table "Require at least one row"
                 :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"

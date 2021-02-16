@@ -515,9 +515,14 @@
                                          {:value :label :label (text :t.create-form/type-label)}
                                          {:value :header :label (text :t.create-form/type-header)}]}])
 
-(defn- form-field-optional-checkbox [field-index]
-  [checkbox context {:keys [:form/fields field-index :field/optional]
+(defn- form-field-optional-checkbox [field]
+  [checkbox context {:keys [:form/fields (:field/index field) :field/optional]
                      :label (text :t.create-form/optional)}])
+
+(defn- form-field-table-optional-checkbox [field]
+  [checkbox context {:keys [:form/fields (:field/index field) :field/optional]
+                     :negate? true
+                     :label (text :t.create-form/required-table)}])
 
 (defn- add-form-field-button [index]
   [:a.add-form-field {:href "#"
@@ -640,7 +645,9 @@
             (when (common-form/supports-info-text? field)
               [form-field-info-text index])
             (when (common-form/supports-optional? field)
-              [form-field-optional-checkbox index])
+              (if (= :table (:field/type field))
+                [form-field-table-optional-checkbox field]
+                [form-field-optional-checkbox field]))
             (when (common-form/supports-placeholder? field)
               [form-field-placeholder-field index])
             (when (common-form/supports-max-length? field)

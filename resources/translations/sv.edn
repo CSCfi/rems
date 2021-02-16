@@ -253,6 +253,7 @@
                 :placeholder "Exempel (valfritt)"
                 :privacy {:private "Privat"
                           :public "Publikt"}
+                :required-table "Kräver minst en rad" ; TODO check
                 :title "Blankettens namn"
                 :type-attachment "Bilaga"
                 :type-date "Datum"
