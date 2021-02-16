@@ -117,8 +117,13 @@
        (validate-fields)
        (json/generate-string)))
 
-(defn- serialize-formdata [form]
-  (json/generate-string form))
+(def ^:private validate-formdata
+  (s/validator FormData))
+
+(defn- serialize-formdata [formdata]
+  (-> formdata
+      validate-formdata
+      json/generate-string))
 
 (defn save-form-template! [user-id form]
   (:id (db/save-form-template! {:organization (:organization/id (:organization form))
