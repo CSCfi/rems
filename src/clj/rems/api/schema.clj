@@ -160,10 +160,6 @@
          :field/private s/Bool
          (s/optional-key :field/previous-value) schema-base/FieldValue))
 
-(s/defschema FormData
-  {:form/internal-name s/Str
-   :form/external-title schema-base/LocalizedString})
-
 (s/defschema FormTemplate
   {:form/id s/Int
    :organization schema-base/OrganizationOverview

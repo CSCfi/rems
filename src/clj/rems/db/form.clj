@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [map-keys filter-vals remove-keys]]
             [rems.api.schema :as schema]
+            [rems.schema-base :as schema-base]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.db.core :as db]
@@ -16,8 +17,12 @@
 (defn- deserialize-fields [fields-json]
   (coerce-fields (json/parse-string fields-json)))
 
+(s/defschema FormData
+  {:form/internal-name s/Str
+   :form/external-title schema-base/LocalizedString})
+
 (def ^:private coerce-formdata
-  (coerce/coercer! schema/FormData coerce/string-coercion-matcher))
+  (coerce/coercer! FormData coerce/string-coercion-matcher))
 
 (defn- deserialize-formdata [row]
   (merge (dissoc row :formdata)
