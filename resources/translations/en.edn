@@ -280,6 +280,7 @@
                 :placeholder "Placeholder text (optional)"
                 :privacy {:private "Private"
                           :public "Public"}
+                :required-table "Require at least one row"
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Application title"
@@ -428,7 +429,8 @@
          :upload "Upload an attachment"
          :upload-extensions "Allowed file types"
          ;; %1 - field name
-         :validation {:invalid-email "Invalid email address."
+         :validation {:column-values-missing "All columns must have values."
+                      :invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."

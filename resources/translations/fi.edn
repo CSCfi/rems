@@ -255,6 +255,7 @@
                 :placeholder "Esimerkkiteksti (valinnainen)"
                 :privacy {:private "Salainen"
                           :public "Julkinen"}
+                :required-table "Vaadi vähintään yksi rivi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Hakemuksen otsikko"
@@ -385,7 +386,8 @@
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
          :upload-extensions "Sallitut tiedostomuodot"
-         :validation {:invalid-email "Sähköpostiosoite ei kelpaa."
+         :validation {:column-values-missing "Kaikki sarakkeet on täytettävä."
+                      :invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."

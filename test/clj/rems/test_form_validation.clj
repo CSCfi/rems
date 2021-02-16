@@ -172,16 +172,19 @@
                    :field/optional true
                    :field/columns [{:key "col1"} {:key "col2"}]}]]
       (testing "optional"
-        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] ""))))
         (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] []))))
-        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}]])))))
+        (is (nil? (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
+                                                                                  {:column "col2" :value "2"}]
+                                                                                 [{:column "col1" :value "1"}
+                                                                                  {:column "col2" :value "2"}]])))))
       (testing "required"
         (let [required (assoc-in fields [0 :field/optional] false)]
           (is (= [{:field-id "tbl", :type :t.form.validation/required}]
                  (validate-fields-for-submit (assoc-in required [0 :field/value] ""))))
           (is (= [{:field-id "tbl", :type :t.form.validation/required}]
                  (validate-fields-for-submit (assoc-in required [0 :field/value] []))))
-          (is (nil? (validate-fields-for-submit (assoc-in required [0 :field/value] [[{:column "col1" :value "1"}]])))))))))
+          (is (nil? (validate-fields-for-submit (assoc-in required [0 :field/value] [[{:column "col1" :value "1"}
+                                                                                      {:column "col2" :value "2"}]])))))))))
 
 (deftest test-validate-fields-for-draft
   (testing "required fields do not need to be filled at draft stage"
@@ -357,9 +360,7 @@
                    :field/optional true
                    :field/columns [{:key "col1"} {:key "col2"}]}]]
       (testing "valid cases"
-        (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] ""))))
         (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] []))))
-        (is (nil? (validate-fields-for-draft (assoc-in fields [0 :field/value] [[]]))))
         (is (nil? (validate-fields-for-draft
                    (assoc-in fields [0 :field/value] [[{:column "col1" :value "val11"} {:column "col2" :value "val21"}]
                                                       [{:column "col1" :value "val12"} {:column "col2" :value "val22"}]])))))
@@ -367,9 +368,28 @@
         ;; we don't need to test cases here that violate the Field
         ;; schema, schema checking catches those
         (is (= [{:field-id "tbl", :type :t.form.validation/invalid-value}]
-               (validate-fields-for-draft (assoc-in fields [0 :field/value] "string"))
+               (validate-fields-for-draft (assoc-in fields [0 :field/value] ""))))
+        (is (= [{:field-id "tbl", :type :t.form.validation/invalid-value}]
+               (validate-fields-for-draft (assoc-in fields [0 :field/value] "string"))))
+        (is (= [{:field-id "tbl", :type :t.form.validation/invalid-value}]
                (validate-fields-for-draft
                 (assoc-in fields [0 :field/value] [[{:column "colx" :value "val22"}]]))
                (validate-fields-for-draft
                 (assoc-in fields [0 :field/value] [[{:column "col1" :value "val11"} {:column "col2" :value "val21"}]
-                                                   [{:column "col1" :value "val12"} {:column "colx" :value "val22"}]]))))))))
+                                                   [{:column "col1" :value "val12"} {:column "colx" :value "val22"}]])))
+            "unknown columns")
+        (is (= [{:field-id "tbl", :type :t.form.validation/invalid-value}]
+               (validate-fields-for-draft (assoc-in fields [0 :field/value] [[]]))
+               (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}]]))
+               (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
+                                                                               {:column "col2" :value "1"}
+                                                                               {:column "col3" :value "1"}]])))
+            "missing columns")
+        (is (= [{:field-id "tbl", :type :t.form.validation/column-values-missing}]
+               (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
+                                                                               {:column "col2" :value ""}]]))
+               (validate-fields-for-submit (assoc-in fields [0 :field/value] [[{:column "col1" :value "1"}
+                                                                               {:column "col2" :value "2"}]
+                                                                              [{:column "col1" :value ""}
+                                                                               {:column "col2" :value "2"}]])))
+            "empty column values")))))

@@ -5,6 +5,7 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.json-schema :as rjs]
@@ -18,7 +19,7 @@
    (s/optional-key :attachment-id) (rjs/describe (s/maybe s/Int) "For licenses of type attachment")})
 
 (s/defschema LicenseLocalizations
-  (rjs/field {schema/Language LicenseLocalization}
+  (rjs/field {schema-base/Language LicenseLocalization}
              {:description "Licence localizations keyed by language"
               :example {:en {:title "English title"
                              :textcontent "English content"}
@@ -27,7 +28,7 @@
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
-   :organization schema/OrganizationId
+   :organization schema-base/OrganizationId
    :localizations LicenseLocalizations})
 
 (s/defschema AttachmentMetadata

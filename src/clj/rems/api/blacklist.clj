@@ -22,7 +22,7 @@
 (s/defschema BlacklistEntryWithDetails
   (assoc schema/BlacklistEntry
          :blacklist/comment s/Str
-         :blacklist/added-by schema/UserWithAttributes
+         :blacklist/added-by schema-base/UserWithAttributes
          :blacklist/added-at DateTime))
 
 (defn- format-blacklist-entry [entry]
@@ -50,7 +50,7 @@
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
       :roles  #{:owner :handler}
-      :return [schema/UserWithAttributes]
+      :return [schema-base/UserWithAttributes]
       (ok (users/get-users)))
 
     ;; TODO write access to blacklist for organization-owner

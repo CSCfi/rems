@@ -6,49 +6,6 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(s/defschema Language
-  (rjs/field s/Keyword
-             {:description "A language code"
-              :example "en"}))
-
-(s/defschema LocalizedString
-  (rjs/field {Language s/Str}
-             {:example {:fi "text in Finnish"
-                        :en "text in English"}
-              :description "Text values keyed by languages"}))
-
-(s/defschema LocalizedInt
-  (rjs/field {Language s/Int}
-             {:example {:fi 1
-                        :en 2}
-              :description "Integers keyed by languages"}))
-
-(s/defschema OrganizationId {:organization/id s/Str})
-
-(s/defschema UserWithAttributes
-  {:userid schema-base/UserId
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)
-   (s/optional-key :organizations) [OrganizationId]
-   (s/optional-key :notification-email) (s/maybe s/Str)
-   (s/optional-key :researcher-status-by) s/Str
-   s/Keyword s/Any})
-
-(s/defschema OrganizationOverview
-  (merge OrganizationId
-         {:organization/short-name LocalizedString
-          :organization/name LocalizedString}))
-
-(s/defschema OrganizationFull
-  (merge OrganizationOverview
-         {(s/optional-key :organization/modifier) UserWithAttributes
-          (s/optional-key :organization/last-modified) DateTime
-          (s/optional-key :organization/owners) [UserWithAttributes]
-          (s/optional-key :organization/review-emails) [{:name LocalizedString
-                                                         :email s/Str}]
-          (s/optional-key :enabled) s/Bool
-          (s/optional-key :archived) s/Bool}))
-
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
               ;; fields are redundant. If we remove them we can reuse
@@ -67,7 +24,7 @@
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
-   :organization OrganizationOverview
+   :organization schema-base/OrganizationOverview
    (s/optional-key :resource-name) s/Str
    :start DateTime
    :end (s/maybe DateTime)
@@ -79,7 +36,7 @@
 (s/defschema License
   {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
-   :organization OrganizationOverview
+   :organization schema-base/OrganizationOverview
    :enabled s/Bool
    :archived s/Bool
    :localizations {s/Keyword {:title s/Str
@@ -93,12 +50,12 @@
 
 (s/defschema Event
   (assoc schema-base/EventBase
-         :event/actor-attributes UserWithAttributes
+         :event/actor-attributes schema-base/UserWithAttributes
          s/Keyword s/Any))
 
 (s/defschema Entitlement
   {:resource s/Str
-   :user UserWithAttributes
+   :user schema-base/UserWithAttributes
    :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
@@ -122,11 +79,11 @@
    :archived s/Bool})
 
 (s/defschema OrganizationEnabledCommand
-  (merge OrganizationId
+  (merge schema-base/OrganizationId
          {:enabled s/Bool}))
 
 (s/defschema OrganizationArchivedCommand
-  (merge OrganizationId
+  (merge schema-base/OrganizationId
          {:archived s/Bool}))
 
 (s/defschema SuccessResponse
@@ -137,8 +94,8 @@
   {:resource/id s/Int
    :resource/ext-id s/Str
    :catalogue-item/id s/Int
-   :catalogue-item/title LocalizedString
-   :catalogue-item/infourl LocalizedString
+   :catalogue-item/title schema-base/LocalizedString
+   :catalogue-item/infourl schema-base/LocalizedString
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
@@ -148,17 +105,17 @@
 (s/defschema V2License
   {:license/id s/Int
    :license/type (s/enum :text :link :attachment)
-   :license/title LocalizedString
-   (s/optional-key :license/link) LocalizedString
-   (s/optional-key :license/text) LocalizedString
-   (s/optional-key :license/attachment-id) LocalizedInt
-   (s/optional-key :license/attachment-filename) LocalizedString
+   :license/title schema-base/LocalizedString
+   (s/optional-key :license/link) schema-base/LocalizedString
+   (s/optional-key :license/text) schema-base/LocalizedString
+   (s/optional-key :license/attachment-id) schema-base/LocalizedInt
+   (s/optional-key :license/attachment-filename) schema-base/LocalizedString
    :license/enabled s/Bool
    :license/archived s/Bool})
 
 (s/defschema Workflow
   {:id s/Int
-   :organization OrganizationOverview
+   :organization schema-base/OrganizationOverview
    :owneruserid schema-base/UserId
    :modifieruserid schema-base/UserId
    :title s/Str
@@ -173,13 +130,13 @@
 (s/defschema FieldTemplate
   {:field/id schema-base/FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta :table)
-   :field/title LocalizedString
-   (s/optional-key :field/placeholder) LocalizedString
+   :field/title schema-base/LocalizedString
+   (s/optional-key :field/placeholder) schema-base/LocalizedString
    :field/optional s/Bool
    (s/optional-key :field/options) [{:key s/Str
-                                     :label LocalizedString}]
+                                     :label schema-base/LocalizedString}]
    (s/optional-key :field/columns) [{:key s/Str
-                                     :label LocalizedString}]
+                                     :label schema-base/LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/privacy) (rjs/field
                                     (s/enum :public :private)
@@ -189,7 +146,7 @@
                                         (s/optional-key :visibility/field) {:field/id schema-base/FieldId}
                                         (s/optional-key :visibility/values) [s/Str]}
                                        {:description "Always visible by default"})
-   (s/optional-key :field/info-text) LocalizedString})
+   (s/optional-key :field/info-text) schema-base/LocalizedString})
 
 (s/defschema NewFieldTemplate
   (-> FieldTemplate
@@ -205,17 +162,17 @@
 
 (s/defschema FormData
   {:form/internal-name s/Str
-   :form/external-title LocalizedString})
+   :form/external-title schema-base/LocalizedString})
 
 (s/defschema FormTemplate
   {:form/id s/Int
-   :organization OrganizationOverview
+   :organization schema-base/OrganizationOverview
    (s/optional-key :form/title) (rjs/field s/Str
                                            {:deprecate true
                                             :description "DEPRECATED, will disappear, use either internal name or external title as you need"})
    :form/internal-name (rjs/field s/Str
                                   {:description "The internal name of the form only visible to the administration."})
-   :form/external-title (rjs/field LocalizedString
+   :form/external-title (rjs/field schema-base/LocalizedString
                                    {:description "The title of the form used publicly in the application."})
    :form/fields [FieldTemplate]
    (s/optional-key :form/errors) (s/maybe {(s/optional-key :organization) s/Any
@@ -237,7 +194,7 @@
                                            {:deprecate true
                                             :description "DEPRECATED, will disappear, use either internal name or external title as you need"})
    :form/internal-name s/Str
-   :form/external-title LocalizedString
+   :form/external-title schema-base/LocalizedString
    :form/fields [Field]})
 
 (s/defschema ApplicationAttachment
@@ -246,14 +203,14 @@
    :attachment/type s/Str})
 
 (s/defschema BlacklistEntry
-  {:blacklist/user UserWithAttributes
+  {:blacklist/user schema-base/UserWithAttributes
    :blacklist/resource {:resource/ext-id s/Str}})
 
 (s/defschema Blacklist
   [BlacklistEntry])
 
 (s/defschema Handler
-  (assoc UserWithAttributes
+  (assoc schema-base/UserWithAttributes
          (s/optional-key :handler/active?) s/Bool))
 
 (s/defschema Permissions
@@ -283,8 +240,8 @@
    (s/optional-key :application/copied-to) [{:application/id s/Int
                                              :application/external-id s/Str}]
    :application/last-activity DateTime
-   :application/applicant UserWithAttributes
-   :application/members #{UserWithAttributes}
+   :application/applicant schema-base/UserWithAttributes
+   :application/members #{schema-base/UserWithAttributes}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    (s/optional-key :application/blacklist) (rjs/field

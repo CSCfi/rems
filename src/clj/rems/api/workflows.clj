@@ -11,7 +11,7 @@
             [schema.core :as s]))
 
 (s/defschema CreateWorkflowCommand
-  {:organization schema/OrganizationId
+  {:organization schema-base/OrganizationId
    :title s/Str
    (s/optional-key :forms) [{:form/id s/Int}]
    :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
@@ -19,7 +19,7 @@
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
-   (s/optional-key :organization) schema/OrganizationId
+   (s/optional-key :organization) schema-base/OrganizationId
    ;; type can't change
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [schema-base/UserId]})
@@ -30,7 +30,7 @@
    (s/optional-key :errors) [s/Any]})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(s/defschema AvailableActor schema/UserWithAttributes)
+(s/defschema AvailableActor schema-base/UserWithAttributes)
 (s/defschema AvailableActors [AvailableActor])
 
 (def workflows-api
