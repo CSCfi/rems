@@ -429,6 +429,7 @@
          :upload-extensions "Allowed file types"
          ;; %1 - field name
          :validation {:column-values-missing "All columns must have values."
+                      :columns-required "At least one column is required."
                       :invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."

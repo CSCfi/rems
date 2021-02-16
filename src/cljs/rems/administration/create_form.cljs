@@ -341,6 +341,7 @@
 
 (defn- add-form-field-column-button [field-index]
   [:a.add-option {:href "#"
+                  :id (str "fields-" field-index "-add-column")
                   :on-click (fn [event]
                               (.preventDefault event)
                               (rf/dispatch [::add-form-field-column field-index]))}
@@ -371,11 +372,12 @@
 
 (defn- form-field-column-fields [field-index]
   (let [form @(rf/subscribe [::form-data])]
-    (into (into [:div]
-                (for [column-index (range (count (get-in form [:form/fields field-index :field/columns])))]
-                  [form-field-column-field field-index column-index]))
-          [[:div.form-field-option.new-form-field-option
-            [add-form-field-column-button field-index]]])))
+    (into [:div {:id (str "fields-" field-index "-columns")}]
+          (concat
+           (for [column-index (range (count (get-in form [:form/fields field-index :field/columns])))]
+             [form-field-column-field field-index column-index])
+           [[:div.form-field-option.new-form-field-option
+             [add-form-field-column-button field-index]]]))))
 
 (defn- form-fields-that-can-be-used-in-visibility [form]
   (filter #(contains? {:option :multiselect} (:field/type %))
@@ -599,17 +601,21 @@
                         (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
                                                 (text-format error (str (text :t.create-form/option-label)
                                                                         " (" (.toUpperCase (name lang)) ")")))))]])
-            (for [[column-id column-errors] (into (sorted-map) (:field/columns field-errors))]
-              [:li (text-format :t.create-form/column-n (inc column-id))
-               [:ul
-                (when (:key column-errors)
-                  (format-validation-link (str "fields-" field-index "-column-" column-id "-key")
-                                          (text-format (:key column-errors) (text :t.create-form/option-key))))
-                (into [:<>]
-                      (for [[lang error] (:label column-errors)]
-                        (format-validation-link (str "fields-" field-index "-column-" column-id "-label-" (name lang))
-                                                (text-format error (str (text :t.create-form/option-label)
-                                                                        " (" (.toUpperCase (name lang)) ")")))))]])))]))
+            (if (= :t.form.validation/columns-required (:field/columns field-errors))
+              [[:li
+                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-column"))}
+                 (text :t.form.validation/columns-required)]]]
+              (for [[column-id column-errors] (into (sorted-map) (:field/columns field-errors))]
+                [:li (text-format :t.create-form/column-n (inc column-id))
+                 [:ul
+                  (when (:key column-errors)
+                    (format-validation-link (str "fields-" field-index "-column-" column-id "-key")
+                                            (text-format (:key column-errors) (text :t.create-form/option-key))))
+                  (into [:<>]
+                        (for [[lang error] (:label column-errors)]
+                          (format-validation-link (str "fields-" field-index "-column-" column-id "-label-" (name lang))
+                                                  (text-format error (str (text :t.create-form/option-label)
+                                                                          " (" (.toUpperCase (name lang)) ")")))))]]))))]))
 
 (defn format-validation-errors [form-errors form lang]
   ;; TODO: deduplicate with field definitions
