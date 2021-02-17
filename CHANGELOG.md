@@ -8,14 +8,14 @@ have notable changes.
 
 Changes since v2.16
 
-NB: This release contains migrations!
+**NB: This release contains migrations!**
 
 ### Breaking changes
 - A new form field type "table" is now available. A table has a predefined set of columns, and applicants can fill in as many rows as they wish. **You can not roll back to an earlier release once your database contains applications with filled-in table fields. You will need to fix the database manually.** (#2551)
 
 ### Changes
 - Forms now have both an internal name as well as a localized title instead of the non-localized title. (#2066)
-  - The old style form titles are now deprecated in the API and a migration copies the title to the internal name. *Please, check and optionally change the form titles after the migration!*
+  - The old style form titles are now deprecated in the API and a migration copies the title to the internal name. **Please, check and optionally change the form titles after the migration!**
   - Prefer the new `internal-name` or `external-title` fields instead.
   - The external title is shown to applicants in the application and internal name used throughout the administration.
   - The API supports the old style for now.
