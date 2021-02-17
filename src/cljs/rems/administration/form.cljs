@@ -1,5 +1,6 @@
 (ns rems.administration.form
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview format-validation-errors]]
@@ -66,10 +67,14 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (get-in form [:organization :organization/short-name language]) "/") (:form/title form)]
+     :title [:span (andstr (get-in form [:organization :organization/short-name language]) "/") (:form/internal-name form)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (get-in form [:organization :organization/name language])]
-              [inline-info-field (text :t.administration/title) (:form/title form)]
+              [inline-info-field (text :t.administration/internal-name) (get-in form [:form/internal-name])]
+              (for [[langcode title] (:form/external-title form)]
+                [inline-info-field (str (text :t.administration/external-title)
+                                        " (" (str/upper-case (name langcode)) ")")
+                 title])
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
      [:div.col.commands

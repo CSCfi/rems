@@ -66,7 +66,7 @@
               [inline-info-field (text :t.administration/forms)
                (into [:ul.list-group]
                      (for [form (get-in workflow [:workflow :forms])]
-                       [:li.list-group-item [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/title form)]]))
+                       [:li.list-group-item [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/internal-name form)]]))
                {:box? false}]]}]
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]

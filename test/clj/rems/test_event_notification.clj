@@ -60,7 +60,10 @@
                                              :body
                                              (get "content")
                                              json/parse-string)}))
-            form-id (test-helpers/create-form! {:form/title "notifications"
+            form-id (test-helpers/create-form! {:form/internal-name "notifications"
+                                                :form/external-title {:en "Notifications EN"
+                                                                      :fi "Notifications FI"
+                                                                      :sv "Notifications SV"}
                                                 :form/fields [{:field/type :text
                                                                :field/id "field-1"
                                                                :field/title {:en "text field"
@@ -135,7 +138,10 @@
                                       (get "content")
                                       json/parse-string
                                       (select-keys [:event/id :event/time]))))
-            form-id (test-helpers/create-form! {:form/title "notifications"
+            form-id (test-helpers/create-form! {:form/internal-name "notifications"
+                                                :form/external-title {:en "Notifications EN"
+                                                                      :fi "Notifications FI"
+                                                                      :sv "Notifications SV"}
                                                 :form/fields [{:field/type :text
                                                                :field/id "field-1"
                                                                :field/title {:en "text field"

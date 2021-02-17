@@ -116,6 +116,19 @@
 (defn- validate-localized-text-field [m key languages]
   {key (apply merge (mapv #(validate-text-field (get m key) %) languages))})
 
+(deftest test-validate-localized-text-field
+  (is (= {:foo nil}
+         (validate-localized-text-field {:foo {:fi "FI" :en "EN"}} :foo [:fi :en])))
+  (is (= {:foo {:fi :t.form.validation/required
+                :en :t.form.validation/required}}
+         (validate-localized-text-field {:foo {:fi "" :en ""}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-localized-text-field {:foo {:fi "FI"}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-localized-text-field {:foo {:fi "FI" :en ""}} :foo [:fi :en])))
+  (is (= {:foo {:en :t.form.validation/required}}
+         (validate-localized-text-field {:foo {:fi "FI" :en " "}} :foo [:fi :en]))))
+
 (defn- validate-optional-localized-field [m key languages]
   (let [validated (mapv #(validate-text-field (get m key) %) languages)]
     ;; partial translations are not allowed
@@ -237,9 +250,34 @@
 (defn- raw-answers->formatted [raw-answers]
   (build-index {:keys [:form :field] :value-fn :value} raw-answers))
 
+(defn- validate-form-name-fields [form languages]
+  (-> (if (:form/title form)
+        (validate-text-field form :form/title) ; deprecated
+        (merge (validate-text-field form :form/internal-name)
+               (validate-localized-text-field form :form/external-title languages)))
+      remove-empty-keys
+      nil-if-empty))
+
+(deftest test-validate-form-name-fields
+  (is (= {:form/internal-name :t.form.validation/required
+          :form/external-title {:en :t.form.validation/required
+                                :fi :t.form.validation/required}}
+         (validate-form-name-fields {} [:en :fi])))
+  (is (= {:form/external-title {:fi :t.form.validation/required}}
+         (validate-form-name-fields {:form/internal-name "foo"
+                                     :form/external-title {:en "Foo"}} [:en :fi])
+         (validate-form-name-fields {:form/internal-name "foo"
+                                     :form/external-title {:en "Foo" :fi ""}} [:en :fi])))
+  (is (= nil
+         (validate-form-name-fields {:form/internal-name "foo"
+                                     :form/external-title {:en "Foo" :fi "Foo"}} [:en :fi])))
+  (is (= nil
+         (validate-form-name-fields {:form/title "Foo"} [:en :fi]))
+      "deprecated but still ok"))
+
 (defn validate-form-template [form languages]
   (-> (merge (validate-organization-field form)
-             (validate-text-field form :form/title)
+             (validate-form-name-fields form languages)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
@@ -261,7 +299,9 @@
 
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}
-              :form/title "the title"
+              :form/internal-name "the title"
+              :form/external-title {:en "en title"
+                                    :fi "fi title"}
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
                                            :fi "fi title"}
@@ -282,9 +322,15 @@
              (:organization (validate-form-template (assoc-in form [:organization] nil) languages))
              (:organization (validate-form-template (assoc-in form [:organization :organization/id] "") languages)))))
 
-    (testing "missing title"
+    (testing "missing internal-name"
       (is (= :t.form.validation/required
-             (:form/title (validate-form-template (assoc-in form [:form/title] "") languages)))))
+             (:form/internal-name (validate-form-template (dissoc form :form/internal-name) languages))
+             (:form/internal-name (validate-form-template (assoc-in form [:form/internal-name] "") languages)))))
+
+    (testing "missing external-title"
+      (is (= {:en :t.form.validation/required}
+             (:form/external-title (validate-form-template (assoc-in form [:form/external-title :en] "") languages))
+             (:form/external-title (validate-form-template (update-in form [:form/external-title] dissoc :en) languages)))))
 
     (testing "zero fields is ok"
       (is (empty? (validate-form-template (assoc-in form [:form/fields] []) languages))))

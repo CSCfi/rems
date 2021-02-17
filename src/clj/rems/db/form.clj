@@ -1,7 +1,8 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [medley.core :refer [map-keys filter-vals]]
+            [medley.core :refer [map-keys filter-vals remove-keys]]
             [rems.api.schema :as schema]
+            [rems.schema-base :as schema-base]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.db.core :as db]
@@ -16,15 +17,33 @@
 (defn- deserialize-fields [fields-json]
   (coerce-fields (json/parse-string fields-json)))
 
+(s/defschema FormData
+  {:form/internal-name s/Str
+   :form/external-title schema-base/LocalizedString})
+
+(def ^:private coerce-formdata
+  (coerce/coercer! FormData coerce/string-coercion-matcher))
+
+(defn- deserialize-formdata [row]
+  (merge (dissoc row :formdata)
+         (coerce-formdata (json/parse-string (:formdata row)))))
+
+(defn- add-deprecated-title [row]
+  (assoc row :form/title (:form/internal-name row)))
+
 (defn- parse-db-row [row]
   (-> row
       (update :fields deserialize-fields)
+      deserialize-formdata
       (->> (map-keys {:id :form/id
+                      :form/internal-name :form/internal-name
+                      :form/external-title :form/external-title
                       :organization :organization
-                      :title :form/title
                       :fields :form/fields
                       :enabled :enabled
-                      :archived :archived}))
+                      :archived :archived})
+           (remove-keys nil?))
+      add-deprecated-title
       (update :organization (fn [o] {:organization/id o}))))
 
 (defn- add-validation-errors [template]
@@ -98,15 +117,25 @@
        (validate-fields)
        (json/generate-string)))
 
+(def ^:private validate-formdata
+  (s/validator FormData))
+
+(defn- serialize-formdata [formdata]
+  (-> formdata
+      validate-formdata
+      json/generate-string))
+
 (defn save-form-template! [user-id form]
   (:id (db/save-form-template! {:organization (:organization/id (:organization form))
-                                :title (:form/title form)
+                                :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
+                                                               :form/external-title (:form/external-title form)})
                                 :user user-id
                                 :fields (serialize-fields form)})))
 
 (defn edit-form-template! [user-id form]
   (db/edit-form-template! {:id (:form/id form)
                            :organization (:organization/id (:organization form))
-                           :title (:form/title form)
+                           :formdata (serialize-formdata {:form/internal-name (or (:form/internal-name form) (:form/title form))
+                                                          :form/external-title (:form/external-title form)})
                            :user user-id
                            :fields (serialize-fields form)}))

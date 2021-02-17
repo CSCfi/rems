@@ -27,7 +27,7 @@
    (update db ::catalogue-items (fn [items]
                                   (for [item items]
                                     (if (= (:id item) old-catalogue-item-id)
-                                      (assoc item :id new-catalogue-item-id :formid (:form/id new-form) :form-name (:form/title new-form))
+                                      (assoc item :id new-catalogue-item-id :formid (:form/id new-form) :form-name (:form/internal-name new-form))
                                       item))))))
 
 
@@ -117,7 +117,7 @@
      [dropdown/dropdown {:id :form-dropdown
                          :items @(rf/subscribe [::forms])
                          :item-key :form/id
-                         :item-label :form/title
+                         :item-label :form/internal-name
                          :item-selected? #(= (:form/id %) (:form/id form))
                          :on-change on-change}]]))
 

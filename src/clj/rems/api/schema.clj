@@ -163,10 +163,18 @@
 (s/defschema FormTemplate
   {:form/id s/Int
    :organization schema-base/OrganizationOverview
-   :form/title s/Str
+   (s/optional-key :form/title) (rjs/field s/Str
+                                           {:deprecate true
+                                            :description "DEPRECATED, will disappear, use either internal name or external title as you need"})
+   :form/internal-name (rjs/field s/Str
+                                  {:description "The internal name of the form only visible to the administration."})
+   :form/external-title (rjs/field schema-base/LocalizedString
+                                   {:description "The title of the form used publicly in the application."})
    :form/fields [FieldTemplate]
    (s/optional-key :form/errors) (s/maybe {(s/optional-key :organization) s/Any
                                            (s/optional-key :form/title) s/Any
+                                           (s/optional-key :form/internal-name) s/Any
+                                           (s/optional-key :form/external-title) s/Any
                                            (s/optional-key :form/fields) {s/Num s/Any}})
    ;; TODO: rename the following to use :status/ namespace (also in all other entities)
    :enabled s/Bool
@@ -178,7 +186,11 @@
 ;;; instance for form template once filled in by user
 (s/defschema Form
   {:form/id s/Int
-   :form/title s/Str
+   (s/optional-key :form/title) (rjs/field s/Str
+                                           {:deprecate true
+                                            :description "DEPRECATED, will disappear, use either internal name or external title as you need"})
+   :form/internal-name s/Str
+   :form/external-title schema-base/LocalizedString
    :form/fields [Field]})
 
 (s/defschema ApplicationAttachment

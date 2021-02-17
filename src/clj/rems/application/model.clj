@@ -422,7 +422,9 @@
                                default-fields
                                (:form/fields form))]
     (assoc form
-           :form/title (:form/title form-template)
+           :form/title (:form/internal-name form-template)
+           :form/internal-name (:form/internal-name form-template)
+           :form/external-title (:form/external-title form-template)
            :form/fields fields)))
 
 (defn enrich-forms [forms get-form-template]

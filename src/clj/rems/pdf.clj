@@ -5,8 +5,9 @@
             [clojure.string :as str]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
+            [rems.context :as context]
             [rems.text :refer [localized localize-decision localize-event localize-state localize-time text with-language]]
-            [rems.util :refer [getx getx-in]])
+            [rems.util :refer [getx]])
   (:import [java.io ByteArrayOutputStream]))
 
 (defn- render-user [user]
@@ -120,11 +121,11 @@
 
 (defn- render-fields [application]
   (let [filenames (attachment-filenames application)]
-    (list [:heading heading-style (text :t.form/application)]
-          (doall
-           (for [form (getx application :application/forms)
-                 field (getx form :form/fields)]
-             (render-field filenames field))))))
+    (doall
+     (for [form (getx application :application/forms)]
+       (list [:heading heading-style (or (get-in form [:form/external-title context/*lang*]) (text :t.form/application))]
+             (doall (for [field (getx form :form/fields)]
+                      (render-field filenames field))))))))
 
 (defn- render-license [license]
   ;; TODO license text?

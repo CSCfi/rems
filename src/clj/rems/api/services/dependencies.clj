@@ -97,7 +97,7 @@
                  {:catalogue-items [(select-keys (enrich-dependency dep) [:id :localizations])]}
 
                  (:form/id dep)
-                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}
+                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/internal-name :form/external-title])]}
 
                  (:organization/id dep)
                  {:organizations [(select-keys (enrich-dependency dep) [:organization/id :organization/name])]}))))

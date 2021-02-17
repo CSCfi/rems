@@ -4,6 +4,7 @@
             [rems.api.schema :as schema]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [ring.swagger.json-schema :as rjs]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -12,11 +13,15 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:form/id :organization :form/title :form/errors :enabled :archived]))))
+     (select-keys form [:form/id :organization :form/title :form/internal-name :form/external-title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
   {:organization schema-base/OrganizationId
-   :form/title s/Str
+   (s/optional-key :form/title) (rjs/field (s/maybe s/Str)
+                                           {:deprecate true
+                                            :description "DEPRECATED, use internal name and external title instead"})
+   (s/optional-key :form/internal-name) s/Str
+   (s/optional-key :form/external-title) schema-base/LocalizedString
    :form/fields [schema/NewFieldTemplate]})
 
 (s/defschema EditFormCommand

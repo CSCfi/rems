@@ -1849,7 +1849,10 @@
         applicant "alice"
         handler "handler"
         reporter "reporter"
-        form-id (test-helpers/create-form! {:form/title "notifications"
+        form-id (test-helpers/create-form! {:form/internal-name "notifications"
+                                            :form/external-title {:en "Notifications EN"
+                                                                  :fi "Notifications FI"
+                                                                  :sv "Notifications SV"}
                                             :form/fields [{:field/type :text
                                                            :field/id "field-1"
                                                            :field/title {:en "text field"
@@ -1923,7 +1926,11 @@
                                                   :field/optional false
                                                   :field/visible true
                                                   :field/private false}]
-                                   :form/title "notifications"
+                                   :form/title "notifications" ; deprecated
+                                   :form/internal-name "notifications"
+                                   :form/external-title {:en "Notifications EN"
+                                                         :fi "Notifications FI"
+                                                         :sv "Notifications SV"}
                                    :form/id form-id}]
               :application/events [{:application/external-id "2010/1"
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
