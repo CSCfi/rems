@@ -103,7 +103,9 @@
   (list
    [:.logo-menu {:height logo-height-menu
                  :background-color (get-theme-attribute :logo-bgcolor)
-                 :width "100px"}]
+                 :width "100px"
+                 :padding-top "0px"
+                 :padding-bottom "0px"}]
    [:.logo {:height logo-height
             :background-color (get-theme-attribute :logo-bgcolor)
             :width "100%"
