@@ -300,6 +300,7 @@
 
 (defn- add-form-field-option-button [field-index]
   [:a.add-option {:href "#"
+                  :id (str "fields-" field-index "-add-option")
                   :on-click (fn [event]
                               (.preventDefault event)
                               (rf/dispatch [::add-form-field-option field-index]))}
@@ -590,17 +591,21 @@
             (when (-> field-errors :field/visibility :visibility/values)
               [(format-validation-link (str "fields-" field-index "-visibility-value")
                                        (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/values) (text :t.create-form.visibility/has-value))))])
-            (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
-              [:li (text-format :t.create-form/option-n (inc option-id))
-               [:ul
-                (when (:key option-errors)
-                  (format-validation-link (str "fields-" field-index "-options-" option-id "-key")
-                                          (text-format (:key option-errors) (text :t.create-form/option-key))))
-                (into [:<>]
-                      (for [[lang error] (:label option-errors)]
-                        (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
-                                                (text-format error (str (text :t.create-form/option-label)
-                                                                        " (" (.toUpperCase (name lang)) ")")))))]])
+            (if (= :t.form.validation/options-required (:field/options field-errors))
+              [[:li
+                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-option"))}
+                 (text :t.form.validation/options-required)]]]
+              (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
+                [:li (text-format :t.create-form/option-n (inc option-id))
+                 [:ul
+                  (when (:key option-errors)
+                    (format-validation-link (str "fields-" field-index "-options-" option-id "-key")
+                                            (text-format (:key option-errors) (text :t.create-form/option-key))))
+                  (into [:<>]
+                        (for [[lang error] (:label option-errors)]
+                          (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
+                                                  (text-format error (str (text :t.create-form/option-label)
+                                                                          " (" (.toUpperCase (name lang)) ")")))))]]))
             (if (= :t.form.validation/columns-required (:field/columns field-errors))
               [[:li
                 [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-column"))}

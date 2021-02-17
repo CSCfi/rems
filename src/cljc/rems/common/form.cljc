@@ -151,7 +151,10 @@
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
-  {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+  {:field/options
+   (if (empty? options)
+     :t.form.validation/options-required
+     (apply merge (mapv #(validate-option %1 %2 languages) options (range))))})
 
 (defn- validate-columns [columns languages]
   {:field/columns
@@ -348,6 +351,11 @@
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
 
+        (testing "missing options"
+          (is (= {:form/fields {0 {:field/options :t.form.validation/options-required}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options] []) languages)
+                 (validate-form-template (update-in form [:form/fields 0] dissoc :field/options) languages))))
+
         (testing "missing option key"
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
@@ -374,6 +382,11 @@
                                                    :fi "Pekonia"}}]}])]
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
+
+        (testing "missing options"
+          (is (= {:form/fields {0 {:field/options :t.form.validation/options-required}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options] []) languages)
+                 (validate-form-template (update-in form [:form/fields 0] dissoc :field/options) languages))))
 
         (testing "missing option key"
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}

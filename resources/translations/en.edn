@@ -433,6 +433,7 @@
                       :invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
+                      :options-required "At least one option is required."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."
                       :unsupported "Field \"%1\" is not supported."}}

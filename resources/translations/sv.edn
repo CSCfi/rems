@@ -390,6 +390,7 @@
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
+                      :options-required "Kräv minst ett alternativ." ; TODO check
                       :required " \"%1\" är ett obligatoriskt fält."
                       :toolong "För långt innehåll i fält \"%1\"."
                       :unsupported "Field \"%1\" is not supported."}}
