@@ -18,6 +18,7 @@ Changes since v2.16
 - GA4GH Visa (output by the experimental /api/permissions API) timestamps are now in seconds, instead of milliseconds. (#2554)
 - The REMS `reset` command line command now works even when you have duplicate resource ids in the database. (#2557)
   - In practice, this means that REMS will not recreate the unique constraint on resource ids, even when rolling back to old database schema versions.
+- The form editor now checks that table, option and multiselect fields are created with at least one column/option. (#2564)
 
 ### Additions
 
