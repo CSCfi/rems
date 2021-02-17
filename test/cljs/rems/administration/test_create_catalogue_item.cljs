@@ -1,6 +1,6 @@
 (ns rems.administration.test-create-catalogue-item
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.create-catalogue-item :refer [build-request resourse-dropdown]]))
+            [rems.administration.create-catalogue-item :refer [build-request resource-label]]))
 
 (deftest build-request-test
   (let [form {:title {:en "en title"
@@ -109,19 +109,19 @@
                    {:resid "u"}
                    {:resid "z"}]
         counts (frequencies (map :resid resourses))]
-    (testing "sorting resources"
-      (is (not (empty? (map resourse-dropdown resourses))))
-      (is (= ["x (org: NBN en )"
-              "y (org: NBN en ) (licenses: Performance License, Second License )"
-              "y (licenses: Performance License )"
+    (testing "resource-label"
+      (is (not (empty? (map resource-label resourses))))
+      (is (= ["x (org: NBN en)"
+              "y (org: NBN en) (licenses: Performance License, Second License)"
+              "y (licenses: Performance License)"
               "u"
               "z"]
-             (map #(resourse-dropdown % "en" counts) resourses)))
-      (is (= ["x (org: NBN en )"
-              "y (org: NBN en ) (licenses: Performance License, Second License )"
-              "y (licenses: Performance License )"
-              "u"
-              "z"]
-             (map #(resourse-dropdown % "en" counts) resourses))))))
+             (map #(resource-label % :en counts) resourses)))
+      (is (not (= ["x (org: NBN fi)"
+                   "y (org: NBN fi) (licenses: Performance License, Second License)"
+                   "y (licenses: Performance License)"
+                   "u"
+                   "z"]
+                  (map #(resource-label % :fi counts) resourses)))))))
 
 

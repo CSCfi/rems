@@ -868,16 +868,10 @@
 
         ;; Create resources
         res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization {:organization/id "nbn"
-                                               :organization/short-name {:en "NBN en"
-                                                                         :fi "NBN fi"
-                                                                         :sv "NBN sv"}}
+                                :organization {:organization/id "nbn"}
                                 :actor owner})
         res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization {:organization/id "nbn"
-                                               :organization/short-name {:en "NBN en"
-                                                                         :fi "NBN fi"
-                                                                         :sv "NBN sv"}}
+                                :organization {:organization/id "nbn"}
                                 :actor owner
                                 :license-ids [license1]})
         res3 (create-resource! {:resource-ext-id "something else"
@@ -889,17 +883,11 @@
                                                   :actor organization-owner1
                                                   :license-ids [license-organization-owner]})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
-                                                  :organization {:organization/id "nbn"
-                                                                 :organization/short-name {:en "NBN en"
-                                                                                           :fi "NBN fi"
-                                                                                           :sv "NBN sv"}}
+                                                  :organization {:organization/id "nbn"}
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
         res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
-                                                        :organization {:organization/id "hus"
-                                                                       :organization/short-name {:en "HUS en"
-                                                                                                 :fi "HUS fi"
-                                                                                                 :sv "HUS sv"}}
+                                                        :organization {:organization/id "hus"}
                                                         :actor owner
                                                         :license-ids [license1 extra-license attachment-license]})
         res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"

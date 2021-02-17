@@ -188,22 +188,19 @@
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
-(defn resourse-dropdown [r language counts]
-  (let [organisation? (get-in r [:organization :organization/short-name (keyword language)])
+(defn resource-label [r language counts]
+  (let [organisation (get-in r [:organization :organization/short-name language])
         duplicate? (> (get counts (:resid r)) 1)
         licenses? (not-empty (:licenses r))]
     (str (:resid r)
-      ;; when organisation is found, show organisation
-         (when organisation?
-           (str/join " " [" (org:" organisation? ")"]))
-      ;; when duplicate is found, show duplicate
+         (when organisation
+           (str/join [" (org: " organisation ")"]))
          (when duplicate?
-         ;; when licenses are found, show licences, but only if it is duplicate
            (when licenses?
-             (str/join " "
-                       [" (licenses:"
+             (str/join [" (licenses: "
                         (str/join ", " (mapv
-                                        (fn [l] (:title ((keyword language) (:localizations l))))
+                                        ;; (fn [l] (:title ((keyword language) (:localizations l))))
+                                        (fn [l] (get-in l [:localizations language :title]))
                                         (:licenses r)))
                         ")"]))))))
 
@@ -224,7 +221,7 @@
         {:id resource-dropdown-id
          :items (->> resources (filter :enabled) (remove :archived))
          :item-key :id
-         :item-label #(resourse-dropdown % language counts)
+         :item-label #(resource-label % language counts)
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
