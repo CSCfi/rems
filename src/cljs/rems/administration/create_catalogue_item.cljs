@@ -215,7 +215,6 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     (js/console.log "yay" (clj->js (get-in (first resources) [:organization :id])))
      [:label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
