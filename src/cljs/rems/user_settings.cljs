@@ -87,7 +87,9 @@
    ;; this doesnt work
    ;; (flash-message/default-error-handler :top "Fetch user settings")
    ;; this works
-   (flash-message/show-default-error! :top (str "Fetch user settings" "wtf"))
+   (if (= 401 (:status user-settings-error))
+     (flash-message/show-default-error! :top (str "Fetch user settings" (:status user-settings-error)))
+     (flash-message/show-default-error! :top (str "Fetch user settings")))
    {}))
 
 (rf/reg-event-fx
@@ -95,13 +97,13 @@
  (fn [{:keys [db]} [_ user-settings-error]]
    (let [logged-in? (:user (:identity db))]
      (if-not logged-in?
-       {:db db}
        {:db db
-        :dispatch [:flash-message-error user-settings-error]}))))
+        :dispatch [:flash-message-error user-settings-error]}
+       {:db db}))))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
-         (merge {:default-error-handler? true}
+         (merge {:simple-error-handler? true}
                 {:handler #(rf/dispatch-sync [:loaded-user-settings %])}
                 {:error-handler #(rf/dispatch [:loaded-user-settings-fail %])})))
 
