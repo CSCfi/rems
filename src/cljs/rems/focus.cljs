@@ -6,6 +6,9 @@
   (.setAttribute element "tabindex" "-1")
   (.focus element))
 
+(defn focus-selector [selector]
+  (focus (.querySelector js/document selector)))
+
 (defn focus-without-scroll [element]
   (.setAttribute element "tabindex" "-1")
   (.focus element (js-obj "preventScroll" true)))

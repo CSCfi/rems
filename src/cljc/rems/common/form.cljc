@@ -164,11 +164,17 @@
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
-  {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+  {:field/options
+   (if (empty? options)
+     :t.form.validation/options-required
+     (apply merge (mapv #(validate-option %1 %2 languages) options (range))))})
 
-(defn- validate-columns [options languages]
-  ;; columns have the same syntax as options for now
-  {:field/columns (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+(defn- validate-columns [columns languages]
+  {:field/columns
+   (if (empty? columns)
+     :t.form.validation/columns-required
+     ;; columns have the same syntax as options for now
+     (apply merge (mapv #(validate-option %1 %2 languages) columns (range))))})
 
 (defn- field-option-keys [field]
   (set (map :key (:field/options field))))
@@ -391,6 +397,11 @@
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
 
+        (testing "missing options"
+          (is (= {:form/fields {0 {:field/options :t.form.validation/options-required}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options] []) languages)
+                 (validate-form-template (update-in form [:form/fields 0] dissoc :field/options) languages))))
+
         (testing "missing option key"
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
@@ -418,6 +429,11 @@
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
 
+        (testing "missing options"
+          (is (= {:form/fields {0 {:field/options :t.form.validation/options-required}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options] []) languages)
+                 (validate-form-template (update-in form [:form/fields 0] dissoc :field/options) languages))))
+
         (testing "missing option key"
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
@@ -442,6 +458,11 @@
                           :field/optional false}])]
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
+
+        (testing "missing columns"
+          (is (= {:form/fields {0 {:field/columns :t.form.validation/columns-required}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns] []) languages)
+                 (validate-form-template (update-in form [:form/fields 0] dissoc :field/columns) languages))))
 
         (testing "missing title localization"
           (is (= {:form/fields {0 {:field/title {:en :t.form.validation/required}}}}
