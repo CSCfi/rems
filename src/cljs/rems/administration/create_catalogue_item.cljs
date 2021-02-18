@@ -194,12 +194,11 @@
         licenses? (not-empty (:licenses r))]
     (str (:resid r)
          (when organisation
-           (str/join [" (org: " organisation ")"]))
+           (str/join [" (" (text :t.administration/org) ": " organisation ")"]))
          (when duplicate?
            (when licenses?
-             (str/join [" (licenses: "
+             (str/join [" (" (str/lower-case (text :t.administration/licenses)) ": "
                         (str/join ", " (mapv
-                                        ;; (fn [l] (:title ((keyword language) (:localizations l))))
                                         (fn [l] (get-in l [:localizations language :title]))
                                         (:licenses r)))
                         ")"]))))))

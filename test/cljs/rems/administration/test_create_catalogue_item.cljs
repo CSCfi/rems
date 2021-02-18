@@ -111,9 +111,9 @@
         counts (frequencies (map :resid resourses))]
     (testing "resource-label"
       (is (not (empty? (map #(resource-label % :en counts) resourses))))
-      (is (= ["x (org: NBN en)"
-              "y (org: NBN en) (licenses: Performance License, Second License)"
-              "y (licenses: Performance License)"
+      (is (= ["x ([:t.administration/org]: NBN en)"
+              "y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
+              "y ([:t.administration/licenses]: Performance License)"
               "u"
               "z"]
              (map #(resource-label % :en counts) resourses)))
