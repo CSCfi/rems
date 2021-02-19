@@ -47,7 +47,7 @@
       (is (nil? (build-request (assoc form :form nil)
                                languages))))))
 
-(deftest resourse-dropdown-test
+(deftest resource-label-test
   (let [resourses [{:resid "x"
                     :archived false
                     :enabled true
