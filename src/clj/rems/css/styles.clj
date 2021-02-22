@@ -703,7 +703,7 @@
    [:.form-group {:text-align "initial"}
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
-   [:label.application-field-label {:font-weight "bold"}]
+   [:.application-field-label {:font-weight "bold"}]
    [:div.info-collapse {:font-weight "400"
                         :white-space :pre-wrap}]
 
