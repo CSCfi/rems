@@ -150,7 +150,7 @@
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
   [s]
-  (when s
+  (when-not (str/blank? s)
     (let [splitted (-> s
                        (str/replace link-regex #(str "\t" %1 "\t"))
                        (str/split "\t"))

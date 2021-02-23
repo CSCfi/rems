@@ -27,6 +27,7 @@ Changes since v2.16
   - In practice, this means that REMS will not recreate the unique constraint on resource ids, even when rolling back to old database schema versions.
 - The form editor now checks that table, option and multiselect fields are created with at least one column/option. (#2564)
 - The multiselect field label wasn't being bolded.
+- Info text icon could appear even though the field description was empty.
 
 ### Additions
 
