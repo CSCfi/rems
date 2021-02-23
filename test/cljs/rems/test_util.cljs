@@ -66,4 +66,6 @@
       (is (= (linkify "(See www-page at www.abc.com.)")
              ["(See www-page at "
               [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"]
-              ".)"])))))
+              ".)"])))
+    (testing "returns nil for empty"
+      (is (= nil (linkify ""))))))
