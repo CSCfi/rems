@@ -81,23 +81,15 @@
                      [[:check-if-should-save-language!]]))})))
 
 (rf/reg-event-fx
- :flash-message-error
- (fn [_ user-settings-error]
-   ;; TODO: refactor this part
-   ;; this doesnt work
-   ;; (flash-message/default-error-handler :top "Fetch user settings")
-   ;; this works
-   (flash-message/show-default-error! :top (str "Fetch user settings")))
- {})
-
-(rf/reg-event-fx
  :loaded-user-settings-fail
  (fn [{:keys [db]} [_ user-settings-error]]
    (let [logged-in? (:user (:identity db))]
      (if-not logged-in?
-       {:db db}
-       {:db db
-        :dispatch [:flash-message-error user-settings-error]}))))
+       (if-not (= 401 (:status user-settings-error))
+         {:db db
+          :dispatch (flash-message/show-default-error! :top (str "Fetch user settings"))}
+         {:db db})
+       {:db db}))))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
