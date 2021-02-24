@@ -83,7 +83,13 @@
                                 :licensetype "text"
                                 :localizations {:en {:attachment-id nil
                                                      :textcontent "Be fast."
-                                                     :title "Performance License"}}}
+                                                     :title "Performance License"}
+                                                :fi {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Performance License FI"}
+                                                :sv {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Performance License SV"}}}
                                {:archived false
                                 :enabled true
                                 :id 8
@@ -93,7 +99,10 @@
                                                      :title "Second License"}
                                                 :fi {:attachment-id nil
                                                      :textcontent "Be fast."
-                                                     :title "Second License in Finnish"}}}]
+                                                     :title "Second License FI"}
+                                                :sv {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Second License SV"}}}]
                     :organization {:organization/id "nbn"
                                    :organization/name {:en "NBN"
                                                        :fi "NBN"
@@ -108,7 +117,13 @@
                                 :licensetype "text"
                                 :localizations {:en {:attachment-id nil
                                                      :textcontent "Be fast."
-                                                     :title "Performance License"}}}]}
+                                                     :title "Performance License"}
+                                                :fi {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Performance License FI"}
+                                                :sv {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Performance License SV"}}}]}
                    {:resid "u"}
                    {:resid "z"}]
         counts (frequencies (map :resid resources))]
@@ -120,14 +135,14 @@
               "z"]
              (map #(resource-label % :en counts) resources)))
       (is (= ["x ([:t.administration/org]: NBN fi)"
-              "y ([:t.administration/org]: NBN fi) ([:t.administration/licenses]: Second License in Finnish)"
-              "y"
+              "y ([:t.administration/org]: NBN fi) ([:t.administration/licenses]: Performance License FI, Second License FI)"
+              "y ([:t.administration/licenses]: Performance License FI)"
               "u"
               "z"]
              (map #(resource-label % :fi counts) resources)))
       (is (= ["x ([:t.administration/org]: NBN sv)"
-              "y ([:t.administration/org]: NBN sv)"
-              "y"
+              "y ([:t.administration/org]: NBN sv) ([:t.administration/licenses]: Performance License SV, Second License SV)"
+              "y ([:t.administration/licenses]: Performance License SV)"
               "u"
               "z"]
              (map #(resource-label % :sv counts) resources))))))
