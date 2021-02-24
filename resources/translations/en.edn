@@ -421,7 +421,7 @@
          :please-wait "Please wait"
          :previous-applications "Applicant's previous applications"
          :previous-value "Previous"
-         :required "*"
+         :required " "
          :resources "Resources"
          :save "Save as draft"
          :submit "Send application"
