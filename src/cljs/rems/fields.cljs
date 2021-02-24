@@ -139,7 +139,7 @@
       " "
       (if optional
         (text :t.form/optional)
-        (text :t.form/required))
+        nil)
       (when info-text
         [info-collapse
          {:info-id (field-name opts)
