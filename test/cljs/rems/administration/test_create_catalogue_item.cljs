@@ -48,7 +48,7 @@
                                languages))))))
 
 (deftest resource-label-test
-  (let [resourses [{:resid "x"
+  (let [resources [{:resid "x"
                     :archived false
                     :enabled true
                     :id 1
@@ -90,7 +90,10 @@
                                 :licensetype "text"
                                 :localizations {:en {:attachment-id nil
                                                      :textcontent "Be fast."
-                                                     :title "Second License"}}}]
+                                                     :title "Second License"}
+                                                :fi {:attachment-id nil
+                                                     :textcontent "Be fast."
+                                                     :title "Second License in Finnish"}}}]
                     :organization {:organization/id "nbn"
                                    :organization/name {:en "NBN"
                                                        :fi "NBN"
@@ -108,20 +111,25 @@
                                                      :title "Performance License"}}}]}
                    {:resid "u"}
                    {:resid "z"}]
-        counts (frequencies (map :resid resourses))]
+        counts (frequencies (map :resid resources))]
     (testing "resource-label"
-      (is (not (empty? (map #(resource-label % :en counts) resourses))))
       (is (= ["x ([:t.administration/org]: NBN en)"
               "y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
               "y ([:t.administration/licenses]: Performance License)"
               "u"
               "z"]
-             (map #(resource-label % :en counts) resourses)))
-      (is (not (= ["x (org: NBN fi)"
-                   "y (org: NBN fi) (licenses: Performance License, Second License)"
-                   "y (licenses: Performance License)"
-                   "u"
-                   "z"]
-                  (map #(resource-label % :fi counts) resourses)))))))
+             (map #(resource-label % :en counts) resources)))
+      (is (= ["x ([:t.administration/org]: NBN fi)"
+              "y ([:t.administration/org]: NBN fi) ([:t.administration/licenses]: Second License in Finnish)"
+              "y"
+              "u"
+              "z"]
+             (map #(resource-label % :fi counts) resources)))
+      (is (= ["x ([:t.administration/org]: NBN sv)"
+              "y ([:t.administration/org]: NBN sv)"
+              "y"
+              "u"
+              "z"]
+             (map #(resource-label % :sv counts) resources))))))
 
 
