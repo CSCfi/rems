@@ -111,7 +111,7 @@
                    :name "Name"
                    :no-licenses "No licenses"
                    :optional "(optional)"
-                   :org "org"
+                   :org "Org"
                    :organization "Organization"
                    :organizations "Organizations"
                    :owners "Owners"
