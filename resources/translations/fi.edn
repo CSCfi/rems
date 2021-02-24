@@ -379,7 +379,7 @@
          :please-wait "Odota hetkinen"
          :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
-         :required " "
+         :required ""
          :resources "Resurssit"
          :save "Tallenna luonnos"
          :submit "Lähetä hakemus"
