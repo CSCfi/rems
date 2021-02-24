@@ -191,23 +191,15 @@
 (defn resource-label [r language counts]
   (let [organisation (get-in r [:organization :organization/short-name language])
         duplicate? (> (get counts (:resid r)) 1)
-        licenses? (not-empty (:licenses r))
-        localized? (if (and licenses? (not (every? nil? (mapv
-                                                         (fn [l] (get-in l [:localizations language :title]))
-                                                         (:licenses r)))))
-                     true
-                     false)]
+        licenses? (not-empty (:licenses r))]
     (str (:resid r)
          (when organisation
-           (str/join [" (" (text :t.administration/org) ": " organisation ")"]))
-         (when duplicate?
-           (when licenses?
-             (when localized?
-               (str/join [" (" (str/lower-case (text :t.administration/licenses)) ": "
-                          (str/join ", " (filter #(not (nil? %)) (mapv
-                                                                  (fn [l] (get-in l [:localizations language :title]))
-                                                                  (:licenses r))))
-                          ")"])))))))
+           (str " (" (text :t.administration/org) ": " organisation ")"))
+         (when (and duplicate? licenses?)
+           (str " (" (text :t.administration/licenses) ": "
+                (str/join ", " (mapv #(get-in % [:localizations language :title])
+                                     (:licenses r)))
+                ")")))))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
