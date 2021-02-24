@@ -161,6 +161,11 @@
   (assert (:success body) (pr-str body))
   body)
 
+(defn assert-unauthorized [response]
+  (response-is-unauthorized? response)
+  {:status (:status response)
+   :body (read-body response)})
+
 ;;; Fake login without API key
 
 (defn- strip-cookie-attributes [cookie]
