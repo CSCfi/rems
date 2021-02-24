@@ -191,7 +191,7 @@
 (defn resource-label [r language counts]
   (let [organisation (get-in r [:organization :organization/short-name language])
         duplicate? (> (get counts (:resid r)) 1)
-        licenses? (not-empty (:licenses r))]
+        licenses? (seq (:licenses r))]
     (str (:resid r)
          (when organisation
            (str " (" (text :t.administration/org) ": " organisation ")"))
