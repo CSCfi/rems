@@ -28,6 +28,7 @@ Changes since v2.16
 - The form editor now checks that table, option and multiselect fields are created with at least one column/option. (#2564)
 - The multiselect field label wasn't being bolded.
 - Info text icon could appear even though the field description was empty.
+- Changes to the default translation for the required form field: does not include an asterisk sign anymore.
 
 ### Additions
 

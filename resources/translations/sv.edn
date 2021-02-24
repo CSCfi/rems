@@ -379,7 +379,7 @@
          :please-wait "Var god vänta"
          :previous-applications "Sökandes tidigare ansökningar"
          :previous-value "Föregående"
-         :required "*"
+         :required ""
          :resources "Resurser"
          :save "Spara utkast"
          :submit "Lämna in ansökningen"
