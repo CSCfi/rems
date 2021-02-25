@@ -49,81 +49,29 @@
 
 (deftest resource-label-test
   (let [resources [{:resid "x"
-                    :archived false
-                    :enabled true
-                    :id 1
-                    :licenses [{:archived false
-                                :enabled true
-                                :id 8
-                                :licensetype "text"
-                                :localizations {:en {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License"}}}
-                               {:archived false
-                                :enabled true
-                                :id 8
-                                :licensetype "text"
-                                :localizations {:en {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Second License"}}}]
-                    :modifieruserid "owner"
+                    :licenses [{:localizations {:en {:title "Performance License"}}}
+                               {:localizations {:en {:title "Second License"}}}]
                     :organization {:organization/id "nbn"
-                                   :organization/name {:en "NBN"
-                                                       :fi "NBN"
-                                                       :sv "NBN"}
                                    :organization/short-name
                                    {:en "NBN en"
                                     :fi "NBN fi"
                                     :sv "NBN sv"}}
                     :owneruserid "owner"}
                    {:resid "y"
-                    :licenses [{:archived false
-                                :enabled true
-                                :id 8
-                                :licensetype "text"
-                                :localizations {:en {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License"}
-                                                :fi {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License FI"}
-                                                :sv {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License SV"}}}
-                               {:archived false
-                                :enabled true
-                                :id 8
-                                :licensetype "text"
-                                :localizations {:en {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Second License"}
-                                                :fi {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Second License FI"}
-                                                :sv {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Second License SV"}}}]
+                    :licenses [{:localizations {:en {:title "Performance License"}
+                                                :fi {:title "Performance License FI"}
+                                                :sv {:title "Performance License SV"}}}
+                               {:localizations {:en {:title "Second License"}
+                                                :fi {:title "Second License FI"}
+                                                :sv {:title "Second License SV"}}}]
                     :organization {:organization/id "nbn"
-                                   :organization/name {:en "NBN"
-                                                       :fi "NBN"
-                                                       :sv "NBN"}
                                    :organization/short-name {:en "NBN en"
                                                              :fi "NBN fi"
                                                              :sv "NBN sv"}}}
                    {:resid "y"
-                    :licenses [{:archived false
-                                :enabled true
-                                :id 8
-                                :licensetype "text"
-                                :localizations {:en {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License"}
-                                                :fi {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License FI"}
-                                                :sv {:attachment-id nil
-                                                     :textcontent "Be fast."
-                                                     :title "Performance License SV"}}}]}
+                    :licenses [{:localizations {:en {:title "Performance License"}
+                                                :fi {:title "Performance License FI"}
+                                                :sv {:title "Performance License SV"}}}]}
                    {:resid "u"}
                    {:resid "z"}]
         counts (frequencies (map :resid resources))]
