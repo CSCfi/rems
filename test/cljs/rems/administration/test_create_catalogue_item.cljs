@@ -76,6 +76,34 @@
                    {:resid "z"}]
         counts (frequencies (map :resid resources))]
     (testing "resource-label"
+      (is (= ["y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
+              "y ([:t.administration/licenses]: Performance License)"]
+             (map #(resource-label % :en counts) [{:resid "y"
+                                                   :licenses [{:localizations {:en {:title "Performance License"}
+                                                                               :fi {:title "Performance License FI"}
+                                                                               :sv {:title "Performance License SV"}}}
+                                                              {:localizations {:en {:title "Second License"}
+                                                                               :fi {:title "Second License FI"}
+                                                                               :sv {:title "Second License SV"}}}]
+                                                   :organization {:organization/id "nbn"
+                                                                  :organization/short-name {:en "NBN en"
+                                                                                            :fi "NBN fi"
+                                                                                            :sv "NBN sv"}}}
+                                                  {:resid "y"
+                                                   :licenses [{:localizations {:en {:title "Performance License"}
+                                                                               :fi {:title "Performance License FI"}
+                                                                               :sv {:title "Performance License SV"}}}]}])))
+
+      (is (= "x ([:t.administration/org]: NBN en)"
+             (resource-label {:resid "x"
+                              :licenses [{:localizations {:en {:title "Performance License"}}}
+                                         {:localizations {:en {:title "Second License"}}}]
+                              :organization {:organization/id "nbn"
+                                             :organization/short-name
+                                             {:en "NBN en"
+                                              :fi "NBN fi"
+                                              :sv "NBN sv"}}
+                              :owneruserid "owner"} :en counts)))
       (is (= ["x ([:t.administration/org]: NBN en)"
               "y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
               "y ([:t.administration/licenses]: Performance License)"
