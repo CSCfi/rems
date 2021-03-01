@@ -631,7 +631,7 @@
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when (:organization form-errors)
-           [:li [:a {:href "#" :on-click (focus-input-field "organization")}
+           [:li [:a {:href "#" :on-click (focus-input-field "organization-dropdown")}
                  (text-format (:organization form-errors) (text :t.administration/organization))]])
 
          (when (:form/internal-name form-errors)
