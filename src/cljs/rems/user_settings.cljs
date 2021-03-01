@@ -93,7 +93,7 @@
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
-         {:simple-error-handler? true
+         {:custom-error-handler? true
           :handler #(rf/dispatch-sync [:loaded-user-settings %])
           :error-handler #(rf/dispatch [:loaded-user-settings-fail %])}))
 

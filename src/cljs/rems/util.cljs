@@ -76,7 +76,8 @@
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
 
   Has sensible defaults with error handler, JSON and keywords.
-  You can use :simple-error-handler? to decide weather you would like use wrapper for the error handling.
+  You can use :custom-error-handler? to decide weather you would like use wrapper for the error handling.
+  
   Additionally calls event hooks.
 
   Returns a promise, but it's okay to ignore it if you prefer using
@@ -88,7 +89,7 @@
    (fn [resolve reject]
      (GET url (-> (merge {:response-format :transit}
                          opts
-                         (if (:simple-error-handler? opts)
+                         (if (:custom-error-handler? opts)
                            {:error-handler (:error-handler opts)}
                            {:error-handler (wrap-default-error-handler (:error-handler opts))}))
                   (update :handler append-handler resolve)
