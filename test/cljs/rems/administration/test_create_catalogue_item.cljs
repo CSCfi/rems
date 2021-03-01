@@ -48,52 +48,33 @@
                                languages))))))
 
 (deftest resource-label-test
-  (let [resources [{:resid "x"
-                    :licenses [{:localizations {:en {:title "Performance License"}}}
-                               {:localizations {:en {:title "Second License"}}}]
-                    :organization {:organization/id "nbn"
-                                   :organization/short-name
-                                   {:en "NBN en"
-                                    :fi "NBN fi"
-                                    :sv "NBN sv"}}
-                    :owneruserid "owner"}
-                   {:resid "y"
-                    :licenses [{:localizations {:en {:title "Performance License"}
-                                                :fi {:title "Performance License FI"}
-                                                :sv {:title "Performance License SV"}}}
-                               {:localizations {:en {:title "Second License"}
-                                                :fi {:title "Second License FI"}
-                                                :sv {:title "Second License SV"}}}]
-                    :organization {:organization/id "nbn"
-                                   :organization/short-name {:en "NBN en"
-                                                             :fi "NBN fi"
-                                                             :sv "NBN sv"}}}
-                   {:resid "y"
-                    :licenses [{:localizations {:en {:title "Performance License"}
-                                                :fi {:title "Performance License FI"}
-                                                :sv {:title "Performance License SV"}}}]}
-                   {:resid "u"}
-                   {:resid "z"}]
-        counts (frequencies (map :resid resources))]
-    (testing "resource-label"
-      (is (= ["y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
-              "y ([:t.administration/licenses]: Performance License)"]
-             (map #(resource-label % :en counts) [{:resid "y"
-                                                   :licenses [{:localizations {:en {:title "Performance License"}
-                                                                               :fi {:title "Performance License FI"}
-                                                                               :sv {:title "Performance License SV"}}}
-                                                              {:localizations {:en {:title "Second License"}
-                                                                               :fi {:title "Second License FI"}
-                                                                               :sv {:title "Second License SV"}}}]
-                                                   :organization {:organization/id "nbn"
-                                                                  :organization/short-name {:en "NBN en"
-                                                                                            :fi "NBN fi"
-                                                                                            :sv "NBN sv"}}}
-                                                  {:resid "y"
-                                                   :licenses [{:localizations {:en {:title "Performance License"}
-                                                                               :fi {:title "Performance License FI"}
-                                                                               :sv {:title "Performance License SV"}}}]}])))
-
+  (testing "resource-label"
+    (testing "show license names for duplicate resources"
+      (is (= "y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
+             (resource-label {:resid "y"
+                              :licenses [{:localizations {:en {:title "Performance License"}
+                                                          :fi {:title "Performance License FI"}
+                                                          :sv {:title "Performance License SV"}}}
+                                         {:localizations {:en {:title "Second License"}
+                                                          :fi {:title "Second License FI"}
+                                                          :sv {:title "Second License SV"}}}]
+                              :organization {:organization/id "nbn"
+                                             :organization/short-name {:en "NBN en"
+                                                                       :fi "NBN fi"
+                                                                       :sv "NBN sv"}}} :en {"y" 2})))
+      (is (= "y ([:t.administration/org]: NBN fi) ([:t.administration/licenses]: Performance License FI, Second License FI)"
+             (resource-label {:resid "y"
+                              :licenses [{:localizations {:en {:title "Performance License"}
+                                                          :fi {:title "Performance License FI"}
+                                                          :sv {:title "Performance License SV"}}}
+                                         {:localizations {:en {:title "Second License"}
+                                                          :fi {:title "Second License FI"}
+                                                          :sv {:title "Second License SV"}}}]
+                              :organization {:organization/id "nbn"
+                                             :organization/short-name {:en "NBN en"
+                                                                       :fi "NBN fi"
+                                                                       :sv "NBN sv"}}} :fi {"y" 2}))))
+    (testing "don't show license names for unique resources"
       (is (= "x ([:t.administration/org]: NBN en)"
              (resource-label {:resid "x"
                               :licenses [{:localizations {:en {:title "Performance License"}}}
@@ -103,24 +84,22 @@
                                              {:en "NBN en"
                                               :fi "NBN fi"
                                               :sv "NBN sv"}}
-                              :owneruserid "owner"} :en counts)))
-      (is (= ["x ([:t.administration/org]: NBN en)"
-              "y ([:t.administration/org]: NBN en) ([:t.administration/licenses]: Performance License, Second License)"
-              "y ([:t.administration/licenses]: Performance License)"
-              "u"
-              "z"]
-             (map #(resource-label % :en counts) resources)))
-      (is (= ["x ([:t.administration/org]: NBN fi)"
-              "y ([:t.administration/org]: NBN fi) ([:t.administration/licenses]: Performance License FI, Second License FI)"
-              "y ([:t.administration/licenses]: Performance License FI)"
-              "u"
-              "z"]
-             (map #(resource-label % :fi counts) resources)))
-      (is (= ["x ([:t.administration/org]: NBN sv)"
-              "y ([:t.administration/org]: NBN sv) ([:t.administration/licenses]: Performance License SV, Second License SV)"
-              "y ([:t.administration/licenses]: Performance License SV)"
-              "u"
-              "z"]
-             (map #(resource-label % :sv counts) resources))))))
+                              :owneruserid "owner"} :en {"y" 2})))
+      (is (= "y ([:t.administration/org]: NBN en)"
+             (resource-label {:resid "y"
+                              :licenses [{:localizations {:en {:title "Performance License"}
+                                                          :fi {:title "Performance License FI"}
+                                                          :sv {:title "Performance License SV"}}}
+                                         {:localizations {:en {:title "Second License"}
+                                                          :fi {:title "Second License FI"}
+                                                          :sv {:title "Second License SV"}}}]
+                              :organization {:organization/id "nbn"
+                                             :organization/short-name {:en "NBN en"
+                                                                       :fi "NBN fi"
+                                                                       :sv "NBN sv"}}} :en {"y" 1})))
+      (is (= "z" (resource-label {:resid "z"} :en {"z" 1}))))
+    (testing "don't show organization if not available"
+      (is (= "z" (resource-label {:resid "z"} :en {"y" 2})))
+      (is (= "z" (resource-label {:resid "z"} :en {"z" 1}))))))
 
 
