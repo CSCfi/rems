@@ -1484,7 +1484,7 @@
       (btu/wait-page-loaded)
       (btu/scroll-and-click :create-resource)
       (btu/wait-page-loaded)
-      (btu/wait-visible :organization-dropdown)
+      (btu/wait-visible :organization)
       (btu/fill-human :resid (str "resource for " (btu/context-get :organization-name)))
       (select-option* "Organization" (btu/context-get :organization-name))
       (btu/scroll-and-click :save)
