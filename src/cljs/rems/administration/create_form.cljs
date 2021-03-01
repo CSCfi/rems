@@ -638,9 +638,10 @@
            [:li [:a {:href "#" :on-click (focus-input-field "internal-name")}
                  (text-format (:form/internal-name form-errors) (text :t.administration/internal-name))]])
 
-         (when (:form/external-title form-errors)
-           [:li [:a {:href "#" :on-click (focus-input-field "external-title")}
-                 (text-format (:form/external-title form-errors) (text :t.administration/external-title))]])]
+         (for [[lang error] (:form/external-title form-errors)]
+           (format-validation-link (str "external-title-" (name lang))
+                                   (text-format error (str (text :t.administration/external-title)
+                                                           " (" (.toUpperCase (name lang)) ")"))))]
 
         (for [[field-index field-errors] (into (sorted-map) (:form/fields form-errors))]
           (let [field (get-in form [:form/fields field-index])]
