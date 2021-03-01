@@ -1,5 +1,6 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
+            [medley.core :as medley]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [radio-button-group text-field]]
@@ -15,7 +16,7 @@
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
-  (medley.core/find-first #(= (id-key %) id) items))
+  (medley/find-first #(= (id-key %) id) items))
 
 (rf/reg-event-fx
  ::enter-page
