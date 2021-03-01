@@ -630,13 +630,13 @@
 (defn format-validation-errors [form-errors form lang]
   ;; TODO: deduplicate with field definitions
   (into [:ul
-         (when (:organization form-errors)
-           [:li [:a {:href "#" :on-click (focus-input-field "organization-dropdown")}
-                 (text-format (:organization form-errors) (text :t.administration/organization))]])
+         (when-let [error (:organization form-errors)]
+           (format-validation-link "organization-dropdown"
+                                   (text-format error (text :t.administration/organization))))
 
-         (when (:form/internal-name form-errors)
-           [:li [:a {:href "#" :on-click (focus-input-field "internal-name")}
-                 (text-format (:form/internal-name form-errors) (text :t.administration/internal-name))]])
+         (when-let [error (:form/internal-name form-errors)]
+           (format-validation-link "internal-name"
+                                   (text-format error (text :t.administration/internal-name))))
 
          (for [[lang error] (:form/external-title form-errors)]
            (format-validation-link (str "external-title-" (name lang))
