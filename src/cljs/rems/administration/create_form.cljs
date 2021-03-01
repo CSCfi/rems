@@ -619,11 +619,11 @@
                 [:li (text-format :t.create-form/column-n (inc column-id))
                  [:ul
                   (when (:key column-errors)
-                    (format-validation-link (str "fields-" field-index "-column-" column-id "-key")
+                    (format-validation-link (str "fields-" field-index "-columns-" column-id "-key")
                                             (text-format (:key column-errors) (text :t.create-form/option-key))))
                   (into [:<>]
                         (for [[lang error] (:label column-errors)]
-                          (format-validation-link (str "fields-" field-index "-column-" column-id "-label-" (name lang))
+                          (format-validation-link (str "fields-" field-index "-columns-" column-id "-label-" (name lang))
                                                   (text-format error (str (text :t.create-form/option-label)
                                                                           " (" (.toUpperCase (name lang)) ")")))))]]))))]))
 
