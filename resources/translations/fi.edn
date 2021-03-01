@@ -387,7 +387,7 @@
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
          :upload-extensions "Sallitut tiedostomuodot"
-         :validation {:column-values-missing "Kaikki sarakkeet on täytettävä."
+         :validation {:column-values-missing "Kaikki sarakkeet on täytettävä taulukossa \"%1\"."
                       :columns-required "Vähintään yksi sarake vaaditaan."
                       :invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."

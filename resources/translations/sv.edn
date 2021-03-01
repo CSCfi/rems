@@ -387,7 +387,7 @@
          :success "Genomfört"
          :upload "Lägg till bilaga"
          :upload-extensions "Tillåtna filtyper"
-         :validation {:column-values-missing "Alla kolumner måste fyllas i."
+         :validation {:column-values-missing "Alla kolumner måste fyllas i i tabell \"%1\"."
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-user "Ogiltig användare."
