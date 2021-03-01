@@ -1,13 +1,10 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
-            [re-frame.core :as rf]
             [rems.administration.items :as items]
-            [rems.atoms :refer [add-symbol attachment-link close-symbol textarea success-symbol]]
+            [rems.atoms :refer [add-symbol attachment-link close-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.common.roles :as roles]
             [rems.common.util :refer [build-index getx]]
-            [rems.dropdown :as dropdown]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]])
@@ -374,24 +371,6 @@
 (defn header-field [opts]
   (let [title (localized (:field/title opts))]
     [non-field-wrapper opts [:h3 title]]))
-
-(defn organization-field [{:keys [id value on-change readonly]}]
-  (let [organizations @(rf/subscribe [:owned-organizations])
-        language @(rf/subscribe [:language])
-        item-selected? #(= (:organization/id %) (:organization/id value))
-        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
-    [:div.form-group
-     [:label {:for id} (text :t.administration/organization)]
-     (if (or readonly disallowed)
-       [readonly-field {:id id
-                        :value (get-in value [:organization/name language])}]
-       [dropdown/dropdown
-        {:id id
-         :items (->> organizations (filter :enabled) (remove :archived))
-         :item-key :organization/id
-         :item-label (comp language :organization/name)
-         :item-selected? item-selected?
-         :on-change on-change}])]))
 
 (defn- table-view [{:keys [id readonly columns rows on-change]}]
   [:table.table.table-sm.table-borderless
