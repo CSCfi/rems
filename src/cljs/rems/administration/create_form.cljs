@@ -566,6 +566,9 @@
   [:li [:a {:href "#" :on-click (focus-input-field target)}
         content]])
 
+(defn- format-error-for-localized-field [error label lang]
+  (text-format error (str (text label) " (" (str/upper-case (name lang)) ")")))
+
 (defn- format-field-validation [field field-errors]
   (let [field-index (:field/index field)
         lang @(rf/subscribe [:language])]
@@ -574,16 +577,13 @@
            (concat
             (for [[lang error] (:field/title field-errors)]
               (format-validation-link (str "fields-" field-index "-title-" (name lang))
-                                      (text-format error (str (text :t.create-form/field-title)
-                                                              " (" (.toUpperCase (name lang)) ")"))))
+                                      (format-error-for-localized-field error :t.create-form/field-title lang)))
             (for [[lang error] (:field/placeholder field-errors)]
               (format-validation-link (str "fields-" field-index "-placeholder-" (name lang))
-                                      (text-format error (str (text :t.create-form/placeholder)
-                                                              " (" (.toUpperCase (name lang)) ")"))))
+                                      (format-error-for-localized-field error :t.create-form/placeholder lang)))
             (for [[lang error] (:field/info-text field-errors)]
               (format-validation-link (str "fields-" field-index "-info-text-" (name lang))
-                                      (text-format error (str (text :t.create-form/info-text)
-                                                              " (" (.toUpperCase (name lang)) ")"))))
+                                      (format-error-for-localized-field error :t.create-form/info-text lang)))
             (when (:field/max-length field-errors)
               [(format-validation-link (str "fields-" field-index "-max-length")
                                        (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
@@ -609,8 +609,7 @@
                   (into [:<>]
                         (for [[lang error] (:label option-errors)]
                           (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
-                                                  (text-format error (str (text :t.create-form/option-label)
-                                                                          " (" (.toUpperCase (name lang)) ")")))))]]))
+                                                  (format-error-for-localized-field error :t.create-form/option-label lang))))]]))
             (if (= :t.form.validation/columns-required (:field/columns field-errors))
               [[:li
                 [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-column"))}
@@ -624,8 +623,7 @@
                   (into [:<>]
                         (for [[lang error] (:label column-errors)]
                           (format-validation-link (str "fields-" field-index "-columns-" column-id "-label-" (name lang))
-                                                  (text-format error (str (text :t.create-form/option-label)
-                                                                          " (" (.toUpperCase (name lang)) ")")))))]]))))]))
+                                                  (format-error-for-localized-field error :t.create-form/option-label lang))))]]))))]))
 
 (defn format-validation-errors [form-errors form lang]
   ;; TODO: deduplicate with field definitions
@@ -640,8 +638,7 @@
 
          (for [[lang error] (:form/external-title form-errors)]
            (format-validation-link (str "external-title-" (name lang))
-                                   (text-format error (str (text :t.administration/external-title)
-                                                           " (" (.toUpperCase (name lang)) ")"))))]
+                                   (format-error-for-localized-field error :t.administration/external-title lang)))]
 
         (for [[field-index field-errors] (into (sorted-map) (:form/fields form-errors))]
           (let [field (get-in form [:form/fields field-index])]
