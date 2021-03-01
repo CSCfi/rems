@@ -157,12 +157,7 @@
        :else editor-component)
      (when validation
        [:div.invalid-feedback
-        {:id (str (field-name opts) "-error")
-         ;; XXX: Bootstrap's has "display: none" on .invalid-feedback by default
-         ;;      and overrides that for example when there is a sibling .form-control.is-invalid,
-         ;;      but that doesn't work with checkbox groups nor attachments, and we anyways
-         ;;      don't need the feature of hiding this div with CSS when it has no content.
-         :style {:display "block"}}
+        {:id (str (field-name opts) "-error")}
         (text-format (:type validation) raw-title)])]))
 
 (defn- non-field-wrapper [opts children]

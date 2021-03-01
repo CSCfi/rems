@@ -32,12 +32,7 @@
        (str/join "-")))
 
 (defn- field-validation-message [error label]
-  ;; XXX: Bootstrap's has "display: none" on .invalid-feedback by default
-  ;;      and overrides that for example when there is a sibling .form-control.is-invalid,
-  ;;      but that doesn't work with checkbox groups, dropdowns, etc., and we anyways
-  ;;      don't need the feature of hiding this div with CSS when it has no content.
-  [:div {:class "invalid-feedback"
-         :style {:display "block"}}
+  [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
 (defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
