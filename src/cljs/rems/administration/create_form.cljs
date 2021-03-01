@@ -16,7 +16,7 @@
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field organization-field radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -270,14 +270,8 @@
    :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
-
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
-
 (defn- form-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
+  [organization-field context {:keys [:organization]}])
 
 (defn- form-internal-name-field []
   [text-field context {:keys [:form/internal-name]
@@ -629,7 +623,7 @@
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when-let [error (:organization form-errors)]
-           (format-validation-link "organization-dropdown"
+           (format-validation-link "organization"
                                    (text-format error (text :t.administration/organization))))
 
          (when-let [error (:form/internal-name form-errors)]

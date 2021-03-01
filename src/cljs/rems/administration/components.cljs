@@ -16,7 +16,10 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
-            [rems.text :refer [text-format]]))
+            [rems.dropdown :as dropdown]
+            [rems.fields :as fields]
+            [rems.common.roles :as roles]
+            [rems.text :refer [text text-format]]))
 
 (defn- key-to-id [key]
   (if (number? key)
@@ -172,3 +175,28 @@
 
 (defn inline-info-field [text value & [opts]]
   [info-field text value (merge {:inline? true} opts)])
+
+(defn organization-field [context {:keys [keys readonly]}]
+  (let [label (text :t.administration/organization)
+        organizations @(rf/subscribe [:owned-organizations])
+        language @(rf/subscribe [:language])
+        form @(rf/subscribe [(:get-form context)])
+        value (get-in form keys)
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
+        id (keys-to-id keys)
+        item-selected? #(= (:organization/id %) (:organization/id value))
+        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
+    [:div.form-group
+     [:label {:for id} label]
+     (if (or readonly disallowed)
+       [fields/readonly-field {:id id
+                               :value (get-in value [:organization/name language])}]
+       [dropdown/dropdown
+        {:id id
+         :items (->> organizations (filter :enabled) (remove :archived))
+         :item-key :organization/id
+         :item-label (comp language :organization/name)
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [(:update-form context) keys %])}])
+     [field-validation-message (get-in form-errors keys) label]]))

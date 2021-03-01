@@ -3,7 +3,7 @@
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [text-field]]
+            [rems.administration.components :refer [organization-field text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
@@ -140,18 +140,12 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
-(def ^:private organization-dropdown-id "organization-dropdown")
 (def ^:private workflow-dropdown-id "workflow-dropdown")
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (defn- catalogue-item-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
+  [organization-field context {:keys [:organization]}])
 
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]

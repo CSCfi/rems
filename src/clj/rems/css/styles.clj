@@ -706,6 +706,11 @@
    [:.application-field-label {:font-weight "bold"}]
    [:div.info-collapse {:font-weight "400"
                         :white-space :pre-wrap}]
+   ;; Bootstrap's has "display: none" on .invalid-feedback by default
+   ;; and overrides that for example when there is a sibling .form-control.is-invalid,
+   ;; but that doesn't work with checkbox groups, dropdowns, etc., and we anyways
+   ;; don't need the feature of hiding this div with CSS when it has no content.
+   [:div.invalid-feedback {:display :block}]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]

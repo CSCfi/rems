@@ -2,11 +2,10 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [text-field]]
+            [rems.administration.components :refer [organization-field text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
-            [rems.fields :as fields]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
@@ -62,14 +61,8 @@
 
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (defn- resource-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
+  [organization-field context {:keys [:organization]}])
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]

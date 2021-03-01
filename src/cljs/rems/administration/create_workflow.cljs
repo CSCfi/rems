@@ -1,8 +1,9 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
+            [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [radio-button-group text-field]]
+            [rems.administration.components :refer [organization-field radio-button-group text-field]]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
@@ -15,7 +16,7 @@
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
-  (medley.core/find-first #(= (id-key %) id) items))
+  (find-first #(= (id-key %) id) items))
 
 (rf/reg-event-fx
  ::enter-page
@@ -129,14 +130,8 @@
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (defn- workflow-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
+  [organization-field context {:keys [:organization]}])
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]

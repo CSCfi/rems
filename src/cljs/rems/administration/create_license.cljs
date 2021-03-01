@@ -2,14 +2,10 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
+            [rems.administration.components :refer [organization-field radio-button-group text-field textarea-autosize]]
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
-            [rems.dropdown :as dropdown]
-            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.common.roles :as roles]
-            [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! trim-when-string]]))
 
@@ -112,14 +108,8 @@
 (defn- language-heading [language]
   [:h3 (str/upper-case (name language))])
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (defn- license-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
+  [organization-field context {:keys [:organization]}])
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]

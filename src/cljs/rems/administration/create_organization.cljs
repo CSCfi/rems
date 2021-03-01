@@ -11,7 +11,6 @@
             [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
-            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
@@ -138,16 +137,6 @@
    :update-form ::set-form-field})
 
 (def ^:private owners-dropdown-id "owners-dropdown")
-
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
-(defn- organization-organization-field []
-  [fields/organization-field {:id "organization-dropdown"
-                              :value @(rf/subscribe [::selected-organization])
-                              :readonly @(rf/subscribe [::editing?])
-                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- organization-id-field []
   [text-field context {:keys [:organization/id]
