@@ -146,6 +146,10 @@
   (assert-response-is-ok response)
   (read-body response))
 
+(defn read-unauthorized-body [response]
+  {:body (read-body response)
+   :status (:status response)})
+
 (defn api-response [method api & [body api-key user-id]]
   (cond-> (request method api)
     api-key (assoc-in [:headers "x-rems-api-key"] api-key)
@@ -160,11 +164,6 @@
 (defn assert-success [body]
   (assert (:success body) (pr-str body))
   body)
-
-(defn assert-unauthorized [response]
-  (response-is-unauthorized? response)
-  {:status (:status response)
-   :body (read-body response)})
 
 ;;; Fake login without API key
 
