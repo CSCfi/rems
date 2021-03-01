@@ -851,6 +851,15 @@
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
+        license2 (create-license! {:actor owner
+                                   :license/type :link
+                                   :organization {:organization/id "nbn"}
+                                   :license/title {:en "Demo license 2"
+                                                   :fi "Demolisenssi 2"
+                                                   :sv "Demolicens 2"}
+                                   :license/link {:en "https://fedoraproject.org/wiki/Licensing/Beerware"
+                                                  :fi "https://fedoraproject.org/wiki/Licensing/Beerware"
+                                                  :sv "https://fedoraproject.org/wiki/Licensing/Beerware"}})
         extra-license (create-license! {:actor owner
                                         :license/type :link
                                         :organization {:organization/id "nbn"}
@@ -894,6 +903,22 @@
                                                   :organization {:organization/id "nbn"}
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
+        res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
+                                                        :organization {:organization/id "hus"}
+                                                        :actor owner
+                                                        :license-ids [license1 extra-license attachment-license]})
+        res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"
+                                                        :organization {:organization/id "hus"}
+                                                        :actor owner
+                                                        :license-ids [license2 extra-license attachment-license]})
+        res-duplicate-resource-name-with-long-name1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                       :organization {:organization/id "hus"}
+                                                                       :actor owner
+                                                                       :license-ids [license1 extra-license attachment-license]})
+        res-duplicate-resource-name-with-long-name2 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                       :organization {:organization/id "hus"}
+                                                                       :actor owner
+                                                                       :license-ids [license2 extra-license attachment-license]})
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)

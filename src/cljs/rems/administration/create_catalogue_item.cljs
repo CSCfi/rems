@@ -188,8 +188,22 @@
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
+(defn resource-label [r language counts]
+  (let [organisation (get-in r [:organization :organization/short-name language])
+        duplicate? (> (get counts (:resid r)) 1)
+        licenses? (seq (:licenses r))]
+    (str (:resid r)
+         (when organisation
+           (str " (" (text :t.administration/org) ": " organisation ")"))
+         (when (and duplicate? licenses?)
+           (str " (" (text :t.administration/licenses) ": "
+                (str/join ", " (mapv #(get-in % [:localizations language :title])
+                                     (:licenses r)))
+                ")")))))
+
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
+        counts (frequencies (map :resid resources))
         editing? @(rf/subscribe [::editing?])
         selected-resource @(rf/subscribe [::selected-resource])
         item-selected? #(= (:id %) (:id selected-resource))
@@ -204,10 +218,7 @@
         {:id resource-dropdown-id
          :items (->> resources (filter :enabled) (remove :archived))
          :item-key :id
-         :item-label #(str (:resid %)
-                           " (org: "
-                           (get-in % [:organization :organization/short-name language])
-                           ")")
+         :item-label #(resource-label % language counts)
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 

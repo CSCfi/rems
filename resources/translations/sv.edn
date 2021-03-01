@@ -110,6 +110,7 @@
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
+                   :org "Org"
                    :organization "Organisation"
                    :organizations "Organisationer"
                    :owners "Ägare"

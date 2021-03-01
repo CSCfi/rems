@@ -110,6 +110,7 @@
                    :name "Nimi"
                    :no-licenses "Ei lisenssejä"
                    :optional "(valinnainen)"
+                   :org "Org"
                    :organization "Organisaatio"
                    :organizations "Organisaatiot"
                    :owners "Omistajat"
