@@ -31,6 +31,7 @@
             [rems.common.util :refer [build-index index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
+            [rems.focus :as focus]
             [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
@@ -71,7 +72,11 @@
                 ": " (localized (:catalogue-item/title resource))]))])))
 
 (defn- format-validation-error [type field]
-  [:a {:href "#" :on-click (focus-input-field (fields/field-name field))}
+  [:a {:href "#" :on-click (case (:field/type field)
+                             ;; workaround for tables: there's no single input to focus
+                             :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
+                             ;; default
+                             (focus-input-field (fields/field-name field)))}
    (text-format type (localized (:field/title field)))])
 
 (defn- format-submission-errors
