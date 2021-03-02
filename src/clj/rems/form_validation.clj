@@ -62,7 +62,7 @@
       ;; Schema validation guarantees that it's either a s/Str or
       ;; a [[{:column s/Str :value s/Str}]], and we've ruled out s/Str
       ;; in wrong-value-type-error
-      (when (not (every? row-ok? (:field/value field)))
+      (when (not (every? row-ok? value))
         ;; TODO more specific error?
         {:field-id (:field/id field)
          :type     :t.form.validation/invalid-value}))))
