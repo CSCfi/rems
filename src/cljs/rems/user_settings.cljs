@@ -84,12 +84,8 @@
  :loaded-user-settings-fail
  (fn [{:keys [db]} [_ user-settings-error]]
    (let [logged-in? (:user (:identity db))]
-     (if-not logged-in?
-       (if-not (= 401 (:status user-settings-error))
-         {:db db
-          :dispatch (flash-message/show-default-error! :top (str "Fetch user settings"))}
-         {:db db})
-       {:db db}))))
+     {:dispatch (when-not logged-in? (when-not (= 401 (:status user-settings-error))
+                                       (flash-message/show-default-error! :top (str "Fetch user settings"))))})))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"

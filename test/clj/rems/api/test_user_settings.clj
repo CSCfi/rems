@@ -21,7 +21,7 @@
               :body "unauthorized"}
              (-> (request :get "/api/user-settings")
                  handler
-                 read-unauthorized-body))))
+                 read-body-and-status))))
 
     (testing "default user settings"
       (is (= {:language "en"

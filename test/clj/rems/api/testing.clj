@@ -146,7 +146,7 @@
   (assert-response-is-ok response)
   (read-body response))
 
-(defn read-unauthorized-body [response]
+(defn read-body-and-status [response]
   {:body (read-body response)
    :status (:status response)})
 
