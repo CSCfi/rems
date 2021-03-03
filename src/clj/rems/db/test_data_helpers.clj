@@ -200,8 +200,9 @@
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
                                          field (:form/fields form)
-                                         :when (or optional-fields
-                                                   (not (:field/optional field)))]
+                                         :when (and (:field/visible field)
+                                                    (or optional-fields
+                                                        (not (:field/optional field))))]
                                      {:form (:form/id form)
                                       :field (:field/id field)
                                       :value (case (:field/type field)

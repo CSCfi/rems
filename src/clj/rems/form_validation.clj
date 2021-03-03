@@ -9,27 +9,28 @@
     (every? valid-row? (:field/value field))))
 
 (defn- required-error [field]
-  (case (:field/type field)
-    (:header :label)
-    nil
+  (when (:field/visible field)
+    (case (:field/type field)
+      (:header :label)
+      nil
 
-    :table
-    (or
-     ;; a non-optional table must have at least one row
-     (when (and (not (:field/optional field))
-                (empty? (:field/value field)))
-       {:field-id (:field/id field)
-        :type     :t.form.validation/required})
-     ;; all tables must have all columns set for all rows
-     (when (not (all-columns-set? field))
-       {:field-id (:field/id field)
-        :type     :t.form.validation/column-values-missing}))
+      :table
+      (or
+       ;; a non-optional table must have at least one row
+       (when (and (not (:field/optional field))
+                  (empty? (:field/value field)))
+         {:field-id (:field/id field)
+          :type     :t.form.validation/required})
+       ;; all tables must have all columns set for all rows
+       (when (not (all-columns-set? field))
+         {:field-id (:field/id field)
+          :type     :t.form.validation/column-values-missing}))
 
-    ;; default:
-    (when (and (not (:field/optional field))
-               (str/blank? (:field/value field)))
-      {:field-id (:field/id field)
-       :type     :t.form.validation/required})))
+      ;; default:
+      (when (and (not (:field/optional field))
+                 (str/blank? (:field/value field)))
+        {:field-id (:field/id field)
+         :type     :t.form.validation/required}))))
 
 (defn- too-long-error [field]
   (when-let [limit (:field/max-length field)]
@@ -88,8 +89,15 @@
         {:field-id (:field/id field)
          :type :t.form.validation/invalid-value}))))
 
+(defn- invisible-field-error [field]
+  (when-not (:field/visible field)
+    (when-not (empty? (:field/value field))
+      {:field-id (:field/id field)
+       :type :t.form.validation/invisible-field})))
+
 (defn- validate-field-content [field]
-  (or (wrong-value-type-error field)
+  (or (invisible-field-error field)
+      (wrong-value-type-error field)
       (invalid-email-address-error field)
       (too-long-error field)
       (invalid-option-error field)
@@ -105,14 +113,12 @@
 
 (defn validate-fields-for-draft [fields]
   (->> (sort-by :field/id fields)
-       (filter :field/visible)
        (map validate-draft-field)
        (remove nil?)
        (seq)))
 
 (defn validate-fields-for-submit [fields]
   (->> (sort-by :field/id fields)
-       (filter :field/visible)
        (map validate-field-submit)
        (remove nil?)
        (seq)))

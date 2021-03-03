@@ -370,7 +370,7 @@
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
-  [cmd application injections]
+  [cmd application _injections]
   (or (merge-with concat
                   (licenses-not-accepted-error application (:actor cmd))
                   (validation-error application))
