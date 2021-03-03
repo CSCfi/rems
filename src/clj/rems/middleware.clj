@@ -142,25 +142,33 @@
       (catch ForbiddenException e
         (on-forbidden-error req)))))
 
+;; When using figwheel in dev mode, the browser getches a gazillion js
+;; files from under /js/out. We filter them out to keep the log
+;; cleaner. This helps e.g. when debugging browser test failures.
+(def silence-logging-regex #"^/js/out/.*")
+
 (defn wrap-logging
   [handler]
   (fn [request]
     (let [uri (str (:uri request)
                    (when-let [q (:query-string request)]
-                     (str "?" q)))]
-      (log/info ">" (:request-method request) uri
-                "lang:" context/*lang*
-                "user:" context/*user*
-                (if (:uses-valid-api-key? request)
-                  "api-key"
-                  "")
-                "roles:" context/*roles*)
-      (log/debug "session" (pr-str (:session request)))
-      (when (seq (:form-params request))
-        (log/debug "form params" (pr-str (:form-params request))))
+                     (str "?" q)))
+          log? (not (re-matches silence-logging-regex uri))]
+      (when log?
+        (log/info ">" (:request-method request) uri
+                  "lang:" context/*lang*
+                  "user:" context/*user*
+                  (if (:uses-valid-api-key? request)
+                    "api-key"
+                    "")
+                  "roles:" context/*roles*)
+        (log/debug "session" (pr-str (:session request)))
+        (when (seq (:form-params request))
+          (log/debug "form params" (pr-str (:form-params request)))))
       (let [response (handler request)]
-        (log/info "<" (:request-method request) uri (:status response)
-                  (or (get-in response [:headers "Location"]) ""))
+        (when log?
+          (log/info "<" (:request-method request) uri (:status response)
+                    (or (get-in response [:headers "Location"]) "")))
         response))))
 
 (defn- wrap-request-context [handler]
