@@ -63,7 +63,6 @@
   (getx {1 {:form/id 1
             :form/fields [{:field/id "1"
                            :field/optional true
-                           :field/visible true
                            :field/type :option
                            :field/options [{:key "foo" :label "Foo"}
                                            {:key "bar" :label "Bar"}]}
@@ -82,7 +81,19 @@
                            :field/type :attachment}]}
          4 {:form/id 4
             :form/fields [{:field/id "text"
-                           :field/type :text}]}}
+                           :field/type :text}]}
+         7 {:form/id 7
+            :form/fields [{:field/id "7"
+                           :field/type :option
+                           :field/optional true
+                           :field/options [{:key "y" :label "y"}
+                                           {:key "n" :label "n"}]}
+                          {:field/id "8"
+                           :field/type :email
+                           :field/optional false
+                           :field/visibility {:visibility/type :only-if
+                                              :visibility/field {:field/id "7"}
+                                              :visibility/values ["y"]}}]}}
         id))
 
 (defn- dummy-get-catalogue-item [id]
@@ -338,6 +349,23 @@
                            {:type :application.command/save-draft
                             :actor applicant-user-id
                             :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+
+    (testing "validation of conditional fields"
+      (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
+            application (apply-events nil [created])]
+        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
+               (fail-command application
+                             {:type :application.command/save-draft
+                              :actor applicant-user-id
+                              :field-values [{:form 7 :field "7" :value "y"}
+                                             {:form 7 :field "8" :value "invalid_email"}]}))
+            "visible field should not accept invalid values")
+        (is (ok-command application
+                        {:type :application.command/save-draft
+                         :actor applicant-user-id
+                         :field-values [{:form 7 :field "7" :value "n"}
+                                        {:form 7 :field "8" :value "invalid_email"}]})
+            "invisible field can accept invalid values")))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}

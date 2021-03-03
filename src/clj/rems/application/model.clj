@@ -536,14 +536,18 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
+(defn add-answers [application current-answers previous-answers]
+  (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers) application))
+
 (defn enrich-answers [application]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
         current-answers (first answer-versions)
         previous-answers (second answer-versions)]
-    (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
-         (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers)))))
+    (-> application
+        (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
+        (add-answers current-answers previous-answers))))
 
 (defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
@@ -554,15 +558,8 @@
                         days))
       application)))
 
-(defn- enrich-form-field-visible [form]
-  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
-        update-field-visibility (fn [field] (assoc field :field/visible (form/field-visible? field field-values)))]
-    (transform [:form/fields ALL]
-               update-field-visibility
-               form)))
-
 (defn enrich-field-visible [application]
-  (transform [:application/forms ALL] enrich-form-field-visible application))
+  (transform [:application/forms ALL] form/enrich-form-field-visible application))
 
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application

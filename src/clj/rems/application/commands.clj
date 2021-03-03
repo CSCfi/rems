@@ -355,10 +355,12 @@
 
 (defmethod command-handler :application.command/save-draft
   [cmd application _injections]
-  (let [forms (:application/forms application)
-        answers (:field-values cmd)
-        new-forms (transform [ALL] #(form/enrich-form-answers % answers nil) forms)]
-    (or (merge-with concat (validation-errors-for-draft new-forms))
+  (let [answers (:field-values cmd)
+        forms (for [form (:application/forms application)]
+                (-> form
+                    (form/enrich-form-answers answers nil)
+                    (form/enrich-form-field-visible)))]
+    (or (validation-errors-for-draft forms)
         (ok {:event/type               :application.event/draft-saved
              :application/field-values (:field-values cmd)}))))
 
