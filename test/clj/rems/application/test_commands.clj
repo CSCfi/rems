@@ -680,8 +680,7 @@
                            :event/time test-time
                            :event/actor applicant-user-id
                            :application/id app-id
-                           :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                      {:form 1 :field "2" :value "bar"}]}
+                           :application/field-values []}
         licenses-accepted-event {:event/type :application.event/licenses-accepted
                                  :event/time test-time
                                  :event/actor applicant-user-id
