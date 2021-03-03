@@ -146,6 +146,10 @@
   (assert-response-is-ok response)
   (read-body response))
 
+(defn read-body-and-status [response]
+  {:body (read-body response)
+   :status (:status response)})
+
 (defn api-response [method api & [body api-key user-id]]
   (cond-> (request method api)
     api-key (assoc-in [:headers "x-rems-api-key"] api-key)

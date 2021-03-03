@@ -16,6 +16,13 @@
   (let [user-id (str (UUID/randomUUID))]
     (test-helpers/create-user! {:eppn user-id})
 
+    (testing "default user settings without authentification"
+      (is (= {:status 401
+              :body "unauthorized"}
+             (-> (request :get "/api/user-settings")
+                 handler
+                 read-body-and-status))))
+
     (testing "default user settings"
       (is (= {:language "en"
               :notification-email nil}

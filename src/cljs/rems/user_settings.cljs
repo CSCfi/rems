@@ -80,10 +80,18 @@
                    (when first-time? ; to avoid an infinite loop if the settings fail to save (e.g. unsupported language in cookies)
                      [[:check-if-should-save-language!]]))})))
 
+(rf/reg-event-fx
+ :loaded-user-settings-fail
+ (fn [{:keys [db]} [_ user-settings-error]]
+   (let [logged-in? (:user (:identity db))]
+     {:dispatch (when-not logged-in? (when-not (= 401 (:status user-settings-error))
+                                       (flash-message/show-default-error! :top (str "Fetch user settings"))))})))
+
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
-         {:handler #(rf/dispatch-sync [:loaded-user-settings %])
-          :error-handler (flash-message/default-error-handler :top "Fetch user settings")}))
+         {:custom-error-handler? true
+          :handler #(rf/dispatch-sync [:loaded-user-settings %])
+          :error-handler #(rf/dispatch [:loaded-user-settings-fail %])}))
 
 (rf/reg-event-fx
  ::save-user-language!

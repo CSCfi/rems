@@ -11,6 +11,7 @@
 
     (GET "/" []
       :summary "Get user settings"
+      :roles #{:logged-in}
       :return user-settings/UserSettings
       (ok (user-settings/get-user-settings (get-user-id))))
 
