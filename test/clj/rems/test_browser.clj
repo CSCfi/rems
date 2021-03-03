@@ -272,11 +272,14 @@
             attachment-field (get-in application [:application/forms 0 :form/fields 7])
             attachment-field-id (str "form-" form-id "-field-" (:field/id attachment-field))
             attachment-field-upload-selector (keyword (str "upload-" attachment-field-id "-input"))
+            conditional-field (get-in application [:application/forms 0 :form/fields 9])
+            conditional-field-id (str "form-" form-id "-field-" (:field/id conditional-field))
             table-field (get-in application [:application/forms 0 :form/fields 11])
             table-field-id (str "form-" form-id "-field-" (:field/id table-field))]
         ;; sanity checks:
         (is (= "attachment" (:field/type attachment-field)))
         (is (= "table" (:field/type table-field)))
+        (is (:field/visibility conditional-field))
 
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
@@ -300,6 +303,14 @@
         (select-option "Option list" "First option")
         (btu/wait-predicate #(btu/field-visible? "Conditional field"))
         (fill-form-field "Conditional field" "Conditional")
+
+        ;; check that answers to conditional fields are retained even if they're temporarily invisible
+        (select-option "Option list" "Second option")
+        (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
+        (select-option "Option list" "First option")
+        (btu/wait-predicate #(btu/field-visible? "Conditional field"))
+        (is (= "Conditional" (btu/value-of (keyword conditional-field-id))))
+
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
         (btu/check-box "Option3")
