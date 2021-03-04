@@ -392,7 +392,6 @@
                       :invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
-                      :invisible-field "Kenttä on ei ole näkyvissä."
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."

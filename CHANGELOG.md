@@ -19,7 +19,7 @@ Changes since v2.16
   - Prefer the new `internal-name` or `external-title` fields instead.
   - The external title is shown to applicants in the application and internal name used throughout the administration.
   - The API supports the old style for now.
-- Answers to conditional fields that are not visible are no longer accepted by the API, nor sent by the REMS UI. (#2574)
+- Answers to conditional fields that are not visible are no longer stored by REMS. The API accepts answers for invisible fields but drops them. The UI does not send answers to invisible fields. (#2574)
 
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)

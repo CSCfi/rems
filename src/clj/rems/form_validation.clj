@@ -89,15 +89,8 @@
         {:field-id (:field/id field)
          :type :t.form.validation/invalid-value}))))
 
-(defn- invisible-field-error [field]
-  (when-not (:field/visible field)
-    (when-not (empty? (:field/value field))
-      {:field-id (:field/id field)
-       :type :t.form.validation/invisible-field})))
-
 (defn- validate-field-content [field]
-  (or (invisible-field-error field)
-      (wrong-value-type-error field)
+  (or (wrong-value-type-error field)
       (invalid-email-address-error field)
       (too-long-error field)
       (invalid-option-error field)

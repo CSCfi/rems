@@ -359,10 +359,14 @@
         forms (for [form (:application/forms application)]
                 (-> form
                     (form/enrich-form-answers answers nil)
-                    (form/enrich-form-field-visible)))]
+                    (form/enrich-form-field-visible)))
+        visible-values (for [form forms
+                             field (:form/fields form)
+                             :when (:field/visible field)]
+                         {:form (:form/id form) :field (:field/id field) :value (:field/value field)})]
     (or (validation-errors-for-draft forms)
         (ok {:event/type               :application.event/draft-saved
-             :application/field-values (:field-values cmd)}))))
+             :application/field-values visible-values}))))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]

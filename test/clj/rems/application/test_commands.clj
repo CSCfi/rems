@@ -361,20 +361,24 @@
                               :field-values [{:form 7 :field "7" :value "y"}
                                              {:form 7 :field "8" :value "invalid_email"}]}))
             "visible field should not accept invalid values")
-        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invisible-field}]}
+        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
                               :field-values [{:form 7 :field "7" :value "n"}
                                              {:form 7 :field "8" :value "invalid_email"}]}))
             "invisible should not accept invalid values")
-        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invisible-field}]}
-               (fail-command application
-                             {:type :application.command/save-draft
-                              :actor applicant-user-id
-                              :field-values [{:form 7 :field "7" :value "n"}
-                                             {:form 7 :field "8" :value "valid@example.com"}]}))
-            "invisible should not accept valid values")))
+        (is (= {:event/type :application.event/draft-saved
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id
+                :application/field-values [{:form 7, :field "7", :value "n"}]}
+               (ok-command application
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 7 :field "7" :value "n"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+            "answers to invisible fields should get dropped")))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -714,13 +718,15 @@
 
     (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
-        (is (= {:errors [{:type :t.form.validation/invisible-field
-                          :form-id 1
-                          :field-id "2"}]}
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
                (-> application
                    (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
                                                                                       {:form 1 :field "2" :value "present"}])])
-                   (fail-command submit-command injections))))
+                   (ok-command submit-command injections)))
+            "submit succeeds even if application is inconsistent and contains an answer for an invisible field")
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
                 :event/actor applicant-user-id
