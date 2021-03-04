@@ -63,7 +63,6 @@
   (getx {1 {:form/id 1
             :form/fields [{:field/id "1"
                            :field/optional true
-                           :field/visible true
                            :field/type :option
                            :field/options [{:key "foo" :label "Foo"}
                                            {:key "bar" :label "Bar"}]}
@@ -74,6 +73,7 @@
                                               :visibility/values ["foo"]}}]}
          2 {:form/id 2
             :form/fields [{:field/id "1"
+                           :field/type :text
                            :field/optional false}]}
          3 {:form/id 3
             :form/fields [{:field/id "text"
@@ -82,7 +82,19 @@
                            :field/type :attachment}]}
          4 {:form/id 4
             :form/fields [{:field/id "text"
-                           :field/type :text}]}}
+                           :field/type :text}]}
+         7 {:form/id 7
+            :form/fields [{:field/id "7"
+                           :field/type :option
+                           :field/optional true
+                           :field/options [{:key "y" :label "y"}
+                                           {:key "n" :label "n"}]}
+                          {:field/id "8"
+                           :field/type :email
+                           :field/optional false
+                           :field/visibility {:visibility/type :only-if
+                                              :visibility/field {:field/id "7"}
+                                              :visibility/values ["y"]}}]}}
         id))
 
 (defn- dummy-get-catalogue-item [id]
@@ -338,6 +350,47 @@
                            {:type :application.command/save-draft
                             :actor applicant-user-id
                             :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+
+    (testing "validation of conditional fields"
+      (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
+            application (apply-events nil [created])]
+        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
+               (fail-command application
+                             {:type :application.command/save-draft
+                              :actor applicant-user-id
+                              :field-values [{:form 7 :field "7" :value "y"}
+                                             {:form 7 :field "8" :value "invalid_email"}]}))
+            "visible field should not accept invalid values")
+        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
+               (fail-command application
+                             {:type :application.command/save-draft
+                              :actor applicant-user-id
+                              :field-values [{:form 7 :field "7" :value "n"}
+                                             {:form 7 :field "8" :value "invalid_email"}]}))
+            "invisible should not accept invalid values")
+        (is (= {:event/type :application.event/draft-saved
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id
+                :application/field-values [{:form 7, :field "7", :value "y"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}
+               (ok-command application
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 7 :field "7" :value "y"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+            "answers to visible fields should get stored")
+        (is (= {:event/type :application.event/draft-saved
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id
+                :application/field-values [{:form 7, :field "7", :value "n"}]}
+               (ok-command application
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 7 :field "7" :value "n"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+            "answers to invisible fields should get dropped")))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -643,8 +696,7 @@
                            :event/time test-time
                            :event/actor applicant-user-id
                            :application/id app-id
-                           :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                      {:form 1 :field "2" :value "bar"}]}
+                           :application/field-values []}
         licenses-accepted-event {:event/type :application.event/licenses-accepted
                                  :event/time test-time
                                  :event/actor applicant-user-id
@@ -684,6 +736,15 @@
                 :application/id app-id}
                (-> application
                    (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
+                                                                                      {:form 1 :field "2" :value "present"}])])
+                   (ok-command submit-command injections)))
+            "submit succeeds even if application is inconsistent and contains an answer for an invisible field")
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
+               (-> application
+                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
                                                                                       {:form 1 :field "2" :value ""}])])
                    (ok-command submit-command injections)))))
       (testing "1st field is given, 2nd field is required and visible but empty"
@@ -691,7 +752,8 @@
                           :form-id 1
                           :field-id "2"}]}
                (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "2" :value ""}])])
+                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                      {:form 1 :field "2" :value ""}])])
                    (fail-command submit-command injections)))))
       (testing "1st field is given, 2nd field is given"
         (is (= {:event/type :application.event/submitted
@@ -753,7 +815,6 @@
                                      {:type :application.command/return
                                       :actor handler-user-id
                                       :comment "ret"})
-          submit-injections {:get-form-template dummy-get-form-template}
           submit-command {:type :application.command/submit
                           :actor applicant-user-id}]
       (is (= {:event/type :application.event/returned
@@ -768,14 +829,14 @@
                   :event/time test-time
                   :event/actor applicant-user-id
                   :application/id app-id}
-                 (ok-command returned submit-command submit-injections)))
+                 (ok-command returned submit-command)))
           (testing "succeeds even when catalogue item is disabled"
             (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
               (is (= {:event/type :application.event/submitted
                       :event/time test-time
                       :event/actor applicant-user-id
                       :application/id app-id}
-                     (ok-command disabled submit-command submit-injections))))))))))
+                     (ok-command disabled submit-command))))))))))
 
 
 (deftest test-assign-external-id

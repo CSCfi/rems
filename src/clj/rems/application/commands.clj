@@ -355,12 +355,18 @@
 
 (defmethod command-handler :application.command/save-draft
   [cmd application _injections]
-  (let [forms (:application/forms application)
-        answers (:field-values cmd)
-        new-forms (transform [ALL] #(form/enrich-form-answers % answers nil) forms)]
-    (or (merge-with concat (validation-errors-for-draft new-forms))
+  (let [answers (:field-values cmd)
+        forms (for [form (:application/forms application)]
+                (-> form
+                    (form/enrich-form-answers answers nil)
+                    (form/enrich-form-field-visible)))
+        visible-values (for [form forms
+                             field (:form/fields form)
+                             :when (:field/visible field)]
+                         {:form (:form/id form) :field (:field/id field) :value (:field/value field)})]
+    (or (validation-errors-for-draft forms)
         (ok {:event/type               :application.event/draft-saved
-             :application/field-values (:field-values cmd)}))))
+             :application/field-values visible-values}))))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
@@ -368,7 +374,7 @@
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
-  [cmd application injections]
+  [cmd application _injections]
   (or (merge-with concat
                   (licenses-not-accepted-error application (:actor cmd))
                   (validation-error application))

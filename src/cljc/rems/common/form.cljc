@@ -303,6 +303,13 @@
       (assoc form :form/fields fields)
       form)))
 
+(defn enrich-form-field-visible [form]
+  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
+        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
+    (transform [:form/fields ALL]
+               update-field-visibility
+               form)))
+
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}
               :form/internal-name "the title"

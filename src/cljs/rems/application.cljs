@@ -141,19 +141,22 @@
  (fn [db [_ errors]]
    (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- field-values-to-api [field-values]
-  (for [[form fields] field-values
-        [field value] fields]
-    {:form form :field field :value value}))
+(defn- field-values-to-api [application field-values]
+  (for [form (:application/forms application)
+        :let [form-id (:form/id form)]
+        field (:form/fields form)
+        :let [field-id (:field/id field)]
+        :when (form/field-visible? field (get field-values form-id))]
+    {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- save-application! [description application-id field-values]
+(defn- save-application! [description application field-values]
   (post! "/api/applications/save-draft"
-         {:params {:application-id application-id
-                   :field-values (field-values-to-api field-values)}
+         {:params {:application-id (:application/id application)
+                   :field-values (field-values-to-api application field-values)}
           :handler (flash-message/default-success-handler
                     :actions
                     description
-                    #(rf/dispatch [::fetch-application application-id]))
+                    #(rf/dispatch [::fetch-application (:application/id application)]))
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
@@ -162,7 +165,7 @@
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (save-application! description
-                        (:application/id application)
+                        application
                         (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
@@ -170,7 +173,7 @@
   ;; TODO: deduplicate with save-application!
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values (field-values-to-api field-values)}
+                   :field-values (field-values-to-api application field-values)}
           :handler (fn [response]
                      (cond
                        (not (:success response))

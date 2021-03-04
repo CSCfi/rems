@@ -29,6 +29,10 @@
                                            {:field/title    "B"
                                             :field/optional true
                                             :field/visible  false
+                                            :field/value    ""}
+                                           {:field/title    "C"
+                                            :field/optional false
+                                            :field/visible  false
                                             :field/value    ""}]))))
 
   (testing "labels and headers are always effectively optional"
