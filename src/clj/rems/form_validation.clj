@@ -17,20 +17,20 @@
       :table
       (or
        ;; a non-optional table must have at least one row
-       (when (and (not (:field/optional field))
-                  (empty? (:field/value field)))
-         {:field-id (:field/id field)
-          :type     :t.form.validation/required})
+       (when-not (:field/optional field)
+         (when (empty? (:field/value field))
+           {:field-id (:field/id field)
+            :type     :t.form.validation/required}))
        ;; all tables must have all columns set for all rows
-       (when (not (all-columns-set? field))
+       (when-not (all-columns-set? field)
          {:field-id (:field/id field)
           :type     :t.form.validation/column-values-missing}))
 
       ;; default:
-      (when (and (not (:field/optional field))
-                 (str/blank? (:field/value field)))
-        {:field-id (:field/id field)
-         :type     :t.form.validation/required}))))
+      (when-not (:field/optional field)
+        (when (str/blank? (:field/value field))
+          {:field-id (:field/id field)
+           :type     :t.form.validation/required})))))
 
 (defn- too-long-error [field]
   (when-let [limit (:field/max-length field)]
@@ -63,7 +63,7 @@
       ;; Schema validation guarantees that it's either a s/Str or
       ;; a [[{:column s/Str :value s/Str}]], and we've ruled out s/Str
       ;; in wrong-value-type-error
-      (when (not (every? row-ok? value))
+      (when-not (every? row-ok? value)
         ;; TODO more specific error?
         {:field-id (:field/id field)
          :type     :t.form.validation/invalid-value}))))
@@ -71,7 +71,7 @@
 ;; TODO: validate that attachments are actually valid?
 (defn- invalid-attachment-error [field]
   (when (= (:field/type field) :attachment)
-    (when (not (every? number? (form/parse-attachment-ids (:field/value field))))
+    (when-not (every? number? (form/parse-attachment-ids (:field/value field)))
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-value})))
 
