@@ -38,14 +38,14 @@
   (testing "invisible fields should not be filled"
     (is (= [{:field-id "A" :type :t.form.validation/invisible-field}
             {:field-id "B" :type :t.form.validation/invisible-field}]
-           (validate-fields-for-draft [{:field/id "A"
-                                        :field/optional true
-                                        :field/visible false
-                                        :field/value "x"}
-                                       {:field/id "B"
-                                        :field/optional false
-                                        :field/visible false
-                                        :field/value "x"}]))))
+           (validate-fields-for-submit [{:field/id "A"
+                                         :field/optional true
+                                         :field/visible false
+                                         :field/value "x"}
+                                        {:field/id "B"
+                                         :field/optional false
+                                         :field/visible false
+                                         :field/value "x"}]))))
 
   (testing "labels and headers are always effectively optional"
     (is (nil? (validate-fields-for-submit [{:field/type     :label
