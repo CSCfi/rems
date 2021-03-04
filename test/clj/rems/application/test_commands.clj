@@ -372,6 +372,18 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id
+                :application/field-values [{:form 7, :field "7", :value "y"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}
+               (ok-command application
+                           {:type :application.command/save-draft
+                            :actor applicant-user-id
+                            :field-values [{:form 7 :field "7" :value "y"}
+                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+            "answers to visible fields should get stored")
+        (is (= {:event/type :application.event/draft-saved
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id
                 :application/field-values [{:form 7, :field "7", :value "n"}]}
                (ok-command application
                            {:type :application.command/save-draft
