@@ -303,6 +303,16 @@
       (assoc form :form/fields fields)
       form)))
 
+(defn- add-default-field-value [field]
+  (assoc field :field/value
+         (case (:field/type field)
+           :table []
+           ;; default
+           "")))
+
+(defn add-default-values [form]
+  (transform [:form/fields ALL] add-default-field-value form))
+
 (defn enrich-form-field-visible [form]
   (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
         update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]

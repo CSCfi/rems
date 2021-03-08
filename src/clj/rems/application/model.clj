@@ -408,18 +408,10 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- add-default-value [field]
-  (assoc field :field/value
-         (case (:field/type field)
-           :table []
-           ;; default
-           "")))
-
 (defn- enrich-form [form get-form-template]
-  (let [form-template (get-form-template (:form/id form))
-        default-fields (map add-default-value (:form/fields form-template))
+  (let [form-template (form/add-default-values (get-form-template (:form/id form)))
         fields (merge-lists-by :field/id
-                               default-fields
+                               (:form/fields form-template)
                                (:form/fields form))]
     (assoc form
            :form/title (:form/internal-name form-template)
