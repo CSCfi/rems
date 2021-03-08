@@ -20,13 +20,44 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.css.style-utils :refer [get-theme-attribute get-logo-image generate-at-font-faces get-navbar-logo get-logo-name-sm]]
+            [rems.css.style-utils :refer [get-theme-attribute get-logo-image get-navbar-logo get-logo-name-sm]]
             [ring.util.response :as response]))
 
 (def content-width (u/px 1200))
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
+
+;; Fonts of the app 
+
+(defn generate-at-font-faces
+  "The theme :font-family settings will override these fonts is set.
+  
+  Reason for this function to be included into our screen.css
+   - because themes like Findata can use them since our theme.edn doesn't offer a possibility to add custom fonts
+   - all the fonts need to be 'built in' to REMS, even if they're not active
+   - bundling Robot Slab and Lato in REMS is a bit of a hack, made for Findata & THL to get the sort of styles they want"
+  []
+  (list
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Light.eot')"}
+                            {:src "url('/font/Lato-Light.eot') format('embedded-opentype'), url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff'), url('/font/Lato-Light.ttf') format('truetype')"
+                             :font-weight 300
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Regular.eot')"}
+                            {:src "url('/font/Lato-Regular.eot') format('embedded-opentype'), url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff'), url('/font/Lato-Regular.ttf') format('truetype')"
+                             :font-weight 400
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Bold.eot')"}
+                            {:src "url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype')"
+                             :font-weight 700
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Roboto Slab'"
+                             :src "url('/font/Roboto-Slab.woff2') format('woff2')"
+                             :font-weight 400
+                             :font-style "normal"})))
 
 (defn- generate-form-placeholder-styles []
   (list
