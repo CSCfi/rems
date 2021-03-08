@@ -32,6 +32,7 @@ Changes since v2.16
 - Changes to the default translation for the required form field: does not include an asterisk sign anymore.
 
 ### Additions
+- The example-theme now uses the Lato font.
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
