@@ -321,6 +321,9 @@
                form)))
 
 (defn hide-invisible-answers [form]
+  ;; We don't hide :field/previous-value intentionally. In case a
+  ;; field has flipped from visible to invisible, the previous answer
+  ;; is valid & interesting.
   (transform [:form/fields ALL]
              (fn [field]
                (if (:field/visible field)
