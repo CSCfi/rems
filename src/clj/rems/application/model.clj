@@ -694,12 +694,11 @@
   (if (or (= :public (:field/privacy field :public))
           (may-see-private-answers? roles))
     (assoc field :field/private false)
-    (-> field
-        (assoc :field/private true)
-        ;; TODO "" for table is technically wrong, but doesn't matter
-        ;; in practice since the field isn't rendered in the UI
-        (update-existing :field/value (constantly ""))
-        (update-existing :field/previous-value (constantly "")))))
+    (let [private (-> field
+                      (assoc :field/private true)
+                      (form/add-default-field-value)) ; zeros :field/value
+          value (:field/value private)]
+      (update-existing private :field/previous-value (constantly value)))))
 
 (defn apply-privacy [application roles]
   (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))

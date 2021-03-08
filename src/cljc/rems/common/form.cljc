@@ -303,7 +303,7 @@
       (assoc form :form/fields fields)
       form)))
 
-(defn- add-default-field-value [field]
+(defn add-default-field-value [field]
   (assoc field :field/value
          (case (:field/type field)
            :table []
