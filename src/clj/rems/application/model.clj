@@ -551,7 +551,12 @@
       application)))
 
 (defn enrich-field-visible [application]
-  (transform [:application/forms ALL] form/enrich-form-field-visible application))
+  (transform [:application/forms ALL]
+             ;; Even though we no longer store invisible fields since #2582, old data might include invisible answers.
+             ;; We strip them out here so that they don't leak out of the API.
+             (comp form/hide-invisible-answers
+                   form/enrich-form-field-visible)
+             application))
 
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application

@@ -320,6 +320,14 @@
                update-field-visibility
                form)))
 
+(defn hide-invisible-answers [form]
+  (transform [:form/fields ALL]
+             (fn [field]
+               (if (:field/visible field)
+                 field
+                 (add-default-field-value field)))
+             form))
+
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}
               :form/internal-name "the title"
