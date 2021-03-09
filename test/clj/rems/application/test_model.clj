@@ -1446,30 +1446,20 @@
   (let [application {:application/forms [{:form/id 1
                                           :form/fields [{:field/id "fld1"
                                                          :field/title "Option"
-                                                         :field/value ""
                                                          :field/options [{:key "no" :label "No"}
                                                                          {:key "yes" :label "Yes"}]}
                                                         {:field/id "fld2"
                                                          :field/title "Hidden field"
-                                                         :field/value "secret"
                                                          :field/visibility {:visibility/type :only-if
                                                                             :visibility/field {:field/id "fld1"}
                                                                             :visibility/values ["yes"]}}]}]}
-        extract (fn [application]
-                  (->> (get-in (model/enrich-field-visible application) [:application/forms 0 :form/fields])
-                       (map #(select-keys % [:field/id :field/visible :field/value]))))]
-    (is (= [{:field/id "fld1" :field/value "" :field/visible true}
-            {:field/id "fld2" :field/value "" :field/visible false}]
-           (extract application))
-        "empty value should not make field visible and invisible answer should be stripped out")
-    (is (= [{:field/id "fld1" :field/value "no" :field/visible true}
-            {:field/id "fld2" :field/value "" :field/visible false}]
-           (extract (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no")))
-        "other option value should not make field visible and invisible answers should be stripped out")
-    (is (= [{:field/id "fld1" :field/value "yes" :field/visible true}
-            {:field/id "fld2" :field/value "secret" :field/visible true}]
-           (extract (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes")))
-        "correct value should make field visible and retain answer")))
+        visible-fields (fn [application]
+                         (->> (get-in (model/enrich-field-visible application) [:application/forms 0 :form/fields])
+                              (filter :field/visible)
+                              (map :field/id)))]
+    (is (= ["fld1"] (visible-fields application)) "no answer should not make field visible")
+    (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
+    (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
 (deftest test-hide-sensitive-information
   (let [base (reduce model/application-view nil
