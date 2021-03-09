@@ -33,6 +33,7 @@ Changes since v2.16
 
 ### Additions
 - The example-theme now uses the Lato font.
+- The `/api/applications/<id>` API now includes `"attachment/occurs-in"` keys in `"application/attachments"`. (#2571)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
