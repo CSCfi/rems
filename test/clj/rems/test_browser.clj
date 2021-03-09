@@ -361,10 +361,12 @@
             (testing "attachments"
               (is (= [{:attachment/id (first (btu/context-get :attachment-ids))
                        :attachment/filename "test.txt"
-                       :attachment/type "text/plain"}
+                       :attachment/type "text/plain"
+                       :attachment/occurs-in ["value"]}
                       {:attachment/id (second (btu/context-get :attachment-ids))
                        :attachment/filename "test-fi.txt"
-                       :attachment/type "text/plain"}]
+                       :attachment/type "text/plain"
+                       :attachment/occurs-in ["value"]}]
                      (:application/attachments application))))
             (testing "applicant information"
               (is (= "alice" (get-in application [:application/applicant :userid])))

@@ -1256,6 +1256,9 @@
                 id2 (:id body2)]
             (is (:success body2))
             (is (number? id2))
+            (testing "and checking the attachments in application/attachments"
+              (is (= []
+                     (:application/attachments (get-application-for-user app-id user-id)))))
             (testing "and using them in a field"
               (is (= {:success true}
                      (send-command user-id {:type :application.command/save-draft
@@ -1265,6 +1268,16 @@
               (is (= {:success true}
                      (send-command user-id {:type :application.command/submit
                                             :application-id app-id}))))
+            (testing "and checking the attachments in application/attachments"
+              (is (= [{:attachment/type "text/plain"
+                       :attachment/filename "test.txt"
+                       :attachment/id id
+                       :attachment/occurs-in ["value"]}
+                      {:attachment/type "text/plain"
+                       :attachment/filename "second.txt"
+                       :attachment/id id2
+                       :attachment/occurs-in ["value"]}]
+                     (:application/attachments (get-application-for-user app-id user-id)))))
             (testing "and accessing the attachments as handler"
               (let [response (-> (read-request id)
                                  (authenticate api-key handler-id)
@@ -1478,19 +1491,19 @@
 
     (testing ":application/attachments"
       (testing "applicant"
-        (is (= ["handler-public-remark.txt"
-                "handler-approve.txt"
-                "handler-close.txt"
-                "handler-close (1).txt"]
-               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id applicant-id))))))
+        (is (= [{:attachment/filename "handler-public-remark.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-approve.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-close.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-close (1).txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}]
+               (mapv #(dissoc % :attachment/id) (:application/attachments (get-application-for-user application-id applicant-id))))))
       (testing "handler"
-        (is (= ["handler-public-remark.txt"
-                "reviewer-review.txt"
-                "handler-private-remark.txt"
-                "handler-approve.txt"
-                "handler-close.txt"
-                "handler-close (1).txt"]
-               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id handler-id)))))))))
+        (is (= [{:attachment/filename "handler-public-remark.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "reviewer-review.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-private-remark.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-approve.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-close.txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}
+                {:attachment/filename "handler-close (1).txt" :attachment/type "text/plain" :attachment/occurs-in ["event"]}]
+               (mapv #(dissoc % :attachment/id) (:application/attachments (get-application-for-user application-id handler-id)))))))))
 
 (deftest test-application-attachment-zip
   (let [api-key "42"

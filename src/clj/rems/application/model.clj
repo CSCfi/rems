@@ -522,6 +522,12 @@
             15 #{:previous-value}}
            (classify-attachments application)))))
 
+(defn- enrich-classify-attachments [application]
+  (let [classes (classify-attachments application)
+        enrich (fn [attachment] (assoc attachment
+                                       :attachment/occurs-in (get classes (:attachment/id attachment))))]
+    (update application :application/attachments (partial mapv enrich))))
+
 (defn- get-blacklist [application blacklisted?]
   (let [all-members (application-util/applicant-and-members application)
         all-resources (distinct (map :resource/ext-id (:application/resources application)))]
@@ -616,6 +622,7 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+      (enrich-classify-attachments)
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)

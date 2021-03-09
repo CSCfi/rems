@@ -1697,6 +1697,30 @@
              (answers submitted-returned-resubmitted-application :handler))
           "should see previous answers"))))
 
+(deftest test-enrich-classify-attachments
+  (let [application {:application/attachments [{:attachment/id 1 :attachment/filename "1.txt"}
+                                               {:attachment/id 2 :attachment/filename "2.txt"}
+                                               {:attachment/id 3 :attachment/filename "3.txt"}
+                                               {:attachment/id 4 :attachment/filename "4.txt"}
+                                               {:attachment/id 5 :attachment/filename "5.txt"}
+                                               {:attachment/id 6 :attachment/filename "6.txt"}]
+                     :application/forms [{:form/fields [{:field/type :attachment
+                                                         :field/value "1" :field/previous-value "1,2"}]}
+                                         {:form/fields [{:field/type :text
+                                                         :field/value "3,4"}]}]
+                     :application/events [{:event/type :application.event/remarked
+                                           :application/comment "4"
+                                           :event/attachments [{:attachment/id 5}
+                                                               {:attachment/id 6}]}]}]
+    (is (= [{:attachment/id 1 :attachment/filename "1.txt" :attachment/occurs-in #{:value :previous-value}}
+            {:attachment/id 2 :attachment/filename "2.txt" :attachment/occurs-in #{:previous-value}}
+            {:attachment/id 3 :attachment/filename "3.txt" :attachment/occurs-in nil}
+            {:attachment/id 4 :attachment/filename "4.txt" :attachment/occurs-in nil}
+            {:attachment/id 5 :attachment/filename "5.txt" :attachment/occurs-in #{:event}}
+            {:attachment/id 6 :attachment/filename "6.txt" :attachment/occurs-in #{:event}}]
+           (:application/attachments
+            (#'model/enrich-classify-attachments application))))))
+
 (deftest test-hide-attachments
   (let [application {:application/attachments [{:attachment/id 1 :attachment/filename "1.txt"}
                                                {:attachment/id 2 :attachment/filename "2.txt"}

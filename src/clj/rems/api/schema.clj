@@ -196,7 +196,8 @@
 (s/defschema ApplicationAttachment
   {:attachment/id s/Int
    :attachment/filename s/Str
-   :attachment/type s/Str})
+   :attachment/type s/Str
+   :attachment/occurs-in (s/maybe #{(s/enum :event :value :previous-value)})})
 
 (s/defschema BlacklistEntry
   {:blacklist/user schema-base/UserWithAttributes
