@@ -408,18 +408,10 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- add-default-value [field]
-  (assoc field :field/value
-         (case (:field/type field)
-           :table []
-           ;; default
-           "")))
-
 (defn- enrich-form [form get-form-template]
-  (let [form-template (get-form-template (:form/id form))
-        default-fields (map add-default-value (:form/fields form-template))
+  (let [form-template (form/add-default-values (get-form-template (:form/id form)))
         fields (merge-lists-by :field/id
-                               default-fields
+                               (:form/fields form-template)
                                (:form/fields form))]
     (assoc form
            :form/title (:form/internal-name form-template)
@@ -559,7 +551,9 @@
       application)))
 
 (defn enrich-field-visible [application]
-  (transform [:application/forms ALL] form/enrich-form-field-visible application))
+  (transform [:application/forms ALL]
+             form/enrich-form-field-visible
+             application))
 
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application
@@ -697,12 +691,11 @@
   (if (or (= :public (:field/privacy field :public))
           (may-see-private-answers? roles))
     (assoc field :field/private false)
-    (-> field
-        (assoc :field/private true)
-        ;; TODO "" for table is technically wrong, but doesn't matter
-        ;; in practice since the field isn't rendered in the UI
-        (update-existing :field/value (constantly ""))
-        (update-existing :field/previous-value (constantly "")))))
+    (let [private (-> field
+                      (assoc :field/private true)
+                      (form/add-default-field-value)) ; zeros :field/value
+          value (:field/value private)]
+      (update-existing private :field/previous-value (constantly value)))))
 
 (defn apply-privacy [application roles]
   (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))
