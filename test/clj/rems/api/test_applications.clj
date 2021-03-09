@@ -1886,7 +1886,8 @@
         res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id
                                                      :resource-id res-id
-                                                     :workflow-id workflow-id})
+                                                     :workflow-id workflow-id
+                                                     :start (time/date-time 2009)})
         app-id (test-helpers/create-application! {:time (time/date-time 2010)
                                                   :actor applicant
                                                   :catalogue-item-ids [cat-id]})
@@ -1937,7 +1938,7 @@
               :application/todo nil
               :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
               :application/members []
-              :application/resources [{:catalogue-item/start "REDACTED"
+              :application/resources [{:catalogue-item/start "2009-01-01T00:00:00.000Z"
                                        :catalogue-item/end nil
                                        :catalogue-item/expired false
                                        :catalogue-item/enabled true
@@ -1994,7 +1995,5 @@
                                                                {:form form-id :field "att" :value (str att-id)}]}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
-                 ;; start is set by the db not easy to mock
-                 (assoc-in [:application/resources 0 :catalogue-item/start] "REDACTED")
                  ;; event ids are unpredictable
                  (update :application/events (partial map #(update % :event/id (constantly 100))))))))))
