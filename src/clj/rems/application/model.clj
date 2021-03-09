@@ -488,6 +488,40 @@
 
              {}))))
 
+(defn- classify-attachments [application]
+  (let [from-events (for [event (:application/events application)
+                          attachment (:event/attachments event)]
+                      {(:attachment/id attachment) #{:event}})
+        from-fields (for [form (getx application :application/forms)
+                          field (getx form :form/fields)
+                          :when (= :attachment (:field/type field))
+                          k [:field/value :field/previous-value]
+                          id (form/parse-attachment-ids (get field k))]
+                      {id #{(case k
+                              :field/value :value
+                              :field/previous-value :previous-value)}})]
+    (apply merge-with set/union (concat from-events from-fields))))
+
+(deftest test-classify-attachments
+  (let [application {:application/events [{:event/type :application.event/foo
+                                           :event/attachments [{:attachment/id 1}
+                                                               {:attachment/id 3}]}
+                                          {:event/type :application.event/bar}]
+                     :application/forms [{:form/fields [{:field/type :attachment
+                                                         :field/value "5" :field/previous-value "5,1,15"}]}
+                                         {:form/fields [{:field/type :text
+                                                         :field/value "2" :field/previous-vaule "2"}
+                                                        {:field/type :attachment
+                                                         :field/value "9,11,13"}]}]}]
+    (is (= {1 #{:event :previous-value}
+            3 #{:event}
+            5 #{:value :previous-value}
+            9 #{:value}
+            11 #{:value}
+            13 #{:value}
+            15 #{:previous-value}}
+           (classify-attachments application)))))
+
 (defn- get-blacklist [application blacklisted?]
   (let [all-members (application-util/applicant-and-members application)
         all-resources (distinct (map :resource/ext-id (:application/resources application)))]
@@ -715,18 +749,11 @@
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))
 
-
 (defn- visible-attachment-ids [application]
-  (let [from-events (->> (:application/events application)
-                         (mapcat :event/attachments)
-                         (map :attachment/id))
-        from-fields (for [form (getx application :application/forms)
-                          field (getx form :form/fields)
-                          :when (= :attachment (:field/type field))
-                          value [(:field/value field) (:field/previous-value field)]
-                          attachment (form/parse-attachment-ids value)]
-                      attachment)]
-    (set (concat from-events from-fields))))
+  (->> application
+       classify-attachments
+       keys
+       set))
 
 (deftest test-visible-attachment-ids
   (let [application {:application/events [{:event/type :application.event/foo
