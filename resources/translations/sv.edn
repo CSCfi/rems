@@ -390,6 +390,7 @@
          :validation {:column-values-missing "Alla kolumner måste fyllas i i tabell \"%1\"."
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."
+                      :invalid-phone-number "Ogiltig phone number."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :options-required "Kräv minst ett alternativ." ; TODO check

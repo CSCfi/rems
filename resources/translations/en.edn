@@ -433,6 +433,7 @@
          :validation {:column-values-missing "All columns must have values for table \"%1\"."
                       :columns-required "At least one column is required."
                       :invalid-email "Invalid email address."
+                      :invalid-phone-number "Invalid phone number."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :options-required "At least one option is required."

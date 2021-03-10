@@ -390,6 +390,7 @@
          :validation {:column-values-missing "Kaikki sarakkeet on täytettävä taulukossa \"%1\"."
                       :columns-required "Vähintään yksi sarake vaaditaan."
                       :invalid-email "Sähköpostiosoite ei kelpaa."
+                      :invalid-phone-number "Puhelinnumero ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."
