@@ -1,7 +1,8 @@
 (ns rems.guide-utils
   (:require [clojure.string :as str]
             [rems.common.util :as common-util]
-            [rems.common.git :as git]))
+            [rems.common.git :as git])
+  (:require-macros rems.guide-utils))
 
 (defn- remove-indentation [docstring]
   (str/join "\n" (for [line (str/split (str "  " docstring) #"\n")]

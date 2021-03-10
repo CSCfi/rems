@@ -1,9 +1,9 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.guide-utils :refer [component-info example]]
             [rems.navbar :as navbar]
-            [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.text :refer [text]]))
 
 (rf/reg-event-db
  ::remember-current-page

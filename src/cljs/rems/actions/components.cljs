@@ -7,8 +7,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [post!]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.util :refer [post!]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))

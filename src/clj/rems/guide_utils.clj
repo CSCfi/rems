@@ -1,5 +1,5 @@
-(ns rems.guide-macros
-  "Utilities for component guide."
+(ns rems.guide-utils
+  "Utilities for component guide: macro implementations"
   (:require [clojure.pprint :refer [code-dispatch write]]
             [rems.common.util :as common-util]))
 
@@ -13,9 +13,6 @@
     `(rems.guide-utils/render-namespace-info
       ~name
       ~meta)))
-
-(comment
-  (meta (find-ns 'rems.guide-macros)))
 
 (defmacro component-info [component]
   ;; TODO we'd like to use normalize-file-path on the component

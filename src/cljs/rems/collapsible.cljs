@@ -1,6 +1,6 @@
 (ns rems.collapsible
-  (:require [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+  (:require [rems.text :refer [text]]
+            [rems.guide-utils :refer [component-info example]]))
 
 (defn- header
   [title title-class]

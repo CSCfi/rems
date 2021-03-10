@@ -1,6 +1,6 @@
 (ns rems.phase
-  (:require [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+  (:require [rems.guide-utils :refer [component-info example]]
+            [rems.text :refer [text]]))
 
 (defn phases
   "Component for phase progress bar.

@@ -5,10 +5,9 @@
             [rems.atoms :refer [add-symbol attachment-link close-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [build-index getx]]
-            [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
+            [rems.guide-utils :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))

@@ -4,8 +4,8 @@
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.common.application-util :refer [get-member-name]]
             [rems.common.util :refer [index-by]]
-            [rems.text :refer [text localized]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.guide-utils :refer [component-info example]]
+            [rems.text :refer [text localized]]))
 
 (defn username
   "A rems.atoms/info-field with the name of the user."

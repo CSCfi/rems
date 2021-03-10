@@ -3,9 +3,9 @@
             [rems.atoms :as atoms]
             [rems.auth.fake :as fake]
             [rems.auth.oidc :as oidc]
+            [rems.guide-utils :refer [component-info example]]
             [rems.navbar :as nav]
-            [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.text :refer [text]]))
 
 (defn login-component []
   (let [config @(rf/subscribe [:rems.config/config])

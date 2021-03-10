@@ -2,10 +2,10 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
-            [rems.language-switcher :refer [language-switcher]]
             [rems.common.roles :as roles]
-            [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.guide-utils :refer [component-info example]]
+            [rems.language-switcher :refer [language-switcher]]
+            [rems.text :refer [text]]))
 
 ;; TODO fetch as a subscription?
 (def context {:root-path ""})

@@ -4,11 +4,11 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
+            [rems.guide-utils :refer [component-info example]]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.user :as user]
-            [rems.util :refer [put!]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.util :refer [put!]]))
 
 (rf/reg-event-fx
  ::enter-page

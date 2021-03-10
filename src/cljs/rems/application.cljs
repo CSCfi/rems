@@ -33,13 +33,12 @@
             [rems.fields :as fields]
             [rems.focus :as focus]
             [rems.flash-message :as flash-message]
-            [rems.guide-utils :refer [lipsum lipsum-paragraphs]]
+            [rems.guide-utils :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]]))
 
 ;;;; Helpers
 

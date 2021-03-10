@@ -1,8 +1,8 @@
 (ns rems.dropdown
   (:require [cljsjs.react-select]
             [clojure.string :as str]
-            [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.guide-utils :refer [component-info example]]
+            [rems.text :refer [text]]))
 
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu.

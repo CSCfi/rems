@@ -11,16 +11,14 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            ;; somebody needs to refer this so that it's in scope when rems.guide-macros refers to it:
-            [rems.guide-utils]
+            [rems.guide-utils :refer [example]]
             [rems.language-switcher :as language-switcher]
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.profile :as profile]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.user :as user])
-  (:require-macros [rems.guide-macros :refer [example]]))
+            [rems.user :as user]))
 
 (defn color-box [id hex]
   [:div.col-md-3
