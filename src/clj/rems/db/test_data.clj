@@ -193,7 +193,14 @@
                   :fi "Tekstialue pituusrajalla"
                   :sv "Textområdet med begränsat längd"}
     :field/optional true
-    :field/max-length 100}])
+    :field/max-length 100}
+   
+   {:field/type :phonenumber
+    :field/title {:en "Phone number"
+                  :fi "Puhelinnumero"
+                  :sv "Puhelinnumero"}
+    :field/optional true
+    :field/max-length 16}])
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))
