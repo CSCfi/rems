@@ -1,5 +1,5 @@
 (ns rems.test-table
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.table :refer [apply-row-defaults parse-search-terms]]))
 
 (deftest test-apply-row-defaults

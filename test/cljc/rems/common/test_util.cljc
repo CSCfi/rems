@@ -1,6 +1,5 @@
 (ns rems.common.test-util
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is testing use-fixtures]])
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.common.util :refer [select-vals distinct-by]]))
 
 (deftest select-vals-test

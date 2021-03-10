@@ -1,5 +1,5 @@
 (ns rems.test-util
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [cljs-time.core :as time]
             [cljs-time.format :as format]
             [rems.text :refer [time-format localize-time]]

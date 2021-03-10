@@ -1,5 +1,5 @@
 (ns rems.administration.test-create-form
-  (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
             [rems.identity :refer [set-roles!]]

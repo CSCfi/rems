@@ -1,5 +1,5 @@
 (ns rems.administration.test-create-workflow
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.administration.create-workflow :refer [build-create-request build-edit-request]]))
 
 (deftest build-create-request-test

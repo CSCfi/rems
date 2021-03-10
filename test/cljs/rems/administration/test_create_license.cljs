@@ -1,5 +1,5 @@
 (ns rems.administration.test-create-license
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.administration.create-license :refer [parse-textcontent build-request]]))
 
 (deftest parse-textcontent-test

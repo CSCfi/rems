@@ -1,5 +1,5 @@
 (ns rems.administration.test-items
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [rems.administration.items :as items]))
 
 (deftest add-item-test
