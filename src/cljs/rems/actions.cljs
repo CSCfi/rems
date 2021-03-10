@@ -6,7 +6,6 @@
             [rems.collapsible :as collapsible]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.guide-functions]
             [rems.search :as search]
             [rems.text :refer [text]]))
 

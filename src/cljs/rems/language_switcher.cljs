@@ -1,7 +1,6 @@
 (ns rems.language-switcher
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.guide-functions]
             [rems.text :refer [text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

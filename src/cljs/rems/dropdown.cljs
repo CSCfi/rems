@@ -1,7 +1,6 @@
 (ns rems.dropdown
   (:require [cljsjs.react-select]
             [clojure.string :as str]
-            [rems.guide-functions]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

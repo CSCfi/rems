@@ -7,7 +7,6 @@
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.guide-functions]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]

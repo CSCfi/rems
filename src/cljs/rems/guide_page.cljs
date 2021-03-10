@@ -11,6 +11,8 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            ;; somebody needs to refer this so that it's in scope when rems.guide-macros refers to it:
+            [rems.guide-functions]
             [rems.language-switcher :as language-switcher]
             [rems.navbar :as nav]
             [rems.phase :as phase]

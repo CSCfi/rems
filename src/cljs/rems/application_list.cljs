@@ -6,7 +6,6 @@
             [re-frame.core :as rf]
             [rems.common.application-util :as application-util]
             [rems.atoms :as atoms]
-            [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-todo localize-time localized text text-format]])
