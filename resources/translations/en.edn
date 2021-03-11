@@ -266,6 +266,7 @@
                 :column-n "Column %1"
                 :column-key "ID code"
                 :column-label "Label"
+                :field-id "Field ID code"
                 ;; %1 - field number
                 ;; %2 - field title
                 :field-n "Field %1: %2"

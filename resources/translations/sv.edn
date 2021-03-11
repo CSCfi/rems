@@ -244,6 +244,7 @@
                 :column-n "Kolumn %1"
                 :column-key "Id"
                 :column-label "Titel"
+                :field-id "Fält id"
                 :field-n "Fält %1: %2"
                 :field-title "Fältets namn"
                 :field-type "Typ av fält"
