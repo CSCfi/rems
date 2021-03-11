@@ -672,12 +672,12 @@
             [form-field-id-field index]
             [form-field-title-field index]
             [form-field-type-radio-group index]
-            (when (common-form/supports-info-text? field)
-              [form-field-info-text index])
             (when (common-form/supports-optional? field)
               (if (= :table (:field/type field))
                 [form-field-table-optional-checkbox field]
                 [form-field-optional-checkbox field]))
+            (when (common-form/supports-info-text? field)
+              [form-field-info-text index])
             (when (common-form/supports-placeholder? field)
               [form-field-placeholder-field index])
             (when (common-form/supports-max-length? field)
