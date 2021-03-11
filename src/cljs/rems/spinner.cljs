@@ -1,8 +1,7 @@
 (ns rems.spinner
   (:require [re-frame.core :as rf]
-            [rems.guide-functions]
-            [rems.text :refer [text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.guide-util :refer [component-info example]]
+            [rems.text :refer [text]]))
 
 (defn big
   "Big spinner for indicating loading or in-progress state."

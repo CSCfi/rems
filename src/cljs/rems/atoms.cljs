@@ -2,9 +2,8 @@
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
             [reagent.core :as reagent]
-            [rems.guide-functions]
-            [rems.text :refer [text localized]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.guide-util :refer [component-info example]]
+            [rems.text :refer [text localized]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"

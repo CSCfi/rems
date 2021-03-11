@@ -1,5 +1,5 @@
 (ns rems.flash-message
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [re-frame.core :as rf]
             [reagent.core :as reagent]
             [rems.administration.status-flags :as status-flags]

@@ -1,5 +1,5 @@
 (ns rems.administration.test-create-catalogue-item
-  (:require [cljs.test :refer-macros [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.administration.create-catalogue-item :refer [build-request resource-label]]))
 
 (deftest build-request-test
@@ -101,5 +101,3 @@
     (testing "don't show organization if not available"
       (is (= "z" (resource-label {:resid "z"} :en {"y" 2})))
       (is (= "z" (resource-label {:resid "z"} :en {"z" 1}))))))
-
-
