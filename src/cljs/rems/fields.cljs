@@ -168,7 +168,7 @@
 (defn- event-value [event]
   (.. event -target -value))
 
-(defn text-field
+(defn phone-text-field
   [{:keys [validation on-change info-text] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
@@ -176,6 +176,32 @@
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:input.form-control {:type "text"
+                           :id (field-name opts)
+                           :name (field-name opts)
+                           :placeholder placeholder
+                           :required (not optional)
+                           :aria-required (not optional)
+                           :aria-invalid (when validation true)
+                           :aria-describedby (when validation
+                                               (str (field-name opts) "-error"))
+                           :max-length max-length
+                           :class (when validation "is-invalid")
+                           :value value
+                           :on-change (comp on-change event-value)}]]))
+
+(defn text-field
+  [{:keys [validation on-change info-text type] :as opts}]
+  (let [placeholder (localized (:field/placeholder opts))
+        value (:field/value opts)
+        optional (:field/optional opts)
+        max-length (:field/max-length opts)
+        type (:field/type opts)]
+    [field-wrapper opts
+     [:input.form-control {:type (cond
+                                   (= type :text) "text"
+                                   (= type :phonenumber) "tel"
+                                   (= type :email) "email"
+                                   :else "text")
                            :id (field-name opts)
                            :name (field-name opts)
                            :placeholder placeholder
@@ -464,6 +490,7 @@
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]
+      :phonenumber [text-field f]
       :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]

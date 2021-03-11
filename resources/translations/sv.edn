@@ -265,6 +265,7 @@
                 :type-label "Informationsfält"
                 :type-multiselect "Flervalsmeny"
                 :type-option "Rullgardinsmeny"
+                :type-phone-number "Phone number"
                 :type-privacy "Publikt / privat"
                 :type-table "Tabell"
                 :type-text "Textfält"
