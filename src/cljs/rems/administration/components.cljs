@@ -36,30 +36,38 @@
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
-(defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline?]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
         normalizer (or normalizer identity)
         error (get-in form-errors keys)]
-    [:div.form-group.field
-     [:label {:for id} label]
-     [:input.form-control {:type type
-                           :id id
-                           :disabled readonly
-                           :placeholder placeholder
-                           :class (when error "is-invalid")
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (normalizer (.. % -target -value))])}]
-     [field-validation-message error label]]))
+    [:div.form-group.field {:class (when inline? "row")}
+     [:label {:for id
+              :class (when inline? "col-sm-auto col-form-label")}
+      label]
+     [:div {:class (when inline? "col")}
+      [:input.form-control {:type type
+                            :id id
+                            :disabled readonly
+                            :placeholder placeholder
+                            :class (when error "is-invalid")
+                            :value (get-in form keys)
+                            :on-change #(rf/dispatch [(:update-form context)
+                                                      keys
+                                                      (normalizer (.. % -target -value))])}]
+      [field-validation-message error label]]]))
 
 (defn text-field
   "A basic text field, full page width."
   [context keys]
   (input-field (merge keys {:context context :type "text"})))
+
+(defn text-field-inline
+  "A basic text field, label next to field"
+  [context keys]
+  (input-field (merge keys {:context context :type "text" :inline? true})))
 
 (defn textarea-autosize
   "A basic textarea, full page width."
@@ -112,21 +120,20 @@
                        [localized-text-field-lang context {:keys-prefix keys
                                                            :label label
                                                            :lang lang}]))]
-    [:div.form-group.field
-     (if collapse?
-       [:<>
-        [:label
-         label
-         " "
-         [:button.btn.btn-link {:data-toggle "collapse"
-                                :href (str "#" id)
-                                :aria-controls id}
-          (text :t.collapse/show)]]
-        [:div.collapse {:id id}
-         fields]]
-       [:<>
-        [:label label]
-        fields])]))
+    (if collapse?
+      [:div.form-group.field.mb-1
+       [:label
+        label
+        " "
+        [:button.btn.btn-link.btn-sm {:data-toggle "collapse"
+                                      :href (str "#" id)
+                                      :aria-controls id}
+         (text :t.collapse/show)]]
+       [:div.collapse {:id id}
+        fields]]
+      [:div.form-group.field
+       [:label label]
+       fields])))
 
 (defn checkbox
   "A single checkbox, on its own line."

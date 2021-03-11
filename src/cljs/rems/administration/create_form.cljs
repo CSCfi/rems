@@ -16,7 +16,7 @@
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [checkbox localized-text-field organization-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field organization-field radio-button-group text-field text-field-inline]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -282,8 +282,8 @@
                                  :label (text :t.administration/external-title)}])
 
 (defn- form-field-id-field [field-index]
-  [text-field context {:keys [:form/fields field-index :field/id]
-                       :label (text :t.create-form/field-id)}])
+  [text-field-inline context {:keys [:form/fields field-index :field/id]
+                              :label (text :t.create-form/field-id)}])
 
 (defn- form-field-title-field [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/title]
@@ -300,8 +300,8 @@
                                  :label (text :t.create-form/info-text)}])
 
 (defn- form-field-max-length-field [field-index]
-  [text-field context {:keys [:form/fields field-index :field/max-length]
-                       :label (text :t.create-form/maxlength)}])
+  [text-field-inline context {:keys [:form/fields field-index :field/max-length]
+                              :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-field-option-button [field-index]
   [:a.add-option {:href "#"
