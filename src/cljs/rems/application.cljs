@@ -33,7 +33,7 @@
             [rems.fields :as fields]
             [rems.focus :as focus]
             [rems.flash-message :as flash-message]
-            [rems.guide-utils :refer [component-info example lipsum lipsum-paragraphs]]
+            [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]

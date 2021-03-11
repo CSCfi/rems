@@ -21,7 +21,7 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [checkbox sort-symbol]]
             [rems.focus :as focus]
-            [rems.guide-utils :refer [component-info example namespace-info]]
+            [rems.guide-util :refer [component-info example namespace-info]]
             [rems.search :as search]
             [rems.text :refer [text text-format]]
             [schema.core :as s]))

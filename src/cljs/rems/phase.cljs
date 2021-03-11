@@ -1,5 +1,5 @@
 (ns rems.phase
-  (:require [rems.guide-utils :refer [component-info example]]
+  (:require [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
 (defn phases

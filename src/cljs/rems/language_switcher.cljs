@@ -1,7 +1,7 @@
 (ns rems.language-switcher
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text-format]]))
 
 (defn lang-link-classes [current-language language]

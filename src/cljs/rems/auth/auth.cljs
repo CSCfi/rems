@@ -3,7 +3,7 @@
             [rems.atoms :as atoms]
             [rems.auth.fake :as fake]
             [rems.auth.oidc :as oidc]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.navbar :as nav]
             [rems.text :refer [text]]))
 

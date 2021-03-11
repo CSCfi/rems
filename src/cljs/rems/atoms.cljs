@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
             [reagent.core :as reagent]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text localized]]))
 
 (defn external-link []

@@ -4,7 +4,7 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.user :as user]

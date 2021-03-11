@@ -1,4 +1,4 @@
-(ns rems.guide-utils
+(ns rems.guide-util
   "Utilities for component guide: macro implementations"
   (:require [clojure.pprint :refer [code-dispatch write]]
             [rems.common.util :as common-util]))

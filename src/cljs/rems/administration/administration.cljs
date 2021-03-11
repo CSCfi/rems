@@ -1,7 +1,7 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.navbar :as navbar]
             [rems.text :refer [text]]))
 

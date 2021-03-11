@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.common.roles :as roles]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]))
 

@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text text-format get-localized-title]]))
 
 (rf/reg-sub

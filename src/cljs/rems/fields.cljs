@@ -5,7 +5,7 @@
             [rems.atoms :refer [add-symbol attachment-link close-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [build-index getx]]
-            [rems.guide-utils :refer [component-info example lipsum-short lipsum-paragraphs]]
+            [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]]))
 

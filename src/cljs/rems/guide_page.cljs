@@ -11,7 +11,7 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.guide-utils :refer [example]]
+            [rems.guide-util :refer [example]]
             [rems.language-switcher :as language-switcher]
             [rems.navbar :as nav]
             [rems.phase :as phase]

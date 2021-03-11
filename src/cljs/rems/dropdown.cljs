@@ -1,7 +1,7 @@
 (ns rems.dropdown
   (:require [cljsjs.react-select]
             [clojure.string :as str]
-            [rems.guide-utils :refer [component-info example]]
+            [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
 (defn dropdown
