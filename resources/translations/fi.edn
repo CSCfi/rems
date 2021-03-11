@@ -244,6 +244,7 @@
                 :column-n "Sarake %1"
                 :column-key "Tunniste"
                 :column-label "Otsikko"
+                :field-id "Kentän tunniste"
                 :field-n "Kenttä %1: %2"
                 :field-title "Kentän otsikko"
                 :field-type "Kentän tyyppi"

@@ -281,6 +281,10 @@
   [localized-text-field context {:keys [:form/external-title]
                                  :label (text :t.administration/external-title)}])
 
+(defn- form-field-id-field [field-index]
+  [text-field context {:keys [:form/fields field-index :field/id]
+                       :label (text :t.create-form/field-id)}])
+
 (defn- form-field-title-field [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/title]
                                  :label (text :t.create-form/field-title)}])
@@ -663,6 +667,7 @@
               [move-form-field-down-button index]
               [remove-form-field-button index]]]
 
+            [form-field-id-field index]
             [form-field-title-field index]
             [form-field-type-radio-group index]
             (when (common-form/supports-info-text? field)

@@ -264,8 +264,9 @@
                 :collapse-aria-label "Info about "
                 ;; %1 - column number
                 :column-n "Column %1"
-                :column-key "ID code"
+                :column-key "ID"
                 :column-label "Label"
+                :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title
                 :field-n "Field %1: %2"
@@ -273,7 +274,7 @@
                 :field-type "Field type"
                 :info-text "Field description (optional)"
                 :maxlength "Maximum length in characters (optional)"
-                :option-key "ID code"
+                :option-key "ID"
                 :option-label "Label"
                 ;; %1 - option number
                 :option-n "Option %1"

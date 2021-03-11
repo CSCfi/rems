@@ -1086,6 +1086,8 @@
 
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
       (btu/wait-visible :fields-1-title-en)
+      (btu/clear :fields-1-id)
+      (btu/fill-human :fields-1-id "opt")
       (btu/fill-human :fields-1-title-en "Option list (EN)")
       (btu/fill-human :fields-1-title-fi "Option list (FI)")
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
@@ -1184,9 +1186,10 @@
         ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
-        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."}))
-        (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."})))
 
+      (testing "successful save"
+        (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
         (btu/wait-visible {:tag :h1 :fn/has-text "Form"})))
@@ -1203,7 +1206,7 @@
                 :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
-                               :field/id "fld3"
+                               :field/id "fld2"
                                :field/max-length nil
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
@@ -1215,7 +1218,7 @@
                               {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "option"
-                               :field/id "fld2"
+                               :field/id "opt"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
                                                {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
                                :field/optional false}]
