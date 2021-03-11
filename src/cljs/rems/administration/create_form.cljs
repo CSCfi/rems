@@ -291,10 +291,12 @@
 
 (defn- form-field-placeholder-field [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/placeholder]
+                                 :collapse? true
                                  :label (text :t.create-form/placeholder)}])
 
 (defn- form-field-info-text [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/info-text]
+                                 :collapse? true
                                  :label (text :t.create-form/info-text)}])
 
 (defn- form-field-max-length-field [field-index]

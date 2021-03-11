@@ -16,6 +16,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
+            [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.common.roles :as roles]
@@ -103,14 +104,29 @@
   "A text field for inputting text in all supported languages.
   Has a separate text fields for each language. The data is stored
   in the form as a map of language to text."
-  [context {:keys [keys label]}]
-  (let [languages @(rf/subscribe [:languages])]
-    (into [:div.form-group.field
-           [:label label]]
-          (for [lang languages]
-            [localized-text-field-lang context {:keys-prefix keys
-                                                :label label
-                                                :lang lang}]))))
+  [context {:keys [keys label collapse?]}]
+  (let [languages @(rf/subscribe [:languages])
+        id (keys-to-id keys)
+        fields (into [:<>]
+                     (for [lang languages]
+                       [localized-text-field-lang context {:keys-prefix keys
+                                                           :label label
+                                                           :lang lang}]))]
+    [:div.form-group.field
+     (if collapse?
+       [:<>
+        [:label
+         label
+         " "
+         [:button.btn.btn-link {:data-toggle "collapse"
+                                :href (str "#" id)
+                                :aria-controls id}
+          (text :t.collapse/show)]]
+        [:div.collapse {:id id}
+         fields]]
+       [:<>
+        [:label label]
+        fields])]))
 
 (defn checkbox
   "A single checkbox, on its own line."
