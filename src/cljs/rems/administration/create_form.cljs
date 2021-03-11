@@ -283,7 +283,7 @@
 
 (defn- form-field-id-field [field-index]
   [text-field context {:keys [:form/fields field-index :field/id]
-                       :label (text :t.create-form/field-id)}]) ; TODO localize
+                       :label (text :t.create-form/field-id)}])
 
 (defn- form-field-title-field [field-index]
   [localized-text-field context {:keys [:form/fields field-index :field/title]
