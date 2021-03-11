@@ -33,6 +33,7 @@ Changes since v2.16
 
 ### Additions
 - The example-theme now uses the Lato font.
+- The field id can now be changed in the form editor. (#1804)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 

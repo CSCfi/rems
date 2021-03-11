@@ -65,6 +65,8 @@ Placeholder texts: It is possible to add placeholder text to most of the fields.
 
 ![Placeholder text](img/placeholder.png)
 
+Field id: This is the technical identifier for the field. It is not shown to the applicant, but can be used to identify the field when fetching data via the API. It is useful when implementing integrations that read data from REMS and push it to other systems.
+
 :exclamation: Note! **Do not give important information, such as instructions, as placeholder texts** because it will be difficult for the applicant to read and it is not accessible. Use labels or info text if you want to give instructions how to fill in a field.
 
 :point_up: Pro tip: If you have already created application forms before, you can use an old form as a template by navigating to Administration>Forms and selecting a form and **Copy as new**.
