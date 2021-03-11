@@ -86,7 +86,7 @@
         keys (conj keys-prefix lang)
         id (keys-to-id keys)
         error (get-in form-errors keys)]
-    [:div.form-group.row
+    [:div.form-group.row.mb-0
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
      [:div.col-sm-11
