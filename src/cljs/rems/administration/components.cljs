@@ -126,6 +126,7 @@
         label
         " "
         [:button.btn.btn-link.btn-sm {:data-toggle "collapse"
+                                      :id (str id "-show")
                                       :href (str "#" id)
                                       :aria-controls id}
          (text :t.collapse/show)]]
