@@ -433,50 +433,52 @@
         visibility-field (:visibility/field visibility)
         visibility-value (:visibility/values visibility)]
     [:div {:class (when (= :only-if visibility-type) "form-field-visibility")}
-     [:div.form-group.field {:id (str "container-field" field-index)}
-      [:label {:for id-type} label-type]
-      " "
-      [:select.form-control
-       {:id id-type
-        :class (when error-type "is-invalid")
-        :on-change #(rf/dispatch [::form-field-visibility-type field-index (keyword (.. % -target -value))])
-        :value (or visibility-type "")}
-       [:option {:value "always"} (text :t.create-form.visibility/always)]
-       [:option {:value "only-if"} (text :t.create-form.visibility/only-if)]]
-      [:div.invalid-feedback
-       (when error-type (text-format error-type label-type))]]
+     [:div.form-group.field.row {:id (str "container-field" field-index)}
+      [:label.col-sm-2.col-form-label {:for id-type} label-type]
+      [:div.col-sm-10
+       [:select.form-control
+        {:id id-type
+         :class (when error-type "is-invalid")
+         :on-change #(rf/dispatch [::form-field-visibility-type field-index (keyword (.. % -target -value))])
+         :value (or visibility-type "")}
+        [:option {:value "always"} (text :t.create-form.visibility/always)]
+        [:option {:value "only-if"} (text :t.create-form.visibility/only-if)]]
+       [:div.invalid-feedback
+        (when error-type (text-format error-type label-type))]]]
      (when (= :only-if visibility-type)
        [:<>
-        [:div.form-group
-         [:label {:for id-field} label-field]
-         [:select.form-control
-          {:id id-field
-           :class (when error-field "is-invalid")
-           :on-change #(rf/dispatch [::form-field-visibility-field field-index {:field/id (.. % -target -value)}])
-           :value (or (:field/id visibility-field) "")}
-          ^{:key "not-selected"} [:option ""]
-          (doall
-           (for [field (form-fields-that-can-be-used-in-visibility form)]
-             ^{:key (str field-index "-" (:field/id field))}
-             [:option {:value (:field/id field)}
-              (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))]))]
-         [:div.invalid-feedback
-          (when error-field (text-format error-field label-field))]]
+        [:div.form-group.field.row
+         [:label.col-sm-2.col-form-label {:for id-field} label-field]
+         [:div.col-sm-10
+          [:select.form-control
+           {:id id-field
+            :class (when error-field "is-invalid")
+            :on-change #(rf/dispatch [::form-field-visibility-field field-index {:field/id (.. % -target -value)}])
+            :value (or (:field/id visibility-field) "")}
+           ^{:key "not-selected"} [:option ""]
+           (doall
+            (for [field (form-fields-that-can-be-used-in-visibility form)]
+              ^{:key (str field-index "-" (:field/id field))}
+              [:option {:value (:field/id field)}
+               (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))]))]
+          [:div.invalid-feedback
+           (when error-field (text-format error-field label-field))]]]
         (when (:field/id visibility-field)
-          [:div.form-group
-           [:label {:for id-value} label-value]
-           [:select.form-control
-            {:id id-value
-             :class (when error-value "is-invalid")
-             :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
-             :value (or (first visibility-value) "")}
-            ^{:key "not-selected"} [:option ""]
-            (doall
-             (for [value (form-field-values form (:field/id visibility-field))]
-               ^{:key (str field-index "-" (:value value))}
-               [:option {:value (:value value)} (get-in value [:title lang])]))]
-           [:div.invalid-feedback
-            (when error-value (text-format error-value label-value))]])])]))
+          [:div.form-group.field.row
+           [:label.col-sm-2.col-form-label {:for id-value} label-value]
+           [:div.col-sm-10
+            [:select.form-control
+             {:id id-value
+              :class (when error-value "is-invalid")
+              :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
+              :value (or (first visibility-value) "")}
+             ^{:key "not-selected"} [:option ""]
+             (doall
+              (for [value (form-field-values form (:field/id visibility-field))]
+                ^{:key (str field-index "-" (:value value))}
+                [:option {:value (:value value)} (get-in value [:title lang])]))]
+            [:div.invalid-feedback
+             (when error-value (text-format error-value label-value))]]])])]))
 
 (rf/reg-event-db
  ::form-field-privacy
@@ -495,16 +497,16 @@
         id (str "fields-" field-index "-privacy-type")
         label (text :t.create-form/type-privacy)
         privacy (get-in form [:form/fields field-index :field/privacy])]
-    [:div.form-group.field {:id (str "container-field" field-index)}
-     [:label {:for id} label]
-     " "
-     [:select.form-control
-      {:id id
-       :class (when error "is-invalid")
-       :on-change #(rf/dispatch [::form-field-privacy field-index (keyword (.. % -target -value))])
-       :value (or privacy "public")}
-      [:option {:value "public"} (text :t.create-form.privacy/public)]
-      [:option {:value "private"} (text :t.create-form.privacy/private)]]]))
+    [:div.form-group.field.row {:id (str "container-field" field-index)}
+     [:label.col-sm-2.col-form-label {:for id} label]
+     [:div.col-sm-10
+      [:select.form-control
+       {:id id
+        :class (when error "is-invalid")
+        :on-change #(rf/dispatch [::form-field-privacy field-index (keyword (.. % -target -value))])
+        :value (or privacy "public")}
+       [:option {:value "public"} (text :t.create-form.privacy/public)]
+       [:option {:value "private"} (text :t.create-form.privacy/private)]]]]))
 
 (defn- form-field-type-radio-group [field-index]
   [radio-button-group context {:id (str "radio-group-" field-index)
