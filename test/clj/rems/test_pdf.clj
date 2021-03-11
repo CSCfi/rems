@@ -162,7 +162,9 @@
                  [[:paragraph pdf/field-style "Text field with max length"]
                   [:paragraph "pdf test"]]
                  [[:paragraph pdf/field-style "Text area with max length"]
-                  [:paragraph "pdf test"]]]]]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph {:spacing-before 8, :style :bold} "Phone number"]
+                  [:paragraph "+358451110000"]]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
                 [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]
