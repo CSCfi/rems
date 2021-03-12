@@ -163,7 +163,7 @@
                   [:paragraph "pdf test"]]
                  [[:paragraph pdf/field-style "Text area with max length"]
                   [:paragraph "pdf test"]]
-                 [[:paragraph {:spacing-before 8, :style :bold} "Phone number"]
+                 [[:paragraph pdf/field-style "Phone number"]
                   [:paragraph "+358451110000"]]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
