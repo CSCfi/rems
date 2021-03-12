@@ -34,7 +34,7 @@
                     (.focus (js/$ (str "#" id "more-link"))))}
     label]])
 
-(defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button?]
+(defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button? class]
   (let [always? (not-empty content-always)
         show-more [show-more-button
                    (if always?
@@ -46,7 +46,7 @@
                      (text :t.collapse/show-less)
                      (text :t.collapse/hide))
                    id open?]]
-    [:div.collapse-content
+    [:div {:class class}
      content-always
      (when (seq content-hideable)
        [:div
@@ -80,7 +80,7 @@
   [:div {:id id :class class}
    (when title [header title title-class])
    (when (or always collapse footer)
-     [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
+     [block id open? on-open always collapse footer top-less-button? bottom-less-button? nil])])
 
 (defn component
   "Displays a collapsible block of content.
@@ -102,7 +102,7 @@
                           :class class}
    (when title [header title title-class])
    (when (or always collapse footer)
-     [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
+     [block id open? on-open always collapse footer top-less-button? bottom-less-button? "collapse-content"])])
 
 (defn guide
   []
