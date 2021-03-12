@@ -671,7 +671,6 @@
               [move-form-field-down-button index]
               [remove-form-field-button index]]]
 
-            [form-field-id-field index]
             [form-field-title-field index]
             [form-field-type-radio-group index]
             (when (common-form/supports-optional? field)
@@ -682,12 +681,24 @@
               [form-field-info-text index])
             (when (common-form/supports-placeholder? field)
               [form-field-placeholder-field index])
-            (when (common-form/supports-max-length? field)
-              [form-field-max-length-field index])
-            (when (common-form/supports-privacy? field)
-              [form-field-privacy index])
-            (when (common-form/supports-visibility? field)
-              [form-field-visibility index])
+            (let [id (str (field-editor-id (:field/id field)) "-advanced")]
+              [:div.form-group.field.mb-1
+               [:label
+                (text :t.create-form/additional-settings)
+                " "
+                [:button.btn.btn-link.btn-sm {:data-toggle "collapse"
+                                              :id (str id "-show")
+                                              :href (str "#" id)
+                                              :aria-controls id}
+                 (text :t.collapse/show)]]
+               [:div.collapse {:id id}
+                [form-field-id-field index]
+                (when (common-form/supports-max-length? field)
+                  [form-field-max-length-field index])
+                (when (common-form/supports-privacy? field)
+                  [form-field-privacy index])
+                (when (common-form/supports-visibility? field)
+                  [form-field-visibility index])]])
             (when (common-form/supports-options? field)
               [form-field-option-fields index])
             (when (common-form/supports-columns? field)

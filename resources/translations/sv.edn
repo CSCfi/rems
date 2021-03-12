@@ -240,6 +240,7 @@
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
+                :additional-settings "Ytterligare inställningar" ; TODO check
                 :collapse-aria-label "Info om "
                 :column-n "Kolumn %1"
                 :column-key "Id"
