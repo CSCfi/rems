@@ -189,7 +189,7 @@
                                  {:field/type :email
                                   :field/title localized
                                   :field/optional true}
-                                 {:field/type :phonenumber
+                                 {:field/type :phone-number
                                   :field/title localized
                                   :field/optional true}
                                  {:field/type :date

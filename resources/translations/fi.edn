@@ -265,7 +265,7 @@
                 :type-label "Lisätietokenttä"
                 :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
-                :type-phone-number "Phone number"
+                :type-phone-number "Puhelinnumero"
                 :type-privacy "Julkisuus"
                 :type-table "Taulukko"
                 :type-text "Tekstikenttä"

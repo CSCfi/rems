@@ -46,7 +46,7 @@
        :type     :t.form.validation/invalid-email})))
 
 (defn- invalid-phone-number-error [field]
-  (when (= (:field/type field) :phonenumber)
+  (when (= (:field/type field) :phone-number)
     (when-not (or (str/blank? (:field/value field))
                   (re-matches +phone-number-regex+ (:field/value field)))
       {:field-id (:field/id field)

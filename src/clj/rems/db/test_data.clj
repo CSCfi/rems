@@ -195,7 +195,7 @@
     :field/optional true
     :field/max-length 100}
 
-   {:field/type :phonenumber
+   {:field/type :phone-number
     :field/title {:en "Phone number"
                   :fi "Puhelinnumero"
                   :sv "Puhelinnumero"}

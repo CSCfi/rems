@@ -199,7 +199,7 @@
     [field-wrapper opts
      [:input.form-control {:type (cond
                                    (= type :text) "text"
-                                   (= type :phonenumber) "tel"
+                                   (= type :phone-number) "tel"
                                    (= type :email) "email"
                                    :else "text")
                            :id (field-name opts)
@@ -490,7 +490,7 @@
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]
-      :phonenumber [text-field f]
+      :phone-number [text-field f]
       :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]
