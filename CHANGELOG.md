@@ -33,6 +33,7 @@ Changes since v2.16
 
 ### Additions
 - The example-theme now uses the Lato font.
+- Add phone nmber to fiels types in the form. (#2552)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
