@@ -389,7 +389,7 @@
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]
-                      ["phonenumber" "+358450000100"]]
+                      ["phone-number" "+358450000100"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)
