@@ -328,9 +328,9 @@
      [move-form-field-option-up-button field-index option-index]
      [move-form-field-option-down-button field-index option-index]
      [remove-form-field-option-button field-index option-index]]]
-   [text-field context {:keys [:form/fields field-index :field/options option-index :key]
-                        :label (text :t.create-form/option-key)
-                        :normalizer normalize-option-key}]
+   [text-field-inline context {:keys [:form/fields field-index :field/options option-index :key]
+                               :label (text :t.create-form/option-key)
+                               :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
@@ -370,9 +370,9 @@
      [move-form-field-column-up-button field-index column-index]
      [move-form-field-column-down-button field-index column-index]
      [remove-form-field-column-button field-index column-index]]]
-   [text-field context {:keys [:form/fields field-index :field/columns column-index :key]
-                        :label (text :t.create-form/column-key)
-                        :normalizer normalize-option-key}]
+   [text-field-inline context {:keys [:form/fields field-index :field/columns column-index :key]
+                               :label (text :t.create-form/column-key)
+                               :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/columns column-index :label]
                                   :label (text :t.create-form/column-label)}]])
 
