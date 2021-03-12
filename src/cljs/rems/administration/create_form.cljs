@@ -684,14 +684,14 @@
               [form-field-placeholder-field index])
             (when (common-form/supports-max-length? field)
               [form-field-max-length-field index])
-            (when (common-form/supports-options? field)
-              [form-field-option-fields index])
-            (when (common-form/supports-columns? field)
-              [form-field-column-fields index])
             (when (common-form/supports-privacy? field)
               [form-field-privacy index])
             (when (common-form/supports-visibility? field)
-              [form-field-visibility index])]
+              [form-field-visibility index])
+            (when (common-form/supports-options? field)
+              [form-field-option-fields index])
+            (when (common-form/supports-columns? field)
+              [form-field-column-fields index])]
 
            [:div.form-field.new-form-field
             [add-form-field-button (inc index)]]])))
