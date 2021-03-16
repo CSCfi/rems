@@ -28,11 +28,11 @@
 (def logo-height (u/px 150))
 (def menu-height 56)
 
-;; Fonts of the app 
+;; Fonts of the app
 
 (defn generate-at-font-faces
   "The theme :font-family settings will override these fonts is set.
-  
+
   Reason for this function to be included into our screen.css
    - because themes like Findata can use them since our theme.edn doesn't offer a possibility to add custom fonts
    - all the fonts need to be 'built in' to REMS, even if they're not active
@@ -719,7 +719,9 @@
     [:h4 {:display "inline"
           :font-weight "bold"
           :font-size (u/rem 1.1)}]]
-   [:.form-field-controls {:float "right"}
+   [:.form-field-controls
+    {:float "right"
+     :font-size (u/rem 1.2)}
     [:* {:margin-left (u/em 0.25)}]]
    [:.new-form-field {:text-align "center"}]
 
