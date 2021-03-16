@@ -667,14 +667,14 @@
             [:div.form-field-header.d-flex
              [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
              [:div.form-field-controls.text-nowrap.ml-auto
+              [remove-form-field-button index]
+              [move-form-field-up-button index]
+              [move-form-field-down-button index]
               [:button.btn.btn-link.p-0 {:data-toggle "collapse"
                                          :id (str (field-editor-id (:field/id field)) "-contents-collapse")
                                          :href (str "#" (field-editor-id (:field/id field)) "-contents")
                                          :aria-controls (str (field-editor-id (:field/id field)) "-contents")}
-               [atoms/collapse-symbol]]
-              [move-form-field-up-button index]
-              [move-form-field-down-button index]
-              [remove-form-field-button index]]]
+               [atoms/collapse-symbol]]]]
 
             [:div
              {:id (str (field-editor-id (:field/id field)) "-contents")
