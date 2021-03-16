@@ -4,7 +4,7 @@
             [rems.common.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
-            [rems.common.catalogue-util :refer [urn-catalogue-item-link ega-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
@@ -39,10 +39,7 @@
 ;;;; UI
 
 (defn- catalogue-item-more-info [item language config]
-  (let [more-info-link (get-in item [:localizations language :infourl])
-        link (or more-info-link
-                 (urn-catalogue-item-link item config)
-                 (ega-catalogue-item-link item config))]
+  (let [link (catalogue-item-more-info-url item language config)]
     (when link
       [:a.btn.btn-secondary
        {:href link
@@ -60,14 +57,15 @@
    [(rf/subscribe [::catalogue])
     (rf/subscribe [:language])
     (rf/subscribe [:logged-in])
-    (rf/subscribe [:rems.cart/cart])])
- (fn [[catalogue language logged-in? cart] _]
+    (rf/subscribe [:rems.cart/cart])
+    (rf/subscribe [:rems.config/config])])
+ (fn [[catalogue language logged-in? cart config] _]
    (let [cart-item-ids (set (map :id cart))]
      (map (fn [item]
             {:key (:id item)
              :name {:value (get-localized-title item language)}
              :commands {:td [:td.commands
-                             [catalogue-item-more-info item language {}]
+                             [catalogue-item-more-info item language config]
                              (when logged-in?
                                (if (contains? cart-item-ids (:id item))
                                  [cart/remove-from-cart-button item language]
