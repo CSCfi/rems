@@ -267,6 +267,7 @@
                 :column-n "Column %1"
                 :column-key "ID"
                 :column-label "Label"
+                :confirm-remove-field "Remove this field?"
                 :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title

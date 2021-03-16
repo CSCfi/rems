@@ -542,7 +542,8 @@
    (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
-  [items/remove-button #(rf/dispatch [::remove-form-field field-index])])
+  [items/remove-button #(when (js/confirm (text :t.create-form/confirm-remove-field))
+                          (rf/dispatch [::remove-form-field field-index]))])
 
 (defn- move-form-field-up-button [field-index]
   [items/move-up-button #(rf/dispatch [::move-form-field-up field-index])])

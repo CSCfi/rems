@@ -245,6 +245,7 @@
                 :column-n "Kolumn %1"
                 :column-key "Id"
                 :column-label "Titel"
+                :confirm-remove-field "Ta bort fält?" ; TODO check
                 :field-id "Fält id"
                 :field-n "Fält %1: %2"
                 :field-title "Fältets namn"

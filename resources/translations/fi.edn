@@ -245,6 +245,7 @@
                 :column-n "Sarake %1"
                 :column-key "Tunniste"
                 :column-label "Otsikko"
+                :confirm-remove-field "Poista kenttä?"
                 :field-id "Kentän tunniste"
                 :field-n "Kenttä %1: %2"
                 :field-title "Kentän otsikko"
