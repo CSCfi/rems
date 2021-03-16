@@ -671,15 +671,14 @@
               [remove-form-field-button index]
               [move-form-field-up-button index]
               [move-form-field-down-button index]
-              [:button.btn.btn-link.p-0 {:data-toggle "collapse"
-                                         :id (str (field-editor-id (:field/id field)) "-contents-collapse")
-                                         :href (str "#" (field-editor-id (:field/id field)) "-contents")
-                                         :aria-controls (str (field-editor-id (:field/id field)) "-contents")}
-               [atoms/collapse-symbol]]]]
+              [collapsible/controls
+               (str (field-editor-id (:field/id field)) "-contents")
+               [atoms/expand-symbol]
+               [atoms/collapse-symbol]
+               true]]]
 
-            [:div
+            [:div.collapse.show
              {:id (str (field-editor-id (:field/id field)) "-contents")
-              :class "collapse show"
               :tab-index "-1"}
              [form-field-title-field index]
              [form-field-type-radio-group index]
@@ -696,11 +695,7 @@
                 [:label
                  (text :t.create-form/additional-settings)
                  " "
-                 [:button.btn.btn-link.btn-sm {:data-toggle "collapse"
-                                               :id (str id "-show")
-                                               :href (str "#" id)
-                                               :aria-controls id}
-                  (text :t.collapse/show)]]
+                 [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide) false]]
                 [:div.collapse {:id id}
                  [form-field-id-field index]
                  (when (common-form/supports-max-length? field)

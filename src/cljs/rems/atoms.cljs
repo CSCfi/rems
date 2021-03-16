@@ -49,6 +49,10 @@
   [:i {:class "fas fa-compress-alt icon-link"
        :aria-label (text :t.collapse/hide)}])
 
+(defn expand-symbol []
+  [:i {:class "fas fa-expand-alt icon-link"
+       :aria-label (text :t.collapse/show)}])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
