@@ -690,7 +690,7 @@
                [form-field-info-text index])
              (when (common-form/supports-placeholder? field)
                [form-field-placeholder-field index])
-             (let [id (str (field-editor-id (:field/id field)) "-advanced")]
+             (let [id (str "fields-" index "-additional")]
                [:div.form-group.field.mb-1
                 [:label
                  (text :t.create-form/additional-settings)
