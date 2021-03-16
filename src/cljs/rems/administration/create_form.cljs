@@ -665,8 +665,7 @@
                              :key index
                              :data-field-index index}
             [:div.form-field-header.d-flex
-             [:h3
-              (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
+             [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
              [:div.form-field-controls.text-nowrap.ml-auto
               [move-form-field-up-button index]
               [move-form-field-down-button index]
