@@ -691,12 +691,12 @@
              (when (common-form/supports-placeholder? field)
                [form-field-placeholder-field index])
              (let [id (str "fields-" index "-additional")]
-               [:div.form-group.field.mb-1
+               [:div.form-group.field
                 [:label
                  (text :t.create-form/additional-settings)
                  " "
                  [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide) false]]
-                [:div.collapse {:id id}
+                [:div.collapse.solid-group {:id id}
                  [form-field-id-field index]
                  (when (common-form/supports-max-length? field)
                    [form-field-max-length-field index])
