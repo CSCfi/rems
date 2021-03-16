@@ -57,14 +57,14 @@
 
 (def +default-length+ (time/years 1))
 
-(defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby]}]
+(defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby dac-id]}]
   {:iss (:public-url env)
    :sub userid
    :iat (clj-time.coerce/to-epoch (time/now))
    :exp (clj-time.coerce/to-epoch (or end (time/plus (time/now) +default-length+)))
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
-                   :source (:public-url env)
+                   :source (or dac-id (:public-url env))
                    :by "dac" ; the Data Access Commitee acts via REMS
                    :asserted (clj-time.coerce/to-epoch start)}})
 
