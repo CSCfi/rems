@@ -8,17 +8,21 @@
     (let [element (js/$ (str "#" id))]
       (.collapse element "show")
       (.focus element))
-    (.collapse (js/$ (str "." id "-more")) "hide")
+    ;; bootstrap's .collapse returns immediately, so in order to avoid
+    ;; momentarily showing both buttons we wait for a hidden.bs.collapse event
+    (.. (js/$ (str "." id "-more"))
+        (collapse "hide")
+        (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-less")) collapse "show"))))
     (when callback
-      (callback))
-    (.collapse (js/$ (str "." id "-less")) "show")))
+      (callback))))
 
 (defn- show-callback [id]
   (fn [event]
     (.preventDefault event)
     (.collapse (js/$ (str "#" id)) "hide")
-    (.collapse (js/$ (str "." id "-more")) "show")
-    (.collapse (js/$ (str "." id "-less")) "hide")
+    (.. (js/$ (str "." id "-less"))
+        (collapse "hide")
+        (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-more")) collapse "show"))))
     (.focus (js/$ (str "#" id "-more-link")))))
 
 (defn- header
