@@ -4,7 +4,7 @@
             [rems.common.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
-            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [urn-catalogue-item-link ega-catalogue-item-link]]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
@@ -39,10 +39,10 @@
 ;;;; UI
 
 (defn- catalogue-item-more-info [item language config]
-  (let [urn-link (urn-catalogue-item-link item config)
-        more-info-link (get-in item [:localizations language :infourl])
+  (let [more-info-link (get-in item [:localizations language :infourl])
         link (or more-info-link
-                 urn-link)]
+                 (urn-catalogue-item-link item config)
+                 (ega-catalogue-item-link item config))]
     (when link
       [:a.btn.btn-secondary
        {:href link

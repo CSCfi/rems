@@ -25,7 +25,7 @@
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
-            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [urn-catalogue-item-link ega-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by parse-int]]
@@ -763,7 +763,8 @@
    ;; NB! localized falls back to the default language, so the fallback logic
    ;; here is subtly different
    (when-let [url (or (localized (:catalogue-item/infourl resource))
-                      (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
+                      (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {})
+                      (ega-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
      [:<>
       (goog.string/unescapeEntities " &mdash; ")
       [:a {:href url :target :_blank}

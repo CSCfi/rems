@@ -106,7 +106,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Ändringen gjordes av"
-                   :more-info "Webbadress för tilläggsinformation (valfritt, om inget anges används resursens URN)"
+                   :more-info "Webbadress för tilläggsinformation (valfritt, om inget anges används resursens URN eller EGA länk)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
