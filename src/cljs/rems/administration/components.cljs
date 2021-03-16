@@ -16,6 +16,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
+            [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.common.roles :as roles]
@@ -35,30 +36,38 @@
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
-(defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline?]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
         normalizer (or normalizer identity)
         error (get-in form-errors keys)]
-    [:div.form-group.field
-     [:label {:for id} label]
-     [:input.form-control {:type type
-                           :id id
-                           :disabled readonly
-                           :placeholder placeholder
-                           :class (when error "is-invalid")
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (normalizer (.. % -target -value))])}]
-     [field-validation-message error label]]))
+    [:div.form-group.field {:class (when inline? "row")}
+     [:label {:for id
+              :class (when inline? "col-sm-auto col-form-label")}
+      label]
+     [:div {:class (when inline? "col")}
+      [:input.form-control {:type type
+                            :id id
+                            :disabled readonly
+                            :placeholder placeholder
+                            :class (when error "is-invalid")
+                            :value (get-in form keys)
+                            :on-change #(rf/dispatch [(:update-form context)
+                                                      keys
+                                                      (normalizer (.. % -target -value))])}]
+      [field-validation-message error label]]]))
 
 (defn text-field
   "A basic text field, full page width."
   [context keys]
   (input-field (merge keys {:context context :type "text"})))
+
+(defn text-field-inline
+  "A basic text field, label next to field"
+  [context keys]
+  (input-field (merge keys {:context context :type "text" :inline? true})))
 
 (defn textarea-autosize
   "A basic textarea, full page width."
@@ -86,7 +95,7 @@
         keys (conj keys-prefix lang)
         id (keys-to-id keys)
         error (get-in form-errors keys)]
-    [:div.form-group.row
+    [:div.form-group.row.mb-0
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
      [:div.col-sm-11
@@ -103,14 +112,29 @@
   "A text field for inputting text in all supported languages.
   Has a separate text fields for each language. The data is stored
   in the form as a map of language to text."
-  [context {:keys [keys label]}]
-  (let [languages @(rf/subscribe [:languages])]
-    (into [:div.form-group.field
-           [:label label]]
-          (for [lang languages]
-            [localized-text-field-lang context {:keys-prefix keys
-                                                :label label
-                                                :lang lang}]))))
+  [context {:keys [keys label collapse?]}]
+  (let [languages @(rf/subscribe [:languages])
+        id (keys-to-id keys)
+        fields (into [:<>]
+                     (for [lang languages]
+                       [localized-text-field-lang context {:keys-prefix keys
+                                                           :label label
+                                                           :lang lang}]))]
+    (if collapse?
+      [:div.form-group.field.mb-1
+       [:label
+        label
+        " "
+        [:button.btn.btn-link.btn-sm {:data-toggle "collapse"
+                                      :id (str id "-show")
+                                      :href (str "#" id)
+                                      :aria-controls id}
+         (text :t.collapse/show)]]
+       [:div.collapse {:id id}
+        fields]]
+      [:div.form-group.field
+       [:label label]
+       fields])))
 
 (defn checkbox
   "A single checkbox, on its own line."

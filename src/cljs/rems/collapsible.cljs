@@ -148,17 +148,17 @@
                         :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
    (component-info minimal)
    (example "minimal collapsible without title"
-            [component {:id "minimal1"
-                        :always [:p "I am content that is always visible"]
-                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+            [minimal {:id "minimal1"
+                      :always [:p "I am content that is always visible"]
+                      :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
    (example "minimal collapsible with custom border"
-            [component {:id "minimal2"
-                        :class "form-item"
-                        :always [:p "I am content that is always visible"]
-                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
-   (example "minimal collapsible"
-            [component {:id "minimal3"
-                        :class "slow"
-                        :title "Minimal expanded"
-                        :always [:p "I am content that is always visible"]
-                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])
+            [minimal {:id "minimal2"
+                      :class "dashed-group m-1"
+                      :always [:p "I am content that is always visible"]
+                      :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+   (example "minimal collapsible that opens slowly"
+            [minimal {:id "minimal3"
+                      :class "slow"
+                      :title "Minimal expanded"
+                      :always [:p "I am content that is always visible"]
+                      :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])
