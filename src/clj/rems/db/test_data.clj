@@ -525,9 +525,14 @@
                                                                                      :field/title {:fi "Kuvaus"
                                                                                                    :en "Description"
                                                                                                    :sv "Rubrik"}
-                                                                                     :field/optional false}]})}]})]
+                                                                                     :field/optional false}]})}]})
+        ega (create-workflow! {:actor owner
+                               :organization {:organization/id "csc"}
+                               :title "EGA workflow, a variant of default"
+                               :type :workflow/default
+                               :handlers handlers})]
 
-    ;; attach both kinds of licenses to all workflows created by owner
+    ;; attach both kinds of licenses to all workflows created by owner except EGA
     (let [link (create-license! {:actor owner
                                  :license/type :link
                                  :organization {:organization/id "nbn"}
@@ -551,6 +556,7 @@
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
     {:default default
+     :ega ega
      :decider decider
      :master master
      :auto-approve auto-approve
@@ -884,6 +890,17 @@
                                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
+
+        ega-creative-commons-license (create-license! {:actor owner
+                                                       :license/type :link
+                                                       :organization {:organization/id "csc"}
+                                                       :license/title {:en "CC Attribution 4.0"
+                                                                       :fi "CC Nimeä 4.0"
+                                                                       :sv "CC Erkännande 4.0"}
+                                                       :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                                      :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                                      :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+
         _ (create-disabled-license! {:actor owner
                                      :organization {:organization/id "nbn"}})
         attachment-license (create-attachment-license! {:actor owner
@@ -901,6 +918,12 @@
                                 :organization {:organization/id "hus"}
                                 :actor owner
                                 :license-ids [license1 extra-license attachment-license]})
+
+        ega-resource (create-resource! {:resource-ext-id "EGAD00001006673"
+                                        :organization {:organization/id "csc"}
+                                        :actor owner
+                                        :license-ids [ega-creative-commons-license]})
+
         res-organization-owner (create-resource! {:resource-ext-id "Owned by organization owner"
                                                   :organization {:organization/id "organization1"}
                                                   :actor organization-owner1
@@ -909,22 +932,22 @@
                                                   :organization {:organization/id "nbn"}
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
-        res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
-                                                        :organization {:organization/id "hus"}
-                                                        :actor owner
-                                                        :license-ids [license1 extra-license attachment-license]})
-        res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"
-                                                        :organization {:organization/id "hus"}
-                                                        :actor owner
-                                                        :license-ids [license2 extra-license attachment-license]})
-        res-duplicate-resource-name-with-long-name1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
-                                                                       :organization {:organization/id "hus"}
-                                                                       :actor owner
-                                                                       :license-ids [license1 extra-license attachment-license]})
-        res-duplicate-resource-name-with-long-name2 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
-                                                                       :organization {:organization/id "hus"}
-                                                                       :actor owner
-                                                                       :license-ids [license2 extra-license attachment-license]})
+        _res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
+                                                         :organization {:organization/id "hus"}
+                                                         :actor owner
+                                                         :license-ids [license1 extra-license attachment-license]})
+        _res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"
+                                                         :organization {:organization/id "hus"}
+                                                         :actor owner
+                                                         :license-ids [license2 extra-license attachment-license]})
+        _res-duplicate-resource-name-with-long-name1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                        :organization {:organization/id "hus"}
+                                                                        :actor owner
+                                                                        :license-ids [license1 extra-license attachment-license]})
+        _res-duplicate-resource-name-with-long-name2 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                        :organization {:organization/id "hus"}
+                                                                        :actor owner
+                                                                        :license-ids [license2 extra-license attachment-license]})
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
@@ -961,7 +984,19 @@
                                                        :field/privacy :private}]})
         form-organization-owner (create-all-field-types-example-form! organization-owner1 {:organization/id "organization1"} "Owned by organization owner" {:en "Owned by organization owner"
                                                                                                                                                             :fi "Omistaja organization owner"
-                                                                                                                                                            :sv "Ägare organization owner"})]
+                                                                                                                                                            :sv "Ägare organization owner"})
+
+        ega-form (create-form! {:actor owner
+                                :organization {:organization/id "csc"}
+                                :form/internal-name "EGA Application Form"
+                                :form/external-title {:en "EGA Form"
+                                                      :fi "EGA Lomake"
+                                                      :sv "EGA Blankett"}
+                                :form/fields [{:field/title {:en "Description"
+                                                             :fi "Kuvaus"
+                                                             :sv "Text"}
+                                               :field/optional false
+                                               :field/type :text}]})]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -1015,6 +1050,14 @@
                              :form-id form-private-hus
                              :organization {:organization/id "hus"}
                              :workflow-id (:default workflows)})
+    (create-catalogue-item! {:actor owner
+                             :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
+                                     :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
+                                     :sv "CINECA synthetic cohort EUROPE UK1 referencing fake samples"}
+                             :resource-id ega-resource
+                             :form-id ega-form
+                             :organization {:organization/id "csc"}
+                             :workflow-id (:ega workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"
