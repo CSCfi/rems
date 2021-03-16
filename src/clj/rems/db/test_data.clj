@@ -199,8 +199,7 @@
     :field/title {:en "Phone number"
                   :fi "Puhelinnumero"
                   :sv "Puhelinnumero"}
-    :field/optional true
-    :field/max-length 20}])
+    :field/optional true}])
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))

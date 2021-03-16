@@ -15,7 +15,7 @@
   (contains? #{:text :texta :description :phone-number} (:field/type field)))
 
 (defn supports-max-length? [field]
-  (contains? #{:description :text :texta :phone-number} (:field/type field)))
+  (contains? #{:description :text :texta} (:field/type field)))
 
 (defn supports-options? [field]
   (contains? #{:option :multiselect} (:field/type field)))
