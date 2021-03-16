@@ -423,8 +423,8 @@
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
-      (btu/scroll-and-click :invite0-info-more-link)
-      (btu/wait-visible :invite0-infocollapse)
+      (btu/scroll-and-click :invite0-info-collapse-more-link)
+      (btu/wait-visible :invite0-info-collapse)
 
       (is (= {"Name" "John Smith"
               "Email (from identity provider)" "john.smith@generic.name"}
@@ -536,7 +536,7 @@
     (testing "handler should see application after clicking on View"
       (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
     (testing "handler should see the applicant info"
-      (btu/scroll-and-click :applicant-info-more-link)
+      (btu/scroll-and-click :applicant-info-collapse-more-link)
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
               "Username" "alice"
