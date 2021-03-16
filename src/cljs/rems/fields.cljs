@@ -176,11 +176,11 @@
         max-length (:field/max-length opts)
         type (:field/type opts)]
     [field-wrapper opts
-     [:input.form-control {:type (cond
-                                   (= type :text) "text"
-                                   (= type :phone-number) "tel"
-                                   (= type :email) "email"
-                                   :else "text")
+     [:input.form-control {:type (case type
+                                   :text "text"
+                                   :phone-number "tel"
+                                   :email "email"
+                                   "text")
                            :id (field-name opts)
                            :name (field-name opts)
                            :placeholder placeholder

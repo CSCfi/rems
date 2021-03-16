@@ -198,7 +198,7 @@
    {:field/type :phone-number
     :field/title {:en "Phone number"
                   :fi "Puhelinnumero"
-                  :sv "Puhelinnumero"}
+                  :sv "Telefonnummer"}
     :field/optional true}])
 
 (deftest test-all-field-types-example
