@@ -106,7 +106,7 @@
                     [spinner/big]
                     [:<>
                      (when-let [ega-api-key-expiration-date (get-in identity [:ega :api-key-expiration-date])]
-                       [info-field (text :t.applicant-info/ega-api-key-expiration-date) ega-api-key-expiration-date {:inline? true}])
+                       [info-field (text :t.profile/ega-api-key-expiration-date) ega-api-key-expiration-date {:inline? true}])
                      [:button.btn.btn-primary
                       {:type "submit"}
                       (text :t.profile/generate-api-key)]])}]])
