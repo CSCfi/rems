@@ -2,7 +2,6 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.actions.components :refer [action-button action-form-view button-wrapper command!]]
-            [rems.atoms :refer [textarea]]
             [rems.text :refer [text]]))
 
 (rf/reg-event-fx
