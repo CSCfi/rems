@@ -12,7 +12,12 @@
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]))
 
-(defn token
+(def ^:private +common-opts+
+  {:socket-timeout 2500
+   :conn-timeout 2500
+   :as :json})
+
+(defn post-token
   "Fetches an EGA Token representing an EGA user.
 
   `:username`      - username (in EGA) e.g. foo@bar.com
@@ -23,19 +28,16 @@
 
   NB: It is valid for one hour."
   [{:keys [username password client-id client-secret config]}]
-  (-> (http/post (str (:connect-server-url config) "/token")
-                 {:form-params {"grant_type" "password"
-                                "client_id" client-id
-                                "client_secret" client-secret
-                                "username" username
-                                "password" password
-                                "scope" "openid"}
-                  :socket-timeout 2500
-                  :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/post (str (:connect-server-url config) "/token")
+             (merge +common-opts+
+                    {:form-params {"grant_type" "password"
+                                   "client_id" client-id
+                                   "client_secret" client-secret
+                                   "username" username
+                                   "password" password
+                                   "scope" "openid"}})))
 
-(defn api-key-generate
+(defn get-api-key-generate
   "Generate an API-Key for a user with a token.
 
   The API-Key can be used longer (e.g. a year) to represent the
@@ -47,124 +49,103 @@
   `:reason`          - string description of the use of the key
   `:config`          - configuration of the EGA integration"
   [{:keys [access-token id expiration-date reason config]}]
-  (-> (http/get (str (:permission-server-url config) "/api_key/generate")
-                {:oauth-token access-token
-                 :query-params {"id" id
-                                "expiration_date" expiration-date ; TODO: pass as date?
-                                "reason" reason}
-                 :socket-timeout 2500
-                 :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/get (str (:permission-server-url config) "/api_key/generate")
+            (merge +common-opts+
+                   {:oauth-token access-token
+                    :query-params {"id" id
+                                   "expiration_date" expiration-date ; TODO: pass as date?
+                                   "reason" reason}})))
 
-(defn api-key-list
+(defn get-api-key-list
   "List the API-Keys available.
 
   `:access-token` - the access token
   `:config`       - configuration of the EGA integration
 
-  NB: The token itself cannot be returned anymore."
+  NB: The actual API-Key is not returned by this call. It is only returned once in `api-key-generate`."
   [{:keys [access-token config]}]
-  (-> (http/get (str (:permission-server-url config) "/api_key")
-                {:oauth-token access-token
-                 :socket-timeout 2500
-                 :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/get (str (:permission-server-url config) "/api_key")
+            (merge +common-opts+
+                   {:oauth-token access-token})))
 
-(defn read-permissions
-  "Reads the permissions of the specified user.
+(defn get-permissions
+  "Gets the permissions of the specified user.
 
-  `:api-key`    - valid API-Key of the person asking
+  `:api-key`    - valid API-Key of the person acting
   `:account-id` - account id (Elixir or EGA)
   `:format`     - PLAIN or JWT, defaults to JWT.
   `:config`     - configuration of the EGA integration"
   [{:keys [api-key account-id format config]}]
-  (-> (http/get (str (:permission-server-url config) "/permissions")
-                {:headers {"authorization" (str "api-key " api-key)
-                           "x-account-id" account-id}
-                 :query-params {"format" (or format "JWT")}
-                 :socket-timeout 2500
-                 :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/get (str (:permission-server-url config) "/permissions")
+            (merge +common-opts+
+                   {:headers {"authorization" (str "api-key " api-key)
+                              "x-account-id" account-id}
+                    :query-params {"format" (or format "JWT")}})))
 
-(defn read-me-permissions
-  "Reads the permissions of the current user.
+(defn get-me-permissions
+  "Gets the permissions of the current user.
 
-  `:api-key`    - valid API-Key of the person asking
+  `:api-key`    - valid API-Key of the person acting
   `:format`     - PLAIN or JWT, defaults to JWT.
   `:config`     - configuration of the EGA integration"
   [{:keys [api-key format config]}]
-  (-> (http/get (str (:permission-server-url config) "/me/permissions")
-                {:headers {"authorization" (str "api-key " api-key)}
-                 :query-params {"format" (or format "JWT")}
-                 :socket-timeout 2500
-                 :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/get (str (:permission-server-url config) "/me/permissions")
+            (merge +common-opts+
+                   {:headers {"authorization" (str "api-key " api-key)}
+                    :query-params {"format" (or format "JWT")}})))
 
-(defn datasets-list-users
+(defn get-dataset-users
   "Lists the users with permission to the dataset.
 
-  `:api-key`    - valid API-Key of the person asking
+  `:api-key`    - valid API-Key of the person acting
   `:dataset-id` - id of the dataset
   `:config`     - configuration of the EGA integration"
   [{:keys [api-key dataset-id config]}]
-  (-> (http/get (str (:permission-server-url config) "/datasets/" dataset-id "/users")
-                {:headers {"authorization" (str "api-key " api-key)}
-                 :socket-timeout 2500
-                 :conn-timeout 2500})
-      :body
-      json/parse-string))
+  (http/get (str (:permission-server-url config) "/datasets/" dataset-id "/users")
+            (merge +common-opts+
+                   {:headers {"authorization" (str "api-key " api-key)}})))
 
-(defn get-api-key-for [handler-userid]
-  (:ega-api-key (user-secrets/get-user-secrets handler-userid)))
+(defn- get-api-key-for [handler-userid]
+  (get-in (user-secrets/get-user-secrets handler-userid) [:ega :api-key]))
 
-(defn get-dac-for [resid handler-userid]
+(defn- get-dac-for [resid handler-userid]
   "EGAC00001000908") ; TODO: implement
 
-(defn create-or-update-permissions
+(defn post-create-or-update-permissions
   "Create or update the permissions of the user.
 
-  `:api-key`    - valid API-Key of the person asking
-  `:account-id` - account id (Elixir or EGA)
+  `:api-key`    - valid API-Key of the person acting
+  `:account-id` - account id (Elixir or EGA) of the user whose permissions are updated
   `:visas`      - visas of permissions to create
   `:format`     - PLAIN or JWT, defaults to JWT.
   `:config`     - configuration of the EGA integration"
   [{:keys [api-key account-id visas format config]}]
-  (-> (http/post (str (:permission-server-url config) "/permissions")
-                 {:headers {"authorization" (str "api-key " api-key)
-                            "x-account-id" account-id}
-                  :body (json/generate-string (if (= "JWT" format)
-                                                (map (fn [visa]
-                                                       {:jwt visa
-                                                        :format format})
-                                                     visas)
-                                                visas))
-                  :content-type :json
-                  :socket-timeout 2500
-                  :conn-timeout 2500
-                  :query-params {:format (or format "JWT")}})
-      :body
-      json/parse-string))
+  (http/post (str (:permission-server-url config) "/permissions")
+             (merge +common-opts+
+                    {:headers {"authorization" (str "api-key " api-key)
+                               "x-account-id" account-id}
+                     :content-type :json
+                     :body (json/generate-string (if (= "JWT" format)
+                                                   (map (fn [visa]
+                                                          {:jwt visa
+                                                           :format format})
+                                                        visas)
+                                                   visas))
+                     :query-params {:format (or format "JWT")}})))
 
 (defn delete-permissions
   "Delete the permissions of the user for a given dataset.
 
-  `:api-key`     - valid API-Key of the person asking
-  `:account-id`  - account id (Elixir or EGA)
+  `:api-key`     - valid API-Key of the person acting
+  `:account-id`  - account id (Elixir or EGA) of the user whose permissions are deleted
   `:dataset-ids` - ids of the datasets to delete
   `:config`      - configuration of the EGA integration"
   [{:keys [api-key account-id dataset-ids config]}]
-  (-> (http/delete (str (:permission-server-url config) "/permissions")
-                   {:headers {"authorization" (str "api-key " api-key)
-                              "x-account-id" account-id}
-                    :socket-timeout 2500
-                    :conn-timeout 2500
-                    :query-params {:values (str/join "," dataset-ids)}})
-      :body
-      json/parse-string))
+  (http/delete (str (:permission-server-url config) "/permissions")
+               (merge +common-opts+
+                      {:headers {"authorization" (str "api-key " api-key)
+                                 "x-account-id" account-id}
+                       :query-params {:values (str/join "," dataset-ids)}})))
 
 (defn- entitlement->update
   "Converts an entitlement to a GA4GH visa for EGA.
@@ -178,7 +159,7 @@
                  :start (:start entitlement)
                  :end (:end entitlement)
                  :userid (:userid entitlement)
-                 :dac-id (get-dac-for (:resid entitlement) (:handler entitlement))}]
+                 :dac-id (get-dac-for (:resid entitlement) (:approvedby entitlement))}]
                ga4gh/entitlements->passport
                :ga4gh_passport_v1)]})
 
@@ -204,22 +185,27 @@
                        :iat 1618617600}]]]}
            (update-in (entitlement->update {:resid "EGAD00001006673"
                                             :userid "elixir-user"
+                                            :approvedby "dac-user"
                                             :start (time-core/date-time 2021 03 17)
                                             :end (time-core/date-time 2022 03 17)})
                       [:visas 0 0]
                       ga4gh/visa->claims)))))
 
 (defn entitlement-push [action entitlement config]
-  (let [common-fields {:api-key (get-api-key-for (:handler entitlement))
+  (let [api-key (get-api-key-for (:approvedby entitlement))
+        common-fields {:api-key api-key
                        :account-id (:userid entitlement)
                        :config config}]
+
+    (when (str/blank? api-key)
+      (log/warnf "Missing EGA api-key for %s" (:approvedby entitlement)))
 
     (log/infof "Pushing entitlements to %s: %s" (:permission-server-url config) entitlement)
 
     (case action
       :add
-      (create-or-update-permissions (merge common-fields
-                                           (entitlement->update entitlement)))
+      (post-create-or-update-permissions (merge common-fields
+                                                (entitlement->update entitlement)))
 
       :remove
       (delete-permissions (merge common-fields
