@@ -73,7 +73,7 @@
                   (or (ex-data e)
                       {:status "exception"}))))
 
-    :basic
+    :basic ; TODO: let's move this :entitlements-target (v1) at some point to :entitlement-post (v2)
     (when-let [target (get-in env [:entitlements-target action])]
       (let [payload (get-entitlements-payload entitlements action)
             json-payload (json/generate-string payload)]
