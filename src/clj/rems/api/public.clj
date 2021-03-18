@@ -30,7 +30,8 @@
    :default-language s/Keyword
    :oidc-extra-attributes [{:attribute s/Str
                             s/Keyword s/Any}]
-   :dev s/Bool})
+   :dev s/Bool
+   (s/optional-key :enable-ega) s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -67,7 +68,8 @@
                             :extra-pages
                             :languages
                             :oidc-extra-attributes
-                            :enable-assign-external-id-ui])))
+                            :enable-assign-external-id-ui
+                            :enable-ega])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
