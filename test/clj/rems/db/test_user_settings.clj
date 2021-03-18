@@ -1,5 +1,6 @@
 (ns ^:integration rems.db.test-user-settings
   (:require [clojure.test :refer :all]
+            [clj-time.core :as time-core]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -7,6 +8,8 @@
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
+
+(def expiration-date (time-core/date-time 2021 3 18))
 
 (deftest test-user-settings
   (users/add-user! {:userid "user"})
@@ -20,23 +23,27 @@
 
   (testing "add settings"
     (is (= {:success true}
-           (user-settings/update-user-settings! "user" {:language :fi})))
+           (user-settings/update-user-settings! "user" {:language :fi
+                                                        :ega {:api-key-expiration-date expiration-date}})))
     (is (= {:language :fi
-            :notification-email nil}
+            :notification-email nil
+            :ega {:api-key-expiration-date expiration-date}}
            (user-settings/get-user-settings "user"))))
 
   (testing "modify settings"
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {:notification-email "user@example.com"})))
     (is (= {:language :fi
-            :notification-email "user@example.com"}
+            :notification-email "user@example.com"
+            :ega {:api-key-expiration-date expiration-date}}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with empty settings does not change settings"
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {})))
     (is (= {:language :fi
-            :notification-email "user@example.com"}
+            :notification-email "user@example.com"
+            :ega {:api-key-expiration-date expiration-date}}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with invalid settings does not change settings"
@@ -48,7 +55,8 @@
                                                         :language :de})) ; invalid
         "partially invalid")
     (is (= {:language :fi
-            :notification-email "user@example.com"}
+            :notification-email "user@example.com"
+            :ega {:api-key-expiration-date expiration-date}}
            (user-settings/get-user-settings "user"))))
 
   (testing "changing one user's settings does not change another user's settings"
