@@ -31,9 +31,9 @@
 (defn update-user-secrets! [user new-secrets]
   (assert user "User missing!")
   (let [old-secrets (get-user-secrets user)
-        validated (try (validate-user-secrets new-secrets) (catch Exception _e nil))]
-    (if (= (set (keys validated))
-           (set (keys new-secrets)))
+        validated (try (validate-user-secrets (merge old-secrets new-secrets))
+                       (catch Exception _e nil))]
+    (if validated
       (do
         (db/update-user-secrets!
          {:user user
