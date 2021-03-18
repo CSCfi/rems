@@ -488,7 +488,10 @@
            :phase-revoked "Phase revoked:"
            :rejected "Rejected"
            :revoked "Revoked"}
-  :profile {:idp-email "Email address from identity provider"
+  :profile {:ega "EGA"
+            :ega-api-key-expiration-date "EGA API-key expiration"
+            :generate-api-key "Generate API-key"
+            :idp-email "Email address from identity provider"
             :no-email "(no email address)"
             :notification-email "Use another email address for notifications"
             :save "Save"

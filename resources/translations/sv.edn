@@ -444,7 +444,10 @@
            :phase-revoked "Status återkallad:"
            :rejected "Avslag"
            :revoked "Återkallad"}
-  :profile {:idp-email "E-postadress från identifieringstjänst"
+  :profile {:ega "EGA"
+            :ega-api-key-expiration-date "EGA API-nyckel ekspiration"
+            :generate-api-key "Hämta en API-nyckel"
+            :idp-email "E-postadress från identifieringstjänst"
             :no-email "(ingen e-postadress)"
             :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
             :save "Spara"
