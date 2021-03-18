@@ -18,6 +18,6 @@
     (PUT "/" []
       :summary "Update user settings"
       :roles #{:logged-in}
-      :body [settings user-settings/PartialUserSettings]
+      :body [settings user-settings/UserSettings]
       :return schema/SuccessResponse
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))))
