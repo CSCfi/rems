@@ -1,7 +1,10 @@
 (ns rems.ega
   "Utilities for interfacing with EGA Permission API.
 
-  The function names match the remote API paths."
+  The function names match the remote API method and paths.
+
+  The most important function is the last but not least `entitlement-push`. The rest
+  are so far kept private."
   (:require [clj-http.client :as http]
             [clj-time.core :as time-core]
             [clojure.string :as str]
@@ -17,7 +20,7 @@
    :conn-timeout 2500
    :as :json})
 
-(defn post-token
+(defn- post-token
   "Fetches an EGA Token representing an EGA user.
 
   `:username`      - username (in EGA) e.g. foo@bar.com
@@ -37,7 +40,7 @@
                                    "password" password
                                    "scope" "openid"}})))
 
-(defn get-api-key-generate
+(defn- get-api-key-generate
   "Generate an API-Key for a user with a token.
 
   The API-Key can be used longer (e.g. a year) to represent the
@@ -56,7 +59,7 @@
                                    "expiration_date" expiration-date ; TODO: pass as date?
                                    "reason" reason}})))
 
-(defn get-api-key-list
+(defn- get-api-key-list
   "List the API-Keys available.
 
   `:access-token` - the access token
@@ -68,7 +71,7 @@
             (merge +common-opts+
                    {:oauth-token access-token})))
 
-(defn get-permissions
+(defn- get-permissions
   "Gets the permissions of the specified user.
 
   `:api-key`    - valid API-Key of the person acting
@@ -82,7 +85,7 @@
                               "x-account-id" account-id}
                     :query-params {"format" (or format "JWT")}})))
 
-(defn get-me-permissions
+(defn- get-me-permissions
   "Gets the permissions of the current user.
 
   `:api-key`    - valid API-Key of the person acting
@@ -94,7 +97,7 @@
                    {:headers {"authorization" (str "api-key " api-key)}
                     :query-params {"format" (or format "JWT")}})))
 
-(defn get-dataset-users
+(defn- get-dataset-users
   "Lists the users with permission to the dataset.
 
   `:api-key`    - valid API-Key of the person acting
@@ -111,7 +114,7 @@
 (defn- get-dac-for [resid handler-userid]
   "EGAC00001000908") ; TODO: implement
 
-(defn post-create-or-update-permissions
+(defn- post-create-or-update-permissions
   "Create or update the permissions of the user.
 
   `:api-key`    - valid API-Key of the person acting
@@ -133,7 +136,7 @@
                                                    visas))
                      :query-params {:format (or format "JWT")}})))
 
-(defn delete-permissions
+(defn- delete-permissions
   "Delete the permissions of the user for a given dataset.
 
   `:api-key`     - valid API-Key of the person acting
