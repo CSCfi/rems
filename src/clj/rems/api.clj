@@ -25,13 +25,12 @@
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.auth :as auth]
             [rems.db.core :as db]
-            [rems.json :refer [muuntaja]]
+            [rems.json :as json]
             [rems.util :refer [get-user-id]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
-            [schema.core :as s]
-            [rems.json :as json])
+            [schema.core :as s])
   (:import [rems.auth ForbiddenException UnauthorizedException]
            rems.DataException
            rems.InvalidRequestException
@@ -137,7 +136,7 @@
   (audit-log-middleware
    (api
     {;; TODO: should this be in rems.middleware?
-     :formats muuntaja
+     :formats json/muuntaja
      :middleware [cors-middleware
                   transaction-middleware]
      :exceptions {:handlers {UnauthorizedException unauthorized-handler
