@@ -1,7 +1,8 @@
 (ns rems.profile
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :refer [document-title info-field]]
             [rems.collapsible :as collapsible]
+            [rems.common.roles :as roles]
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
             [rems.guide-util :refer [component-info example]]
@@ -64,7 +65,8 @@
 
 (defn profile-page []
   (let [identity @(rf/subscribe [:identity])
-        form @(rf/subscribe [::form])]
+        form @(rf/subscribe [::form])
+        config @(rf/subscribe [:rems.config/config])]
     [:<>
      [document-title (text :t.navigation/profile)]
      [flash-message/component :top]
@@ -95,6 +97,20 @@
                   [:button.btn.btn-primary
                    {:type "submit"}
                    (text :t.profile/save)]])}]
+
+     (when (and (:enable-ega config) (roles/has-roles? :handler))
+       [:div.mt-3
+        [collapsible/component
+         {:title (text :t.profile/ega)
+          :always (if @(rf/subscribe [::user-settings :fetching?])
+                    [spinner/big]
+                    [:<>
+                     (when-let [ega-api-key-expiration-date (get-in identity [:ega :api-key-expiration-date])]
+                       [info-field (text :t.applicant-info/ega-api-key-expiration-date) ega-api-key-expiration-date {:inline? true}])
+                     [:button.btn.btn-primary
+                      {:type "submit"}
+                      (text :t.profile/generate-api-key)]])}]])
+
      [:div.mt-3
       [collapsible/component
        {:title (text :t.profile/your-details)
