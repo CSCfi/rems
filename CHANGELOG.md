@@ -35,7 +35,7 @@ Changes since v2.16
 ### Additions
 - The example-theme now uses the Lato font.
 - The field id can now be changed in the form editor. (#1804)
-- "More info" support for EGA style resources (#2466)
+- "More info" support for EGA style resources (when :enable-ega flag is set) (#2466)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 
