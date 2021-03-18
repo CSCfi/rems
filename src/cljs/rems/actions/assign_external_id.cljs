@@ -6,8 +6,8 @@
 
 (rf/reg-event-fx
  ::open-form
- (fn [{:keys [db]} _]
-   {:db (assoc db ::external-id "")}))
+ (fn [{:keys [db]} [_ initial-id]]
+   {:db (assoc db ::external-id initial-id)}))
 
 (rf/reg-sub ::external-id (fn [db _] (::external-id db)))
 (rf/reg-event-db ::set-external-id (fn [db [_ value]] (assoc db ::external-id value)))
@@ -25,10 +25,10 @@
               :on-finished on-finished})
    {}))
 
-(defn assign-external-id-button []
+(defn assign-external-id-button [initial-id]
   [action-button {:id action-form-id
                   :text (text :t.actions/assign-external-id)
-                  :on-click #(rf/dispatch [::open-form])}])
+                  :on-click #(rf/dispatch [::open-form initial-id])}])
 
 (defn assign-external-id-view
   [{:keys [external-id on-set-external-id on-send]}]
