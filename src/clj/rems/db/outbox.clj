@@ -9,6 +9,7 @@
             [schema.core :as s])
   (:import [org.joda.time Duration DateTime]))
 
+;; TODO: the meaning of the fields should be documented
 (def OutboxData
   {(s/optional-key :outbox/id) s/Int
    :outbox/type (s/enum :email :entitlement-post :event-notification)

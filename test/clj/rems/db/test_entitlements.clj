@@ -1,6 +1,7 @@
 (ns ^:integration rems.db.test-entitlements
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
+            [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
@@ -32,12 +33,22 @@
 (defn run-with-server
   [endpoint-spec callback]
   (with-open [server (stub/start! {"/add" endpoint-spec
-                                   "/remove" endpoint-spec
-                                   "/ga4gh" endpoint-spec})]
+                                   "/remove" endpoint-spec})]
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :entitlements-target {:add (str (:uri server) "/add")
-                                                               :remove (str (:uri server) "/remove")
-                                                               :ga4gh (str (:uri server) "/ga4gh")})]
+                                                               :remove (str (:uri server) "/remove")})]
+      (callback server))))
+
+(defn ega-config [server]
+  {:type :ega
+   :connect-server-url (str (:uri server) "/c")
+   :permission-server-url (str (:uri server) "/p")})
+
+(defn run-with-ega-server
+  [spec callback]
+  (with-open [server (stub/start! spec)]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :entitlement-push [(ega-config server)])]
       (callback server))))
 
 (deftest test-post-entitlements!
@@ -45,38 +56,26 @@
     (run-with-server
      {:status 200}
      (fn [server]
-       (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))
+       (is (nil? (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))
        (is (= [+expected-payload+] (for [r (stub/recorded-requests server)]
                                      (json/parse-string (get-in r [:body "postData"]))))))))
-
-  (testing "ok :ga4gh action"
-    (run-with-server
-     {:status 200}
-     (fn [server]
-       (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
-       (let [data (-> (stub/recorded-requests server)
-                      first
-                      (get-in [:body "postData"])
-                      json/parse-string)]
-         (is (= [:ga4gh_passport_v1] (keys data)))
-         (is (= [true true] (map string? (:ga4gh_passport_v1 data))))))))
 
   (testing "not-found"
     (run-with-server
      {:status 404}
      (fn [_]
-       (is (= "failed: 404" (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+}))))))
+       (is (= "failed: 404" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "timeout"
     (run-with-server
      {:status 200 :delay 5000} ;; timeout of 2500 in code
      (fn [_]
-       (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+}))))))
+       (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "invalid url"
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :entitlements-target {:add "http://invalid/entitlements"})]
-      (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))))
+      (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
   (testing "no server configured"
-    (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))))
+    (is (nil? (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
 
 (defn- get-requests [server]
   (doall
@@ -86,9 +85,6 @@
 
 (defn- requests-for-paths [server ^String path]
   (filter #(= (% :path) path) (set (get-requests server))))
-
-(defn- is-valid-ga4gh? [entry]
-  (string? (first (:ga4gh_passport_v1 (:body entry)))))
 
 (deftest test-entitlement-granting
   (let [applicant "bob"
@@ -163,13 +159,10 @@
                (is (= #{[applicant "resource1"] [applicant "resource2"]}
                       (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
              (testing "entitlements were POSTed to callbacks"
-               (let [add-paths (requests-for-paths server "/add")
-                     ga4gh-paths (requests-for-paths server "/ga4gh")]
+               (let [add-paths (requests-for-paths server "/add")]
                  (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob" :end nil}]}
                           {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob" :end nil}]}}
-                        (set add-paths)))
-                 (is (= 2 (count ga4gh-paths)))
-                 (is (every? is-valid-ga4gh? ga4gh-paths))))))))
+                        (set add-paths)))))))))
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (run-with-server
@@ -187,13 +180,10 @@
                       [member "resource1"] [member "resource2"]}
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
            (testing "new entitlements were POSTed to callbacks"
-             (let [add-paths (requests-for-paths server "/add")
-                   ga4gh-paths (requests-for-paths server "/ga4gh")]
+             (let [add-paths (requests-for-paths server "/add")]
                (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a" :end nil}]}
                         {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a" :end nil}]}}
-                      (set add-paths)))
-               (is (= 2 (count ga4gh-paths)))
-               (is (every? is-valid-ga4gh? ga4gh-paths)))))))
+                      (set add-paths))))))))
 
       (testing "removing a member ends entitlements"
         (run-with-server
@@ -231,14 +221,11 @@
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "entitlement changes POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
-                   remove-paths (requests-for-paths server "/remove")
-                   ga4gh-paths (requests-for-paths server "/ga4gh")]
+                   remove-paths (requests-for-paths server "/remove")]
                (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end nil}]}}
                       (set add-paths)))
                (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
-                      (set remove-paths)))
-               (is (= 1 (count ga4gh-paths)))
-               (is (every? is-valid-ga4gh? ga4gh-paths)))))))
+                      (set remove-paths))))))))
 
       (testing "closed application should end entitlements"
         (run-with-server
@@ -315,3 +302,36 @@
            (testing "ended entitlements POSTed to callback"
              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}]
                     (get-requests server))))))))))
+
+
+(deftest test-entitlement-push
+  (let [post-data-for (fn [server]
+                        {:action :add
+                         :type :ega
+                         :entitlements [{:resid "EGAD00001006673" :userid "elixir-user" :start (time/date-time 2002 10 11) :mail "elixir-user@elixir.org"}]
+                         :config (ega-config server)})]
+    (testing "ok :add action"
+      (run-with-ega-server
+       {"/p/permissions" {:status 200 :content-type "application/json" :body (json/generate-string {})}}
+       (fn [server]
+         (is (= nil (#'entitlements/post-entitlements! (post-data-for server))))
+         (let [post (update-in (first (stub/recorded-requests server)) [:body "postData"] json/parse-string)]
+           (is (= "elixir-user" (get-in post [:headers :x-account-id]))))))) ; sanity check only, content test is in ega.clj
+
+    (testing "not-found"
+      (run-with-ega-server
+       {"/p/permissions" {:status 404}}
+       (fn [server]
+         (is (= 404 (:status (#'entitlements/post-entitlements! (post-data-for server))))))))
+
+    (testing "timeout"
+      (run-with-ega-server
+       {"/p/permissions" {:status 200 :delay 5000}} ;; timeout of 2500 in code
+       (fn [server]
+         (is (= {:status "exception"} (#'entitlements/post-entitlements! (post-data-for server)))))))
+
+    (testing "invalid url"
+      (is (= {:status "exception"} (#'entitlements/post-entitlements! (post-data-for {:uri "http://invalid/address/altogether"})))))
+
+    (testing "no server configured means no problem"
+      (is (= nil (#'entitlements/post-entitlements! (dissoc (post-data-for {:uri "http://invalid/address/no/problem"}) :config)))))))
