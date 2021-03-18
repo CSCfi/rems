@@ -1,5 +1,5 @@
 (ns ^:integration rems.db.test-user-secrets
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.user-secrets :as user-secrets]
             [rems.db.users :as users]))
