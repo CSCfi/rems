@@ -15,7 +15,7 @@
   (and resid (str/starts-with? resid "EGAD")))
 
 (defn- ega-catalogue-item-url [resid {:keys [enable-ega ega-organization]}]
-  (when enable-ega (ega-dataset? resid)
+  (when (and enable-ega (ega-dataset? resid))
     (str (or ega-organization "https://ega-archive.org/datasets/") resid)))
 
 ;; Resource can have different schemas here (V2Resource vs. CatalogueItem)
