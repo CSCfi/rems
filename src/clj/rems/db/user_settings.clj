@@ -1,6 +1,5 @@
 (ns rems.db.user-settings
   (:require [clojure.string :as str]
-            [medley.core :refer [map-keys]]
             [rems.common.util :refer [+email-regex+]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
@@ -14,8 +13,8 @@
 
 ;; TODO should this be in schema-base?
 (s/defschema UserSettings
-  {:language s/Keyword
-   :notification-email (s/maybe s/Str)})
+  {(s/optional-key :language) s/Keyword
+   (s/optional-key :notification-email) (s/maybe s/Str)})
 
 (def ^:private validate-user-settings
   (s/validator UserSettings))
@@ -25,20 +24,14 @@
       validate-user-settings
       json/generate-string))
 
-(s/defschema PartialUserSettings
-  (map-keys s/optional-key UserSettings))
-
-(def ^:private coerce-partial-user-settings
-  (coerce/coercer! PartialUserSettings json/coercion-matcher))
+(def ^:private coerce-user-settings
+  (coerce/coercer! UserSettings json/coercion-matcher))
 
 (defn- json->settings [json]
-  ;; Allows missing keys, so we don't need to write migrations
-  ;; if we add new keys to user settings. Migrations are needed if
-  ;; we remove keys or make their validation stricter.
   (when json
     (-> json
         json/parse-string
-        coerce-partial-user-settings)))
+        coerce-user-settings)))
 
 (defn get-user-settings [user]
   (merge (default-settings)
