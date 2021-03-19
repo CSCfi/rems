@@ -169,13 +169,13 @@
   NB: the GA4GH signing keys will be required from the environment"
   [entitlement]
   {:format "JWT"
-   :visas [(-> [{:resid (:resid entitlement)
-                 :start (:start entitlement)
-                 :end (:end entitlement)
-                 :userid (:userid entitlement)
-                 :dac-id (get-dac-for (:resid entitlement) (:approvedby entitlement))}]
-               ga4gh/entitlements->passport
-               :ga4gh_passport_v1)]})
+   :visas (-> [{:resid (:resid entitlement)
+                :start (:start entitlement)
+                :end (:end entitlement)
+                :userid (:userid entitlement)
+                :dac-id (get-dac-for (:resid entitlement) (:approvedby entitlement))}]
+              ga4gh/entitlements->passport
+              :ga4gh_passport_v1)})
 
 (deftest test-entitlement->update
   (with-redefs [env (rems.config/load-keys {:public-url "https://rems.example/"
@@ -183,26 +183,26 @@
                                             :ga4gh-visa-public-key "test-data/example-public-key.jwk"})
                 time-core/now (fn [] (time-core/date-time 2021 04 17))] ; iat
     (is (= {:format "JWT"
-            :visas [[[{:alg "RS256"
-                       :kid "2011-04-29"
-                       :jku "https://rems.example/api/jwk"
-                       :typ "JWT"}
-                      {:sub "elixir-user"
-                       :iss "https://rems.example/"
-                       :exp 1647475200
-                       :ga4gh_visa_v1
-                       {:value "EGAD00001006673"
-                        :type "ControlledAccessGrants"
-                        :source "EGAC00001000908"
-                        :asserted 1615939200
-                        :by "dac"}
-                       :iat 1618617600}]]]}
+            :visas [[{:alg "RS256"
+                      :kid "2011-04-29"
+                      :jku "https://rems.example/api/jwk"
+                      :typ "JWT"}
+                     {:sub "elixir-user"
+                      :iss "https://rems.example/"
+                      :exp 1647475200
+                      :ga4gh_visa_v1
+                      {:value "EGAD00001006673"
+                       :type "ControlledAccessGrants"
+                       :source "EGAC00001000908"
+                       :asserted 1615939200
+                       :by "dac"}
+                      :iat 1618617600}]]}
            (update-in (entitlement->update {:resid "EGAD00001006673"
                                             :userid "elixir-user"
                                             :approvedby "dac-user"
                                             :start (time-core/date-time 2021 03 17)
                                             :end (time-core/date-time 2022 03 17)})
-                      [:visas 0 0]
+                      [:visas 0]
                       ga4gh/visa->claims)))))
 
 (defn entitlement-push [action entitlement config]
