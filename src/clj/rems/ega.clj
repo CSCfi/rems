@@ -222,3 +222,36 @@
       :remove
       (delete-permissions (merge common-fields
                                  {:dataset-ids [(:resid entitlement)]})))))
+
+(defn update-api-key
+  "Logs into EGA fetching an access token, generates an API-Key and saves it to the user's secrets.
+
+  `:userid`               - REMS user to generate the key for
+  `:username`             - EGA user to use
+  `:password`             - EGA user password
+  `:config`               - configuration of the EGA integration with following keys:
+    `:connect-server-url` - EGA login server url
+    `:permission-server-url` - EGA permission server url
+    `:client-id`          - client id for REMS
+    `:client-secret`      - client secret for REMS"
+  [{:keys [userid username password config]}]
+  (let [_ (log/info "Get EGA token...")
+        token (-> {:username username
+                   :password password
+                   :config config}
+                  post-token
+                  :body
+                  :access_token)
+        _ (log/info "Generate API-Key...")
+        api-key (-> {:access-token token
+                     :id userid
+                     :expiration-date (time-core/plus (time-core/now) (time-core/years 1))
+                     :reason "rems_ega_push"
+                     :config config}
+                    get-api-key-generate
+                    :body
+                    :token)
+        _ (log/info "Save user secret...")
+        result (user-secrets/update-user-secrets! userid {:ega {:api-key api-key}})]
+    (println "Success!")
+    (:success result)))
