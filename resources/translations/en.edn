@@ -261,11 +261,13 @@
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"
+                :additional-settings "Additional settings"
                 :collapse-aria-label "Info about "
                 ;; %1 - column number
                 :column-n "Column %1"
                 :column-key "ID"
                 :column-label "Label"
+                :confirm-remove-field "Remove this field?"
                 :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title

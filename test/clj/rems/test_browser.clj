@@ -423,8 +423,8 @@
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
-      (btu/scroll-and-click :invite0-info-more-link)
-      (btu/wait-visible :invite0-infocollapse)
+      (btu/scroll-and-click :invite0-info-collapse-more-link)
+      (btu/wait-visible :invite0-info-collapse)
 
       (is (= {"Name" "John Smith"
               "Email (from identity provider)" "john.smith@generic.name"}
@@ -536,7 +536,7 @@
     (testing "handler should see application after clicking on View"
       (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
     (testing "handler should see the applicant info"
-      (btu/scroll-and-click :applicant-info-more-link)
+      (btu/scroll-and-click :applicant-info-collapse-more-link)
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
               "Username" "alice"
@@ -1074,32 +1074,34 @@
       (btu/fill-human :fields-0-title-en "Text area (EN)")
       (btu/fill-human :fields-0-title-fi "Text area (FI)")
       (btu/fill-human :fields-0-title-sv "Text area (SV)")
-      (btu/scroll-and-click :fields-0-placeholder-show)
+      (btu/scroll-and-click :fields-0-placeholder-more-link)
       (btu/wait-visible :fields-0-placeholder-en)
       (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
       (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
       (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
-      (btu/scroll-and-click :fields-0-info-text-show)
+      (btu/scroll-and-click :fields-0-info-text-more-link)
       (btu/wait-visible :fields-0-info-text-en)
       (btu/fill-human :fields-0-info-text-en "") ; should not get passed as is blank
       (btu/fill-human :fields-0-info-text-fi " ")
       (btu/fill-human :fields-0-info-text-sv "")
       (btu/scroll-and-click :fields-0-type-texta)
       (btu/scroll-and-click :fields-0-optional)
+      (btu/scroll-and-click :fields-0-additional-more-link)
       (btu/fill-human :fields-0-max-length "127")
 
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
       (btu/wait-visible :fields-1-title-en)
-      (btu/clear :fields-1-id)
-      (btu/fill-human :fields-1-id "opt")
       (btu/fill-human :fields-1-title-en "Option list (EN)")
       (btu/fill-human :fields-1-title-fi "Option list (FI)")
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
-      (btu/scroll-and-click :fields-1-info-text-show)
+      (btu/scroll-and-click :fields-1-info-text-more-link)
       (btu/wait-visible :fields-1-info-text-en)
       (btu/fill-human :fields-1-info-text-en "Info text (EN)")
       (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
       (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
+      (btu/scroll-and-click :fields-1-additional-more-link)
+      (btu/clear :fields-1-id)
+      (btu/fill-human :fields-1-id "opt")
       (btu/scroll-and-click :fields-1-type-option)
       (btu/scroll-and-click {:class :add-option})
       (btu/wait-visible :fields-1-options-0-key)
@@ -1180,7 +1182,7 @@
         (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
 
         (btu/scroll-and-click :fields-0-type-description)
-        (btu/scroll-and-click :fields-0-info-text-show)
+        (btu/scroll-and-click :fields-0-info-text-more-link)
         (btu/wait-visible :fields-0-info-text-en)
         (btu/fill-human :fields-0-info-text-en "Info text (EN)")
         (btu/fill-human :fields-0-info-text-fi "Info text (FI)")

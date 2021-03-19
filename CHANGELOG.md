@@ -21,6 +21,7 @@ Changes since v2.16
   - The API supports the old style for now.
 - Answers to conditional fields that are not visible are no longer stored by REMS. The API accepts answers for invisible fields but drops them. The UI does not send answers to invisible fields. (#2574)
 - The "Assign external id" action now shows the previous assigned external id. (#2530)
+- The form editor UI was reworked to look less cluttered. Many inputs are now hidden behind "Show" buttons by default. (#1899)
 
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)

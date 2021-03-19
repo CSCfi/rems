@@ -328,9 +328,9 @@
      [move-form-field-option-up-button field-index option-index]
      [move-form-field-option-down-button field-index option-index]
      [remove-form-field-option-button field-index option-index]]]
-   [text-field context {:keys [:form/fields field-index :field/options option-index :key]
-                        :label (text :t.create-form/option-key)
-                        :normalizer normalize-option-key}]
+   [text-field-inline context {:keys [:form/fields field-index :field/options option-index :key]
+                               :label (text :t.create-form/option-key)
+                               :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
@@ -370,9 +370,9 @@
      [move-form-field-column-up-button field-index column-index]
      [move-form-field-column-down-button field-index column-index]
      [remove-form-field-column-button field-index column-index]]]
-   [text-field context {:keys [:form/fields field-index :field/columns column-index :key]
-                        :label (text :t.create-form/column-key)
-                        :normalizer normalize-option-key}]
+   [text-field-inline context {:keys [:form/fields field-index :field/columns column-index :key]
+                               :label (text :t.create-form/column-key)
+                               :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/columns column-index :label]
                                   :label (text :t.create-form/column-label)}]])
 
@@ -542,7 +542,8 @@
    (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
-  [items/remove-button #(rf/dispatch [::remove-form-field field-index])])
+  [items/remove-button #(when (js/confirm (text :t.create-form/confirm-remove-field))
+                          (rf/dispatch [::remove-form-field field-index]))])
 
 (defn- move-form-field-up-button [field-index]
   [items/move-up-button #(rf/dispatch [::move-form-field-up field-index])])
@@ -667,31 +668,46 @@
             [:div.form-field-header.d-flex
              [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
              [:div.form-field-controls.text-nowrap.ml-auto
+              [remove-form-field-button index]
               [move-form-field-up-button index]
               [move-form-field-down-button index]
-              [remove-form-field-button index]]]
+              [collapsible/controls
+               (str (field-editor-id (:field/id field)) "-contents")
+               [atoms/expand-symbol]
+               [atoms/collapse-symbol]
+               true]]]
 
-            [form-field-id-field index]
-            [form-field-title-field index]
-            [form-field-type-radio-group index]
-            (when (common-form/supports-optional? field)
-              (if (= :table (:field/type field))
-                [form-field-table-optional-checkbox field]
-                [form-field-optional-checkbox field]))
-            (when (common-form/supports-info-text? field)
-              [form-field-info-text index])
-            (when (common-form/supports-placeholder? field)
-              [form-field-placeholder-field index])
-            (when (common-form/supports-max-length? field)
-              [form-field-max-length-field index])
-            (when (common-form/supports-options? field)
-              [form-field-option-fields index])
-            (when (common-form/supports-columns? field)
-              [form-field-column-fields index])
-            (when (common-form/supports-privacy? field)
-              [form-field-privacy index])
-            (when (common-form/supports-visibility? field)
-              [form-field-visibility index])]
+            [:div.collapse.show
+             {:id (str (field-editor-id (:field/id field)) "-contents")
+              :tab-index "-1"}
+             [form-field-title-field index]
+             [form-field-type-radio-group index]
+             (when (common-form/supports-optional? field)
+               (if (= :table (:field/type field))
+                 [form-field-table-optional-checkbox field]
+                 [form-field-optional-checkbox field]))
+             (when (common-form/supports-info-text? field)
+               [form-field-info-text index])
+             (when (common-form/supports-placeholder? field)
+               [form-field-placeholder-field index])
+             (let [id (str "fields-" index "-additional")]
+               [:div.form-group.field
+                [:label
+                 (text :t.create-form/additional-settings)
+                 " "
+                 [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide) false]]
+                [:div.collapse.solid-group {:id id}
+                 [form-field-id-field index]
+                 (when (common-form/supports-max-length? field)
+                   [form-field-max-length-field index])
+                 (when (common-form/supports-privacy? field)
+                   [form-field-privacy index])
+                 (when (common-form/supports-visibility? field)
+                   [form-field-visibility index])]])
+             (when (common-form/supports-options? field)
+               [form-field-option-fields index])
+             (when (common-form/supports-columns? field)
+               [form-field-column-fields index])]]
 
            [:div.form-field.new-form-field
             [add-form-field-button (inc index)]]])))
