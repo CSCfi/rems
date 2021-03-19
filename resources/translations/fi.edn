@@ -106,7 +106,7 @@
                    :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :modifier "Muokkaaja"
-                   :more-info "Lisätietoja-URL (valinnainen, puuttuessa käytetään resurssin URN:ää)"
+                   :more-info "Lisätietoja-URL (valinnainen)"
                    :name "Nimi"
                    :no-licenses "Ei lisenssejä"
                    :optional "(valinnainen)"
