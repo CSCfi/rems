@@ -130,7 +130,8 @@
   `:format`                  - PLAIN or JWT, defaults to JWT.
   `:config`                  - configuration of the EGA integration with following keys:
     `:permission-server-url` - EGA permission server url"
-  [{:keys [api-key account-id visas format config]}]
+  [{:keys [api-key account-id visas format config] :as params}]
+  (log/infof "%s: %s" #'post-create-or-update-permissions params)
   (http/post (str (:permission-server-url config) "/permissions")
              (merge +common-opts+
                     {:headers {"authorization" (str "api-key " api-key)
@@ -152,7 +153,8 @@
   `:dataset-ids`             - ids of the datasets to delete
   `:config`                  - configuration of the EGA integration with following keys:
     `:permission-server-url` - EGA permission server url"
-  [{:keys [api-key account-id dataset-ids config]}]
+  [{:keys [api-key account-id dataset-ids config] :as params}]
+  (log/infof "%s: %s" #'delete-permissions params)
   (http/delete (str (:permission-server-url config) "/permissions")
                (merge +common-opts+
                       {:headers {"authorization" (str "api-key " api-key)
@@ -212,7 +214,7 @@
     (when (str/blank? api-key)
       (log/warnf "Missing EGA api-key for %s" (:approvedby entitlement)))
 
-    (log/infof "Pushing entitlements to %s: %s" (:permission-server-url config) entitlement)
+    (log/infof "Pushing entitlements to %s %s: %s %s" (:id config) (:permission-server-url config) entitlement config)
 
     (case action
       :add
