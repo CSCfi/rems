@@ -109,7 +109,7 @@
                    :license-name "License name"
                    :licenses "Licenses"
                    :modifier "Modifier"
-                   :more-info "More info URL (optional, defaults to resource URN or EGA link)"
+                   :more-info "More info URL (optional)"
                    :name "Name"
                    :no-licenses "No licenses"
                    :optional "(optional)"
