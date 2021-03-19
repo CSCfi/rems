@@ -69,8 +69,8 @@
     (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
     (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
                                                                   :path "/api/applications"}
-                                                                 {:method "any"
-                                                                  :path "/api/my-applications"}]})
+                                                                 {:path "/api/my-applications"
+                                                                  :method "any"}]})
     (api-key/add-api-key! "47" {:comment "regex path" :paths [{:method "any"
                                                                :path "/api/c.*"}
                                                               {:method "get"

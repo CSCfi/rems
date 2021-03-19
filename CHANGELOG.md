@@ -20,6 +20,7 @@ Changes since v2.16
   - The external title is shown to applicants in the application and internal name used throughout the administration.
   - The API supports the old style for now.
 - Answers to conditional fields that are not visible are no longer stored by REMS. The API accepts answers for invisible fields but drops them. The UI does not send answers to invisible fields. (#2574)
+- The "Assign external id" action now shows the previous assigned external id. (#2530)
 - The form editor UI was reworked to look less cluttered. Many inputs are now hidden behind "Show" buttons by default. (#1899)
 
 ### Fixes
@@ -31,10 +32,12 @@ Changes since v2.16
 - The multiselect field label wasn't being bolded.
 - Info text icon could appear even though the field description was empty.
 - Changes to the default translation for the required form field: does not include an asterisk sign anymore.
+- Fixed occasional "Invalid path whitelist entry" error when adding/updating api keys.
 
 ### Additions
 - The example-theme now uses the Lato font.
 - The field id can now be changed in the form editor. (#1804)
+- "More info" support for EGA style resources (when :enable-ega flag is set) (#2466)
 
 ## v2.16 "Länsiväylä" 2021-02-04
 

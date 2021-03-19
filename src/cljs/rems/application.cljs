@@ -25,7 +25,7 @@
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
-            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by parse-int]]
@@ -711,7 +711,7 @@
                               :application.command/reject [approve-reject-action-button]
                               :application.command/revoke [revoke-action-button]
                               :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
-                                                                        [assign-external-id-button])
+                                                                        [assign-external-id-button (get application :application/assigned-external-id "")])
                               :application.command/close [close-action-button]
                               :application.command/delete [delete-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
@@ -753,23 +753,18 @@
                                   actions)]
                       forms)}])))
 
-(defn- render-resource [resource]
+(defn- render-resource [resource language config]
   ^{:key (:catalogue-item/id resource)}
-  [:div.application-resource
-   (localized (:catalogue-item/title resource))
-   ;; Slight duplication with rems.catalogue/catalogue-item-more-info,
-   ;; but the data has a different schema here (V2Resource vs. CatalogueItem)
-   ;;
-   ;; NB! localized falls back to the default language, so the fallback logic
-   ;; here is subtly different
-   (when-let [url (or (localized (:catalogue-item/infourl resource))
-                      (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
-     [:<>
-      (goog.string/unescapeEntities " &mdash; ")
-      [:a {:href url :target :_blank}
-       (text :t.catalogue/more-info) " " [external-link]]])])
+  (let [config @(rf/subscribe [:rems.config/config])]
+    [:div.application-resource
+     (localized (:catalogue-item/title resource))
+     (when-let [url (catalogue-item-more-info-url resource language config)]
+       [:<>
+        (goog.string/unescapeEntities " &mdash; ")
+        [:a {:href url :target :_blank}
+         (text :t.catalogue/more-info) " " [external-link]]])]))
 
-(defn- applied-resources [application userid]
+(defn- applied-resources [application userid language config]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:userid (:application/applicant application)) userid)
@@ -782,7 +777,7 @@
                [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
-                       [render-resource resource]))]
+                       [render-resource resource language config]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
@@ -801,7 +796,7 @@
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
-(defn- render-application [{:keys [application edit-application config userid highlight-request-id]}]
+(defn- render-application [{:keys [application edit-application config userid highlight-request-id language]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
@@ -810,7 +805,7 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid]]
+     [:div.mt-3 [applied-resources application userid language config]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
@@ -829,7 +824,8 @@
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
         highlight-request-id @(rf/subscribe [::highlight-request-id])
-        userid (:userid @(rf/subscribe [:user]))]
+        userid (:userid @(rf/subscribe [:user]))
+        language @(rf/subscribe [:language])]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
                           (when application
@@ -845,7 +841,8 @@
                             :edit-application edit-application
                             :config config
                             :userid userid
-                            :highlight-request-id highlight-request-id}])
+                            :highlight-request-id highlight-request-id
+                            :language language}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
      (when reloading?
