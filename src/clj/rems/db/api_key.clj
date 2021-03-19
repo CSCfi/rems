@@ -51,7 +51,7 @@
 
 (defn add-api-key! [key & [{:keys [comment users paths]}]]
   (doseq [entry paths]
-    (assert (= [:method :path] (keys entry))
+    (assert (= #{:method :path} (set (keys entry)))
             (str "Invalid path whitelist entry: " (pr-str entry)))
     (assert (contains? #{"get" "put" "post" "patch" "delete" "head" "options" "any"} (:method entry))
             (str "Invalid method: " (pr-str entry))))

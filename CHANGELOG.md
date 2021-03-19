@@ -31,6 +31,7 @@ Changes since v2.16
 - The multiselect field label wasn't being bolded.
 - Info text icon could appear even though the field description was empty.
 - Changes to the default translation for the required form field: does not include an asterisk sign anymore.
+- Fixed occasional "Invalid path whitelist entry" error when adding/updating api keys.
 
 ### Additions
 - The example-theme now uses the Lato font.
