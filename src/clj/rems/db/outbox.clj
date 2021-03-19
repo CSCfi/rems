@@ -18,7 +18,7 @@
    :outbox/deadline DateTime
    :outbox/next-attempt (s/maybe DateTime)
    :outbox/latest-attempt (s/maybe DateTime)
-   :outbox/latest-error (s/maybe s/Str)
+   :outbox/latest-error (s/maybe s/Any)
    (s/optional-key :outbox/email) s/Any
    (s/optional-key :outbox/entitlement-post) s/Any
    (s/optional-key :outbox/event-notification) s/Any})
