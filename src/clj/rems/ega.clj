@@ -23,19 +23,20 @@
 (defn- post-token
   "Fetches an EGA Token representing an EGA user.
 
-  `:username`      - username (in EGA) e.g. foo@bar.com
-  `:password`      - password for the user
-  `:client-id`     - client id for REMS
-  `:client-secret` - client secret for REMS
-  `:config`        - configuration of the EGA integration
+  `:username`             - username (in EGA) e.g. foo@bar.com
+  `:password`             - password for the user
+  `:config`               - configuration of the EGA integration with following keys:
+    `:connect-server-url` - EGA login server url
+    `:client-id`          - client id for REMS
+    `:client-secret`      - client secret for REMS
 
   NB: It is valid for one hour."
-  [{:keys [username password client-id client-secret config]}]
+  [{:keys [username password config]}]
   (http/post (str (:connect-server-url config) "/token")
              (merge +common-opts+
                     {:form-params {"grant_type" "password"
-                                   "client_id" client-id
-                                   "client_secret" client-secret
+                                   "client_id" (:client-id config)
+                                   "client_secret" (:client-secret config)
                                    "username" username
                                    "password" password
                                    "scope" "openid"}})))
@@ -46,12 +47,14 @@
   The API-Key can be used longer (e.g. a year) to represent the
   user it was generated for.
 
-  `:access-token`    - the access token
-  `:id`              - identity for the key e.g. user
-  `:expiration-date` - YYYY-MM-DD of the desired expiration date
-  `:reason`          - string description of the use of the key
-  `:config`          - configuration of the EGA integration"
+  `:access-token`            - the access token
+  `:id`                      - identity for the key e.g. user
+  `:expiration-date`         - YYYY-MM-DD of the desired expiration date
+  `:reason`                  - string description of the use of the key
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [access-token id expiration-date reason config]}]
+  (assert access-token)
   (http/get (str (:permission-server-url config) "/api_key/generate")
             (merge +common-opts+
                    {:oauth-token access-token
@@ -63,7 +66,8 @@
   "List the API-Keys available.
 
   `:access-token` - the access token
-  `:config`       - configuration of the EGA integration
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url
 
   NB: The actual API-Key is not returned by this call. It is only returned once in `api-key-generate`."
   [{:keys [access-token config]}]
@@ -74,10 +78,11 @@
 (defn- get-permissions
   "Gets the permissions of the specified user.
 
-  `:api-key`    - valid API-Key of the person acting
-  `:account-id` - account id (Elixir or EGA)
-  `:format`     - PLAIN or JWT, defaults to JWT.
-  `:config`     - configuration of the EGA integration"
+  `:api-key`                 - valid API-Key of the person acting
+  `:account-id`              - account id (Elixir or EGA)
+  `:format`                  - PLAIN or JWT, defaults to JWT.
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id format config]}]
   (http/get (str (:permission-server-url config) "/permissions")
             (merge +common-opts+
@@ -90,7 +95,8 @@
 
   `:api-key`    - valid API-Key of the person acting
   `:format`     - PLAIN or JWT, defaults to JWT.
-  `:config`     - configuration of the EGA integration"
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [api-key format config]}]
   (http/get (str (:permission-server-url config) "/me/permissions")
             (merge +common-opts+
@@ -100,9 +106,10 @@
 (defn- get-dataset-users
   "Lists the users with permission to the dataset.
 
-  `:api-key`    - valid API-Key of the person acting
-  `:dataset-id` - id of the dataset
-  `:config`     - configuration of the EGA integration"
+  `:api-key`                 - valid API-Key of the person acting
+  `:dataset-id`              - id of the dataset
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [api-key dataset-id config]}]
   (http/get (str (:permission-server-url config) "/datasets/" dataset-id "/users")
             (merge +common-opts+
@@ -117,11 +124,12 @@
 (defn- post-create-or-update-permissions
   "Create or update the permissions of the user.
 
-  `:api-key`    - valid API-Key of the person acting
-  `:account-id` - account id (Elixir or EGA) of the user whose permissions are updated
-  `:visas`      - visas of permissions to create
-  `:format`     - PLAIN or JWT, defaults to JWT.
-  `:config`     - configuration of the EGA integration"
+  `:api-key`                 - valid API-Key of the person acting
+  `:account-id`              - account id (Elixir or EGA) of the user whose permissions are updated
+  `:visas`                   - visas of permissions to create
+  `:format`                  - PLAIN or JWT, defaults to JWT.
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id visas format config]}]
   (http/post (str (:permission-server-url config) "/permissions")
              (merge +common-opts+
@@ -139,10 +147,11 @@
 (defn- delete-permissions
   "Delete the permissions of the user for a given dataset.
 
-  `:api-key`     - valid API-Key of the person acting
-  `:account-id`  - account id (Elixir or EGA) of the user whose permissions are deleted
-  `:dataset-ids` - ids of the datasets to delete
-  `:config`      - configuration of the EGA integration"
+  `:api-key`                 - valid API-Key of the person acting
+  `:account-id`              - account id (Elixir or EGA) of the user whose permissions are deleted
+  `:dataset-ids`             - ids of the datasets to delete
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id dataset-ids config]}]
   (http/delete (str (:permission-server-url config) "/permissions")
                (merge +common-opts+

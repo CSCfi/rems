@@ -82,9 +82,12 @@
  ;; External systems for pushing entitlements (v2)
  ;;
  ;; Example:
- ;; :entitlement-push [{:type :ega
+ ;; :entitlement-push [{:id "ega"
+ ;;                     :type :ega
  ;;                     :connect-server-url "https://ega.ebi.ac.uk:8053/ega-openid-connect-server"
- ;;                     :permission-server-url "https://ega.ebi.ac.uk:8053/ega-permissions"}
+ ;;                     :permission-server-url "https://ega.ebi.ac.uk:8053/ega-permissions"
+ ;;                     :client-id "..."
+ ;;                     :client-secret "..."}
  :entitlement-push nil
 
  ;; Default length for entitlements, in days. This only affects the UI of the approve command.
