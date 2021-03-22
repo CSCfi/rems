@@ -4,52 +4,85 @@ Using docker, docker-compose, and Keycloak, you can roll your own local IdP for 
 
 ## Quick-ish Start
 
-1. **Setting up the Docker files**
-    1. Create a `Dockerfile` for your keycloak. To start, it can be as simple as the following:
-    ```
-    FROM quay.io/keycloak/keycloak:11.0.2
-    ```
-    2. Create a `docker-compose.yaml` file for REMS and your Keycloak IdP. Mount your custom REMS config to `/rems/config/config.edn`. Example:
-    ```
-    version: "3.7"
-    services:
+1. **Setting up the docker-compose file**
+Create a `docker-compose.yaml` file for REMS and your Keycloak IdP. Mount your custom REMS config to `/rems/config/config.edn`. The following example is provided as a `docker-compose.yaml` file in this directory:
+```
+version: "3.7"
+services:
     rems:
+        image: cscfi/rems
         mem_reservation: 200m
         mem_limit: 500m
         ports:
-        - "127.0.0.1:3001:3000"
+            - "127.0.0.1:3000:3000"
         volumes:
-        - ./services/rems/simple-config.edn:/rems/config/config.edn
+            - ./services/rems/simple-config.edn:/rems/config/config.edn
         depends_on:
-        - db
-        - keycloak
+            - db
+            - keycloak
     db:
         image: postgres:9.6
         environment:
-        POSTGRES_USER: rems
-        POSTGRES_PASSWORD: remspassword
-        mem_reservation: 30m
-        mem_limit: 150m
+            POSTGRES_USER: rems
+            POSTGRES_PASSWORD: remspassword
+            mem_reservation: 30m
+            mem_limit: 150m
         ports:
-        - "127.0.0.1:5432:5432"
+            - "127.0.0.1:5432:5432"
     keycloak:
+        image: quay.io/keycloak/keycloak:latest
         environment:
-        KEYCLOAK_USER: admin
-        KEYCLOAK_PASSWORD: admin
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: admin
         ports:
-        - "3002:8080"
-    ```
+            - "8080:8080"
+volumes:
+    db:
+```
 
-2. **Preparing a Keycloak Realm**
-    1. Build and run keycloak with `docker-compose up keycloak`.
-    2. Login to keycloak at `http://keycloak:8080/auth/admin` with the admin username and password, set to `admin` and `admin` in this (very insecure) example. These can be set as environment variables, as demonstrated in the `docker-compose.yaml` example above.
-    3. Add an identity provision `realm` to Keycloak by mousing over `Master` near the top-left of the page, and clicking `Add realm`. A realm can be thought of as a single vault containing a set of users, credentials, groups, clients, security settings, etc. When authenticating with a realm, the client is only able to authenticate within that realm. Realms can be partially exported and imported by clicking `Import`/`Export` near the bottom-left of the page, although exporting users is more complicated. For this example, the realm will be named `rems-idp`.
-    4. Add a client for REMS, by navigating to `Clients` on the left side of the page and clicking `Create`. Set the `Client Protocol` to `openid-connect`. Clients are allowed to authenticate users within the Keycloak realm that they are bound to. For this example, the Client ID will be `rems-client`.
-    5. Upon client creation, you will be redirected to `Clients` > `rems-client`. Put `*` in the `Valid Redirect URIs` field.
-    6. There is a variety of ways to authenticate the client itself with Keycloak. REMS uses the `Client ID` and a Keycloak-generated `Secret`. In Keycloak, navigate to `Clients` > `rems-client` if you are not already there. Set the `Access Type` to `confidential`. Then, navigate to the `Credentials` tab. Set `Client Authenticator` to `Client Id and Secret`. Click `Regenerate Secret` and copy the generated secret to your clipboard. For this example, the generated secret is `0ed4b9e0-5ff0-446a-ab7b-82dac465b9d5`.
+Next, we will set up Keycloak with the following settings:
+| Keycloak property                | Setting              | Value                                |
+|----------------------------------|----------------------|--------------------------------------|
+| Keycloak admin's username        | Username or email    | admin                                |
+| Keycloak admin's password        | Password             | admin                                |
+| realm                            | Name                 | rems-idp                             |
+| client                           | Client ID            | rems-client                          |
+| client auth protocol             | Client Protocol      | openid-connect                       |
+| acceptable client redirect URIs  | Valid Redirect URIs  | *                                    |
+| client access type               | Access Type          | confidential                         |
+| client authenticator             | Client Authenticator | Client Id and Secret                 |
+| Keycloak-generated client secret | Secret               | 0ed4b9e0-5ff0-446a-ab7b-82dac465b9d5 |
+| REMS user's username             | Username             | username                              |
+| REMS user's password             | Password             | password                              |
 
-3. **Configuring REMS to Authenticate with Keycloak**
-    1. Modify your custom REMS config file (called `./services/rems/simple-config.edn` in this example). Tell REMS to use OIDC by modifying the `:authentication` parameter, and setting the values for some OIDC parameters specific to your keycloak instance. Remember that docker-compose will mount this file into your REMS container as `/rems/config/config.edn`.
+2. **Running and preparing Keycloak**
+    1. **Run the keycloak container** with `docker-compose up keycloak`.
+    2. **Login to keycloak as `admin`/`admin`.**
+    Login at `http://keycloak:8080/auth/admin`. The administration username and password can be set as environment variables, as shown in the `docker-compose.yaml` example above.
+    3. *(Optional)* **Import the generic REMS Keycloak realm** provided in this repository.
+    Download the `realm-export.json` file provided in this directory.
+    Mouse over `Master` near the top-left of the page, and click `Add realm`. Next to `Import`, click `Select file` and choose the `realm-export.json` file. Click `Create` to finish.
+    Skip to step #4 below.
+
+If you opt to not do #2.3, follow the instructions outlined in step #3 (below) to set up the realm manually.
+
+3. *(Optional)* **Manually preparing a Keycloak Realm**
+    1. **Add an identity provision `realm` to Keycloak named `rems-idp`.**
+    Add the realm by mousing over `Master` near the top-left of the page, and clicking `Add realm`.
+    A realm can be thought of as a single vault containing a set of users, credentials, groups, clients, security settings, etc. When authenticating with a realm, the client is only able to authenticate within that realm.
+    2. **Add an OIDC client named `rems-client` to the realm.**
+    Navigate to `Clients` on the left side of the page and click `Create`. Set the `Client Protocol` to `openid-connect`. Clients are allowed to authenticate users within the Keycloak realm that they are bound to. For this example, the Client ID will be `rems-client`.
+    3. **Define the set of acceptable redirect URIs.**
+    Upon client creation, you will be redirected to `Clients` > `rems-client`. To accept all redirect URIs, put `*` in the `Valid Redirect URIs` field.
+    4. **Authenticate the client with Keycloak using the `Client Id and Secret`.**
+    There various ways to authenticate the client itself with Keycloak. REMS uses the `Client ID` and a Keycloak-generated `Secret`.
+    In Keycloak, navigate to `Clients` > `rems-client`. Set the `Access Type` to `confidential`.
+    
+4. **Configuring REMS to Authenticate with Keycloak**
+    1. **Generate the REMS client secret.**
+    In Keycloak, navigate to `Clients` > `rems-client` > `Credentials`. Click `Regenerate Secret` and copy the generated secret to your clipboard. In this example, the generated secret is `0ed4b9e0-5ff0-446a-ab7b-82dac465b9d5`, but yours will be something different.
+    2. **Configure REMS to use the secret.**
+    Modify your custom REMS config file (called `./services/rems/simple-config.edn` in this example). Tell REMS to use OIDC by modifying the `:authentication` parameter, and setting the values for some OIDC parameters specific to your keycloak instance. Remember that docker-compose will mount this file into your REMS container as `/rems/config/config.edn`.
     ```
     :authentication :oidc
 
@@ -59,42 +92,37 @@ Using docker, docker-compose, and Keycloak, you can roll your own local IdP for 
     ; REMS' client ID, as defined in Keycloak
     :oidc-client-id "rems-client"
 
-    ; REMS' client secret, as generated in keycloak in step #8 above
+    ; REMS' client secret, as generated in keycloak in step #4.1
     :oidc-client-secret "0ed4b9e0-5ff0-446a-ab7b-82dac465b9d5"
     ```
 
-4. **Spinning up REMS**
-    1. Add any other configuration that your REMS instance needs to your `simple-config.edn` file. For example, you will want to populate the `database-url` and `port` parameters.
+5. **Spinning up REMS**
+    1. **Finalize the REMS configuration.**
+    The full configuration used in this example is provided in the `simple-config.edn` file in this directory.
+    Add any other configuration that your REMS instance needs to your `simple-config.edn` file. For example, you will want to populate the `database-url` and `port` parameters.
     ```
-    {:port 3000
+    :port 3000
     :database-url "postgresql://db:5432/rems?user=rems&password=remspassword"
     :search-index-path "/tmp/rems-search-index"
     :authentication :oidc
-    :public-url "http://localhost:3001/"
-
-    :oidc-metadata-url "http://rp-keycloak:8080/auth/realms/rems-idp/.well-known/openid-configuration"
-
-    :oidc-client-id "rems-client"
-    :oidc-client-secret "0ed4b9e0-5ff0-446a-ab7b-82dac465b9d5"
-    }
+    :public-url "http://localhost:3000/"
     ```
-    2. Build rems, which (at the time of writing) requires:
-        1. [Installing Leiningen](https://leiningen.org/)
-        2. Building the Leiningen jar: `lein uberjar`
-        3. Building the Docker container: `docker-compose build rems`
-        4. Migrating the test data: `docker-compose run --rm -e CMD="migrate;test-data" rems`
-    3. Run `docker-compose up rems`
-    4. Navigate to REMS, at http://localhost:3001/ in this example.
+    2. **Migrate the REMS database.**
+        1. Migrate REMS with: `docker-compose run --rm -e CMD="migrate" rems`
+        2. *(Optional)* Populate REMS with test data with: `docker-compose run --rm -e CMD="test-data" rems`
+    3. Run with: `docker-compose up rems`
+    4. Navigate to REMS, at http://localhost:3000/ in this example.
 
 5. **Testing Authentication**
-    1. To test authentication with Keycloak, add a test User in Keycloak by navigating to `Users` and clicking `Add user`. Give them a `username` and clicking `Save`.
-    2. Navigate to the new User's `Credentials` tab and set a `password` for them. Set the `Temporary` toggle to `OFF`.
-    3. In REMS, at http://localhost:3001/ in this example, click the `Login` button to be redirected to Keycloak. 
-    4. Access the account using `varchar`/`varchar`. You should be authenticated and redirected back to REMS.
+    1. **Create REMS user username/password in Keycloak.**
+        1. To test authentication with Keycloak, add a test User in Keycloak by navigating to `Users` and clicking `Add user`. Give them a `username` and click `Save`.
+        2. Navigate to the new User's `Credentials` tab and set a `password` for them. Set the `Temporary` toggle to `OFF`.
+    2. In REMS, at http://localhost:3000/ in this example, click the `Login` button to be redirected to Keycloak. 
+    3. Access the account by logging in with the user's `username`/`password` credentials. You should be authenticated and redirected back to REMS.
 
 6. **Exporting the Realm**
     1. You can export your realm and save it source control, to reduce development and testing time. Simply navigate to `Export` on the bottom-left of the page, set `Export clients` to `ON`, and click `Export`.
-    2. Next time you want to add this realm to keycloak, navigate to `Add Realm` and select your `realm-export.json` file for import. The `Name` will auto-populate.
+    2. Next time you want to add this realm to keycloak, navigate to `Add Realm` and select your `realm-export.json` file for import.
 
 ## OIDC Hostname issues
 
@@ -105,7 +133,7 @@ For example, suppose your `docker-compose.yaml` has a Keycloak IdP configured as
 services:
   keycloak:
     ports:
-      - "3002:8080"
+      - "8080:8080"
 ```
 Then, in your REMS config file, you must set something like:
 ```
@@ -113,36 +141,34 @@ Then, in your REMS config file, you must set something like:
 ```
 If you instead set it to something like:
 ```
-:oidc-metadata-url "http://localhost:3002/auth/realms/dycons-researcher-idp/.well-known/openid-configuration"
+:oidc-metadata-url "http://localhost:8080/auth/realms/dycons-researcher-idp/.well-known/openid-configuration"
 ```
-then REMS will crash with a `Connection Refused` exception early in runtime. This is fairly typical Docker networking.
+then REMS will crash with a `Connection Refused` exception early in runtime. 
 
 Using the `keycloak:8080` hostname, the problem arises when a user attempts to Login to REMS. REMS requests authentication redirection URLs from Keycloak at the `keycloak:8080` address. Keycloak then generates those URLs using the `keycloak:8080` hostname used in the request. However, `keycloak:8080` is meaningless to the user's browser, which does not have access to the docker-compose network namespace. The browser is unable to find Keycloak at that address.
 
-This can be resolved with either of the processes outlined below, which cause keycloak to generate the URLs served at `.well-known/openid-configuration` with a specified [frontendUrl](https://www.keycloak.org/docs/latest/server_installation/#default-provider). The `frontendUrl` resolves to a hostname that the browser is able to find (`localhost:3002` in this example). REMS will still be able to connect to keycloak at `keycloak:8080` at runtime, but the `.well-known/openid-configuration` Keycloak endpoint will serve URLs with the `frontendUrl` base URL you set.
+This can be resolved with either of the processes outlined below, which cause keycloak to generate the URLs served at `.well-known/openid-configuration` with a specified [frontendUrl](https://www.keycloak.org/docs/latest/server_installation/#default-provider). The `frontendUrl` resolves to a hostname that the browser is able to find (`localhost:8080` in this example). REMS will still be able to connect to keycloak at `keycloak:8080` at runtime, but the `.well-known/openid-configuration` Keycloak endpoint will serve URLs with the `frontendUrl` base URL you set.
 
-### Option 1: Set frontendUrl using the Keycloak GUI
+### Option 1: Set frontendUrl using the Keycloak GUI, then export
+
+This solution is host-independent, can be saved to source control, and is easy to automate into your overall Keycloak setup process.
 
 1. Run your keycloak and REMS with `docker-compose up`.
 2. Create or import a `realm` if you have not done so already.
-3. In the realm settings on the admin console, populate the `Frontend URL` field with `http://localhost:3002/auth/`. This is assuming you want Keycloak to authenticate at `localhost:3002`. Amend the hostname as needed, *but make sure the value for Frontend URL terminates with `/auth/`.*
+3. In the realm settings on the admin console, populate the `Frontend URL` field with `http://localhost:8080/auth/`. This is assuming you want Keycloak to authenticate at `localhost:8080`. Amend the hostname as needed, *but make sure the value for Frontend URL terminates with `/auth/`.*
+4. You can export your realm with this custom frontendUrl and add the resulting `realm-export.json` to source control. Next time you set up keycloak by importing the realm, the frontendUrl will be populated automatically.
 
-### Option 2: Set frontendUrl by mounting custom configuration to the Keycloak container
+### Option 2: Add the keycloak hostname to the host machine
 
-This process hardcodes the frontendUrl for your keycloak instance, but has the benefit of being easy to automate into your docker build.
+This solution is a common work-around for keycloak redirection issues, but has the following disadvantages:
+- Requires administrative access to the host machine
+- Is a manual process that must be run on each new machine that keycloak is being installed on
+- Can cause confusion when multiple seperate instances of Keycloak are run on one host
+- May not work if the port number inside the docker network differs from the port exposed on the host, for example if `localhost:8081` is mapped to `keycloak:8080`
 
-1. Copy `/opt/jboss/keycloak/standalone/configuration/standalone-ha.xml` from your keycloak container to your host
-2. In your local copy of `standalone-ha.xml`, replace this line:
+1. Open the host's `/etc/hosts` file for editing, for example with: `sudo nano /etc/hosts`
+2. Add the end of the file, add the IP address of your keycloak instance followed by the domain name and its aliases: `IPAddress DomainName [DomainAliases]`. For example, append:
 ```
-<property name="frontendUrl" value="${keycloak.frontendUrl:}"/>
+127.0.0.1   keycloak
 ```
-with this line:
-```
-<property name="frontendUrl" value="http://localhost:3002/auth/"/>
-```
-This is assuming you want Keycloak to authenticate at `localhost:3002`. Amend the hostname as needed, *but make sure the value for `frontendUrl` terminates with `/auth/`.*
-3. Mount your local copy of `standalone-ha.xml` to the keycloak container, ex. via your keycloak's `Dockerfile`:
-```
-ADD ./standalone-ha.xml /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml
-```
-4. Run your keycloak and REMS with `docker-compose up`.
+3. Save the modified `/etc/hosts` file.
