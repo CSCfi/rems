@@ -109,7 +109,7 @@
                    :license-name "License name"
                    :licenses "Licenses"
                    :modifier "Modifier"
-                   :more-info "More info URL (optional, defaults to resource URN)"
+                   :more-info "More info URL (optional)"
                    :name "Name"
                    :no-licenses "No licenses"
                    :optional "(optional)"
@@ -261,11 +261,14 @@
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"
+                :additional-settings "Additional settings"
                 :collapse-aria-label "Info about "
                 ;; %1 - column number
                 :column-n "Column %1"
-                :column-key "ID code"
+                :column-key "ID"
                 :column-label "Label"
+                :confirm-remove-field "Remove this field?"
+                :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title
                 :field-n "Field %1: %2"
@@ -273,7 +276,7 @@
                 :field-type "Field type"
                 :info-text "Field description (optional)"
                 :maxlength "Maximum length in characters (optional)"
-                :option-key "ID code"
+                :option-key "ID"
                 :option-label "Label"
                 ;; %1 - option number
                 :option-n "Option %1"

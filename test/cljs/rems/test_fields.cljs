@@ -1,10 +1,8 @@
 (ns rems.test-fields
-  (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.fields :refer [field-wrapper toggle-diff-button]]
-            [rems.atoms :refer [textarea]]
-            [rems.spa]
-            [rems.text :refer [text]]))
+            [rems.spa]))
 
 (use-fixtures
   :once

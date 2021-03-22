@@ -63,7 +63,9 @@ For more information about the api-key command line commands, run:
 java -Drems.config=path/to/config -jar rems.jar help
 ```
 
-## Example
+## Examples
+
+### Available catalogue items
 
 Checking what catalogue items are available:
 
@@ -104,6 +106,17 @@ Returns the list of catalogue items as a JSON response:
     ...
 ]
 ```
+
+### Fetching an attachment for an event
+
+Let's say there's an approved application with id 123 and you wish to
+fetch the attachment to the decision event.
+
+1. Fetch the application from `/api/applications/123`
+   - Use an `x-rems-user-id` that is the handler for the workflow of the application, or alternatively a user that has the `reporter` role and can read all applications.
+2. Iterate through the `"application/events"` field of the response until you find an event with `"event/type": "application.event/decided"`
+3. Get the attachment ids from the event. There might be multiple or zero attachments. Iterate through `"event/attachments"` and collect the `"attachment/id"` values.
+4. Download the attachments using `/api/applications/attachment/<id>`
 
 ## Audit log
 

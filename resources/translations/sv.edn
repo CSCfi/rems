@@ -106,7 +106,7 @@
                    :license-name "Licensens namn"
                    :licenses "Licenser"
                    :modifier "Ändringen gjordes av"
-                   :more-info "Webbadress för tilläggsinformation (valfritt, om inget anges används resursens URN)"
+                   :more-info "Webbadress för tilläggsinformation (valfritt)"
                    :name "Namn"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
@@ -240,10 +240,13 @@
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
+                :additional-settings "Ytterligare inställningar" ; TODO check
                 :collapse-aria-label "Info om "
                 :column-n "Kolumn %1"
                 :column-key "Id"
                 :column-label "Titel"
+                :confirm-remove-field "Ta bort fält?" ; TODO check
+                :field-id "Fält id"
                 :field-n "Fält %1: %2"
                 :field-title "Fältets namn"
                 :field-type "Typ av fält"
