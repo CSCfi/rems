@@ -168,13 +168,18 @@
   (.. event -target -value))
 
 (defn text-field
-  [{:keys [validation on-change info-text] :as opts}]
+  [{:keys [validation on-change info-text type] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
-        max-length (:field/max-length opts)]
+        max-length (:field/max-length opts)
+        type (:field/type opts)]
     [field-wrapper opts
-     [:input.form-control {:type "text"
+     [:input.form-control {:type (case type
+                                   :text "text"
+                                   :phone-number "tel"
+                                   :email "email"
+                                   "text")
                            :id (field-name opts)
                            :name (field-name opts)
                            :placeholder placeholder
@@ -463,6 +468,7 @@
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]
+      :phone-number [text-field f]
       :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]

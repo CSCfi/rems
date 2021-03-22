@@ -357,6 +357,42 @@
                                         :field/visible  true
                                         :field/value    "invalid.email"}]))))
 
+  (testing "error: field input invalid phone number"
+    (is (= [{:type :t.form.validation/invalid-phone-number :field-id "less than 5 symbols is not allowed"}
+            {:type :t.form.validation/invalid-phone-number :field-id "more than 25 symbols is not allowed"}
+            {:type :t.form.validation/invalid-phone-number :field-id "number has to start with a + prefix"}
+            {:type :t.form.validation/invalid-phone-number :field-id "prefix 0 is not allowed"}]
+           (validate-fields-for-draft [{:field/id       "empty phone number"
+                                        :field/type     :phone-number
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    ""}
+                                       {:field/id       "prefix 0 is not allowed"
+                                        :field/type     :phone-number
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    "+058450000100"}
+                                       {:field/id       "more than 25 symbols is not allowed"
+                                        :field/type     :phone-number
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    "+15005000010000000000000000000000"}
+                                       {:field/id       "less than 5 symbols is not allowed"
+                                        :field/type     :phone-number
+                                        :field/optional true
+                                        :field/visible  true
+                                        :field/value    "+3500"}
+                                       {:field/id       "number has to start with a + prefix"
+                                        :field/type     :phone-number
+                                        :field/optional true
+                                        :field/visible  true
+                                        :field/value    "35000000000000"}
+                                       {:field/id       "valid phone number"
+                                        :field/type     :phone-number
+                                        :field/optional true
+                                        :field/visible  true
+                                        :field/value    "+358450000100"}]))))
+
   (testing "table validation"
     (let [fields [{:field/id "tbl"
                    :field/type :table

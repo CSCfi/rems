@@ -12,7 +12,7 @@
   (not (contains? #{:label :header} (:field/type field))))
 
 (defn supports-placeholder? [field]
-  (contains? #{:text :texta :description} (:field/type field)))
+  (contains? #{:text :texta :description :phone-number} (:field/type field)))
 
 (defn supports-max-length? [field]
   (contains? #{:description :text :texta} (:field/type field)))
@@ -102,7 +102,7 @@
               (str/blank? (:organization/id organization)))
       {:organization :t.form.validation/required})))
 
-(def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta :table})
+(def field-types #{:attachment :date :description :email :header :label :multiselect :phone-number :option :text :texta :table})
 
 (defn- validate-field-type [m]
   (let [type (keyword (get m :field/type))]
@@ -463,6 +463,19 @@
                                                                 :fi :t.form.validation/required}}}}}}
                    empty-label
                    nil-label))))))
+
+    (testing "phone number"
+      (let [form (assoc form :form/fields
+                        [{:field/type :phone-number
+                          :field/title {:en "en" :fi "fi"}
+                          :field/optional false}])]
+        (testing "valid form"
+          (is (empty? (validate-form-template form languages))))
+
+        (testing "missing title localization"
+          (is (= {:form/fields {0 {:field/title {:en :t.form.validation/required}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] nil) languages))))))
 
     (testing "table"
       (let [form (assoc form :form/fields

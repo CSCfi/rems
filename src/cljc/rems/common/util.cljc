@@ -7,6 +7,18 @@
 ;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
 (def +email-regex+ #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
 
+(def +phone-number-regex+ #"^\+[1-9][0-9\s]{4,26}$")
+
+(deftest test-phone-number-regex
+  (is (= "+358450000000"
+         (re-matches +phone-number-regex+ "+358450000000")))
+  (is (= nil
+         (re-matches +phone-number-regex+ "+058450000000")))
+  (is (= "+3 5 8 4 5 0 0 0 0 0 0 0 "
+         (re-matches +phone-number-regex+ "+3 5 8 4 5 0 0 0 0 0 0 0 ")))
+  (is (= nil
+         (re-matches +phone-number-regex+ "+35845000000000000000000000000000"))))
+
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
   "Like `get` but throws an exception if the key is not found."

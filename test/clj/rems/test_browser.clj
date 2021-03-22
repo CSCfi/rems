@@ -287,6 +287,7 @@
         (set-date-for-label "Date field" "2050-01-02")
 
         (fill-form-field "Email field" "user@example.com")
+        (fill-form-field "Phone number" "+358450000100")
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
@@ -387,7 +388,8 @@
                                 [{:column "col1", :value "c"} {:column "col2", :value "d"}]]]
                       ["label" ""]
                       ["text" ""]
-                      ["texta" ""]]
+                      ["texta" ""]
+                      ["phone-number" "+358450000100"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)
