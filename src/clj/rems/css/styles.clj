@@ -253,16 +253,19 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(defn- generate-dashed-form-group []
+(defn- generate-form-group []
   {:position "relative"
-   :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
    :padding (u/px 10)
    :margin-top 0
    :margin-bottom (u/px 16)})
 
+(defn- generate-dashed-form-group []
+  (assoc (generate-form-group)
+         :border "2px dashed #ccc"))
+
 (defn- generate-solid-form-group []
-  (assoc (generate-dashed-form-group)
+  (assoc (generate-form-group)
          :border "2px solid #eee"))
 
 (defn- remove-nil-vals
