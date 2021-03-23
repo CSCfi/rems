@@ -710,7 +710,7 @@
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
-   [:.form-field (generate-dashed-form-group)]
+   [:.form-field (generate-solid-form-group)]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
@@ -719,15 +719,17 @@
     {:float "right"
      :font-size (u/rem 1.2)}
     [:* {:margin-left (u/em 0.25)}]]
-   [:.new-form-field {:text-align "center"}]
+   [:.new-form-field (assoc (generate-dashed-form-group)
+                            :text-align "center")]
 
-   [:.form-field-visibility (assoc (generate-dashed-form-group)
+   [:.form-field-visibility (assoc (generate-solid-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
-   [:.form-field-option (assoc (generate-dashed-form-group)
+   [:.form-field-option (assoc (generate-solid-form-group)
                                :margin-left 0
                                :margin-right 0)]
-   [:.new-form-field-option {:text-align "center"}]
+   [:.new-form-field-option (assoc (generate-dashed-form-group)
+                                   :text-align "center")]
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
