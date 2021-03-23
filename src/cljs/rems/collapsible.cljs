@@ -60,13 +60,13 @@
 
 (defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button? class]
   (let [always? (not-empty content-always)
-        show-more [:div.mb-3.collapse-toggle
+        show-more [:div.collapse-toggle
                    [show-more-button
                     (if always?
                       (text :t.collapse/show-more)
                       (text :t.collapse/show))
                     id open? on-open]]
-        show-less [:div.mb-3.collapse-toggle
+        show-less [:div.collapse-toggle
                    [show-less-button
                     (if always?
                       (text :t.collapse/show-less)
