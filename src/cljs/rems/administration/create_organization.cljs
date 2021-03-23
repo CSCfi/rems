@@ -211,7 +211,7 @@
 
 
 (defn- organization-review-email-field [field-index]
-  [:div.form-field.dashed-group
+  [:div.form-field
    [:div.form-field-header
     [:h4 (text-format :t.administration/review-email-n (inc field-index))]
     [:div.form-field-controls [remove-review-email-button field-index]]]

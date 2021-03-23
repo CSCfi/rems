@@ -253,21 +253,20 @@
    [:.text-highlight {:color (get-theme-attribute :color3)
                       :font-weight "bold"}]))
 
-(defn- generate-dashed-form-group []
+(defn- generate-form-group []
   {:position "relative"
-   :border "2px dashed #ccc"
    :border-radius (u/rem 0.4)
    :padding (u/px 10)
    :margin-top 0
    :margin-bottom (u/px 16)})
 
+(defn- generate-dashed-form-group []
+  (assoc (generate-form-group)
+         :border "2px dashed #ccc"))
+
 (defn- generate-solid-form-group []
-  {:position "relative"
-   :border "2px solid #eee"
-   :margin 0
-   :padding (u/rem 1)
-   :padding-right (u/rem 2)
-   :border-radius (u/rem 0.4)})
+  (assoc (generate-form-group)
+         :border "2px solid #eee"))
 
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
@@ -700,21 +699,9 @@
    [:.dashed-group (generate-dashed-form-group)]
    [:.solid-group (generate-solid-form-group)]
 
-   ;; workflow editor
-   [:.workflow-round (generate-dashed-form-group)
-    [:h2 {:font-weight 400
-          :font-size (u/rem 1.4)}]]
-   [:.next-workflow-arrow {:position "absolute"
-                           :font-size (u/px 40)
-                           :left (u/percent 50)
-                           :transform "translate(-50%, -1%)"
-                           :z-index 1}]
-   [:.new-workflow-round {:text-align "center"}]
-   [:.remove-workflow-round {:float "right"}]
-
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
-   [:.form-field (generate-dashed-form-group)]
+   [:.form-field (generate-solid-form-group)]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
@@ -723,15 +710,17 @@
     {:float "right"
      :font-size (u/rem 1.2)}
     [:* {:margin-left (u/em 0.25)}]]
-   [:.new-form-field {:text-align "center"}]
+   [:.new-form-field (assoc (generate-dashed-form-group)
+                            :text-align "center")]
 
-   [:.form-field-visibility (assoc (generate-dashed-form-group)
+   [:.form-field-visibility (assoc (generate-solid-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
-   [:.form-field-option (assoc (generate-dashed-form-group)
+   [:.form-field-option (assoc (generate-solid-form-group)
                                :margin-left 0
                                :margin-right 0)]
-   [:.new-form-field-option {:text-align "center"}]
+   [:.new-form-field-option (assoc (generate-dashed-form-group)
+                                   :text-align "center")]
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
