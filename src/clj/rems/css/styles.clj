@@ -696,18 +696,6 @@
    [:.dashed-group (generate-dashed-form-group)]
    [:.solid-group (generate-solid-form-group)]
 
-   ;; workflow editor
-   [:.workflow-round (generate-dashed-form-group)
-    [:h2 {:font-weight 400
-          :font-size (u/rem 1.4)}]]
-   [:.next-workflow-arrow {:position "absolute"
-                           :font-size (u/px 40)
-                           :left (u/percent 50)
-                           :transform "translate(-50%, -1%)"
-                           :z-index 1}]
-   [:.new-workflow-round {:text-align "center"}]
-   [:.remove-workflow-round {:float "right"}]
-
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
    [:.form-field (generate-solid-form-group)]
