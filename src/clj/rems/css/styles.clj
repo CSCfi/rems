@@ -262,12 +262,8 @@
    :margin-bottom (u/px 16)})
 
 (defn- generate-solid-form-group []
-  {:position "relative"
-   :border "2px solid #eee"
-   :margin 0
-   :padding (u/rem 1)
-   :padding-right (u/rem 2)
-   :border-radius (u/rem 0.4)})
+  (assoc (generate-dashed-form-group)
+         :border "2px solid #eee"))
 
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
