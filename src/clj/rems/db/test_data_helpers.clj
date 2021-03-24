@@ -210,6 +210,7 @@
                                                :date "2002-03-04"
                                                :email "user@example.com"
                                                :phone-number "+358451110000"
+                                               :ip-address "192.168.0.254"
                                                :table (repeat 2 (for [column (:field/columns field)]
                                                                   {:column (:key column) :value field-value}))
                                                :attachment (str attachment)

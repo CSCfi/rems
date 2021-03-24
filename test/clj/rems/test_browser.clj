@@ -288,6 +288,7 @@
 
         (fill-form-field "Email field" "user@example.com")
         (fill-form-field "Phone number" "+358450000100")
+        (fill-form-field "IP address" "192.168.0.254")
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
@@ -389,7 +390,8 @@
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]
-                      ["phone-number" "+358450000100"]]
+                      ["phone-number" "+358450000100"]
+                      ["ip-address" "192.168.0.254"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)

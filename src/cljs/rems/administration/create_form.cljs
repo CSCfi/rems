@@ -522,6 +522,7 @@
                                          {:value :date :label (text :t.create-form/type-date)}
                                          {:value :email :label (text :t.create-form/type-email)}
                                          {:value :phone-number :label (text :t.create-form/type-phone-number)}
+                                         {:value :ip-address :label (text :t.create-form/type-ip-address)}
                                          {:value :attachment :label (text :t.create-form/type-attachment)}
                                          {:value :label :label (text :t.create-form/type-label)}
                                          {:value :header :label (text :t.create-form/type-header)}]}])
