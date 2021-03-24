@@ -19,6 +19,12 @@
   (is (= nil
          (re-matches +phone-number-regex+ "+35845000000000000000000000000000"))))
 
+;; regex from https://www.oreilly.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
+(def +ip-address-regex+ #"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
+                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
+                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
+                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
   "Like `get` but throws an exception if the key is not found."

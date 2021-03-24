@@ -2,7 +2,7 @@
   "Pure functions for form validation logic"
   (:require [clojure.string :as str]
             [rems.common.form :as form]
-            [rems.common.util :refer [+email-regex+ +phone-number-regex+]]))
+            [rems.common.util :refer [+email-regex+ +phone-number-regex+ +ip-address-regex+]]))
 
 (defn- all-columns-set? [field]
   (let [valid-row? #(not-any? str/blank? (map :value %))]
@@ -51,6 +51,13 @@
                   (re-matches +phone-number-regex+ (:field/value field)))
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-phone-number})))
+
+(defn- invalid-ip-address-error [field]
+  (when (= (:field/type field) :ip-address)
+    (when-not (or (str/blank? (:field/value field))
+                  (re-matches +ip-address-regex+ (:field/value field)))
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-ip-address})))
 
 
 (defn- option-value-valid? [field]

@@ -485,6 +485,7 @@
       :multiselect [multiselect-field f]
       :option [option-field f]
       :phone-number [text-field f]
+      :ip-address [text-field f]
       :table [table-field f]
       :text [text-field f]
       :texta [texta-field f]
