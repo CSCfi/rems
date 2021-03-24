@@ -424,7 +424,8 @@
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]
-                      ["phone-number" "+358450000100"]]
+                      ["phone-number" "+358450000100"]
+                      ["ip-address" "192.168.0.254"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)

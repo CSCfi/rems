@@ -186,6 +186,9 @@
                                  {:field/type :header
                                   :field/title localized
                                   :field/optional true}
+                                 {:field/type :ip-address
+                                  :field/title localized
+                                  :field/optional true}
                                  {:field/type :email
                                   :field/title localized
                                   :field/optional true}

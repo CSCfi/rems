@@ -199,6 +199,12 @@
     :field/title {:en "Phone number"
                   :fi "Puhelinnumero"
                   :sv "Telefonnummer"}
+    :field/optional true}
+
+   {:field/type :ip-address
+    :field/title {:en "IP address"
+                  :fi "IP-osoite"
+                  :sv "IP-adress"}
     :field/optional true}])
 
 (deftest test-all-field-types-example
