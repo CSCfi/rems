@@ -2,7 +2,12 @@
   "Pure functions for form validation logic"
   (:require [clojure.string :as str]
             [rems.common.form :as form]
-            [rems.common.util :refer [+email-regex+ +phone-number-regex+ +ip-address-regex+]]))
+            [rems.common.util :refer [+email-regex+
+                                      +phone-number-regex+
+                                      +valid-ip-address-regex+
+                                      +valid-ip-address-regex-version-six+
+                                      +reserved-ip-address-range-regex+
+                                      +reserved-ip-address-range-regex-version-six+]]))
 
 (defn- all-columns-set? [field]
   (let [valid-row? #(not-any? str/blank? (map :value %))]
@@ -54,8 +59,14 @@
 
 (defn- invalid-ip-address-error [field]
   (when (= (:field/type field) :ip-address)
-    (when-not (or (str/blank? (:field/value field))
-                  (re-matches +ip-address-regex+ (:field/value field)))
+    (when
+     (or
+      (str/blank? (:field/value field))
+      (or
+       (and (first (re-matches +valid-ip-address-regex+ (:field/value field)))
+            (first (re-matches +reserved-ip-address-range-regex+ (:field/value field))))
+       (and (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))
+            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field))))))
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-ip-address})))
 
@@ -108,6 +119,7 @@
   (or (wrong-value-type-error field)
       (invalid-email-address-error field)
       (invalid-phone-number-error field)
+      (invalid-ip-address-error field)
       (too-long-error field)
       (invalid-option-error field)
       (missing-columns-error field)

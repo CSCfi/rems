@@ -19,11 +19,34 @@
   (is (= nil
          (re-matches +phone-number-regex+ "+35845000000000000000000000000000"))))
 
-;; regex from https://www.oreilly.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
-(def +ip-address-regex+ #"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+;; regex from https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
+(def +valid-ip-address-regex+ #"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+
+;; https://stackoverflow.com/questions/2814002/private-ip-address-identifier-in-regular-expression
+(def +private-network-ip-address-range-regex+ #"(^127\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){3}$|(^10\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){3}$|(^172\.1[6-9]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^172\.2[0-9]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^172\.3[0-1]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^192\.168\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$")
+
+(deftest test-ip-address-regex
+  (is (= "0.0.0.0"
+         (first (re-matches +valid-ip-address-regex+ "0.0.0.0"))))
+  (is (= "255.255.255.255"
+         (first (re-matches +valid-ip-address-regex+ "255.255.255.255"))))
+  (is (= "127.0.0.1"
+         (first (re-matches +valid-ip-address-regex+ "127.0.0.1"))))
+  (is (= "192.168.0.0"
+         (first (re-matches +valid-ip-address-regex+ "192.168.0.0"))))
+  (is (= "10.255.255.255"
+         (first (re-matches +valid-ip-address-regex+ "10.255.255.255"))))
+  (is (= nil
+         (first (re-matches +valid-ip-address-regex+ "256.255.255.255"))))
+  (is (= nil
+         (first (re-matches +valid-ip-address-regex+ "10.foo.bar.255"))))
+  (is (= "192.168.0.0"
+          (re-matches +private-network-ip-address-range-regex+ "192.168.0.0")))
+  ;; (is (= "+3 5 8 4 5 0 0 0 0 0 0 0 "
+  ;;        (re-matches +phone-number-regex+ "+3 5 8 4 5 0 0 0 0 0 0 0 ")))
+  ;; (is (= nil
+  ;;        (re-matches +phone-number-regex+ "+35845000000000000000000000000000")))
+  )
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
