@@ -20,10 +20,25 @@
          (re-matches +phone-number-regex+ "+35845000000000000000000000000000"))))
 
 ;; regex from https://www.oreilly.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
-(def +ip-address-regex+ #"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.↵
-                           (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+(def +valid-ip-address-regex+ #"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$")
+
+;; https://stackoverflow.com/questions/2814002/private-ip-address-identifier-in-regular-expression
+(def +private-ip-address-range-regex+ #"^(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)")
+
+(deftest test-ip-address-regex
+  (is (= "192.168.0.0"
+         (first (re-matches +valid-ip-address-regex+ "192.168.0.0"))))
+  (is (= "10.255.255.255"
+         (first (re-matches +valid-ip-address-regex+ "10.255.255.255"))))
+  (is (= nil
+         (first (re-matches +valid-ip-address-regex+ "10.foo.bar.255"))))
+  (is (= "192.168.0.0"
+         (re-matches +private-ip-address-range-regex+ "192.168.0.0")))
+  ;; (is (= "+3 5 8 4 5 0 0 0 0 0 0 0 "
+  ;;        (re-matches +phone-number-regex+ "+3 5 8 4 5 0 0 0 0 0 0 0 ")))
+  ;; (is (= nil
+  ;;        (re-matches +phone-number-regex+ "+35845000000000000000000000000000")))
+  )
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
