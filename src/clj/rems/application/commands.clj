@@ -298,6 +298,7 @@
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
        (mapv :formid)
+       (remove nil?)
        (distinct)
        (mapv (fn [form-id] {:form/id form-id}))))
 
