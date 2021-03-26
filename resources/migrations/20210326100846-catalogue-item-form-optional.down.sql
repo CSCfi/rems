@@ -1,0 +1,2 @@
+-- no down migration for now
+-- if one is needed we could create an empty form and then point null formids to it
