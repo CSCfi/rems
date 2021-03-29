@@ -761,7 +761,7 @@
      [flash-message/component :top]
      (if loading?
        [:div [spinner/big]]
-       [:div.container-fluid
+       [:<>
         [validation-errors-summary]
         [:div.row
          [:div.col-lg
