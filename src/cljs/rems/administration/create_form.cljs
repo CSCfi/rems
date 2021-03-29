@@ -768,7 +768,7 @@
           [collapsible/component
            {:id "create-form"
             :class "fields"
-            :title (page-title edit-form?)
+            :title [text :t.administration/form]
             :always [:div
                      [form-organization-field]
                      [form-internal-name-field]
