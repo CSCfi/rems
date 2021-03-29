@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+    rems:
+        image: cscfi/rems
+        mem_reservation: 200m
+        mem_limit: 500m
+        ports:
+            - "127.0.0.1:3000:3000"
+        volumes:
+            - ./services/rems/simple-config.edn:/rems/config/config.edn
+        depends_on:
+            - db
+            - keycloak
+    db:
+        image: postgres:9.6
+        environment:
+            POSTGRES_USER: rems
+            POSTGRES_PASSWORD: remspassword
+            mem_reservation: 30m
+            mem_limit: 150m
+        ports:
+            - "127.0.0.1:5432:5432"
+    keycloak:
+        image: quay.io/keycloak/keycloak:latest
+        environment:
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: admin
+        ports:
+            - "8080:8080"
+volumes:
+    db:
