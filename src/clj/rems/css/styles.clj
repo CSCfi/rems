@@ -685,6 +685,7 @@
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
    [:.application-field-label {:font-weight "bold"}]
+   [:.administration-field-label {:font-weight "bold"}]
    [:div.info-collapse {:font-weight "400"
                         :white-space :pre-wrap}]
    ;; Bootstrap's has "display: none" on .invalid-feedback by default

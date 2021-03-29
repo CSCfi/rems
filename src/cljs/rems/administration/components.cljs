@@ -45,7 +45,9 @@
         error (get-in form-errors keys)]
     [:div.form-group.field {:class (when inline? "row")}
      [:label {:for id
-              :class (when inline? "col-sm-auto col-form-label")}
+              :class (if inline?
+                       "col-sm-auto col-form-label"
+                       "administration-field-label")}
       label]
      [:div {:class (when inline? "col")}
       [:input.form-control {:type type
@@ -78,7 +80,7 @@
         id (keys-to-id keys)
         error (get-in form-errors keys)]
     [:div.form-group.field
-     [:label {:for id} label]
+     [:label.administration-field-label {:for id} label]
      [textarea {:id id
                 :placeholder placeholder
                 :value (get-in form keys)
@@ -122,14 +124,14 @@
                                                            :lang lang}]))]
     (if collapse?
       [:div.form-group.field.mb-1
-       [:label
+       [:label.administration-field-label
         label
         " "
         [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide)]]
        [:div.collapse {:id id}
         fields]]
       [:div.form-group.field
-       [:label label]
+       [:label.administration-field-label label]
        fields])))
 
 (defn checkbox
@@ -183,7 +185,7 @@
   `readonly`     - boolean"
   [context {:keys [id keys label orientation options readonly]}]
   [:div.form-group.field {:id id}
-   (when label [:label {:for id} label])
+   (when label [:label.administration-field-label {:for id} label])
    (into [:div.form-control]
          (map (fn [{:keys [value label]}]
                 [radio-button context {:keys keys
@@ -208,7 +210,7 @@
         item-selected? #(= (:organization/id %) (:organization/id value))
         disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
-     [:label {:for id} label]
+     [:label.administration-field-label {:for id} label]
      (if (or readonly disallowed)
        [fields/readonly-field {:id id
                                :value (get-in value [:organization/name language])}]

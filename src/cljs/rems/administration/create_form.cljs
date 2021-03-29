@@ -691,7 +691,7 @@
                  [form-field-placeholder-field index])
                (let [id (str "fields-" index "-additional")]
                  [:div.form-group.field
-                  [:label
+                  [:label.administration-field-label
                    (text :t.create-form/additional-settings)
                    " "
                    [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide) false]]
