@@ -74,7 +74,7 @@
         selected-licenses @(rf/subscribe [::selected-licenses])
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
+     [:label.administration-field-label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
        :items licenses

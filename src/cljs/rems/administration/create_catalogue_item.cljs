@@ -166,7 +166,7 @@
         item-selected? #(= (:id %) (:id selected-workflow))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for workflow-dropdown-id} (text :t.administration/workflow)]
+     [:label.administration-field-label {:for workflow-dropdown-id} (text :t.administration/workflow)]
      (if editing?
        (let [workflow (item-by-id workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
@@ -203,7 +203,7 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for resource-dropdown-id} (text :t.administration/resource)]
+     [:label.administration-field-label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
@@ -223,7 +223,7 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for form-dropdown-id} (text :t.administration/form)]
+     [:label.administration-field-label {:for form-dropdown-id} (text :t.administration/form)]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id

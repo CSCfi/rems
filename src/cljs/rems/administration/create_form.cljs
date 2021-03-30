@@ -691,7 +691,7 @@
                  [form-field-placeholder-field index])
                (let [id (str "fields-" index "-additional")]
                  [:div.form-group.field
-                  [:label
+                  [:label.administration-field-label
                    (text :t.create-form/additional-settings)
                    " "
                    [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide) false]]
@@ -761,14 +761,14 @@
      [flash-message/component :top]
      (if loading?
        [:div [spinner/big]]
-       [:div.container-fluid
+       [:<>
         [validation-errors-summary]
         [:div.row
          [:div.col-lg
           [collapsible/component
            {:id "create-form"
             :class "fields"
-            :title (page-title edit-form?)
+            :title [text :t.administration/form]
             :always [:div
                      [form-organization-field]
                      [form-internal-name-field]
