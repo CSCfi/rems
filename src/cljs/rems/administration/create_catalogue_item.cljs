@@ -50,7 +50,8 @@
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (number? (:wfid request))
        (number? (:resid request))
-       (number? (:form request))
+       (or (nil? (:form request))
+           (number? (:form request)))
        (= (set languages)
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
@@ -237,6 +238,7 @@
                            (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
+         :clearable? true
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
 (defn- cancel-button [catalogue-item-id]
