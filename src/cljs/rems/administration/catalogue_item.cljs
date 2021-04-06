@@ -66,9 +66,10 @@
                        (str "/administration/workflows/" (:wfid catalogue-item))
                        (:workflow-name catalogue-item)]]
                      [inline-info-field (text :t.administration/form)
-                      [atoms/link nil
-                       (str "/administration/forms/" (:formid catalogue-item))
-                       (:form-name catalogue-item)]]
+                      (when (:formid catalogue-item)
+                        [atoms/link nil
+                         (str "/administration/forms/" (:formid catalogue-item))
+                         (:form-name catalogue-item)])]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
