@@ -72,8 +72,7 @@
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn [] (form-change-loop items form))
-    :disabled (or (nil? (:form/id form))
-                  (empty? items)
+    :disabled (or (empty? items)
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
 
@@ -118,6 +117,7 @@
                          :item-key :form/id
                          :item-label :form/internal-name
                          :item-selected? #(= (:form/id %) (:form/id form))
+                         :clearable? true
                          :on-change on-change}]]))
 
 (defn change-catalogue-item-form-page []
