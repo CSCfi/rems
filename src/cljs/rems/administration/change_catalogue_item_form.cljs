@@ -33,7 +33,7 @@
 
 (rf/reg-event-fx
  ::change-catalogue-item-form
- (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
+ (fn [_ [_ catalogue-item-id form on-success]]
    (post! (str "/api/catalogue-items/" catalogue-item-id "/change-form")
           {:params {:form (:form/id form)}
            :handler (fn [result]
@@ -77,11 +77,6 @@
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
 
-(defn- to-catalogue-item [catalogue-item-id]
-  [atoms/link {:class "btn btn-primary"}
-   (str "/administration/catalogue-items/" catalogue-item-id)
-   (text :t.administration/view)])
-
 (rf/reg-sub
  ::catalogue-items-table-rows
  (fn [_ _]
@@ -90,7 +85,11 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-localized-title item language)}
+           :name (let [title (get-localized-title item language)]
+                   {:value title
+                    :display-value [atoms/link nil
+                                    (str "/administration/catalogue-items/" (:id item))
+                                    title]})
            :form (let [value (:form-name item)]
                    {:value value
                     :td [:td.form
@@ -103,7 +102,7 @@
   [:div
    [table/table {:id ::catalogue
                  :columns [{:key :name
-                            :title (text :t.catalogue/header)}
+                            :title (text :t.administration/catalogue-item)}
                            {:key :form
                             :title (text :t.administration/form)}]
                  :rows [::catalogue-items-table-rows]
