@@ -329,9 +329,9 @@
                 new-new-catalogue-item-id (:catalogue-item-id response)]
             (is (true? (:success response)))
             (is (= {:formid new-form-id :form-name "new form"}
-               (-> (api-call :get (str "/api/catalogue-items/" new-new-catalogue-item-id) nil
-                             +test-api-key+ "owner")
-                   (select-keys [:formid :form-name]))))))))
+                   (-> (api-call :get (str "/api/catalogue-items/" new-new-catalogue-item-id) nil
+                                 +test-api-key+ "owner")
+                       (select-keys [:formid :form-name]))))))))
     (testing "can change form as organization owner"
       (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                      (authenticate +test-api-key+ "organization-owner1")
