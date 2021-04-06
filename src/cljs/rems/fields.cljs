@@ -111,7 +111,7 @@
         value (:field/value opts)
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
-        info-text (linkify (localized (:field/info-text opts)))
+        info-text (localized (:field/info-text opts))
         collapse-aria-label (str (text :t.create-form/collapse-aria-label) raw-title)]
     ;; TODO: simplify fieldset code
     [(if fieldset
@@ -136,12 +136,12 @@
       (if optional
         (text :t.form/optional)
         (text :t.form/required))
-      (when info-text
+      (when-not (str/blank? info-text)
         [info-collapse
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
           :focus-when-collapse-opened focus-when-collapse-opened
-          :body-text info-text}])]
+          :body-text (linkify info-text)}])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
