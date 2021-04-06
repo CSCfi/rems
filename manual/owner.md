@@ -145,7 +145,7 @@ Licences are optional.
 
 ### 5. Create a catalogue item
 
-Create a catalogue item by choosing an  application form, a workflow and a resource you want to use.
+Create a catalogue item by choosing an application form, a workflow and a resource you want to use. You can create a catalogue item without a form. This can be useful when using workflow forms, for example.
 
 Give your catalogue item a descriptive name. Thus, it will be easier for the applicants to recognise which catalogue item they want access to. The name is required to be in Finnish, in English and in Swedish.
 
