@@ -890,7 +890,8 @@
       (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
-      (select-option "Form" (btu/context-get :form-name))
+      (when-let [form-name (btu/context-get :form-name)]
+        (select-option "Form" form-name))
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
@@ -906,7 +907,8 @@
               "More info (SV)" ""
               "Workflow" (btu/context-get :workflow-name)
               "Resource" (btu/context-get :resid)
-              "Form" (btu/context-get :form-name)
+              "Form" (or (btu/context-get :form-name)
+                         "")
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
@@ -914,7 +916,8 @@
       (go-to-admin "Catalogue items")
       (is (some #(= {"workflow" (btu/context-get :workflow-name)
                      "resource" (btu/context-get :resid)
-                     "form" (btu/context-get :form-name)
+                     "form" (or (btu/context-get :form-name)
+                                "No form")
                      "name" (btu/context-get :catalogue-item-name)}
                     (select-keys % ["resource" "workflow" "form" "name"]))
                 (slurp-rows :catalogue))))))
@@ -954,7 +957,13 @@
       (logout)
       (login-as "alice")
       (go-to-catalogue)
-      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
+      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))
+    (testing "catalogue item with no form"
+      (logout)
+      (login-as "owner")
+      (btu/context-assoc! :form-name nil
+                          :catalogue-item-name (str "Browser Test No Form " (btu/get-seed)))
+      (create-catalogue-item))))
 
 (deftest test-edit-catalogue-item
   (btu/with-postmortem
