@@ -239,6 +239,7 @@
                            ")")
          :item-selected? item-selected?
          :clearable? true
+         :placeholder (text :t.administration/no-form)
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
 (defn- cancel-button [catalogue-item-id]

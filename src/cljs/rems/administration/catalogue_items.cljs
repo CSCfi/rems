@@ -112,9 +112,11 @@
            :form (let [value (:form-name item)]
                    {:value value
                     :td [:td.form
-                         [atoms/link nil
-                          (str "/administration/forms/" (:formid item))
-                          value]]})
+                         (if value
+                           [atoms/link nil
+                            (str "/administration/forms/" (:formid item))
+                            value]
+                           [text :t.administration/no-form])]})
            :workflow (let [value (:workflow-name item)]
                        {:value value
                         :td [:td.workflow

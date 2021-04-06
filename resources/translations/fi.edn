@@ -108,6 +108,7 @@
                    :modifier "Muokkaaja"
                    :more-info "Lisätietoja-URL (valinnainen)"
                    :name "Nimi"
+                   :no-form "Ei lomaketta"
                    :no-licenses "Ei lisenssejä"
                    :optional "(valinnainen)"
                    :org "Org"
