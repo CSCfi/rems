@@ -310,7 +310,7 @@
                   :on-click (fn [event]
                               (.preventDefault event)
                               (rf/dispatch [::add-form-field-option field-index]))}
-   (text :t.create-form/add-option)])
+   [atoms/add-symbol] " " (text :t.create-form/add-option)])
 
 (defn- remove-form-field-option-button [field-index option-index]
   [items/remove-button #(rf/dispatch [::remove-form-field-option field-index option-index])])
@@ -541,7 +541,7 @@
                       :on-click (fn [event]
                                   (.preventDefault event)
                                   (rf/dispatch [::add-form-field index]))}
-   (text :t.create-form/add-form-field)])
+   [atoms/add-symbol] " " (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
   [items/remove-button #(when (js/confirm (text :t.create-form/confirm-remove-field))
