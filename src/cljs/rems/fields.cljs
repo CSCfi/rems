@@ -393,6 +393,9 @@
                                                 :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
                    (when-not readonly
                      [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+          (when (and readonly (empty? rows))
+            [[:tr [:td {:col-span (count columns)}
+                   (text :t.form/no-rows)]]])
           (when-not readonly
             [[:tr [:td {:col-span (count columns)}
                    [:button.btn.btn-outline-secondary
@@ -842,6 +845,16 @@
                                     {:key "col3" :label {:en "Third column"}}]
                     :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
                                   [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "empty non-editable field of type \"table\""
+            [field {:readonly true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value []}])
    (example "diff for field of type \"table\""
             [field {:diff true
                     :form/id 36
