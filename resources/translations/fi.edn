@@ -380,6 +380,7 @@
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
+         :no-rows "Ei rivejä"
          :optional "(valinnainen)"
          :please-wait "Odota hetkinen"
          :previous-applications "Hakijan edeltävät hakemukset"
