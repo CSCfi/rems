@@ -673,9 +673,9 @@
               [:div.form-field-header.d-flex
                [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
                [:div.form-field-controls.text-nowrap.ml-auto
-                [remove-form-field-button index]
                 [move-form-field-up-button index]
-                [move-form-field-down-button index]]]
+                [move-form-field-down-button index]
+                [remove-form-field-button index]]]
               :collapse
               [:div
                {:id (str (field-editor-id (:field/id field)) "-contents")
