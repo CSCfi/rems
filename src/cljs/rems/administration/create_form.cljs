@@ -66,6 +66,7 @@
     (focus/on-element-appear (str "#" (field-editor-id id))
                              (fn [element]
                                (focus/scroll-to-top element)
+                               (collapsible/open-component (field-editor-id id))
                                (.focus (.querySelector element selector))))))
 
 (defn- assign-field-index [form]
