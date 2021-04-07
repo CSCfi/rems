@@ -638,8 +638,9 @@
              :margin-bottom (u/px 16)}]
    [:div.form-control {:height :auto
                        :white-space "pre-wrap"
-                       :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"
-                       :background-color "rgba(0, 0, 0, 0.01)"}
+                       ;; A copy of bootstrap's .form-control:disabled
+                       :background-color "#e9ecef"
+                       :opacity 1}
     [:&:empty {:height (u/rem 2.25)}]]
    [:.toggle-diff {:float "right"}]
    [:.diff
