@@ -2,7 +2,7 @@
   (:require [rems.text :refer [text]]
             [rems.guide-util :refer [component-info example]]))
 
-(defn- hide-callback [id callback]
+(defn- show-callback [id callback]
   (fn [event]
     (.preventDefault event)
     (let [element (js/$ (str "#" id))]
@@ -16,7 +16,7 @@
     (when callback
       (callback))))
 
-(defn- show-callback [id]
+(defn- hide-callback [id]
   (fn [event]
     (.preventDefault event)
     (.collapse (js/$ (str "#" id)) "hide")
@@ -35,7 +35,7 @@
    {:class (str (str id "-more ") (when-not expanded "show"))
     :href "#"
     :id (str id "-more-link")
-    :on-click (hide-callback id callback)}
+    :on-click (show-callback id callback)}
    label])
 
 (defn- show-less-button
@@ -43,7 +43,7 @@
   [:a.collapse
    {:class (str (str id "-less ") (when expanded "show"))
     :href "#"
-    :on-click (show-callback id)}
+    :on-click (hide-callback id)}
    label])
 
 (defn controls
