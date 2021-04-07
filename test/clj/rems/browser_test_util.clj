@@ -287,6 +287,8 @@
 (def disabled? (wrap-etaoin et/disabled?))
 (def clear (wrap-etaoin et/clear))
 (def clear-el (wrap-etaoin et/clear-el))
+(def wait-has-alert (wrap-etaoin et/wait-has-alert))
+(def accept-alert (wrap-etaoin et/accept-alert))
 ;; TODO add more of etaoin here
 
 

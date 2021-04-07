@@ -1092,6 +1092,14 @@
       (btu/scroll-and-click :fields-0-additional-more-link)
       (btu/fill-human :fields-0-max-length "127")
 
+      (testing "add and remove a field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (btu/scroll-and-click {:css "#field-editor-fld2 .form-field-controls .remove"})
+        (btu/wait-has-alert)
+        (btu/accept-alert)
+        (btu/wait-invisible :field-editor-fld2))
+
+      ;; need to filter by visible-el? since there's a leftover invisible :add-form-field from the removed field
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
       (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
       (btu/wait-visible :fields-1-title-en)
