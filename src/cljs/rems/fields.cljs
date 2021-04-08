@@ -385,12 +385,14 @@
             (into [:tr]
                   (concat
                    (for [{:keys [key label]} columns]
-                     [:td [:input.form-control {:type :text
-                                                :aria-label (localized label)
-                                                :id (str id "-row" row-i "-" key)
-                                                :disabled readonly
-                                                :value (get-in rows [row-i key])
-                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
+                     [:td
+                      (if readonly
+                        [:div.form-control (get-in rows [row-i key])]
+                        [:input.form-control {:type :text
+                                              :aria-label (localized label)
+                                              :id (str id "-row" row-i "-" key)
+                                              :value (get-in rows [row-i key])
+                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
                    (when-not readonly
                      [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
           (when (and readonly (empty? rows))

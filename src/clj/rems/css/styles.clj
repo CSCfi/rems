@@ -637,10 +637,7 @@
              :margin-top 0
              :margin-bottom (u/px 16)}]
    [:div.form-control {:height :auto
-                       :white-space "pre-wrap"
-                       ;; A copy of bootstrap's .form-control:disabled
-                       :background-color "#e9ecef"
-                       :opacity 1}
+                       :white-space "pre-wrap"}
     [:&:empty {:height (u/rem 2.25)}]]
    [:.toggle-diff {:float "right"}]
    [:.diff
