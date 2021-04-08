@@ -387,7 +387,9 @@
                    (for [{:keys [key label]} columns]
                      [:td
                       (if readonly
-                        [:div.form-control (get-in rows [row-i key])]
+                        [:div.form-control {:id (str id "-row" row-i "-" key)
+                                            :aria-label (localized label)}
+                         (get-in rows [row-i key])]
                         [:input.form-control {:type :text
                                               :aria-label (localized label)
                                               :id (str id "-row" row-i "-" key)
