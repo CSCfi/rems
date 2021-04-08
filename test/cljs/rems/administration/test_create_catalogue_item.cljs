@@ -27,6 +27,18 @@
                                    :infourl nil}}}
              (build-request form languages))))
 
+    (testing "missing form"
+      (is (= {:wfid 123
+              :resid 456
+              :form nil
+              :organization {:organization/id "organization1"}
+              :localizations {:en {:title "en title"
+                                   :infourl "hello"}
+                              :fi {:title "fi title"
+                                   :infourl nil}}}
+             (build-request (assoc form :form nil)
+                            languages))))
+
     (testing "missing title"
       (is (nil? (build-request (assoc-in form [:title :en] "")
                                languages)))
@@ -42,9 +54,6 @@
                                languages))))
     (testing "missing resource"
       (is (nil? (build-request (assoc form :resource nil)
-                               languages))))
-    (testing "missing form"
-      (is (nil? (build-request (assoc form :form nil)
                                languages))))))
 
 (deftest resource-label-test

@@ -8,7 +8,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest catalogue-api-test
@@ -21,6 +21,19 @@
                   handler
                   read-ok-body)]
     (is (= ["urn:1234"] (map :resid items)))))
+
+(deftest catalogue-api-no-form
+  (test-data/create-test-api-key!)
+  (test-data/create-test-users-and-roles!)
+  (let [form-id (test-helpers/create-form! {})
+        res (test-helpers/create-resource! {:resource-ext-id "urn:5678"})]
+    (test-helpers/create-catalogue-item! {:actor "owner" :form-id form-id :resource-id res})
+    (test-helpers/create-catalogue-item! {:actor "owner" :form-id nil :resource-id res})
+    (is (= #{{:resid "urn:5678" :formid nil}
+             {:resid "urn:5678" :formid form-id}}
+           (set
+            (map #(select-keys % [:resid :formid])
+                 (api-call :get "/api/catalogue/" nil test-data/+test-api-key+ "alice")))))))
 
 (deftest catalogue-api-security-test
   (test-data/create-test-api-key!)

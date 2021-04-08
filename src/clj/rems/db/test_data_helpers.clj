@@ -169,7 +169,9 @@
                  (catalogue/create-catalogue-item!
                   {:start (or start (time/now))
                    :resid (or resource-id (create-resource! {:organization organization}))
-                   :form (or form-id (create-form! {:organization organization}))
+                   :form (if (contains? command :form-id) ; support :form-id nil
+                           form-id
+                           (create-form! {:organization organization}))
                    :organization (or organization (ensure-default-organization!))
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]

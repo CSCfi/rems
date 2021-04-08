@@ -22,6 +22,7 @@ Changes since v2.16
 - Answers to conditional fields that are not visible are no longer stored by REMS. The API accepts answers for invisible fields but drops them. The UI does not send answers to invisible fields. (#2574)
 - The "Assign external id" action now shows the previous assigned external id. (#2530)
 - The form editor UI was reworked to look less cluttered. Many inputs are now hidden behind "Show" buttons by default. (#1899)
+- It is now possible to create catalogue items without a form via both the API and the UI. (#2603)
 
 ### Fixes
 - Searching for applications by the original REMS generated id works, even if another id has been assigned. (#2564)

@@ -111,6 +111,7 @@
                    :modifier "Modifier"
                    :more-info "More info URL (optional)"
                    :name "Name"
+                   :no-form "No form"
                    :no-licenses "No licenses"
                    :optional "(optional)"
                    :org "Org"

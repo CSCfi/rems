@@ -529,7 +529,17 @@
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
-                       "42" user-id))))))
+                       "42" user-id))))
+
+    (testing "no forms"
+      (let [no-form (test-helpers/create-catalogue-item! {:form-id nil})
+            application-id (:application-id
+                            (api-call :post "/api/applications/create" {:catalogue-item-ids [no-form]}
+                                      "42" user-id))]
+        (is (number? application-id))
+        (let [created (get-application-for-user application-id user-id)]
+          (is (= [] (get created :application/forms)))
+          (is (= "application.state/draft" (get created :application/state))))))))
 
 (deftest test-application-delete
   (let [api-key "42"

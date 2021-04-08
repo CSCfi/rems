@@ -108,6 +108,7 @@
                    :modifier "Ändringen gjordes av"
                    :more-info "Webbadress för tilläggsinformation (valfritt)"
                    :name "Namn"
+                   :no-form "Ingen blankett"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
                    :org "Org"

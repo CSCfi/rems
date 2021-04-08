@@ -20,8 +20,8 @@
   {:id s/Int
    :wfid s/Int
    (s/optional-key :workflow-name) s/Str
-   :formid schema-base/FormId
-   (s/optional-key :form-name) s/Str
+   :formid (s/maybe schema-base/FormId)
+   (s/optional-key :form-name) (s/maybe s/Str)
    :resid s/Str
    :resource-id s/Int
    :organization schema-base/OrganizationOverview
