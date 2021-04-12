@@ -6,7 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.16
+Changes since v2.17
+
+### Changes
+
+### Fixes
+
+### Additions
+
+## v2.17 "Isokaari" 2021-04-12
 
 **NB: This release contains migrations!**
 
