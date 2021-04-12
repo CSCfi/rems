@@ -115,7 +115,7 @@
                          [atoms/link nil
                           (str "/administration/forms/" (:formid item))
                           value]]}
-                   {:value [text :t.administration/no-form]
+                   {:value (text :t.administration/no-form)
                     :sort-value "" ; push "No form" cases to the top of the list when sorting
                     :td [:td.form [text :t.administration/no-form]]})
            :workflow (let [value (:workflow-name item)]
