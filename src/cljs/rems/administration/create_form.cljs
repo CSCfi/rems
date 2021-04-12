@@ -66,6 +66,7 @@
     (focus/on-element-appear (str "#" (field-editor-id id))
                              (fn [element]
                                (focus/scroll-to-top element)
+                               (collapsible/open-component (field-editor-id id))
                                (.focus (.querySelector element selector))))))
 
 (defn- assign-field-index [form]
@@ -309,7 +310,7 @@
                   :on-click (fn [event]
                               (.preventDefault event)
                               (rf/dispatch [::add-form-field-option field-index]))}
-   (text :t.create-form/add-option)])
+   [atoms/add-symbol] " " (text :t.create-form/add-option)])
 
 (defn- remove-form-field-option-button [field-index option-index]
   [items/remove-button #(rf/dispatch [::remove-form-field-option field-index option-index])])
@@ -540,7 +541,7 @@
                       :on-click (fn [event]
                                   (.preventDefault event)
                                   (rf/dispatch [::add-form-field index]))}
-   (text :t.create-form/add-form-field)])
+   [atoms/add-symbol] " " (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
   [items/remove-button #(when (js/confirm (text :t.create-form/confirm-remove-field))
@@ -672,9 +673,9 @@
               [:div.form-field-header.d-flex
                [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
                [:div.form-field-controls.text-nowrap.ml-auto
-                [remove-form-field-button index]
                 [move-form-field-up-button index]
-                [move-form-field-down-button index]]]
+                [move-form-field-down-button index]
+                [remove-form-field-button index]]]
               :collapse
               [:div
                {:id (str (field-editor-id (:field/id field)) "-contents")

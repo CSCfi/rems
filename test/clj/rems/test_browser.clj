@@ -1080,7 +1080,6 @@
       (fill-form-field "FI" "Form Editor Test (FI)")
       (fill-form-field "SV" "Form Editor Test (SV)")
       (btu/scroll-and-click {:class :add-form-field})
-      (btu/scroll-and-click :field-editor-fld1-collapse-more-link)
       ;; using ids to fill the fields because the label structure is complicated
       (btu/wait-visible :fields-0-title-en)
       (btu/fill-human :fields-0-title-en "Text area (EN)")
@@ -1101,8 +1100,15 @@
       (btu/scroll-and-click :fields-0-additional-more-link)
       (btu/fill-human :fields-0-max-length "127")
 
+      (testing "add and remove a field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (btu/scroll-and-click {:css "#field-editor-fld2 .form-field-controls .remove"})
+        (btu/wait-has-alert)
+        (btu/accept-alert)
+        (btu/wait-invisible :field-editor-fld2))
+
+      ;; need to filter by visible-el? since there's a leftover invisible :add-form-field from the removed field
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-      (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
       (btu/wait-visible :fields-1-title-en)
       (btu/fill-human :fields-1-title-en "Option list (EN)")
       (btu/fill-human :fields-1-title-fi "Option list (FI)")
@@ -1179,8 +1185,6 @@
 
       (testing "add description field"
         (btu/scroll-and-click {:class :add-form-field})
-        ;; we're predicting the field ids here, a bit fragile
-        (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
         (btu/scroll-and-click :fields-0-type-description)
         (btu/fill-human :fields-0-title-en "Description (EN)")
         (btu/fill-human :fields-0-title-fi "Description (FI)")
