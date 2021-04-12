@@ -106,10 +106,11 @@
         style (cond box? {:class "form-control"}
                     :else {:style {:padding-left 0}})]
     (if inline?
-      [:div.form-group.row
-       [:label.col-sm-3.col-form-label title]
-       (into [:div.col-sm-9 style]
-             values)]
+      [:div.container-fluid
+       [:div.form-group.row
+        [:label.col-sm-3.col-form-label title]
+        (into [:div.col-sm-9 style]
+              values)]]
       [:div.form-group
        [:label title]
        (into [:div style] values)])))
