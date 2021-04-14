@@ -1,6 +1,5 @@
 (ns rems.application.test-model
-  (:require [beautify-web.core :as bw]
-            [clojure.set :as set]
+  (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [hiccup.core :as hiccup]
@@ -368,25 +367,24 @@
                  (-> s
                      (str/replace " " "\u00A0") ;  non-breaking space
                      (str/replace "-" "\u2011")))] ; non-breaking hyphen
-    (->> (hiccup/html
-          [:table {:border 1}
-           [:tr
-            [:th (nowrap "State \\ Role")]
-            (for [role roles]
-              [:th (nowrap (name role))])]
-           (for [state states]
-             [:tr
-              [:th {:valign :top}
-               (nowrap (name state))]
-              (for [role roles]
-                (let [{:keys [always-perms sometimes-perms]} (get perms-by-state-and-role [state role])]
-                  [:td {:valign :top}
-                   "<!-- role: " (name role) " -->"
-                   (for [perm (sort always-perms)]
-                     [:div (nowrap (name perm))])
-                   (for [perm (sort sometimes-perms)]
-                     [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
-         (bw/beautify-html))))
+    (hiccup/html
+     [:table {:border 1}
+      [:tr
+       [:th (nowrap "State \\ Role")]
+       (for [role roles]
+         [:th (nowrap (name role))])]
+      (for [state states]
+        [:tr
+         [:th {:valign :top}
+          (nowrap (name state))]
+         (for [role roles]
+           (let [{:keys [always-perms sometimes-perms]} (get perms-by-state-and-role [state role])]
+             [:td {:valign :top}
+              "<!-- role: " (name role) " -->"
+              (for [perm (sort always-perms)]
+                [:div (nowrap (name perm))])
+              (for [perm (sort sometimes-perms)]
+                [:div [:i "(" (nowrap (name perm)) ")"]])]))])])))
 
 (defn output-permissions-reference [event-seqs]
   (let [applications (map (fn [events]
