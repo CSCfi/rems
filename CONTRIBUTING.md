@@ -26,3 +26,5 @@ git clone git@github.com:your-username/rems.git
 - One of the core team members will review it
 - React to questions and comments in the PR
 - Let's get it merged and celebrate!
+
+Please, follow [CSC Code of Conduct](https://www.csc.fi/en/values) when participating.
