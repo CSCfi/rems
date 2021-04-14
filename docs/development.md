@@ -1,5 +1,18 @@
 # Getting started with REMS development
 
+## Installed Software
+
+In order to get started with REMS, you need to have the following software installed:
+
+   - Docker
+   - Java. Currently REMS should be working with Java versions 11 to 16
+   - leiningen. As of 2021-04-14, the project should work with lein version Leiningen 2.9.5 on Java 16 OpenJDK 64-Bit Server VM.
+### Mac OS installation for Apple M1 Chip (Apple Silicon M1)
+
+1. Java Installation: install Java via Azul, make sure you download the version of [Java for MacOS for ARM architecture](https://www.azul.com/downloads/zulu-community/?os=macos&architecture=arm-64-bit&package=jdk).
+ 
+2. Do not install leiningen through homebrew, rather use the script from [here](https://purelyfunctional.tv/guide/how-to-install-clojure/#mac-leiningen) to install leiningen.
+
 ## Development database
 
 Run the official postgres docker image and initialize the database by running
@@ -20,7 +33,7 @@ When done you can stop (and automatically remove) the database.
 docker stop rems_test
 ```
 
-## Populating the database
+### Populating the development database
 
 The best setup for development is to populate the database with test data by running
 
@@ -128,6 +141,13 @@ To conveniently run all the tests you can run the lein alias
 ```
 lein alltests
 ```
+### Automated accessibility test report
+
+We use [axe](https://www.deque.com/axe/) for automated accessibility tests.
+
+The preferable way is to run the browser test suite, or let CI run it, and see what is recorded in the `browsertest-accessibility-report` directory, for example `violations.json` file.
+
+By enabling the configuration option `:accessibility-report` you can have the tool running and accessible also from `window.axe` object in the browser console. This should be enabled in the dev and test configs for you.
 
 ## Indentation & formatting
 
@@ -145,10 +165,4 @@ components in various configurations and is useful for example to develop and do
 
 See a running guide as example [https://rems-dev.rahtiapp.fi/guide](https://rems-dev.rahtiapp.fi/guide).
 
-## Automated accessibility test report
 
-We use [axe](https://www.deque.com/axe/) for automated accessibility tests.
-
-The preferable way is to run the browser test suite, or let CI run it, and see what is recorded in the `browsertest-accessibility-report` directory, for example `violations.json` file.
-
-By enabling the configuration option `:accessibility-report` you can have the tool running and accessible also from `window.axe` object in the browser console. This should be enabled in the dev and test configs for you.
