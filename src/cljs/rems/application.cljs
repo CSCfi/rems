@@ -148,7 +148,7 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validation-errors [application description on-success]
+(defn- handle-validation-errors [description application on-success]
   (fn [response]
     (if (:success response)
       (on-success)
@@ -163,8 +163,8 @@
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application field-values)}
           :handler (handle-validation-errors
-                    application
                     description
+                    application
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
@@ -181,19 +181,19 @@
                            (rf/dispatch [::fetch-application (:application/id application)]))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [application description application-id field-values]
+(defn- submit-application! [description application field-values]
   (save-application! description
                      application
                      field-values
                      (fn []
                       (post! "/api/applications/submit"
-                             {:params {:application-id application-id}
+                             {:params {:application-id (:application/id application)}
                               :handler (handle-validation-errors
-                                        application
                                         description
+                                        application
                                         #(do
                                            (flash-message/show-default-success! :actions description)
-                                           (rf/dispatch [::fetch-application application-id])))
+                                           (rf/dispatch [::fetch-application (:application/id application)])))
                               :error-handler (flash-message/default-error-handler :actions description)}))))
 
 (rf/reg-event-fx
@@ -201,9 +201,8 @@
  (fn [{:keys [db]} [_ description]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
-     (submit-application! application
-                          description
-                          (:application/id application)
+     (submit-application! description
+                          application
                           (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
