@@ -11,6 +11,7 @@ Changes since v2.17
 ### Changes
 
 ### Fixes
+- Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
 
 ### Additions
 

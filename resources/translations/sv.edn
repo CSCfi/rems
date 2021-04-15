@@ -25,7 +25,7 @@
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
-                     :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
+                     :validation-errors "Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :handled-applications "Behandlade ansökningar"
             :invite-member "Bjud in deltagare"
