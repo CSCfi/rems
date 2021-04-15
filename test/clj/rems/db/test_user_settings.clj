@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clj-time.core :as time-core]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.config :as config]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [schema.core :as s]))
@@ -20,6 +21,16 @@
             :notification-email nil}
            (s/validate user-settings/UserSettings
                        (user-settings/get-user-settings "user")))))
+
+  (testing "add settings without EGA flag"
+    (is (= {:success false}
+           (with-redefs [config/env {:enable-ega false}]
+             (user-settings/update-user-settings! "user" {:language :fi
+                                                          :ega {:api-key-expiration-date expiration-date}}))))
+    (is (= {:language :en
+            :notification-email nil}
+           (user-settings/get-user-settings "user"))
+        "nothing was saved since something was wrong"))
 
   (testing "add settings"
     (is (= {:success true}
