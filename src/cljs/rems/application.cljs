@@ -148,12 +148,10 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- save-handler [application description on-success]
+(defn- save-handler [application on-success]
   (fn [response]
     (if (:success response)
-      (do
-        (flash-message/show-default-success! :actions description)
-        (on-success))
+      (on-success)
       (do
         (let [validation-errors (filter :field-id (:errors response))]
           (rf/dispatch [::set-validation-errors validation-errors]))
@@ -166,7 +164,6 @@
                    :field-values (field-values-to-api application field-values)}
           :handler (save-handler
                     application
-                    description
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
@@ -178,7 +175,9 @@
      (save-application! description
                         application
                         (:field-values edit-application)
-                        #(rf/dispatch [::fetch-application (:application/id application)])))
+                        #(do
+                           (flash-message/show-default-success! :actions description)
+                           (rf/dispatch [::fetch-application (:application/id application)]))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [application description application-id field-values]
@@ -190,8 +189,9 @@
                              {:params {:application-id application-id}
                               :handler (save-handler
                                         application
-                                        description
-                                        #(rf/dispatch [::fetch-application application-id]))
+                                        #(do
+                                           (flash-message/show-default-success! :actions description)
+                                           (rf/dispatch [::fetch-application application-id])))
                               :error-handler (flash-message/default-error-handler :actions description)}))))
 
 (rf/reg-event-fx
