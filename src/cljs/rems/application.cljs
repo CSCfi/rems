@@ -186,15 +186,15 @@
                      application
                      field-values
                      (fn []
-                      (post! "/api/applications/submit"
-                             {:params {:application-id (:application/id application)}
-                              :handler (handle-validation-errors
-                                        description
-                                        application
-                                        #(do
-                                           (flash-message/show-default-success! :actions description)
-                                           (rf/dispatch [::fetch-application (:application/id application)])))
-                              :error-handler (flash-message/default-error-handler :actions description)}))))
+                       (post! "/api/applications/submit"
+                              {:params {:application-id (:application/id application)}
+                               :handler (handle-validation-errors
+                                         description
+                                         application
+                                         #(do
+                                            (flash-message/show-default-success! :actions description)
+                                            (rf/dispatch [::fetch-application (:application/id application)])))
+                               :error-handler (flash-message/default-error-handler :actions description)}))))
 
 (rf/reg-event-fx
  ::submit-application
