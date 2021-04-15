@@ -236,7 +236,8 @@
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                           (conj current-attachments (:id response)))])
-                        (rf/dispatch [::save-application description])))
+                        ;; (rf/dispatch [::save-application description])
+                        ))
             :error-handler (fn [response]
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description

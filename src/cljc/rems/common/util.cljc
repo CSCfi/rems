@@ -41,7 +41,7 @@
   (is (= nil
          (first (re-matches +valid-ip-address-regex+ "10.foo.bar.255"))))
   (is (= "192.168.0.0"
-          (re-matches +private-network-ip-address-range-regex+ "192.168.0.0")))
+           (re-matches +private-network-ip-address-range-regex+ "192.168.0.0")))
   ;; (is (= "+3 5 8 4 5 0 0 0 0 0 0 0 "
   ;;        (re-matches +phone-number-regex+ "+3 5 8 4 5 0 0 0 0 0 0 0 ")))
   ;; (is (= nil

@@ -18,8 +18,9 @@
   `:disabled?` is the whole input disabled?
   `:multi?` is this a multiple choice dropdown?
   `:clearable?` should there be a clear selection button?
+  `:placeholder` text to show when nothing is selected, defaults to (text :t.dropdown/placeholder)
   `:on-change` called each time the value changes, one or seq"
-  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change disabled?]
+  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? placeholder on-change disabled?]
     :or {item-key identity
          item-label identity
          hide-selected? multi?
@@ -41,7 +42,7 @@
                  :options (into-array items)
                  :value (into-array (filter item-selected? items))
                  :onChange #(on-change (if (array? %) (array-seq %) %))
-                 :placeholder (text :t.dropdown/placeholder)}])
+                 :placeholder (or placeholder (text :t.dropdown/placeholder))}])
 
 (defn guide
   []

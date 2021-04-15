@@ -892,7 +892,8 @@
       (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
       (select-option "Workflow" (btu/context-get :workflow-name))
       (select-option "Resource" (btu/context-get :resid))
-      (select-option "Form" (btu/context-get :form-name))
+      (when-let [form-name (btu/context-get :form-name)]
+        (select-option "Form" form-name))
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
@@ -908,7 +909,8 @@
               "More info (SV)" ""
               "Workflow" (btu/context-get :workflow-name)
               "Resource" (btu/context-get :resid)
-              "Form" (btu/context-get :form-name)
+              "Form" (or (btu/context-get :form-name)
+                         "")
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
@@ -916,7 +918,8 @@
       (go-to-admin "Catalogue items")
       (is (some #(= {"workflow" (btu/context-get :workflow-name)
                      "resource" (btu/context-get :resid)
-                     "form" (btu/context-get :form-name)
+                     "form" (or (btu/context-get :form-name)
+                                "No form")
                      "name" (btu/context-get :catalogue-item-name)}
                     (select-keys % ["resource" "workflow" "form" "name"]))
                 (slurp-rows :catalogue))))))
@@ -956,7 +959,13 @@
       (logout)
       (login-as "alice")
       (go-to-catalogue)
-      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))))
+      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))
+    (testing "catalogue item with no form"
+      (logout)
+      (login-as "owner")
+      (btu/context-assoc! :form-name nil
+                          :catalogue-item-name (str "Browser Test No Form " (btu/get-seed)))
+      (create-catalogue-item))))
 
 (deftest test-edit-catalogue-item
   (btu/with-postmortem
@@ -1093,6 +1102,14 @@
       (btu/scroll-and-click :fields-0-additional-more-link)
       (btu/fill-human :fields-0-max-length "127")
 
+      (testing "add and remove a field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (btu/scroll-and-click {:css "#field-editor-fld2 .form-field-controls .remove"})
+        (btu/wait-has-alert)
+        (btu/accept-alert)
+        (btu/wait-invisible :field-editor-fld2))
+
+      ;; need to filter by visible-el? since there's a leftover invisible :add-form-field from the removed field
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
       (btu/wait-visible :fields-1-title-en)
       (btu/fill-human :fields-1-title-en "Option list (EN)")
@@ -1185,6 +1202,7 @@
         (btu/wait-page-loaded)
         (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
 
+        (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
         (btu/scroll-and-click :fields-0-type-description)
         (btu/scroll-and-click :fields-0-info-text-more-link)
         (btu/wait-visible :fields-0-info-text-en)

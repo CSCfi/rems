@@ -33,7 +33,7 @@
 
 (rf/reg-event-fx
  ::change-catalogue-item-form
- (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
+ (fn [_ [_ catalogue-item-id form on-success]]
    (post! (str "/api/catalogue-items/" catalogue-item-id "/change-form")
           {:params {:form (:form/id form)}
            :handler (fn [result]
@@ -72,15 +72,9 @@
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn [] (form-change-loop items form))
-    :disabled (or (nil? (:form/id form))
-                  (empty? items)
+    :disabled (or (empty? items)
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
-
-(defn- to-catalogue-item [catalogue-item-id]
-  [atoms/link {:class "btn btn-primary"}
-   (str "/administration/catalogue-items/" catalogue-item-id)
-   (text :t.administration/view)])
 
 (rf/reg-sub
  ::catalogue-items-table-rows
@@ -90,20 +84,26 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-localized-title item language)}
+           :name (let [title (get-localized-title item language)]
+                   {:value title
+                    :display-value [atoms/link nil
+                                    (str "/administration/catalogue-items/" (:id item))
+                                    title]})
            :form (let [value (:form-name item)]
                    {:value value
                     :td [:td.form
-                         [atoms/link nil
-                          (str "/administration/forms/" (:formid item))
-                          value]]})})
+                         (if value
+                           [atoms/link nil
+                            (str "/administration/forms/" (:formid item))
+                            value]
+                           [text :t.administration/no-form])]})})
         catalogue)))
 
 (defn catalogue-items-table []
   [:div
    [table/table {:id ::catalogue
                  :columns [{:key :name
-                            :title (text :t.catalogue/header)}
+                            :title (text :t.administration/catalogue-item)}
                            {:key :form
                             :title (text :t.administration/form)}]
                  :rows [::catalogue-items-table-rows]
@@ -119,6 +119,8 @@
                          :item-key :form/id
                          :item-label :form/internal-name
                          :item-selected? #(= (:form/id %) (:form/id form))
+                         :clearable? true
+                         :placeholder (text :t.administration/no-form)
                          :on-change on-change}]]))
 
 (defn change-catalogue-item-form-page []

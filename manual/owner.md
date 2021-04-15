@@ -80,16 +80,23 @@ For example, you can create an option list “Do you want to add attachments?”
 :exclamation: Note! Conditional fields only work with Option list.
 
 1. Create an **Option list** and fill in the options
+
 ![Option list](img/optionlist1.png) ![Option list](img/optionlist2.png)
+
 2. Create another field of any field type.
+
 ![Option list](img/optionlist3.png)
-3. In the another field, select Visible>Only if
+
+3. In the field you just created, select Additional settings>Visible>Only if
+
 ![Option list](img/optionlist4.png)
+
 4. Field: Locate the Option list you created earlier from the drop-down list
-5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses Yes-option in the Field 1. "Do you want to add attachments?".
+5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses the "Yes" option in Field 1, "Do you want to add attachments?".
+
 ![Option list](img/optionlist5.png)
 
-You can test how the fields work on the Preview-section on the right of the page
+You can test how the fields work in the Preview section on the right of the page.
 
 ### 2. Create a workflow
 
@@ -145,7 +152,7 @@ Licences are optional.
 
 ### 5. Create a catalogue item
 
-Create a catalogue item by choosing an  application form, a workflow and a resource you want to use.
+Create a catalogue item by choosing an application form, a workflow and a resource you want to use. You can create a catalogue item without a form. This can be useful when using workflow forms, for example.
 
 Give your catalogue item a descriptive name. Thus, it will be easier for the applicants to recognise which catalogue item they want access to. The name is required to be in Finnish, in English and in Swedish.
 

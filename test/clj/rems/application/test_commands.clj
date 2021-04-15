@@ -109,7 +109,9 @@
                      :wfid 2}
                   5 {:resid "res5"
                      :formid 2
-                     :wfid 2}}
+                     :wfid 2}
+                  6 {:resid "res5"
+                     :formid nil}}
                  id))))
 
 (defn- dummy-get-catalogue-item-licenses [id]
@@ -119,7 +121,8 @@
             {:id 2}
             {:id 3}]
          4 []
-         5 []} id))
+         5 []
+         6 []} id))
 
 (defn- dummy-get-config []
   {})
@@ -230,6 +233,23 @@
            (ok-command nil {:type :application.command/create
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2]}
+                       injections))))
+
+  (testing "no forms"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 6
+                                     :resource/ext-id "res5"}]
+            :application/licenses []
+            :application/forms []
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [6]}
                        injections))))
 
   (testing "error: zero catalogue items"

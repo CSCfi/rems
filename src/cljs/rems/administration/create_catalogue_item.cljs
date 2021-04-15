@@ -50,7 +50,8 @@
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (number? (:wfid request))
        (number? (:resid request))
-       (number? (:form request))
+       (or (nil? (:form request))
+           (number? (:form request)))
        (= (set languages)
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
@@ -166,7 +167,7 @@
         item-selected? #(= (:id %) (:id selected-workflow))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for workflow-dropdown-id} (text :t.administration/workflow)]
+     [:label.administration-field-label {:for workflow-dropdown-id} (text :t.administration/workflow)]
      (if editing?
        (let [workflow (item-by-id workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
@@ -203,7 +204,7 @@
         item-selected? #(= (:id %) (:id selected-resource))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for resource-dropdown-id} (text :t.administration/resource)]
+     [:label.administration-field-label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
        (let [resource (item-by-id resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
@@ -223,7 +224,7 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label {:for form-dropdown-id} (text :t.administration/form)]
+     [:label.administration-field-label {:for form-dropdown-id} (text :t.administration/form)]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
@@ -237,6 +238,8 @@
                            (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
+         :clearable? true
+         :placeholder (text :t.administration/no-form)
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
 (defn- cancel-button [catalogue-item-id]

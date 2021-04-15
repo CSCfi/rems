@@ -111,7 +111,7 @@
         value (:field/value opts)
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)
-        info-text (linkify (localized (:field/info-text opts)))
+        info-text (localized (:field/info-text opts))
         collapse-aria-label (str (text :t.create-form/collapse-aria-label) raw-title)]
     ;; TODO: simplify fieldset code
     [(if fieldset
@@ -136,12 +136,12 @@
       (if optional
         (text :t.form/optional)
         (text :t.form/required))
-      (when info-text
+      (when-not (str/blank? info-text)
         [info-collapse
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
           :focus-when-collapse-opened focus-when-collapse-opened
-          :body-text info-text}])]
+          :body-text (linkify info-text)}])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -385,14 +385,21 @@
             (into [:tr]
                   (concat
                    (for [{:keys [key label]} columns]
-                     [:td [:input.form-control {:type :text
-                                                :aria-label (localized label)
-                                                :id (str id "-row" row-i "-" key)
-                                                :disabled readonly
-                                                :value (get-in rows [row-i key])
-                                                :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}]])
+                     [:td
+                      (if readonly
+                        [:div.form-control {:id (str id "-row" row-i "-" key)
+                                            :aria-label (localized label)}
+                         (get-in rows [row-i key])]
+                        [:input.form-control {:type :text
+                                              :aria-label (localized label)
+                                              :id (str id "-row" row-i "-" key)
+                                              :value (get-in rows [row-i key])
+                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
                    (when-not readonly
                      [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+          (when (and readonly (empty? rows))
+            [[:tr [:td {:col-span (count columns)}
+                   (text :t.form/no-rows)]]])
           (when-not readonly
             [[:tr [:td {:col-span (count columns)}
                    [:button.btn.btn-outline-secondary
@@ -843,6 +850,16 @@
                                     {:key "col3" :label {:en "Third column"}}]
                     :field/value [[{:column "col1" :value "aaaaa"} {:column "col2" :value "bbbbbb"} {:column "col3" :value "ccccccc"}]
                                   [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
+   (example "empty non-editable field of type \"table\""
+            [field {:readonly true
+                    :form/id 36
+                    :field/id "1"
+                    :field/type :table
+                    :field/title {:en "Lorem ipsum dolor sit amet"}
+                    :field/columns [{:key "col1" :label {:en "First column"}}
+                                    {:key "col2" :label {:en "Second column"}}
+                                    {:key "col3" :label {:en "Third column"}}]
+                    :field/value []}])
    (example "diff for field of type \"table\""
             [field {:diff true
                     :form/id 36

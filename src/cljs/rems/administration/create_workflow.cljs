@@ -183,7 +183,7 @@
         all-handlers @(rf/subscribe [::actors])
         selected-handlers (set (map :userid (get-in form [:handlers])))]
     [:div.form-group
-     [:label {:for handlers-dropdown-id} (text :t.create-workflow/handlers)]
+     [:label.administration-field-label {:for handlers-dropdown-id} (text :t.create-workflow/handlers)]
      [dropdown/dropdown
       {:id handlers-dropdown-id
        :items all-handlers
@@ -198,7 +198,7 @@
         selected-form-ids (set (mapv :form/id (:forms @(rf/subscribe [::form]))))
         id "workflow-forms"]
     [:div.form-group
-     [:label {:for id} (text :t.administration/forms)]
+     [:label.administration-field-label {:for id} (text :t.administration/forms)]
      (if @(rf/subscribe [::editing?])
        [fields/readonly-field-raw
         {:id id

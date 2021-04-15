@@ -2,28 +2,24 @@
   (:require [rems.text :refer [text]]
             [rems.guide-util :refer [component-info example]]))
 
-(defn- hide-callback [id callback]
-  (fn [event]
-    (.preventDefault event)
-    (let [element (js/$ (str "#" id))]
-      (.collapse element "show")
-      (.focus element))
-    ;; bootstrap's .collapse returns immediately, so in order to avoid
-    ;; momentarily showing both buttons we wait for a hidden.bs.collapse event
-    (.. (js/$ (str "." id "-more"))
-        (collapse "hide")
-        (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-less")) collapse "show"))))
-    (when callback
-      (callback))))
+(defn- show [id callback]
+  (let [element (js/$ (str "#" id))]
+    (.collapse element "show")
+    (.focus element))
+  ;; bootstrap's .collapse returns immediately, so in order to avoid
+  ;; momentarily showing both buttons we wait for a hidden.bs.collapse event
+  (.. (js/$ (str "." id "-more"))
+      (collapse "hide")
+      (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-less")) collapse "show"))))
+  (when callback
+    (callback)))
 
-(defn- show-callback [id]
-  (fn [event]
-    (.preventDefault event)
-    (.collapse (js/$ (str "#" id)) "hide")
-    (.. (js/$ (str "." id "-less"))
-        (collapse "hide")
-        (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-more")) collapse "show"))))
-    (.focus (js/$ (str "#" id "-more-link")))))
+(defn- hide [id]
+  (.collapse (js/$ (str "#" id)) "hide")
+  (.. (js/$ (str "." id "-less"))
+      (collapse "hide")
+      (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-more")) collapse "show"))))
+  (.focus (js/$ (str "#" id "-more-link"))))
 
 (defn- header
   [title title-class]
@@ -35,7 +31,9 @@
    {:class (str (str id "-more ") (when-not expanded "show"))
     :href "#"
     :id (str id "-more-link")
-    :on-click (hide-callback id callback)}
+    :on-click (fn [event]
+                (.preventDefault event)
+                (show id callback))}
    label])
 
 (defn- show-less-button
@@ -43,7 +41,9 @@
   [:a.collapse
    {:class (str (str id "-less ") (when expanded "show"))
     :href "#"
-    :on-click (show-callback id)}
+    :on-click (fn [event]
+                (.preventDefault event)
+                (hide id))}
    label])
 
 (defn controls
@@ -60,13 +60,13 @@
 
 (defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button? class]
   (let [always? (not-empty content-always)
-        show-more [:div.mb-3.collapse-toggle
+        show-more [:div.collapse-toggle
                    [show-more-button
                     (if always?
                       (text :t.collapse/show-more)
                       (text :t.collapse/show))
                     id open? on-open]]
-        show-less [:div.mb-3.collapse-toggle
+        show-less [:div.collapse-toggle
                    [show-less-button
                     (if always?
                       (text :t.collapse/show-less)
@@ -129,6 +129,11 @@
    (when title [header title title-class])
    (when (or always collapse footer)
      [block (str id "-collapse") open? on-open always collapse footer top-less-button? bottom-less-button? "collapse-content"])])
+
+(defn open-component
+  "A helper for opening a collapsible/component or collapsible/minimal"
+  [id]
+  (show (str id "-collapse") nil))
 
 (defn guide
   []
