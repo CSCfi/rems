@@ -654,7 +654,7 @@
         errors @(rf/subscribe [::form-errors])
         lang @(rf/subscribe [:language])]
     (when errors
-      [:div.alert.alert-danger (text :t.actions.errors/submission-failed)
+      [:div.alert.alert-danger (text :t.actions.errors/validation-errors)
        [format-validation-errors errors form lang]])))
 
 (defn- form-fields [fields]

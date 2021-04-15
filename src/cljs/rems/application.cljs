@@ -78,13 +78,13 @@
                              (focus-input-field (fields/field-name field)))}
    (text-format type (localized (:field/title field)))])
 
-(defn- format-submission-errors
+(defn- format-validation-errors
   [application errors]
   (let [fields-index (index-by [:form/id :field/id]
                                (for [form (:application/forms application)
                                      field (:form/fields form)]
                                  (assoc field :form/id (:form/id form))))]
-    [:div (text :t.actions.errors/submission-failed) ; TODO also used for drafts
+    [:div (text :t.actions.errors/validation-errors)
      (into [:ul]
            (concat
             (for [{:keys [type form-id field-id]} errors]
@@ -148,7 +148,7 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validation-errors [application on-success]
+(defn- handle-validation-errors [application description on-success]
   (fn [response]
     (if (:success response)
       (on-success)
@@ -156,7 +156,7 @@
         (let [validation-errors (filter :field-id (:errors response))]
           (rf/dispatch [::set-validation-errors validation-errors]))
         ;; validation errors can be too long for :actions location
-        (flash-message/show-error! :top [format-submission-errors application (:errors response)])))))
+        (flash-message/show-default-error! :top description [format-validation-errors application (:errors response)])))))
 
 (defn- save-application! [description application field-values on-success]
   (post! "/api/applications/save-draft"
@@ -164,6 +164,7 @@
                    :field-values (field-values-to-api application field-values)}
           :handler (handle-validation-errors
                     application
+                    description
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
@@ -189,6 +190,7 @@
                              {:params {:application-id application-id}
                               :handler (handle-validation-errors
                                         application
+                                        description
                                         #(do
                                            (flash-message/show-default-success! :actions description)
                                            (rf/dispatch [::fetch-application application-id])))
