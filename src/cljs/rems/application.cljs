@@ -148,7 +148,7 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- save-handler [application on-success]
+(defn- handle-validation-errors [application on-success]
   (fn [response]
     (if (:success response)
       (on-success)
@@ -162,7 +162,7 @@
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application field-values)}
-          :handler (save-handler
+          :handler (handle-validation-errors
                     application
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
@@ -187,7 +187,7 @@
                      (fn []
                       (post! "/api/applications/submit"
                              {:params {:application-id application-id}
-                              :handler (save-handler
+                              :handler (handle-validation-errors
                                         application
                                         #(do
                                            (flash-message/show-default-success! :actions description)
