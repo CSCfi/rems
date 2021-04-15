@@ -1251,7 +1251,7 @@
         ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
-        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."})))
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
 
       (testing "successful save"
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
