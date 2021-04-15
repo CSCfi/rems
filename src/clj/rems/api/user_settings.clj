@@ -7,10 +7,7 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(s/defschema GetUserSettings
-  {:language s/Keyword
-   :notification-email (s/maybe s/Str)
-   (s/optional-key :ega) {:api-key-expiration-date DateTime}})
+(def GetUserSettings user-settings/UserSettings)
 
 (s/defschema UpdateUserSettings
   {(s/optional-key :language) s/Keyword
