@@ -40,7 +40,11 @@
          (when user
            (json->settings (:settings (db/get-user-settings {:user user}))))))
 
-(defn validate-new-settings [{:keys [language notification-email] :as new-settings}]
+(defn validate-new-settings
+  "Validates the new settings.
+
+  Returns `nil` if the settings were invalid, distinct from `{}` if nothing needs to be done."
+  [{:keys [language notification-email] :as new-settings}]
   (let [valid-new-settings (merge {} ; valid returns at least a map
                                   (when (contains? (set (:languages env)) language)
                                     {:language language})
@@ -50,24 +54,23 @@
                                              (str/blank? notification-email))
                                     ;; clear notification email to use identity provider's email instead
                                     {:notification-email nil})
-                                  (when-let [ega (:ega new-settings)]
-                                    {:ega (select-keys ega [:api-key-expiration-date])}))]
-    (if (= (set (keys valid-new-settings))
-           (set (keys new-settings)))
-      valid-new-settings
-      nil))) ; fail completely if there was even one error
+                                  (when (:enable-ega env)
+                                    (when-let [ega (:ega new-settings)]
+                                      {:ega (select-keys ega [:api-key-expiration-date])})))]
+    (when (= (set (keys valid-new-settings)) ; fail completely if any were invalid
+             (set (keys new-settings)))
+      valid-new-settings)))
 
 (defn update-user-settings! [user new-settings]
   (assert user "User missing!")
-  (let [old-settings (get-user-settings user)
-        validated (validate-new-settings new-settings)]
-    (if validated
-      (do
-        (db/update-user-settings!
-         {:user user
-          :settings (settings->json (merge old-settings validated))})
-        {:success true})
-      {:success false})))
+  (if-let [validated (validate-new-settings new-settings)]
+    (do
+      (db/update-user-settings! {:user user
+                                 :settings (settings->json
+                                            (merge (get-user-settings user)
+                                                   validated))})
+      {:success true})
+    {:success false}))
 
 (defn delete-user-settings! [user]
   (db/delete-user-settings! {:user user}))
