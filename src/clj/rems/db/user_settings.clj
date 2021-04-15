@@ -41,7 +41,8 @@
            (json->settings (:settings (db/get-user-settings {:user user}))))))
 
 (defn validate-new-settings [{:keys [language notification-email] :as new-settings}]
-  (let [valid-new-settings (merge (when (contains? (set (:languages env)) language)
+  (let [valid-new-settings (merge {} ; valid returns at least a map
+                                  (when (contains? (set (:languages env)) language)
                                     {:language language})
                                   (when (and notification-email (re-matches +email-regex+ notification-email))
                                     {:notification-email notification-email})
