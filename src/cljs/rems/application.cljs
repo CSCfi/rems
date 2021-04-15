@@ -160,14 +160,14 @@
         ;; validation errors can be too long for :actions location
         (flash-message/show-error! :top [format-submission-errors application (:errors response)])))))
 
-(defn- save-application! [description application field-values]
+(defn- save-application! [description application field-values on-success]
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application field-values)}
           :handler (save-handler
                     application
                     description
-                    #(rf/dispatch [::fetch-application (:application/id application)]))
+                    on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
@@ -177,25 +177,22 @@
          edit-application (::edit-application db)]
      (save-application! description
                         application
-                        (:field-values edit-application)))
+                        (:field-values edit-application)
+                        #(rf/dispatch [::fetch-application (:application/id application)])))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [application description application-id field-values]
-  (post! "/api/applications/save-draft"
-         {:params {:application-id application-id
-                   :field-values (field-values-to-api application field-values)}
-          :handler (save-handler
-                    application
-                    description
-                    (fn []
+  (save-application! description
+                     application
+                     field-values
+                     (fn []
                       (post! "/api/applications/submit"
                              {:params {:application-id application-id}
                               :handler (save-handler
                                         application
                                         description
                                         #(rf/dispatch [::fetch-application application-id]))
-                              :error-handler (flash-message/default-error-handler :actions description)})))
-          :error-handler (flash-message/default-error-handler :actions description)}))
+                              :error-handler (flash-message/default-error-handler :actions description)}))))
 
 (rf/reg-event-fx
  ::submit-application
