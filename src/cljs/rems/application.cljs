@@ -84,7 +84,7 @@
                                (for [form (:application/forms application)
                                      field (:form/fields form)]
                                  (assoc field :form/id (:form/id form))))]
-    [:div (text :t.actions.errors/submission-failed)
+    [:div (text :t.actions.errors/submission-failed) ; TODO also used for drafts
      (into [:ul]
            (concat
             (for [{:keys [type form-id field-id]} errors]
@@ -148,12 +148,24 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
+(defn- save-handler [application description on-success]
+  (fn [response]
+    (if (:success response)
+      (do
+        (flash-message/show-default-success! :actions description)
+        (on-success))
+      (do
+        (let [validation-errors (filter :field-id (:errors response))]
+          (rf/dispatch [::set-validation-errors validation-errors]))
+        ;; validation errors can be too long for :actions location
+        (flash-message/show-error! :top [format-submission-errors application (:errors response)])))))
+
 (defn- save-application! [description application field-values]
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application field-values)}
-          :handler (flash-message/default-success-handler
-                    :actions
+          :handler (save-handler
+                    application
                     description
                     #(rf/dispatch [::fetch-application (:application/id application)]))
           :error-handler (flash-message/default-error-handler :actions description)}))
@@ -169,29 +181,20 @@
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [application description application-id field-values]
-  ;; TODO: deduplicate with save-application!
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api application field-values)}
-          :handler (fn [response]
-                     (cond
-                       (not (:success response))
-                       (flash-message/show-default-error! :actions description)
-
-                       :else
-                       (post! "/api/applications/submit"
-                              {:params {:application-id application-id}
-                               :handler (fn [response]
-                                          (if (:success response)
-                                            (do
-                                              (rf/dispatch [::fetch-application application-id])
-                                              (flash-message/show-default-success! :actions description))
-                                            (do
-                                              (let [validation-errors (filter :field-id (:errors response))]
-                                                (rf/dispatch [::set-validation-errors validation-errors]))
-                                              ;; validation errors can be too long for :actions location
-                                              (flash-message/show-error! :top [format-submission-errors application (:errors response)]))))
-                               :error-handler (flash-message/default-error-handler :actions description)})))
+          :handler (save-handler
+                    application
+                    description
+                    (fn []
+                      (post! "/api/applications/submit"
+                             {:params {:application-id application-id}
+                              :handler (save-handler
+                                        application
+                                        description
+                                        #(rf/dispatch [::fetch-application application-id]))
+                              :error-handler (flash-message/default-error-handler :actions description)})))
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
