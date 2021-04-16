@@ -350,10 +350,10 @@
 
 (defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
-   [:div (when show-accepted-licenses?
-           (if (:accepted license)
-             (success-symbol)
-             (empty-symbol)))]
+   [:div.mr-2 (when show-accepted-licenses?
+                (if (:accepted license)
+                  (success-symbol)
+                  (empty-symbol)))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
