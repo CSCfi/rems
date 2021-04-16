@@ -126,7 +126,8 @@
                           (build-index {:keys [:form :field] :value-fn :value}))]
     (assoc db ::edit-application {:field-values field-values
                                   :show-diff {}
-                                  :validation-errors nil})))
+                                  :validation-errors nil
+                                  :attachment-status {}})))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -224,6 +225,7 @@
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
         description [text :t.form/upload]]
+    (rf/dispatch [::set-attachment-status form-id field-id :pending])
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id}
             :body file
@@ -237,8 +239,10 @@
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                           (conj current-attachments (:id response)))])
+                        (rf/dispatch [::set-attachment-status form-id field-id :success])
                         (rf/dispatch [::save-application description])))
             :error-handler (fn [response]
+                             (rf/dispatch [::set-attachment-status form-id field-id :error])
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
                                                                   [:div
@@ -263,6 +267,11 @@
  ::set-field-value
  (fn [db [_ form-id field-id value]]
    (assoc-in db [::edit-application :field-values form-id field-id] value)))
+
+(rf/reg-event-db
+ ::set-attachment-status
+ (fn [db [_ form-id field-id value]]
+   (assoc-in db [::edit-application :attachment-status form-id field-id] value)))
 
 (rf/reg-event-db
  ::toggle-diff
@@ -414,6 +423,7 @@
                                                                                     (->> prev
                                                                                          form/parse-attachment-ids
                                                                                          (mapv attachments)))
+                                                      :field/attachment-status (get-in edit-application [:attachment-status form-id field-id])
                                                       :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
                                                       :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))]))}]))))
 
