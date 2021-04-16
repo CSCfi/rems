@@ -396,26 +396,26 @@
                                   :let [field-id (:field/id field)]
                                   :when (and (form/field-visible? field (get field-values form-id))
                                              (not (:field/private field)))] ; private fields will have empty value anyway
-                              [fields/field (assoc field
-                                                   :form/id form-id
-                                                   :on-change #(rf/dispatch [::set-field-value form-id field-id %])
-                                                   :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                                                   :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])
-                                                   :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
-                                                   :field/value (get-in field-values [form-id field-id])
-                                                   :field/attachments (when (= :attachment (:field/type field))
-                                                                        (->> (get-in field-values [form-id field-id])
-                                                                             form/parse-attachment-ids
-                                                                             (mapv attachments)))
-                                                   :field/previous-attachments (when (= :attachment (:field/type field))
-                                                                                 (when-let [prev (:field/previous-value field)]
-                                                                                   (->> prev
-                                                                                        form/parse-attachment-ids
-                                                                                        (mapv attachments))))
-                                                   :diff (get show-diff field-id)
-                                                   :validation (get-in field-validations [form-id field-id])
-                                                   :readonly readonly?
-                                                   :app-id (:application/id application))]))}]))))
+                              [fields/field (merge field
+                                                   {:form/id form-id
+                                                    :field/value (get-in field-values [form-id field-id])
+
+                                                    :diff (get show-diff field-id)
+                                                    :validation (get-in field-validations [form-id field-id])
+                                                    :readonly readonly?
+                                                    :app-id (:application/id application)
+                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])}
+                                                   (when (= :attachment (:field/type field))
+                                                     {:field/attachments (->> (get-in field-values [form-id field-id])
+                                                                              form/parse-attachment-ids
+                                                                              (mapv attachments))
+                                                      :field/previous-attachments (when-let [prev (:field/previous-value field)]
+                                                                                    (->> prev
+                                                                                         form/parse-attachment-ids
+                                                                                         (mapv attachments)))
+                                                      :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                                      :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))]))}]))))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
