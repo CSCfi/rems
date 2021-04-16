@@ -36,6 +36,9 @@
 (defn success-symbol []
   [:i {:class "fas fa-check-circle text-success"}])
 
+(defn failure-symbol []
+  [:i {:class "fas fa-times-circle text-danger"}])
+
 (defn add-symbol []
   [:i.fa.fa-plus])
 
@@ -178,6 +181,9 @@
        (component-info success-symbol)
        (example "success symbol"
                 [success-symbol])
+       (component-info failure-symbol)
+       (example "failure symbol"
+                [failure-symbol])
        (component-info flash-message)
        (example "flash-message with info"
                 [flash-message {:status :info
