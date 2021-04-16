@@ -67,7 +67,7 @@ The entitlement push can be configured using the `:entitlement-push` key like so
                       :client-secret "..."}
 ```
 
-So far the only supported type is `:ega`, i.e. entitlements are meant to be pushed to [European Genome-Phoenome Archive](https://ega-archive.org/).
+So far the only supported type is `:ega`, i.e. entitlements are meant to be pushed to [European Genome-Phoenome Archive](https://ega-archive.org/). Enable the EGA support also by `:enable-ega true`.
 
 ### Entitlement post (v1)
 
