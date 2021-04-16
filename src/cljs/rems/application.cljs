@@ -169,17 +169,20 @@
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
+
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ description]]
+ (fn [{:keys [db]} [_ description on-success]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (save-application! description
                         application
                         (:field-values edit-application)
                         #(do
-                           (flash-message/show-default-success! :actions description)
-                           (rf/dispatch [::fetch-application (:application/id application)]))))
+                           (rf/dispatch [::fetch-application (:application/id application)])
+                           (if on-success
+                             (on-success)
+                             (flash-message/show-default-success! :actions description)))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [description application field-values]
@@ -232,15 +235,13 @@
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
-            :handler (flash-message/default-success-handler
-                      :actions
-                      description
-                      (fn [response]
-                        ;; no race condition here: events are handled in a FIFO manner
-                        (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
-                                                                          (conj current-attachments (:id response)))])
-                        (rf/dispatch [::set-attachment-status form-id field-id :success])
-                        (rf/dispatch [::save-application description])))
+            :handler (fn [response]
+                       ;; no need to check (:success response) - the API can't fail at the moment
+                       ;; no race condition here: events are handled in a FIFO manner
+                       (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                         (conj current-attachments (:id response)))])
+                       (rf/dispatch [::save-application description
+                                     #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
             :error-handler (fn [response]
                              (rf/dispatch [::set-attachment-status form-id field-id :error])
                              (if (= 415 (:status response))
