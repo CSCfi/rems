@@ -748,7 +748,7 @@
                                          (navigate! "/catalogue"))]]]]
     (when (seq actions)
       [collapsible/component
-       {:id "actions"
+       {:id "actions-collapse"
         :title (text :t.form/actions)
         :always (into [:div (into [:div#action-commands]
                                   actions)]
@@ -812,8 +812,9 @@
      [:div.my-3 [application-licenses application userid]]
      [:div.mt-3 [application-fields application edit-application]]]
     [:div.col-lg-4.spaced-vertically-3
-     [flash-message/component :actions]
-     [actions-form application]]]])
+     [:div#actions
+      [flash-message/component :actions]
+      [actions-form application]]]]])
 
 ;;;; Entrypoint
 
