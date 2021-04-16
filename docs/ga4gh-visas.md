@@ -34,7 +34,6 @@ configured via the `:ga4gh-visa-public-key` parameter. As the
 specification requires, the Visa headers have a `"jku"` parameter,
 that points to the `/api/jwk` url, where the public key can be fetched
 for verifying the Visa.
-
 ### Reading ResearcherStatus Visas
 
 Upon login, REMS fetches an id token from the OIDC server's userinfo
@@ -51,3 +50,7 @@ If an applicant has `researcher-status-by` with value `"so"` or
 checkbox in the applicant details.
 
 See also Bona Fide bot in [bots.md](bots.md).
+
+### European Genome-Phenome Archive (EGA)
+
+The GA4GH Visas are used also by the entitlement push to [EGA](https://ega-archive.org/).
