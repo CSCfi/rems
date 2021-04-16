@@ -14,6 +14,7 @@ Changes since v2.17
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
 
 ### Additions
+- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 
 ## v2.17 "Isokaari" 2021-04-12
 
