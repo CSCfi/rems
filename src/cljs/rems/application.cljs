@@ -416,12 +416,12 @@
                                                     :on-change #(rf/dispatch [::set-field-value form-id field-id %])
                                                     :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])}
                                                    (when (= :attachment (:field/type field))
-                                                     ;; TODO field/attachments can contain a nil after a new attachment's id has been added to the field value,
-                                                     ;; but the application hasn't yet been refetched. It doesn't break the attachment component though,
-                                                     ;; and is a very short-lived phenomenon anyway.
                                                      {:field/attachments (->> (get-in field-values [form-id field-id])
                                                                               form/parse-attachment-ids
-                                                                              (mapv attachments))
+                                                                              (mapv attachments)
+                                                                              ;; The field value can contain an id that's not in attachments when a new attachment has been
+                                                                              ;; uploaded, but the application hasn't yet been refetched.
+                                                                              (remove nil?))
                                                       :field/previous-attachments (when-let [prev (:field/previous-value field)]
                                                                                     (->> prev
                                                                                          form/parse-attachment-ids
