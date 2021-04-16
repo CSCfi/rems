@@ -315,6 +315,7 @@
                            (let [filecontent (aget (.. event -target -files) 0)
                                  form-data (doto (js/FormData.)
                                              (.append "file" filecontent))]
+                             (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
                              (on-upload form-data)))}]
      [:button.btn.btn-outline-secondary
       {:id id
