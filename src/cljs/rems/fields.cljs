@@ -327,7 +327,7 @@
      [:span.ml-2
       (case status
         :pending [spinner/small]
-        :success [success-symbol]
+        :success nil ; the new attachment row appearing is confirmation enough
         :error [failure-symbol]
         nil)]
      [info-collapse
