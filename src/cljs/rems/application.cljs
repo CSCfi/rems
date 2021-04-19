@@ -126,7 +126,8 @@
                           (build-index {:keys [:form :field] :value-fn :value}))]
     (assoc db ::edit-application {:field-values field-values
                                   :show-diff {}
-                                  :validation-errors nil})))
+                                  :validation-errors nil
+                                  :attachment-status {}})))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -168,17 +169,20 @@
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
 
+
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ description]]
+ (fn [{:keys [db]} [_ description on-success]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (save-application! description
                         application
                         (:field-values edit-application)
                         #(do
-                           (flash-message/show-default-success! :actions description)
-                           (rf/dispatch [::fetch-application (:application/id application)]))))
+                           (rf/dispatch [::fetch-application (:application/id application)])
+                           (if on-success
+                             (on-success)
+                             (flash-message/show-default-success! :actions description)))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [description application field-values]
@@ -224,21 +228,22 @@
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
         description [text :t.form/upload]]
+    (rf/dispatch [::set-attachment-status form-id field-id :pending])
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id}
             :body file
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
-            :handler (flash-message/default-success-handler
-                      :actions
-                      description
-                      (fn [response]
-                        ;; no race condition here: events are handled in a FIFO manner
-                        (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
-                                                                          (conj current-attachments (:id response)))])
-                        (rf/dispatch [::save-application description])))
+            :handler (fn [response]
+                       ;; no need to check (:success response) - the API can't fail at the moment
+                       ;; no race condition here: events are handled in a FIFO manner
+                       (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                         (conj current-attachments (:id response)))])
+                       (rf/dispatch [::save-application description
+                                     #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
             :error-handler (fn [response]
+                             (rf/dispatch [::set-attachment-status form-id field-id :error])
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
                                                                   [:div
@@ -263,6 +268,11 @@
  ::set-field-value
  (fn [db [_ form-id field-id value]]
    (assoc-in db [::edit-application :field-values form-id field-id] value)))
+
+(rf/reg-event-db
+ ::set-attachment-status
+ (fn [db [_ form-id field-id value]]
+   (assoc-in db [::edit-application :attachment-status form-id field-id] value)))
 
 (rf/reg-event-db
  ::toggle-diff
@@ -350,10 +360,10 @@
 
 (defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
-   [:div (when show-accepted-licenses?
-           (if (:accepted license)
-             (success-symbol)
-             (empty-symbol)))]
+   [:div.mr-2 (when show-accepted-licenses?
+                (if (:accepted license)
+                  (success-symbol)
+                  (empty-symbol)))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
@@ -396,26 +406,30 @@
                                   :let [field-id (:field/id field)]
                                   :when (and (form/field-visible? field (get field-values form-id))
                                              (not (:field/private field)))] ; private fields will have empty value anyway
-                              [fields/field (assoc field
-                                                   :form/id form-id
-                                                   :on-change #(rf/dispatch [::set-field-value form-id field-id %])
-                                                   :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                                                   :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])
-                                                   :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
-                                                   :field/value (get-in field-values [form-id field-id])
-                                                   :field/attachments (when (= :attachment (:field/type field))
-                                                                        (->> (get-in field-values [form-id field-id])
-                                                                             form/parse-attachment-ids
-                                                                             (mapv attachments)))
-                                                   :field/previous-attachments (when (= :attachment (:field/type field))
-                                                                                 (when-let [prev (:field/previous-value field)]
-                                                                                   (->> prev
-                                                                                        form/parse-attachment-ids
-                                                                                        (mapv attachments))))
-                                                   :diff (get show-diff field-id)
-                                                   :validation (get-in field-validations [form-id field-id])
-                                                   :readonly readonly?
-                                                   :app-id (:application/id application))]))}]))))
+                              [fields/field (merge field
+                                                   {:form/id form-id
+                                                    :field/value (get-in field-values [form-id field-id])
+
+                                                    :diff (get show-diff field-id)
+                                                    :validation (get-in field-validations [form-id field-id])
+                                                    :readonly readonly?
+                                                    :app-id (:application/id application)
+                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])}
+                                                   (when (= :attachment (:field/type field))
+                                                     {:field/attachments (->> (get-in field-values [form-id field-id])
+                                                                              form/parse-attachment-ids
+                                                                              (mapv attachments)
+                                                                              ;; The field value can contain an id that's not in attachments when a new attachment has been
+                                                                              ;; uploaded, but the application hasn't yet been refetched.
+                                                                              (remove nil?))
+                                                      :field/previous-attachments (when-let [prev (:field/previous-value field)]
+                                                                                    (->> prev
+                                                                                         form/parse-attachment-ids
+                                                                                         (mapv attachments)))
+                                                      :field/attachment-status (get-in edit-application [:attachment-status form-id field-id])
+                                                      :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                                      :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))]))}]))))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
