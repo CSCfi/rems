@@ -44,20 +44,20 @@ WHERE 1=1
 -- :name set-catalogue-item-enabled! :!
 -- TODO set modifieruserid?
 UPDATE catalogue_item
-SET (enabled) = (:enabled)
+SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-catalogue-item-archived! :!
 -- TODO set modifieruserid?
 UPDATE catalogue_item
-SET (archived) = (:archived)
+SET archived = :archived
 WHERE id = :id;
 
 -- :name set-catalogue-item-endt! :!
 -- TODO only used for creating test data. either have proper API
 --      for using this or remove?
 UPDATE catalogue_item
-SET (endt) = (:end)
+SET endt = :end
 WHERE id = :id;
 
 -- :name set-catalogue-item-organization! :!
@@ -116,13 +116,13 @@ VALUES (:resid, :organization, :owneruserid, :modifieruserid);
 -- :name set-resource-enabled! :!
 -- TODO set modifieruserid?
 UPDATE resource
-SET (enabled) = (:enabled)
+SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-resource-archived! :!
 -- TODO set modifieruserid?
 UPDATE resource
-SET (archived) = (:archived)
+SET archived = :archived
 WHERE id = :id;
 
 -- :name get-database-name :? :1
@@ -191,14 +191,14 @@ id = :id;
 -- :name set-form-template-enabled! :!
 -- TODO set modifieruserid?
 UPDATE form_template
-SET (enabled) = (:enabled)
+SET enabled = :enabled
 WHERE
 id = :id;
 
 -- :name set-form-template-archived! :!
 -- TODO set modifieruserid?
 UPDATE form_template
-SET (archived) = (:archived)
+SET archived = :archived
 WHERE
 id = :id;
 
@@ -287,12 +287,12 @@ VALUES
 
 -- :name set-license-enabled! :!
 UPDATE license
-SET (enabled) = (:enabled)
+SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-license-archived! :!
 UPDATE license
-SET (archived) = (:archived)
+SET archived = :archived
 WHERE id = :id;
 
 -- :name create-license-attachment! :insert
@@ -329,12 +329,12 @@ VALUES
 
 -- :name set-workflow-enabled! :!
 UPDATE workflow
-SET (enabled) = (:enabled)
+SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-workflow-archived! :!
 UPDATE workflow
-SET (archived) = (:archived)
+SET archived = :archived
 WHERE id = :id;
 
 -- :name edit-workflow! :!
