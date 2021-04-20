@@ -27,7 +27,7 @@
                      :licenses-not-accepted "Terms of use not accepted."
                      ;; %1 - organization name
                      :organization-does-not-exist "Organization \"%1\" does not exist"
-                     :submission-failed "Submission failed. Check the following errors:"}
+                     :validation-errors "Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
             :invite-member "Invite member"

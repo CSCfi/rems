@@ -226,7 +226,16 @@
   ([]
    (get-attachments {:css "a.attachment-link"}))
   ([selector]
-   (mapv (partial btu/get-element-text-el) (btu/query-all selector))))
+   (mapv btu/get-element-text-el (btu/query-all selector))))
+
+(defn get-validation-summary []
+  (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top ul li"})))
+
+(defn get-validation-for-field [label]
+  (let [el (first (btu/query-all [{:css ".fields"}
+                                  {:tag :label :fn/has-text label}]))
+        id (btu/get-element-attr-el el :for)]
+    (btu/get-element-text {:id (str id "-error")})))
 
 ;; applications page
 
@@ -282,7 +291,6 @@
         (is (:field/visibility conditional-field))
 
         (fill-form-field "Application title field" "Test name")
-        (fill-form-field "Text field" "Test")
         (fill-form-field "Text area" "Test2")
         (set-date-for-label "Date field" "2050-01-02")
 
@@ -328,6 +336,36 @@
 
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
+
+        (fill-form-field "Phone number" "+358450000100")
+
+        (testing "save draft succesfully"
+          (btu/scroll-and-click :save)
+          (btu/wait-visible :status-success))
+
+        (testing "add invalid value for field, try to save"
+          (fill-form-field "Email field" "user")
+          (btu/scroll-and-click :save)
+          (btu/wait-visible :status-failed)
+          (is (= ["Invalid email address."]
+                 (get-validation-summary)))
+          (is (= "Invalid email address."
+                 (get-validation-for-field "Email field"))))
+
+        (fill-form-field "Email field" "@example.com")
+
+
+
+        (testing "try to submit without accepting licenses or filling in a mandatory field"
+          (btu/scroll-and-click :submit)
+          (btu/wait-visible {:id "status-failed" :fn/has-text "Send application"})
+          (is (= ["Terms of use not accepted."
+                  "Field \"Text field\" is required."]
+                 (get-validation-summary)))
+          (is (= "Field \"Text field\" is required."
+                 (get-validation-for-field "Text field"))))
+
+        (fill-form-field "Text field" "Test")
 
         (accept-licenses)
         (btu/gather-axe-results)
@@ -1218,7 +1256,7 @@
         ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
-        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Submission failed."})))
+        (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
 
       (testing "successful save"
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")

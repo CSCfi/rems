@@ -34,10 +34,10 @@
   [:i.fa {:class "fa-times"}])
 
 (defn success-symbol []
-  ;; fa-stack has weird spacing, try to fix it by unsetting line-height (which is 2em by default)
-  [:span.fa-stack {:aria-label (text :t.form/success) :style {:line-height :inherit}}
-   [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
-   [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
+  [:i {:class "fas fa-check-circle text-success"}])
+
+(defn failure-symbol []
+  [:i {:class "fas fa-times-circle text-danger"}])
 
 (defn add-symbol []
   [:i.fa.fa-plus])
@@ -178,6 +178,12 @@
         on-change #(swap! state not)]
     (fn []
       [:div
+       (component-info success-symbol)
+       (example "success symbol"
+                [success-symbol])
+       (component-info failure-symbol)
+       (example "failure symbol"
+                [failure-symbol])
        (component-info flash-message)
        (example "flash-message with info"
                 [flash-message {:status :info
