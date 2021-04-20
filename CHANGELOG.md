@@ -15,6 +15,7 @@ Changes since v2.17
 - The application page no longer jumps to the top after adding an attachment. (#2616)
 
 ### Additions
+- REMS now supports PostgreSQL version 13. (#2642)
 
 ## v2.17 "Isokaari" 2021-04-12
 
