@@ -1,4 +1,5 @@
 ### Example file for building REMS docker image and running it
+# See docs/installing-upgrading.md for more info
 
 version: '2'
 services:

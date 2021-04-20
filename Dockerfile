@@ -1,4 +1,4 @@
-# For documentation see docs/docker.md
+# For documentation see docs/installing-upgrading.md
 
 FROM openjdk:11-jre-slim
 
