@@ -586,7 +586,6 @@
             app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                       :actor applicant})
             att-id (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
-                       (assoc :params {"file" filecontent})
                        (assoc :multipart-params {"file" filecontent})
                        (authenticate api-key applicant)
                        handler
@@ -1240,7 +1239,6 @@
                                                   :actor user-id})
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
-                             (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
         read-request #(request :get (str "/api/applications/attachment/" %))]
     (testing "uploading malicious file for a draft"
@@ -1356,7 +1354,6 @@
         (is (response-is-not-found? response))))
     (testing "uploading attachment for nonexistent application"
       (let [response (-> (request :post "/api/applications/add-attachment?application-id=99999999")
-                         (assoc :params {"file" filecontent})
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key user-id)
                          handler)]
@@ -1390,7 +1387,6 @@
                                                           :actor applicant-id})
         add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                             (authenticate api-key %1)
-                            (assoc :params {"file" %2})
                             (assoc :multipart-params {"file" %2})
                             handler
                             read-ok-body
@@ -1402,7 +1398,6 @@
     (testing "unrelated user can't upload attachment"
       (is (response-is-forbidden? (-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                                       (authenticate api-key reviewer-id)
-                                      (assoc :params {"file" filecontent})
                                       (assoc :multipart-params {"file" filecontent})
                                       handler))))
     (testing "invite reviewer"
@@ -1564,7 +1559,6 @@
         add-attachment (fn [user file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (authenticate api-key user)
-                             (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})
                              handler
                              read-ok-body
@@ -1647,7 +1641,6 @@
                         :filename "test.txt"
                         :size (.length file-en)}
         en-attachment-id (-> (request :post "/api/licenses/add_attachment")
-                             (assoc :params {"file" filecontent-en})
                              (assoc :multipart-params {"file" filecontent-en})
                              (authenticate api-key owner)
                              handler
@@ -1660,7 +1653,6 @@
                         :filename "test.txt"
                         :size (.length file-fi)}
         fi-attachment-id (-> (request :post "/api/licenses/add_attachment")
-                             (assoc :params {"file" filecontent-fi})
                              (assoc :multipart-params {"file" filecontent-fi})
                              (authenticate api-key owner)
                              handler
