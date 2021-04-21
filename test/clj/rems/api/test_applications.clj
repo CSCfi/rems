@@ -81,6 +81,20 @@
       handler
       read-ok-body))
 
+(def testfile (io/file "./test-data/test.txt"))
+
+(def malicious-file (io/file "./test-data/malicious_test.html"))
+
+(def filecontent {:tempfile testfile
+                  :content-type "text/plain"
+                  :filename "test.txt"
+                  :size (.length testfile)})
+
+(def malicious-content {:tempfile malicious-file
+                        :content-type "text/html"
+                        :filename "malicious_test.html"
+                        :size (.length malicious-file)})
+
 ;;; tests
 
 (deftest test-application-api-session
@@ -544,12 +558,13 @@
 (deftest test-application-delete
   (let [api-key "42"
         applicant "alice"
-        handler "developer"]
+        handler-id "developer"]
+
     (let [app-id (test-helpers/create-application! {:actor applicant})]
       (testing "can't delete draft as other user"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
-                         api-key handler))))
+                         api-key handler-id))))
       (testing "can delete draft as applicant"
         (is (contains? (-> (get-application-for-user app-id applicant)
                            :application/permissions
@@ -562,6 +577,41 @@
         (is (response-is-not-found?
              (api-response :get (str "/api/applications/" app-id) nil
                            api-key applicant)))))
+    (testing "can delete application with attachments"
+      (let [form-id (test-helpers/create-form! {:form/fields [{:field/id "att"
+                                                               :field/type :attachment
+                                                               :field/title {:en "x" :fi "x" :sv "x"}
+                                                               :field/optional false}]})
+            cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
+            app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
+                                                      :actor applicant})
+            att-id (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
+                       (assoc :multipart-params {"file" filecontent})
+                       (authenticate api-key applicant)
+                       handler
+                       read-ok-body
+                       :id)]
+        (assert (number? att-id))
+        (is (= {:success true}
+               (send-command applicant {:type :application.command/save-draft
+                                        :application-id app-id
+                                        :field-values [{:form form-id :field "att" :value (str att-id)}]})))
+        (is (response-is-ok?
+             (api-response :get (str "/api/applications/attachment/" att-id) nil
+                           api-key applicant)))
+        (is (contains? (-> (get-application-for-user app-id applicant)
+                           :application/permissions
+                           set)
+                       "application.command/delete"))
+        (is (= {:success true}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant)))
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/" app-id) nil
+                           api-key applicant)))
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/attachment/" att-id) nil
+                           api-key applicant)))))
     (let [app-id (test-helpers/create-application! {:actor applicant})]
       (test-helpers/command! {:application-id app-id
                               :type :application.command/submit
@@ -572,7 +622,7 @@
                          api-key applicant))))
       (test-helpers/command! {:application-id app-id
                               :type :application.command/return
-                              :actor handler})
+                              :actor handler-id})
       (testing "can't delete returned application"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
@@ -1174,20 +1224,6 @@
       (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
                                                 api-key handler))))))
 
-(def testfile (io/file "./test-data/test.txt"))
-
-(def malicious-file (io/file "./test-data/malicious_test.html"))
-
-(def filecontent {:tempfile testfile
-                  :content-type "text/plain"
-                  :filename "test.txt"
-                  :size (.length testfile)})
-
-(def malicious-content {:tempfile malicious-file
-                        :content-type "text/html"
-                        :filename "malicious_test.html"
-                        :size (.length malicious-file)})
-
 (deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
@@ -1203,7 +1239,6 @@
                                                   :actor user-id})
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
-                             (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
         read-request #(request :get (str "/api/applications/attachment/" %))]
     (testing "uploading malicious file for a draft"
@@ -1319,7 +1354,6 @@
         (is (response-is-not-found? response))))
     (testing "uploading attachment for nonexistent application"
       (let [response (-> (request :post "/api/applications/add-attachment?application-id=99999999")
-                         (assoc :params {"file" filecontent})
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key user-id)
                          handler)]
@@ -1353,7 +1387,6 @@
                                                           :actor applicant-id})
         add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                             (authenticate api-key %1)
-                            (assoc :params {"file" %2})
                             (assoc :multipart-params {"file" %2})
                             handler
                             read-ok-body
@@ -1365,7 +1398,6 @@
     (testing "unrelated user can't upload attachment"
       (is (response-is-forbidden? (-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
                                       (authenticate api-key reviewer-id)
-                                      (assoc :params {"file" filecontent})
                                       (assoc :multipart-params {"file" filecontent})
                                       handler))))
     (testing "invite reviewer"
@@ -1527,7 +1559,6 @@
         add-attachment (fn [user file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (authenticate api-key user)
-                             (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})
                              handler
                              read-ok-body
@@ -1610,7 +1641,6 @@
                         :filename "test.txt"
                         :size (.length file-en)}
         en-attachment-id (-> (request :post "/api/licenses/add_attachment")
-                             (assoc :params {"file" filecontent-en})
                              (assoc :multipart-params {"file" filecontent-en})
                              (authenticate api-key owner)
                              handler
@@ -1623,7 +1653,6 @@
                         :filename "test.txt"
                         :size (.length file-fi)}
         fi-attachment-id (-> (request :post "/api/licenses/add_attachment")
-                             (assoc :params {"file" filecontent-fi})
                              (assoc :multipart-params {"file" filecontent-fi})
                              (authenticate api-key owner)
                              handler

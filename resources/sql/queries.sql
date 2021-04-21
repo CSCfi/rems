@@ -279,6 +279,10 @@ WHERE id = :id;
 SELECT id, filename, type, modifierUserId FROM attachment
 WHERE appid = :application-id;
 
+-- :name delete-application-attachments! :!
+DELETE FROM attachment
+WHERE appid = :application;
+
 -- :name create-license! :insert
 INSERT INTO license
 (ownerUserId, modifierUserId, organization, type)
