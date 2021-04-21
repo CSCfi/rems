@@ -81,6 +81,20 @@
       handler
       read-ok-body))
 
+(def testfile (io/file "./test-data/test.txt"))
+
+(def malicious-file (io/file "./test-data/malicious_test.html"))
+
+(def filecontent {:tempfile testfile
+                  :content-type "text/plain"
+                  :filename "test.txt"
+                  :size (.length testfile)})
+
+(def malicious-content {:tempfile malicious-file
+                        :content-type "text/html"
+                        :filename "malicious_test.html"
+                        :size (.length malicious-file)})
+
 ;;; tests
 
 (deftest test-application-api-session
@@ -544,12 +558,13 @@
 (deftest test-application-delete
   (let [api-key "42"
         applicant "alice"
-        handler "developer"]
+        handler-id "developer"]
+
     (let [app-id (test-helpers/create-application! {:actor applicant})]
       (testing "can't delete draft as other user"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
-                         api-key handler))))
+                         api-key handler-id))))
       (testing "can delete draft as applicant"
         (is (contains? (-> (get-application-for-user app-id applicant)
                            :application/permissions
@@ -559,6 +574,39 @@
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant))))
       (testing "deleted application is gone"
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/" app-id) nil
+                           api-key applicant)))))
+    (testing "can delete application with attachments"
+      (let [form-id (test-helpers/create-form! {:form/fields [{:field/id "att"
+                                                               :field/type :attachment
+                                                               :field/title {:en "x" :fi "x" :sv "x"}
+                                                               :field/optional false}]})
+            cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
+            app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
+                                                      :actor applicant})
+            att-id (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
+                       (assoc :params {"file" filecontent})
+                       (assoc :multipart-params {"file" filecontent})
+                       (authenticate api-key applicant)
+                       handler
+                       read-ok-body
+                       :id)]
+        (assert (number? att-id))
+        (is (= {:success true}
+               (send-command applicant {:type :application.command/save-draft
+                                        :application-id app-id
+                                        :field-values [{:form form-id :field "att" :value (str att-id)}]})))
+        (is (contains? (-> (get-application-for-user app-id applicant)
+                           :application/permissions
+                           set)
+                       "application.command/delete"))
+        (is (= {:success true}
+               (api-call :post "/api/applications/delete" {:application-id app-id}
+                         api-key applicant)))
+        (is (response-is-not-found?
+             (api-response :get (str "/api/applications/" app-id) nil
+                           api-key applicant)))
         (is (response-is-not-found?
              (api-response :get (str "/api/applications/" app-id) nil
                            api-key applicant)))))
@@ -572,7 +620,7 @@
                          api-key applicant))))
       (test-helpers/command! {:application-id app-id
                               :type :application.command/return
-                              :actor handler})
+                              :actor handler-id})
       (testing "can't delete returned application"
         (is (= {:errors [{:type "forbidden"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
@@ -1173,20 +1221,6 @@
     (testing "handler can't export"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
                                                 api-key handler))))))
-
-(def testfile (io/file "./test-data/test.txt"))
-
-(def malicious-file (io/file "./test-data/malicious_test.html"))
-
-(def filecontent {:tempfile testfile
-                  :content-type "text/plain"
-                  :filename "test.txt"
-                  :size (.length testfile)})
-
-(def malicious-content {:tempfile malicious-file
-                        :content-type "text/html"
-                        :filename "malicious_test.html"
-                        :size (.length malicious-file)})
 
 (deftest test-application-api-attachments
   (let [api-key "42"

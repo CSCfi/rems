@@ -13,6 +13,7 @@ Changes since v2.17
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
 - The application page no longer jumps to the top after adding an attachment. (#2616)
+- Deleting drafts with attachments now works.
 
 ### Additions
 
