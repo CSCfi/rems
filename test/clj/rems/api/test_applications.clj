@@ -597,6 +597,9 @@
                (send-command applicant {:type :application.command/save-draft
                                         :application-id app-id
                                         :field-values [{:form form-id :field "att" :value (str att-id)}]})))
+        (is (response-is-ok?
+             (api-response :get (str "/api/applications/attachment/" att-id) nil
+                           api-key applicant)))
         (is (contains? (-> (get-application-for-user app-id applicant)
                            :application/permissions
                            set)
@@ -608,7 +611,7 @@
              (api-response :get (str "/api/applications/" app-id) nil
                            api-key applicant)))
         (is (response-is-not-found?
-             (api-response :get (str "/api/applications/" app-id) nil
+             (api-response :get (str "/api/applications/attachment/" att-id) nil
                            api-key applicant)))))
     (let [app-id (test-helpers/create-application! {:actor applicant})]
       (test-helpers/command! {:application-id app-id
