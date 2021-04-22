@@ -1,8 +1,11 @@
 (ns rems.db.user-settings
   (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [medley.core :refer [find-first]]
             [rems.common.util :refer [+email-regex+]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.ega :as ega]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s])
@@ -74,3 +77,11 @@
 
 (defn delete-user-settings! [user]
   (db/delete-user-settings! {:user user}))
+
+(defn generate-ega-api-key! [user access-token]
+  (assert user "User missing!")
+  (let [config (find-first (comp #{:ega} :type) (:entitlement-push env))] ; XXX: limitation of one type EGA configuration
+    (assert (seq config) "EGA entitlement push must be configured!")
+    (ega/generate-api-key {:userid user
+                           :access-token access-token
+                           :config config})))
