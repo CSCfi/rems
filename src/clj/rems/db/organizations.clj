@@ -76,4 +76,4 @@
 (defn get-all-organization-roles [userid]
   (when (some #(contains? (set (map :userid (:organization/owners %))) userid)
               (get-organizations-raw))
-    [:organization-owner]))
+    #{:organization-owner}))
