@@ -2,10 +2,11 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [rems.administration.items :as items]
-            [rems.atoms :refer [add-symbol attachment-link close-symbol textarea]]
+            [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [build-index getx]]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
+            [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]]))
 
@@ -301,7 +302,7 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-(defn upload-button [id on-upload]
+(defn- upload-button [id status on-upload]
   (let [upload-id (str id "-input")
         info-id (str id "-info")]
     [:div.upload-file.mr-2
@@ -314,6 +315,7 @@
                            (let [filecontent (aget (.. event -target -files) 0)
                                  form-data (doto (js/FormData.)
                                              (.append "file" filecontent))]
+                             (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
                              (on-upload form-data)))}]
      [:button.btn.btn-outline-secondary
       {:id id
@@ -322,6 +324,12 @@
       [add-symbol]
       " "
       (text :t.form/upload)]
+     [:span.ml-2
+      (case status
+        :pending [spinner/small]
+        :success nil ; the new attachment row appearing is confirmation enough
+        :error [failure-symbol]
+        nil)]
      [info-collapse
       {:info-id info-id
        :aria-label-text (text :t.form/upload-extensions)
@@ -330,7 +338,7 @@
                    ": "
                    attachment-types/allowed-extensions-string]}]]))
 
-(defn multi-attachment-view [{:keys [id attachments on-attach on-remove-attachment]}]
+(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group
    (into [:<>]
          (for [attachment attachments]
@@ -344,7 +352,7 @@
              [close-symbol]
              " "
              (text :t.form/attachment-remove)]]))
-   [upload-button (str "upload-" id) on-attach]])
+   [upload-button (str "upload-" id) status on-attach]])
 
 (defn attachment-row [attachments]
   (into [:div.flex-row.d-flex.flex-wrap]
@@ -365,7 +373,8 @@
    [multi-attachment-view {:id (field-name opts)
                            :attachments (:field/attachments opts)
                            :on-attach on-attach
-                           :on-remove-attachment on-remove-attachment}]])
+                           :on-remove-attachment on-remove-attachment
+                           :status (:field/attachment-status opts)}]])
 
 (defn header-field [opts]
   (let [title (localized (:field/title opts))]
@@ -658,7 +667,27 @@
                     :field/value "123"
                     :field/attachments [{:attachment/id 123
                                          :attachment/filename "test.txt"}]
-                    :success true}])
+                    :field/attachment-status :success}])
+   (example "field of type \"attachment\", file uploaded, failure indicator"
+            [field {:app-id 5
+                    :form/id 17
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "test.txt"}]
+                    :field/attachment-status :error}])
+   (example "field of type \"attachment\", file uploaded, spinner"
+            [field {:app-id 5
+                    :form/id 17
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/attachments [{:attachment/id 123
+                                         :attachment/filename "test.txt"}]
+                    :field/attachment-status :pending}])
    (example "field of type \"attachment\", previous and new file uploaded, diff shown"
             [field {:app-id 5
                     :form/id 18

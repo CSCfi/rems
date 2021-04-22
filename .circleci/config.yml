@@ -18,7 +18,7 @@ executors:
   db:
     docker:
       - image: circleci/clojure:openjdk-11-lein-2.9.3-node-browsers
-      - image: postgres:9.6
+      - image: postgres:13
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_USER: rems_test
