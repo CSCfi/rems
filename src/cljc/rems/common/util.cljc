@@ -22,8 +22,42 @@
 ;; regex from https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
 (def +valid-ip-address-regex+ #"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
 
+(def +valid-ip-address-regex-version-six+ #"(([0-9]|[a-f]){1,4}(\:)){7}(([0-9]|[a-f]){1,4})$")
+
 ;; https://stackoverflow.com/questions/2814002/private-ip-address-identifier-in-regular-expression
-(def +private-network-ip-address-range-regex+ #"(^127\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){3}$|(^10\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){3}$|(^172\.1[6-9]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^172\.2[0-9]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^172\.3[0-1]\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$|(^192\.168\.)((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){2}$")
+;; for now, this test should test for the following private IPv4 address pattaerns
+;; 0.x.x.x
+;; 10.x.x.x - Private network, local communications
+;; 100.64.x.x–100.127.x.x - Private network, communications between a service provider and its subscribers
+;; 127.x.x.x - host, loopback addresses to the local host
+;; 169.254.x.x - Subnet, Used for link-local addresses[7] between two hosts on a single link when no IP address is otherwise specified
+;; 172.16.x.x – 172.31.x.x - Private network, local communications within a private network
+;; 192.0.0.x - Private network, IETF Protocol Assignments
+;; 192.0.2.x - Documentation, Assigned as TEST-NET-1, documentation and examples.
+;; 192.168.x.x - Private network, local communications within a private network
+;; 198.18.x.x - 198.19.x.x - Private network, benchmark testing of inter-network communications between two separate subnets
+;; 198.51.100.x - Documentation, Assigned as TEST-NET-2, documentation and examples.
+;; 203.0.113.x - Documentation, Assigned as TEST-NET-3, documentation and examples.
+;; 240.x.x.x–255.x.x.x - multicast
+(def +reserved-ip-address-range-regex+
+  (re-pattern
+   (str
+    "((0|10|127|224?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((100?)\\.([6-9][4-9]|1[1-2][1-7]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((169?)\\.(254?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((172?)\\.(1[6-9]|2[0-9]|31?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((192?)\\.(0?)\\.(0|2?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((192?)\\.(168?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((198?)\\.(1[8-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((198?)\\.(51?)\\.(100?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((203?)\\.(0?)\\.(113?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((2[4-5][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)")))
+
+;; https://simpledns.plus/private-ipv6
+;; https://serverfault.com/questions/546606/what-are-the-ipv6-public-and-private-and-reserved-ranges
+(def +reserved-ip-address-range-regex-version-six+
+  (re-pattern
+   (str "(fdce|fc00|fd00)\\:(([0-9]|[a-f]){1,4}(\\:)){6}(([0-9]|[a-f]){1,4})$")))
 
 (deftest test-ip-address-regex
   (is (= "0.0.0.0"
@@ -40,13 +74,40 @@
          (first (re-matches +valid-ip-address-regex+ "256.255.255.255"))))
   (is (= nil
          (first (re-matches +valid-ip-address-regex+ "10.foo.bar.255"))))
-  (is (= "192.168.0.0"
-          (re-matches +private-network-ip-address-range-regex+ "192.168.0.0")))
-  ;; (is (= "+3 5 8 4 5 0 0 0 0 0 0 0 "
-  ;;        (re-matches +phone-number-regex+ "+3 5 8 4 5 0 0 0 0 0 0 0 ")))
-  ;; (is (= nil
-  ;;        (re-matches +phone-number-regex+ "+35845000000000000000000000000000")))
-  )
+  (is (= "10.0.0.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "10.0.0.0"))))
+  (is (= "10.26.167.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "10.26.167.0"))))
+  (is (= "10.0.255.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "10.0.255.255"))))
+  (is (= "192.0.0.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.0.255"))))
+  (is (= "192.0.2.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.2.255"))))
+  (is (= "192.168.10.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.168.10.255"))))
+  (is (= "172.16.0.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "172.16.0.255"))))
+  (is (= "100.64.0.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "100.64.0.255"))))
+  (is (= "100.127.78.10"
+         (first (re-matches +reserved-ip-address-range-regex+ "100.127.78.10"))))
+  (is (= "169.254.1.1"
+         (first (re-matches +reserved-ip-address-range-regex+ "169.254.1.1"))))
+  (is (= "198.51.100.78"
+         (first (re-matches +reserved-ip-address-range-regex+ "198.51.100.78"))))
+  (is (= "203.0.113.89"
+         (first (re-matches +reserved-ip-address-range-regex+ "203.0.113.89"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "203.0.111.89"))))
+  (is (= "2001:db8:1870:999:128:7648:3849:688"
+         (first (re-matches +valid-ip-address-regex-version-six+ "2001:db8:1870:999:128:7648:3849:688"))))
+  (is (= nil
+         (first (re-matches +valid-ip-address-regex-version-six+ "2001:db8:1g70:999:128:7648:3849:688"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex-version-six+ "2001:db8:1g70:999:128:7648:3849:688"))))
+  (is (= "fdce:de09:d25d:b23e:de8:d0e8:de8:de8"
+         (first (re-matches +reserved-ip-address-range-regex-version-six+ "fdce:de09:d25d:b23e:de8:d0e8:de8:de8")))))
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx

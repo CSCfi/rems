@@ -294,6 +294,10 @@
         (fill-form-field "Text area" "Test2")
         (set-date-for-label "Date field" "2050-01-02")
 
+        (fill-form-field "Email field" "user@example.com")
+        (fill-form-field "Phone number" "+358450000100")
+        (fill-form-field "IP address" "192.168.0.254")
+
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
           (btu/wait-predicate #(= ["test.txt"] (get-attachments)))
