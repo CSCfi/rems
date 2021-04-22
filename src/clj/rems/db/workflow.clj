@@ -52,3 +52,8 @@
 
 (defn join-workflow-licenses [workflow]
   (assoc workflow :licenses (get-workflow-licenses (:id workflow))))
+
+(defn get-all-workflow-roles [userid]
+  (when (some #(contains? (set (map :userid (get-in % [:workflow :handlers]))) userid)
+              (get-workflows nil))
+    #{:handler}))
