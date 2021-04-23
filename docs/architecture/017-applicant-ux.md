@@ -51,7 +51,7 @@ Arguably not a problem, users are used to Save buttons?
 wouldn't call this caching "saving" to the user, instead their work
 would automatically be preserved in their browser, so if they e.g.
 navigate away from the application page and navigate back, they'll
-still se their work-in-progress application.
+still see their work-in-progress application.
 
 **Possible solution 2**: Autosave into REMS db. Also needs problem A to be fixed.
 Cons: lots of events generated to the REMS db.
