@@ -55,6 +55,13 @@
                             :application-id application
                             :actor "handler"}))
 
+  (testing "all for alice as alice"
+    (let [data (-> (request :get "/api/permissions/alice")
+                   (authenticate test-data/+test-api-key+ "alice")
+                   handler
+                   read-ok-body)]
+      (validate-alice-result data)))
+
   (testing "all for alice as handler"
     (let [data (-> (request :get "/api/permissions/alice")
                    (authenticate test-data/+test-api-key+ "handler")
