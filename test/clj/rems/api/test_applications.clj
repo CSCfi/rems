@@ -1565,8 +1565,8 @@
                              read-ok-body
                              :id))
         file #(assoc filecontent :filename %)
-        fetch-zip (fn [user-id]
-                    (with-open [zip (-> (api-response :get (str "/api/applications/" app-id "/attachments") nil
+        fetch-zip (fn [user-id & [params]]
+                    (with-open [zip (-> (api-response :get (str "/api/applications/" app-id "/attachments" params) nil
                                                       api-key user-id)
                                         :body
                                         ZipInputStream.)]
@@ -1595,7 +1595,9 @@
       (is (= {"blue.txt" (slurp testfile)
               "red.txt" (slurp testfile)
               "green.txt" (slurp testfile)}
-             (fetch-zip applicant-id))))
+             (fetch-zip applicant-id)
+             (fetch-zip applicant-id "?all=true")
+             (fetch-zip applicant-id "?all=false"))))
     (testing "submit"
       (is (= {:success true}
              (send-command applicant-id {:type :application.command/submit
@@ -1616,9 +1618,17 @@
                 "green.txt" (slurp testfile)
                 "blue (1).txt" (slurp testfile)
                 "yellow.txt" (slurp testfile)}
+               (fetch-zip applicant-id "?all=true")
                (fetch-zip applicant-id)
                (fetch-zip handler-id)
                (fetch-zip reporter-id))))
+      (testing "fetch zip with all=false as applicant, handler and reporter"
+        (is (= {"blue.txt" (slurp testfile)
+                "red.txt" (slurp testfile)
+                "green.txt" (slurp testfile)}
+               (fetch-zip applicant-id "?all=false")
+               (fetch-zip handler-id "?all=false")
+               (fetch-zip reporter-id "?all=false"))))
       (testing "fetch zip as third party"
         (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/attachments") nil
                                                   api-key "malice"))))

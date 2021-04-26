@@ -488,7 +488,7 @@
 
              {}))))
 
-(defn- classify-attachments [application]
+(defn classify-attachments [application]
   (let [from-events (for [event (:application/events application)
                           attachment (:event/attachments event)]
                       {(:attachment/id attachment) #{:event}})
