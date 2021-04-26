@@ -399,6 +399,7 @@
                       :invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-phone-number "Puhelinnumero ei kelpaa."
                       :invalid-ip-address "IP-osiote ei kelpaa."
+                      :invalid-ip-address-private "Tämä on yksityinen IP-osoite, eikä sitä voi käyttää hakemuksessa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."
