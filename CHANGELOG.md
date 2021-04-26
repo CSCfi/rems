@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.17
 
 ### Changes
+- The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
