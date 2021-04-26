@@ -442,6 +442,7 @@
                       :invalid-email "Invalid email address."
                       :invalid-phone-number "Invalid phone number."
                       :invalid-ip-address "Invalid IP address."
+                      :invalid-ip-address-private "This is a provate IP address and cannot be used in an application."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :options-required "At least one option is required."

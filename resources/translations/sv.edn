@@ -399,6 +399,7 @@
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-phone-number "Ogiltig telefonnummer."
                       :invalid-ip-address "Ogiltig IP-adress."
+                      :invalid-ip-address-private "This is a provate IP address and cannot be used in an application."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :options-required "Kräv minst ett alternativ." ; TODO check

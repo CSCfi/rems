@@ -58,15 +58,19 @@
        :type     :t.form.validation/invalid-phone-number})))
 
 (defn- invalid-ip-address-error [field]
-  (when (= (:field/type field) :ip-address)
-    (when
-     (or
-      (str/blank? (:field/value field))
+  (when (and (= (:field/type field) :ip-address)
+             (not (str/blank? (:field/value field))))
+    (cond
       (or
        (and (first (re-matches +valid-ip-address-regex+ (:field/value field)))
             (first (re-matches +reserved-ip-address-range-regex+ (:field/value field))))
        (and (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))
-            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field))))))
+            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field)))))
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-ip-address-private}
+      (or
+       (not (first (re-matches +valid-ip-address-regex+ (:field/value field))))
+       (not (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))))
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-ip-address})))
 
