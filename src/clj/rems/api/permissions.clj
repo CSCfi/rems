@@ -1,8 +1,11 @@
 (ns rems.api.permissions
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util :as api-util] ; required for route :roles
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.db.entitlements :as entitlements]
             [rems.config :as config]
+            [rems.common.roles :refer [has-roles?]]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -25,13 +28,22 @@
      :tags ["permissions"]
      (GET "/:user" []
        ;; We're trying to replicate https://github.com/CSCfi/elixir-rems-proxy/#get-permissionsusername here
-       :summary "Experimental. Returns user's permissions in ga4gh visa format. See also https://github.com/CSCfi/rems/blob/master/docs/ga4gh-visas.md"
-       :roles #{:handler :owner}
+       :summary (str "Experimental. Returns user's permissions in ga4gh visa format. "
+                     "Handlers, owners and reporters can query anybody's permissions. Other users can query their own permissions. "
+                     "See also https://github.com/CSCfi/rems/blob/master/docs/ga4gh-visas.md")
+       :roles #{:logged-in}
        :path-params [user :- (describe s/Str "return permissions for this user, required")]
        :query-params [{expired :- (describe s/Bool "whether to include expired permissions") false}]
        :return GetPermissionsResponse
        (if (not (:enable-permissions-api config/env))
          (not-implemented "permissions api not implemented")
-         (if (empty? user)
+         (cond
+           (empty? user)
            (api-util/not-found-json-response)
+
+           (not (or (has-roles?  :handler :owner :organization-owner :reporter)
+                    (= user (getx-user-id))))
+           (throw-forbidden)
+
+           :else
            (ok (entitlements/get-entitlements-for-permissions-api user nil expired))))))))
