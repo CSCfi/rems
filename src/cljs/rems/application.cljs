@@ -321,7 +321,7 @@
 (defn- attachment-zip-button [application]
   (when-not (empty? (:application/attachments application))
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" (:application/id application) "/attachments")
+     {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
       :target :_blank}
      [file-download] " " (text :t.form/attachments-as-zip)]))
 

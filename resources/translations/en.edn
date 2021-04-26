@@ -407,7 +407,7 @@
          :application "Application"
          :attachment-remove "Remove"
          :attachments "Attachments"
-         :attachments-as-zip "All attachments (zip)"
+         :attachments-as-zip "Attachments (zip)"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"
