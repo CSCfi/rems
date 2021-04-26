@@ -491,15 +491,13 @@
 (defn classify-attachments [application]
   (let [from-events (for [event (:application/events application)
                           attachment (:event/attachments event)]
-                      {(:attachment/id attachment) #{:event}})
+                      {(:attachment/id attachment) #{:event/attachments}})
         from-fields (for [form (getx application :application/forms)
                           field (getx form :form/fields)
                           :when (= :attachment (:field/type field))
                           k [:field/value :field/previous-value]
                           id (form/parse-attachment-ids (get field k))]
-                      {id #{(case k
-                              :field/value :value
-                              :field/previous-value :previous-value)}})]
+                      {id #{k}})]
     (apply merge-with set/union (concat from-events from-fields))))
 
 (deftest test-classify-attachments
@@ -513,13 +511,13 @@
                                                          :field/value "2" :field/previous-vaule "2"}
                                                         {:field/type :attachment
                                                          :field/value "9,11,13"}]}]}]
-    (is (= {1 #{:event :previous-value}
-            3 #{:event}
-            5 #{:value :previous-value}
-            9 #{:value}
-            11 #{:value}
-            13 #{:value}
-            15 #{:previous-value}}
+    (is (= {1 #{:event/attachments :field/previous-value}
+            3 #{:event/attachments}
+            5 #{:field/value :field/previous-value}
+            9 #{:field/value}
+            11 #{:field/value}
+            13 #{:field/value}
+            15 #{:field/previous-value}}
            (classify-attachments application)))))
 
 (defn- get-blacklist [application blacklisted?]

@@ -51,7 +51,7 @@
       (doseq [metadata (getx application :application/attachments)]
         (let [id (getx metadata :attachment/id)
               attachment (attachments/get-attachment id)]
-          (when (or all? (contains? (get classes id) :value))
+          (when (or all? (contains? (get classes id) :field/value))
             ;; we deduplicate filenames when uploading, but here's a
             ;; failsafe in case we have duplicate filenames in old
             ;; applications
