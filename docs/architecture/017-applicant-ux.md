@@ -34,6 +34,9 @@ validations to save-draft (see e.g.
 [#2567](https://github.com/CSCfi/rems/pull/2567),
 [#2594](https://github.com/CSCfi/rems/pull/2594))
 
+Idea: Think of REMS validations more like spellchecking and less like
+validations. Higlight in red things that the applicant will want to
+fix, but don't prevent saving.
 
 ## B) Validation errors are shown late
 
