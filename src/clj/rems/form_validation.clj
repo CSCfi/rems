@@ -68,11 +68,12 @@
             (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field)))))
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-ip-address-private}
-      (or
+      (and
        (not (first (re-matches +valid-ip-address-regex+ (:field/value field))))
        (not (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))))
       {:field-id (:field/id field)
-       :type     :t.form.validation/invalid-ip-address})))
+       :type     :t.form.validation/invalid-ip-address}
+      :else nil)))
 
 
 (defn- option-value-valid? [field]

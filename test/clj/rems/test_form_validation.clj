@@ -394,40 +394,28 @@
                                         :field/value    "+358450000100"}]))))
 
   (testing "error: field input invalid ip address"
-    (is (= [{:type :t.form.validation/invalid-phone-number :field-id "less than 5 symbols is not allowed"}
-            {:type :t.form.validation/invalid-phone-number :field-id "more than 25 symbols is not allowed"}
-            {:type :t.form.validation/invalid-phone-number :field-id "number has to start with a + prefix"}
-            {:type :t.form.validation/invalid-phone-number :field-id "prefix 0 is not allowed"}]
-           (validate-fields-for-draft [{:field/id       "empty phone number"
-                                        :field/type     :phone-number
+    (is (= [{:type :t.form.validation/invalid-ip-address :field-id "invalid ip address"}
+            {:type :t.form.validation/invalid-ip-address-private :field-id "private ip address"}]
+           (validate-fields-for-draft [{:field/id       "empty ip address"
+                                        :field/type     :ip-address
                                         :field/optional false
                                         :field/visible  true
                                         :field/value    ""}
-                                       {:field/id       "prefix 0 is not allowed"
-                                        :field/type     :phone-number
+                                       {:field/id       "invalid ip address"
+                                        :field/type     :ip-address
                                         :field/optional false
                                         :field/visible  true
                                         :field/value    "+058450000100"}
-                                       {:field/id       "more than 25 symbols is not allowed"
-                                        :field/type     :phone-number
+                                       {:field/id       "correct ip address"
+                                        :field/type     :ip-address
                                         :field/optional false
                                         :field/visible  true
-                                        :field/value    "+15005000010000000000000000000000"}
-                                       {:field/id       "less than 5 symbols is not allowed"
-                                        :field/type     :phone-number
+                                        :field/value    "142.250.74.110"}
+                                       {:field/id       "private ip address"
+                                        :field/type     :ip-address
                                         :field/optional true
                                         :field/visible  true
-                                        :field/value    "+3500"}
-                                       {:field/id       "number has to start with a + prefix"
-                                        :field/type     :phone-number
-                                        :field/optional true
-                                        :field/visible  true
-                                        :field/value    "35000000000000"}
-                                       {:field/id       "valid phone number"
-                                        :field/type     :phone-number
-                                        :field/optional true
-                                        :field/visible  true
-                                        :field/value    "+358450000100"}]))))
+                                        :field/value    "192.0.2.255"}]))))
 
   (testing "table validation"
     (let [fields [{:field/id "tbl"
