@@ -42,16 +42,16 @@
 (def +reserved-ip-address-range-regex+
   (re-pattern
    (str
-    "((0|10|127|224?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((100?)\\.([6-9][4-9]|1[1-2][1-7]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((169?)\\.(254?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((172?)\\.(1[6-9]|2[0-9]|31?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((192?)\\.(0?)\\.(0|2?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((192?)\\.(168?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((198?)\\.(1[8-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((198?)\\.(51?)\\.(100?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((203?)\\.(0?)\\.(113?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
-    "((2[4-5][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)")))
+    "((0|10|127|224)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(100\\.(6[4-9]|[7-9][0-9]|1[0-1][0-7]|12[0-7])\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(169\\.254\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(172\\.(1[6-9]|2[0-9]|3[0-1])\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(192\\.0\\.(0|2?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(192\\.168\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(198\\.1[8-9]\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(198\\.51\\.100\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "(203\\.0\\.113\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)|"
+    "((2[4-5][0-9])\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)")))
 
 ;; https://simpledns.plus/private-ipv6
 ;; https://serverfault.com/questions/546606/what-are-the-ipv6-public-and-private-and-reserved-ranges
@@ -76,6 +76,7 @@
          (first (re-matches +valid-ip-address-regex+ "256.255.255.255"))))
   (is (= nil
          (first (re-matches +valid-ip-address-regex+ "10.foo.bar.255"))))
+  ;; 10.x.x.x - Private network, local communications
   (is (= "10.0.0.0"
          (first (re-matches +reserved-ip-address-range-regex+ "10.0.0.0"))))
   (is (= "10.26.167.0"
@@ -90,20 +91,85 @@
          (first (re-matches +reserved-ip-address-range-regex+ "192.168.10.255"))))
   (is (= "172.16.0.255"
          (first (re-matches +reserved-ip-address-range-regex+ "172.16.0.255"))))
+
+  ;; 100.64.x.x–100.127.x.x - Private network, communications between a service provider and its subscribers
+  (is (= "100.71.0.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "100.71.0.255"))))
   (is (= "100.64.0.255"
          (first (re-matches +reserved-ip-address-range-regex+ "100.64.0.255"))))
+  (is (= "100.100.0.255"
+         (first (re-matches +reserved-ip-address-range-regex+ "100.100.0.255"))))
   (is (= "100.127.78.10"
          (first (re-matches +reserved-ip-address-range-regex+ "100.127.78.10"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "100.255.78.10"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "100.198.78.10"))))
+
+  ;; 169.254.x.x - Subnet, Used for link-local addresses[7] between two hosts on a single link when no IP address is otherwise specified
   (is (= "169.254.1.1"
          (first (re-matches +reserved-ip-address-range-regex+ "169.254.1.1"))))
   (is (= nil
-         (first (re-matches +reserved-ip-address-range-regex+ "142.250.74.110"))))
+         (first (re-matches +reserved-ip-address-range-regex+ "16.254.1.1"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "169.25.1.1"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "169.25.1.1"))))
+
+  ;; 172.16.x.x – 172.31.x.x - Private network, local communications within a private network
+  (is (= "172.16.0.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "172.16.0.0"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "172.1.0.0"))))
+  (is (= "172.30.0.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "172.30.0.0"))))
+  (is (= "172.31.0.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "172.31.0.0"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "172.11.0.0"))))
+
+  ;; 192.0.0.x - Private network, IETF Protocol Assignments
+  ;; 192.0.2.x - Documentation, Assigned as TEST-NET-1, documentation and examples.
+  ;; 192.168.x.x - Private network, local communications within a private network
+
+  (is (= "192.0.0.0"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.0.0"))))
+  (is (= "192.0.0.189"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.0.189"))))
+  (is (= "192.0.2.189"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.2.189"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.25.189"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "192.0.1.10"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "19.0.1.10"))))
+  (is (= "192.168.1.10"
+         (first (re-matches +reserved-ip-address-range-regex+ "192.168.1.10"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "192.16.1.10"))))
+
+  ;; 198.18.x.x - 198.19.x.x - Private network, benchmark testing of inter-network communications between two separate subnets
+  ;; 198.51.100.x - Documentation, Assigned as TEST-NET-2, documentation and examples.
+
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "198.1.100.78"))))
+  (is (= "198.18.100.78"
+         (first (re-matches +reserved-ip-address-range-regex+ "198.18.100.78"))))
   (is (= "198.51.100.78"
          (first (re-matches +reserved-ip-address-range-regex+ "198.51.100.78"))))
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "198.50.100.78"))))
+
+  ;; 203.0.113.x - Documentation, Assigned as TEST-NET-3, documentation and examples.
   (is (= "203.0.113.89"
          (first (re-matches +reserved-ip-address-range-regex+ "203.0.113.89"))))
   (is (= nil
          (first (re-matches +reserved-ip-address-range-regex+ "203.0.111.89"))))
+
+  (is (= nil
+         (first (re-matches +reserved-ip-address-range-regex+ "142.250.74.110"))))
+
   (is (= "2001:db8:1870:999:128:7648:3849:688"
          (first (re-matches +valid-ip-address-regex-version-six+ "2001:db8:1870:999:128:7648:3849:688"))))
   (is (= nil
