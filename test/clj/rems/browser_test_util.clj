@@ -300,11 +300,11 @@
 
 (defn no-timeout? [f]
   (try+
-    (f)
-    true
-    (catch [:type :etaoin/timeout] e
-      (log/error e)
-      false)))
+   (f)
+   true
+   (catch [:type :etaoin/timeout] e
+     (log/error e)
+     false)))
 
 (defn eventually-visible? [& args]
   (no-timeout? #(apply wait-visible args)))
