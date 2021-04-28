@@ -729,7 +729,7 @@
 (deftest test-guide-page
   (btu/with-postmortem
     (btu/go (str (btu/get-server-url) "guide"))
-    (btu/wait-visible {:tag :h1 :fn/text "Component Guide"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Component Guide"}))
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
     (is (< 60 (count (btu/query-all {:class :example}))))))
