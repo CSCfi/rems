@@ -338,8 +338,8 @@
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
 
-        (fill-form-field "Phone number" "+358450000100")
-        (fill-form-field "IP address" "142.250.74.110")
+        ;; (fill-form-field "Phone number" "+358450000100")
+        ;; (fill-form-field "IP address" "142.250.74.110")
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
