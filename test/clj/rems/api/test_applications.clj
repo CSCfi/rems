@@ -1905,15 +1905,15 @@
                                                                   :sv "Notifications SV"}
                                             :form/fields [{:field/type :text
                                                            :field/id "field-1"
-                                                           :field/title {:en "text field"
-                                                                         :fi "text field"
-                                                                         :sv "text field"}
+                                                           :field/title {:en "text field EN"
+                                                                         :fi "text field FI"
+                                                                         :sv "text field SV"}
                                                            :field/optional false}
                                                           {:field/type :attachment
                                                            :field/id "att"
-                                                           :field/title {:en "attachment"
-                                                                         :fi "attachment"
-                                                                         :sv "attachment"}
+                                                           :field/title {:en "attachment EN"
+                                                                         :fi "attachment FI"
+                                                                         :sv "attachment SV"}
                                                            :field/optional false}]})
         workflow-id (test-helpers/create-workflow! {:title "wf"
                                                     :handlers [handler]
@@ -1986,9 +1986,9 @@
               :application/accepted-licenses {}
               :application/forms [{:form/fields [{:field/value "raw test"
                                                   :field/type "text"
-                                                  :field/title {:en "text field"
-                                                                :fi "text field"
-                                                                :sv "text field"}
+                                                  :field/title {:en "text field EN"
+                                                                :fi "text field FI"
+                                                                :sv "text field SV"}
                                                   :field/id "field-1"
                                                   :field/optional false
                                                   :field/visible true
@@ -1996,9 +1996,9 @@
                                                  {:field/value (str att-id)
                                                   :field/type "attachment"
                                                   :field/id "att"
-                                                  :field/title {:en "attachment"
-                                                                :fi "attachment"
-                                                                :sv "attachment"}
+                                                  :field/title {:en "attachment EN"
+                                                                :fi "attachment FI"
+                                                                :sv "attachment SV"}
                                                   :field/optional false
                                                   :field/visible true
                                                   :field/private false}]
