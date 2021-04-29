@@ -620,7 +620,7 @@
   `:group?`             - specifies if a group border is rendered
   `:can-remove?`        - can the user be removed?
   `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
+  [{:keys [element-id attributes application group? can-remove? accepted-licenses? invited-user?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
@@ -634,7 +634,7 @@
                [user/username attributes]
                (when-not (nil? accepted-licenses?)
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
-      :collapse [user/attributes attributes]
+      :collapse [user/attributes attributes invited-user?]
       :footer (let [element-id (str element-id "-remove-member")]
                 [:div {:id element-id}
                  (when can-remove?
@@ -676,13 +676,15 @@
                              :application application
                              :group? true
                              :can-remove? can-remove?
-                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
+                             :accepted-licenses? (accepted-licenses? application (:userid member))
+                             :invited-user? false}])
              (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
                              :group? true
-                             :can-remove? can-uninvite?}])))
+                             :can-remove? can-uninvite?
+                             :invited-user? true}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])

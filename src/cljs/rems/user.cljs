@@ -15,7 +15,7 @@
 
 (defn attributes
   "A div with a rems.atoms/info-field for every user attribute in the given attributes."
-  [attributes]
+  [attributes invited-user?]
   (let [language @(rf/subscribe [:language])
         organization-by-id @(rf/subscribe [:organization-by-id])
         organization-name-if-known (fn [organization]
@@ -30,7 +30,10 @@
            (when-let [mail (:notification-email attributes)]
              [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
            (when-let [mail (:email attributes)]
-             [info-field (text :t.applicant-info/email) mail {:inline? true}])
+             [info-field (text :t.applicant-info/email) mail {:inline? true}]
+             (if invited-user?
+               [info-field (text :t.applicant-info/email) mail {:inline? true}]
+               [info-field (text :t.applicant-info/email-idp) mail {:inline? true}]))
            (when-let [organizations (seq (:organizations attributes))]
              [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])
            (when (#{"so" "system"} (:researcher-status-by attributes))
@@ -61,7 +64,8 @@
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                          :address "Testikatu 1, 00100 Helsinki"
                          :researcher-status-by "so"
-                         :nickname "The Dev"}])
+                         :nickname "The Dev"}
+             false])
    (example "invalid value for researcher status"
             [attributes {:userid "developer@uu.id"
                          :email "developer@uu.id"
