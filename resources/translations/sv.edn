@@ -135,7 +135,8 @@
                    :workflows "Arbetsflöden"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
-                   :email "E-postadress (från identifieringstjäst)"
+                   :email "E-postadress"
+                   :email-idp "E-postadress (från identifieringstjäst)"
                    :invited-member "Inbjuden deltagare"
                    :member "Deltagare"
                    :name "Namn"
