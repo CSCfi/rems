@@ -477,7 +477,7 @@
                  (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] nil) languages))))))
 
-        (testing "ip address"
+    (testing "ip address"
       (let [form (assoc form :form/fields
                         [{:field/type :ip-address
                           :field/title {:en "en" :fi "fi"}
@@ -489,7 +489,7 @@
           (is (= {:form/fields {0 {:field/title {:en :t.form.validation/required}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] nil) languages))))))
-                 
+
     (testing "table"
       (let [form (assoc form :form/fields
                         [{:field/type :table

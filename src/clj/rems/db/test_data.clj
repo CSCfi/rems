@@ -200,12 +200,12 @@
                   :fi "Puhelinnumero"
                   :sv "Telefonnummer"}
     :field/optional true}
-    
-    {:field/type :ip-address
-     :field/title {:en "IP address"
+
+   {:field/type :ip-address
+    :field/title {:en "IP address"
                   :fi "IP-osoite"
                   :sv "IP-adress"}
-     :field/optional true}])
+    :field/optional true}])
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))

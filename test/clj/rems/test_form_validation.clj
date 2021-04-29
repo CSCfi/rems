@@ -392,7 +392,7 @@
                                         :field/optional true
                                         :field/visible  true
                                         :field/value    "+358450000100"}]))))
-  
+
   (testing "error: field input invalid ip address"
     (is (= [{:type :t.form.validation/invalid-ip-address :field-id "invalid ip address"}
             {:type :t.form.validation/invalid-ip-address-private :field-id "private ip address"}]
