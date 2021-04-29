@@ -128,7 +128,7 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color (get-theme-attribute :phase-bgcolor "#eee")
+   [:.phase {:background-color (get-theme-attribute :phase-bgcolor)
              :color (get-theme-attribute :phase-color "#111")
              :flex-grow 1
              :height (u/px 40)
@@ -156,10 +156,10 @@
     [:&.active (merge {:color (get-theme-attribute :phase-color-active :phase-color "#111")}
                       (if-let [background (get-theme-attribute :phase-background-active)]
                         {:background background}
-                        {:background-color (get-theme-attribute :phase-bgcolor-active "#ccc")
-                         :border-color (get-theme-attribute :phase-bgcolor-active "#ccc")}))]
-    [:&.completed {:background-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
-                   :border-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
+                        {:background-color (get-theme-attribute :phase-bgcolor-active)
+                         :border-color (get-theme-attribute :phase-bgcolor-active)}))]
+    [:&.completed {:background-color (get-theme-attribute :phase-bgcolor-completed)
+                   :border-color (get-theme-attribute :phase-bgcolor-completed)
                    :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
 
 (defn- generate-actions-float-menu
@@ -183,16 +183,17 @@
                                     :overflow-y :auto
                                     :max-height "calc(100vh - 105px)"}])))
 
+;; TODO inline me
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
   ;; 'large text' and thus requires smaller contrast ratio for
   ;; accessibility.
-  (get-theme-attribute :button-navbar-font-weight 700))
+  (get-theme-attribute :button-navbar-font-weight))
 
 (defn table-selection-bgcolor []
   (if-let [selection-bgcolor (get-theme-attribute :table-selection-bgcolor)]
     selection-bgcolor
-    (-> (get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3 "#777777")
+    (-> (get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3)
         (c/darken 15))))
 
 (defn- generate-rems-table-styles []
@@ -209,14 +210,14 @@
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
    [:.table-border {:padding 0
                     :margin "1em 0"
-                    :border (get-theme-attribute :table-border "1px solid #ccc")
+                    :border (get-theme-attribute :table-border)
                     :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
                   :background-color (get-theme-attribute :table-bgcolor :color1)
                   :box-shadow (get-theme-attribute :table-shadow)
                   :color (get-theme-attribute :table-text-color)}
     [:th {:white-space "nowrap"
-          :color (get-theme-attribute :table-heading-color "#fff")
+          :color (get-theme-attribute :table-heading-color)
           :background-color (get-theme-attribute :table-heading-bgcolor :color3)}]
     [:th
      :td
@@ -227,11 +228,11 @@
     [:td:before
      {:color (get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
-     [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff")
+     [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff") ; TODO sort this out
                 :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]
      [(s/& (s/nth-child "2n"))
-      [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff")
+      [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff") ; TODO sort this out
                  :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
       {:background-color (get-theme-attribute :table-stripe-color :table-bgcolor :color1)}
       [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]]]
@@ -366,7 +367,7 @@
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {:font-family (get-theme-attribute :font-family "'Lato', sans-serif")
+   [:body {:font-family (get-theme-attribute :font-family)
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
@@ -383,7 +384,7 @@
                       :display :flex
                       :flex-direction :column}]
    [:.fixed-top {:background-color "#fff"
-                 :border-bottom (get-theme-attribute :header-border "3px solid #ccc")
+                 :border-bottom (get-theme-attribute :header-border)
                  :box-shadow (get-theme-attribute :header-shadow :table-shadow)
                  :min-height menu-height}]
    [:.skip-navigation {:position :absolute
@@ -417,11 +418,11 @@
      :&:active:hover
      {:background-color (get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
       :border-color (get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
-      :color (get-theme-attribute :primary-button-hover-color :primary-button-color "#fff")
+      :color (get-theme-attribute :primary-button-hover-color :primary-button-color)
       :outline-color :transparent}]
     {:background-color (get-theme-attribute :primary-button-bgcolor :color4)
      :border-color (get-theme-attribute :primary-button-bgcolor :color4)
-     :color (get-theme-attribute :primary-button-color "#fff")
+     :color (get-theme-attribute :primary-button-color)
      :outline-color :transparent}]
    [:.btn-secondary
     ;; Only override bootstrap's default if the key is defined in the theme
@@ -459,11 +460,13 @@
                                :background-color "#eee"}]]]
    [:.flash-message-title {:font-weight :bold}]
 
+   ;; TODO get rid of the text classes we don't use? At least -dark,
+   ;; -white, -light and -info seem unused currently.
    [:.text-primary {:color (get-theme-attribute :text-primary)}]
    [:.text-secondary {:color (get-theme-attribute :text-secondary)}]
    [:.text-success {:color (get-theme-attribute :text-success)}]
    [:.text-danger {:color (get-theme-attribute :text-danger)}]
-   [:.text-warning {:color (get-theme-attribute :text-warning "#ffc107!important")}]
+   [:.text-warning {:color (get-theme-attribute :text-warning)}]
    [:.text-info {:color (get-theme-attribute :text-info)}]
    [:.text-light {:color (get-theme-attribute :text-light)}]
    [:.text-dark {:color (get-theme-attribute :text-dark)}]
@@ -480,6 +483,7 @@
    [:.bg-dark {:background-color (get-theme-attribute :bg-dark)}]
    [:.bg-white {:background-color (get-theme-attribute :bg-white)}]
 
+   ;; TODO get rid of alert classes we don't use
    [:.alert-primary {:color (get-theme-attribute :alert-primary-color)
                      :background-color (get-theme-attribute :alert-primary-bgcolor)
                      :border-color (get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
@@ -539,7 +543,7 @@
      :letter-spacing (u/rem 0.015)
      :padding-left 0
      :padding-right 0
-     :color (get-theme-attribute :navbar-color "#111")
+     :color (get-theme-attribute :navbar-color)
      :justify-content "space-between"}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
@@ -569,7 +573,7 @@
    [:.navbar {:white-space "nowrap"}]
    [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
    [:.user-name {:text-transform :none}]
-   [:#big-navbar {:text-transform (get-theme-attribute :big-navbar-text-transform "none")}]
+   [:#big-navbar {:text-transform (get-theme-attribute :big-navbar-text-transform)}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]
    [:.navbar-flex {:display "flex"
@@ -580,7 +584,7 @@
    ;; Logo, login, etc.
    (generate-logo-styles)
    ;; Footer
-   (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
+   (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color)]
      [:footer {:width "100%"
                :min-height (u/px 53.6)
                :color footer-text-color
@@ -749,7 +753,7 @@
                      :width "inherit"}]
    [:.clickable {:cursor :pointer}]
    [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border
-   [:.rems-card-header {:color (get-theme-attribute :table-heading-color "#fff")
+   [:.rems-card-header {:color (get-theme-attribute :table-heading-color)
                         :background-color (get-theme-attribute :table-heading-bgcolor :color3)}]
    [(s/descendant :.card-header :a) {:color :inherit}]
    [:.application-resources
@@ -769,15 +773,16 @@
    [:.collapse-toggle {:text-align :center}]
    [:.collapse-wrapper {:border-radius (u/rem 0.4)
                         :border "1px solid #ccc"
-                        :background-color (get-theme-attribute :collapse-bgcolor "#fff")
+                        :background-color (get-theme-attribute :collapse-bgcolor)
                         :box-shadow (get-theme-attribute :collapse-shadow :table-shadow)}
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
                     :font-weight 400
                     :font-size (u/rem 1.5)
                     :line-height 1.1
-                    :font-family (get-theme-attribute :font-family "'Lato', sans-serif")
-                    :color (get-theme-attribute :collapse-color "#fff")}
+                    :font-family (get-theme-attribute :font-family)
+                    :color (get-theme-attribute :collapse-color)}
+     ;; TODO figure this out
      [:&.alert-danger {:color (get-theme-attribute :danger-color "inherit")}]]]
    [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
@@ -829,7 +834,7 @@
    ;; by more specific styles by react-select.
    [:.dropdown-select__option--is-focused
     (make-important
-     {:color (get-theme-attribute :table-heading-color "#fff")
+     {:color (get-theme-attribute :table-heading-color)
       :background-color (get-theme-attribute :table-heading-bgcolor :color3)})]
    [:.dropdown-select__control--is-focused
     (make-important
@@ -886,10 +891,6 @@
 
 (defn screen-css []
   (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
-
-(deftest test-screen-css
-  (binding [context/*lang* :fi]
-    (is (string? (screen-css)))))
 
 ;; For development use and Figwheel updates render all configured CSS
 ;; files so that Figwheel will notice this change and force our app

@@ -24,7 +24,7 @@
   (when path
     (let [url (if (str/starts-with? path "http")
                 path
-                (str (get-theme-attribute :img-path "../../img/") path))]
+                (str (get-theme-attribute :img-path) path))]
       (str "url(\"" url "\")"))))
 
 (defn get-logo-image [lang]
@@ -35,4 +35,3 @@
 
 (defn get-navbar-logo [lang]
   (resolve-image (get-theme-attribute (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))
-
