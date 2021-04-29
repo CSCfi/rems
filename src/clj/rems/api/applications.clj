@@ -275,7 +275,7 @@
       :summary "Get attachments for an application as a zip file"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
-      :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, will zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
+      :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, the zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
