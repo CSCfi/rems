@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [rems.api.services.attachment :as attachment]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.applications]
@@ -1564,8 +1565,8 @@
                              read-ok-body
                              :id))
         file #(assoc filecontent :filename %)
-        fetch-zip (fn [user-id]
-                    (with-open [zip (-> (api-response :get (str "/api/applications/" app-id "/attachments") nil
+        fetch-zip (fn [user-id & [params]]
+                    (with-open [zip (-> (api-response :get (str "/api/applications/" app-id "/attachments" params) nil
                                                       api-key user-id)
                                         :body
                                         ZipInputStream.)]
@@ -1594,7 +1595,9 @@
       (is (= {"blue.txt" (slurp testfile)
               "red.txt" (slurp testfile)
               "green.txt" (slurp testfile)}
-             (fetch-zip applicant-id))))
+             (fetch-zip applicant-id)
+             (fetch-zip applicant-id "?all=true")
+             (fetch-zip applicant-id "?all=false"))))
     (testing "submit"
       (is (= {:success true}
              (send-command applicant-id {:type :application.command/submit
@@ -1615,9 +1618,17 @@
                 "green.txt" (slurp testfile)
                 "blue (1).txt" (slurp testfile)
                 "yellow.txt" (slurp testfile)}
+               (fetch-zip applicant-id "?all=true")
                (fetch-zip applicant-id)
                (fetch-zip handler-id)
                (fetch-zip reporter-id))))
+      (testing "fetch zip with all=false as applicant, handler and reporter"
+        (is (= {"blue.txt" (slurp testfile)
+                "red.txt" (slurp testfile)
+                "green.txt" (slurp testfile)}
+               (fetch-zip applicant-id "?all=false")
+               (fetch-zip handler-id "?all=false")
+               (fetch-zip reporter-id "?all=false"))))
       (testing "fetch zip as third party"
         (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/attachments") nil
                                                   api-key "malice"))))
@@ -1894,9 +1905,15 @@
                                                                   :sv "Notifications SV"}
                                             :form/fields [{:field/type :text
                                                            :field/id "field-1"
-                                                           :field/title {:en "text field"
-                                                                         :fi "text field"
-                                                                         :sv "text field"}
+                                                           :field/title {:en "text field EN"
+                                                                         :fi "text field FI"
+                                                                         :sv "text field SV"}
+                                                           :field/optional false}
+                                                          {:field/type :attachment
+                                                           :field/id "att"
+                                                           :field/title {:en "attachment EN"
+                                                                         :fi "attachment FI"
+                                                                         :sv "attachment SV"}
                                                            :field/optional false}]})
         workflow-id (test-helpers/create-workflow! {:title "wf"
                                                     :handlers [handler]
@@ -1905,8 +1922,17 @@
         res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id
                                                      :resource-id res-id
-                                                     :workflow-id workflow-id})
-        app-id (test-helpers/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
+                                                     :workflow-id workflow-id
+                                                     :start (time/date-time 2009)})
+        app-id (test-helpers/create-application! {:time (time/date-time 2010)
+                                                  :actor applicant
+                                                  :catalogue-item-ids [cat-id]})
+        att-id (:id (attachment/add-application-attachment applicant app-id filecontent))]
+    (test-helpers/fill-form! {:time (time/date-time 2010)
+                              :application-id app-id
+                              :actor applicant
+                              :field-value "raw test"
+                              :attachment att-id})
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
                                                 api-key applicant))))
@@ -1914,7 +1940,9 @@
       (is (= {:application/description ""
               :application/invited-members []
               :application/last-activity "2010-01-01T00:00:00.000Z"
-              :application/attachments []
+              :application/attachments [{:attachment/type "text/plain"
+                                         :attachment/filename "test.txt"
+                                         :attachment/id att-id}]
               :application/licenses []
               :application/created "2010-01-01T00:00:00.000Z"
               :application/state "application.state/draft"
@@ -1945,7 +1973,7 @@
               :application/todo nil
               :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
               :application/members []
-              :application/resources [{:catalogue-item/start "REDACTED"
+              :application/resources [{:catalogue-item/start "2009-01-01T00:00:00.000Z"
                                        :catalogue-item/end nil
                                        :catalogue-item/expired false
                                        :catalogue-item/enabled true
@@ -1955,13 +1983,22 @@
                                        :resource/ext-id ext-id
                                        :catalogue-item/archived false
                                        :catalogue-item/id cat-id}]
-              :application/accepted-licenses {:alice []}
+              :application/accepted-licenses {}
               :application/forms [{:form/fields [{:field/value "raw test"
                                                   :field/type "text"
-                                                  :field/title {:en "text field"
-                                                                :fi "text field"
-                                                                :sv "text field"}
+                                                  :field/title {:en "text field EN"
+                                                                :fi "text field FI"
+                                                                :sv "text field SV"}
                                                   :field/id "field-1"
+                                                  :field/optional false
+                                                  :field/visible true
+                                                  :field/private false}
+                                                 {:field/value (str att-id)
+                                                  :field/type "attachment"
+                                                  :field/id "att"
+                                                  :field/title {:en "attachment EN"
+                                                                :fi "attachment FI"
+                                                                :sv "attachment SV"}
                                                   :field/optional false
                                                   :field/visible true
                                                   :field/private false}]
@@ -1989,17 +2026,9 @@
                                     :event/actor "alice"
                                     :application/id app-id
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
-                                    :application/field-values [{:form form-id :field "field-1" :value "raw test"}]}
-                                   {:event/id 100
-                                    :event/type "application.event/licenses-accepted"
-                                    :event/time "2010-01-01T00:00:00.000Z"
-                                    :event/actor "alice"
-                                    :application/id app-id
-                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
-                                    :application/accepted-licenses []}]}
+                                    :application/field-values [{:form form-id :field "field-1" :value "raw test"}
+                                                               {:form form-id :field "att" :value (str att-id)}]}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
-                 ;; start is set by the db not easy to mock
-                 (assoc-in [:application/resources 0 :catalogue-item/start] "REDACTED")
                  ;; event ids are unpredictable
                  (update :application/events (partial map #(update % :event/id (constantly 100))))))))))
