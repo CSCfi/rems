@@ -20,6 +20,7 @@ Changes since v2.17
 ### Additions
 - REMS now supports PostgreSQL version 13. (#2642)
 - Experimental GA4GH Permissions API now allows users to query their own permissions via `/api/permissions/:user`. (#2631)
+- Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn). (#2588)
 
 ## v2.17 "Isokaari" 2021-04-12
 
