@@ -399,7 +399,7 @@
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-phone-number "Ogiltig telefonnummer."
                       :invalid-ip-address "Ogiltig IP-adress."
-                      :invalid-ip-address-private "Detta är en privat IP-adress och kan inte användas i en applikation."
+                      :invalid-ip-address-private "Detta är en privat IP-adress och kan inte användas i en ansökning."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :options-required "Kräv minst ett alternativ." ; TODO check
