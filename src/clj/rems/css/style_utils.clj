@@ -2,11 +2,30 @@
   "The namespace contains the helpful style utils that are meant to be kept separate
    the main styles file to keep it cleaner."
   (:require [clojure.string :as str]
-            [garden.stylesheet :as stylesheet]
             [rems.config :refer [env]]))
 
 
-;; Customazable theme related functions
+;; Customizable theme related functions
+
+(def ^:private ignore-theme-var-error?
+  ;; We don't want to include all these localized versions in
+  ;; config-defaults.edn. Luckily there are only a few so we can just
+  ;; have a whitelist.
+  #{:logo-name-fi
+    :logo-name-fi-sm
+    :navbar-logo-name-fi
+    :logo-name-sv
+    :logo-name-sv-sm
+    :navbar-logo-name-sv})
+
+(defn- theme-get
+  "Helper for making sure we document all our theme variables."
+  [attr]
+  (if-let [[_ v] (find (:theme env) attr)] ; find instead of get: nil values are ok, missing values are bad
+    v
+    (when (:dev env)
+      (when-not (ignore-theme-var-error? attr)
+        (assert false (str "Theme attribute " attr " used but not documented in config-defaults.edn!"))))))
 
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme with fallbacks.
@@ -16,7 +35,7 @@
   (when (seq attr-names)
     (let [attr-name (first attr-names)
           attr-value (if (keyword? attr-name)
-                       (get (:theme env) attr-name)
+                       (theme-get attr-name)
                        attr-name)]
       (or attr-value (recur (rest attr-names))))))
 
