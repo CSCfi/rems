@@ -334,6 +334,7 @@
         ;; leave "Text are with max length" empty
 
         (fill-form-field "Phone number" "+358450000100")
+        (fill-form-field "IP address" "142.250.74.110")
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
@@ -424,7 +425,8 @@
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]
-                      ["phone-number" "+358450000100"]]
+                      ["phone-number" "+358450000100"]
+                      ["ip-address" "142.250.74.110"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)

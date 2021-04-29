@@ -266,6 +266,7 @@
                 :type-description "Ansökans rubrik"
                 :type-email "E-postadress"
                 :type-header "Titel"
+                :type-ip-address "IP-adress"
                 :type-label "Informationsfält"
                 :type-multiselect "Flervalsmeny"
                 :type-option "Rullgardinsmeny"
@@ -397,6 +398,8 @@
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-phone-number "Ogiltig telefonnummer."
+                      :invalid-ip-address "Ogiltig IP-adress."
+                      :invalid-ip-address-private "Detta är en privat IP-adress och kan inte användas i en ansökning."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :options-required "Kräv minst ett alternativ." ; TODO check

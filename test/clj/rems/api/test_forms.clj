@@ -192,6 +192,9 @@
                                  {:field/type :phone-number
                                   :field/title localized
                                   :field/optional true}
+                                 {:field/type :ip-address
+                                  :field/title localized
+                                  :field/optional true}
                                  {:field/type :date
                                   :field/title localized
                                   :field/optional true}

@@ -393,6 +393,30 @@
                                         :field/visible  true
                                         :field/value    "+358450000100"}]))))
 
+  (testing "error: field input invalid ip address"
+    (is (= [{:type :t.form.validation/invalid-ip-address :field-id "invalid ip address"}
+            {:type :t.form.validation/invalid-ip-address-private :field-id "private ip address"}]
+           (validate-fields-for-draft [{:field/id       "empty ip address"
+                                        :field/type     :ip-address
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    ""}
+                                       {:field/id       "invalid ip address"
+                                        :field/type     :ip-address
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    "+058450000100"}
+                                       {:field/id       "correct ip address"
+                                        :field/type     :ip-address
+                                        :field/optional false
+                                        :field/visible  true
+                                        :field/value    "142.250.74.110"}
+                                       {:field/id       "private ip address"
+                                        :field/type     :ip-address
+                                        :field/optional true
+                                        :field/visible  true
+                                        :field/value    "192.0.2.255"}]))))
+
   (testing "table validation"
     (let [fields [{:field/id "tbl"
                    :field/type :table
