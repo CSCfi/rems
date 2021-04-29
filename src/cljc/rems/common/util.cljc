@@ -38,6 +38,7 @@
 ;; 198.18.x.x - 198.19.x.x - Private network, benchmark testing of inter-network communications between two separate subnets
 ;; 198.51.100.x - Documentation, Assigned as TEST-NET-2, documentation and examples.
 ;; 203.0.113.x - Documentation, Assigned as TEST-NET-3, documentation and examples.
+;; 224.x.x.x - In use for IP multicast.[11] (Former Class D network).
 ;; 240.x.x.x–255.x.x.x - multicast
 (def +reserved-ip-address-range-regex+
   (re-pattern
