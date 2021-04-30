@@ -121,7 +121,7 @@
 
  ;; UI theme variables.
  :theme {:color1 "#eee"
-         :color2 "#555"
+         :color2 "#999"
          :color3 "#000"
          :color4 "#000"
 
@@ -155,14 +155,14 @@
 
          ;; Tables
          :table-hover-color nil ; defaults to :table-text-color
-         :table-hover-bgcolor nil ; defaults to :table-bgcolor or :color2
-         :table-bgcolor nil ; defalts to :color1
+         :table-hover-bgcolor nil ; defaults to :color2
+         :table-bgcolor nil ; defaults to :color1
          :table-shadow nil
          :table-border "1px solid #ccc"
          :table-heading-color "#fff"
          :table-heading-bgcolor nil ; defaults to :color3
          :table-selection-bgcolor nil ; defaults to a darkened :table-hover-bgcolor, :table-bgcolor or :color3
-         :table-text-color nil ; TODO sort this out
+         :table-text-color nil ; defaults to bootstrap colors
          :table-stripe-color nil ; background for every second table row, defaults to :color1
 
          ;; Text

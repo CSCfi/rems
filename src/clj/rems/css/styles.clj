@@ -228,11 +228,11 @@
     [:td:before
      {:color (get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
-     [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff") ; TODO sort this out
+     [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color)
                 :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]
      [(s/& (s/nth-child "2n"))
-      [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff") ; TODO sort this out
+      [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color)
                  :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
       {:background-color (get-theme-attribute :table-stripe-color :table-bgcolor :color1)}
       [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]]]
