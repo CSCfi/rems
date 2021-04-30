@@ -563,6 +563,10 @@
    [:.navbar-toggler {:border-color (get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
+    ;; TODO this use of link-color is preventing us from moving the
+    ;; default for link-color into config-defaults.edn. At least
+    ;; theme-findata has set :link-color (to something different
+    ;; than :color3) and not set :nav-color.
     {:color (get-theme-attribute :nav-color :link-color :color3)
      :font-weight (button-navbar-font-weight)
      :border 0} ; for button links

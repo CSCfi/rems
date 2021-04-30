@@ -148,7 +148,7 @@
          ;; Navbar
          :button-navbar-font-weight 700
          :navbar-color "#111" ; color of text in navbar
-         :nav-color nil ; color of links on navbar, defaults to :link-color or :color3
+         :nav-color nil ; color of links on navbar, defaults to :link-color, or if it is not set, :color3
          :nav-active-color nil ; defaults to :color4
          :nav-hover-color nil ; defaults to :color4
          :big-navbar-text-transform "none"
@@ -168,7 +168,7 @@
          ;; Text
          :header-border "3px solid #ccc"
          :header-shadow nil ; defaults to :table-shadow
-         :link-color nil ; TODO sort this out
+         :link-color nil ; defaults to #025b96
          :link-hover-color nil ; defaults to color4
          :font-family "'Lato', sans-serif"
          ;; Text colors:
