@@ -153,11 +153,9 @@
                                           :border-left [[(u/px 10) :solid :white]]
                                           :border-bottom [[(u/px 20) :solid :transparent]]
                                           :border-right "none"}]
-    [:&.active (merge {:color (get-theme-attribute :phase-color-active :phase-color "#111")}
-                      (if-let [background (get-theme-attribute :phase-background-active)]
-                        {:background background}
-                        {:background-color (get-theme-attribute :phase-bgcolor-active)
-                         :border-color (get-theme-attribute :phase-bgcolor-active)}))]
+    [:&.active {:color (get-theme-attribute :phase-color-active :phase-color "#111")
+                :background-color (get-theme-attribute :phase-bgcolor-active)
+                :border-color (get-theme-attribute :phase-bgcolor-active)}]
     [:&.completed {:background-color (get-theme-attribute :phase-bgcolor-completed)
                    :border-color (get-theme-attribute :phase-bgcolor-completed)
                    :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
