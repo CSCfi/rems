@@ -10,6 +10,11 @@ Changes since v2.17
 
 ### Changes
 - The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
+- Changes to theming: (#2588)
+  - Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn).
+  - The theme variables `:danger-color` and `:phase-background-active` have been removed.
+  - The look of the default theme has changes a bit.
+  - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
@@ -20,7 +25,6 @@ Changes since v2.17
 ### Additions
 - REMS now supports PostgreSQL version 13. (#2642)
 - Experimental GA4GH Permissions API now allows users to query their own permissions via `/api/permissions/:user`. (#2631)
-- Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn). (#2588)
 
 ## v2.17 "Isokaari" 2021-04-12
 
