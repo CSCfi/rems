@@ -229,7 +229,6 @@
          :secondary-button-hover-bgcolor nil ; defaults to bootstrap colors
 
          ;; Misc
-         :danger-color nil ; TODO figure this out
          :footer-color nil ; defaults to :table-heading-color
          :footer-bgcolor nil ; defaults to :table-heading-bgcolor or color3
          :collapse-shadow nil ; defaults to :table-shadow

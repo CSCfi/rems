@@ -781,9 +781,7 @@
                     :font-size (u/rem 1.5)
                     :line-height 1.1
                     :font-family (get-theme-attribute :font-family)
-                    :color (get-theme-attribute :collapse-color)}
-     ;; TODO figure this out
-     [:&.alert-danger {:color (get-theme-attribute :danger-color "inherit")}]]]
+                    :color (get-theme-attribute :collapse-color)}]]
    [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
     [:.collapsing {:-webkit-transition "height 0.25s linear"
