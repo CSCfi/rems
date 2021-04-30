@@ -129,7 +129,7 @@
              :justify-content "stretch"
              :align-items "center"}
    [:.phase {:background-color (get-theme-attribute :phase-bgcolor)
-             :color (get-theme-attribute :phase-color "#111")
+             :color (get-theme-attribute :phase-color)
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -153,12 +153,12 @@
                                           :border-left [[(u/px 10) :solid :white]]
                                           :border-bottom [[(u/px 20) :solid :transparent]]
                                           :border-right "none"}]
-    [:&.active {:color (get-theme-attribute :phase-color-active :phase-color "#111")
+    [:&.active {:color (get-theme-attribute :phase-color-active)
                 :background-color (get-theme-attribute :phase-bgcolor-active)
                 :border-color (get-theme-attribute :phase-bgcolor-active)}]
-    [:&.completed {:background-color (get-theme-attribute :phase-bgcolor-completed)
-                   :border-color (get-theme-attribute :phase-bgcolor-completed)
-                   :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
+    [:&.completed {:color (get-theme-attribute :phase-color-completed)
+                   :background-color (get-theme-attribute :phase-bgcolor-completed)
+                   :border-color (get-theme-attribute :phase-bgcolor-completed)}]]])
 
 (defn- generate-actions-float-menu
   "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS

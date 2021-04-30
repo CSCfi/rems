@@ -138,7 +138,7 @@
 
          ;; Phases
          :phase-bgcolor "#eee"
-         :phase-color nil ; TODO sort this out
+         :phase-color "#111"
          :phase-bgcolor-active "#ccc"
          :phase-color-active nil ; defaults to :phase-color
          :phase-bgcolor-completed "#ccc"
