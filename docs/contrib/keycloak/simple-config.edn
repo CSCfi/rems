@@ -6,7 +6,7 @@
  :authentication :oidc
 
  ; The location of Keycloak's OIDC metadata for the realm to which REMS is client
- :oidc-metadata-url "http://rp-keycloak:8080/auth/realms/dycons-researcher-idp/.well-known/openid-configuration"
+ :oidc-metadata-url "http://keycloak:8080/auth/realms/rems-idp/.well-known/openid-configuration"
 
  ; REMS' client ID, as defined in Keycloak
  :oidc-client-id "rems-client"

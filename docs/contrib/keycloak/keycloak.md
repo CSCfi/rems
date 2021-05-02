@@ -137,13 +137,9 @@ services:
 ```
 Then, in your REMS config file, you must set something like:
 ```
-:oidc-metadata-url "http://keycloak:8080/auth/realms/my-realm/.well-known/openid-configuration"`.
+:oidc-metadata-url "http://keycloak:8080/auth/realms/rems-idp/.well-known/openid-configuration"
 ```
-If you instead set it to something like:
-```
-:oidc-metadata-url "http://localhost:8080/auth/realms/dycons-researcher-idp/.well-known/openid-configuration"
-```
-then REMS will crash with a `Connection Refused` exception early in runtime. 
+If you use `localhost:8080` instead of `keycloak:8080`, then REMS will crash with a `Connection Refused` exception early in runtime. 
 
 Using the `keycloak:8080` hostname, the problem arises when a user attempts to Login to REMS. REMS requests authentication redirection URLs from Keycloak at the `keycloak:8080` address. Keycloak then generates those URLs using the `keycloak:8080` hostname used in the request. However, `keycloak:8080` is meaningless to the user's browser, which does not have access to the docker-compose network namespace. The browser is unable to find Keycloak at that address.
 
