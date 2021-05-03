@@ -128,11 +128,11 @@
          ;; Images & logos
          :img-path  "../../img/" ; Path for static images, relative to /css/<lang>/screen.css
          :logo-name nil ; Big logo, used on home page. Also used on other pages if :navbar-logo-name is not set.
-         :logo-name-en nil ; localized big logo, defaults to :logo-name
-         :logo-name-sm nil ; Small logo, used in mobile mode.
-         :logo-name-en-sm nil ; localized
+         :logo-name-en nil ; Localized big logo, defaults to :logo-name
+         :logo-name-sm nil ; Small version of big logo, used in mobile mode.
+         :logo-name-en-sm nil ; Localized small version of big logo, defaults to :logo-name-sm
          :navbar-logo-name nil ; Small logo for navbar
-         :navbar-logo-name-en nil ; localized
+         :navbar-logo-name-en nil ; Localized small logo for navbar, defaults to :navbar-logo-name
          :logo-bgcolor nil
          :logo-content-origin nil
 
@@ -150,7 +150,7 @@
          :nav-color nil ; color of links on navbar, defaults to :link-color, or if it is not set, :color3
          :nav-active-color nil ; defaults to :color4
          :nav-hover-color nil ; defaults to :color4
-         :big-navbar-text-transform "none"
+         :big-navbar-text-transform "none" ; can be used to e.g. uppercase the navbar text
 
          ;; Tables
          :table-hover-color nil ; defaults to :table-text-color
