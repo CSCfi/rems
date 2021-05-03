@@ -14,7 +14,10 @@
     [info-field (text :t.applicant-info/name) name {:inline? true}]))
 
 (defn attributes
-  "A div with a rems.atoms/info-field for every user attribute in the given attributes."
+  "A div with a rems.atoms/info-field for every user attribute in the given attributes.
+   Accepts 
+    - attributes: map, user attributes
+    - invited-user? : boolean, if user is invited, shows different email string"
   [attributes invited-user?]
   (let [language @(rf/subscribe [:language])
         organization-by-id @(rf/subscribe [:organization-by-id])
@@ -30,7 +33,6 @@
            (when-let [mail (:notification-email attributes)]
              [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
            (when-let [mail (:email attributes)]
-             [info-field (text :t.applicant-info/email) mail {:inline? true}]
              (if invited-user?
                [info-field (text :t.applicant-info/email) mail {:inline? true}]
                [info-field (text :t.applicant-info/email-idp) mail {:inline? true}]))
@@ -56,7 +58,7 @@
    (example "empty attributes"
             [username {}])
    (component-info attributes)
-   (example "full set of attributes"
+   (example "full set of attributes, false invited-user status"
             [attributes {:userid "developer@uu.id"
                          :email "developer@uu.id"
                          :name "Deve Loper"
@@ -66,13 +68,20 @@
                          :researcher-status-by "so"
                          :nickname "The Dev"}
              false])
-   (example "invalid value for researcher status"
+   (example "invited memeber set of attributes, true invited-user status"
+            [attributes {:userid "invited@memeber.com"
+                         :email "invited@memeber.com"
+                         :name "Invited Mamber"
+                         :notification-email "invited@memeber.com"
+                         :organizations []}
+             true])
+   (example "invalid value for researcher status, no invited-user status"
             [attributes {:userid "developer@uu.id"
                          :email "developer@uu.id"
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                          :researcher-status-by :dac}])
-   (example "less attributes"
+   (example "less attributes, no invited-user status"
             [attributes {:email "developer@uu.id"
                          :organizations [{:organization/id "Testers"} {:organization/id "Users"}]}])
-   (example "empty attributes"
+   (example "empty attributes, no invited-user status"
             [attributes {}])])
