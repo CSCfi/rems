@@ -131,7 +131,7 @@
          :logo-name-en nil ; Localized big logo, defaults to :logo-name
          :logo-name-sm nil ; Small version of big logo, used in mobile mode.
          :logo-name-en-sm nil ; Localized small version of big logo, defaults to :logo-name-sm
-         :navbar-logo-name nil ; Small logo for navbar
+         :navbar-logo-name nil ; Small logo for navbar. Used on non-home pages instead of :logo-name.
          :navbar-logo-name-en nil ; Localized small logo for navbar, defaults to :navbar-logo-name
          :logo-bgcolor nil
          :logo-content-origin nil
