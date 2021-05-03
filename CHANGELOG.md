@@ -12,7 +12,7 @@ Changes since v2.17
 - The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
 - Changes to theming: (#2588)
   - Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn).
-  - The theme variables `:danger-color` and `:phase-background-active` have been removed.
+  - The theme variables `:danger-color` (didn't really affect anything) and `:phase-background-active` (wasn't used, overlaps with `:phase-bgcolor-active`) have been removed.
   - The look of the default theme has changes a bit.
   - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
 
