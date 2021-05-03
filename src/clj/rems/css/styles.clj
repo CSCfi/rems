@@ -358,7 +358,7 @@
    [:a
     :button
     {:cursor :pointer
-     :color (get-theme-attribute :link-color "#025b96")}
+     :color (get-theme-attribute :link-color)}
     [:&:hover {:color (get-theme-attribute :link-hover-color :color4)}]]
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
@@ -561,11 +561,7 @@
    [:.navbar-toggler {:border-color (get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
-    ;; TODO this use of link-color is preventing us from moving the
-    ;; default for link-color into config-defaults.edn. At least
-    ;; theme-findata has set :link-color (to something different
-    ;; than :color3) and not set :nav-color.
-    {:color (get-theme-attribute :nav-color :link-color :color3)
+    {:color (get-theme-attribute :nav-color :link-color)
      :font-weight (button-navbar-font-weight)
      :border 0} ; for button links
     [:&.active
