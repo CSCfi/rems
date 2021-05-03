@@ -121,9 +121,118 @@
 
  ;; UI theme variables.
  :theme {:color1 "#eee"
-         :color2 "#555"
+         :color2 "#999"
          :color3 "#000"
-         :color4 "#000"}
+         :color4 "#000"
+
+         ;; Images & logos
+         :img-path  "../../img/" ; Path for static images, relative to /css/<lang>/screen.css
+         :logo-name nil ; Big logo, used on home page. Also used on other pages if :navbar-logo-name is not set.
+         :logo-name-en nil ; Localized big logo, defaults to :logo-name
+         :logo-name-sm nil ; Small version of big logo, used in mobile mode.
+         :logo-name-en-sm nil ; Localized small version of big logo, defaults to :logo-name-sm
+         :navbar-logo-name nil ; Small logo for navbar. Used on non-home pages instead of :logo-name.
+         :navbar-logo-name-en nil ; Localized small logo for navbar, defaults to :navbar-logo-name
+         :logo-bgcolor nil
+         :logo-content-origin nil
+
+         ;; Phases
+         :phase-bgcolor "#eee"
+         :phase-color "#111"
+         :phase-bgcolor-active "#ccc"
+         :phase-color-active nil ; defaults to :phase-color
+         :phase-bgcolor-completed "#ccc"
+         :phase-color-completed nil ; defaults to :phase-color
+
+         ;; Navbar
+         :button-navbar-font-weight 700
+         :navbar-color "#111" ; color of text in navbar
+         :nav-color nil ; color of links on navbar, defaults to :link-color
+         :nav-active-color nil ; defaults to :color4
+         :nav-hover-color nil ; defaults to :color4
+         :big-navbar-text-transform "none" ; can be used to e.g. uppercase the navbar text
+
+         ;; Tables
+         :table-hover-color nil ; defaults to :table-text-color
+         :table-hover-bgcolor nil ; defaults to :color2
+         :table-bgcolor nil ; defaults to :color1
+         :table-shadow nil
+         :table-border "1px solid #ccc"
+         :table-heading-color "#fff"
+         :table-heading-bgcolor nil ; defaults to :color3
+         :table-selection-bgcolor nil ; defaults to a darkened :table-hover-bgcolor, :table-bgcolor or :color3
+         :table-text-color nil ; defaults to bootstrap colors
+         :table-stripe-color nil ; background for every second table row, defaults to :color1
+
+         ;; Text
+         :header-border "3px solid #ccc"
+         :header-shadow nil ; defaults to :table-shadow
+         :link-color  "#025b96"
+         :link-hover-color nil ; defaults to color4
+         :font-family "'Lato', sans-serif"
+         ;; Text colors:
+         :text-primary nil
+         :bg-primary nil
+         :text-secondary nil
+         :bg-secondary nil
+         :text-success nil
+         :bg-success nil
+         :text-danger nil
+         :bg-danger nil
+         :text-warning "#ffc107!important"
+         :bg-warning nil
+         :text-info nil
+         :bg-info nil
+         :text-light nil
+         :bg-light nil
+         :text-dark nil
+         :bg-dark nil
+         :text-white nil
+         :bg-white nil
+         :text-muted nil
+
+         ;; Alerts
+         :alert-primary-color nil ; defaults to bootstrap colors
+         :alert-primary-bgcolor nil ; defaults to bootstrap colors
+         :alert-primary-bordercolor nil ; defaults to :alert-primary-color
+         :alert-secondary-color nil ; defaults to bootstrap colors
+         :alert-secondary-bgcolor nil ; defaults to bootstrap colors
+         :alert-secondary-bordercolor nil ; defaults to :alert-secondary-color
+         :alert-success-color nil ; defaults to bootstrap colors
+         :alert-success-bgcolor nil ; defaults to bootstrap colors
+         :alert-success-bordercolor nil ; defaults to :alert-success-color
+         :alert-danger-color nil ; defaults to bootstrap colors
+         :alert-danger-bgcolor nil ; defaults to bootstrap colors
+         :alert-danger-bordercolor nil ; defaults to :alert-danger-color
+         :alert-warning-color nil ; defaults to bootstrap colors
+         :alert-warning-bgcolor nil ; defaults to bootstrap colors
+         :alert-warning-bordercolor nil ; defaults to :alert-warning-color
+         :alert-info-color nil ; defaults to bootstrap colors
+         :alert-info-bgcolor nil ; defaults to bootstrap colors
+         :alert-info-bordercolor nil ; defaults to :alert-info-color
+         :alert-light-color nil ; defaults to bootstrap colors
+         :alert-light-bgcolor nil ; defaults to bootstrap colors
+         :alert-light-bordercolor nil ; defaults to :alert-light-color
+         :alert-dark-color nil ; defaults to bootstrap colors
+         :alert-dark-bgcolor nil ; defaults to bootstrap colors
+         :alert-dark-bordercolor nil ; defaults to :alert-dark-color
+
+         ;; Buttons
+         :primary-button-color "#fff"
+         :primary-button-bgcolor nil ; defaults to :color4
+         :primary-button-hover-color nil ; defaults to :primary-button-color
+         :primary-button-hover-bgcolor nil ; defaults to :primary-button-bgcolor
+         :secondary-button-color nil ; defaults to bootstrap colors
+         :secondary-button-bgcolor nil ; defaults to bootstrap colors
+         :secondary-button-hover-color nil ; defaults to bootstrap colors
+         :secondary-button-hover-bgcolor nil ; defaults to bootstrap colors
+
+         ;; Misc
+         :footer-color nil ; defaults to :table-heading-color
+         :footer-bgcolor nil ; defaults to :table-heading-bgcolor or color3
+         :collapse-shadow nil ; defaults to :table-shadow
+         :collapse-bgcolor "#fff"
+         :collapse-color "#fff"}
 
  ;; Optional extra static resources directory.
  :extra-static-resources nil
@@ -191,4 +300,3 @@
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
  :enable-ega false} ; should the EGA features be shown in the UI
-

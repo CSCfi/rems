@@ -10,6 +10,15 @@ Changes since v2.17
 
 ### Changes
 - The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
+- Changes to theming: (#2588)
+  - Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn).
+  - The `:nav-color` now simply defaults to `:link-color`. Previously, it defaulted to `:color3` if `:link-color` is unset.
+  - The theme variables `:danger-color` (didn't really affect anything) and `:phase-background-active` (wasn't used, overlaps with `:phase-bgcolor-active`) have been removed.
+  - The default theme has minor visual changes:
+    - color2 is lighter
+    - table hover highlight is now dark-on-light instead of light-on-dark
+    - link color used in nav bar
+  - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)

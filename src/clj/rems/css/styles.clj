@@ -20,7 +20,7 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.css.style-utils :refer [get-theme-attribute get-logo-image get-navbar-logo get-logo-name-sm]]
+            [rems.css.style-utils :refer [theme-getx get-logo-image get-navbar-logo get-logo-name-sm]]
             [ring.util.response :as response]))
 
 (def content-width (u/px 1200))
@@ -84,12 +84,12 @@
 (defn- generate-logo-styles []
   (list
    [:.logo-menu {:height logo-height-menu
-                 :background-color (get-theme-attribute :logo-bgcolor)
+                 :background-color (theme-getx :logo-bgcolor)
                  :width "100px"
                  :padding-top "0px"
                  :padding-bottom "0px"}]
    [:.logo {:height logo-height
-            :background-color (get-theme-attribute :logo-bgcolor)
+            :background-color (theme-getx :logo-bgcolor)
             :width "100%"
             :margin "0 auto"
             :padding "0 20px"
@@ -97,20 +97,20 @@
    [(s/descendant :.logo :.img)
     (s/descendant :.logo-menu :.img)
     {:height "100%"
-     :background-color (get-theme-attribute :logo-bgcolor)
+     :background-color (theme-getx :logo-bgcolor)
      :-webkit-background-size :contain
      :-moz-o-background-size :contain
      :-o-background-size :contain
      :background-size :contain
      :background-repeat :no-repeat
      :background-position [[:center :center]]
-     :background-origin (get-theme-attribute :logo-content-origin)}]
+     :background-origin (theme-getx :logo-content-origin)}]
    [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
    [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
    (stylesheet/at-media {:max-width (u/px 480)}
                         (list
                          [(s/descendant :.logo :.img)
-                          {:background-color (get-theme-attribute :logo-bgcolor)
+                          {:background-color (theme-getx :logo-bgcolor)
                            :background-image (get-logo-name-sm context/*lang*)
                            :-webkit-background-size :contain
                            :-moz-background-size :contain
@@ -128,8 +128,8 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color (get-theme-attribute :phase-bgcolor "#eee")
-             :color (get-theme-attribute :phase-color "#111")
+   [:.phase {:background-color (theme-getx :phase-bgcolor)
+             :color (theme-getx :phase-color)
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -153,14 +153,12 @@
                                           :border-left [[(u/px 10) :solid :white]]
                                           :border-bottom [[(u/px 20) :solid :transparent]]
                                           :border-right "none"}]
-    [:&.active (merge {:color (get-theme-attribute :phase-color-active :phase-color "#111")}
-                      (if-let [background (get-theme-attribute :phase-background-active)]
-                        {:background background}
-                        {:background-color (get-theme-attribute :phase-bgcolor-active "#ccc")
-                         :border-color (get-theme-attribute :phase-bgcolor-active "#ccc")}))]
-    [:&.completed {:background-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
-                   :border-color (get-theme-attribute :phase-bgcolor-completed "#ccc")
-                   :color (get-theme-attribute :phase-color-completed :phase-color)}]]])
+    [:&.active {:color (theme-getx :phase-color-active)
+                :background-color (theme-getx :phase-bgcolor-active)
+                :border-color (theme-getx :phase-bgcolor-active)}]
+    [:&.completed {:color (theme-getx :phase-color-completed)
+                   :background-color (theme-getx :phase-bgcolor-completed)
+                   :border-color (theme-getx :phase-bgcolor-completed)}]]])
 
 (defn- generate-actions-float-menu
   "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
@@ -183,16 +181,17 @@
                                     :overflow-y :auto
                                     :max-height "calc(100vh - 105px)"}])))
 
+;; TODO inline me
 (defn- button-navbar-font-weight []
   ;; Default font-weight to 700 so the text is considered
   ;; 'large text' and thus requires smaller contrast ratio for
   ;; accessibility.
-  (get-theme-attribute :button-navbar-font-weight 700))
+  (theme-getx :button-navbar-font-weight))
 
 (defn table-selection-bgcolor []
-  (if-let [selection-bgcolor (get-theme-attribute :table-selection-bgcolor)]
+  (if-let [selection-bgcolor (theme-getx :table-selection-bgcolor)]
     selection-bgcolor
-    (-> (get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3 "#777777")
+    (-> (theme-getx :table-hover-bgcolor :table-bgcolor :color3)
         (c/darken 15))))
 
 (defn- generate-rems-table-styles []
@@ -200,7 +199,7 @@
    [:.rems-table.cart {:background "#fff"
                        :color "#000"
                        :margin 0}
-    [".cart-bundle:not(:last-child)" {:border-bottom [[(u/px 1) :solid (get-theme-attribute :color1)]]}]
+    [".cart-bundle:not(:last-child)" {:border-bottom [[(u/px 1) :solid (theme-getx :color1)]]}]
     [:td:before {:content "initial"}]
     [:th
      :td:before
@@ -209,15 +208,15 @@
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
    [:.table-border {:padding 0
                     :margin "1em 0"
-                    :border (get-theme-attribute :table-border "1px solid #ccc")
+                    :border (theme-getx :table-border)
                     :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
-                  :background-color (get-theme-attribute :table-bgcolor :color1)
-                  :box-shadow (get-theme-attribute :table-shadow)
-                  :color (get-theme-attribute :table-text-color)}
+                  :background-color (theme-getx :table-bgcolor :color1)
+                  :box-shadow (theme-getx :table-shadow)
+                  :color (theme-getx :table-text-color)}
     [:th {:white-space "nowrap"
-          :color (get-theme-attribute :table-heading-color "#fff")
-          :background-color (get-theme-attribute :table-heading-bgcolor :color3)}]
+          :color (theme-getx :table-heading-color)
+          :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
      :td
      {:text-align "left"
@@ -225,21 +224,21 @@
     [:.selection {:width (u/rem 0.5)
                   :padding-right 0}]
     [:td:before
-     {:color (get-theme-attribute :table-text-color)}]
+     {:color (theme-getx :table-text-color)}]
     [:tr {:margin "0 1rem"}
-     [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff")
-                :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
-     [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]
+     [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                :background-color (theme-getx :table-hover-bgcolor :color2)}]
+     [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
      [(s/& (s/nth-child "2n"))
-      [:&:hover {:color (get-theme-attribute :table-hover-color :table-text-color "#fff")
-                 :background-color (get-theme-attribute :table-hover-bgcolor :color2)}]
-      {:background-color (get-theme-attribute :table-stripe-color :table-bgcolor :color1)}
-      [:&.selected {:background-color (get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]]]
+      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
+      {:background-color (theme-getx :table-stripe-color :table-bgcolor :color1)}
+      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
    [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
-   [:.outer-cart {:border [[(u/px 1) :solid (get-theme-attribute :color1)]]
+   [:.outer-cart {:border [[(u/px 1) :solid (theme-getx :color1)]]
                   :border-radius (u/rem 0.4)}]
    [:.cart-title {:margin-left (u/em 1)
                   :margin-right (u/em 1)
@@ -250,7 +249,7 @@
    ;; TODO: Change naming of :color3? It is used as text color here,
    ;;   which means that it should have a good contrast with light background.
    ;;   This could be made explicit by changing the name accordingly.
-   [:.text-highlight {:color (get-theme-attribute :color3)
+   [:.text-highlight {:color (theme-getx :color3)
                       :font-weight "bold"}]))
 
 (defn- generate-form-group []
@@ -359,14 +358,14 @@
    [:a
     :button
     {:cursor :pointer
-     :color (get-theme-attribute :link-color "#025b96")}
-    [:&:hover {:color (get-theme-attribute :link-hover-color :color4)}]]
+     :color (theme-getx :link-color)}
+    [:&:hover {:color (theme-getx :link-hover-color :color4)}]]
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {:font-family (get-theme-attribute :font-family "'Lato', sans-serif")
+   [:body {:font-family (theme-getx :font-family)
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
@@ -383,8 +382,8 @@
                       :display :flex
                       :flex-direction :column}]
    [:.fixed-top {:background-color "#fff"
-                 :border-bottom (get-theme-attribute :header-border "3px solid #ccc")
-                 :box-shadow (get-theme-attribute :header-shadow :table-shadow)
+                 :border-bottom (theme-getx :header-border)
+                 :box-shadow (theme-getx :header-shadow :table-shadow)
                  :min-height menu-height}]
    [:.skip-navigation {:position :absolute
                        :left (u/em -1000)}
@@ -415,13 +414,13 @@
     [:&:hover
      :&:focus
      :&:active:hover
-     {:background-color (get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
-      :border-color (get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
-      :color (get-theme-attribute :primary-button-hover-color :primary-button-color "#fff")
+     {:background-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
+      :border-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
+      :color (theme-getx :primary-button-hover-color :primary-button-color)
       :outline-color :transparent}]
-    {:background-color (get-theme-attribute :primary-button-bgcolor :color4)
-     :border-color (get-theme-attribute :primary-button-bgcolor :color4)
-     :color (get-theme-attribute :primary-button-color "#fff")
+    {:background-color (theme-getx :primary-button-bgcolor :color4)
+     :border-color (theme-getx :primary-button-bgcolor :color4)
+     :color (theme-getx :primary-button-color)
      :outline-color :transparent}]
    [:.btn-secondary
     ;; Only override bootstrap's default if the key is defined in the theme
@@ -430,15 +429,15 @@
      :&:active:hover
      (into {}
            (filter val
-                   {:background-color (get-theme-attribute :secondary-button-hover-bgcolor)
-                    :border-color (get-theme-attribute :secondary-button-hover-bgcolor)
-                    :color (get-theme-attribute :secondary-button-hover-color)
+                   {:background-color (theme-getx :secondary-button-hover-bgcolor)
+                    :border-color (theme-getx :secondary-button-hover-bgcolor)
+                    :color (theme-getx :secondary-button-hover-color)
                     :outline-color :transparent}))]
     (into {}
           (filter val
-                  {:background-color (get-theme-attribute :secondary-button-bgcolor)
-                   :border-color (get-theme-attribute :secondary-button-bgcolor)
-                   :color (get-theme-attribute :secondary-button-color)
+                  {:background-color (theme-getx :secondary-button-bgcolor)
+                   :border-color (theme-getx :secondary-button-bgcolor)
+                   :color (theme-getx :secondary-button-color)
                    :outline-color :transparent}))]
    [:.btn-primary.disabled :.btn-primary:disabled ; same color as bootstrap's default for .btn-secondary.disabled
     {:color "#fff"
@@ -455,64 +454,67 @@
                      :padding "0.25em"
                      :text-align :center
                      :color "#ccc"}
-                    [:&:hover {:color (get-theme-attribute :color4)
+                    [:&:hover {:color (theme-getx :color4)
                                :background-color "#eee"}]]]
    [:.flash-message-title {:font-weight :bold}]
 
-   [:.text-primary {:color (get-theme-attribute :text-primary)}]
-   [:.text-secondary {:color (get-theme-attribute :text-secondary)}]
-   [:.text-success {:color (get-theme-attribute :text-success)}]
-   [:.text-danger {:color (get-theme-attribute :text-danger)}]
-   [:.text-warning {:color (get-theme-attribute :text-warning "#ffc107!important")}]
-   [:.text-info {:color (get-theme-attribute :text-info)}]
-   [:.text-light {:color (get-theme-attribute :text-light)}]
-   [:.text-dark {:color (get-theme-attribute :text-dark)}]
-   [:.text-muted {:color (get-theme-attribute :text-muted)}]
-   [:.text-white {:color (get-theme-attribute :text-white)}]
+   ;; TODO get rid of the text classes we don't use? At least -dark,
+   ;; -white, -light and -info seem unused currently.
+   [:.text-primary {:color (theme-getx :text-primary)}]
+   [:.text-secondary {:color (theme-getx :text-secondary)}]
+   [:.text-success {:color (theme-getx :text-success)}]
+   [:.text-danger {:color (theme-getx :text-danger)}]
+   [:.text-warning {:color (theme-getx :text-warning)}]
+   [:.text-info {:color (theme-getx :text-info)}]
+   [:.text-light {:color (theme-getx :text-light)}]
+   [:.text-dark {:color (theme-getx :text-dark)}]
+   [:.text-muted {:color (theme-getx :text-muted)}]
+   [:.text-white {:color (theme-getx :text-white)}]
 
-   [:.bg-primary {:background-color (get-theme-attribute :bg-primary)}]
-   [:.bg-secondary {:background-color (get-theme-attribute :bg-secondary)}]
-   [:.bg-success {:background-color (get-theme-attribute :bg-success)}]
-   [:.bg-danger {:background-color (get-theme-attribute :bg-danger)}]
-   [:.bg-warning {:background-color (get-theme-attribute :bg-warning)}]
-   [:.bg-info {:background-color (get-theme-attribute :bg-info)}]
-   [:.bg-light {:background-color (get-theme-attribute :bg-light)}]
-   [:.bg-dark {:background-color (get-theme-attribute :bg-dark)}]
-   [:.bg-white {:background-color (get-theme-attribute :bg-white)}]
+   [:.bg-primary {:background-color (theme-getx :bg-primary)}]
+   [:.bg-secondary {:background-color (theme-getx :bg-secondary)}]
+   [:.bg-success {:background-color (theme-getx :bg-success)}]
+   [:.bg-danger {:background-color (theme-getx :bg-danger)}]
+   [:.bg-warning {:background-color (theme-getx :bg-warning)}]
+   [:.bg-info {:background-color (theme-getx :bg-info)}]
+   [:.bg-light {:background-color (theme-getx :bg-light)}]
+   [:.bg-dark {:background-color (theme-getx :bg-dark)}]
+   [:.bg-white {:background-color (theme-getx :bg-white)}]
 
-   [:.alert-primary {:color (get-theme-attribute :alert-primary-color)
-                     :background-color (get-theme-attribute :alert-primary-bgcolor)
-                     :border-color (get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
-   [:.alert-secondary {:color (get-theme-attribute :alert-secondary-color)
-                       :background-color (get-theme-attribute :alert-secondary-bgcolor)
-                       :border-color (get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
+   ;; TODO get rid of alert classes we don't use
+   [:.alert-primary {:color (theme-getx :alert-primary-color)
+                     :background-color (theme-getx :alert-primary-bgcolor)
+                     :border-color (theme-getx :alert-primary-bordercolor :alert-primary-color)}]
+   [:.alert-secondary {:color (theme-getx :alert-secondary-color)
+                       :background-color (theme-getx :alert-secondary-bgcolor)
+                       :border-color (theme-getx :alert-secondary-bordercolor :alert-secondary-color)}]
    [:.alert-success
     (s/descendant :.state-approved.phases :.phase.completed)
     (s/descendant :.state-submitted.phases :.phase.completed)
-    {:color (get-theme-attribute :alert-success-color)
-     :background-color (get-theme-attribute :alert-success-bgcolor)
-     :border-color (get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
+    {:color (theme-getx :alert-success-color)
+     :background-color (theme-getx :alert-success-bgcolor)
+     :border-color (theme-getx :alert-success-bordercolor :alert-success-color)}]
    [:.alert-danger
     :.state-rejected
     :.state-revoked
     (s/descendant :.state-rejected.phases :.phase.completed)
     (s/descendant :.state-revoked.phases :.phase.completed)
-    {:color (get-theme-attribute :alert-danger-color)
-     :background-color (get-theme-attribute :alert-danger-bgcolor)
-     :border-color (get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
-   [:.alert-warning {:color (get-theme-attribute :alert-warning-color)
-                     :background-color (get-theme-attribute :alert-warning-bgcolor)
-                     :border-color (get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
+    {:color (theme-getx :alert-danger-color)
+     :background-color (theme-getx :alert-danger-bgcolor)
+     :border-color (theme-getx :alert-danger-bordercolor :alert-danger-color)}]
+   [:.alert-warning {:color (theme-getx :alert-warning-color)
+                     :background-color (theme-getx :alert-warning-bgcolor)
+                     :border-color (theme-getx :alert-warning-bordercolor :alert-warning-color)}]
    [:.alert-info
-    {:color (get-theme-attribute :alert-info-color)
-     :background-color (get-theme-attribute :alert-info-bgcolor)
-     :border-color (get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
-   [:.alert-light {:color (get-theme-attribute :alert-light-color)
-                   :background-color (get-theme-attribute :alert-light-bgcolor)
-                   :border-color (get-theme-attribute :alert-light-bordercolor :alert-light-color)}]
-   [:.alert-dark {:color (get-theme-attribute :alert-dark-color)
-                  :background-color (get-theme-attribute :alert-dark-bgcolor)
-                  :border-color (get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
+    {:color (theme-getx :alert-info-color)
+     :background-color (theme-getx :alert-info-bgcolor)
+     :border-color (theme-getx :alert-info-bordercolor :alert-info-color)}]
+   [:.alert-light {:color (theme-getx :alert-light-color)
+                   :background-color (theme-getx :alert-light-bgcolor)
+                   :border-color (theme-getx :alert-light-bordercolor :alert-light-color)}]
+   [:.alert-dark {:color (theme-getx :alert-dark-color)
+                  :background-color (theme-getx :alert-dark-bgcolor)
+                  :border-color (theme-getx :alert-dark-bordercolor :alert-dark-color)}]
    shake
    [:.flash-message.alert-danger
     {:animation [[shake "0.6s cubic-bezier(.36,.07,.19,.97) both"]]}]
@@ -539,7 +541,7 @@
      :letter-spacing (u/rem 0.015)
      :padding-left 0
      :padding-right 0
-     :color (get-theme-attribute :navbar-color "#111")
+     :color (theme-getx :navbar-color)
      :justify-content "space-between"}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
@@ -551,25 +553,25 @@
                       :display :flex
                       :flex-direction :row}]
    [:.navbar-top-left {:flex 1
-                       :background-color (get-theme-attribute :color4)}]
+                       :background-color (theme-getx :color4)}]
    [:.navbar-top-right {:flex 1
-                        :background-color (get-theme-attribute :color2)}]
+                        :background-color (theme-getx :color2)}]
    [:.navbar-text {:font-size (u/px 19)
                    :font-weight (button-navbar-font-weight)}]
-   [:.navbar-toggler {:border-color (get-theme-attribute :color1)}]
+   [:.navbar-toggler {:border-color (theme-getx :color1)}]
    [:.nav-link
     :.btn-link
-    {:color (get-theme-attribute :nav-color :link-color :color3)
+    {:color (theme-getx :nav-color :link-color)
      :font-weight (button-navbar-font-weight)
      :border 0} ; for button links
     [:&.active
-     {:color (get-theme-attribute :nav-active-color :color4)}]
+     {:color (theme-getx :nav-active-color :color4)}]
     [:&:hover
-     {:color (get-theme-attribute :nav-hover-color :color4)}]]
+     {:color (theme-getx :nav-hover-color :color4)}]]
    [:.navbar {:white-space "nowrap"}]
    [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
    [:.user-name {:text-transform :none}]
-   [:#big-navbar {:text-transform (get-theme-attribute :big-navbar-text-transform "none")}]
+   [:#big-navbar {:text-transform (theme-getx :big-navbar-text-transform)}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]
    [:.navbar-flex {:display "flex"
@@ -580,14 +582,14 @@
    ;; Logo, login, etc.
    (generate-logo-styles)
    ;; Footer
-   (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
+   (let [footer-text-color (theme-getx :footer-color :table-heading-color)]
      [:footer {:width "100%"
                :min-height (u/px 53.6)
                :color footer-text-color
                :font-size (u/px 19) ;; same as navbar
                :padding-top "1rem"
                :padding-bottom "1rem"
-               :background-color (get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
+               :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
                :margin-top (u/em 1)}
       [:a :a:hover {:color footer-text-color
                     :font-weight (button-navbar-font-weight)}]
@@ -602,7 +604,7 @@
      :margin-top (u/rem 2)
      :border-style "solid"
      :border-width (u/px 1)
-     :box-shadow (get-theme-attribute :collapse-shadow :table-shadow)}
+     :box-shadow (theme-getx :collapse-shadow :table-shadow)}
     [:h1 {:margin-bottom (u/px 20)}]]
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
@@ -735,10 +737,10 @@
    [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)
                  :height (u/px 50)}]
-   [:.color-1 {:background-color (get-theme-attribute :color1)}]
-   [:.color-2 {:background-color (get-theme-attribute :color2)}]
-   [:.color-3 {:background-color (get-theme-attribute :color3)}]
-   [:.color-4 {:background-color (get-theme-attribute :color4)}]
+   [:.color-1 {:background-color (theme-getx :color1)}]
+   [:.color-2 {:background-color (theme-getx :color2)}]
+   [:.color-3 {:background-color (theme-getx :color3)}]
+   [:.color-4 {:background-color (theme-getx :color4)}]
    [:.color-title {:padding-top (u/rem 0.8)}]
    [(s/descendant :.alert :ul) {:margin-bottom 0}]
    [:ul.comments {:list-style-type :none}]
@@ -749,8 +751,8 @@
                      :width "inherit"}]
    [:.clickable {:cursor :pointer}]
    [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border
-   [:.rems-card-header {:color (get-theme-attribute :table-heading-color "#fff")
-                        :background-color (get-theme-attribute :table-heading-bgcolor :color3)}]
+   [:.rems-card-header {:color (theme-getx :table-heading-color)
+                        :background-color (theme-getx :table-heading-bgcolor :color3)}]
    [(s/descendant :.card-header :a) {:color :inherit}]
    [:.application-resources
     [:.application-resource {:margin-bottom (u/rem 1)
@@ -769,25 +771,24 @@
    [:.collapse-toggle {:text-align :center}]
    [:.collapse-wrapper {:border-radius (u/rem 0.4)
                         :border "1px solid #ccc"
-                        :background-color (get-theme-attribute :collapse-bgcolor "#fff")
-                        :box-shadow (get-theme-attribute :collapse-shadow :table-shadow)}
+                        :background-color (theme-getx :collapse-bgcolor)
+                        :box-shadow (theme-getx :collapse-shadow :table-shadow)}
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
                     :font-weight 400
                     :font-size (u/rem 1.5)
                     :line-height 1.1
-                    :font-family (get-theme-attribute :font-family "'Lato', sans-serif")
-                    :color (get-theme-attribute :collapse-color "#fff")}
-     [:&.alert-danger {:color (get-theme-attribute :danger-color "inherit")}]]]
+                    :font-family (theme-getx :font-family)
+                    :color (theme-getx :collapse-color)}]]
    [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
     [:.collapsing {:-webkit-transition "height 0.25s linear"
                    :-o-transition "height 0.25s linear"
                    :transition "height 0.25s linear"}]]
 
-   [:.color1 {:color (get-theme-attribute :color1)}]
-   [:.color1-faint {:color (when (get-theme-attribute :color1)
-                             (-> (get-theme-attribute :color1)
+   [:.color1 {:color (theme-getx :color1)}]
+   [:.color1-faint {:color (when (theme-getx :color1)
+                             (-> (theme-getx :color1)
                                  (c/saturate -50)
                                  (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
@@ -829,8 +830,8 @@
    ;; by more specific styles by react-select.
    [:.dropdown-select__option--is-focused
     (make-important
-     {:color (get-theme-attribute :table-heading-color "#fff")
-      :background-color (get-theme-attribute :table-heading-bgcolor :color3)})]
+     {:color (theme-getx :table-heading-color)
+      :background-color (theme-getx :table-heading-bgcolor :color3)})]
    [:.dropdown-select__control--is-focused
     (make-important
      {:color "#495057"
@@ -886,10 +887,6 @@
 
 (defn screen-css []
   (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
-
-(deftest test-screen-css
-  (binding [context/*lang* :fi]
-    (is (string? (screen-css)))))
 
 ;; For development use and Figwheel updates render all configured CSS
 ;; files so that Figwheel will notice this change and force our app
