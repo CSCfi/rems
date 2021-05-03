@@ -18,7 +18,7 @@
     :logo-name-sv-sm
     :navbar-logo-name-sv})
 
-(defn- theme-get
+(defn- theme-getx-impl
   "Helper for making sure we document all our theme variables."
   [attr]
   (if-let [[_ v] (find (:theme env) attr)] ; find instead of get: nil values are ok, missing values are bad
@@ -27,7 +27,7 @@
       (when-not (ignore-theme-var-error? attr)
         (assert false (str "Theme attribute " attr " used but not documented in config-defaults.edn!"))))))
 
-(defn get-theme-attribute
+(defn theme-getx
   "Fetch the attribute value from the current theme with fallbacks.
 
   Keywords denote attribute lookups while strings are interpreted as fallback constant value."
@@ -35,7 +35,7 @@
   (when (seq attr-names)
     (let [attr-name (first attr-names)
           attr-value (if (keyword? attr-name)
-                       (theme-get attr-name)
+                       (theme-getx-impl attr-name)
                        attr-name)]
       (or attr-value (recur (rest attr-names))))))
 
@@ -43,14 +43,14 @@
   (when path
     (let [url (if (str/starts-with? path "http")
                 path
-                (str (get-theme-attribute :img-path) path))]
+                (str (theme-getx :img-path) path))]
       (str "url(\"" url "\")"))))
 
 (defn get-logo-image [lang]
-  (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang))) :logo-name)))
+  (resolve-image (theme-getx (keyword (str "logo-name-" (name lang))) :logo-name)))
 
 (defn get-logo-name-sm [lang]
-  (resolve-image (get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
+  (resolve-image (theme-getx (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
 
 (defn get-navbar-logo [lang]
-  (resolve-image (get-theme-attribute (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))
+  (resolve-image (theme-getx (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))

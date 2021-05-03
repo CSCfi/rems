@@ -32,9 +32,9 @@
       (is (= "example-theme/public"
              (:theme-static-resources (config/load-external-theme config)))))))
 
-(deftest get-theme-attribute-test
+(deftest theme-getx-test
   (with-redefs [config/env {:theme {:test "success"
                                     :test-color 2}}]
-    (is (= 2 (style-utils/get-theme-attribute :test-color)))
-    (is (= "success" (style-utils/get-theme-attribute :test)))
-    (is (nil? (style-utils/get-theme-attribute :no-such-attribute)))))
+    (is (= 2 (style-utils/theme-getx :test-color)))
+    (is (= "success" (style-utils/theme-getx :test)))
+    (is (nil? (style-utils/theme-getx :no-such-attribute)))))
