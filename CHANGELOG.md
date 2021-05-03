@@ -14,7 +14,10 @@ Changes since v2.17
   - Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn).
   - The `:nav-color` now simply defaults to `:link-color`. Previously, it defaulted to `:color4` if `:link-color` is unset.
   - The theme variables `:danger-color` (didn't really affect anything) and `:phase-background-active` (wasn't used, overlaps with `:phase-bgcolor-active`) have been removed.
-  - The look of the default theme has changes a bit.
+  - The default theme has minor visual changes:
+    - color2 is lighter
+    - table hover highlight is now dark-on-light instead of light-on-dark
+    - link color used in nav bar
   - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
 
 ### Fixes
