@@ -285,6 +285,7 @@
     {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/promote-to-applicant}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -313,6 +314,7 @@
     {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/promote-to-applicant}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}

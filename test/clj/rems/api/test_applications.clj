@@ -241,6 +241,7 @@
                  "application.command/change-resources"
                  "application.command/close"
                  "application.command/assign-external-id"
+                 "application.command/promote-to-applicant"
                  "see-everything"}
                (set (get application :application/permissions))))))
 
@@ -264,6 +265,7 @@
                      "application.command/change-resources"
                      "application.command/close"
                      "application.command/assign-external-id"
+                     "application.command/promote-to-applicant"
                      "see-everything"}
                    (set (get application :application/permissions))))))
         (testing "disabled command fails"
@@ -1053,6 +1055,7 @@
                "application.command/request-review"
                "application.command/return"
                "application.command/uninvite-member"
+               "application.command/promote-to-applicant"
                "see-everything"}
              (set (:application/permissions (get-application-for-user app-id handler))))))
     (testing "request decision"
