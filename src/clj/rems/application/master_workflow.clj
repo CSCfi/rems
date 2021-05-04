@@ -140,6 +140,18 @@
   (-> application
       (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
 
+(defmethod application-permissions-view :application.event/applicant-changed
+  [application event]
+  (let [old (first (for [[user roles] (:application/user-roles application)
+                         :when (contains? roles :applicant)]
+                     user))
+        new (get-in event [:application/applicant :userid])]
+    (-> application
+        (permissions/remove-role-from-user :applicant old)
+        (permissions/give-role-to-users :member [old])
+        (permissions/give-role-to-users :applicant [new])
+        (permissions/remove-role-from-user :member new))))
+
 (defmethod application-permissions-view :application.event/submitted
   [application _event]
   (-> application

@@ -1044,6 +1044,61 @@
                                            :application/past-members #{{:userid "member"}}})]
           (is (= expected-application (recreate expected-application))))))))
 
+(deftest test-applicant-change
+  (let [application (-> submitted-application
+                        (update :application/events into [{:event/type :application.event/member-added
+                                                           :event/time (DateTime. 4000)
+                                                           :event/actor "handler"
+                                                           :application/id 1
+                                                           :application/member {:userid "member1"}}
+                                                          {:event/type :application.event/member-added
+                                                           :event/time (DateTime. 4000)
+                                                           :event/actor "handler"
+                                                           :application/id 1
+                                                           :application/member {:userid "member2"}}])
+                        recreate)]
+    (testing "> promote member to applicant"
+      (let [new-event {:event/type :application.event/applicant-changed
+                       :event/time (DateTime. 5000)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/applicant {:userid "member1"}}
+            events (conj (:application/events application) new-event)
+            expected-application (merge application
+                                        {:application/last-activity (DateTime. 5000)
+                                         :application/events events
+                                         :application/applicant {:userid "member1"}
+                                         :application/members #{{:userid "member2"} {:userid "applicant"}}})]
+        (is (= expected-application (recreate expected-application)))
+        (testing "> promote original applicant back"
+          (let [new-event {:event/type :application.event/applicant-changed
+                           :event/time (DateTime. 6000)
+                           :event/actor "handler"
+                           :application/id 1
+                           :application/applicant {:userid "applicant"}}
+                events (conj events new-event)
+                expected-application (merge expected-application
+                                            {:application/last-activity (DateTime. 6000)
+                                             :application/events events
+                                             :application/applicant {:userid "applicant"}
+                                             :application/members #{{:userid "member1"} {:userid "member2"}}})]
+            (is (= expected-application (recreate expected-application)))))))
+    ;; This isn't currently a planned use case for the event, just
+    ;; documenting this possibility.
+    (testing "> promote other user to applicant"
+      (let [new-event {:event/type :application.event/applicant-changed
+                       :event/time (DateTime. 5000)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/applicant {:userid "usurper"}}
+            events (conj (:application/events application) new-event)
+            expected-application (merge application
+                                        {:application/last-activity (DateTime. 5000)
+                                         :application/events events
+                                         :application/applicant {:userid "usurper"}
+                                         :application/members #{{:userid "member1"} {:userid "member2"} {:userid "applicant"}}})]
+        (is (= expected-application (recreate expected-application)))))))
+
 (deftest test-application-view-actor-invitations
   (testing "> reviewer invited"
     (let [token "abcd1234"

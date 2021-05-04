@@ -163,7 +163,8 @@
                  :entitlement-end "Access rights end %1."
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
-                 :events {:approved "%1 approved the application."
+                 :events {:applicant-changed "%1 changed the applicant to %2."
+                          :approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "This application is a copy of an old application."
                           :copied-to "%1 copied the application to a new application."

@@ -111,6 +111,10 @@
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
                               :email s/Str}))
+(s/defschema ApplicantChangedEvent
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/applicant-changed)
+         :application/applicant schema-base/User))
 (s/defschema ReviewerInvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/reviewer-invited)
@@ -160,7 +164,8 @@
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas
-  {:application.event/approved ApprovedEvent
+  {:application.event/applicant-changed ApplicantChangedEvent
+   :application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
    :application.event/review-requested ReviewRequestedEvent
    :application.event/reviewed ReviewedEvent

@@ -107,6 +107,13 @@
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
+(defmethod application-base-view :application.event/applicant-changed
+  [application event]
+  (-> application
+      (update :application/members disj (:application/applicant event))
+      (update :application/members conj (:application/applicant application))
+      (assoc :application/applicant (:application/applicant event))))
+
 (defmethod application-base-view :application.event/decider-invited
   [application event]
   (-> application
@@ -637,7 +644,8 @@
                                   :application.event/decider-joined
                                   :application.event/decision-requested})
 (deftest test-sensitive-events
-  (let [public-events #{:application.event/approved
+  (let [public-events #{:application.event/applicant-changed
+                        :application.event/approved
                         :application.event/closed
                         :application.event/copied-from
                         :application.event/copied-to
