@@ -35,10 +35,11 @@
       :return schema/SuccessResponse
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))
 
-    (when (:enable-ega env)
-      (POST "/generate-ega-api-key" [:as request] ; NB: binding syntax
-        :summary "Generates a new EGA API-key for the user."
-        :roles #{:handler}
-        :return GenerateEGAApiKeyResponse
+    (POST "/generate-ega-api-key" [:as request] ; NB: binding syntax
+      :summary "Generates a new EGA API-key for the user."
+      :roles #{:handler}
+      :return GenerateEGAApiKeyResponse
+      (if-not (:enable-ega env)
+        (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
           (ok (user-settings/generate-ega-api-key! (get-user-id) access-token)))))))
