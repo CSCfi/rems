@@ -135,7 +135,8 @@
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
-                   :email "Sähköposti (tunnistautumispalvelusta)"
+                   :email "Sähköposti"
+                   :email-idp "Sähköposti (tunnistautumispalvelusta)"
                    :invited-member "Kutsuttu jäsen"
                    :member "Jäsen"
                    :name "Nimi"

@@ -139,7 +139,8 @@
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
-                   :email "Email (from identity provider)"
+                   :email "Email"
+                   :email-idp "Email (from identity provider)"
                    :invited-member "Invited member"
                    :member "Member"
                    :name "Name"

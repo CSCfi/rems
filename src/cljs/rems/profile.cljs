@@ -100,7 +100,7 @@
        {:title (text :t.profile/your-details)
         :always [:<>
                  [user/username (:user identity)]
-                 [user/attributes (:user identity)]]}]]]))
+                 [user/attributes attributes false]]}]]]))
 
 (defn guide []
   [:div

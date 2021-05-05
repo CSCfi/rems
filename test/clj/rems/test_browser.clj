@@ -470,7 +470,7 @@
       (is (btu/eventually-visible? :invite0-info-collapse))
 
       (is (= {"Name" "John Smith"
-              "Email (from identity provider)" "john.smith@generic.name"}
+              "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info)))
       (is (string? (-> (btu/context-get :application-id)
                        applications/get-application-internal
