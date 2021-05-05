@@ -1,10 +1,17 @@
 (ns ^:integration rems.api.test-user-settings
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
+            [clj-time.core :as time-core]
             [rems.api.testing :refer :all]
             [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.user-secrets :as user-secrets]
+            [rems.db.user-settings :as user-settings]
             [rems.handler :refer [handler]]
-            [ring.mock.request :refer :all])
+            [rems.json :as json]
+            [rems.testing-util :refer [with-fixed-time]]
+            [ring.mock.request :refer :all]
+            [stub-http.core :as stub])
   (:import [java.util UUID]))
 
 (use-fixtures
@@ -43,3 +50,69 @@
                  (authenticate "42" user-id)
                  handler
                  read-ok-body))))))
+
+(defn ega-config [server]
+  {:type :ega
+   :connect-server-url (str (:uri server) "/c")
+   :permission-server-url (str (:uri server) "/p")})
+
+(defn run-with-ega-server
+  [spec callback]
+  (with-open [server (stub/start! spec)]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :entitlement-push [(ega-config server)])]
+      (callback server))))
+
+(deftest test-generate-api-key
+  (test-data/create-test-api-key!)
+  (let [user-id (str (UUID/randomUUID))]
+    (test-helpers/create-user! {:eppn user-id})
+
+    (testing "without authentication"
+      (let [{:keys [body] :as response} (-> (request :post "/api/user-settings/generate-ega-api-key")
+                                            handler
+                                            read-body-and-status)]
+        (is (response-is-unauthorized? response))
+        (is (str/includes? body "Invalid anti-forgery token"))))
+
+    (testing "not a handler"
+      (is (= {:status 403
+              :body "forbidden"}
+             (-> (request :post "/api/user-settings/generate-ega-api-key")
+                 (authenticate "42" user-id)
+                 handler
+                 read-body-and-status))))
+
+    (test-helpers/create-workflow! {:handlers [user-id]})
+
+    (testing "without entitlement push configured"
+      (is (= {:status 500
+              :body {:type "unknown-exception" :class "java.lang.AssertionError"}}
+             (-> (request :post "/api/user-settings/generate-ega-api-key")
+                 (authenticate "42" user-id)
+                 handler
+                 read-body-and-status))))
+
+    (testing "success"
+      (with-fixed-time (time-core/date-time 2021)
+        (fn []
+          (run-with-ega-server
+           {"/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}
+           (fn [server]
+             (let [username user-id
+                   cookie (login-with-cookies user-id)
+                   csrf (get-csrf-token cookie)]
+               (testing "generate-ega-api-key with session"
+                 (is (= {:status 200
+                         :body {:success true
+                                :api-key-expiration-date "2022-01-01T00:00:00.000Z"}}
+                        (-> (request :post "/api/user-settings/generate-ega-api-key")
+                            (header "Cookie" cookie)
+                            (header "x-csrf-token" csrf)
+                            handler
+                            assert-response-is-ok
+                            read-body-and-status)))
+                 (is (= "2022-01-01T00:00:00.000Z"
+                        (get-in (user-settings/get-user-settings user-id) [:ega :api-key-expiration-date])))
+                 (is (= {:ega {:api-key "access-token-xyz"}}
+                        (user-secrets/get-user-secrets user-id))))))))))))
