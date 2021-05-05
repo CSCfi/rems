@@ -14,6 +14,7 @@
             [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
+            [rems.actions.promote-to-applicant :refer [promote-to-applicant-action-button promote-to-applicant-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-link request-decision-form]]
@@ -635,13 +636,14 @@
                (when-not (nil? accepted-licenses?)
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
       :collapse [user/attributes attributes invited-user?]
-      :footer (let [element-id (str element-id "-remove-member")]
+      :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
-                 (when can-remove?
-                   [:div.commands
-                    [remove-member-action-button element-id]])
-                 (when can-remove?
-                   [remove-member-form element-id attributes application-id (partial reload! application-id)])])}]))
+                 [:div.commands
+                  [promote-to-applicant-action-button element-id] ;; TODO check permissions
+                  (when can-remove?
+                    [remove-member-action-button element-id])]
+                 [promote-to-applicant-form element-id attributes application-id (partial reload! application-id)]
+                 [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."

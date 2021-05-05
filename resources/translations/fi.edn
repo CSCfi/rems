@@ -35,6 +35,7 @@
             :member-email "Sähköposti"
             :member-name "Nimi"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
+            :promote-to-applicant "Tee hakija"
             :reject "Hylkää"
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"

@@ -35,6 +35,7 @@
             :member-email "E-postadress"
             :member-name "Namn"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
+            :promote-to-applicant "Gör till sökanden" ; TODO check
             :reject "Avslå"
             :remark "Gör anteckning"
             :remark-public "Visa anteckning för sökande"

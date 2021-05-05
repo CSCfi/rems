@@ -37,6 +37,7 @@
             :member-email "Email"
             :member-name "Name"
             :name-and-email-required "Name and email are required."
+            :promote-to-applicant "Make applicant"
             :reject "Reject"
             :remark "Remark"
             :remark-public "Show to applicant"
