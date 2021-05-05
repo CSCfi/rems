@@ -13,7 +13,8 @@
             [rems.config :refer [env]]
             [rems.db.user-secrets :as user-secrets]
             [rems.ga4gh :as ga4gh]
-            [rems.json :as json]))
+            [rems.json :as json]
+            [rems.util :refer [getx]]))
 
 (def ^:private +common-opts+
   {:socket-timeout 2500
@@ -35,8 +36,8 @@
   (http/post (str (:connect-server-url config) "/token")
              (merge +common-opts+
                     {:form-params {"grant_type" "password"
-                                   "client_id" (:client-id config)
-                                   "client_secret" (:client-secret config)
+                                   "client_id" (getx config :client-id)
+                                   "client_secret" (getx config :client-secret)
                                    "username" username
                                    "password" password
                                    "scope" "openid"}})))
@@ -55,7 +56,7 @@
     `:permission-server-url` - EGA permission server url"
   [{:keys [access-token id expiration-date reason config]}]
   (assert access-token)
-  (http/get (str (:permission-server-url config) "/api_key/generate")
+  (http/get (str (getx config :permission-server-url) "/api_key/generate")
             (merge +common-opts+
                    {:oauth-token access-token
                     :query-params {"id" id
@@ -71,7 +72,7 @@
 
   NB: The actual API-Key is not returned by this call. It is only returned once in `api-key-generate`."
   [{:keys [access-token config]}]
-  (http/get (str (:permission-server-url config) "/api_key")
+  (http/get (str (getx config :permission-server-url) "/api_key")
             (merge +common-opts+
                    {:oauth-token access-token})))
 
@@ -84,7 +85,7 @@
   `:config`                  - configuration of the EGA integration with following keys:
     `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id format config]}]
-  (http/get (str (:permission-server-url config) "/permissions")
+  (http/get (str (getx config :permission-server-url) "/permissions")
             (merge +common-opts+
                    {:headers {"authorization" (str "api-key " api-key)
                               "x-account-id" account-id}
@@ -98,7 +99,7 @@
   `:config`                  - configuration of the EGA integration with following keys:
     `:permission-server-url` - EGA permission server url"
   [{:keys [api-key format config]}]
-  (http/get (str (:permission-server-url config) "/me/permissions")
+  (http/get (str (getx config :permission-server-url) "/me/permissions")
             (merge +common-opts+
                    {:headers {"authorization" (str "api-key " api-key)}
                     :query-params {"format" (or format "JWT")}})))
@@ -111,7 +112,7 @@
   `:config`                  - configuration of the EGA integration with following keys:
     `:permission-server-url` - EGA permission server url"
   [{:keys [api-key dataset-id config]}]
-  (http/get (str (:permission-server-url config) "/datasets/" dataset-id "/users")
+  (http/get (str (getx config :permission-server-url) "/datasets/" dataset-id "/users")
             (merge +common-opts+
                    {:headers {"authorization" (str "api-key " api-key)}})))
 
@@ -132,7 +133,7 @@
     `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id visas format config] :as params}]
   (log/infof "%s: %s" #'post-create-or-update-permissions params)
-  (http/post (str (:permission-server-url config) "/permissions")
+  (http/post (str (getx config :permission-server-url) "/permissions")
              (merge +common-opts+
                     {:headers {"authorization" (str "api-key " api-key)
                                "x-account-id" account-id}
@@ -155,7 +156,7 @@
     `:permission-server-url` - EGA permission server url"
   [{:keys [api-key account-id dataset-ids config] :as params}]
   (log/infof "%s: %s" #'delete-permissions params)
-  (http/delete (str (:permission-server-url config) "/permissions")
+  (http/delete (str (getx config :permission-server-url) "/permissions")
                (merge +common-opts+
                       {:headers {"authorization" (str "api-key " api-key)
                                  "x-account-id" account-id}
@@ -214,7 +215,7 @@
     (when (str/blank? api-key)
       (log/warnf "Missing EGA api-key for %s" (:approvedby entitlement)))
 
-    (log/infof "Pushing entitlements to %s %s: %s %s" (:id config) (:permission-server-url config) entitlement config)
+    (log/infof "Pushing entitlements to %s %s: %s %s" (getx config :id) (getx config :permission-server-url) entitlement config)
 
     (case action
       :add
