@@ -446,6 +446,7 @@
            :revoked "Peruttu"}
   :profile {:ega "EGA"
             :ega-api-key-expiration-date "EGA API-avain vanhenee"
+            :ega-full "The European Genome-phenome Archive"
             :generate-api-key "Luo API-avain"
             :idp-email "Sähköpostiosoite tunnistautumispalvelulta"
             :no-email "(ei sähköpostiosoitetta)"

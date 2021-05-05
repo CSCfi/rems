@@ -101,7 +101,7 @@
      (when (and (:enable-ega config) (roles/has-roles? :handler))
        [:div.mt-3
         [collapsible/component
-         {:title (text :t.profile/ega)
+         {:title (text :t.profile/ega-full)
           :always (if @(rf/subscribe [::user-settings :fetching?])
                     [spinner/big]
                     [:<>

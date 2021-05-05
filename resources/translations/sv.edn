@@ -446,6 +446,7 @@
            :revoked "Återkallad"}
   :profile {:ega "EGA"
             :ega-api-key-expiration-date "EGA API-nyckel ekspiration"
+            :ega-full "The European Genome-phenome Archive"
             :generate-api-key "Hämta en API-nyckel"
             :idp-email "E-postadress från identifieringstjänst"
             :no-email "(ingen e-postadress)"
