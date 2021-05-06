@@ -620,8 +620,9 @@
   `:application`        - application
   `:group?`             - specifies if a group border is rendered
   `:can-remove?`        - can the user be removed?
+  `:can-remove?`        - can the user be promoted to applicant?
   `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? can-remove? accepted-licenses? invited-user?]}]
+  [{:keys [element-id attributes application group? can-remove? can-promote? accepted-licenses? invited-user?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
@@ -639,7 +640,8 @@
       :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
                  [:div.commands
-                  [promote-to-applicant-action-button element-id] ;; TODO check permissions
+                  (when can-promote?
+                    [promote-to-applicant-action-button element-id])
                   (when can-remove?
                     [remove-member-action-button element-id])]
                  [promote-to-applicant-form element-id attributes application-id (partial reload! application-id)]
@@ -654,6 +656,7 @@
         invited-members (:application/invited-members application)
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
+        can-promote? (contains? permissions :application.command/promote-to-applicant)
         can-remove? (contains? permissions :application.command/remove-member)
         can-invite? (contains? permissions :application.command/invite-member)
         can-uninvite? (contains? permissions :application.command/uninvite-member)]
@@ -669,6 +672,7 @@
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
+                           :can-promote? false
                            :accepted-licenses? (when (not= :application.state/draft (:application/state application))
                                                  (accepted-licenses? application (:userid applicant)))}]]
             (concat
@@ -677,6 +681,7 @@
                              :attributes member
                              :application application
                              :group? true
+                             :can-promote? can-promote?
                              :can-remove? can-remove?
                              :accepted-licenses? (accepted-licenses? application (:userid member))
                              :invited-user? false}])
@@ -685,6 +690,7 @@
                              :attributes invited-member
                              :application application
                              :group? true
+                             :can-promote? false
                              :can-remove? can-uninvite?
                              :invited-user? true}])))
       :footer [:div
@@ -894,13 +900,14 @@
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}}])
-   (example "member-info"
+   (example "member-info with buttons"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :group? true
-                          :can-remove? true}])
+                          :can-remove? true
+                          :can-promote? true}])
    (example "member-info"
             [member-info {:element-id "info4"
                           :attributes {:name "John Smith"
