@@ -622,12 +622,13 @@
   `:can-remove?`        - can the user be removed?
   `:can-remove?`        - can the user be promoted to applicant?
   `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? can-remove? can-promote? accepted-licenses? invited-user?]}]
+  [{:keys [element-id attributes application group? can-remove? can-promote? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
+        invited-user? (nil? user-id)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
-                    user-id (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))]
+                    invited-user? (text :t.applicant-info/invited-member)
+                    :else (text :t.applicant-info/member))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -683,16 +684,14 @@
                              :group? true
                              :can-promote? can-promote?
                              :can-remove? can-remove?
-                             :accepted-licenses? (accepted-licenses? application (:userid member))
-                             :invited-user? false}])
+                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
              (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
                              :group? true
                              :can-promote? false
-                             :can-remove? can-uninvite?
-                             :invited-user? true}])))
+                             :can-remove? can-uninvite?}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])
