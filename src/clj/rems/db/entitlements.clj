@@ -95,6 +95,7 @@
             (str "failed: " status)))))))
 
 ;; TODO argh adding these everywhere sucks
+;; TODO consider using schema coercions
 (defn- fix-entry-from-db [entry]
   (-> entry
       (update-in [:outbox/entitlement-post :action] keyword)
