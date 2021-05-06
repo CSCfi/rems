@@ -251,7 +251,7 @@
         result (user-secrets/update-user-secrets! userid {:ega {:api-key api-key}})]
     (if (:success result)
       (do
-        (println "Success!")
+        (log/info "Success!")
         {:success (:success result)
          :api-key-expiration-date expiration-date})
       {:success false})))
