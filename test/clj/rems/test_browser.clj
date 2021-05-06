@@ -488,13 +488,13 @@
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant invited John Smith to the application."})))
 
     (testing "uninvite member"
-      (is (not (btu/visible? :actions-invite0-remove-member-form)))
-      (btu/scroll-and-click :invite0-remove-member-form-action-button)
-      (is (btu/eventually-visible? :actions-invite0-remove-member-form))
-      (btu/fill-human :comment-invite0-remove-member-comment "sorry but no")
-      (btu/scroll-and-click :invite0-remove-member-submit)
+      (is (not (btu/visible? :actions-invite0-operations-remove)))
+      (btu/scroll-and-click :invite0-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-invite0-operations-remove))
+      (btu/fill-human :comment-invite0-operations-remove-comment "sorry but no")
+      (btu/scroll-and-click :invite0-operations-remove-submit)
       (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
-      (btu/wait-invisible :actions-invite0-remove-member-form)
+      (btu/wait-invisible :actions-invite0-operations-remove)
       (btu/wait-invisible :invite0-info)
 
       (is (empty? (-> (btu/context-get :application-id)
@@ -537,13 +537,13 @@
     (go-to-application (btu/context-get :application-id))
 
     (testing "remove second member jade"
-      (is (not (btu/visible? :actions-member1-remove-member-form)))
-      (btu/scroll-and-click :member1-remove-member-form-action-button)
-      (is (btu/eventually-visible? :actions-member1-remove-member-form))
-      (btu/fill-human :comment-member1-remove-member-comment "not in research group anymore")
-      (btu/scroll-and-click :member1-remove-member-submit)
+      (is (not (btu/visible? :actions-member1-operations-remove)))
+      (btu/scroll-and-click :member1-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-member1-operations-remove))
+      (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
+      (btu/scroll-and-click :member1-operations-remove-submit)
       (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
-      (btu/wait-invisible :actions-member1-remove-member-form)
+      (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
