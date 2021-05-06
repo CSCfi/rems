@@ -619,16 +619,23 @@
   `:attributes`         - user attributes to display
   `:application`        - application
   `:group?`             - specifies if a group border is rendered
-  `:can-remove?`        - can the user be removed?
-  `:can-remove?`        - can the user be promoted to applicant?
   `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? can-remove? can-promote? accepted-licenses?]}]
+  [{:keys [element-id attributes application group? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         invited-user? (nil? user-id)
-        title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
+        applicant? (= (:userid (:application/applicant application)) user-id)
+        title (cond applicant? (text :t.applicant-info/applicant)
                     invited-user? (text :t.applicant-info/invited-member)
-                    :else (text :t.applicant-info/member))]
+                    :else (text :t.applicant-info/member))
+        permissions (:application/permissions application)
+        can-remove? (and (not applicant?)
+                         (contains? permissions :application.command/remove-member))
+        can-uninvite? (and invited-user?
+                           (contains? permissions :application.command/uninvite-member))
+        can-promote? (and (not applicant?)
+                          (not invited-user?)
+                          (contains? permissions :application.command/promote-to-applicant))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -643,7 +650,7 @@
                  [:div.commands
                   (when can-promote?
                     [promote-to-applicant-action-button element-id])
-                  (when can-remove?
+                  (when (or can-remove? can-uninvite?)
                     [remove-member-action-button element-id])]
                  [promote-to-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
@@ -657,10 +664,7 @@
         invited-members (:application/invited-members application)
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
-        can-promote? (contains? permissions :application.command/promote-to-applicant)
-        can-remove? (contains? permissions :application.command/remove-member)
-        can-invite? (contains? permissions :application.command/invite-member)
-        can-uninvite? (contains? permissions :application.command/uninvite-member)]
+        can-invite? (contains? permissions :application.command/invite-member)]
     [collapsible/component
      {:id "applicants-info"
       :title (text :t.applicant-info/applicants)
@@ -672,8 +676,6 @@
                            :application application
                            :group? (or (seq members)
                                        (seq invited-members))
-                           :can-remove? false
-                           :can-promote? false
                            :accepted-licenses? (when (not= :application.state/draft (:application/state application))
                                                  (accepted-licenses? application (:userid applicant)))}]]
             (concat
@@ -682,16 +684,12 @@
                              :attributes member
                              :application application
                              :group? true
-                             :can-promote? can-promote?
-                             :can-remove? can-remove?
                              :accepted-licenses? (accepted-licenses? application (:userid member))}])
              (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
-                             :group? true
-                             :can-promote? false
-                             :can-remove? can-uninvite?}])))
+                             :group? true}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])
@@ -879,7 +877,7 @@
 (defn guide []
   [:div
    (component-info member-info)
-   (example "member-info"
+   (example "member-info: applicant with notification email, accepted licenses, researcher status"
             [member-info {:element-id "info1"
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
@@ -889,30 +887,35 @@
                                        :address "Testikatu 1, 00100 Helsinki"
                                        :researcher-status-by "so"}
                           :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}
+                                        :application/applicant {:userid "developer@uu.id"}}
                           :accepted-licenses? true}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
                           :attributes {:userid "developer"
                                        :email "developer@uu.id"
-                                       :name "Testers"
-                                       :address "Testikatu 1, 00100 Helsinki"}
-                          :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}}])
+                                       :address "Testikatu 1, 00100 Helsinki"}}])
    (example "member-info with buttons"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}
-                          :group? true
-                          :can-remove? true
-                          :can-promote? true}])
-   (example "member-info"
+                                        :application/applicant {:userid "developer"}
+                                        :application/permissions #{:application.command/remove-member
+                                                                   :application.command/promote-to-applicant}}
+                          :group? true}])
+   (example "member-info: invited member"
             [member-info {:element-id "info4"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
+                          :group? true}])
+   (example "member-info: invited member, with remove button"
+            [member-info {:element-id "info4"
+                          :attributes {:name "John Smith"
+                                       :email "john.smith@invited.com"}
+                          :application {:application/id 42
+                                        :application/applicant {:userid "developer"}
+                                        :application/permissions #{:application.command/uninvite-member}}
                           :group? true}])
 
    (component-info applicants-info)
