@@ -618,9 +618,8 @@
   `:element-id`         - id of the element to generate unique ids
   `:attributes`         - user attributes to display
   `:application`        - application
-  `:group?`             - specifies if a group border is rendered
-  `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? accepted-licenses?]}]
+  `:group?`             - specifies if a group border is rendered"
+  [{:keys [element-id attributes application group?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         invited-user? (nil? user-id)
@@ -628,6 +627,7 @@
         title (cond applicant? (text :t.applicant-info/applicant)
                     invited-user? (text :t.applicant-info/invited-member)
                     :else (text :t.applicant-info/member))
+        accepted? (accepted-licenses? application user-id)
         permissions (:application/permissions application)
         can-remove? (and (not applicant?)
                          (contains? permissions :application.command/remove-member))
@@ -642,8 +642,9 @@
       :always [:div
                [:h3 title]
                [user/username attributes]
-               (when-not (nil? accepted-licenses?)
-                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
+               (when-not (or invited-user?
+                             (= :application.state/draft (:application/state application)))
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted?}] {:inline? true}])]
       :collapse [user/attributes attributes invited-user?]
       :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
@@ -675,16 +676,13 @@
                            :attributes applicant
                            :application application
                            :group? (or (seq members)
-                                       (seq invited-members))
-                           :accepted-licenses? (when (not= :application.state/draft (:application/state application))
-                                                 (accepted-licenses? application (:userid applicant)))}]]
+                                       (seq invited-members))}]]
             (concat
              (for [[index member] (map-indexed vector (sort-by :name members))]
                [member-info {:element-id (str "member" index)
                              :attributes member
                              :application application
-                             :group? true
-                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
+                             :group? true}])
              (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
@@ -887,18 +885,20 @@
                                        :address "Testikatu 1, 00100 Helsinki"
                                        :researcher-status-by "so"}
                           :application {:application/id 42
-                                        :application/applicant {:userid "developer@uu.id"}}
-                          :accepted-licenses? true}])
+                                        :application/applicant {:userid "developer@uu.id"}
+                                        :application/licenses [{:license/id 1}]
+                                        :application/accepted-licenses {"developer@uu.id" #{1}}}}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
                           :attributes {:userid "developer"
                                        :email "developer@uu.id"
                                        :address "Testikatu 1, 00100 Helsinki"}}])
-   (example "member-info with buttons"
+   (example "member-info with buttons, licenses not accepted"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}
+                                        :application/licenses [{:license/id 1}]
                                         :application/permissions #{:application.command/remove-member
                                                                    :application.command/promote-to-applicant}}
                           :group? true}])
