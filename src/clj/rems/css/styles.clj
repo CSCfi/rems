@@ -27,6 +27,14 @@
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
+(def media-breakpoints {:small-screen (u/px 480)
+                        :medium-screen 870
+                        :big-screen 1080})
+(def bootstrap-media-breakpoints {:xs (u/px 576)
+                                  :sm (u/px 768)
+                                  :md (u/px 992)
+                                  :lg (u/px 1200)})
+
 
 ;; Fonts of the app
 
@@ -71,12 +79,12 @@
 
 (defn- generate-media-queries []
   (list
-   (stylesheet/at-media {:max-width (u/px 480)}
+   (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom "none"}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
-   (stylesheet/at-media {:min-width (u/px 480)}
+   (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
                         [:.commands {:white-space "nowrap"}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
@@ -107,7 +115,7 @@
      :background-origin (theme-getx :logo-content-origin)}]
    [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
    [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
-   (stylesheet/at-media {:max-width (u/px 480)}
+   (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         (list
                          [(s/descendant :.logo :.img)
                           {:background-color (theme-getx :logo-bgcolor)
