@@ -31,7 +31,8 @@
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
             [schema.core :as s])
-  (:import [rems.auth ForbiddenException UnauthorizedException]
+  (:import clojure.lang.ExceptionInfo
+           [rems.auth ForbiddenException UnauthorizedException]
            rems.DataException
            rems.InvalidRequestException
            rems.TryAgainException))
@@ -77,6 +78,12 @@
   [exception _ex-data _request]
   (log/error "data exception" (pr-str (.-data exception)))
   (-> (service-unavailable (json/generate-string (.-data exception)))
+      (response/content-type "application/json")))
+
+(defn ex-info-handler
+  [exception ex-data _request]
+  (log/error exception (str (.getMessage exception) " " (pr-str ex-data)))
+  (-> (internal-server-error)
       (response/content-type "application/json")))
 
 (defn with-logging
@@ -140,6 +147,7 @@
      :middleware [cors-middleware
                   transaction-middleware]
      :exceptions {:handlers {UnauthorizedException unauthorized-handler
+                             ExceptionInfo ex-info-handler
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
                              TryAgainException try-again-handler
