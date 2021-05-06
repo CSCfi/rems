@@ -65,13 +65,14 @@
 
 (defn- post-entitlements! [{:keys [action type entitlements config]}]
   (case type
-    :ega (when config
-           (try (doseq [entitlement entitlements] ; technically these could be grouped per user & api-key
-                  (ega/entitlement-push action entitlement config))
-                (catch Exception e
-                  (log/error "POST failed" e)
-                  (or (ex-data e)
-                      {:status "exception"}))))
+    :ega
+    (when config
+      (try (doseq [entitlement entitlements] ; technically these could be grouped per user & api-key
+             (ega/entitlement-push action entitlement config))
+           (catch Exception e
+             (log/error "POST failed" e)
+             (or (ex-data e)
+                 {:status "exception"}))))
 
     :basic ; TODO: let's move this :entitlements-target (v1) at some point to :entitlement-post (v2)
     (when-let [target (get-in env [:entitlements-target action])]
