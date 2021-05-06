@@ -28,8 +28,8 @@
 (def logo-height (u/px 150))
 (def menu-height 56)
 (def media-breakpoints {:small-screen (u/px 480)
-                        :medium-screen 870
-                        :big-screen 1080})
+                        :medium-screen (u/px 870)
+                        :big-screen (u/px 1080)})
 (def bootstrap-media-breakpoints {:xs (u/px 576)
                                   :sm (u/px 768)
                                   :md (u/px 992)
