@@ -30,7 +30,7 @@ Changes since v2.17
 - REMS now supports PostgreSQL version 13. (#2642)
 - Experimental GA4GH Permissions API now allows users to query their own permissions via `/api/permissions/:user`. (#2631)
 - The handler can now change the applicant of a submitted application. (#2581)
-  - This feature can be disabled by adding `:application.command/promote-to-applicant` to `:disable-commands`.
+  - This feature can be disabled by adding `:application.command/change-applicant` to `:disable-commands`.
 
 ## v2.17 "Isokaari" 2021-04-12
 

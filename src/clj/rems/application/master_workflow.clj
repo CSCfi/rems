@@ -46,7 +46,7 @@
     :application.command/invite-member
     :application.command/invite-reviewer
     :application.command/uninvite-member
-    :application.command/promote-to-applicant
+    :application.command/change-applicant
     :application.command/request-review
     :application.command/request-decision
     :application.command/return
@@ -56,7 +56,7 @@
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
-        :application.command/promote-to-applicant ;; could allow this, but decided to not do it right now
+        :application.command/change-applicant ;; could allow this, but decided to not do it right now
         :application.command/return
         :application.command/approve
         :application.command/reject

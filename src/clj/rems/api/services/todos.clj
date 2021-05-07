@@ -46,11 +46,11 @@
           :application.command/add-licenses
           :application.command/add-member
           :application.command/assign-external-id
+          :application.command/change-applicant
           :application.command/change-resources
           :application.command/invite-member
           :application.command/invite-reviewer
           :application.command/invite-decider
-          :application.command/promote-to-applicant
           :application.command/remove-member
           :application.command/uninvite-member
           ;; remarks can be made without a request, also on handled todos

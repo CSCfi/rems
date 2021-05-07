@@ -241,7 +241,7 @@
                  "application.command/change-resources"
                  "application.command/close"
                  "application.command/assign-external-id"
-                 "application.command/promote-to-applicant"
+                 "application.command/change-applicant"
                  "see-everything"}
                (set (get application :application/permissions))))))
 
@@ -265,7 +265,7 @@
                      "application.command/change-resources"
                      "application.command/close"
                      "application.command/assign-external-id"
-                     "application.command/promote-to-applicant"
+                     "application.command/change-applicant"
                      "see-everything"}
                    (set (get application :application/permissions))))))
         (testing "disabled command fails"
@@ -749,7 +749,7 @@
                   "application.command/approve"]
                  (:application/permissions (get-application-for-user app-id decider)))))))))
 
-(deftest test-promote-to-applicant
+(deftest test-change-applicant
   (let [applicant "alice"
         handler "developer"
         app-id (test-helpers/create-application! {:actor applicant})]
@@ -767,7 +767,7 @@
                                     :member {:userid "malice"}}))))
     (testing "promote carl to applicant"
       (is (= {:success true}
-             (send-command handler {:type :application.command/promote-to-applicant
+             (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
                                     :member {:userid "carl"}})))
       (let [application (get-application-for-user app-id applicant)]
@@ -787,12 +787,12 @@
                    set)))))
     (testing "applicant can't promote member to applicant"
       (is (= {:success false :errors [{:type "forbidden"}]}
-             (send-command "carl" {:type :application.command/promote-to-applicant
+             (send-command "carl" {:type :application.command/change-applicant
                                    :application-id app-id
                                    :member {:userid "malice"}}))))
     (testing "can't promote non-member to applicant"
       (is (= {:success false :errors [{:type "user-not-member" :user {:userid "elsa"}}]}
-             (send-command handler {:type :application.command/promote-to-applicant
+             (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
                                     :member {:userid "elsa"}}))))
     (testing "can't change applicant of returned application"
@@ -800,7 +800,7 @@
              (send-command handler {:type :application.command/return
                                     :application-id app-id})))
       (is (= {:success false :errors [{:type "forbidden"}]}
-             (send-command handler {:type :application.command/promote-to-applicant
+             (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
                                     :member {:userid "malice"}}))))))
 
@@ -1110,7 +1110,7 @@
                "application.command/request-review"
                "application.command/return"
                "application.command/uninvite-member"
-               "application.command/promote-to-applicant"
+               "application.command/change-applicant"
                "see-everything"}
              (set (:application/permissions (get-application-for-user app-id handler))))))
     (testing "request decision"

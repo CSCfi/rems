@@ -74,7 +74,7 @@
   (assoc CommandBase
          :member {:name s/Str
                   :email s/Str}))
-(s/defschema PromoteToApplicantCommand
+(s/defschema ChangeApplicantCommand
   (assoc CommandWithComment
          :member schema-base/User))
 (s/defschema RejectCommand
@@ -118,6 +118,7 @@
    :application.command/add-member AddMemberCommand
    :application.command/approve ApproveCommand
    :application.command/assign-external-id AssignExternalIdCommand
+   :application.command/change-applicant ChangeApplicantCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
    :application.command/copy-as-new CopyAsNewCommand
@@ -127,7 +128,6 @@
    :application.command/invite-decider InviteDeciderCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/invite-reviewer InviteReviewerCommand
-   :application.command/promote-to-applicant PromoteToApplicantCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
@@ -564,7 +564,7 @@
                                    {:event/type :application.event/member-uninvited
                                     :application/member (:member cmd)})))
 
-(defmethod command-handler :application.command/promote-to-applicant
+(defmethod command-handler :application.command/change-applicant
   [cmd application injections]
   (or (when-not (contains? (set (map :userid (:application/members application)))
                            (:userid (:member cmd)))

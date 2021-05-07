@@ -276,6 +276,7 @@
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
+    {:permission :application.command/change-applicant}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -285,7 +286,6 @@
     {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
-    {:permission :application.command/promote-to-applicant}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -307,6 +307,7 @@
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
+    {:permission :application.command/change-applicant}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -314,7 +315,6 @@
     {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
-    {:permission :application.command/promote-to-applicant}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}

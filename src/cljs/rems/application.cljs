@@ -635,7 +635,7 @@
                            (contains? permissions :application.command/uninvite-member))
         can-promote? (and (not applicant?)
                           (not invited-user?)
-                          (contains? permissions :application.command/promote-to-applicant))]
+                          (contains? permissions :application.command/change-applicant))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -900,7 +900,7 @@
                                         :application/applicant {:userid "developer"}
                                         :application/licenses [{:license/id 1}]
                                         :application/permissions #{:application.command/remove-member
-                                                                   :application.command/promote-to-applicant}}
+                                                                   :application.command/change-applicant}}
                           :group? true}])
    (example "member-info: invited member"
             [member-info {:element-id "info4"

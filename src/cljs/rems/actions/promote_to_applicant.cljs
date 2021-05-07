@@ -16,7 +16,7 @@
  ::promote-to-applicant
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
    (let [description [text :t.actions/promote-to-applicant]]
-     (post! "/api/applications/promote-to-applicant"
+     (post! "/api/applications/change-applicant"
             {:params {:application-id application-id
                       :member (select-keys member [:userid])
                       :comment comment}
