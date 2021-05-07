@@ -495,6 +495,9 @@
               :application.event/member-removed)
              {:application/member (get-user (:userid (:application/member event)))}
 
+             :application.event/applicant-changed
+             {:application/applicant (get-user (:userid (:application/applicant event)))}
+
              {}))))
 
 (defn classify-attachments [application]
