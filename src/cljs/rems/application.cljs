@@ -8,13 +8,13 @@
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
+            [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
-            [rems.actions.promote-to-applicant :refer [promote-to-applicant-action-button promote-to-applicant-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-link request-decision-form]]
@@ -633,9 +633,9 @@
                          (contains? permissions :application.command/remove-member))
         can-uninvite? (and invited-user?
                            (contains? permissions :application.command/uninvite-member))
-        can-promote? (and (not applicant?)
-                          (not invited-user?)
-                          (contains? permissions :application.command/change-applicant))]
+        can-change? (and (not applicant?)
+                         (not invited-user?)
+                         (contains? permissions :application.command/change-applicant))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
@@ -649,11 +649,11 @@
       :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
                  [:div.commands
-                  (when can-promote?
-                    [promote-to-applicant-action-button element-id])
+                  (when can-change?
+                    [change-applicant-action-button element-id])
                   (when (or can-remove? can-uninvite?)
                     [remove-member-action-button element-id])]
-                 [promote-to-applicant-form element-id attributes application-id (partial reload! application-id)]
+                 [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
 (defn applicants-info

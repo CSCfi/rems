@@ -12,6 +12,7 @@
             :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
+            :change-applicant "Gör till sökanden" ; TODO check
             :change-resources "Ändra resurser"
             :clear "Töm"
             :close "Stäng ansökan"
@@ -35,7 +36,6 @@
             :member-email "E-postadress"
             :member-name "Namn"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
-            :promote-to-applicant "Gör till sökanden" ; TODO check
             :reject "Avslå"
             :remark "Gör anteckning"
             :remark-public "Visa anteckning för sökande"

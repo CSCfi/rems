@@ -12,6 +12,7 @@
             :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
+            :change-applicant "Tee hakija"
             :change-resources "Muuta resursseja"
             :clear "Tyhjennä"
             :close "Sulje hakemus"
@@ -35,7 +36,6 @@
             :member-email "Sähköposti"
             :member-name "Nimi"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
-            :promote-to-applicant "Tee hakija"
             :reject "Hylkää"
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"
