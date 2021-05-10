@@ -241,6 +241,7 @@
                  "application.command/change-resources"
                  "application.command/close"
                  "application.command/assign-external-id"
+                 "application.command/change-applicant"
                  "see-everything"}
                (set (get application :application/permissions))))))
 
@@ -264,6 +265,7 @@
                      "application.command/change-resources"
                      "application.command/close"
                      "application.command/assign-external-id"
+                     "application.command/change-applicant"
                      "see-everything"}
                    (set (get application :application/permissions))))))
         (testing "disabled command fails"
@@ -747,6 +749,61 @@
                   "application.command/approve"]
                  (:application/permissions (get-application-for-user app-id decider)))))))))
 
+(deftest test-change-applicant
+  (let [applicant "alice"
+        handler "developer"
+        app-id (test-helpers/create-application! {:actor applicant})]
+    (testing "submit application and add two members"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id})))
+      (is (= {:success true}
+             (send-command handler {:type :application.command/add-member
+                                    :application-id app-id
+                                    :member {:userid "carl"}})))
+      (is (= {:success true}
+             (send-command handler {:type :application.command/add-member
+                                    :application-id app-id
+                                    :member {:userid "malice"}}))))
+    (testing "promote carl to applicant"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/change-applicant
+                                    :application-id app-id
+                                    :member {:userid "carl"}})))
+      (let [application (get-application-for-user app-id applicant)]
+        (is (= "carl" (get-in application [:application/applicant :userid])))
+        (is (= #{"alice" "malice"} (->> application :application/members (map :userid) set)))
+        (testing "alice has limited rights"
+          (is (= #{"application.command/copy-as-new"
+                   "application.command/accept-licenses"}
+                 (-> application :application/permissions set)))))
+      (testing "carl has full rights"
+        (is (= #{"application.command/copy-as-new"
+                 "application.command/remove-member"
+                 "application.command/accept-licenses"
+                 "application.command/uninvite-member"}
+               (-> (get-application-for-user app-id "carl")
+                   :application/permissions
+                   set)))))
+    (testing "applicant can't promote member to applicant"
+      (is (= {:success false :errors [{:type "forbidden"}]}
+             (send-command "carl" {:type :application.command/change-applicant
+                                   :application-id app-id
+                                   :member {:userid "malice"}}))))
+    (testing "can't promote non-member to applicant"
+      (is (= {:success false :errors [{:type "user-not-member" :user {:userid "elsa"}}]}
+             (send-command handler {:type :application.command/change-applicant
+                                    :application-id app-id
+                                    :member {:userid "elsa"}}))))
+    (testing "can't change applicant of returned application"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/return
+                                    :application-id app-id})))
+      (is (= {:success false :errors [{:type "forbidden"}]}
+             (send-command handler {:type :application.command/change-applicant
+                                    :application-id app-id
+                                    :member {:userid "malice"}}))))))
+
 (deftest test-application-validation
   (let [user-id "alice"
         form-id (test-helpers/create-form! {:form/fields [{:field/id "req1"
@@ -1053,6 +1110,7 @@
                "application.command/request-review"
                "application.command/return"
                "application.command/uninvite-member"
+               "application.command/change-applicant"
                "see-everything"}
              (set (:application/permissions (get-application-for-user app-id handler))))))
     (testing "request decision"

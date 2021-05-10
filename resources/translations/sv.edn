@@ -12,6 +12,7 @@
             :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
+            :change-applicant "Gör till sökanden" ; TODO check
             :change-resources "Ändra resurser"
             :clear "Töm"
             :close "Stäng ansökan"
@@ -154,7 +155,8 @@
                  :description "Rubrik"
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
-                 :events {:approved "%1 godkände ansökan."
+                 :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
+                          :approved "%1 godkände ansökan."
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."

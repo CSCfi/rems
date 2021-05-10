@@ -12,6 +12,7 @@
             :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
+            :change-applicant "Tee hakija"
             :change-resources "Muuta resursseja"
             :clear "Tyhjennä"
             :close "Sulje hakemus"
@@ -154,7 +155,8 @@
                  :description "Otsikko"
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
-                 :events {:approved "%1 hyväksyi hakemuksen. "
+                 :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
+                          :approved "%1 hyväksyi hakemuksen."
                           :closed "%1 sulki hakemuksen."
                           :copied-from "Tämä hakemus on kopio vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."

@@ -238,6 +238,8 @@
     (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
+    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand
+                      "Promote member of application to applicant. Previous applicant becomes a member.")
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
