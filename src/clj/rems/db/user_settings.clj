@@ -82,6 +82,20 @@
   (assert user "User missing!")
   (let [config (find-first (comp #{:ega} :type) (:entitlement-push env))] ; XXX: limitation of one type EGA configuration
     (assert (seq config) "EGA entitlement push must be configured!")
-    (ega/generate-api-key {:userid user
-                           :access-token access-token
-                           :config config})))
+    (let [response (ega/generate-api-key {:userid user
+                                          :access-token access-token
+                                          :config config})]
+      (when-let [expiration-date (:api-key-expiration-date response)] ; when success
+        (update-user-settings! user {:ega {:api-key-expiration-date expiration-date}}))
+      response)))
+
+(defn delete-ega-api-key! [user access-token]
+  (assert user "User missing!")
+  (let [config (find-first (comp #{:ega} :type) (:entitlement-push env))] ; XXX: limitation of one type EGA configuration
+    (assert (seq config) "EGA entitlement push must be configured!")
+    (let [response (ega/delete-api-key {:userid user
+                                        :access-token access-token
+                                        :config config})]
+      (when (:success response)
+        (update-user-settings! user {:ega {}}))
+      response)))

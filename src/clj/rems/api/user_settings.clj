@@ -18,6 +18,9 @@
   {:success s/Bool
    (s/optional-key :api-key-expiration-date) DateTime})
 
+(s/defschema DeleteEGAApiKeyResponse
+  {:success s/Bool})
+
 (def user-settings-api
   (context "/user-settings" []
     :tags ["user-settings"]
@@ -42,4 +45,13 @@
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
-          (ok (user-settings/generate-ega-api-key! (get-user-id) access-token)))))))
+          (ok (user-settings/generate-ega-api-key! (get-user-id) access-token)))))
+
+    (POST "/delete-ega-api-key" [:as request] ; NB: binding syntax
+      :summary "Deletes the EGA API-key of the user."
+      :roles #{:handler}
+      :return DeleteEGAApiKeyResponse
+      (if-not (:enable-ega env)
+        (not-implemented "EGA not enabled")
+        (let [access-token (get-in request [:session :access-token])]
+          (ok (user-settings/delete-ega-api-key! (get-user-id) access-token)))))))

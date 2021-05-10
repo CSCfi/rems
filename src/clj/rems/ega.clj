@@ -63,6 +63,19 @@
                                    "expiration_date" expiration-date ; TODO: pass as date?
                                    "reason" reason}})))
 
+(defn- delete-api-key-invalidate
+  "Invalidates an API-Key of a user with a token.
+
+  `:access-token`            - the access token
+  `:id`                      - identity for the key e.g. user
+  `:config`                  - configuration of the EGA integration with following keys:
+    `:permission-server-url` - EGA permission server url"
+  [{:keys [access-token id config]}]
+  (assert access-token)
+  (http/delete (str (getx config :permission-server-url) "/api_key/" id)
+               (merge +common-opts+
+                      {:oauth-token access-token})))
+
 (defn- get-api-key-list
   "List the API-Keys available.
 
@@ -278,3 +291,27 @@
     (generate-api-key {:userid userid
                        :access-token access-token
                        :config config})))
+
+(defn delete-api-key
+  "Deletes the API-Key and removes it from the user's secrets.
+
+  `:userid`               - REMS user to delete the key of
+  `:access-token`         - User's ELIXIR access token
+  `:config`               - configuration of the EGA integration with following keys:
+    `:connect-server-url` - EGA login server url
+    `:permission-server-url` - EGA permission server url
+    `:client-id`          - client id for REMS
+    `:client-secret`      - client secret for REMS"
+  [{:keys [userid access-token config]}]
+  (let [_ (log/info "Deleting API-Key...")
+        _result (-> {:access-token access-token
+                     :id userid
+                     :config config}
+                    delete-api-key-invalidate)
+        _ (log/info "Remove user secret...")
+        result (user-secrets/update-user-secrets! userid {:ega {}})]
+    (if (:success result)
+      (do
+        (log/info "Success!")
+        {:success (:success result)})
+      {:success false})))
