@@ -63,6 +63,18 @@
                                          :entitlement-push [(ega-config server)])]
       (callback server))))
 
+(comment
+  ;; small helper to test the EGA API / REMS UI
+  ;; configure this to the dev-config.edn or so
+  :entitlement-push [{:id :stub-ega
+                      :type :ega
+                      :permission-server-url "http://localhost:1234/p"}]
+  (def ega-stub-server
+    (stub/start! {:port 1234}
+                 {{:path "/p/api_key/handler" :method "DELETE"} {:status 200 :content-type "application/json"}
+                  "/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}))
+  (.close ega-stub-server))
+
 (deftest test-generate-api-key
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))]
