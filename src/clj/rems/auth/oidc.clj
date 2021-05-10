@@ -47,11 +47,15 @@
   (let [response (-> (http/post (:token_endpoint oidc-configuration)
                                 ;; NOTE Some IdPs don't support client id and secret in form params,
                                 ;;      and require us to use HTTP basic auth
-                                {:basic-auth [(getx env :oidc-client-id)
+                                {:basic-auth [(str (getx env :oidc-client-id))
                                               (getx env :oidc-client-secret)]
                                  :form-params {:grant_type "authorization_code"
                                                :code (get-in request [:params :code])
-                                               :redirect_uri (str (getx env :public-url) "oidc-callback")}})
+                                               :redirect_uri (str (getx env :public-url) "oidc-callback")}
+                                 ;; Setting these will cause the exceptions raised by http/post to contain
+                                 ;; the request body, useful for debugging failures.
+                                 :save-request? (getx env :log-authentication-details)
+                                 :debug-body (getx env :log-authentication-details)})
                      ;; FIXME Complains about Invalid cookie header in logs
                      ;; TODO Unhandled responses for token endpoint:
                      ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes

@@ -19,6 +19,7 @@ Changes since v2.17
     - table hover highlight is now dark-on-light instead of light-on-dark
     - link color used in nav bar
   - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
+- Setting `:log-authentication-details` now prints out details for failed OIDC HTTP requests.
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)

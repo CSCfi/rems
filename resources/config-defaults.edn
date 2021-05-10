@@ -32,7 +32,7 @@
  ;; Supported authentication methods: :oidc, :fake
  :authentication :fake
 
- ;; Log additional details about authentication
+ ;; Log additional details about (OIDC) authentication. May leak secrets in the log, but useful for debugging.
  :log-authentication-details false
 
  ;; Show link to an alternative login service
