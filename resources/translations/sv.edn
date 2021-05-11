@@ -281,7 +281,7 @@
                 :type-visibility "Synlighet"
                 :visibility {:always "Visas alltid"
                              :field "Fält"
-                             :has-value "Har värde"
+                             :has-value "Har ett av värden"
                              :hidden "Dold"
                              :only-if "Visas om"}}
   :create-license {:external-link "Länk"

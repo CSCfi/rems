@@ -281,7 +281,7 @@
                 :type-visibility "Näkyvissä"
                 :visibility {:always "Aina"
                              :field "Kentällä"
-                             :has-value "On arvo"
+                             :has-value "On yksi arvoista"
                              :hidden "Piilossa"
                              :only-if "Vain jos"}}
   :create-license {:external-link "Linkki"

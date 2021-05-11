@@ -306,7 +306,7 @@
                 :type-visibility "Visible"
                 :visibility {:always "Always"
                              :field "Field"
-                             :has-value "Has value"
+                             :has-value "Has one of the values"
                              :hidden "Hidden"
                              :only-if "Only if"}}
   :create-license {:external-link "External link"
