@@ -38,13 +38,16 @@
 (defn parse-multiselect-values
   "Decodes a set of option keys from a string"
   [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
+  (if value
+    (-> value
+        (str/split #"\s+")
+        set
+        (disj ""))
+    #{}))
 
 (deftest test-parse-unparse-multiselect-values
   (is (= #{} (parse-multiselect-values "")))
+  (is (= #{} (parse-multiselect-values nil)))
   (is (= "" (unparse-multiselect-values nil)))
   (is (= "" (unparse-multiselect-values #{})))
   (is (= #{"yes"} (parse-multiselect-values "yes")))
@@ -141,13 +144,18 @@
 
 ;;; Visibility
 
-(defn field-visible? [field values]
-  (let [visibility (:field/visibility field)]
+(defn field-visible? [field field-values]
+  (let [visibility (:field/visibility field)
+        values (->> visibility
+                    :visibility/field
+                    :field/id
+                    (get field-values)
+                    ;; NB! by happy coincidence unparse-multiselect-values also for option fields
+                    parse-multiselect-values)]
     (or (nil? visibility)
         (= :always (:visibility/type visibility))
         (and (= :only-if (:visibility/type visibility))
-             (contains? (set (:visibility/values visibility))
-                        (get values (:field/id (:visibility/field visibility))))))))
+             (boolean (some (set (:visibility/values visibility)) values))))))
 
 (deftest test-field-visible?
   (is (true? (field-visible? nil nil)))
@@ -168,7 +176,16 @@
   (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
                                                  :visibility/field {:field/id "1"}
                                                  :visibility/values ["yes" "definitely"]}}
-                             {"1" "definitely"}))))
+                             {"1" "definitely"})))
+  (testing "multiselect field values"
+    (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                   :visibility/field {:field/id "1"}
+                                                   :visibility/values ["yes" "definitely"]}}
+                               {"1" "definitely maybe"})))
+    (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                    :visibility/field {:field/id "1"}
+                                                    :visibility/values ["yes" "no"]}}
+                                {"1" "definitely maybe"})))))
 
 (defn enrich-form-field-visible [form]
   (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
@@ -605,9 +622,18 @@
 
     (testing "visible"
       (let [form (assoc form :form/fields
-                        [{:field/id "fld1"
+                        [{:field/id "op"
                           :field/title {:en "en" :fi "fi"}
                           :field/type :option
+                          :field/options [{:key "yes"
+                                           :label {:en "en yes"
+                                                   :fi "fi yes"}}
+                                          {:key "no"
+                                           :label {:en "en no"
+                                                   :fi "fi no"}}]}
+                         {:field/id "mul"
+                          :field/title {:en "en" :fi "fi"}
+                          :field/type :multiselect
                           :field/options [{:key "yes"
                                            :label {:en "en yes"
                                                    :fi "fi yes"}}
@@ -645,20 +671,26 @@
         (testing "invalid value"
           (is (= {:form/fields {1 {:field/visibility {:visibility/values :t.form.validation/required}}}}
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}})))
+                                    :visibility/field {:field/id "op"}})))
           (is (= {:form/fields {1 {:field/visibility {:visibility/values :t.form.validation/invalid-value}}}}
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["yes" "does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["yes" "yes"]}))))
 
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))
           (is (empty? (validate-visible {:visibility/type :only-if
-                                         :visibility/field {:field/id "fld1"}
-                                         :visibility/values ["yes"]}))))))))
+                                         :visibility/field {:field/id "op"}
+                                         :visibility/values ["yes"]})))
+          (is (empty? (validate-visible {:visibility/type :only-if
+                                         :visibility/field {:field/id "mul"}
+                                         :visibility/values ["yes"]})))
+          (is (empty? (validate-visible {:visibility/type :only-if
+                                         :visibility/field {:field/id "mul"}
+                                         :visibility/values ["yes" "no"]}))))))))

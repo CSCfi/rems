@@ -386,16 +386,17 @@
              [add-form-field-column-button field-index]]]))))
 
 (defn- form-fields-that-can-be-used-in-visibility [form]
-  (filter #(contains? {:option :multiselect} (:field/type %))
+  (filter #(contains? #{:option :multiselect} (:field/type %))
           (:form/fields form)))
 
 (defn- form-field-values [form field-id]
   (let [field (find-first (comp #{field-id} :field/id) (:form/fields form))]
     (case (:field/type field)
-      :option (let [options (:field/options field)]
-                (map (fn [o] {:value (:key o)
-                              :title (:label o)})
-                     options))
+      (:option :multiselect)
+      (let [options (:field/options field)]
+        (map (fn [o] {:value (:key o)
+                      :title (:label o)})
+             options))
       [])))
 
 (rf/reg-event-db
