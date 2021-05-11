@@ -172,6 +172,7 @@
     (cond
       (str/blank? val)
       {:key :t.form.validation/required}
+
       (not= val (normalize-option-key val))
       {:key :t.form.validation/invalid-value})))
 

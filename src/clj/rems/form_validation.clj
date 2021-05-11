@@ -86,9 +86,8 @@
        :type     :t.form.validation/invalid-value})))
 
 (defn- multiselect-value-valid? [field]
-  (let [allowed-values (set (conj (map :key (:field/options field)) ""))]
-    (every? #(contains? allowed-values %)
-            (form/parse-multiselect-values (:field/value field)))))
+  (let [allowed? (set (conj (map :key (:field/options field)) ""))]
+    (every? allowed? (form/parse-multiselect-values (:field/value field)))))
 
 (defn- invalid-multiselect-error [field]
   (when (= (:field/type field) :multiselect)
