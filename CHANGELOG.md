@@ -20,6 +20,9 @@ Changes since v2.17
     - link color used in nav bar
   - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
 - Setting `:log-authentication-details` now prints out details for failed OIDC HTTP requests.
+- More validations in the API:
+  - the values of multiselect fields (/api/applications/save-draft)
+  - option and column keys (/api/forms/create, /api/forms/edit)
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
