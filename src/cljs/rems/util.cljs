@@ -77,7 +77,7 @@
 
   Has sensible defaults with error handler, JSON and keywords.
   You can use :custom-error-handler? to decide weather you would like use wrapper for the error handling.
-  
+
   Additionally calls event hooks.
 
   Returns a promise, but it's okay to ignore it if you prefer using
@@ -125,26 +125,6 @@
 
 (defn trim-when-string [s]
   (when (string? s) (str/trim s)))
-
-(defn normalize-option-key
-  "Strips disallowed characters from an option key"
-  [key]
-  (str/replace key #"\s+" ""))
-
-(defn encode-option-keys
-  "Encodes a set of option keys to a string"
-  [keys]
-  (->> keys
-       sort
-       (str/join " ")))
-
-(defn decode-option-keys
-  "Decodes a set of option keys from a string"
-  [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
 
 (def ^:private link-regex #"(?:http://|https://|www\.\w).*?(?=[^a-zA-Z0-9_/]*(?: |$))")
 

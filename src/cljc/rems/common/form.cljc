@@ -159,8 +159,25 @@
            (not (<= (first max-length-range) parsed (second max-length-range)))
            :t.form.validation/invalid-value))})
 
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(deftest test-normalize-option-key
+  (is (= "foo" (normalize-option-key " f o o "))))
+
+(defn- validate-key [option]
+  (let [val (get option :key)]
+    (cond
+      (str/blank? val)
+      {:key :t.form.validation/required}
+
+      (not= val (normalize-option-key val))
+      {:key :t.form.validation/invalid-value})))
+
 (defn- validate-option [option id languages]
-  {id (merge (validate-text-field option :key)
+  {id (merge (validate-key option)
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
@@ -424,6 +441,10 @@
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages))))
 
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "e gg") languages))))
+
         (testing "missing option label"
           (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
                 nil-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
@@ -455,6 +476,10 @@
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages))))
+
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "e gg") languages))))
 
         (testing "missing option label"
           (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
@@ -520,7 +545,11 @@
         (testing "missing column key"
           (is (= {:form/fields {0 {:field/columns {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :key] nil) languages)
-                 (validate-form-template (update-in form [:form/fields 0 :field/columns 0] dissoc :key) languages))))))
+                 (validate-form-template (update-in form [:form/fields 0 :field/columns 0] dissoc :key) languages))))
+
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/columns {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :key] "col 1") languages))))))
 
     (testing "visible"
       (let [form (assoc form :form/fields
@@ -596,3 +625,30 @@
   (is (= "1" (unparse-attachment-ids [1])))
   (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
   (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
+
+;; TODO for historical reasons we separate multiselect values with a
+;; space, and attachments with a comma.
+
+(defn unparse-multiselect-values
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn parse-multiselect-values
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(deftest test-parse-unparse-multiselect-values
+  (is (= #{} (parse-multiselect-values "")))
+  (is (= "" (unparse-multiselect-values nil)))
+  (is (= "" (unparse-multiselect-values #{})))
+  (is (= #{"yes"} (parse-multiselect-values "yes")))
+  (is (= "yes" (unparse-multiselect-values #{"yes"})))
+  (is (= #{"yes" "maybe" "no"} (parse-multiselect-values "yes maybe no")))
+  (is (= "maybe no yes" (unparse-multiselect-values #{"yes" "maybe" "no"}))))

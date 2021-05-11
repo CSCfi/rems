@@ -85,6 +85,16 @@
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-value})))
 
+(defn- multiselect-value-valid? [field]
+  (let [allowed? (set (conj (map :key (:field/options field)) ""))]
+    (every? allowed? (form/parse-multiselect-values (:field/value field)))))
+
+(defn- invalid-multiselect-error [field]
+  (when (= (:field/type field) :multiselect)
+    (when-not (multiselect-value-valid? field)
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-value})))
+
 (defn- missing-columns-error [field]
   (when (= (:field/type field) :table)
     (let [columns (set (map :key (:field/columns field)))
@@ -126,6 +136,7 @@
       (invalid-ip-address-error field)
       (too-long-error field)
       (invalid-option-error field)
+      (invalid-multiselect-error field)
       (missing-columns-error field)
       (invalid-attachment-error field)))
 

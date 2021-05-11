@@ -12,7 +12,6 @@
   React to re-render it. So we want to wait until the element is rendered to the new place
   with the new index before we can scroll to the new position."
   (:require [clojure.string :as str]
-            [goog.string :refer [parseInt]]
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -27,10 +26,9 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
-            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [navigate! fetch put! post! normalize-option-key trim-when-string visibility-ratio focus-input-field]]))
+            [rems.util :refer [navigate! put! post! trim-when-string visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -332,7 +330,7 @@
      [remove-form-field-option-button field-index option-index]]]
    [text-field-inline context {:keys [:form/fields field-index :field/options option-index :key]
                                :label (text :t.create-form/option-key)
-                               :normalizer normalize-option-key}]
+                               :normalizer common-form/normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
@@ -374,7 +372,7 @@
      [remove-form-field-column-button field-index column-index]]]
    [text-field-inline context {:keys [:form/fields field-index :field/columns column-index :key]
                                :label (text :t.create-form/column-key)
-                               :normalizer normalize-option-key}]
+                               :normalizer common-form/normalize-option-key}]
    [localized-text-field context {:keys [:form/fields field-index :field/columns column-index :label]
                                   :label (text :t.create-form/column-label)}]])
 
