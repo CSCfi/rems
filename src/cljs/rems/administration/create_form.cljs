@@ -22,6 +22,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common.util :refer [parse-int]]
+            [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -410,7 +411,7 @@
    (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/field] visibility-field)))
 
 (rf/reg-event-db
- ::form-field-visibility-value
+ ::form-field-visibility-values
  (fn [db [_ field-index visibility-value]]
    (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/values] visibility-value)))
 
@@ -435,8 +436,8 @@
         visibility-value (:visibility/values visibility)]
     [:div {:class (when (= :only-if visibility-type) "form-field-visibility")}
      [:div.form-group.field.row {:id (str "container-field" field-index)}
-      [:label.col-sm-2.col-form-label {:for id-type} label-type]
-      [:div.col-sm-10
+      [:label.col-sm-3.col-form-label {:for id-type} label-type]
+      [:div.col-sm-9
        [:select.form-control
         {:id id-type
          :class (when error-type "is-invalid")
@@ -449,8 +450,8 @@
      (when (= :only-if visibility-type)
        [:<>
         [:div.form-group.field.row
-         [:label.col-sm-2.col-form-label {:for id-field} label-field]
-         [:div.col-sm-10
+         [:label.col-sm-3.col-form-label {:for id-field} label-field]
+         [:div.col-sm-9
           [:select.form-control
            {:id id-field
             :class (when error-field "is-invalid")
@@ -466,18 +467,19 @@
            (when error-field (text-format error-field label-field))]]]
         (when (:field/id visibility-field)
           [:div.form-group.field.row
-           [:label.col-sm-2.col-form-label {:for id-value} label-value]
-           [:div.col-sm-10
-            [:select.form-control
+           [:label.col-sm-3.col-form-label {:for id-value} label-value]
+           [:div.col-sm-9
+            [dropdown/dropdown
              {:id id-value
-              :class (when error-value "is-invalid")
-              :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
-              :value (or (first visibility-value) "")}
-             ^{:key "not-selected"} [:option ""]
-             (doall
-              (for [value (form-field-values form (:field/id visibility-field))]
-                ^{:key (str field-index "-" (:value value))}
-                [:option {:value (:value value)} (get-in value [:title lang])]))]
+              :items (for [value (form-field-values form (:field/id visibility-field))]
+                       {:value (:value value)
+                        :label (get-in value [:title lang])})
+              :item-key #(str field-index "-" %)
+              :item-label :label
+              :item-selected? #(contains? (set visibility-value) (:value %))
+              :multi? true
+              :clearable? true
+              :on-change #(rf/dispatch [::form-field-visibility-values field-index (mapv :value %)])}]
             [:div.invalid-feedback
              (when error-value (text-format error-value label-value))]]])])]))
 
