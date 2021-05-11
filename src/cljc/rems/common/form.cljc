@@ -159,12 +159,20 @@
            (not (<= (first max-length-range) parsed (second max-length-range)))
            :t.form.validation/invalid-value))})
 
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(deftest test-normalize-option-key
+  (is (= "foo" (normalize-option-key " f o o "))))
+
 (defn- validate-key [option]
   (let [val (get option :key)]
     (cond
       (str/blank? val)
       {:key :t.form.validation/required}
-      (str/includes? val " ")
+      (not= val (normalize-option-key val))
       {:key :t.form.validation/invalid-value})))
 
 (defn- validate-option [option id languages]
@@ -620,18 +628,26 @@
 ;; TODO for historical reasons we separate multiselect values with a
 ;; space, and attachments with a comma.
 
-(defn parse-multiselect-values [string]
-  (when-not (empty? string)
-    (str/split string #" ")))
+(defn unparse-multiselect-values
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
 
-(defn unparse-multiselect-values [ids]
-  (str/join " " ids))
+(defn parse-multiselect-values
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
 
 (deftest test-parse-unparse-multiselect-values
-  (is (= nil (parse-multiselect-values "")))
+  (is (= #{} (parse-multiselect-values "")))
   (is (= "" (unparse-multiselect-values nil)))
-  (is (= "" (unparse-multiselect-values [])))
-  (is (= ["yes"] (parse-multiselect-values "yes")))
-  (is (= "yes" (unparse-multiselect-values ["yes"])))
-  (is (= ["yes" "maybe" "no"] (parse-multiselect-values "yes maybe no")))
-  (is (=  "yes maybe no" (unparse-multiselect-values ["yes" "maybe" "no"]))))
+  (is (= "" (unparse-multiselect-values #{})))
+  (is (= #{"yes"} (parse-multiselect-values "yes")))
+  (is (= "yes" (unparse-multiselect-values #{"yes"})))
+  (is (= #{"yes" "maybe" "no"} (parse-multiselect-values "yes maybe no")))
+  (is (= "maybe no yes" (unparse-multiselect-values #{"yes" "maybe" "no"}))))

@@ -4,11 +4,12 @@
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
+            [rems.common.form :as common-form]
             [rems.common.util :refer [build-index getx]]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]]))
+            [rems.util :refer [focus-when-collapse-opened linkify]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -271,7 +272,7 @@
   (let [value (:field/value opts)
         options (:field/options opts)
         optional (:field-/optional opts)
-        selected-keys (decode-option-keys value)]
+        selected-keys (common-form/parse-multiselect-values value)]
     [field-wrapper
      (assoc opts
             :fieldset true
@@ -288,7 +289,7 @@
                                      selected-keys (if checked
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))]
-                                 (on-change (encode-option-keys selected-keys))))]
+                                 (on-change (common-form/unparse-multiselect-values selected-keys))))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
