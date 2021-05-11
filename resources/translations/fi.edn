@@ -304,7 +304,11 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
+  :email {:applicant-changed {:subject-to-member "Hakemuksen %3 hakija vaihtunut"
+                              :message-to-member "Hyvä %1,\n\n%2 on vaihtanut hakemuksen %3 hakijan käyttäjäksi %4.\n\nVoit tarkastella hakemusta: %6."
+                              :subject-to-handler "(%3) Hakija vaihtunut"
+                              :message-to-handler "Hyvä %1,\n\n%2 on vaihtanut hakemuksen %3 hakijan käyttäjäksi %4.\n\nVoit tarkastella hakemusta: %6."}
+          :application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on hyväksytty"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}

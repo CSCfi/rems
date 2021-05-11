@@ -78,6 +78,9 @@
                  :email "assistant@example.com"}
     "remarker" {:userid "remarker"
                 :name "Random Remarker"}
+    "bob" {:userid "bob"
+           :name "Bob Boss"
+           :email "bob@corp.net"}
     {:userid userid}))
 
 (defn email-recipient [email]
@@ -394,6 +397,26 @@
                               :event/type :application.event/decider-invited
                               :application/decider {:email "actor@example.com" :name "Adam Actor"}
                               :invitation/token "abc123"}))))
+
+(deftest test-change-applicant
+  (let [change {:application/id 7
+                :event/type :application.event/applicant-changed
+                :event/actor "assistant"
+                :application/applicant {:userid "bob"}}
+        mails (emails base-events change)]
+    (is (= #{"applicant" "handler" "bob"} (email-recipients mails)))
+    (is (= {:to-user "applicant"
+            :subject "Applicant for application 2001/3, \"Application title\" changed"
+            :body "Dear Alice Applicant,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
+           (email-to "applicant" mails)))
+    (is (= {:to-user "bob"
+            :subject "Applicant for application 2001/3, \"Application title\" changed"
+            :body "Dear Bob Boss,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
+           (email-to "bob" mails)))
+    (is (= {:to-user "handler"
+            :subject "(2001/3, \"Application title\") Applicant changed"
+            :body "Dear Hannah Handler,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
+           (email-to "handler" mails)))))
 
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
