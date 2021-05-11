@@ -596,3 +596,22 @@
   (is (= "1" (unparse-attachment-ids [1])))
   (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
   (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
+
+;; TODO for historical reasons we separate multiselect values with a
+;; space, and attachments with a comma.
+
+(defn parse-multiselect-values [string]
+  (when-not (empty? string)
+    (str/split string #" ")))
+
+(defn unparse-multiselect-values [ids]
+  (str/join " " ids))
+
+(deftest test-parse-unparse-multiselect-values
+  (is (= nil (parse-multiselect-values "")))
+  (is (= "" (unparse-multiselect-values nil)))
+  (is (= "" (unparse-multiselect-values [])))
+  (is (= ["yes"] (parse-multiselect-values "yes")))
+  (is (= "yes" (unparse-multiselect-values ["yes"])))
+  (is (= ["yes" "maybe" "no"] (parse-multiselect-values "yes maybe no")))
+  (is (=  "yes maybe no" (unparse-multiselect-values ["yes" "maybe" "no"]))))

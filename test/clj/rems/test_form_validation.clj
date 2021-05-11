@@ -139,6 +139,67 @@
                                          :field/visible  true
                                          :field/value    ""}]))))
 
+  (testing "error: multiselect validation"
+    (is (= nil
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    ""}])
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    "ye"}])
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    "no"}])
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    "ye no xx"}])))
+    (is (= [{:type :t.form.validation/invalid-value :field-id "1"}]
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    "foo"}])
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional true
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    "ye foo xx"}])))
+    (is (= [{:type :t.form.validation/required :field-id "1"}]
+           (validate-fields-for-submit [{:field/id       "1"
+                                         :field/type     :multiselect
+                                         :field/visible  true
+                                         :field/optional false
+                                         :field/options  [{:key   "ye"}
+                                                          {:key   "no"}
+                                                          {:key   "xx"}]
+                                         :field/value    ""}]))))
+
   (testing "error: field input invalid email address"
     (is (= [{:type :t.form.validation/required :field-id "1"}
             {:type :t.form.validation/invalid-email :field-id "2"}
@@ -327,6 +388,46 @@
                                         :field/optional true
                                         :field/visible  true
                                         :field/value    ""}]))))
+
+  (testing "error: multiselect validation"
+    (is (= nil
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    ""}])
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    "ye"}])
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    "no"}])
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    "ye no xx"}])))
+    (is (= [{:type :t.form.validation/invalid-value :field-id "1"}]
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    "foo"}])
+           (validate-fields-for-draft [{:field/id       "1"
+                                        :field/type     :multiselect
+                                        :field/options  [{:key   "ye"}
+                                                         {:key   "no"}
+                                                         {:key   "xx"}]
+                                        :field/value    "ye foo xx"}]))))
 
   (testing "error: field input invalid email address"
     (is (= [{:type :t.form.validation/invalid-email :field-id "2"}
