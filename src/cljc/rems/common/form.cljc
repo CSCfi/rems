@@ -8,6 +8,80 @@
              [medley.core :refer [assoc-some find-first]]
              [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 
+;;; Field values
+
+(defn parse-attachment-ids [string]
+  (mapv parse-int (when-not (empty? string)
+                    (str/split string #","))))
+
+(defn unparse-attachment-ids [ids]
+  (str/join "," ids))
+
+(deftest test-parse-unparse-attachment-ids
+  (is (= [] (parse-attachment-ids "")))
+  (is (= "" (unparse-attachment-ids [])))
+  (is (= [1] (parse-attachment-ids "1")))
+  (is (= "1" (unparse-attachment-ids [1])))
+  (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
+  (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
+
+;; TODO for historical reasons we separate multiselect values with a
+;; space, and attachments with a comma.
+
+(defn unparse-multiselect-values
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn parse-multiselect-values
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(deftest test-parse-unparse-multiselect-values
+  (is (= #{} (parse-multiselect-values "")))
+  (is (= "" (unparse-multiselect-values nil)))
+  (is (= "" (unparse-multiselect-values #{})))
+  (is (= #{"yes"} (parse-multiselect-values "yes")))
+  (is (= "yes" (unparse-multiselect-values #{"yes"})))
+  (is (= #{"yes" "maybe" "no"} (parse-multiselect-values "yes maybe no")))
+  (is (= "maybe no yes" (unparse-multiselect-values #{"yes" "maybe" "no"}))))
+
+(defn- raw-answers->formatted [raw-answers]
+  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
+
+(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
+  (let [form-id (:form/id form)
+        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
+        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (if (not-empty fields)
+      (assoc form :form/fields fields)
+      form)))
+
+(defn add-default-field-value [field]
+  (assoc field :field/value
+         (case (:field/type field)
+           :table []
+           ;; default
+           "")))
+
+(defn add-default-values [form]
+  (transform [:form/fields ALL] add-default-field-value form))
+
+;;; Field types and their features
+
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))
 
@@ -31,6 +105,8 @@
 
 (defn supports-columns? [field]
   (= :table (:field/type field)))
+
+;;; Field ids
 
 (defn- generate-field-ids
   "Generate a set of unique field ids taking into account what have been given already.
@@ -63,6 +139,8 @@
   (is (= [{:field/id "fld2"} {:field/id "fld1"}] (assign-field-ids [{} {:field/id "fld1"}])))
   (is (= [{:field/id "fld2"} {:field/id "fld4"} {:field/id "fld3"}] (assign-field-ids [{:field/id "fld2"} {} {:field/id "fld3"}]))))
 
+;;; Visibility
+
 (defn field-visible? [field values]
   (let [visibility (:field/visibility field)]
     (or (nil? visibility)
@@ -91,6 +169,15 @@
                                                  :visibility/field {:field/id "1"}
                                                  :visibility/values ["yes" "definitely"]}}
                              {"1" "definitely"}))))
+
+(defn enrich-form-field-visible [form]
+  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
+        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
+    (transform [:form/fields ALL]
+               update-field-visibility
+               form)))
+
+;;; Validating form templates
 
 (defn- validate-text-field [m key]
   (when (str/blank? (get m key))
@@ -270,9 +357,6 @@
   (when-not (empty? m)
     m))
 
-(defn- raw-answers->formatted [raw-answers]
-  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
-
 (defn- validate-form-name-fields [form languages]
   (-> (if (:form/title form)
         (validate-text-field form :form/title) ; deprecated
@@ -304,38 +388,6 @@
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
-
-(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
-  (let [form-id (:form/id form)
-        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
-        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
-        fields (for [field (:form/fields form)
-                     :let [field-id (:field/id field)
-                           current-value (get current-answers field-id)
-                           previous-value (get previous-answers field-id)]]
-                 (assoc-some field
-                             :field/value current-value
-                             :field/previous-value previous-value))]
-    (if (not-empty fields)
-      (assoc form :form/fields fields)
-      form)))
-
-(defn add-default-field-value [field]
-  (assoc field :field/value
-         (case (:field/type field)
-           :table []
-           ;; default
-           "")))
-
-(defn add-default-values [form]
-  (transform [:form/fields ALL] add-default-field-value form))
-
-(defn enrich-form-field-visible [form]
-  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
-        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
-    (transform [:form/fields ALL]
-               update-field-visibility
-               form)))
 
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}
@@ -610,45 +662,3 @@
           (is (empty? (validate-visible {:visibility/type :only-if
                                          :visibility/field {:field/id "fld1"}
                                          :visibility/values ["yes"]}))))))))
-
-(defn parse-attachment-ids [string]
-  (mapv parse-int (when-not (empty? string)
-                    (str/split string #","))))
-
-(defn unparse-attachment-ids [ids]
-  (str/join "," ids))
-
-(deftest test-parse-unparse-attachment-ids
-  (is (= [] (parse-attachment-ids "")))
-  (is (= "" (unparse-attachment-ids [])))
-  (is (= [1] (parse-attachment-ids "1")))
-  (is (= "1" (unparse-attachment-ids [1])))
-  (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
-  (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
-
-;; TODO for historical reasons we separate multiselect values with a
-;; space, and attachments with a comma.
-
-(defn unparse-multiselect-values
-  "Encodes a set of option keys to a string"
-  [keys]
-  (->> keys
-       sort
-       (str/join " ")))
-
-(defn parse-multiselect-values
-  "Decodes a set of option keys from a string"
-  [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
-
-(deftest test-parse-unparse-multiselect-values
-  (is (= #{} (parse-multiselect-values "")))
-  (is (= "" (unparse-multiselect-values nil)))
-  (is (= "" (unparse-multiselect-values #{})))
-  (is (= #{"yes"} (parse-multiselect-values "yes")))
-  (is (= "yes" (unparse-multiselect-values #{"yes"})))
-  (is (= #{"yes" "maybe" "no"} (parse-multiselect-values "yes maybe no")))
-  (is (= "maybe no yes" (unparse-multiselect-values #{"yes" "maybe" "no"}))))
