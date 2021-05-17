@@ -112,7 +112,7 @@
      :background-origin (theme-getx :logo-content-origin)}]
    [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
    [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
-   (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
+   (stylesheet/at-media {:max-width (:sm bootstrap-media-breakpoints)}
                         (list
                          [(s/descendant :.logo :.img)
                           {:background-color (theme-getx :logo-bgcolor)
