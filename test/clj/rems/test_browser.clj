@@ -1396,6 +1396,7 @@
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
       (btu/context-assoc! :form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))))
+
     (testing "fetch form via api"
       (is (= {:form/title "Conditional field test"
               :form/external-title {:fi "Conditional field test (FI)" :en "Conditional field test (EN)" :sv "Conditional field test (SV)"}
@@ -1440,7 +1441,40 @@
               (http/get (str (btu/get-server-url) "/api/forms/" (btu/context-get :form-id))
                         {:as :json
                          :headers {"x-rems-api-key" "42"
-                                   "x-rems-user-id" "handler"}})))))))
+                                   "x-rems-user-id" "handler"}})))))
+
+    (testing "create catalogue item and application"
+      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+      (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
+                                                                             :catalogue-item-ids [(btu/context-get :catalogue-id)]})))
+
+    (testing "fill in application"
+      (logout)
+      (login-as "alice")
+      (go-to-application (btu/context-get :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
+      (is (btu/field-visible? "Option (EN)"))
+      (is (btu/field-visible? "Multiselect (EN)"))
+
+      (testing "toggle text field visibility"
+        (is (not (btu/field-visible? "Text (EN)")))
+        (select-option "Option (EN)" "Yes")
+        (is (btu/field-visible? "Text (EN)"))
+        (select-option "Option (EN)" "No")
+        (is (not (btu/field-visible? "Text (EN)"))))
+
+      (testing "toggle email field visibility"
+        (is (not (btu/field-visible? "Email (EN)")))
+        (btu/check-box "x") ; x selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "z") ; x and z selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "x") ; z selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "y") ; z and y selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "z") ; y zelected
+        (is (not (btu/field-visible? "Email (EN)")))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
