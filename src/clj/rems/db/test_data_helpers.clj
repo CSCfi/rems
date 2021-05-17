@@ -8,6 +8,7 @@
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
+            [rems.api.services.categories :as categories]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -237,6 +238,13 @@
                        :application-id app-id
                        :actor actor})
     app-id))
+
+(defn create-category! [{:keys [id data]
+                         :as command}]
+  (let [result (categories/create-category! {:id id
+                                             :data data})]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
 
 (defn assert-no-existing-data! []
   (assert (empty? (db/get-organizations {}))

@@ -645,7 +645,7 @@ SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE 
 
 -- :name add-organization! :insert
 INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
-ON CONFLICT (id) DO NOTHING
+ON CONFLICT (id) DO NOTHING 
 RETURNING id;
 
 -- :name set-organization! :!
@@ -679,3 +679,15 @@ WHERE id = :id;
 -- :name delete-invitation! :!
 DELETE FROM invitation
 WHERE id = :id;
+
+-- :name create-category! :insert
+-- :doc Create a single category item
+INSERT INTO category (id, data, organization) 
+VALUES (:id, :data::jsonb, :organization);
+
+-- :name get-categories :*
+-- :doc Get all category items
+SELECT id, data::text, organization FROM category;
+
+-- :name get-category-by-id! :? :1
+SELECT id, data FROM category WHERE id = :id;

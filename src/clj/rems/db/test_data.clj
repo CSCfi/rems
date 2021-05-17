@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
             [rems.api.services.form :as form]
+            [rems.json :as json]
             [rems.api.services.organizations :as organizations]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
@@ -1165,6 +1166,18 @@
                              :form-id form-organization-owner
                              :organization {:organization/id "organization1"}
                              :workflow-id (:organization-owner workflows)})
+
+    ; create category
+
+    (db/create-category! {:id 89
+                          :data (json/generate-string {:name "Category 1"})
+                          :organization "text"})
+    (db/create-category! {:id 90
+                          :data (json/generate-string {:name "Category 2"})
+                          :organization "text"})
+    (db/create-category! {:id 91
+                          :data (json/generate-string {:name "Category 3"})
+                          :organization "text"})
 
     (let [applicant (users :applicant1)
           handler (users :approver2)
