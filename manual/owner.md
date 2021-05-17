@@ -77,7 +77,7 @@ You can create fields that are hidden or shown to the applicant depending on the
 
 For example, you can create an option list “Do you want to add attachments?” Yes - No. If the applicant chooses “Yes” the attachment field is shown to the applicant. If they choose “No” they will not see the attachment field.
 
-:exclamation: Note! Conditional fields only work with Option list.
+:exclamation: Note! Conditional fields only work with Option list and Multiselect fields.
 
 1. Create an **Option list** and fill in the options
 
@@ -92,7 +92,7 @@ For example, you can create an option list “Do you want to add attachments?”
 ![Option list](img/optionlist4.png)
 
 4. Field: Locate the Option list you created earlier from the drop-down list
-5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses the "Yes" option in Field 1, "Do you want to add attachments?".
+5. Has one of the values: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses the "Yes" option in Field 1, "Do you want to add attachments?".
 
 ![Option list](img/optionlist5.png)
 
