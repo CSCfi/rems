@@ -304,7 +304,11 @@
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
-  :email {:application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
+  :email {:applicant-changed {:subject-to-member "Sökande för ansökan %3 bytte"
+                              :message-to-member "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6." ; TODO check
+                              :subject-to-handler "(%3) Sökande bytte"
+                              :message-to-handler "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6."} ; TODO check
+          :application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
                                  :message-to-applicant "%1,\n\nDin ansökan %3 är godkänd.\n\nDu kan granska ansökningen och beslutet här: %6"
                                  :subject-to-handler "(%3) Ansökan är godkänd"
                                  :message-to-handler "%1,\n\n%2 har godkänt ansökan %3 från %4.\n\nDu kan granska ansökningen och beslutet här: %6"}
