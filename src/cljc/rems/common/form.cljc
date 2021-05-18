@@ -155,7 +155,7 @@
     (or (nil? visibility)
         (= :always (:visibility/type visibility))
         (and (= :only-if (:visibility/type visibility))
-             (boolean (some (set (:visibility/values visibility)) values))))))
+             (some? (some (set (:visibility/values visibility)) values))))))
 
 (deftest test-field-visible?
   (is (true? (field-visible? nil nil)))
