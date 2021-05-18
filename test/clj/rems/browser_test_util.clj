@@ -379,8 +379,10 @@
 
 
 (defn field-visible? [label]
-  (visible? [{:css ".fields"}
-             {:tag :label :fn/has-text label}]))
+  (or (visible? [{:css ".fields"}
+                 {:tag :label :fn/has-text label}])
+      (visible? [{:css ".fields"}
+                 {:tag :legend :fn/has-text label}])))
 
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked

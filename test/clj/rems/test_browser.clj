@@ -1303,6 +1303,179 @@
                                      "x-rems-user-id" "handler"}}))))))
     (user-settings/delete-user-settings! "owner"))) ; clear language settings
 
+(deftest test-conditional-field
+  (btu/with-postmortem
+    (login-as "owner")
+    (go-to-admin "Forms")
+
+    (testing "create form"
+      (btu/scroll-and-click :create-form)
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
+      (select-option "Organization" "nbn")
+      (fill-form-field "Name" "Conditional field test")
+      (fill-form-field "EN" "Conditional field test (EN)")
+      (fill-form-field "FI" "Conditional field test (FI)")
+      (fill-form-field "SV" "Conditional field test (SV)")
+
+      (testing "create option field"
+        (btu/scroll-and-click {:class :add-form-field})
+        (is (btu/eventually-visible? :fields-0-title-en))
+        (btu/fill-human :fields-0-title-en "Option (EN)")
+        (btu/fill-human :fields-0-title-fi "Option (FI)")
+        (btu/fill-human :fields-0-title-sv "Option (SV)")
+        (btu/scroll-and-click :fields-0-type-option)
+        (btu/scroll-and-click {:class :add-option})
+        (is (btu/eventually-visible? :fields-0-options-0-key))
+        (btu/fill-human :fields-0-options-0-key "true")
+        (btu/fill-human :fields-0-options-0-label-en "Yes")
+        (btu/fill-human :fields-0-options-0-label-fi "Kyllä")
+        (btu/fill-human :fields-0-options-0-label-sv "Ja")
+        (btu/scroll-and-click {:class :add-option})
+        (is (btu/eventually-visible? :fields-0-options-1-key))
+        (btu/fill-human :fields-0-options-1-key "false")
+        (btu/fill-human :fields-0-options-1-label-en "No")
+        (btu/fill-human :fields-0-options-1-label-fi "Ei")
+        (btu/fill-human :fields-0-options-1-label-sv "Nej"))
+
+      (testing "create multiselect field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-1-title-en))
+        (btu/fill-human :fields-1-title-en "Multiselect (EN)")
+        (btu/fill-human :fields-1-title-fi "Multiselect (FI)")
+        (btu/fill-human :fields-1-title-sv "Multiselect (SV)")
+        (btu/scroll-and-click :fields-1-type-multiselect)
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-0-key))
+        (btu/fill-human :fields-1-options-0-key "x")
+        (btu/fill-human :fields-1-options-0-label-en "X")
+        (btu/fill-human :fields-1-options-0-label-fi "X")
+        (btu/fill-human :fields-1-options-0-label-sv "X")
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-1-key))
+        (btu/fill-human :fields-1-options-1-key "y")
+        (btu/fill-human :fields-1-options-1-label-en "Y")
+        (btu/fill-human :fields-1-options-1-label-fi "Y")
+        (btu/fill-human :fields-1-options-1-label-sv "Y")
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-2-key))
+        (btu/fill-human :fields-1-options-2-key "z")
+        (btu/fill-human :fields-1-options-2-label-en "Z")
+        (btu/fill-human :fields-1-options-2-label-fi "Z")
+        (btu/fill-human :fields-1-options-2-label-sv "Z"))
+
+      (testing "create conditional text field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-2-title-en))
+        (btu/fill-human :fields-2-title-en "Text (EN)")
+        (btu/fill-human :fields-2-title-fi "Text (FI)")
+        (btu/fill-human :fields-2-title-sv "Text (SV)")
+        (btu/scroll-and-click :fields-2-additional-more-link)
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-type "Only if\n")
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-field "Field 1: Option (EN)\n")
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-value "Yes\n"))
+
+      (testing "create conditional email field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-3-title-en))
+        (btu/fill-human :fields-3-title-en "Email (EN)")
+        (btu/fill-human :fields-3-title-fi "Email (FI)")
+        (btu/fill-human :fields-3-title-sv "Email (SV)")
+        (btu/scroll-and-click :fields-3-type-email)
+        (btu/scroll-and-click :fields-3-additional-more-link)
+        (is (btu/eventually-visible? :fields-3-visibility-type))
+        (btu/fill :fields-3-visibility-type "Only if\n")
+        (is (btu/eventually-visible? :fields-3-visibility-field))
+        (btu/fill :fields-3-visibility-field "Field 2: Multiselect (EN)\n")
+        (is (btu/eventually-visible? :fields-3-visibility-value))
+        (btu/fill :fields-3-visibility-value "X\n")
+        (btu/fill :fields-3-visibility-value "Z\n"))
+
+      (btu/scroll-and-click :save)
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (btu/context-assoc! :form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))))
+
+    (testing "fetch form via api"
+      (is (= {:form/title "Conditional field test"
+              :form/external-title {:fi "Conditional field test (FI)" :en "Conditional field test (EN)" :sv "Conditional field test (SV)"}
+              :organization {:organization/id "nbn"
+                             :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                             :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}}
+              :form/errors nil
+              :form/id (btu/context-get :form-id)
+
+              :form/internal-name "Conditional field test"
+              :form/fields [{:field/title {:fi "Option (FI)" :en "Option (EN)" :sv "Option (SV)"}
+                             :field/type "option"
+                             :field/id "fld1"
+                             :field/optional false
+                             :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
+                                             {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]}
+                            {:field/title {:fi "Multiselect (FI)" :en "Multiselect (EN)" :sv "Multiselect (SV)"}
+                             :field/type "multiselect"
+                             :field/id "fld2"
+                             :field/optional false
+                             :field/options [{:key "x" :label {:fi "X" :en "X" :sv "X"}}
+                                             {:key "y" :label {:fi "Y" :en "Y" :sv "Y"}}
+                                             {:key "z" :label {:fi "Z" :en "Z" :sv "Z"}}]}
+                            {:field/title {:fi "Text (FI)" :en "Text (EN)" :sv "Text (SV)"}
+                             :field/type "text"
+                             :field/visibility {:visibility/type "only-if"
+                                                :visibility/field {:field/id "fld1"}
+                                                :visibility/values ["true"]}
+                             :field/id "fld3"
+                             :field/max-length nil
+                             :field/optional false}
+                            {:field/title {:fi "Email (FI)" :en "Email (EN)" :sv "Email (SV)"}
+                             :field/type "email"
+                             :field/visibility {:visibility/type "only-if"
+                                                :visibility/field {:field/id "fld2"}
+                                                :visibility/values ["x" "z"]}
+                             :field/id "fld4"
+                             :field/optional false}]
+              :archived false
+              :enabled true}
+             (:body
+              (http/get (str (btu/get-server-url) "/api/forms/" (btu/context-get :form-id))
+                        {:as :json
+                         :headers {"x-rems-api-key" "42"
+                                   "x-rems-user-id" "handler"}})))))
+
+    (testing "create catalogue item and application"
+      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+      (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
+                                                                             :catalogue-item-ids [(btu/context-get :catalogue-id)]})))
+
+    (testing "fill in application"
+      (logout)
+      (login-as "alice")
+      (go-to-application (btu/context-get :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
+      (is (btu/field-visible? "Option (EN)"))
+      (is (btu/field-visible? "Multiselect (EN)"))
+
+      (testing "toggle text field visibility"
+        (is (not (btu/field-visible? "Text (EN)")))
+        (select-option "Option (EN)" "Yes")
+        (is (btu/field-visible? "Text (EN)"))
+        (select-option "Option (EN)" "No")
+        (is (not (btu/field-visible? "Text (EN)"))))
+
+      (testing "toggle email field visibility"
+        (is (not (btu/field-visible? "Email (EN)")))
+        (btu/check-box "x") ; x selected
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(btu/field-visible? "Email (EN)")))))
+        (btu/check-box "z") ; x and z selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "x") ; z selected
+        (Thread/sleep 500) ; Small wait to make sure the field really stays visible
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "y") ; z and y selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "z") ; y zelected
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(not (btu/field-visible? "Email (EN)"))))))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem

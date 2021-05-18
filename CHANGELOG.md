@@ -35,6 +35,7 @@ Changes since v2.17
 - Experimental GA4GH Permissions API now allows users to query their own permissions via `/api/permissions/:user`. (#2631)
 - The handler can now change the applicant of a submitted application. (#2581)
   - This feature can be disabled by adding `:application.command/change-applicant` to `:disable-commands`.
+- Multiselect fields can now be used to control visibility of other fields. (#1947)
 
 ## v2.17 "Isokaari" 2021-04-12
 
