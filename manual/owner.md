@@ -60,6 +60,7 @@ Application forms are totally customisable. You can create different fields, suc
 **Attachment**: Applicant can add one or multiple attachments.
 **Label**: Use labels as descriptive texts if you want to give the applicant additional information, such as instructions, regarding some field.
 **Header**: Consider using headers if you want to divide the application form into sections.
+**IP address**: IP address field will validate the IP address the applicant has provided in IPv4 or IPv6 forms. IP address must not be within the known private range.
 
 Placeholder texts: It is possible to add placeholder text to most of the fields. Use placeholder texts to provide an example on how the field should be filled. Placeholders help the applicant to fill in the field correctly. For example:
 
