@@ -1466,7 +1466,7 @@
       (testing "toggle email field visibility"
         (is (not (btu/field-visible? "Email (EN)")))
         (btu/check-box "x") ; x selected
-        (is (btu/field-visible? "Email (EN)"))
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(btu/field-visible? "Email (EN)")))))
         (btu/check-box "z") ; x and z selected
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "x") ; z selected
@@ -1474,7 +1474,7 @@
         (btu/check-box "y") ; z and y selected
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "z") ; y zelected
-        (is (not (btu/field-visible? "Email (EN)")))))))
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(not (btu/field-visible? "Email (EN)"))))))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
