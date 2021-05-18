@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.17
+Changes since v2.18
+
+## v2.18 "Särkiniemientie" 2021-05-18
 
 ### Changes
 - The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
