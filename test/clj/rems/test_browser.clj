@@ -1470,6 +1470,7 @@
         (btu/check-box "z") ; x and z selected
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "x") ; z selected
+        (Thread/sleep 500) ; Small wait to make sure the field really stays visible
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "y") ; z and y selected
         (is (btu/field-visible? "Email (EN)"))
