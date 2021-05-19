@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.18
 
+### Fixes
+- Pdf generation failed for applications that had table fields with no rows. Now fixed.
+
 ## v2.18 "Särkiniemientie" 2021-05-18
 
 ### Changes
