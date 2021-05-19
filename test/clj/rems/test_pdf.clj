@@ -17,6 +17,29 @@
 
 (use-fixtures :each rollback-db-fixture)
 
+;; regression test
+(deftest test-pdf-empty-table
+  (let [data {:application/state :draft
+              :application/resources []
+              :application/id 123
+              :application/applicant "user"
+              :application/members []
+              :application/licenses []
+              :application/events []
+              :application/forms [{:form/fields [{:field/visible true
+                                                  :field/type :table
+                                                  :field/title {:en "Table field"}
+                                                  :field/value []}]}]}]
+    (is (= [[[:heading {:spacing-before 20} "Application"]
+             [[[:paragraph {:spacing-before 8, :style :bold} "Table field"]
+               [:paragraph "No rows"]]]]]
+           (with-language :en
+             (fn []
+               (with-fixed-time (time/date-time 2010)
+                 (fn []
+                   (#'pdf/render-fields data)))))))
+    (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
+
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
