@@ -638,6 +638,11 @@ WHERE id = :id;
 
 -- :name create-category! :insert
 -- :doc Create a single category item
-INSERT INTO category (id, title, start) VALUES (:id, :title,
---~ (if (contains? params :start) ":start" "now()")
-);
+INSERT INTO category (id, data) VALUES (:id, :data);
+
+-- :name get-categories :*
+-- :doc Get all category items
+SELECT * FROM category;
+
+-- :name get-category-by-id! :? :1
+SELECT id, data FROM category WHERE id = :id;
