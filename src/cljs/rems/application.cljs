@@ -8,6 +8,7 @@
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
+            [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
@@ -321,7 +322,7 @@
 (defn- attachment-zip-button [application]
   (when-not (empty? (:application/attachments application))
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" (:application/id application) "/attachments")
+     {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
       :target :_blank}
      [file-download] " " (text :t.form/attachments-as-zip)]))
 
@@ -617,31 +618,43 @@
   `:element-id`         - id of the element to generate unique ids
   `:attributes`         - user attributes to display
   `:application`        - application
-  `:group?`             - specifies if a group border is rendered
-  `:can-remove?`        - can the user be removed?
-  `:accepted-licenses?` - has the member accepted the licenses?"
-  [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
+  `:group?`             - specifies if a group border is rendered"
+  [{:keys [element-id attributes application group?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
-                    user-id (text :t.applicant-info/member)
-                    :else (text :t.applicant-info/invited-member))]
+        invited-user? (nil? user-id)
+        applicant? (= (:userid (:application/applicant application)) user-id)
+        title (cond applicant? (text :t.applicant-info/applicant)
+                    invited-user? (text :t.applicant-info/invited-member)
+                    :else (text :t.applicant-info/member))
+        accepted? (accepted-licenses? application user-id)
+        permissions (:application/permissions application)
+        can-remove? (and (not applicant?)
+                         (contains? permissions :application.command/remove-member))
+        can-uninvite? (and invited-user?
+                           (contains? permissions :application.command/uninvite-member))
+        can-change? (and (not applicant?)
+                         (not invited-user?)
+                         (contains? permissions :application.command/change-applicant))]
     [collapsible/minimal
      {:id (str element-id "-info")
       :class (when group? "group")
       :always [:div
                [:h3 title]
                [user/username attributes]
-               (when-not (nil? accepted-licenses?)
-                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
-      :collapse [user/attributes attributes]
-      :footer (let [element-id (str element-id "-remove-member")]
+               (when-not (or invited-user?
+                             (= :application.state/draft (:application/state application)))
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted?}] {:inline? true}])]
+      :collapse [user/attributes attributes invited-user?]
+      :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
-                 (when can-remove?
-                   [:div.commands
-                    [remove-member-action-button element-id]])
-                 (when can-remove?
-                   [remove-member-form element-id attributes application-id (partial reload! application-id)])])}]))
+                 [:div.commands
+                  (when can-change?
+                    [change-applicant-action-button element-id])
+                  (when (or can-remove? can-uninvite?)
+                    [remove-member-action-button element-id])]
+                 [change-applicant-form element-id attributes application-id (partial reload! application-id)]
+                 [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
@@ -652,9 +665,7 @@
         invited-members (:application/invited-members application)
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
-        can-remove? (contains? permissions :application.command/remove-member)
-        can-invite? (contains? permissions :application.command/invite-member)
-        can-uninvite? (contains? permissions :application.command/uninvite-member)]
+        can-invite? (contains? permissions :application.command/invite-member)]
     [collapsible/component
      {:id "applicants-info"
       :title (text :t.applicant-info/applicants)
@@ -665,24 +676,18 @@
                            :attributes applicant
                            :application application
                            :group? (or (seq members)
-                                       (seq invited-members))
-                           :can-remove? false
-                           :accepted-licenses? (when (not= :application.state/draft (:application/state application))
-                                                 (accepted-licenses? application (:userid applicant)))}]]
+                                       (seq invited-members))}]]
             (concat
              (for [[index member] (map-indexed vector (sort-by :name members))]
                [member-info {:element-id (str "member" index)
                              :attributes member
                              :application application
-                             :group? true
-                             :can-remove? can-remove?
-                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
+                             :group? true}])
              (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
                [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
-                             :group? true
-                             :can-remove? can-uninvite?}])))
+                             :group? true}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])
@@ -870,7 +875,7 @@
 (defn guide []
   [:div
    (component-info member-info)
-   (example "member-info"
+   (example "member-info: applicant with notification email, accepted licenses, researcher status"
             [member-info {:element-id "info1"
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
@@ -880,29 +885,37 @@
                                        :address "Testikatu 1, 00100 Helsinki"
                                        :researcher-status-by "so"}
                           :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}
-                          :accepted-licenses? true}])
+                                        :application/applicant {:userid "developer@uu.id"}
+                                        :application/licenses [{:license/id 1}]
+                                        :application/accepted-licenses {"developer@uu.id" #{1}}}}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
                           :attributes {:userid "developer"
                                        :email "developer@uu.id"
-                                       :name "Testers"
-                                       :address "Testikatu 1, 00100 Helsinki"}
-                          :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}}])
-   (example "member-info"
+                                       :address "Testikatu 1, 00100 Helsinki"}}])
+   (example "member-info with buttons, licenses not accepted"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
-                                        :application/applicant {:userid "developer"}}
-                          :group? true
-                          :can-remove? true}])
-   (example "member-info"
+                                        :application/applicant {:userid "developer"}
+                                        :application/licenses [{:license/id 1}]
+                                        :application/permissions #{:application.command/remove-member
+                                                                   :application.command/change-applicant}}
+                          :group? true}])
+   (example "member-info: invited member"
             [member-info {:element-id "info4"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
+                          :group? true}])
+   (example "member-info: invited member, with remove button"
+            [member-info {:element-id "info4"
+                          :attributes {:name "John Smith"
+                                       :email "john.smith@invited.com"}
+                          :application {:application/id 42
+                                        :application/applicant {:userid "developer"}
+                                        :application/permissions #{:application.command/uninvite-member}}
                           :group? true}])
 
    (component-info applicants-info)

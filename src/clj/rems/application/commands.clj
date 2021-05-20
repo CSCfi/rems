@@ -74,6 +74,9 @@
   (assoc CommandBase
          :member {:name s/Str
                   :email s/Str}))
+(s/defschema ChangeApplicantCommand
+  (assoc CommandWithComment
+         :member schema-base/User))
 (s/defschema RejectCommand
   CommandWithComment)
 (s/defschema RemarkCommand
@@ -115,6 +118,7 @@
    :application.command/add-member AddMemberCommand
    :application.command/approve ApproveCommand
    :application.command/assign-external-id AssignExternalIdCommand
+   :application.command/change-applicant ChangeApplicantCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
    :application.command/copy-as-new CopyAsNewCommand
@@ -559,6 +563,15 @@
       (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/member-uninvited
                                     :application/member (:member cmd)})))
+
+(defmethod command-handler :application.command/change-applicant
+  [cmd application injections]
+  (or (when-not (contains? (set (map :userid (:application/members application)))
+                           (:userid (:member cmd)))
+        {:errors [{:type :user-not-member :user (:member cmd)}]})
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/applicant-changed
+                                    :application/applicant (:member cmd)})))
 
 (defn- copy-field-values! [copy-attachment! application new-application-id]
   (vec

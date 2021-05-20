@@ -236,6 +236,16 @@
                (text :t.email/regards)
                (text :t.email/footer))}])))
 
+(defmethod event-to-emails :application.event/applicant-changed [event application]
+  (concat (emails-to-recipients (application-util/applicant-and-members application)
+                                event application
+                                :t.email.applicant-changed/subject-to-member
+                                :t.email.applicant-changed/message-to-member)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.applicant-changed/subject-to-handler
+                                :t.email.applicant-changed/message-to-handler)))
+
 ;; TODO member-joined?
 
 (defn handler-reminder-email [lang handler applications]

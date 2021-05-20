@@ -17,13 +17,14 @@
 (defn add-roles-documentation [summary roles]
   (when (nil? summary)
     (throw (IllegalArgumentException. "Route must have a :summary when using :roles and it must be specified before :roles")))
-  (str summary
-       " (roles: "
-       (->> roles
-            (map name)
-            (sort)
-            (str/join ", "))
-       ")"))
+  (let [role-str (->> roles
+                      (map name)
+                      (sort)
+                      (str/join ", "))]
+    `(str ~summary
+          " (roles: "
+          ~role-str
+          ")")))
 
 (defmethod restructure-param :roles [_ roles acc]
   (-> acc

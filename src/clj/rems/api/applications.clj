@@ -238,6 +238,8 @@
     (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
+    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand
+                      "Promote member of application to applicant. Previous applicant becomes a member.")
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
@@ -272,13 +274,14 @@
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/attachments" []
-      :summary "Get all attachments as a zip file"
+      :summary "Get attachments for an application as a zip file"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
+      :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, the zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
-        (attachment/zip-attachments app)
+        (attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/experimental/pdf" request

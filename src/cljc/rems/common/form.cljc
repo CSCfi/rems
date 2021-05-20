@@ -8,11 +8,88 @@
              [medley.core :refer [assoc-some find-first]]
              [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 
+;;; Field values
+
+(defn parse-attachment-ids [string]
+  (mapv parse-int (when-not (empty? string)
+                    (str/split string #","))))
+
+(defn unparse-attachment-ids [ids]
+  (str/join "," ids))
+
+(deftest test-parse-unparse-attachment-ids
+  (is (= [] (parse-attachment-ids "")))
+  (is (= "" (unparse-attachment-ids [])))
+  (is (= [1] (parse-attachment-ids "1")))
+  (is (= "1" (unparse-attachment-ids [1])))
+  (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
+  (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
+
+;; TODO for historical reasons we separate multiselect values with a
+;; space, and attachments with a comma.
+
+(defn unparse-multiselect-values
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn parse-multiselect-values
+  "Decodes a set of option keys from a string"
+  [value]
+  (if value
+    (-> value
+        (str/split #"\s+")
+        set
+        (disj ""))
+    #{}))
+
+(deftest test-parse-unparse-multiselect-values
+  (is (= #{} (parse-multiselect-values "")))
+  (is (= #{} (parse-multiselect-values nil)))
+  (is (= "" (unparse-multiselect-values nil)))
+  (is (= "" (unparse-multiselect-values #{})))
+  (is (= #{"yes"} (parse-multiselect-values "yes")))
+  (is (= "yes" (unparse-multiselect-values #{"yes"})))
+  (is (= #{"yes" "maybe" "no"} (parse-multiselect-values "yes maybe no")))
+  (is (= "maybe no yes" (unparse-multiselect-values #{"yes" "maybe" "no"}))))
+
+(defn- raw-answers->formatted [raw-answers]
+  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
+
+(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
+  (let [form-id (:form/id form)
+        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
+        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (if (not-empty fields)
+      (assoc form :form/fields fields)
+      form)))
+
+(defn add-default-field-value [field]
+  (assoc field :field/value
+         (case (:field/type field)
+           :table []
+           ;; default
+           "")))
+
+(defn add-default-values [form]
+  (transform [:form/fields ALL] add-default-field-value form))
+
+;;; Field types and their features
+
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))
 
 (defn supports-placeholder? [field]
-  (contains? #{:text :texta :description :phone-number} (:field/type field)))
+  (contains? #{:text :texta :description :phone-number :ip-address} (:field/type field)))
 
 (defn supports-max-length? [field]
   (contains? #{:description :text :texta} (:field/type field)))
@@ -31,6 +108,8 @@
 
 (defn supports-columns? [field]
   (= :table (:field/type field)))
+
+;;; Field ids
 
 (defn- generate-field-ids
   "Generate a set of unique field ids taking into account what have been given already.
@@ -63,13 +142,20 @@
   (is (= [{:field/id "fld2"} {:field/id "fld1"}] (assign-field-ids [{} {:field/id "fld1"}])))
   (is (= [{:field/id "fld2"} {:field/id "fld4"} {:field/id "fld3"}] (assign-field-ids [{:field/id "fld2"} {} {:field/id "fld3"}]))))
 
-(defn field-visible? [field values]
-  (let [visibility (:field/visibility field)]
+;;; Visibility
+
+(defn field-visible? [field field-values]
+  (let [visibility (:field/visibility field)
+        values (->> visibility
+                    :visibility/field
+                    :field/id
+                    (get field-values)
+                    ;; NB! by happy coincidence unparse-multiselect-values also for option fields
+                    parse-multiselect-values)]
     (or (nil? visibility)
         (= :always (:visibility/type visibility))
         (and (= :only-if (:visibility/type visibility))
-             (contains? (set (:visibility/values visibility))
-                        (get values (:field/id (:visibility/field visibility))))))))
+             (some? (some (set (:visibility/values visibility)) values))))))
 
 (deftest test-field-visible?
   (is (true? (field-visible? nil nil)))
@@ -90,7 +176,25 @@
   (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
                                                  :visibility/field {:field/id "1"}
                                                  :visibility/values ["yes" "definitely"]}}
-                             {"1" "definitely"}))))
+                             {"1" "definitely"})))
+  (testing "multiselect field values"
+    (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                   :visibility/field {:field/id "1"}
+                                                   :visibility/values ["yes" "definitely"]}}
+                               {"1" "definitely maybe"})))
+    (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                    :visibility/field {:field/id "1"}
+                                                    :visibility/values ["yes" "no"]}}
+                                {"1" "definitely maybe"})))))
+
+(defn enrich-form-field-visible [form]
+  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
+        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
+    (transform [:form/fields ALL]
+               update-field-visibility
+               form)))
+
+;;; Validating form templates
 
 (defn- validate-text-field [m key]
   (when (str/blank? (get m key))
@@ -102,7 +206,7 @@
               (str/blank? (:organization/id organization)))
       {:organization :t.form.validation/required})))
 
-(def field-types #{:attachment :date :description :email :header :label :multiselect :phone-number :option :text :texta :table})
+(def field-types #{:attachment :date :description :email :header :ip-address :label :multiselect :phone-number :option :text :texta :table})
 
 (defn- validate-field-type [m]
   (let [type (keyword (get m :field/type))]
@@ -159,8 +263,25 @@
            (not (<= (first max-length-range) parsed (second max-length-range)))
            :t.form.validation/invalid-value))})
 
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(deftest test-normalize-option-key
+  (is (= "foo" (normalize-option-key " f o o "))))
+
+(defn- validate-key [option]
+  (let [val (get option :key)]
+    (cond
+      (str/blank? val)
+      {:key :t.form.validation/required}
+
+      (not= val (normalize-option-key val))
+      {:key :t.form.validation/invalid-value})))
+
 (defn- validate-option [option id languages]
-  {id (merge (validate-text-field option :key)
+  {id (merge (validate-key option)
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
@@ -253,9 +374,6 @@
   (when-not (empty? m)
     m))
 
-(defn- raw-answers->formatted [raw-answers]
-  (build-index {:keys [:form :field] :value-fn :value} raw-answers))
-
 (defn- validate-form-name-fields [form languages]
   (-> (if (:form/title form)
         (validate-text-field form :form/title) ; deprecated
@@ -287,38 +405,6 @@
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
-
-(defn enrich-form-answers [form current-answers-raw previous-answers-raw]
-  (let [form-id (:form/id form)
-        current-answers (get (raw-answers->formatted current-answers-raw) form-id)
-        previous-answers (get (raw-answers->formatted previous-answers-raw) form-id)
-        fields (for [field (:form/fields form)
-                     :let [field-id (:field/id field)
-                           current-value (get current-answers field-id)
-                           previous-value (get previous-answers field-id)]]
-                 (assoc-some field
-                             :field/value current-value
-                             :field/previous-value previous-value))]
-    (if (not-empty fields)
-      (assoc form :form/fields fields)
-      form)))
-
-(defn add-default-field-value [field]
-  (assoc field :field/value
-         (case (:field/type field)
-           :table []
-           ;; default
-           "")))
-
-(defn add-default-values [form]
-  (transform [:form/fields ALL] add-default-field-value form))
-
-(defn enrich-form-field-visible [form]
-  (let [field-values (build-index {:keys [:field/id] :value-fn :field/value} (:form/fields form))
-        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
-    (transform [:form/fields ALL]
-               update-field-visibility
-               form)))
 
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}
@@ -424,6 +510,10 @@
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages))))
 
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "e gg") languages))))
+
         (testing "missing option label"
           (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
                 nil-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
@@ -456,6 +546,10 @@
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages))))
 
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "e gg") languages))))
+
         (testing "missing option label"
           (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
                 nil-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
@@ -467,6 +561,19 @@
     (testing "phone number"
       (let [form (assoc form :form/fields
                         [{:field/type :phone-number
+                          :field/title {:en "en" :fi "fi"}
+                          :field/optional false}])]
+        (testing "valid form"
+          (is (empty? (validate-form-template form languages))))
+
+        (testing "missing title localization"
+          (is (= {:form/fields {0 {:field/title {:en :t.form.validation/required}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] nil) languages))))))
+
+    (testing "ip address"
+      (let [form (assoc form :form/fields
+                        [{:field/type :ip-address
                           :field/title {:en "en" :fi "fi"}
                           :field/optional false}])]
         (testing "valid form"
@@ -507,13 +614,26 @@
         (testing "missing column key"
           (is (= {:form/fields {0 {:field/columns {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :key] nil) languages)
-                 (validate-form-template (update-in form [:form/fields 0 :field/columns 0] dissoc :key) languages))))))
+                 (validate-form-template (update-in form [:form/fields 0 :field/columns 0] dissoc :key) languages))))
+
+        (testing "invalid option key"
+          (is (= {:form/fields {0 {:field/columns {0 {:key :t.form.validation/invalid-value}}}}}
+                 (validate-form-template (assoc-in form [:form/fields 0 :field/columns 0 :key] "col 1") languages))))))
 
     (testing "visible"
       (let [form (assoc form :form/fields
-                        [{:field/id "fld1"
+                        [{:field/id "op"
                           :field/title {:en "en" :fi "fi"}
                           :field/type :option
+                          :field/options [{:key "yes"
+                                           :label {:en "en yes"
+                                                   :fi "fi yes"}}
+                                          {:key "no"
+                                           :label {:en "en no"
+                                                   :fi "fi no"}}]}
+                         {:field/id "mul"
+                          :field/title {:en "en" :fi "fi"}
+                          :field/type :multiselect
                           :field/options [{:key "yes"
                                            :label {:en "en yes"
                                                    :fi "fi yes"}}
@@ -551,35 +671,26 @@
         (testing "invalid value"
           (is (= {:form/fields {1 {:field/visibility {:visibility/values :t.form.validation/required}}}}
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}})))
+                                    :visibility/field {:field/id "op"}})))
           (is (= {:form/fields {1 {:field/visibility {:visibility/values :t.form.validation/invalid-value}}}}
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["yes" "does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
-                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/field {:field/id "op"}
                                     :visibility/values ["yes" "yes"]}))))
 
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))
           (is (empty? (validate-visible {:visibility/type :only-if
-                                         :visibility/field {:field/id "fld1"}
-                                         :visibility/values ["yes"]}))))))))
-
-(defn parse-attachment-ids [string]
-  (mapv parse-int (when-not (empty? string)
-                    (str/split string #","))))
-
-(defn unparse-attachment-ids [ids]
-  (str/join "," ids))
-
-(deftest test-parse-unparse-attachment-ids
-  (is (= [] (parse-attachment-ids "")))
-  (is (= "" (unparse-attachment-ids [])))
-  (is (= [1] (parse-attachment-ids "1")))
-  (is (= "1" (unparse-attachment-ids [1])))
-  (is (= [1 236 3] (parse-attachment-ids "1,236,3")))
-  (is (=  "1,236,3" (unparse-attachment-ids [1 236 3]))))
+                                         :visibility/field {:field/id "op"}
+                                         :visibility/values ["yes"]})))
+          (is (empty? (validate-visible {:visibility/type :only-if
+                                         :visibility/field {:field/id "mul"}
+                                         :visibility/values ["yes"]})))
+          (is (empty? (validate-visible {:visibility/type :only-if
+                                         :visibility/field {:field/id "mul"}
+                                         :visibility/values ["yes" "no"]}))))))))

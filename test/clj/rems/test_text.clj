@@ -67,6 +67,14 @@
                               :application/member {:userid "User"
                                                    :email "user@example.com"
                                                    :name "User Urquhart"}})))
+      (is (= "Bob Bond changed the applicant to User Urquhart."
+             (localize-event {:event/type :application.event/applicant-changed
+                              :event/actor "bob"
+                              :event/actor-attributes {:userid "bob"
+                                                       :name "Bob Bond"}
+                              :application/applicant {:userid "User"
+                                                      :email "user@example.com"
+                                                      :name "User Urquhart"}})))
       (is (= "Bob Bond invited User Urquhart <user@example.com> to the application."
              (localize-event {:event/type :application.event/member-invited
                               :event/actor "bob"

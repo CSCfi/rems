@@ -118,7 +118,8 @@
 
 
 (def ^:private event-types
-  {:application.event/approved :t.applications.events/approved
+  {:application.event/applicant-changed :t.applications.events/applicant-changed
+   :application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
    :application.event/review-requested :t.applications.events/review-requested
    :application.event/reviewed :t.applications.events/reviewed
@@ -184,6 +185,9 @@
         (:application.event/member-added
          :application.event/member-removed)
         (application-util/get-member-name (:application/member event))
+
+        :application.event/applicant-changed
+        (application-util/get-member-name (:application/applicant event))
 
         (:application.event/member-invited
          :application.event/member-uninvited)

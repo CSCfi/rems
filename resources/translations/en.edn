@@ -12,6 +12,7 @@
             :assign-external-id-info "External id"
             :bundling-intro [:div.intro [:p "Note that only resources that have the same application workflow can be bundled together."]]
             :cancel "Cancel"
+            :change-applicant "Make applicant"
             :change-resources "Change resources"
             :clear "Clear"
             :close "Close application"
@@ -140,7 +141,8 @@
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
-                   :email "Email (from identity provider)"
+                   :email "Email"
+                   :email-idp "Email (from identity provider)"
                    :invited-member "Invited member"
                    :member "Member"
                    :name "Name"
@@ -163,7 +165,8 @@
                  :entitlement-end "Access rights end %1."
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
-                 :events {:approved "%1 approved the application."
+                 :events {:applicant-changed "%1 changed the applicant to %2."
+                          :approved "%1 approved the application."
                           :closed "%1 closed the application."
                           :copied-from "This application is a copy of an old application."
                           :copied-to "%1 copied the application to a new application."
@@ -292,6 +295,7 @@
                 :type-description "Application title"
                 :type-email "Email address"
                 :type-header "Header"
+                :type-ip-address "IP address"
                 :type-label "Label"
                 :type-multiselect "Multi-select list"
                 :type-option "Option list"
@@ -303,7 +307,7 @@
                 :type-visibility "Visible"
                 :visibility {:always "Always"
                              :field "Field"
-                             :has-value "Has value"
+                             :has-value "Has one of the values"
                              :hidden "Hidden"
                              :only-if "Only if"}}
   :create-license {:external-link "External link"
@@ -333,7 +337,11 @@
   ;; %4 - name of applicant
   ;; %5 - catalogue items of application, comma separated list
   ;; %6 - link to application
-  :email {:application-approved {:subject-to-applicant "Your application %3 has been approved"
+  :email {:applicant-changed {:subject-to-member "Applicant for application %3 changed"
+                              :message-to-member "Dear %1,\n\nThe applicant for application %3 has been changed to %4 by %2.\n\nYou can view the application at %6."
+                              :subject-to-handler "(%3) Applicant changed"
+                              :message-to-handler "Dear %1,\n\nThe applicant for application %3 has been changed to %4 by %2.\n\nYou can view the application at %6."}
+          :application-approved {:subject-to-applicant "Your application %3 has been approved"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision at %6"
                                  :subject-to-handler "(%3) Application has been approved"
                                  :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can view the application and the decision at %6"}
@@ -408,7 +416,7 @@
          :application "Application"
          :attachment-remove "Remove"
          :attachments "Attachments"
-         :attachments-as-zip "All attachments (zip)"
+         :attachments-as-zip "Attachments (zip)"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"
@@ -441,6 +449,8 @@
                       :columns-required "At least one column is required."
                       :invalid-email "Invalid email address."
                       :invalid-phone-number "Invalid phone number."
+                      :invalid-ip-address "Invalid IP address."
+                      :invalid-ip-address-private "This is a private IP address and cannot be used in an application."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :options-required "At least one option is required."

@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.tools.logging :as log]
             [rems.application.commands :as commands]
+            [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
@@ -43,21 +44,23 @@
       (throw-forbidden))
     (attachments/save-attachment! file user-id application-id)))
 
-(defn zip-attachments [application]
-  (let [out (ByteArrayOutputStream.)]
+(defn zip-attachments [application all?]
+  (let [classes (model/classify-attachments application)
+        out (ByteArrayOutputStream.)]
     (with-open [zip (ZipOutputStream. out)]
       (doseq [metadata (getx application :application/attachments)]
         (let [id (getx metadata :attachment/id)
               attachment (attachments/get-attachment id)]
-          ;; we deduplicate filenames when uploading, but here's a
-          ;; failsafe in case we have duplicate filenames in old
-          ;; applications
-          (try
-            (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
-            (.write zip (getx attachment :attachment/data))
-            (.closeEntry zip)
-            (catch ZipException e
-              (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e))))))
+          (when (or all? (contains? (get classes id) :field/value))
+            ;; we deduplicate filenames when uploading, but here's a
+            ;; failsafe in case we have duplicate filenames in old
+            ;; applications
+            (try
+              (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
+              (.write zip (getx attachment :attachment/data))
+              (.closeEntry zip)
+              (catch ZipException e
+                (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e)))))))
     (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient
         (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
         (content-type "application/zip"))))

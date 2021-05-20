@@ -2,7 +2,12 @@
   "Pure functions for form validation logic"
   (:require [clojure.string :as str]
             [rems.common.form :as form]
-            [rems.common.util :refer [+email-regex+ +phone-number-regex+]]))
+            [rems.common.util :refer [+email-regex+
+                                      +phone-number-regex+
+                                      +valid-ip-address-regex+
+                                      +valid-ip-address-regex-version-six+
+                                      +reserved-ip-address-range-regex+
+                                      +reserved-ip-address-range-regex-version-six+]]))
 
 (defn- all-columns-set? [field]
   (let [valid-row? #(not-any? str/blank? (map :value %))]
@@ -52,6 +57,23 @@
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-phone-number})))
 
+(defn- invalid-ip-address-error [field]
+  (when (and (= (:field/type field) :ip-address)
+             (not (str/blank? (:field/value field))))
+    (cond
+      (or
+       (and (first (re-matches +valid-ip-address-regex+ (:field/value field)))
+            (first (re-matches +reserved-ip-address-range-regex+ (:field/value field))))
+       (and (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))
+            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field)))))
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-ip-address-private}
+      (and
+       (not (first (re-matches +valid-ip-address-regex+ (:field/value field))))
+       (not (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))))
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-ip-address}
+      :else nil)))
 
 (defn- option-value-valid? [field]
   (let [allowed-values (set (conj (map :key (:field/options field)) ""))]
@@ -60,6 +82,16 @@
 (defn- invalid-option-error [field]
   (when (= (:field/type field) :option)
     (when-not (option-value-valid? field)
+      {:field-id (:field/id field)
+       :type     :t.form.validation/invalid-value})))
+
+(defn- multiselect-value-valid? [field]
+  (let [allowed? (set (conj (map :key (:field/options field)) ""))]
+    (every? allowed? (form/parse-multiselect-values (:field/value field)))))
+
+(defn- invalid-multiselect-error [field]
+  (when (= (:field/type field) :multiselect)
+    (when-not (multiselect-value-valid? field)
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-value})))
 
@@ -101,8 +133,10 @@
   (or (wrong-value-type-error field)
       (invalid-email-address-error field)
       (invalid-phone-number-error field)
+      (invalid-ip-address-error field)
       (too-long-error field)
       (invalid-option-error field)
+      (invalid-multiselect-error field)
       (missing-columns-error field)
       (invalid-attachment-error field)))
 

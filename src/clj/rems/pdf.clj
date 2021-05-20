@@ -96,12 +96,14 @@
              (str/join ", ")))
 
       :table
-      (let [columns (:field/columns field)]
-        (into [:table {:header (vec (for [column columns] (localized (:label column))))}]
-              (for [row (:field/value field)]
-                (let [values (build-index {:keys [:column] :value-fn :value} row)]
-                  (vec (for [column columns]
-                         (get values (:key column))))))))
+      (if-let [rows (seq (:field/value field))]
+        (let [columns (:field/columns field)]
+          (into [:table {:header (vec (for [column columns] (localized (:label column))))}]
+                (for [row rows]
+                  (let [values (build-index {:keys [:column] :value-fn :value} row)]
+                    (vec (for [column columns]
+                           (get values (:key column))))))))
+        (text :t.form/no-rows))
 
       (:field/value field))))
 

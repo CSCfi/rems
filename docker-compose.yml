@@ -1,4 +1,5 @@
 ### Example file for running REMS using docker image from DockerHub
+# See docs/installing-upgrading.md for more info
 
 version: '2'
 services:
@@ -11,12 +12,12 @@ services:
       AUTHENTICATION: :fake
       PUBLIC_URL: http://localhost:3000/
     mem_reservation: 200m
-    mem_limit: 500m
+    mem_limit: 2000m
     ports:
       - "127.0.0.1:3000:3000"
 
   db:
-    image: postgres:9.6
+    image: postgres:13
     environment:
       POSTGRES_USER: rems
       POSTGRES_PASSWORD: remspassword

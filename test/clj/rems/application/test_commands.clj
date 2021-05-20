@@ -1594,6 +1594,59 @@
                             :comment ""}
                            injections))))))
 
+(deftest test-change-applicant
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id}
+                                   {:event/type :application.event/member-added
+                                    :event/time test-time
+                                    :event/actor handler-user-id
+                                    :application/id app-id
+                                    :application/member {:userid "member1"}}])]
+    (testing "handler can promote existing member"
+      (is (= {:event/type :application.event/applicant-changed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/applicant {:userid "member1"}
+              :application/comment ""}
+             (ok-command application
+                         {:type :application.command/change-applicant
+                          :actor handler-user-id
+                          :member {:userid "member1"}
+                          :comment ""}))))
+    (testing "applicant can't promote"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/change-applicant
+                            :actor applicant-user-id
+                            :member {:userid "member1"}
+                            :comment ""}))))
+    (testing "member can't promote themself"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/change-applicant
+                            :actor "member1"
+                            :member {:userid "member1"}
+                            :comment ""}))))
+    (testing "handler can't promote non-member"
+      (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
+             (fail-command application
+                           {:type :application.command/change-applicant
+                            :actor handler-user-id
+                            :member {:userid "unknown"}
+                            :comment ""}))))
+    (testing "handler can't promote current applicant"
+      (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
+             (fail-command application
+                           {:type :application.command/change-applicant
+                            :actor handler-user-id
+                            :member {:userid applicant-user-id}
+                            :comment ""}))))))
+
 (deftest test-review
   (let [reviewer "reviewer"
         reviewer2 "reviewer2"

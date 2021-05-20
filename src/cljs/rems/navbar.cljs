@@ -82,12 +82,12 @@
         lang @(rf/subscribe [:language])]
     [:nav.navbar-flex
      [:div.navbar.navbar-expand-sm.flex-fill
-      (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
-                (:navbar-logo-name theme))
-        [atoms/logo-navigation])
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]
+      (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
+                (:navbar-logo-name theme))
+        [atoms/logo-navigation])
       [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 identity]]
      [:div.navbar [user-widget (:user identity)]]]))
 

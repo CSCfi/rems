@@ -46,6 +46,7 @@
           :application.command/add-licenses
           :application.command/add-member
           :application.command/assign-external-id
+          :application.command/change-applicant
           :application.command/change-resources
           :application.command/invite-member
           :application.command/invite-reviewer

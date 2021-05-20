@@ -6,9 +6,31 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.17
+Changes since v2.18
+
+### Fixes
+- Pdf generation failed for applications that had table fields with no rows. Now fixed.
+
+### Additions
+- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
+
+## v2.18 "Särkiniemientie" 2021-05-18
 
 ### Changes
+- The "Attachments (zip)" button in the UI now only downloads the current application attachments. Event attachments and previous versions of application attachments are left out. The full zip is still available via the API. (#2453)
+- Changes to theming: (#2588)
+  - Theme variables are now documented in [resources/config-defaults.edn](resources/config-defaults.edn).
+  - The `:nav-color` now simply defaults to `:link-color`. Previously, it defaulted to `:color3` if `:link-color` is unset.
+  - The theme variables `:danger-color` (didn't really affect anything) and `:phase-background-active` (wasn't used, overlaps with `:phase-bgcolor-active`) have been removed.
+  - The default theme has minor visual changes:
+    - color2 is lighter
+    - table hover highlight is now dark-on-light instead of light-on-dark
+    - link color used in nav bar
+  - Some theme-related code was rewritten. There should be no changes to appearance, but bugs are possible.
+- Setting `:log-authentication-details` now prints out details for failed OIDC HTTP requests.
+- More validations in the API:
+  - the values of multiselect fields (/api/applications/save-draft)
+  - option and column keys (/api/forms/create, /api/forms/edit)
 
 ### Fixes
 - Errors for invalid inputs (field values that are too long, invalid email addresses, etc.) are now rendered nicely. Previously the applicant just saw a "Save draft: Failed" message. (#2611)
@@ -18,7 +40,10 @@ Changes since v2.17
 
 ### Additions
 - REMS now supports PostgreSQL version 13. (#2642)
-- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
+- Experimental GA4GH Permissions API now allows users to query their own permissions via `/api/permissions/:user`. (#2631)
+- The handler can now change the applicant of a submitted application. (#2581)
+  - This feature can be disabled by adding `:application.command/change-applicant` to `:disable-commands`.
+- Multiselect fields can now be used to control visibility of other fields. (#1947)
 
 ## v2.17 "Isokaari" 2021-04-12
 

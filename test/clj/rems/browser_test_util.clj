@@ -17,7 +17,8 @@
             [rems.db.test-data-users :as test-users]
             [rems.db.test-data :as test-data]
             [rems.json :as json]
-            [rems.standalone])
+            [rems.standalone]
+            [slingshot.slingshot :refer [try+]])
   (:import (java.net SocketException)))
 
 ;;; test setup
@@ -292,8 +293,21 @@
 ;; TODO add more of etaoin here
 
 
-
 ;;; etaoin extensions
+
+;; exceptions make for ugly test failures: here are some wrappers that
+;; are better adapted for (is ...) assertions
+
+(defn no-timeout? [f]
+  (try+
+   (f)
+   true
+   (catch [:type :etaoin/timeout] e
+     (log/error e)
+     false)))
+
+(defn eventually-visible? [& args]
+  (no-timeout? #(apply wait-visible args)))
 
 ;; TODO our input fields process every character through re-frame.
 ;; Etaoin's fill-human almost works, but very rarely loses characters,
@@ -365,8 +379,10 @@
 
 
 (defn field-visible? [label]
-  (visible? [{:css ".fields"}
-             {:tag :label :fn/has-text label}]))
+  (or (visible? [{:css ".fields"}
+                 {:tag :label :fn/has-text label}])
+      (visible? [{:css ".fields"}
+                 {:tag :legend :fn/has-text label}])))
 
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked

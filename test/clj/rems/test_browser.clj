@@ -48,6 +48,10 @@
   (btu/scroll-and-click {:css ".login-btn"})
   (btu/screenshot "login-page.png")
   (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
+  ;; NB. it's better to use wait-visible instead of
+  ;; eventually-visible? in utils like this because we want the line
+  ;; in the original test in the error, not a line in this util with
+  ;; no info of where it was called from.
   (btu/wait-visible :logout)
   (btu/screenshot "logged-in.png"))
 
@@ -322,9 +326,9 @@
         (btu/check-box "Option3")
         ;; fill in two rows for the table
         (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (btu/wait-visible (keyword (str table-field-id "-row0-col1")))
+        (is (btu/eventually-visible? (keyword (str table-field-id "-row0-col1"))))
         (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (btu/wait-visible (keyword (str table-field-id "-row1-col1")))
+        (is (btu/eventually-visible? (keyword (str table-field-id "-row1-col1"))))
         (btu/fill-human (keyword (str table-field-id "-row0-col1")) "a")
         (btu/fill-human (keyword (str table-field-id "-row0-col2")) "b")
         (btu/fill-human (keyword (str table-field-id "-row1-col1")) "c")
@@ -334,15 +338,16 @@
         ;; leave "Text are with max length" empty
 
         (fill-form-field "Phone number" "+358450000100")
+        (fill-form-field "IP address" "142.250.74.110")
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
-          (btu/wait-visible :status-success))
+          (is (btu/eventually-visible? :status-success)))
 
         (testing "add invalid value for field, try to save"
           (fill-form-field "Email field" "user")
           (btu/scroll-and-click :save)
-          (btu/wait-visible :status-failed)
+          (is (btu/eventually-visible? :status-failed))
           (is (= ["Invalid email address."]
                  (get-validation-summary)))
           (is (= "Invalid email address."
@@ -354,7 +359,7 @@
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
           (btu/scroll-and-click :submit)
-          (btu/wait-visible {:id "status-failed" :fn/has-text "Send application"})
+          (is (btu/eventually-visible? {:id "status-failed" :fn/has-text "Send application"}))
           (is (= ["Terms of use not accepted."
                   "Field \"Text field\" is required."]
                  (get-validation-summary)))
@@ -424,7 +429,8 @@
                       ["label" ""]
                       ["text" ""]
                       ["texta" ""]
-                      ["phone-number" "+358450000100"]]
+                      ["phone-number" "+358450000100"]
+                      ["ip-address" "142.250.74.110"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)
@@ -433,7 +439,7 @@
               (btu/scroll-and-click [{:css "table.my-applications"}
                                      {:tag :tr :data-row (btu/context-get :application-id)}
                                      {:css ".btn-primary"}])
-              (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
+              (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
               (btu/wait-page-loaded)
               (btu/gather-axe-results)
               (testing "check a field answer"
@@ -455,16 +461,16 @@
     (testing "invite member"
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
-      (btu/wait-visible [:actions-invite-member {:fn/has-text "Invite member"}])
+      (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
       (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (btu/scroll-and-click :invite0-info-collapse-more-link)
-      (btu/wait-visible :invite0-info-collapse)
+      (is (btu/eventually-visible? :invite0-info-collapse))
 
       (is (= {"Name" "John Smith"
-              "Email (from identity provider)" "john.smith@generic.name"}
+              "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info)))
       (is (string? (-> (btu/context-get :application-id)
                        applications/get-application-internal
@@ -482,13 +488,13 @@
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant invited John Smith to the application."})))
 
     (testing "uninvite member"
-      (is (not (btu/visible? :actions-invite0-remove-member-form)))
-      (btu/scroll-and-click :invite0-remove-member-form-action-button)
-      (btu/wait-visible :actions-invite0-remove-member-form)
-      (btu/fill-human :comment-invite0-remove-member-comment "sorry but no")
-      (btu/scroll-and-click :invite0-remove-member-submit)
-      (btu/wait-visible [{:css ".alert-success" :fn/has-text "Remove member: Success"}])
-      (btu/wait-invisible :actions-invite0-remove-member-form)
+      (is (not (btu/visible? :actions-invite0-operations-remove)))
+      (btu/scroll-and-click :invite0-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-invite0-operations-remove))
+      (btu/fill-human :comment-invite0-operations-remove-comment "sorry but no")
+      (btu/scroll-and-click :invite0-operations-remove-submit)
+      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (btu/wait-invisible :actions-invite0-operations-remove)
       (btu/wait-invisible :invite0-info)
 
       (is (empty? (-> (btu/context-get :application-id)
@@ -531,13 +537,13 @@
     (go-to-application (btu/context-get :application-id))
 
     (testing "remove second member jade"
-      (is (not (btu/visible? :actions-member1-remove-member-form)))
-      (btu/scroll-and-click :member1-remove-member-form-action-button)
-      (btu/wait-visible :actions-member1-remove-member-form)
-      (btu/fill-human :comment-member1-remove-member-comment "not in research group anymore")
-      (btu/scroll-and-click :member1-remove-member-submit)
-      (btu/wait-visible [{:css ".alert-success" :fn/has-text "Remove member: Success"}])
-      (btu/wait-invisible :actions-member1-remove-member-form)
+      (is (not (btu/visible? :actions-member1-operations-remove)))
+      (btu/scroll-and-click :member1-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-member1-operations-remove))
+      (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
+      (btu/scroll-and-click :member1-operations-remove-submit)
+      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
@@ -563,15 +569,15 @@
   (btu/with-postmortem
     (login-as "developer")
     (testing "handler should see todos on logging in"
-      (btu/wait-visible :todo-applications))
+      (is (btu/eventually-visible? :todo-applications)))
     (testing "handler should see description of application"
-      (btu/wait-visible {:class :application-description :fn/text "test-handling"}))
+      (is (btu/eventually-visible? {:class :application-description :fn/text "test-handling"})))
     (let [app-button {:tag :a :href (str "/application/" (btu/context-get :application-id))}]
       (testing "handler should see view button for application"
-        (btu/wait-visible app-button))
+        (is (btu/eventually-visible? app-button)))
       (btu/scroll-and-click app-button))
     (testing "handler should see application after clicking on View"
-      (btu/wait-visible {:tag :h1 :fn/has-text "test-handling"}))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
       (is (= {"Name" "Alice Applicant"
@@ -585,10 +591,10 @@
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))
     (testing "add a comment and two attachments"
-      (btu/wait-visible :comment-approve-reject)
+      (is (btu/eventually-visible? :comment-approve-reject))
       (btu/fill-human :comment-approve-reject "this is a comment")
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
-      (btu/wait-visible [{:css "a.attachment-link"}])
+      (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
                               (get-attachments))))
@@ -634,17 +640,17 @@
     (testing "handler invites reviewer"
       (login-as "developer")
       (go-to-application (btu/context-get :application-id))
-      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
 
       (btu/scroll-and-click :request-decision-dropdown)
-      (btu/wait-visible :invite-decider-action-button)
+      (is (btu/eventually-visible? :invite-decider-action-button))
       (btu/scroll-and-click :invite-decider-action-button)
 
-      (btu/wait-visible :name-invite-decider)
+      (is (btu/eventually-visible? :name-invite-decider))
       (btu/fill-human :name-invite-decider "anybody will do")
       (btu/fill-human :email-invite-decider "user@example.com")
       (btu/scroll-and-click :invite-decider)
-      (btu/wait-visible {:css ".alert-success"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
       (logout))
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-get :application-id)
@@ -658,12 +664,12 @@
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
       (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
-      (btu/wait-visible {:css ".login-btn"})
+      (is (btu/eventually-visible? {:css ".login-btn"}))
       (btu/scroll-and-click {:css ".login-btn"})
-      (btu/wait-visible [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-reviewer"}]))
       (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
       (btu/wait-page-loaded)
-      (btu/wait-visible {:tag :h1 :fn/has-text "test-invite-decider"}))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"})))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-reviewer"}
@@ -674,11 +680,11 @@
                  (select-keys [:event/actor :event/type])))))
     (testing "submit decision"
       (btu/scroll-and-click :decide-action-button)
-      (btu/wait-visible :comment-decide)
+      (is (btu/eventually-visible? :comment-decide))
       (btu/fill-human :comment-decide "ok")
       (btu/scroll-and-click :decide-approve)
       (btu/wait-page-loaded)
-      (btu/wait-visible {:css ".alert-success"}))
+      (is (btu/eventually-visible? {:css ".alert-success"})))
     (testing "check decision event"
       (is (= {:application/decision :approved
               :application/comment "ok"
@@ -705,10 +711,10 @@
   (btu/with-postmortem
     (login-as "developer")
     (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
-    (btu/wait-visible {:tag :h1 :fn/has-text "test-approve-with-end-date"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-approve-with-end-date"}))
     (testing "approve"
       (btu/scroll-and-click :approve-reject-action-button)
-      (btu/wait-visible :comment-approve-reject)
+      (is (btu/eventually-visible? :comment-approve-reject))
       (btu/fill-human :comment-approve-reject "this is a comment")
       (set-date :approve-end "2100-05-06")
       (btu/scroll-and-click :approve)
@@ -729,7 +735,7 @@
 (deftest test-guide-page
   (btu/with-postmortem
     (btu/go (str (btu/get-server-url) "guide"))
-    (btu/wait-visible {:tag :h1 :fn/text "Component Guide"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Component Guide"}))
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
     (is (< 60 (count (btu/query-all {:class :example}))))))
@@ -738,20 +744,20 @@
   (btu/with-postmortem
     (testing "default language is English"
       (btu/go (btu/get-server-url))
-      (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (login-as "alice")
-      (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue"}))
       (btu/wait-page-loaded))
 
     (testing "changing language while logged out"
       (logout)
-      (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (change-language :fi)
-      (btu/wait-visible {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Tervetuloa REMSiin"})))
 
     (testing "changed language must persist after login"
       (login-as "alice")
-      (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Aineistoluettelo"}))
       (btu/wait-page-loaded))
 
     (testing "wait for language change to show in the db"
@@ -760,14 +766,14 @@
     (testing "changed language must have been saved for user"
       (logout)
       (change-language :en)
-      (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (btu/delete-cookies)
       (login-as "alice")
-      (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"}))
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Aineistoluettelo"})))
 
     (testing "changing language while logged in"
       (change-language :en)
-      (btu/wait-visible {:tag :h1 :fn/text "Catalogue"}))
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue"})))
 
     (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true))) ; avoid no assertions warning
@@ -777,7 +783,7 @@
     (btu/with-postmortem
       (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
-      (btu/wait-visible {:tag :h1 :fn/text "Create license"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create license"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
@@ -789,7 +795,7 @@
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
       (btu/screenshot "about-to-create-license.png")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "License"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-license.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -804,7 +810,7 @@
               "Active" true}
              (slurp-fields :license)))
       (go-to-admin "Licenses")
-      (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Licenses"}))
       (is (some #{{"organization" "NBN"
                    "title" (str (btu/context-get :license-name) " EN")
                    "type" "link"
@@ -814,7 +820,7 @@
       (click-row-action [:licenses]
                         {:fn/text (str (btu/context-get :license-name) " EN")}
                         (select-button-by-label "View"))
-      (btu/wait-visible :license)
+      (is (btu/eventually-visible? :license))
       (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-get :license-name) " EN")
               "Title (FI)" (str (btu/context-get :license-name) " FI")
@@ -831,14 +837,14 @@
     (btu/with-postmortem
       (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
-      (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create resource"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-get :resid))
       (select-option "License" (str (btu/context-get :license-name) " EN"))
       (btu/screenshot "about-to-create-resource.png")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "Resource"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-resource.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -858,7 +864,7 @@
     (btu/with-postmortem
       (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
-      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Name" (btu/context-get :form-name))
@@ -868,7 +874,7 @@
       ;; TODO: create fields
       (btu/screenshot "about-to-create-form.png")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-form.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -888,7 +894,7 @@
     (btu/with-postmortem
       (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
-      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-get :workflow-name))
@@ -897,7 +903,7 @@
       ;; No form
       (btu/screenshot "about-to-create-workflow.png")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-workflow.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -917,7 +923,7 @@
     (btu/with-postmortem
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
-      (btu/wait-visible {:tag :h1 :fn/text "Create catalogue item"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-get :catalogue-item-name) {:index 1})
@@ -929,7 +935,7 @@
         (select-option "Form" form-name))
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-catalogue-item.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1031,7 +1037,7 @@
     (login-as "owner")
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
     (btu/wait-page-loaded)
-    (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
+    (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
     (btu/screenshot "test-edit-catalogue-item-1.png")
     (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
@@ -1047,7 +1053,7 @@
     (btu/fill-human :infourl-en "http://google.com")
     (btu/screenshot "test-edit-catalogue-item-2.png")
     (btu/scroll-and-click :save)
-    (btu/wait-visible {:tag :h1 :fn/text "Catalogue item"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
     (btu/wait-page-loaded)
     (is (= {"Organization" (str (btu/context-get :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
@@ -1071,7 +1077,7 @@
       (testing "editing"
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
         (btu/wait-page-loaded)
-        (btu/wait-visible {:id :title-en :value "test-edit-catalogue-item EN"})
+        (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
         (is (= {"Organization" "Select..." ; unable to select a disabled org again
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
@@ -1086,7 +1092,7 @@
       (testing "viewing"
         (btu/scroll-and-click :cancel)
         (btu/wait-page-loaded)
-        (btu/wait-visible {:id :title :fn/has-text "test-edit-catalogue-item EN"})
+        (is (btu/eventually-visible? {:id :title :fn/has-text "test-edit-catalogue-item EN"}))
         (is (= {"Organization" (str (btu/context-get :organization-name) " en")
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
@@ -1108,7 +1114,7 @@
 
     (testing "create form"
       (btu/scroll-and-click :create-form)
-      (btu/wait-visible {:tag :h1 :fn/text "Create form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
       (select-option "Organization" "nbn")
       (fill-form-field "Name" "Form editor test")
       (fill-form-field "EN" "Form Editor Test (EN)")
@@ -1116,17 +1122,17 @@
       (fill-form-field "SV" "Form Editor Test (SV)")
       (btu/scroll-and-click {:class :add-form-field})
       ;; using ids to fill the fields because the label structure is complicated
-      (btu/wait-visible :fields-0-title-en)
+      (is (btu/eventually-visible? :fields-0-title-en))
       (btu/fill-human :fields-0-title-en "Text area (EN)")
       (btu/fill-human :fields-0-title-fi "Text area (FI)")
       (btu/fill-human :fields-0-title-sv "Text area (SV)")
       (btu/scroll-and-click :fields-0-placeholder-more-link)
-      (btu/wait-visible :fields-0-placeholder-en)
+      (is (btu/eventually-visible? :fields-0-placeholder-en))
       (btu/fill-human :fields-0-placeholder-en "Placeholder (EN)")
       (btu/fill-human :fields-0-placeholder-fi "Placeholder (FI)")
       (btu/fill-human :fields-0-placeholder-sv "Placeholder (SV)")
       (btu/scroll-and-click :fields-0-info-text-more-link)
-      (btu/wait-visible :fields-0-info-text-en)
+      (is (btu/eventually-visible? :fields-0-info-text-en))
       (btu/fill-human :fields-0-info-text-en "") ; should not get passed as is blank
       (btu/fill-human :fields-0-info-text-fi " ")
       (btu/fill-human :fields-0-info-text-sv "")
@@ -1144,12 +1150,12 @@
 
       ;; need to filter by visible-el? since there's a leftover invisible :add-form-field from the removed field
       (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-      (btu/wait-visible :fields-1-title-en)
+      (is (btu/eventually-visible? :fields-1-title-en))
       (btu/fill-human :fields-1-title-en "Option list (EN)")
       (btu/fill-human :fields-1-title-fi "Option list (FI)")
       (btu/fill-human :fields-1-title-sv "Option list (SV)")
       (btu/scroll-and-click :fields-1-info-text-more-link)
-      (btu/wait-visible :fields-1-info-text-en)
+      (is (btu/eventually-visible? :fields-1-info-text-en))
       (btu/fill-human :fields-1-info-text-en "Info text (EN)")
       (btu/fill-human :fields-1-info-text-fi "Info text (FI)")
       (btu/fill-human :fields-1-info-text-sv "Info text (SV)")
@@ -1158,13 +1164,13 @@
       (btu/fill-human :fields-1-id "opt")
       (btu/scroll-and-click :fields-1-type-option)
       (btu/scroll-and-click {:class :add-option})
-      (btu/wait-visible :fields-1-options-0-key)
+      (is (btu/eventually-visible? :fields-1-options-0-key))
       (btu/fill-human :fields-1-options-0-key "true")
       (btu/fill-human :fields-1-options-0-label-en "Yes")
       (btu/fill-human :fields-1-options-0-label-fi "Kyllä")
       (btu/fill-human :fields-1-options-0-label-sv "Ja")
       (btu/scroll-and-click {:class :add-option})
-      (btu/wait-visible :fields-1-options-1-key)
+      (is (btu/eventually-visible? :fields-1-options-1-key))
       (btu/fill-human :fields-1-options-1-key "false")
       (btu/fill-human :fields-1-options-1-label-en "No")
       (btu/fill-human :fields-1-options-1-label-fi "Ei")
@@ -1176,7 +1182,7 @@
       (btu/scroll-and-click :save))
 
     (testing "view form"
-      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
       (btu/wait-page-loaded)
       (is (= {"Organization" "NBN"
               "Name" "Form editor test"
@@ -1187,7 +1193,7 @@
              (slurp-fields :form)))
       (testing "preview"
         ;; the text is split into multiple DOM nodes so we need btu/has-text?, :fn/has-text is simpler for some reason
-        (btu/wait-visible {:tag :button :fn/has-class :info-button})
+        (is (btu/eventually-visible? {:tag :button :fn/has-class :info-button}))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
@@ -1198,7 +1204,7 @@
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
         (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
         (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
         ;; TODO: figure out what to wait for
         (Thread/sleep 500)
@@ -1206,17 +1212,17 @@
         (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
         (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
         (change-language :fi)
-        (btu/wait-visible {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"})
+        (is (btu/eventually-visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-        (btu/wait-visible {:tag :div :fn/has-class :info-collapse})
+        (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
         (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
 
     (testing "edit form"
       (change-language :en)
-      (btu/wait-visible {:tag :h1 :fn/text "Form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
       (btu/scroll-and-click {:fn/has-class :edit-form})
-      (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
       (testing "add description field"
         (btu/scroll-and-click {:class :add-form-field})
@@ -1227,18 +1233,18 @@
 
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
-        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
 
       (testing "check that error message is present on field empty"
         (btu/scroll-and-click {:fn/has-class :edit-form})
         (btu/wait-page-loaded)
-        (btu/wait-visible {:tag :h1 :fn/text "Edit form"})
+        (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
         (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
         (btu/scroll-and-click :fields-0-type-description)
         (btu/scroll-and-click :fields-0-info-text-more-link)
-        (btu/wait-visible :fields-0-info-text-en)
+        (is (btu/eventually-visible? :fields-0-info-text-en))
         (btu/fill-human :fields-0-info-text-en "Info text (EN)")
         (btu/fill-human :fields-0-info-text-fi "Info text (FI)")
         (btu/fill-human :fields-0-info-text-sv " ")
@@ -1246,7 +1252,7 @@
         (btu/scroll-and-click :save)
 
         (btu/wait-page-loaded)
-        (btu/wait-visible {:tag :h1 :fn/has-text "Edit form"})
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Edit form"}))
         (is (btu/visible? {:id :fields-0-info-text-sv :fn/has-class :is-invalid}))
         ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
         (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
@@ -1257,7 +1263,7 @@
         (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
-        (btu/wait-visible {:tag :h1 :fn/has-text "Form"})))
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))))
 
     (testing "fetch form via api"
       (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
@@ -1297,6 +1303,179 @@
                                      "x-rems-user-id" "handler"}}))))))
     (user-settings/delete-user-settings! "owner"))) ; clear language settings
 
+(deftest test-conditional-field
+  (btu/with-postmortem
+    (login-as "owner")
+    (go-to-admin "Forms")
+
+    (testing "create form"
+      (btu/scroll-and-click :create-form)
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
+      (select-option "Organization" "nbn")
+      (fill-form-field "Name" "Conditional field test")
+      (fill-form-field "EN" "Conditional field test (EN)")
+      (fill-form-field "FI" "Conditional field test (FI)")
+      (fill-form-field "SV" "Conditional field test (SV)")
+
+      (testing "create option field"
+        (btu/scroll-and-click {:class :add-form-field})
+        (is (btu/eventually-visible? :fields-0-title-en))
+        (btu/fill-human :fields-0-title-en "Option (EN)")
+        (btu/fill-human :fields-0-title-fi "Option (FI)")
+        (btu/fill-human :fields-0-title-sv "Option (SV)")
+        (btu/scroll-and-click :fields-0-type-option)
+        (btu/scroll-and-click {:class :add-option})
+        (is (btu/eventually-visible? :fields-0-options-0-key))
+        (btu/fill-human :fields-0-options-0-key "true")
+        (btu/fill-human :fields-0-options-0-label-en "Yes")
+        (btu/fill-human :fields-0-options-0-label-fi "Kyllä")
+        (btu/fill-human :fields-0-options-0-label-sv "Ja")
+        (btu/scroll-and-click {:class :add-option})
+        (is (btu/eventually-visible? :fields-0-options-1-key))
+        (btu/fill-human :fields-0-options-1-key "false")
+        (btu/fill-human :fields-0-options-1-label-en "No")
+        (btu/fill-human :fields-0-options-1-label-fi "Ei")
+        (btu/fill-human :fields-0-options-1-label-sv "Nej"))
+
+      (testing "create multiselect field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-1-title-en))
+        (btu/fill-human :fields-1-title-en "Multiselect (EN)")
+        (btu/fill-human :fields-1-title-fi "Multiselect (FI)")
+        (btu/fill-human :fields-1-title-sv "Multiselect (SV)")
+        (btu/scroll-and-click :fields-1-type-multiselect)
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-0-key))
+        (btu/fill-human :fields-1-options-0-key "x")
+        (btu/fill-human :fields-1-options-0-label-en "X")
+        (btu/fill-human :fields-1-options-0-label-fi "X")
+        (btu/fill-human :fields-1-options-0-label-sv "X")
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-1-key))
+        (btu/fill-human :fields-1-options-1-key "y")
+        (btu/fill-human :fields-1-options-1-label-en "Y")
+        (btu/fill-human :fields-1-options-1-label-fi "Y")
+        (btu/fill-human :fields-1-options-1-label-sv "Y")
+        (btu/scroll-and-click :fields-1-add-option)
+        (is (btu/eventually-visible? :fields-1-options-2-key))
+        (btu/fill-human :fields-1-options-2-key "z")
+        (btu/fill-human :fields-1-options-2-label-en "Z")
+        (btu/fill-human :fields-1-options-2-label-fi "Z")
+        (btu/fill-human :fields-1-options-2-label-sv "Z"))
+
+      (testing "create conditional text field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-2-title-en))
+        (btu/fill-human :fields-2-title-en "Text (EN)")
+        (btu/fill-human :fields-2-title-fi "Text (FI)")
+        (btu/fill-human :fields-2-title-sv "Text (SV)")
+        (btu/scroll-and-click :fields-2-additional-more-link)
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-type "Only if\n")
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-field "Field 1: Option (EN)\n")
+        (is (btu/eventually-visible? :fields-2-visibility-type))
+        (btu/fill :fields-2-visibility-value "Yes\n"))
+
+      (testing "create conditional email field"
+        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+        (is (btu/eventually-visible? :fields-3-title-en))
+        (btu/fill-human :fields-3-title-en "Email (EN)")
+        (btu/fill-human :fields-3-title-fi "Email (FI)")
+        (btu/fill-human :fields-3-title-sv "Email (SV)")
+        (btu/scroll-and-click :fields-3-type-email)
+        (btu/scroll-and-click :fields-3-additional-more-link)
+        (is (btu/eventually-visible? :fields-3-visibility-type))
+        (btu/fill :fields-3-visibility-type "Only if\n")
+        (is (btu/eventually-visible? :fields-3-visibility-field))
+        (btu/fill :fields-3-visibility-field "Field 2: Multiselect (EN)\n")
+        (is (btu/eventually-visible? :fields-3-visibility-value))
+        (btu/fill :fields-3-visibility-value "X\n")
+        (btu/fill :fields-3-visibility-value "Z\n"))
+
+      (btu/scroll-and-click :save)
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (btu/context-assoc! :form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))))
+
+    (testing "fetch form via api"
+      (is (= {:form/title "Conditional field test"
+              :form/external-title {:fi "Conditional field test (FI)" :en "Conditional field test (EN)" :sv "Conditional field test (SV)"}
+              :organization {:organization/id "nbn"
+                             :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                             :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}}
+              :form/errors nil
+              :form/id (btu/context-get :form-id)
+
+              :form/internal-name "Conditional field test"
+              :form/fields [{:field/title {:fi "Option (FI)" :en "Option (EN)" :sv "Option (SV)"}
+                             :field/type "option"
+                             :field/id "fld1"
+                             :field/optional false
+                             :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
+                                             {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]}
+                            {:field/title {:fi "Multiselect (FI)" :en "Multiselect (EN)" :sv "Multiselect (SV)"}
+                             :field/type "multiselect"
+                             :field/id "fld2"
+                             :field/optional false
+                             :field/options [{:key "x" :label {:fi "X" :en "X" :sv "X"}}
+                                             {:key "y" :label {:fi "Y" :en "Y" :sv "Y"}}
+                                             {:key "z" :label {:fi "Z" :en "Z" :sv "Z"}}]}
+                            {:field/title {:fi "Text (FI)" :en "Text (EN)" :sv "Text (SV)"}
+                             :field/type "text"
+                             :field/visibility {:visibility/type "only-if"
+                                                :visibility/field {:field/id "fld1"}
+                                                :visibility/values ["true"]}
+                             :field/id "fld3"
+                             :field/max-length nil
+                             :field/optional false}
+                            {:field/title {:fi "Email (FI)" :en "Email (EN)" :sv "Email (SV)"}
+                             :field/type "email"
+                             :field/visibility {:visibility/type "only-if"
+                                                :visibility/field {:field/id "fld2"}
+                                                :visibility/values ["x" "z"]}
+                             :field/id "fld4"
+                             :field/optional false}]
+              :archived false
+              :enabled true}
+             (:body
+              (http/get (str (btu/get-server-url) "/api/forms/" (btu/context-get :form-id))
+                        {:as :json
+                         :headers {"x-rems-api-key" "42"
+                                   "x-rems-user-id" "handler"}})))))
+
+    (testing "create catalogue item and application"
+      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+      (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
+                                                                             :catalogue-item-ids [(btu/context-get :catalogue-id)]})))
+
+    (testing "fill in application"
+      (logout)
+      (login-as "alice")
+      (go-to-application (btu/context-get :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
+      (is (btu/field-visible? "Option (EN)"))
+      (is (btu/field-visible? "Multiselect (EN)"))
+
+      (testing "toggle text field visibility"
+        (is (not (btu/field-visible? "Text (EN)")))
+        (select-option "Option (EN)" "Yes")
+        (is (btu/field-visible? "Text (EN)"))
+        (select-option "Option (EN)" "No")
+        (is (not (btu/field-visible? "Text (EN)"))))
+
+      (testing "toggle email field visibility"
+        (is (not (btu/field-visible? "Email (EN)")))
+        (btu/check-box "x") ; x selected
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(btu/field-visible? "Email (EN)")))))
+        (btu/check-box "z") ; x and z selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "x") ; z selected
+        (Thread/sleep 500) ; Small wait to make sure the field really stays visible
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "y") ; z and y selected
+        (is (btu/field-visible? "Email (EN)"))
+        (btu/check-box "z") ; y zelected
+        (is (btu/no-timeout? (fn [] (btu/wait-predicate #(not (btu/field-visible? "Email (EN)"))))))))))
 
 (deftest test-workflow-create-edit
   (btu/with-postmortem
@@ -1305,7 +1484,7 @@
     (testing "create workflow"
       (btu/context-assoc! :workflow-title (str "test-workflow-create-edit " (btu/get-seed)))
       (btu/scroll-and-click :create-workflow)
-      (btu/wait-visible {:tag :h1 :fn/text "Create workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-get :workflow-title))
@@ -1317,7 +1496,7 @@
       (btu/screenshot "test-workflow-create-edit-1.png")
       (btu/scroll-and-click :save))
     (testing "view workflow"
-      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-2.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1330,7 +1509,7 @@
              (slurp-fields :workflow))))
     (testing "edit workflow"
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
-      (btu/wait-visible {:tag :h1 :fn/text "Edit workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3.png")
       (select-option "Organization" "Default")
@@ -1342,7 +1521,7 @@
       (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
-      (btu/wait-visible {:tag :h1 :fn/text "Workflow"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1365,18 +1544,18 @@
       (go-to-admin "Resources")
       (click-row-action [:resources] {:fn/text "blacklist-test"}
                         (select-button-by-label "View"))
-      (btu/wait-visible {:tag :h1 :fn/text "Resource"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
       (btu/wait-page-loaded)
-      (btu/wait-visible :blacklist)
+      (is (btu/eventually-visible? :blacklist))
       (is (= [{}] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
       (btu/screenshot "test-blacklist-1.png")
       (btu/scroll-and-click :blacklist-add)
-      (btu/wait-visible {:css ".alert-success"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
     (testing "check entry on resource page"
-      (btu/wait-visible :blacklist)
+      (is (btu/eventually-visible? :blacklist))
       (is (= [{} ;; TODO remove the header row in slurp-rows
               {"resource" "blacklist-test"
                "user" "Bruce Baddie"
@@ -1388,9 +1567,9 @@
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "check entry on blacklist page"
       (go-to-admin "Blacklist")
-      (btu/wait-visible {:tag :h1 :fn/text "Blacklist"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Blacklist"}))
       (btu/wait-page-loaded)
-      (btu/wait-visible :blacklist)
+      (is (btu/eventually-visible? :blacklist))
       (is (= [{}
               {"resource" "blacklist-test"
                "user" "Bruce Baddie"
@@ -1403,9 +1582,9 @@
     (testing "remove entry"
       (click-row-action [:blacklist] {:fn/text "baddie"}
                         (select-button-by-label "Remove"))
-      (btu/wait-visible {:css ".alert-success"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (btu/wait-visible :blacklist)
+      (is (btu/eventually-visible? :blacklist))
       (is (= [{}] (slurp-rows :blacklist))))))
 
 (deftest test-report
@@ -1443,7 +1622,7 @@
       (go-to-admin "Reports")
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
-      (btu/wait-visible {:tag :label :fn/text "Form"})
+      (is (btu/eventually-visible? {:tag :label :fn/text "Form"}))
       (select-option* "Form" (btu/context-get :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
@@ -1483,7 +1662,7 @@
       (btu/scroll-and-click :create-organization)
       (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
       (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
-      (btu/wait-visible :id)
+      (is (btu/eventually-visible? :id))
       (btu/fill-human :id (btu/context-get :organization-id))
       (btu/fill-human :short-name-en "SNEN")
       (btu/fill-human :short-name-fi "SNFI")
@@ -1495,18 +1674,18 @@
       (btu/scroll-and-click :add-review-email)
       (btu/scroll-and-click :add-review-email)
 
-      (btu/wait-visible :review-emails-1-name-en)
+      (is (btu/eventually-visible? :review-emails-1-name-en))
       (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
       (btu/fill-human :review-emails-1-name-fi "Review mail FI")
       (btu/fill-human :review-emails-1-name-sv "Review mail SV")
       (btu/fill-human :review-emails-1-email "review.email@example.com")
       (btu/scroll-and-click {:css ".remove"}) ; remove first
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:css ".alert-success"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
     (testing "view after creation"
-      (btu/wait-visible :organization)
+      (is (btu/eventually-visible? :organization))
       (is (= {"Id" (btu/context-get :organization-id)
               "Short name (FI)" "SNFI"
               "Short name (EN)" "SNEN"
@@ -1527,7 +1706,7 @@
     (testing "edit after creation"
       (btu/scroll-and-click :edit-organization)
       (btu/wait-page-loaded)
-      (btu/wait-visible :short-name-en)
+      (is (btu/eventually-visible? :short-name-en))
       (select-option* "Owners" "Organization owner 2")
       (btu/clear :short-name-en)
       (btu/fill-human :short-name-en "SNEN2")
@@ -1536,11 +1715,11 @@
       (btu/clear :short-name-sv)
       (btu/fill-human :short-name-sv "SNSV2")
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:css ".alert-success"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
       (testing "view after editing"
-        (btu/wait-visible :organization)
+        (is (btu/eventually-visible? :organization))
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI2"
                 "Short name (EN)" "SNEN2"
@@ -1563,11 +1742,11 @@
       (btu/wait-page-loaded)
       (btu/scroll-and-click :create-resource)
       (btu/wait-page-loaded)
-      (btu/wait-visible :organization)
+      (is (btu/eventually-visible? :organization))
       (btu/fill-human :resid (str "resource for " (btu/context-get :organization-name)))
       (select-option* "Organization" (btu/context-get :organization-name))
       (btu/scroll-and-click :save)
-      (btu/wait-visible {:css ".alert-success"}))
+      (is (btu/eventually-visible? {:css ".alert-success"})))
 
     (testing "as organization owner"
       (logout)
@@ -1575,7 +1754,7 @@
       (go-to-admin "Organizations")
 
       (testing "list shows created organization"
-        (btu/wait-visible :organizations)
+        (is (btu/eventually-visible? :organizations))
         (let [orgs (slurp-rows :organizations)]
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-get :organization-name) " EN")
@@ -1588,7 +1767,7 @@
                           {:fn/text (str (btu/context-get :organization-name) " EN")}
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
-        (btu/wait-visible :organization)
+        (is (btu/eventually-visible? :organization))
         (is (= {"Id" (btu/context-get :organization-id)
                 "Short name (FI)" "SNFI2"
                 "Short name (EN)" "SNEN2"
@@ -1609,7 +1788,7 @@
       (testing "edit as organization owner"
         (btu/scroll-and-click :edit-organization)
         (btu/wait-page-loaded)
-        (btu/wait-visible :short-name-en)
+        (is (btu/eventually-visible? :short-name-en))
         (btu/clear :short-name-en)
         (btu/fill-human :short-name-en "SNEN")
         (btu/clear :short-name-fi)
@@ -1617,11 +1796,11 @@
         (btu/clear :short-name-sv)
         (btu/fill-human :short-name-sv "SNSV")
         (btu/scroll-and-click :save)
-        (btu/wait-visible {:css ".alert-success"})
+        (is (btu/eventually-visible? {:css ".alert-success"}))
         (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
         (testing "view after editing"
-          (btu/wait-visible :organization)
+          (is (btu/eventually-visible? :organization))
           (is (= {"Id" (btu/context-get :organization-id)
                   "Short name (FI)" "SNFI"
                   "Short name (EN)" "SNEN"
@@ -1657,14 +1836,14 @@
     (btu/set-window-size 400 600) ; small enough for mobile
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
-    (btu/wait-visible :small-navbar)
+    (is (btu/eventually-visible? :small-navbar))
     (btu/screenshot "small-navbar.png")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (btu/wait-visible {:tag :h1 :fn/text "Applications"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Applications"}))
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (btu/wait-visible {:tag :h1 :fn/text "Hakemukset"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
     (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true)))  ; avoid no assertions warning

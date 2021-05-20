@@ -1,4 +1,4 @@
-(ns rems.actions.remove-member
+(ns rems.actions.change-applicant
   (:require [re-frame.core :as rf]
             [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
@@ -10,20 +10,15 @@
  (fn [_ [_ element-id]]
    {:dispatch [:rems.actions.components/set-comment (str element-id "-comment") ""]}))
 
-
 ;; The API allows us to add attachments to these commands
 ;; but this is left out from the UI for simplicity
 (rf/reg-event-fx
- ::remove-member
+ ::change-applicant
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
-   (let [description [text :t.actions/remove-member]]
-     (post! (if (:userid member)
-              "/api/applications/remove-member"
-              "/api/applications/uninvite-member")
+   (let [description [text :t.actions/change-applicant]]
+     (post! "/api/applications/change-applicant"
             {:params {:application-id application-id
-                      :member (if (:userid member)
-                                (select-keys member [:userid])
-                                (select-keys member [:name :email]))
+                      :member (select-keys member [:userid])
                       :comment comment}
              :handler (flash-message/default-success-handler
                        :change-members
@@ -35,33 +30,33 @@
    {}))
 
 (defn- qualify-parent-id [parent-id]
-  (str parent-id "-remove"))
+  (str parent-id "-change"))
 
-(defn remove-member-action-button [parent-id]
+(defn change-applicant-action-button [parent-id]
   (let [element-id (qualify-parent-id parent-id)]
     [action-button {:id element-id
-                    :text (text :t.actions/remove-member)
+                    :text (text :t.actions/change-applicant)
                     :on-click #(rf/dispatch [::reset-form element-id])}]))
 
-(defn- remove-member-view
+(defn- change-applicant-view
   [{:keys [parent-id on-send]}]
   (let [element-id (qualify-parent-id parent-id)]
     [action-form-view element-id
-     (text :t.actions/remove-member)
+     (text :t.actions/change-applicant)
      [[button-wrapper {:id (str element-id "-submit")
-                       :text (text :t.actions/remove-member)
+                       :text (text :t.actions/change-applicant)
                        :class "btn-primary"
                        :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]
      {:collapse-id parent-id}]))
 
-(defn remove-member-form [parent-id member application-id on-finished]
+(defn change-applicant-form [parent-id member application-id on-finished]
   (let [element-id (qualify-parent-id parent-id)
         comment @(rf/subscribe [:rems.actions.components/comment (str element-id "-comment")])]
-    [remove-member-view {:parent-id parent-id
-                         :on-send #(rf/dispatch [::remove-member {:application-id application-id
-                                                                  :collapse-id element-id
-                                                                  :comment comment
-                                                                  :member member
-                                                                  :on-finished on-finished}])}]))
+    [change-applicant-view {:parent-id parent-id
+                            :on-send #(rf/dispatch [::change-applicant {:application-id application-id
+                                                                        :collapse-id element-id
+                                                                        :comment comment
+                                                                        :member member
+                                                                        :on-finished on-finished}])}]))

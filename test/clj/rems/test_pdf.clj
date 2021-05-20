@@ -17,6 +17,29 @@
 
 (use-fixtures :each rollback-db-fixture)
 
+;; regression test
+(deftest test-pdf-empty-table
+  (let [data {:application/state :draft
+              :application/resources []
+              :application/id 123
+              :application/applicant "user"
+              :application/members []
+              :application/licenses []
+              :application/events []
+              :application/forms [{:form/fields [{:field/visible true
+                                                  :field/type :table
+                                                  :field/title {:en "Table field"}
+                                                  :field/value []}]}]}]
+    (is (= [[[:heading {:spacing-before 20} "Application"]
+             [[[:paragraph {:spacing-before 8, :style :bold} "Table field"]
+               [:paragraph "No rows"]]]]]
+           (with-language :en
+             (fn []
+               (with-fixed-time (time/date-time 2010)
+                 (fn []
+                   (#'pdf/render-fields data)))))))
+    (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
+
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
@@ -164,7 +187,9 @@
                  [[:paragraph pdf/field-style "Text area with max length"]
                   [:paragraph "pdf test"]]
                  [[:paragraph pdf/field-style "Phone number"]
-                  [:paragraph "+358451110000"]]]]]
+                  [:paragraph "+358451110000"]]
+                 [[:paragraph pdf/field-style "IP address"]
+                  [:paragraph "142.250.74.110"]]]]]
               [[:heading pdf/heading-style "Events"]
                [:list
                 [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]

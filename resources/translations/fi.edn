@@ -12,6 +12,7 @@
             :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
+            :change-applicant "Tee hakija"
             :change-resources "Muuta resursseja"
             :clear "Tyhjennä"
             :close "Sulje hakemus"
@@ -136,7 +137,8 @@
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
-                   :email "Sähköposti (tunnistautumispalvelusta)"
+                   :email "Sähköposti"
+                   :email-idp "Sähköposti (tunnistautumispalvelusta)"
                    :invited-member "Kutsuttu jäsen"
                    :member "Jäsen"
                    :name "Nimi"
@@ -154,7 +156,8 @@
                  :description "Otsikko"
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
-                 :events {:approved "%1 hyväksyi hakemuksen. "
+                 :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
+                          :approved "%1 hyväksyi hakemuksen."
                           :closed "%1 sulki hakemuksen."
                           :copied-from "Tämä hakemus on kopio vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
@@ -267,6 +270,7 @@
                 :type-description "Hakemuksen otsikko"
                 :type-email "Sähköpostiosoite"
                 :type-header "Otsikko"
+                :type-ip-address "IP-osoite"
                 :type-label "Lisätietokenttä"
                 :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
@@ -278,7 +282,7 @@
                 :type-visibility "Näkyvissä"
                 :visibility {:always "Aina"
                              :field "Kentällä"
-                             :has-value "On arvo"
+                             :has-value "On yksi arvoista"
                              :hidden "Piilossa"
                              :only-if "Vain jos"}}
   :create-license {:external-link "Linkki"
@@ -301,7 +305,11 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
+  :email {:applicant-changed {:subject-to-member "Hakemuksen %3 hakija vaihtunut"
+                              :message-to-member "Hyvä %1,\n\n%2 on vaihtanut hakemuksen %3 hakijan käyttäjäksi %4.\n\nVoit tarkastella hakemusta: %6."
+                              :subject-to-handler "(%3) Hakija vaihtunut"
+                              :message-to-handler "Hyvä %1,\n\n%2 on vaihtanut hakemuksen %3 hakijan käyttäjäksi %4.\n\nVoit tarkastella hakemusta: %6."}
+          :application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on hyväksytty"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
@@ -367,7 +375,7 @@
          :application "Tiedot"
          :attachment-remove "Poista"
          :attachments "Liitteet"
-         :attachments-as-zip "Kaikki liiteet (zip)"
+         :attachments-as-zip "Liitteet (zip)"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
          :comment "Kommentti"
@@ -398,6 +406,8 @@
                       :columns-required "Vähintään yksi sarake vaaditaan."
                       :invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-phone-number "Puhelinnumero ei kelpaa."
+                      :invalid-ip-address "IP-osoite ei kelpaa."
+                      :invalid-ip-address-private "Tämä on yksityinen IP-osoite, eikä sitä voi käyttää hakemuksessa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."

@@ -107,6 +107,13 @@
       (update :application/members disj (:application/member event))
       (update :application/past-members conj (:application/member event))))
 
+(defmethod application-base-view :application.event/applicant-changed
+  [application event]
+  (-> application
+      (update :application/members disj (:application/applicant event))
+      (update :application/members conj (:application/applicant application))
+      (assoc :application/applicant (:application/applicant event))))
+
 (defmethod application-base-view :application.event/decider-invited
   [application event]
   (-> application
@@ -269,6 +276,7 @@
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
+    {:permission :application.command/change-applicant}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -299,6 +307,7 @@
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
+    {:permission :application.command/change-applicant}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -486,7 +495,42 @@
               :application.event/member-removed)
              {:application/member (get-user (:userid (:application/member event)))}
 
+             :application.event/applicant-changed
+             {:application/applicant (get-user (:userid (:application/applicant event)))}
+
              {}))))
+
+(defn classify-attachments [application]
+  (let [from-events (for [event (:application/events application)
+                          attachment (:event/attachments event)]
+                      {(:attachment/id attachment) #{:event/attachments}})
+        from-fields (for [form (getx application :application/forms)
+                          field (getx form :form/fields)
+                          :when (= :attachment (:field/type field))
+                          k [:field/value :field/previous-value]
+                          id (form/parse-attachment-ids (get field k))]
+                      {id #{k}})]
+    (apply merge-with set/union (concat from-events from-fields))))
+
+(deftest test-classify-attachments
+  (let [application {:application/events [{:event/type :application.event/foo
+                                           :event/attachments [{:attachment/id 1}
+                                                               {:attachment/id 3}]}
+                                          {:event/type :application.event/bar}]
+                     :application/forms [{:form/fields [{:field/type :attachment
+                                                         :field/value "5" :field/previous-value "5,1,15"}]}
+                                         {:form/fields [{:field/type :text
+                                                         :field/value "2" :field/previous-vaule "2"}
+                                                        {:field/type :attachment
+                                                         :field/value "9,11,13"}]}]}]
+    (is (= {1 #{:event/attachments :field/previous-value}
+            3 #{:event/attachments}
+            5 #{:field/value :field/previous-value}
+            9 #{:field/value}
+            11 #{:field/value}
+            13 #{:field/value}
+            15 #{:field/previous-value}}
+           (classify-attachments application)))))
 
 (defn- get-blacklist [application blacklisted?]
   (let [all-members (application-util/applicant-and-members application)
@@ -605,7 +649,8 @@
                                   :application.event/decider-joined
                                   :application.event/decision-requested})
 (deftest test-sensitive-events
-  (let [public-events #{:application.event/approved
+  (let [public-events #{:application.event/applicant-changed
+                        :application.event/approved
                         :application.event/closed
                         :application.event/copied-from
                         :application.event/copied-to
@@ -715,18 +760,11 @@
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))
 
-
 (defn- visible-attachment-ids [application]
-  (let [from-events (->> (:application/events application)
-                         (mapcat :event/attachments)
-                         (map :attachment/id))
-        from-fields (for [form (getx application :application/forms)
-                          field (getx form :form/fields)
-                          :when (= :attachment (:field/type field))
-                          value [(:field/value field) (:field/previous-value field)]
-                          attachment (form/parse-attachment-ids value)]
-                      attachment)]
-    (set (concat from-events from-fields))))
+  (->> application
+       classify-attachments
+       keys
+       set))
 
 (deftest test-visible-attachment-ids
   (let [application {:application/events [{:event/type :application.event/foo

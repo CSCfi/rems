@@ -60,6 +60,8 @@ Application forms are totally customisable. You can create different fields, suc
 **Attachment**: Applicant can add one or multiple attachments.
 **Label**: Use labels as descriptive texts if you want to give the applicant additional information, such as instructions, regarding some field.
 **Header**: Consider using headers if you want to divide the application form into sections.
+**Phone number**: A phone number in an international format (E.164), e.g. +14155552671.
+**IP address**: IP address field will validate the IP address the applicant has provided in IPv4 or IPv6 forms. IP address must not be within the known private range.
 
 Placeholder texts: It is possible to add placeholder text to most of the fields. Use placeholder texts to provide an example on how the field should be filled. Placeholders help the applicant to fill in the field correctly. For example:
 
@@ -77,7 +79,7 @@ You can create fields that are hidden or shown to the applicant depending on the
 
 For example, you can create an option list “Do you want to add attachments?” Yes - No. If the applicant chooses “Yes” the attachment field is shown to the applicant. If they choose “No” they will not see the attachment field.
 
-:exclamation: Note! Conditional fields only work with Option list.
+:exclamation: Note! Conditional fields only work with Option list and Multiselect fields.
 
 1. Create an **Option list** and fill in the options
 
@@ -92,7 +94,7 @@ For example, you can create an option list “Do you want to add attachments?”
 ![Option list](img/optionlist4.png)
 
 4. Field: Locate the Option list you created earlier from the drop-down list
-5. Has value: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses the "Yes" option in Field 1, "Do you want to add attachments?".
+5. Has one of the values: Select when you want the list to be shown. In this example, Field 2 "Add one or multiple attachments" is shown if the applicant chooses the "Yes" option in Field 1, "Do you want to add attachments?".
 
 ![Option list](img/optionlist5.png)
 

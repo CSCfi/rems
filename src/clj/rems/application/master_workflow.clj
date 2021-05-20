@@ -46,6 +46,7 @@
     :application.command/invite-member
     :application.command/invite-reviewer
     :application.command/uninvite-member
+    :application.command/change-applicant
     :application.command/request-review
     :application.command/request-decision
     :application.command/return
@@ -55,6 +56,7 @@
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
+        :application.command/change-applicant ;; could allow this, but decided to not do it right now
         :application.command/return
         :application.command/approve
         :application.command/reject
@@ -139,6 +141,18 @@
   [application event]
   (-> application
       (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
+
+(defmethod application-permissions-view :application.event/applicant-changed
+  [application event]
+  (let [old (first (for [[user roles] (:application/user-roles application)
+                         :when (contains? roles :applicant)]
+                     user))
+        new (get-in event [:application/applicant :userid])]
+    (-> application
+        (permissions/remove-role-from-user :applicant old)
+        (permissions/give-role-to-users :member [old])
+        (permissions/give-role-to-users :applicant [new])
+        (permissions/remove-role-from-user :member new))))
 
 (defmethod application-permissions-view :application.event/submitted
   [application _event]

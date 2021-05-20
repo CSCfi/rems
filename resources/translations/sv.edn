@@ -12,6 +12,7 @@
             :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
+            :change-applicant "Gör till sökanden" ; TODO check
             :change-resources "Ändra resurser"
             :clear "Töm"
             :close "Stäng ansökan"
@@ -136,7 +137,8 @@
                    :workflows "Arbetsflöden"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
-                   :email "E-postadress (från identifieringstjäst)"
+                   :email "E-postadress"
+                   :email-idp "E-postadress (från identifieringstjäst)"
                    :invited-member "Inbjuden deltagare"
                    :member "Deltagare"
                    :name "Namn"
@@ -154,7 +156,8 @@
                  :description "Rubrik"
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
-                 :events {:approved "%1 godkände ansökan."
+                 :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
+                          :approved "%1 godkände ansökan."
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."
@@ -267,6 +270,7 @@
                 :type-description "Ansökans rubrik"
                 :type-email "E-postadress"
                 :type-header "Titel"
+                :type-ip-address "IP-adress"
                 :type-label "Informationsfält"
                 :type-multiselect "Flervalsmeny"
                 :type-option "Rullgardinsmeny"
@@ -278,7 +282,7 @@
                 :type-visibility "Synlighet"
                 :visibility {:always "Visas alltid"
                              :field "Fält"
-                             :has-value "Har värde"
+                             :has-value "Har ett av värden"
                              :hidden "Dold"
                              :only-if "Visas om"}}
   :create-license {:external-link "Länk"
@@ -301,7 +305,11 @@
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
-  :email {:application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
+  :email {:applicant-changed {:subject-to-member "Sökande för ansökan %3 bytte"
+                              :message-to-member "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6." ; TODO check
+                              :subject-to-handler "(%3) Sökande bytte"
+                              :message-to-handler "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6."} ; TODO check
+          :application-approved {:subject-to-applicant "Din ansökan %3 är godkänd"
                                  :message-to-applicant "%1,\n\nDin ansökan %3 är godkänd.\n\nDu kan granska ansökningen och beslutet här: %6"
                                  :subject-to-handler "(%3) Ansökan är godkänd"
                                  :message-to-handler "%1,\n\n%2 har godkänt ansökan %3 från %4.\n\nDu kan granska ansökningen och beslutet här: %6"}
@@ -367,7 +375,7 @@
          :application "Ansökan"
          :attachment-remove "Ta bort"
          :attachments "Bilagor"
-         :attachments-as-zip "Alla bilagor (zip)"
+         :attachments-as-zip "Bilagor (zip)"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Kommentar"
@@ -398,6 +406,8 @@
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."
                       :invalid-phone-number "Ogiltig telefonnummer."
+                      :invalid-ip-address "Ogiltig IP-adress."
+                      :invalid-ip-address-private "Detta är en privat IP-adress och kan inte användas i en ansökning."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
                       :options-required "Kräv minst ett alternativ." ; TODO check
