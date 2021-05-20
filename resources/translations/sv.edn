@@ -444,9 +444,14 @@
            :phase-revoked "Status återkallad:"
            :rejected "Avslag"
            :revoked "Återkallad"}
-  :profile {:ega "EGA"
-            :ega-api-key-expiration-date "EGA API-nyckel ekspiration"
+  :profile {:delete-api-key "Radera API-nyckeln"
+            :ega "EGA"
+            :ega-api-key-expiration-date "API-nyckel utgång"
+            :ega-api-key-expired [:p "Du har en utgången EGA API-nyckel. Vänligen hämta en ny API-nyckel."]
+            :ega-api-key-none [:p "Du har inte en giltig EGA API-nyckel än."]
+            :ega-api-key-valid [:p "Du har en giltig EGA API-nyckel."]
             :ega-full "The European Genome-phenome Archive"
+            :ega-intro [:p "Rättigheter för ansökningar som du gödkänner kan överföras till EGA-servrar. Detta kräver att du har en giltig API-nyckel. För att hämta en, se till att du först länkar ditt ELIXIR-konto till EGA-kontot."]
             :generate-api-key "Hämta en API-nyckel"
             :idp-email "E-postadress från identifieringstjänst"
             :no-email "(ingen e-postadress)"

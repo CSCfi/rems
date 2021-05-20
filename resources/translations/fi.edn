@@ -444,10 +444,14 @@
            :phase-revoked "Vaihe peruttu:"
            :rejected "Hylätty"
            :revoked "Peruttu"}
-  :profile {:ega "EGA"
-            :ega-api-key-expiration-date "EGA API-avain vanhenee"
+  :profile {:delete-api-key "Poista API-avain"
+            :ega "EGA"
+            :ega-api-key-expiration-date "API-avain vanhenee"
+            :ega-api-key-expired [:p "Sinulla on vanhentunut API-avain. Luo itsellesi uusi avain."]
+            :ega-api-key-none [:p "Näyttää että sinulla ei ole vielä API-avainta."]
+            :ega-api-key-valid [:p "Sinulla on voimassa oleva API-avain."]
             :ega-full "The European Genome-phenome Archive"
-            :generate-api-key "Luo API-avain"
+            :ega-intro [:p "Hyväksymiesi hakemusten käyttövaltuudet voidaan lähettää EGA-palvelimille. Tämä vaatii että sinulla on voimassa oleva API-avain. Varmista että olet ensin yhdistänyt ELIXIR-käytäjätunnuksesi EGA-tunnukseesi."]
             :idp-email "Sähköpostiosoite tunnistautumispalvelulta"
             :no-email "(ei sähköpostiosoitetta)"
             :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"

@@ -1,5 +1,6 @@
 (ns rems.profile
-  (:require [re-frame.core :as rf]
+  (:require [cljs-time.core :as time-core]
+            [re-frame.core :as rf]
             [rems.atoms :refer [document-title info-field]]
             [rems.collapsible :as collapsible]
             [rems.common.roles :as roles]
@@ -7,9 +8,9 @@
             [rems.fetcher :as fetcher]
             [rems.guide-util :refer [component-info example]]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [text localize-utc-date]]
             [rems.user :as user]
-            [rems.util :refer [put!]]))
+            [rems.util :refer [put! post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -44,6 +45,29 @@
                                                             #(rf/dispatch [::user-settings]))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
+
+(rf/reg-event-fx
+ ::generate-api-key
+ (fn [{:keys [db]} _]
+   (let [description [text :t.profile/generate-api-key]]
+     (post! "/api/user-settings/generate-ega-api-key"
+           {:params (::form db)
+            :handler (flash-message/default-success-handler :top description
+                                                            #(rf/dispatch [::user-settings]))
+            :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
+(rf/reg-event-fx
+ ::delete-api-key
+ (fn [{:keys [db]} _]
+   (let [description [text :t.profile/delete-api-key]]
+     (post! "/api/user-settings/delete-ega-api-key"
+            {:params (::form db)
+             :handler (flash-message/default-success-handler :top description
+                                                             #(rf/dispatch [::user-settings]))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
 
 (rf/reg-sub
  ::missing-email?
@@ -98,6 +122,13 @@
                    {:type "submit"}
                    (text :t.profile/save)]])}]
 
+     [:div.mt-3
+      [collapsible/component
+       {:title (text :t.profile/your-details)
+        :always [:<>
+                 [user/username (:user identity)]
+                 [user/attributes (:user identity)]]}]]
+
      (when (and (:enable-ega config) (roles/has-roles? :handler))
        [:div.mt-3
         [collapsible/component
@@ -105,18 +136,32 @@
           :always (if @(rf/subscribe [::user-settings :fetching?])
                     [spinner/big]
                     [:<>
-                     (when-let [ega-api-key-expiration-date (get-in identity [:ega :api-key-expiration-date])]
-                       [info-field (text :t.profile/ega-api-key-expiration-date) ega-api-key-expiration-date {:inline? true}])
-                     [:button.btn.btn-primary
-                      {:type "submit"}
-                      (text :t.profile/generate-api-key)]])}]])
+                     (text :t.profile/ega-intro)
+                     (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
+                                                                  [:ega :api-key-expiration-date])]
+                       [:<>
+                        (if (time-core/before? (time-core/now) ega-api-key-expiration-date)
+                          (text :t.profile/ega-api-key-valid)
+                          (text :t.profile/ega-api-key-expired))
+                        [info-field (text :t.profile/ega-api-key-expiration-date) (localize-utc-date ega-api-key-expiration-date) {:inline? true}]
+                        [:form
+                         {:on-submit (fn [event]
+                                       (.preventDefault event)
+                                       (rf/dispatch [::delete-api-key]))}
 
-     [:div.mt-3
-      [collapsible/component
-       {:title (text :t.profile/your-details)
-        :always [:<>
-                 [user/username (:user identity)]
-                 [user/attributes (:user identity)]]}]]]))
+                         [:button.btn.btn-primary
+                          {:type "submit"}
+                          (text :t.profile/delete-api-key)]]]
+                       [:<>
+                        (text :t.profile/ega-api-key-none)
+                        [:form
+                         {:on-submit (fn [event]
+                                       (.preventDefault event)
+                                       (rf/dispatch [::generate-api-key]))}
+
+                         [:button.btn.btn-primary
+                          {:type "submit"}
+                          (text :t.profile/generate-api-key)]]])])}]])]))
 
 (defn guide []
   [:div
