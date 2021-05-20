@@ -127,7 +127,7 @@
        {:title (text :t.profile/your-details)
         :always [:<>
                  [user/username (:user identity)]
-                 [user/attributes attributes false]]}]]
+                 [user/attributes (:user identity) false]]}]]
 
      (when (and (:enable-ega config) (roles/has-roles? :handler))
        [:div.mt-3
