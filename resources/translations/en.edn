@@ -490,7 +490,6 @@
            :rejected "Rejected"
            :revoked "Revoked"}
   :profile {:delete-api-key "Delete API-key"
-            :ega "EGA"
             :ega-api-key-expiration-date "Expiration date"
             :ega-api-key-expired [:p "You have an expired EGA API-key. Please generate a new one."]
             :ega-api-key-none [:p "Looks like you don't have a valid EGA API-key yet."]

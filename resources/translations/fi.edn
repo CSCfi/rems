@@ -446,7 +446,6 @@
            :rejected "Hylätty"
            :revoked "Peruttu"}
   :profile {:delete-api-key "Poista API-avain"
-            :ega "EGA"
             :ega-api-key-expiration-date "API-avain vanhenee"
             :ega-api-key-expired [:p "Sinulla on vanhentunut API-avain. Luo itsellesi uusi avain."]
             :ega-api-key-none [:p "Näyttää että sinulla ei ole vielä API-avainta."]
