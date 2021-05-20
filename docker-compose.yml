@@ -17,7 +17,7 @@ services:
       - "127.0.0.1:3000:3000"
 
   db:
-    image: postgres:9.6 # TODO upgrade to postgres:13 once REMS v2.18 is out
+    image: postgres:13
     environment:
       POSTGRES_USER: rems
       POSTGRES_PASSWORD: remspassword
