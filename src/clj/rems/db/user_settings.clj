@@ -19,7 +19,7 @@
 (s/defschema UserSettings
   {:language s/Keyword
    :notification-email (s/maybe s/Str)
-   (s/optional-key :ega) {:api-key-expiration-date DateTime}})
+   (s/optional-key :ega) {(s/optional-key :api-key-expiration-date) DateTime}})
 
 (def ^:private validate-user-settings
   (s/validator UserSettings))
