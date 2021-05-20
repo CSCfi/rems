@@ -27,6 +27,7 @@
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :validation-errors "Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
+            :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
             :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
