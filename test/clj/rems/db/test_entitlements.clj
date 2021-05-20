@@ -40,7 +40,8 @@
       (callback server))))
 
 (defn ega-config [server]
-  {:type :ega
+  {:id :test-entitlement-push
+   :type :ega
    :connect-server-url (str (:uri server) "/c")
    :permission-server-url (str (:uri server) "/p")})
 
