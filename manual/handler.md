@@ -115,3 +115,16 @@ You will be notified when another handler has:
 You will also receive notifications when an applicant has submitted or resubmitted an application.
 
 If you want to delete your user account or if you are having technical problems with REMS, please contact rems-support@csc.fi. Give your email a descriptive name and mention REMS. This makes processing your email quicker.
+
+## The European Genome-phenome Archive
+
+The access rights of approved applications can also be uploaded to [The European Genome-phenome Archive](https://ega-archive.org/) (EGA).
+
+The requirements for this are
+- Enable EGA in the REMS configuration.
+- Each handler who processes EGA applications must link their ELIXIR user id with their EGA user id.
+- Each handler must also generate an EGA API-key from their Profile page.
+
+All the access rights will then automatically pushed into EGA servers.
+
+
