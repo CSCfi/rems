@@ -267,7 +267,9 @@
         (log/info "Success!")
         {:success (:success result)
          :api-key-expiration-date expiration-date})
-      {:success false})))
+      (do
+        (log/errorf "Failure! %s" result)
+        {:success false}))))
 
 (defn update-api-key
   "Logs into EGA fetching an access token, generates an API-Key and saves it to the user's secrets.
@@ -314,4 +316,6 @@
       (do
         (log/info "Success!")
         {:success (:success result)})
-      {:success false})))
+      (do
+        (log/errorf "Failure! %s" result)
+        {:success false}))))
