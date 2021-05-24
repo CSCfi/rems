@@ -1,5 +1,6 @@
 (ns rems.db.user-secrets
-  (:require [rems.db.core :as db]
+  (:require [rems.common.util :refer [deep-merge]]
+            [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]))
@@ -31,7 +32,7 @@
 (defn update-user-secrets! [user new-secrets]
   (assert user "User missing!")
   (let [old-secrets (get-user-secrets user)
-        validated (try (validate-user-secrets (merge old-secrets new-secrets))
+        validated (try (validate-user-secrets (deep-merge old-secrets new-secrets))
                        (catch Exception _e nil))]
     (if validated
       (do
