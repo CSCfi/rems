@@ -1,7 +1,7 @@
 (ns rems.profile
   (:require [cljs-time.core :as time-core]
             [re-frame.core :as rf]
-            [rems.atoms :refer [document-title info-field]]
+            [rems.atoms :refer [document-title info-field link]]
             [rems.collapsible :as collapsible]
             [rems.common.roles :as roles]
             [rems.flash-message :as flash-message]
@@ -78,6 +78,20 @@
           (not (:notification-email (:user-settings db)))))))
 
 ;;;; UI
+
+(defn maybe-ega-api-key-warning []
+  (let [config @(rf/subscribe [:rems.config/config])]
+    (when (:enable-ega config)
+      (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
+                                                   [:ega :api-key-expiration-date])]
+        (when (time-core/after? (time-core/now) ega-api-key-expiration-date)
+          [:div.alert.alert-warning
+           (text :t.profile/ega-api-key-expired)
+           [link nil "/profile" (text :t.actions/generate-ega-api-key-in-profile)]])
+        [:div.alert.alert-warning
+         (text :t.profile/ega-api-key-none)
+         [link nil "/profile" (text :t.actions/generate-ega-api-key-in-profile)]]))))
+
 
 (defn- missing-email-warning-dialog []
   [:div.alert.alert-warning

@@ -3,10 +3,11 @@
   (:require [cljs-time.core :as time-core]
             [re-frame.core :as rf]
             [rems.application-list :as application-list]
-            [rems.atoms :refer [document-title link]]
+            [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
+            [rems.profile :as profile]
             [rems.search :as search]
             [rems.text :refer [text]]))
 
@@ -55,42 +56,32 @@
    [show-throughput-times-button]])
 
 (defn actions-page []
-  (let [config @(rf/subscribe [:rems.config/config])]
-    [:div
-     [document-title (text :t.navigation/actions)]
-     [flash-message/component :top]
-     (when (:enable-ega config)
-       (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
-                                                    [:ega :api-key-expiration-date])]
-         (when (time-core/after? (time-core/now) ega-api-key-expiration-date)
-           [:div.alert.alert-warning
-            (text :t.profile/ega-api-key-expired)
-            [link nil "/profile" (text :t.actions/generate-ega-api-key-in-profile)]])
-         [:div.alert.alert-warning
-          (text :t.profile/ega-api-key-none)
-          [link nil "/profile" (text :t.actions/generate-ega-api-key-in-profile)]]))
-     [:div.spaced-sections
-      [collapsible/component
-       {:id "todo-applications"
-        :open? true
-        :title (text :t.actions/todo-applications)
-        :collapse [:<>
-                   [search/application-search-field {:id "todo-search"
-                                                     :on-search #(rf/dispatch [::todo-applications {:query %}])
-                                                     :searching? @(rf/subscribe [::todo-applications :searching?])}]
-                   [application-list/component {:applications ::todo-applications
-                                                :hidden-columns #{:state :created}
-                                                :default-sort-column :last-activity
-                                                :default-sort-order :desc}]]}]
-      [collapsible/component
-       {:id "handled-applications"
-        :on-open #(rf/dispatch [::handled-applications])
-        :title (text :t.actions/handled-applications)
-        :collapse [:<>
-                   [search/application-search-field {:id "handled-search"
-                                                     :on-search #(rf/dispatch [::handled-applications {:query %}])
-                                                     :searching? @(rf/subscribe [::handled-applications :searching?])}]
-                   [application-list/component {:applications ::handled-applications
-                                                :hidden-columns #{:todo :created :submitted}
-                                                :default-sort-column :last-activity
-                                                :default-sort-order :desc}]]}]]]))
+  [:div
+   [document-title (text :t.navigation/actions)]
+   [flash-message/component :top]
+   [profile/maybe-ega-api-key-warning]
+   [:div.spaced-sections
+    [collapsible/component
+     {:id "todo-applications"
+      :open? true
+      :title (text :t.actions/todo-applications)
+      :collapse [:<>
+                 [search/application-search-field {:id "todo-search"
+                                                   :on-search #(rf/dispatch [::todo-applications {:query %}])
+                                                   :searching? @(rf/subscribe [::todo-applications :searching?])}]
+                 [application-list/component {:applications ::todo-applications
+                                              :hidden-columns #{:state :created}
+                                              :default-sort-column :last-activity
+                                              :default-sort-order :desc}]]}]
+    [collapsible/component
+     {:id "handled-applications"
+      :on-open #(rf/dispatch [::handled-applications])
+      :title (text :t.actions/handled-applications)
+      :collapse [:<>
+                 [search/application-search-field {:id "handled-search"
+                                                   :on-search #(rf/dispatch [::handled-applications {:query %}])
+                                                   :searching? @(rf/subscribe [::handled-applications :searching?])}]
+                 [application-list/component {:applications ::handled-applications
+                                              :hidden-columns #{:todo :created :submitted}
+                                              :default-sort-column :last-activity
+                                              :default-sort-order :desc}]]}]]])
