@@ -184,7 +184,7 @@
                    (text :t.profile/ega-intro)
                    (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
                                                                 [:ega :api-key-expiration-date])]
-                     [existing-ega-key-delete]
+                     [existing-ega-key-delete ega-api-key-expiration-date]
                      [no-ega-key-generate])])}])))
 
 (defn profile-page []
