@@ -99,81 +99,91 @@
   (when @(rf/subscribe [::missing-email?])
     [missing-email-warning-dialog]))
 
-(defn profile-page []
+(defn- user-settings []
   (let [identity @(rf/subscribe [:identity])
-        form @(rf/subscribe [::form])
-        config @(rf/subscribe [:rems.config/config])]
-    [:<>
-     [document-title (text :t.navigation/profile)]
-     [flash-message/component :top]
-     [collapsible/component
-      {:title (text :t.profile/settings)
-       :always (if @(rf/subscribe [::user-settings :fetching?])
-                 [spinner/big]
-                 [:form
-                  {:on-submit (fn [event]
-                                (.preventDefault event)
-                                (rf/dispatch [::save]))}
+        form @(rf/subscribe [::form])]
+    [collapsible/component
+     {:title (text :t.profile/settings)
+      :always (if @(rf/subscribe [::user-settings :fetching?])
+                [spinner/big]
+                [:form
+                 {:on-submit (fn [event]
+                               (.preventDefault event)
+                               (rf/dispatch [::save]))}
 
-                  [:div.form-group
-                   (text :t.profile/idp-email) ": " (or (:email (:user identity))
-                                                        [:span.text-muted (text :t.profile/no-email)])]
+                 [:div.form-group
+                  (text :t.profile/idp-email) ": " (or (:email (:user identity))
+                                                       [:span.text-muted (text :t.profile/no-email)])]
 
-                  (let [id "notification-email"]
-                    [:div.form-group
-                     [:label {:for id} (text :t.profile/notification-email) ":"]
-                     [:input.form-control
-                      {:type "email"
-                       :id id
-                       :value (:notification-email form)
-                       :on-change (fn [event]
-                                    (let [value (.. event -target -value)]
-                                      (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
+                 (let [id "notification-email"]
+                   [:div.form-group
+                    [:label {:for id} (text :t.profile/notification-email) ":"]
+                    [:input.form-control
+                     {:type "email"
+                      :id id
+                      :value (:notification-email form)
+                      :on-change (fn [event]
+                                   (let [value (.. event -target -value)]
+                                     (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
 
-                  [:button.btn.btn-primary
-                   {:type "submit"}
-                   (text :t.profile/save)]])}]
+                 [:button.btn.btn-primary
+                  {:type "submit"}
+                  (text :t.profile/save)]])}]))
 
-     [:div.mt-3
+(defn- user-details []
+  (let [identity @(rf/subscribe [:identity])]
+    [collapsible/component
+     {:title (text :t.profile/your-details)
+      :always [:<>
+               [user/username (:user identity)]
+               [user/attributes (:user identity) false]]}]))
+
+(defn- ega-settings []
+  (let [config @(rf/subscribe [:rems.config/config])]
+    (when (and (:enable-ega config) (roles/has-roles? :handler))
       [collapsible/component
-       {:title (text :t.profile/your-details)
-        :always [:<>
-                 [user/username (:user identity)]
-                 [user/attributes (:user identity) false]]}]]
+       {:title (text :t.profile/ega-full)
+        :always (if @(rf/subscribe [::user-settings :fetching?])
+                  [spinner/big]
+                  [:<>
+                   (text :t.profile/ega-intro)
+                   (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
+                                                                [:ega :api-key-expiration-date])]
+                     [:<>
+                      (if (time-core/before? (time-core/now) ega-api-key-expiration-date)
+                        (text :t.profile/ega-api-key-valid)
+                        (text :t.profile/ega-api-key-expired))
+                      [info-field (text :t.profile/ega-api-key-expiration-date) (localize-utc-date ega-api-key-expiration-date) {:inline? true}]
+                      [:form
+                       {:on-submit (fn [event]
+                                     (.preventDefault event)
+                                     (rf/dispatch [::delete-api-key]))}
 
-     (when (and (:enable-ega config) (roles/has-roles? :handler))
-       [:div.mt-3
-        [collapsible/component
-         {:title (text :t.profile/ega-full)
-          :always (if @(rf/subscribe [::user-settings :fetching?])
-                    [spinner/big]
-                    [:<>
-                     (text :t.profile/ega-intro)
-                     (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
-                                                                  [:ega :api-key-expiration-date])]
-                       [:<>
-                        (if (time-core/before? (time-core/now) ega-api-key-expiration-date)
-                          (text :t.profile/ega-api-key-valid)
-                          (text :t.profile/ega-api-key-expired))
-                        [info-field (text :t.profile/ega-api-key-expiration-date) (localize-utc-date ega-api-key-expiration-date) {:inline? true}]
-                        [:form
-                         {:on-submit (fn [event]
-                                       (.preventDefault event)
-                                       (rf/dispatch [::delete-api-key]))}
+                       [:button.btn.btn-primary
+                        {:type "submit"}
+                        (text :t.profile/delete-api-key)]]]
+                     [:<>
+                      (text :t.profile/ega-api-key-none)
+                      [:form
+                       {:on-submit (fn [event]
+                                     (.preventDefault event)
+                                     (rf/dispatch [::generate-api-key]))}
 
-                         [:button.btn.btn-primary
-                          {:type "submit"}
-                          (text :t.profile/delete-api-key)]]]
-                       [:<>
-                        (text :t.profile/ega-api-key-none)
-                        [:form
-                         {:on-submit (fn [event]
-                                       (.preventDefault event)
-                                       (rf/dispatch [::generate-api-key]))}
+                       [:button.btn.btn-primary
+                        {:type "submit"}
+                        (text :t.profile/generate-api-key)]]])])}])))
 
-                         [:button.btn.btn-primary
-                          {:type "submit"}
-                          (text :t.profile/generate-api-key)]]])])}]])]))
+(defn profile-page []
+  [:<>
+   [document-title (text :t.navigation/profile)]
+   [flash-message/component :top]
+   [user-settings]
+
+   [:div.mt-3
+    [user-details]]
+
+   [:div.mt-3
+    [ega-settings]]])
 
 (defn guide []
   [:div
