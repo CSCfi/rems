@@ -177,12 +177,9 @@
   [:<>
    [document-title (text :t.navigation/profile)]
    [flash-message/component :top]
-   [user-settings]
-
-   [:div.mt-3
-    [user-details]]
-
-   [:div.mt-3
+   [:div.spaced-vertically-3
+    [user-settings]
+    [user-details]
     [ega-settings]]])
 
 (defn guide []
