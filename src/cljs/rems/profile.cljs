@@ -138,6 +138,41 @@
                [user/username (:user identity)]
                [user/attributes (:user identity) false]]}]))
 
+(defn- delete-ega-api-key-button []
+  [:form
+   {:on-submit (fn [event]
+                 (.preventDefault event)
+                 (rf/dispatch [::delete-api-key]))}
+
+   [:button.btn.btn-primary
+    {:type "submit"}
+    (text :t.profile/delete-api-key)]])
+
+(defn- generate-ega-api-key-button []
+  [:form
+   {:on-submit (fn [event]
+                 (.preventDefault event)
+                 (rf/dispatch [::generate-api-key]))}
+
+   [:button.btn.btn-primary
+    {:type "submit"}
+    (text :t.profile/generate-api-key)]])
+
+(defn- existing-ega-key-delete [ega-api-key-expiration-date]
+  [:<>
+   (if (time-core/before? (time-core/now) ega-api-key-expiration-date)
+     (text :t.profile/ega-api-key-valid)
+     (text :t.profile/ega-api-key-expired))
+
+   [info-field (text :t.profile/ega-api-key-expiration-date) (localize-utc-date ega-api-key-expiration-date) {:inline? true}]
+
+   [delete-ega-api-key-button]])
+
+(defn- no-ega-key-generate []
+  [:<>
+   (text :t.profile/ega-api-key-none)
+   [generate-ega-api-key-button]])
+
 (defn- ega-settings []
   (let [config @(rf/subscribe [:rems.config/config])]
     (when (and (:enable-ega config) (roles/has-roles? :handler))
@@ -149,29 +184,8 @@
                    (text :t.profile/ega-intro)
                    (if-let [ega-api-key-expiration-date (get-in @(rf/subscribe [::user-settings])
                                                                 [:ega :api-key-expiration-date])]
-                     [:<>
-                      (if (time-core/before? (time-core/now) ega-api-key-expiration-date)
-                        (text :t.profile/ega-api-key-valid)
-                        (text :t.profile/ega-api-key-expired))
-                      [info-field (text :t.profile/ega-api-key-expiration-date) (localize-utc-date ega-api-key-expiration-date) {:inline? true}]
-                      [:form
-                       {:on-submit (fn [event]
-                                     (.preventDefault event)
-                                     (rf/dispatch [::delete-api-key]))}
-
-                       [:button.btn.btn-primary
-                        {:type "submit"}
-                        (text :t.profile/delete-api-key)]]]
-                     [:<>
-                      (text :t.profile/ega-api-key-none)
-                      [:form
-                       {:on-submit (fn [event]
-                                     (.preventDefault event)
-                                     (rf/dispatch [::generate-api-key]))}
-
-                       [:button.btn.btn-primary
-                        {:type "submit"}
-                        (text :t.profile/generate-api-key)]]])])}])))
+                     [existing-ega-key-delete]
+                     [no-ega-key-generate])])}])))
 
 (defn profile-page []
   [:<>
