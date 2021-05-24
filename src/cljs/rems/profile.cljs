@@ -51,8 +51,7 @@
  (fn [{:keys [db]} _]
    (let [description [text :t.profile/generate-api-key]]
      (post! "/api/user-settings/generate-ega-api-key"
-            {:params (::form db)
-             :handler (flash-message/default-success-handler :top description
+            {:handler (flash-message/default-success-handler :top description
                                                              #(rf/dispatch [::user-settings]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
@@ -62,8 +61,7 @@
  (fn [{:keys [db]} _]
    (let [description [text :t.profile/delete-api-key]]
      (post! "/api/user-settings/delete-ega-api-key"
-            {:params (::form db)
-             :handler (flash-message/default-success-handler :top description
+            {:handler (flash-message/default-success-handler :top description
                                                              #(rf/dispatch [::user-settings]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
