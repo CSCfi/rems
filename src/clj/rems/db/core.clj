@@ -1,4 +1,9 @@
 (ns rems.db.core
+  "Database connections. Exposes queries defined in resources/sql/queries.sql as functions using hugsql.
+  That is, something like ':name get-catalogue-items' queries.sql, there will be a function
+  rems.db.core/get-catalogue-items.
+
+  See also: docs/architecture/012-layers.md"
   {:ns-tracker/resource-deps ["sql/queries.sql"]}
   (:require [clj-time.core :as time]
             [clj-time.jdbc] ;; convert db timestamps to joda-time objects
