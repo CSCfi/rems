@@ -84,8 +84,12 @@ data into the database. This can involve schema coersions (see
 namespace in the DB layer should handle one concept. The DB layer can
 also contain simple domain logic (for example `rems.db.attachments`
 has checking for allowed attachment types). Namespaces in the DB layer
-should not depend on each other. Depending on the common
-`rems.db.core` namespace is fine though.
+should not depend on each other.
+
+The actual SQL queries are defined in `resources/sql/queries.sql`, and
+each one automatically gets a corresponding function in the
+`rems.db.core` namespace. Other `rems.db.*` namespaces should depend
+on `rems.db.core` to perform the queries they need.
 
 ## Problems
 
