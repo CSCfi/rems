@@ -129,11 +129,18 @@
              (doall (for [field (getx form :form/fields)]
                       (render-field filenames field))))))))
 
+(def license-title-style {:style :bold})
+
 (defn- render-license [license]
-  ;; TODO license text?
   ;; TODO get acceptance state?
-  [:paragraph
-   (localized (:license/title license))])
+  (list [:paragraph license-title-style (localized (:license/title license))]
+        (case (:license/type license)
+          :text
+          [:paragraph (localized (:license/text license))]
+          :link
+          [:paragraph (localized (:license/link license))]
+          :attachment
+          [:paragraph (localized (:license/attachment-filename license))])))
 
 (defn- render-licenses [application]
   (list [:heading heading-style (text :t.form/licenses)]

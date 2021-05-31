@@ -149,8 +149,10 @@
                [:heading pdf/heading-style "Resources"]
                [:list [[:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]]]
               [[:heading pdf/heading-style "Terms of use"]
-               [[:paragraph "Google license"]
-                [:paragraph "Text license"]]]
+               [[[:paragraph pdf/license-title-style "Google license"]
+                 [:paragraph "http://google.com"]]
+                [[:paragraph pdf/license-title-style "Text license"]
+                 [:paragraph "Some text"]]]]
               [[[:heading pdf/heading-style "Form"]
                 [[[:paragraph pdf/label-field-style
                    "This form demonstrates all possible field types. (This text itself is a label field.)"]
