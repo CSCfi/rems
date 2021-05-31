@@ -3,6 +3,7 @@
   (:require [clj-pdf.core :refer :all]
             [clj-time.core :as time]
             [clojure.string :as str]
+            [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
             [rems.context :as context]
@@ -10,11 +11,17 @@
             [rems.util :refer [getx]])
   (:import [java.io ByteArrayOutputStream]))
 
-(defn- render-user [user]
+(defn- render-user [application user]
   (str (or (:name user)
            (:userid user))
        " (" (:userid user) ")"
-       " <" (:email user) ">"))
+       " <" (:email user) ">. "
+       (when-let [userid (:userid user)]
+         (str (text :t.form/accepted-licenses)
+              ": "
+              (if (application-util/accepted-licenses? application userid)
+                (text :t.form/checkbox-checked)
+                (text :t.form/checkbox-unchecked))))))
 
 (def heading-style {:spacing-before 20})
 
@@ -37,10 +44,10 @@
       (text :t.applications/state)
       (when state [:phrase ": " (localize-state state)])]
      [:heading heading-style (text :t.applicant-info/applicants)]
-     [:paragraph (text :t.applicant-info/applicant) ": " (render-user (getx application :application/applicant))]
+     [:paragraph (text :t.applicant-info/applicant) ": " (render-user application (getx application :application/applicant))]
      (doall
       (for [member (getx application :application/members)]
-        [:paragraph (text :t.applicant-info/member) ": " (render-user member)]))
+        [:paragraph (text :t.applicant-info/member) ": " (render-user application member)]))
      [:heading heading-style (text :t.form/resources)]
      [:list
       (doall
@@ -132,7 +139,6 @@
 (def license-title-style {:style :bold})
 
 (defn- render-license [license]
-  ;; TODO get acceptance state?
   (list [:paragraph license-title-style (localized (:license/title license))]
         (case (:license/type license)
           :text
