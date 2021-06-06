@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.config :refer [env]]
-            [rems.db.user-settings :as user-settings]
+            [rems.api.services.user-settings :as user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])

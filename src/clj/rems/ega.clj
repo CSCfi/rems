@@ -12,6 +12,7 @@
             [clojure.tools.logging :as log]
             [rems.config :refer [env]]
             [rems.db.user-secrets :as user-secrets]
+            [rems.db.user-settings :as user-settings]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.util :refer [getx]]))
@@ -250,26 +251,34 @@
     `:client-id`          - client id for REMS
     `:client-secret`      - client secret for REMS"
   [{:keys [userid access-token config]}]
-  (let [_ (log/info "Generate API-Key...")
-        expiration-date (time-core/plus (time-core/now) (time-core/years 1))
-        api-key (-> {:access-token access-token
-                     :id userid
-                     :expiration-date expiration-date
-                     :reason "rems_ega_push"
-                     :config config}
-                    get-api-key-generate
-                    :body
-                    :token)
-        _ (log/info "Save user secret...")
-        result (user-secrets/update-user-secrets! userid {:ega {:api-key api-key}})]
-    (if (:success result)
-      (do
-        (log/info "Success!")
-        {:success (:success result)
-         :api-key-expiration-date expiration-date})
-      (do
-        (log/errorf "Failure! %s" result)
-        {:success false}))))
+  (try
+    (let [_ (log/info "Generate API-Key...")
+          expiration-date (time-core/plus (time-core/now) (time-core/years 1))
+          api-key (-> {:access-token access-token
+                       :id userid
+                       :expiration-date expiration-date
+                       :reason "rems_ega_push"
+                       :config config}
+                      get-api-key-generate
+                      :body
+                      :token)
+          _ (assert api-key)
+
+          _ (log/info "Save user secret...")
+          secrets-result (user-secrets/update-user-secrets! userid {:ega {:api-key api-key}})
+          _ (assert (:success secrets-result))
+
+          _ (log/info "Save user settings...")
+          settings-result (user-settings/update-user-settings! userid {:ega {:api-key-expiration-date expiration-date}})
+          _ (assert (:success settings-result))]
+
+      (log/info "Success!")
+      {:success true
+       :api-key-expiration-date expiration-date})
+
+    (catch Throwable t
+      (log/error t "Failure!")
+      {:success false})))
 
 (defn update-api-key
   "Logs into EGA fetching an access token, generates an API-Key and saves it to the user's secrets.
@@ -289,7 +298,8 @@
                           :config config}
                          post-token
                          :body
-                         :access_token)]
+                         :access_token)
+        _ (assert access-token)]
     (generate-api-key {:userid userid
                        :access-token access-token
                        :config config})))
@@ -305,17 +315,23 @@
     `:client-id`          - client id for REMS
     `:client-secret`      - client secret for REMS"
   [{:keys [userid access-token config]}]
-  (let [_ (log/info "Deleting API-Key...")
-        _result (-> {:access-token access-token
-                     :id userid
-                     :config config}
-                    delete-api-key-invalidate)
-        _ (log/info "Remove user secret...")
-        result (user-secrets/update-user-secrets! userid {:ega {}})]
-    (if (:success result)
+  (try
+    (let [_ (log/info "Deleting API-Key...")
+          _result (-> {:access-token access-token
+                       :id userid
+                       :config config}
+                      delete-api-key-invalidate)
+
+          _ (log/info "Remove user secret...")
+          secrets-result (user-secrets/update-user-secrets! userid {:ega {}})
+          _ (assert (:success secrets-result))
+
+          _ (log/info "Remove user setting...")
+          settings-result (user-settings/update-user-settings! userid {:ega {}})
+          _ (assert (:success settings-result))]
+      (log/info "Success!")
+      {:success true})
+    (catch Throwable t
       (do
-        (log/info "Success!")
-        {:success (:success result)})
-      (do
-        (log/errorf "Failure! %s" result)
+        (log/error t "Failure!")
         {:success false}))))
