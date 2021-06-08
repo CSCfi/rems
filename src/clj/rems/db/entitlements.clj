@@ -6,7 +6,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
-            [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
+            [rems.api.services.ega :as ega]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -17,8 +18,7 @@
             [rems.json :as json]
             [rems.common.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [getx-user-id]])
-  (:import [org.joda.time DateTime]))
+            [rems.util :refer [getx-user-id]]))
 
 ;; TODO move Entitlement schema here from rems.api?
 
@@ -63,29 +63,44 @@
        :mail (:mail e)
        :end (:end e)})))
 
-(defn- post-entitlements! [{:keys [entitlements action] :as params}]
-  (when-let [target (get-in env [:entitlements-target action])]
-    (let [payload (get-entitlements-payload entitlements action)
-          json-payload (json/generate-string payload)]
-      (log/infof "Posting entitlements to %s:" target payload)
-      (let [response (try
-                       (http/post target
-                                  {:throw-exceptions false
-                                   :body json-payload
-                                   :content-type :json
-                                   :socket-timeout 2500
-                                   :conn-timeout 2500})
-                       (catch Exception e
-                         (log/error "POST failed" e)
-                         {:status "exception"}))
-            status (:status response)]
-        (when-not (= 200 status)
-          (log/warnf "Entitlement post failed: %s", response)
-          (str "failed: " status))))))
+(defn- post-entitlements! [{:keys [action type entitlements config]}]
+  (case type
+    :ega
+    (when config
+      (try (doseq [entitlement entitlements] ; technically these could be grouped per user & api-key
+             (ega/entitlement-push action entitlement config))
+           (catch Exception e
+             (log/error "POST failed" e)
+             (or (ex-data e)
+                 {:status "exception"}))))
+
+    :basic ; TODO: let's move this :entitlements-target (v1) at some point to :entitlement-post (v2)
+    (when-let [target (get-in env [:entitlements-target action])]
+      (let [payload (get-entitlements-payload entitlements action)
+            json-payload (json/generate-string payload)]
+        (log/infof "Posting entitlements to %s: %s" target payload)
+        (let [response (try
+                         (http/post target
+                                    {:throw-exceptions false
+                                     :body json-payload
+                                     :content-type :json
+                                     :socket-timeout 2500
+                                     :conn-timeout 2500})
+                         (catch Exception e
+                           (log/error "POST failed" e)
+                           {:status "exception"}))
+              status (:status response)]
+          (when-not (= 200 status)
+            (log/warnf "Entitlement post failed: %s", response)
+            (str "failed: " status)))))))
 
 ;; TODO argh adding these everywhere sucks
+;; TODO consider using schema coercions
 (defn- fix-entry-from-db [entry]
-  (update-in entry [:outbox/entitlement-post :action] keyword))
+  (-> entry
+      (update-in [:outbox/entitlement-post :action] keyword)
+      (update-in [:outbox/entitlement-post :type] keyword)
+      (update-in [:outbox/entitlement-post :config :type] keyword)))
 
 (defn process-outbox! []
   (doseq [entry (mapv fix-entry-from-db
@@ -101,11 +116,13 @@
   :start (scheduler/start! process-outbox! (.toStandardDuration (time/seconds 10)))
   :stop (scheduler/stop! entitlement-poller))
 
-(defn- add-to-outbox! [action entitlements]
+(defn- add-to-outbox! [action type entitlements config]
   (outbox/put! {:outbox/type :entitlement-post
                 :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
                 :outbox/entitlement-post {:action action
-                                          :entitlements entitlements}}))
+                                          :type type
+                                          :entitlements entitlements
+                                          :config config}}))
 
 (defn- grant-entitlements! [application-id user-id resource-ids actor end]
   (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids "until" end)
@@ -117,8 +134,10 @@
                           :start (time/now) ; TODO should ideally come from the command time
                           :end end})
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
-    (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))
-    (add-to-outbox! :ga4gh (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+    (let [entitlements (db/get-entitlements {:application application-id :user user-id :resource resource-id})]
+      (add-to-outbox! :add :basic entitlements nil)
+      (doseq [config (:entitlement-push env)]
+        (add-to-outbox! :add (:type config) entitlements config)))))
 
 (defn- revoke-entitlements! [application-id user-id resource-ids actor end]
   (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids "at" end)
@@ -128,7 +147,10 @@
                            :resource resource-id
                            :revokedby actor
                            :end end})
-    (add-to-outbox! :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+    (let [entitlements (db/get-entitlements {:application application-id :user user-id :resource resource-id})]
+      (add-to-outbox! :remove :basic entitlements nil)
+      (doseq [config (:entitlement-push env)]
+        (add-to-outbox! :remove (:type config) entitlements config)))))
 
 (defn- get-entitlements-by-user [application-id]
   (->> (db/get-entitlements {:application application-id :active-at (time/now)})

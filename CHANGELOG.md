@@ -13,6 +13,7 @@ Changes since v2.18
 
 ### Additions
 - Pdf applications now contain license text (for inline licenses), url (for link licenses) or attachment name (for attachment licenses), and license acceptance status for applicant and members. (#2688)
+- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 
 ## v2.18 "Särkiniemientie" 2021-05-18
 
