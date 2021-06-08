@@ -9,32 +9,34 @@ architecture for the backend.
 
 ```
 
-HTTP               /api/licenses/*      /api/workflows/*  ...
+HTTP               /api/licenses/*      /api/workflows/*     /api/user-settings/*                   ...
 
 
-                   +----------+         +----------+
-API layer          | license  |         | workflow |      ...
-                   +----------+         +----------+
-                        |                    |
-                        |                    |
-                        v                    v
-                   +----------+         +----------+
-Service layer      | license  |         | workflow |      ...
-                   +----------+         +----------+
-                        |      \             |
-                        |       '--------+   |
-                        |                |   |
-                        v                v   v
-                   +----------+         +----------+
-DB layer           | license  |         | workflow |
-                   +----------+         +----------+
-                             |           |
-                             v           v
-                           +--------------+
-                           | rems.db.core |
-                           +--------------+
-                                  |
-                                  v
+                   +----------+         +----------+        +---------------+
+API layer          | license  |         | workflow |        | user-settings |                       ...
+                   +----------+         +----------+        +---------------+
+                        |                    |                      |        \
+                        |                    |                      |         '------+
+                        |                    |                      |                |
+                        v                    v                      v                v
+                   +----------+         +----------+        +---------------+     +-----+
+Service layer      | license  |         | workflow |        | user-settings |     | ega |           ...
+                   +----------+         +----------+        +---------------+     +-----+
+                        |      \             |                      |                |
+                        |       '--------+   |                      |                |
+                        |                |   |                      |                |
+                        v                v   v                      v                v
+                   +----------+         +----------+        +---------------+     +-----+
+DB/EXT layer       | license  |         | workflow |        | user-settings |     | ega |           ...
+                   +----------+         +----------+        +---------------+     +-----+
+                             |           |                   |
+                             |           | +----------------'
+                             v           v v
+                            +--------------+
+                            | rems.db.core |
+                            +--------------+
+                                   |
+                                   v
                                 .----.
                                /      \
                               |\      /|
@@ -141,3 +143,11 @@ In particular:
 - `rems.schema-base` contains common schemas that can be used everywhere.
 - `rems.schema-base` and `rems.api.schema` shouldn't depend on any api, db or service components.
 - Schemas used for JSON in the DB should be in `rems.schema-base` or the `rems.db.*` namespace for that feature.
+
+## Amendment: External layer for integrations
+
+Date: 2021-06-08
+Authors: @Macroz
+
+Sometimes there are external services other than the database. We can have namespaces like `rems.ext.*` for these, like `rems.ext.ega`.
+These should also be referred to from a service namespace like the `rems.db.*` namespaces are.

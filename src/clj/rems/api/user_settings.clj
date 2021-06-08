@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.config :refer [env]]
+            [rems.api.services.ega :as ega]
             [rems.api.services.user-settings :as user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]
@@ -45,7 +46,9 @@
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
-          (ok (user-settings/generate-ega-api-key! (get-user-id) access-token)))))
+          (ok (ega/generate-api-key {:userid (get-user-id)
+                                     :access-token access-token
+                                     :config (ega/get-ega-config)})))))
 
     (POST "/delete-ega-api-key" [:as request] ; NB: binding syntax
       :summary "Deletes the EGA API-key of the user."
@@ -54,4 +57,6 @@
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
-          (ok (user-settings/delete-ega-api-key! (get-user-id) access-token)))))))
+          (ok (ega/delete-api-key {:userid (get-user-id)
+                                   :access-token access-token
+                                   :config (ega/get-ega-config)})))))))

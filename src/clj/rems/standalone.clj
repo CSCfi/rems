@@ -8,6 +8,7 @@
             [luminus.repl-server :as repl]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
+            [rems.api.services.ega :as ega]
             [rems.application.search :as search]
             [rems.common.git :as git]
             [rems.config :refer [env]]
@@ -17,7 +18,6 @@
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.users :as users]
-            [rems.ega :as ega]
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.validate :as validate])
