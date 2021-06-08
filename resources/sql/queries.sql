@@ -1,3 +1,6 @@
+-- The queries here get transformed into functions in rems.db.core.
+-- See rems.db.core and docs/architecture/012-layers.md for more info.
+
 -- :name get-catalogue-items :? :*
 -- :doc
 -- - Get catalogue items
