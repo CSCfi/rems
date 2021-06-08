@@ -178,7 +178,7 @@
                                           (filter (comp #{:ega} :type))
                                           (find-first (comp #{config-id} :id)))]
                       (assert ega-config (str "Could not find :entitlement-push with :type :ega and :id " (pr-str config-id)))
-                      (ega/update-api-key {:userid userid :username username :password password :config ega-config}))
+                      (ega/generate-api-key-with-account {:userid userid :username username :password password :config ega-config}))
           (do (usage)
               (System/exit 1))))
 

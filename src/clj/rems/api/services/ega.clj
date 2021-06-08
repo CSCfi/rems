@@ -92,8 +92,8 @@
       (ega/delete-permissions (merge common-fields
                                      {:dataset-ids [(:resid entitlement)]})))))
 
-(defn generate-api-key
-  "Generates an API-Key and saves it to the user's secrets.
+(defn generate-api-key-with-access-token
+  "Generates an API-Key with `access-token` and saves it to the user's secrets.
 
   `:userid`               - REMS user to generate the key for
   `:access-token`         - User's ELIXIR access token
@@ -134,8 +134,8 @@
       (log/error t "Failure!")
       {:success false})))
 
-(defn update-api-key
-  "Logs into EGA fetching an access token, generates an API-Key and saves it to the user's secrets.
+(defn generate-api-key-with-account
+  "Logs into EGA with `username` and `password` to fetch an access token, then generates an API-Key and saves it to the user's secrets.
 
   `:userid`               - REMS user to generate the key for
   `:username`             - EGA user to use
@@ -156,9 +156,9 @@
                          :body
                          :access_token)
         _ (assert access-token)]
-    (generate-api-key {:userid userid
-                       :access-token access-token
-                       :config config})))
+    (generate-api-key-with-access-token {:userid userid
+                                         :access-token access-token
+                                         :config config})))
 
 (defn delete-api-key
   "Deletes the API-Key and removes it from the user's secrets.

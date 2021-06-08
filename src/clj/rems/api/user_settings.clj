@@ -46,9 +46,9 @@
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
-          (ok (ega/generate-api-key {:userid (get-user-id)
-                                     :access-token access-token
-                                     :config (ega/get-ega-config)})))))
+          (ok (ega/generate-api-key-with-access-token {:userid (get-user-id)
+                                                       :access-token access-token
+                                                       :config (ega/get-ega-config)})))))
 
     (POST "/delete-ega-api-key" [:as request] ; NB: binding syntax
       :summary "Deletes the EGA API-key of the user."
