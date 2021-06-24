@@ -10,6 +10,7 @@ Changes since v2.18
 
 ### Fixes
 - Pdf generation failed for applications that had table fields with no rows. Now fixed.
+- Fix for missing notification-email from user settings
 
 ### Additions
 - Pdf applications now contain license text (for inline licenses), url (for link licenses) or attachment name (for attachment licenses), and license acceptance status for applicant and members. (#2688)
