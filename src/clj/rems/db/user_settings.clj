@@ -18,6 +18,11 @@
    :notification-email (s/maybe s/Str)
    (s/optional-key :ega) {:api-key-expiration-date DateTime}})
 
+(s/defschema DbUserSettings
+  {:language s/Keyword
+   (s/optional-key :notification-email) (s/maybe s/Str)
+   (s/optional-key :ega) {:api-key-expiration-date DateTime}})
+
 (def ^:private validate-user-settings
   (s/validator UserSettings))
 
@@ -27,7 +32,7 @@
       json/generate-string))
 
 (def ^:private coerce-user-settings
-  (coerce/coercer! UserSettings json/coercion-matcher))
+  (coerce/coercer! DbUserSettings json/coercion-matcher))
 
 (defn- json->settings [json]
   (when json
