@@ -1,8 +1,10 @@
 (ns ^:integration rems.db.test-users
   (:require [clojure.test :refer :all]
+            [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.db.users :as users]))
+            [rems.db.users :as users]
+            [rems.db.user-settings :as user-settings]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
@@ -15,7 +17,31 @@
   (users/add-user-raw! "user-with-org" {:eppn "user-with-org"
                                         :commonName "User Org"
                                         :mail "user@org"
+                                        ;;:notification-email "user@alt"
                                         :organizations [{:organization/id "org"}]})
+
+  (testing "survives partial user settings"
+    (db/update-user-settings! {:user "user1" :settings "{\"language\": \"fi\"}"}) ; missing notification-email
+
+    (is (= {:userid "user1"
+            :name "What Ever"
+            :email nil}
+           (users/get-user "user1")))
+
+    (is (= {:language :fi :notification-email nil} (user-settings/get-user-settings "user1"))
+        "default is returned for notification-email")
+
+    (is (= {:success true}
+           (user-settings/update-user-settings! "user1" {:language :en}))
+        "settings can be updated")
+
+    (is (= {:userid "user1"
+            :name "What Ever"
+            :email nil}
+           (users/get-user "user1")))
+
+    (is (= {:language :en :notification-email nil} (user-settings/get-user-settings "user1"))
+        "default is returned for notification-email"))
 
   (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
@@ -53,6 +79,13 @@
     (roles/add-role! "user1" :owner)
     (is (= ["user1"] (users/get-users-with-role :owner)))
     (is (= [] (users/get-users-with-role :reporter))))
+
+  (testing "get-deciders"
+    (is (= #{{:userid "whatever", :name "What Ever", :email nil}
+             {:userid "user-with-org",
+              :name "User Org",
+              :email "user@org",
+              :organizations [#:organization{:id "org"}]}} (set (users/get-deciders)))))
 
   (testing "update user with add-user-raw!"
     (users/add-user-raw! "user1" {:eppn "user1"
