@@ -21,15 +21,27 @@
                                         :organizations [{:organization/id "org"}]})
 
   (testing "survives partial user settings"
-    (db/update-user-settings! {:user "user1" :settings "{\"language\": \"fi\"}"}) ; base with partial data
-
-    (is (= {:success true}
-           (user-settings/update-user-settings! "user1" {:language :en})))
+    (db/update-user-settings! {:user "user1" :settings "{\"language\": \"fi\"}"}) ; missing notification-email
 
     (is (= {:userid "user1"
             :name "What Ever"
             :email nil}
-           (users/get-user "user1"))))
+           (users/get-user "user1")))
+
+    (is (= {:language :fi :notification-email nil} (user-settings/get-user-settings "user1"))
+        "default is returned for notification-email")
+
+    (is (= {:success true}
+           (user-settings/update-user-settings! "user1" {:language :en}))
+        "settings can be updated")
+
+    (is (= {:userid "user1"
+            :name "What Ever"
+            :email nil}
+           (users/get-user "user1")))
+
+    (is (= {:language :en :notification-email nil} (user-settings/get-user-settings "user1"))
+        "default is returned for notification-email"))
 
   (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
