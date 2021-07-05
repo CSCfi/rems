@@ -216,9 +216,12 @@
                 :on-change (comp on-change event-value)}]]))
 
 (defn date-field
-  [{:keys [min max validation on-change] :as opts}]
+  [{:keys [validation on-change] :as opts}]
   (let [value (:field/value opts)
-        optional (:field/optional opts)]
+        optional (:field/optional opts)
+        {:date-bounds/keys [min-date max-date type]} (:field/date-bounds opts)
+        min (when (#{:min-date :both} type) min-date)
+        max (when (#{:max-date :both} type) max-date)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
@@ -791,22 +794,30 @@
                     :field/type :date
                     :field/title {:en "Title"}
                     :field/value "2000-12-31"}])
-   (example "non-editable field of type \"date\""
+   (example "field of type \"date\" with min and max bounds"
             [field {:form/id 26
+                    :field/id "1"
+                    :field/type :date
+                    :field/title {:en "Title"}
+                    :field/value "2000-12-15"
+                    :field/date-bounds {:date-bounds/min-date "2000-12-13"
+                                        :date-bounds/max-date "2000-12-17"}}])
+   (example "non-editable field of type \"date\""
+            [field {:form/id 27
                     :field/id "1"
                     :field/type :date
                     :field/title {:en "Title"}
                     :readonly true
                     :field/value ""}])
    (example "non-editable field of type \"date\" with value"
-            [field {:form/id 27
+            [field {:form/id 28
                     :field/id "1"
                     :field/type :date
                     :field/title {:en "Title"}
                     :readonly true
                     :field/value "2000-12-31"}])
    (example "field of type \"option\""
-            [field {:form/id 28
+            [field {:form/id 29
                     :field/id "1"
                     :field/type :option
                     :field/title {:en "Title"}
@@ -814,7 +825,7 @@
                     :field/options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
                                     {:key "n" :label {:en "No" :fi "Ei"}}]}])
    (example "non-editable field of type \"option\""
-            [field {:form/id 29
+            [field {:form/id 30
                     :field/id "1"
                     :field/type :option
                     :field/title {:en "Title"}
@@ -823,7 +834,7 @@
                     :field/options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
                                     {:key "n" :label {:en "No" :fi "Ei"}}]}])
    (example "field of type \"multiselect\""
-            [field {:form/id 30
+            [field {:form/id 31
                     :field/id "1"
                     :field/type :multiselect
                     :field/title {:en "Title"}
@@ -832,7 +843,7 @@
                                     {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
                                     {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}])
    (example "non-editable field of type \"multiselect\""
-            [field {:form/id 31
+            [field {:form/id 32
                     :field/id "1"
                     :field/type :multiselect
                     :field/title {:en "Title"}
@@ -842,25 +853,25 @@
                                     {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
                                     {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}])
    (example "optional field"
-            [field {:form/id 32
+            [field {:form/id 33
                     :field/id "1"
                     :field/type :texta
                     :field/optional true
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}}])
    (example "field of type \"label\""
-            [field {:form/id 33
+            [field {:form/id 34
                     :field/id "1"
                     :field/type :label
                     :field/title {:en "Lorem ipsum dolor sit amet"}}])
    (example "field of type \"description\""
-            [field {:form/id 34
+            [field {:form/id 35
                     :field/id "1"
                     :field/type :description
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}}])
    (example "field of type \"table\""
-            [field {:form/id 35
+            [field {:form/id 36
                     :field/id "1"
                     :field/type :table
                     :field/title {:en "Lorem ipsum dolor sit amet"}
@@ -871,7 +882,7 @@
                                   [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
    (example "non-editable field of type \"table\""
             [field {:readonly true
-                    :form/id 36
+                    :form/id 37
                     :field/id "1"
                     :field/type :table
                     :field/title {:en "Lorem ipsum dolor sit amet"}
@@ -882,7 +893,7 @@
                                   [{:column "col1" :value "ddddd"} {:column "col2" :value "eeeeee"} {:column "col3" :value "fffffff"}]]}])
    (example "empty non-editable field of type \"table\""
             [field {:readonly true
-                    :form/id 36
+                    :form/id 38
                     :field/id "1"
                     :field/type :table
                     :field/title {:en "Lorem ipsum dolor sit amet"}
@@ -892,7 +903,7 @@
                     :field/value []}])
    (example "diff for field of type \"table\""
             [field {:diff true
-                    :form/id 36
+                    :form/id 39
                     :field/id "1"
                     :field/type :table
                     :field/title {:en "Lorem ipsum dolor sit amet"}
