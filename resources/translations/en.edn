@@ -272,6 +272,10 @@
                 :column-key "ID"
                 :column-label "Label"
                 :confirm-remove-field "Remove this field?"
+                :date-bounds {:both "Both"
+                              :max-date "Last date"
+                              :min-date "First date"
+                              :none "None"}
                 :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title
@@ -291,6 +295,7 @@
                 :required-table "Require at least one row"
                 :type-attachment "Attachment"
                 :type-date "Date field"
+                :type-date-bounds "Date limits"
                 :type-description "Application title"
                 :type-email "Email address"
                 :type-header "Header"

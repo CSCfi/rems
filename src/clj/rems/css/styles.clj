@@ -722,6 +722,9 @@
    [:.form-field-visibility (assoc (generate-solid-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
+   [:.form-field-date-bounds (assoc (generate-solid-form-group)
+                                   :margin-left 0
+                                   :margin-right 0)]
    [:.form-field-option (assoc (generate-solid-form-group)
                                :margin-left 0
                                :margin-right 0)]

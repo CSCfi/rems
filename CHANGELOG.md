@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.18
+Changes since v2.19
+
+## v2.19 "Nahkahousuntie" 2021-06-28
 
 ### Fixes
 - Pdf generation failed for applications that had table fields with no rows. Now fixed.
