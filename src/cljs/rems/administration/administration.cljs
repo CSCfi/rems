@@ -21,6 +21,7 @@
 (defn navigator []
   [:div#administration-menu.navbar.mb-4.mr-auto.ml-auto
    [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items)]
+   [navbar/nav-link "/administration/categories" (text :t.administration/categories)]
    [navbar/nav-link "/administration/resources" (text :t.administration/resources)]
    [navbar/nav-link "/administration/forms" (text :t.administration/forms)]
    [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]

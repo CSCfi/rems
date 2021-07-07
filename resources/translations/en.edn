@@ -73,6 +73,7 @@
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
+                   :categories "Categories"
                    :change "Change"
                    :comment "Comment"
                    :copy-as-new "Copy as new"

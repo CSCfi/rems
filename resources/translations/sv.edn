@@ -71,6 +71,7 @@
                    :cancel "Avbryt"
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
+                   :categories "Categories"
                    :change "Ändra"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"

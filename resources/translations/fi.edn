@@ -71,6 +71,7 @@
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
+                   :categories "Categories"
                    :change "Vaihda"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"

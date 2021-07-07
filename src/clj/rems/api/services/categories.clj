@@ -1,0 +1,138 @@
+(ns rems.api.services.categories (:require [rems.api.services.dependencies :as dependencies]
+                                           [rems.api.services.util :as util]
+                                           [rems.db.applications :as applications]
+                                           [rems.db.core :as db]
+                                           [rems.db.catalogue :as catalogue]
+                                           [rems.db.organizations :as organizations]))
+
+
+(defn create-resource! [{:keys [resid organization licenses]} user-id]
+  (util/check-allowed-organization! organization)
+  (let [id (:id (db/create-resource! {:resid resid
+                                      :organization (:organization/id organization)
+                                      :owneruserid user-id
+                                      :modifieruserid user-id}))]
+    (doseq [licid licenses]
+      (db/create-resource-license! {:resid id
+                                    :licid licid}))
+    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
+    (dependencies/reset-cache!)
+    {:success true
+     :id id}))
+
+(defn create-category! [{:keys [actor organization id data]}]
+  ;; (util/check-allowed-organization! organization)
+
+  ;;(let [id (:id (db/create-category! (select-keys command [:data])))
+
+        ;; loc-ids
+        ;; (doall
+        ;;  (for [[langcode localization] localizations]
+        ;;    ))
+      ;;  ]
+    ;; New dependencies introduced
+    ;; (dependencies/reset-cache!)
+    ;; Reset cache so that next call to get localizations will get these ones.
+    ;; (catalogue/reset-cache!)
+  ;; {:success "false"
+  ;;   ;;  (not (some nil? (cons id loc-ids)))
+  ;;  :id id}
+    ;; )
+
+  ;; (util/check-allowed-organization! organization)
+  (let [id (:id (db/create-category! {:id id
+                              ;; :langcode (name langcode)
+                                      :data data}))]
+    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
+    (dependencies/reset-cache!)
+    {:success true
+     :id id}))
+
+;; (defn- join-dependencies [item]
+;;   (when item
+;;     (->> item
+;;          organizations/join-organization
+;;          ;; not used at the moment
+;;          #_licenses/join-catalogue-item-licenses
+;;          #_(transform [:licenses ALL] organizations/join-organization))))
+
+;; (defn get-localized-catalogue-items [& [query-params]]
+;;   (->> (catalogue/get-localized-catalogue-items (or query-params {}))
+;;        (mapv join-dependencies)))
+
+;; (defn get-localized-catalogue-item [id]
+;;   (->> (catalogue/get-localized-catalogue-item id)
+;;        join-dependencies))
+
+;; (defn- check-allowed-to-edit! [id]
+;;   (-> id
+;;       get-localized-catalogue-item
+;;       :organization
+;;       util/check-allowed-organization!))
+
+;; (defn edit-catalogue-item! [{:keys [id localizations organization]}]
+;;   (check-allowed-to-edit! id)
+;;   (when (:organization/id organization)
+;;     (util/check-allowed-organization! organization)
+;;     (db/set-catalogue-item-organization! {:id id
+;;                                           :organization (:organization/id organization)}))
+;;   (doseq [[langcode localization] localizations]
+;;     (db/upsert-catalogue-item-localization!
+;;      (merge {:id id
+;;              :langcode (name langcode)}
+;;             (select-keys localization [:title :infourl]))))
+;;   ;; Reset cache so that next call to get localizations will get these ones.
+;;   (catalogue/reset-cache!)
+;;   (applications/reload-cache!)
+;;   {:success true})
+
+;; (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
+;;   (check-allowed-to-edit! id)
+;;   ;; Clear endt in case it has been set in the db. Otherwise we might
+;;   ;; end up with an enabled item that's not active and can't be made
+;;   ;; active via the UI.
+;;   (db/set-catalogue-item-endt! {:id id :end nil})
+;;   (db/set-catalogue-item-enabled! {:id id :enabled enabled})
+;;   {:success true})
+
+;; (defn set-catalogue-item-archived! [{:keys [id archived]}]
+;;   (check-allowed-to-edit! id)
+;;   (or (dependencies/change-archive-status-error archived {:catalogue-item/id id})
+;;       (do (db/set-catalogue-item-archived! {:id id
+;;                                             :archived archived})
+;;           {:success true})))
+
+;; (defn change-form!
+;;   "Changes the form of a catalogue item.
+
+;;   Since we don't want to modify the old item we must create
+;;   a new item that is the copy of the old item except for the changed form."
+;;   [item form-id]
+;;   (util/check-allowed-organization! (:organization item))
+;;   (if (= (:formid item) form-id)
+;;     {:success true :catalogue-item-id (:id item)}
+;;     ;; create a new item with the new form
+;;     (let [new-item (db/create-catalogue-item! {:enabled true
+;;                                                :archived false
+;;                                                :form form-id
+;;                                                :organization (get-in item [:organization :organization/id])
+;;                                                :resid (:resource-id item)
+;;                                                :wfid (:wfid item)})]
+
+;;       ;; copy localizations
+;;       (doseq [[langcode localization] (:localizations item)]
+;;         (db/upsert-catalogue-item-localization! {:id (:id new-item)
+;;                                                  :langcode (name langcode)
+;;                                                  :title (:title localization)
+;;                                                  :infourl (:infourl localization)}))
+;;       ;; Reset cache so that next call to get localizations will get these ones.
+;;       (catalogue/reset-cache!)
+
+;;       ;; hide the old catalogue item
+;;       (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
+;;       (db/set-catalogue-item-archived! {:id (:id item) :archived true})
+
+;;       ;; New dependencies introduced
+;;       (dependencies/reset-cache!)
+
+;;       {:success true :catalogue-item-id (:id new-item)})))

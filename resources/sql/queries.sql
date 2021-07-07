@@ -637,3 +637,8 @@ RETURNING id;
 UPDATE organization
 SET data = :data::jsonb, modified = :time, modifierUserId = :user
 WHERE id = :id;
+
+
+-- :name create-category! :insert
+-- :doc Create a single category item
+INSERT INTO category (id, data) VALUES (:id, :data);

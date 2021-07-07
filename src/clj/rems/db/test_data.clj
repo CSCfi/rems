@@ -1086,7 +1086,15 @@
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization {:organization/id "organization1"}
-                             :workflow-id (:organization-owner workflows)})))
+                             :workflow-id (:organization-owner workflows)})
+    (create-category! {:actor organization-owner1
+                       :organization {:organization/id "organization1"}
+                       :id 13
+                       :data "data"
+                                                    ;; {:en (str "Performance test resource " n)
+                                                    ;;         :fi (str "Suorituskykytestiresurssi " n)
+                                                    ;;         :sv (str "Licens för prestand " n)}
+                       })))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)

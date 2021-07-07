@@ -11,6 +11,7 @@
             [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
+            [rems.administration.categories :refer [categories-page]]
             [rems.administration.change-catalogue-item-form :refer [change-catalogue-item-form-page]]
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.create-form :refer [create-form-page]]
@@ -254,6 +255,7 @@
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
+   :rems.administration/categories categories-page
    :rems.administration/change-catalogue-item-form change-catalogue-item-form-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
    :rems.administration/create-form create-form-page
@@ -426,6 +428,10 @@
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
+
+(secretary/defroute "/administration/categories" []
+  (rf/dispatch [:rems.administration.categories/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/categories]))
 
 (secretary/defroute "/administration/forms/create" []
   (rf/dispatch [:rems.administration.create-form/enter-page])
