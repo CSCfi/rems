@@ -253,9 +253,9 @@
  ;;               ;; The files are searched under :extra-pages-path (see below).
  ;;               {:id "about"
  ;;                :translations {:fi {:title "Info"
- ;;                                    :file "about-fi.md"}
+ ;;                                    :filename "about-fi.md"}
  ;;                               :en {:title "About"
- ;;                                    :file "about-en.md"}}}]
+ ;;                                    :filename "about-en.md"}}}]
  :extra-pages []
 
  ;; Path to the markdown files for the extra pages.
