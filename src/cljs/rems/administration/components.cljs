@@ -58,20 +58,20 @@
       {:for id :class "col-sm-auto col-form-label"}
       label]
      [:div
-       [:input.form-control {:type "date"
-                             :id id
-                             :name id
-                             :class (when error "is-invalid")
-                             :value (get-in form keys)
-                             :required true
-                             :aria-required true
-                             :aria-invalid (when error true)
-                             :aria-describedby (when error (str id "-error"))
-                             :min min
-                             :max max
-                             :on-change #(rf/dispatch [(:update-form context)
-                                                       keys (.. % -target -value)])}]
-       [field-validation-message error label]]]))
+      [:input.form-control {:type "date"
+                            :id id
+                            :name id
+                            :class (when error "is-invalid")
+                            :value (get-in form keys)
+                            :required true
+                            :aria-required true
+                            :aria-invalid (when error true)
+                            :aria-describedby (when error (str id "-error"))
+                            :min min
+                            :max max
+                            :on-change #(rf/dispatch [(:update-form context)
+                                                      keys (.. % -target -value)])}]
+      [field-validation-message error label]]]))
 
 (defn input-field [{:keys [keys label placeholder context type normalizer readonly inline?]}]
   (let [form @(rf/subscribe [(:get-form context)])
