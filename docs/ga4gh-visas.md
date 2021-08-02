@@ -58,7 +58,7 @@ The GA4GH Visas are used also by the entitlement push to [EGA](https://ega-archi
 The normal flow is such that:
 - The entitlement push is configured to the REMS instance configuration. See [configuration.md](configuration.md) for the necessary configuration. NB: Remember to enable the EGA support also by adding `:enable-ega true`. This is done only once.
 - The handlers must each link their ELIXIR user accounts to an EGA user account (an external process).
-- The handlers must each log in to REMS, and from the Profile page fetch a new EGA API-Key for themselves.
+- The handlers must each log in to REMS, using their ELIXIR ID, and from the Profile page fetch a new EGA API-Key for themselves.
 - Subsequently, when the handler approves an application, their ELIXIR ID and their EGA API-Key will be used to push the entitlement to the configured EGA server in the background. The EGA will display the rights, and allow downloading of data after some delay.
 - Should you wish to use the approver bot together with EGA, you can configure its user from the command-line.
 
