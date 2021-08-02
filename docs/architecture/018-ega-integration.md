@@ -6,7 +6,7 @@ Authors: @Macroz
 
 REMS instances, such as the THL Biobank, wish to synchronize (push) access rights (entitlements) to The European Genome-phenome Archive (EGA).
 
-We have an existing entitlement post function, but that does not support the kind of features that EGA requires (like API-key per handler).
+We have an existing entitlement post function, but that does not support the kind of features that EGA requires (like an API-key per handler, and GA4GH visa format).
 
 REMS also has a permissions API that supports GA4GH style permission visas. This is for the cases where the entitlements are fetched from REMS.
 
@@ -21,7 +21,7 @@ of which `:ega` is the only one implemented so far.
 
 The push is done by the same entitlement background task as before.
 
-For each handler there must be an EGA API-key stored in the user secrets, otherwise the entitlement can't be pushed.
+For each handler there must be an EGA API-key stored in the user secrets, otherwise the entitlements approved by that handler can't be pushed.
 
 For the approver bot we have implemented a CLI command to set the EGA user account.
 
