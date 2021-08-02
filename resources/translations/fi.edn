@@ -458,10 +458,10 @@
   :profile {:delete-api-key "Poista API-avain"
             :ega-api-key-expiration-date "API-avain vanhenee"
             :ega-api-key-expired [:p "Sinulla on vanhentunut API-avain. Luo itsellesi uusi avain."]
-            :ega-api-key-none [:p "Näyttää että sinulla ei ole vielä API-avainta."]
+            :ega-api-key-none [:p "Näyttää siltä, että sinulla ei ole vielä API-avainta."]
             :ega-api-key-valid [:p "Sinulla on voimassa oleva API-avain."]
             :ega-full "The European Genome-phenome Archive"
-            :ega-intro [:p "Hyväksymiesi hakemusten käyttövaltuudet voidaan lähettää EGA-palvelimille. Tämä vaatii että sinulla on voimassa oleva API-avain. Varmista että olet ensin yhdistänyt ELIXIR-käytäjätunnuksesi EGA-tunnukseesi."]
+            :ega-intro [:p "Hyväksymiesi hakemusten käyttövaltuudet voidaan lähettää EGA-palvelimille. Tämä vaatii, että sinulla on voimassa oleva API-avain. Varmista, että olet ensin yhdistänyt ELIXIR-käyttäjätunnuksesi EGA-tunnukseesi."]
             :generate-api-key "Luo API-avain"
             :idp-email "Sähköpostiosoite tunnistautumispalvelulta"
             :no-email "(ei sähköpostiosoitetta)"
