@@ -17,7 +17,7 @@ The EGA Permissions API is [documented here](https://docs.google.com/document/d/
 ## Solution
 
 To enable pushing permissions, we have implemented a new v2 entitlement push. It supports multiple simultaneous integrations as well as types, 
-of which ˋ:egaˋ is the only one implemented so far.
+of which `:ega` is the only one implemented so far.
 
 The push is done by the same entitlement background task as before.
 
