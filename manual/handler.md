@@ -71,7 +71,7 @@ You can also edit the applications:
 - **Change the applicant**: You can change the applicant to another member of the application. This can be useful if, for example, the original applicant has left the applying organization.
 - **Change the application’s resources**: If the applicant is applying for access rights to multiple resources, you can remove some of them if you do not want to grant access to all of them. It is also possible to add new resources if they can be applied for using the same application form. These will show as available in the drop-down list.
 
-You can comment on the application throughout the application process by selecting **Remark** and choosing if you want to show the comment to the applicant or not. Applicants will receive a notification about new comments. Sometimes it is useful for the applicant to see the comments so that they know how the approval process is proceeding. Note that the applicant cannot respond to the comments.
+You can comment on the application throughout the application process by selecting **Remark** and choosing if you want to show the comment to the applicant or not. Applicants will receive a notification about new public comments. Sometimes it is useful for the applicant to see the comments so that they know how the approval process is proceeding. Note that the applicant cannot respond to the comments.
 
 ## After the application has been processed
 
