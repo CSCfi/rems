@@ -125,7 +125,7 @@ The requirements for this are:
 - Each handler who processes EGA applications must link their ELIXIR user id with their EGA user id (this happens outside REMS).
 - Each handler must also generate an EGA API-key from their Profile page in REMS.
 
-All the access rights will then automatically pushed into EGA servers.
+All the access rights will then be automatically pushed into EGA servers.
 
 NB: If the EGA is enabled in the configuration, the handlers will get a warning on the Actions page
 if they do not have a valid EGA API-key yet.
