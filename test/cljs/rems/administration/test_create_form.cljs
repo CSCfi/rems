@@ -313,6 +313,7 @@
                                :field/info-text {:en "en info text"
                                                  :fi "fi info text"}
                                :field/optional true
+                               :field/date-bounds {}
                                :field/type :date}]}
                (build-request form languages)))))
 
