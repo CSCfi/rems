@@ -29,7 +29,7 @@
 
 (rf/reg-sub ::initial-resources (fn [db _] (::initial-resources db)))
 (rf/reg-sub ::selected-resources (fn [db _] (::selected-resources db)))
-(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (map :id resources))))
+(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (set (map :id resources)))))
 
 (def ^:private dropdown-id "change-resources-dropdown")
 
