@@ -36,11 +36,11 @@
                                 :fi "title"}}
          (migrate-title {:form/title "title"} [:en :fi]))))
 
-(defn create-form! [user-id form]
+(defn create-form! [userid form]
   (let [organization (:organization form)]
     (util/check-allowed-organization! organization)
     (or (validation-error form)
-        (let [form-id (form/save-form-template! user-id (migrate-title form (:languages env)))]
+        (let [form-id (form/save-form-template! userid (migrate-title form (:languages env)))]
           ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
           (dependencies/reset-cache!)
           {:success (not (nil? form-id))
@@ -59,13 +59,13 @@
   (->> (form/get-form-templates filters)
        (mapv join-dependencies)))
 
-(defn edit-form! [user-id form]
+(defn edit-form! [userid form]
   ;; need to check both previous and new organization
   (util/check-allowed-organization! (:organization (get-form-template (:form/id form))))
   (util/check-allowed-organization! (:organization form))
   (or (dependencies/in-use-error {:form/id (:form/id form)})
       (validation-error form)
-      (do (form/edit-form-template! user-id form)
+      (do (form/edit-form-template! userid form)
           {:success true})))
 
 (defn set-form-enabled! [{:keys [id enabled]}]
