@@ -1,0 +1,42 @@
+(ns rems.db.invitation
+  (:require [rems.db.core :as db]
+            [rems.json :as json]
+            [rems.schema-base :as schema-base]
+            [schema.coerce :as coerce]
+            [schema.core :as s])
+  (:import [org.joda.time DateTime]))
+
+(def InvitationData
+  {(s/optional-key :invitation/id) s/Int
+   :invitation/email s/Str
+   :invitation/token s/Str
+   :invitation/invited-by schema-base/User
+   (s/optional-key :invitation/invited-user) schema-base/User
+   :invitation/created DateTime
+   (s/optional-key :invitation/sent) DateTime
+   (s/optional-key :invitation/workflow) {:workflow/id s/Int}})
+
+(def ^:private validate-InvitationData
+  (s/validator InvitationData))
+
+(defn create-invitation! [data]
+  (let [amended (assoc data :invitation/created (DateTime/now))
+        json (json/generate-string (validate-InvitationData amended))]
+    (-> {:invitationdata json}
+        db/add-invitation!
+        :id)))
+
+(def ^:private coerce-InvitationData
+  (coerce/coercer! InvitationData json/coercion-matcher))
+
+(defn- fix-row-from-db [row]
+  (-> (:invitationdata row)
+      json/parse-string
+      coerce-InvitationData
+      (assoc :invitation/id (:id row))))
+
+(defn get-invitations
+  [{:keys [workflow-id ids]}]
+  (cond->> (db/get-invitations {:ids ids})
+    true (map fix-row-from-db)
+    workflow-id (filter (comp #{workflow-id} :workflow/id :invitation/workflow))))

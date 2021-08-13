@@ -123,3 +123,7 @@
       format-user
       ;; in case user attributes were not found, return at least the userid
       (assoc :userid userid)))
+
+(defn join-user [x]
+  (when-let [userid (:userid x)]
+    (get-user userid)))
