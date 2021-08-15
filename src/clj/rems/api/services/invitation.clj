@@ -3,6 +3,7 @@
             [rems.db.invitation :as invitation]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
+            [rems.email.core :as email]
             [medley.core :refer [update-existing]]
             [rems.util :refer [secure-token]]))
 
@@ -18,32 +19,47 @@
 (defn- invalid-invitation-type-error [cmd]
   (when-not (:workflow-id cmd) ; so far we only support invitation to workflow
     {:success false
-     :errors [{:type :t.actions.errors/invalid-invitation-type ; NB: not used in UI
+     :errors [{:type :errors/invalid-invitation-type
                :workflow-id (:workflow-id cmd)}]}))
 
 (defn- invalid-workflow-error [cmd]
   (when-let [workflow-id (:workflow-id cmd)]
     (if-let [workflow (workflow/get-workflow workflow-id)]
-      ;; TODO: check for workflow status
+      ;; TODO: check for workflow status, or perhaps it's ok to invite to any workflow?
       (let [organization (:organization workflow)]
         (util/check-allowed-organization! organization))
       {:success false
-       :errors [{:type :t.actions.errors/invalid-workflow :workflow-id workflow-id}]})))
+       :errors [{:type :errors/invalid-workflow :workflow-id workflow-id}]})))
+
+(defn get-invitations-full [cmd]
+  (->> cmd
+       invitation/get-invitations
+       (mapv join-dependencies)))
+
+(defn get-invitations [cmd]
+  (->> cmd
+       get-invitations-full
+       (mapv (partial apply-user-permissions (:userid cmd)))))
+
 
 (defn create-invitation! [cmd]
   (or (invalid-invitation-type-error cmd)
       (invalid-workflow-error cmd)
-      (let [id (invitation/create-invitation! (merge {:invitation/email (:email cmd)
+      (let [id (invitation/create-invitation! (merge {:invitation/name (:name cmd)
+                                                      :invitation/email (:email cmd)
                                                       :invitation/token (secure-token)
                                                       :invitation/invited-by {:userid (:userid cmd)}}
                                                      (when-let [workflow-id (:workflow-id cmd)]
                                                        {:invitation/workflow {:workflow/id workflow-id}})))]
+        (when id
+          (email/generate-invitation-emails! (get-invitations-full {:ids [id]})))
         {:success (not (nil? id))
-         :id id})))
+         :invitation/id id})))
 
-
-(defn get-invitations [cmd]
-  (->> cmd
-       invitation/get-invitations
-       (mapv join-dependencies)
-       (mapv (partial apply-user-permissions (:userid cmd)))))
+(comment
+  (binding [rems.context/*user* {:eppn "owner"}
+            rems.context/*roles* #{:owner}]
+    (create-invitation! {:userid "owner"
+                         :email "dorothy.vaughan@nasa.gov"
+                         :workflow-id 1}))
+  (get-invitations nil))

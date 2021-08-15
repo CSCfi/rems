@@ -11,16 +11,18 @@
   (:import [org.joda.time DateTime]))
 
 (s/defschema CreateInvitationCommand
-  {:email s/Str
+  {:name s/Str
+   :email s/Str
    (s/optional-key :workflow-id) s/Int})
 
 (s/defschema CreateInvitationResponse
   {:success s/Bool
-   (s/optional-key :id) s/Int
+   (s/optional-key :invitation/id) s/Int
    (s/optional-key :errors) [s/Any]})
 
 (s/defschema InvitationResponse
   {(s/optional-key :invitation/id) s/Int
+   :invitation/name s/Str
    :invitation/email s/Str
    :invitation/invited-by schema-base/UserWithAttributes
    (s/optional-key :invitation/invited-user) schema-base/UserWithAttributes

@@ -22,14 +22,16 @@
       (is (= [] (api-call :get "/api/invitations" nil test-data/+test-api-key+ "owner"))))
 
     (testing "create invitation"
-      (let [body (api-call :post "/api/invitations/create" {:email "jane.smythe@test.org"
+      (let [body (api-call :post "/api/invitations/create" {:name "Catherine Johnson"
+                                                            :email "katherine.johnson@nasa.gov"
                                                             :workflow-id workflow-id}
                            test-data/+test-api-key+ "owner")]
         (is (= {:success true}
-               (dissoc body :id)))))
+               (dissoc body :invitation/id)))))
 
     (testing "after invitation"
-      (is (= [{:invitation/email "jane.smythe@test.org"
+      (is (= [{:invitation/name "Catherine Johnson"
+               :invitation/email "katherine.johnson@nasa.gov"
                :invitation/invited-by {:email "owner@example.com"
                                        :userid "owner"
                                        :name "Owner"}

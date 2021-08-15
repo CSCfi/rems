@@ -361,7 +361,9 @@
                              :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämän hakemuksen %3 käsittelemiseen.\n\nVoit tarkastella hakemusta osoitteessa %4"}
           :reviewer-reminder {:application "%1, lähettänyt %2"
                               :message "Hyvä %1,\n\nSeuraavat hakemukset odottavat katselmointiasi:\n\n%2\n\nVoit tarkastella hakemuksia osoitteessa %3"
-                              :subject "Katselmointia odottavat hakemukset"}}
+                              :subject "Katselmointia odottavat hakemukset"}
+          :workflow-handler-invitation {:message "Hyvä %1,\n\n%2 on kutsunut sinut käsittelemään työvuon %3 hakemuksia.\n\nVoit tarkastella työvuota osoitteessa %4"
+                                        :subject "Kutsu käsittelemään hakemuksia"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"

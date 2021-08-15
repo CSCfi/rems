@@ -8,6 +8,7 @@
 
 (def InvitationData
   {(s/optional-key :invitation/id) s/Int
+   :invitation/name s/Str
    :invitation/email s/Str
    :invitation/token s/Str
    :invitation/invited-by schema-base/User

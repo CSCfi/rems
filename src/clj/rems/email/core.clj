@@ -53,6 +53,19 @@
                      (remove nil?))]
     (enqueue-email! email)))
 
+(defn- render-invitation-template [invitation]
+  (let [lang (:default-language env)] ; we don't know the preferred languages here since there is no user
+    (cond (:invitation/workflow invitation)
+          (let [workflow (workflow/get-workflow (get-in invitation [:invitation/workflow :workflow/id]))]
+            (assert workflow "Can't send invitation, missing workflow")
+            (template/workflow-handler-invitation-email lang invitation workflow)))))
+
+(defn generate-invitation-emails! [invitations]
+  (doseq [email (->> invitations
+                     (remove :invitation/sent)
+                     (map render-invitation-template))]
+    (enqueue-email! email)))
+
 ;;; Email poller
 
 ;; You can test email sending by:
