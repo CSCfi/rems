@@ -12,12 +12,14 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [rems.api.services.catalogue :as catalogue]
             [rems.api.services.form :as forms]
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resources]
             [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
             [rems.config]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users :as users]
@@ -556,16 +558,32 @@
 
 (deftest test-handling
   (testing "submit test data with API"
-    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title    {:en "description" :fi "kuvaus" :sv "rubrik"}
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
-                                                                            :field/type     :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:title {:en "First catalogue item"
+                                                                                    :fi "First catalogue item"
+                                                                                    :sv "First catalogue item"}
+                                                                            :form-id (btu/context-get :form-id)
+                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :catalogue-id2 (test-helpers/create-catalogue-item! {:title {:en "Second catalogue item (disabled)"
+                                                                                     :fi "Second catalogue item (disabled)"
+                                                                                     :sv "Second catalogue item (disabled)"}
+                                                                             :form-id (btu/context-get :form-id)
+                                                                             :workflow-id (btu/context-get :workflow-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-get :catalogue-id) (btu/context-get :catalogue-id2)]
                                                                     "test-handling"))
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-get :application-id)
-                            :actor "alice"}))
+                            :actor "alice"})
+
+    (testing "disabling the 2nd item"
+      (binding [context/*user* {:eppn "owner"}
+                context/*roles* #{:owner}]
+        (catalogue/set-catalogue-item-enabled! {:id (btu/context-get :catalogue-id2) :enabled false}))))
+
   (btu/with-postmortem
     (login-as "developer")
     (testing "handler should see todos on logging in"
@@ -588,6 +606,16 @@
               "Nickname" "In Wonderland"
               "Applicant researcher status" true}
              (slurp-fields :applicant-info))))
+
+    (testing "remove the disabled catalogue item"
+      (is (btu/eventually-visible? {:css ".alert-warning"}) "sees disabled catalogue item warning")
+      (btu/scroll-and-click :change-resources-action-button)
+      (is (btu/eventually-visible? [:actions-change-resources {:tag :div :fn/has-text "Second catalogue item (disabled)"}]) "can see the disabled item")
+      (btu/scroll-and-click [:actions-change-resources {:tag :div :fn/has-text "Second catalogue item (disabled)"} {:xpath ".."} {:css "svg"}])
+      (is (btu/eventually-invisible? [:actions-change-resources {:tag :div :fn/has-text "Second catalogue item (disabled)"}]))
+      (btu/scroll-and-click :change-resources)
+      (is (btu/eventually-visible? {:css ".alert-success"}) "has removed disabled item"))
+
     (testing "open the approve form"
       (btu/scroll-and-click :approve-reject-action-button))
     (testing "add a comment and two attachments"
@@ -614,6 +642,7 @@
     (testing "attachments visible in eventlog"
       (is (= ["test.txt" "test-fi.txt"]
              (get-attachments {:css "div.event a.attachment-link"}))))
+
     (testing "event via api"
       ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
       (is (= {:application/id (btu/context-get :application-id)

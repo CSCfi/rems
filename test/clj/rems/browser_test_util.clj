@@ -309,6 +309,9 @@
 (defn eventually-visible? [& args]
   (no-timeout? #(apply wait-visible args)))
 
+(defn eventually-invisible? [& args]
+  (no-timeout? #(apply wait-invisible args)))
+
 ;; TODO our input fields process every character through re-frame.
 ;; Etaoin's fill-human almost works, but very rarely loses characters,
 ;; probably due to the lack of a _minimum_ delay between keypresses.

@@ -3,6 +3,7 @@
             [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
+            [medley.core :refer [distinct-by]]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [post!]]))
@@ -21,6 +22,17 @@
                          (when-not (:rems.catalogue/catalogue db)
                            [[:rems.catalogue/full-catalogue]]))})))
 
+(rf/reg-sub
+ ::catalogue
+ (fn [_ _]
+   [(rf/subscribe [::selected-resources])
+    (rf/subscribe [:rems.catalogue/catalogue])
+    (rf/subscribe [:rems.catalogue/full-catalogue])])
+ (fn [[selected-resources catalogue full-catalogue] _]
+   (->> (filter (comp (set selected-resources) :id) full-catalogue) ; from full catalogue the items that are selected that can be disabled
+        (concat catalogue)
+        (distinct-by :id))))
+
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 (rf/reg-sub ::sorting (fn [db _] (::sorting db)))
 
@@ -29,7 +41,7 @@
 
 (rf/reg-sub ::initial-resources (fn [db _] (::initial-resources db)))
 (rf/reg-sub ::selected-resources (fn [db _] (::selected-resources db)))
-(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (map :id resources))))
+(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (set (map :id resources)))))
 
 (def ^:private dropdown-id "change-resources-dropdown")
 
@@ -102,7 +114,7 @@
 (defn change-resources-form [application can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
-        catalogue @(rf/subscribe [:rems.catalogue/catalogue])
+        catalogue @(rf/subscribe [::catalogue])
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         language @(rf/subscribe [:language])]
     [change-resources-view {:application application
