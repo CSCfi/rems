@@ -648,12 +648,15 @@ RETURNING id;
 SELECT id, invitationdata::TEXT
 FROM invitation
 WHERE 1 = 1
+/*~ (when (:token params) */
+  AND invitationdata->>'invitation/token' = :token
+/*~ ) ~*/
 /*~ (when (:ids params) */
   AND id IN (:v*:ids)
 /*~ ) ~*/
 ORDER BY id ASC;
 
--- :name update-invitation! :!
+-- :name set-invitation! :!
 UPDATE invitation
 SET invitationdata = :invitationdata::jsonb
 WHERE id = :id;

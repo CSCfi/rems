@@ -8,6 +8,7 @@
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
+            [rems.accept-invitation :as accept-invitation]
             [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
@@ -250,6 +251,7 @@
    :applications applications-page
    :extra-pages extra-pages
    :profile profile-page
+   :rems.accept-invitation/accept-invitation-page accept-invitation/accept-invitation-page
    :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
@@ -358,6 +360,12 @@
 (secretary/defroute "/actions" []
   (rf/dispatch [:rems.actions/enter-page])
   (rf/dispatch [:set-active-page :actions]))
+
+(secretary/defroute "/invitation/accept-invitation" {{token :token type :type} :query-params}
+  (rf/dispatch [:after-translations-are-loaded
+                #(do
+                   (rf/dispatch [:rems.accept-invitation/enter-page (keyword type) token])
+                   (rf/dispatch [:set-active-page :rems.accept-invitation/accept-invitation-page]))]))
 
 (secretary/defroute "/application/accept-invitation/:invitation-token" [invitation-token]
   (rf/dispatch [:after-translations-are-loaded

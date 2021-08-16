@@ -15,6 +15,7 @@
    (s/optional-key :invitation/invited-user) schema-base/User
    :invitation/created DateTime
    (s/optional-key :invitation/sent) DateTime
+   (s/optional-key :invitation/accepted) DateTime
    (s/optional-key :invitation/workflow) {:workflow/id s/Int}})
 
 (def ^:private validate-InvitationData
@@ -37,7 +38,24 @@
       (assoc :invitation/id (:id row))))
 
 (defn get-invitations
-  [{:keys [workflow-id ids]}]
-  (cond->> (db/get-invitations {:ids ids})
+  [{:keys [workflow-id ids token]}]
+  (cond->> (db/get-invitations {:ids ids :token token})
     true (map fix-row-from-db)
     workflow-id (filter (comp #{workflow-id} :workflow/id :invitation/workflow))))
+
+(defn accept-invitation! [userid token]
+  (when-let [invitation (first (get-invitations {:token token}))]
+    (let [amended (merge (dissoc invitation :invitation/id)
+                         {:invitation/invited-user {:userid userid}
+                          :invitation/accepted (DateTime/now)})
+          json (json/generate-string (validate-InvitationData amended))]
+      (db/set-invitation! {:id (:invitation/id invitation)
+                           :invitationdata json}))))
+
+(defn mail-sent! [id]
+  (when-let [invitation (first (get-invitations {:ids [id]}))]
+    (let [amended (merge (dissoc invitation :invitation/id)
+                         {:invitation/sent (DateTime/now)})
+          json (json/generate-string (validate-InvitationData amended))]
+      (db/set-invitation! {:id (:invitation/id invitation)
+                           :invitationdata json}))))

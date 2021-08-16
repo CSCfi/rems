@@ -1,5 +1,12 @@
 {:t
- {:actions {:accept-invitation "Acceptera inbjudan"
+ {:accept-invitation {:header "Acceptera inbjudan"
+                      :title "Acceptera inbjudan"
+                      :success {:workflow "Du är nu handläggaren."}
+                      :errors {:already-member {:workflow "Du redan handläggaren."}
+                               :invalid-invitation-type "Acceptering misslyckades."
+                               :invalid-token [:div [:p "Acceptering misslyckades."] [:p "Vänligen kontrollera koden för inbjudan " [:code "%1"]]]
+                               :invalid-workflow "Acceptering misslyckades."}}
+  :actions {:accept-invitation "Acceptera inbjudan"
             :accept-invitation-already-member "Du deltar redan."
             :accept-invitation-success "Du deltar nu i ansökan."
             :accept-licenses "Acceptera licenserna"

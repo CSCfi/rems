@@ -10,6 +10,7 @@
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
+            [rems.db.invitation :as invitation]
             [rems.db.outbox :as outbox]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -61,9 +62,10 @@
             (template/workflow-handler-invitation-email lang invitation workflow)))))
 
 (defn generate-invitation-emails! [invitations]
-  (doseq [email (->> invitations
-                     (remove :invitation/sent)
-                     (map render-invitation-template))]
+  (doseq [invitation invitations
+          :when (not (:invitation/sent invitation))
+          :let [email (render-invitation-template invitation)]]
+    (invitation/mail-sent! (:invitation/id invitation))
     (enqueue-email! email)))
 
 ;;; Email poller

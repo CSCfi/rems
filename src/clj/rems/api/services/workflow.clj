@@ -39,6 +39,7 @@
     (update-in workflow [:workflow :handlers] #(map :userid %))
     workflow))
 
+;; TODO: use rems.db.workflow/edit-workflow! and don't go directly to db fns, same for other fns
 (defn edit-workflow! [{:keys [id organization title handlers]}]
   (let [workflow (unrich-workflow (workflow/get-workflow id))
         workflow-body (cond-> (:workflow workflow)

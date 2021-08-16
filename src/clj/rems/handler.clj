@@ -6,6 +6,7 @@
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
             [rems.api.services.attachment :as attachment]
+            [rems.api.services.invitation :as invitation]
             [rems.api.services.licenses :as licenses]
             [rems.api.util :as api-util]
             [rems.context :as context]
@@ -45,7 +46,10 @@
 
 (defroutes redirects
   (GET "/accept-invitation" [token]
-    (redirect (str "/application/accept-invitation/" token)))
+    (if-let [invitation (first (invitation/get-invitations {:token token}))]
+      (cond (:invitation/workflow invitation)
+            (redirect (str "/invitation/accept-invitation?type=workflow&token=" token)))
+      (redirect (str "/application/accept-invitation/" token))))
 
   (GET "/apply-for" [resource] ;; can specify multiple resources
     (if (vector? resource)

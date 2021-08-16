@@ -1,5 +1,12 @@
 {:t
- {:actions {:accept-invitation "Hyväksy kutsu"
+ {:accept-invitation {:header "Hyväksy kutsu"
+                      :title "Hyväksy kutsu"
+                      :success {:workflow "Liittyminen työvuon käsittelijäksi onnistui."}
+                      :errors {:already-member {:workflow "Olet jo työvuon käsittelijä."}
+                               :invalid-invitation-type "Hyväksyminen epäonnistui."
+                               :invalid-token [:div [:p "Hyväksyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
+                               :invalid-workflow "Hyväksyminen epäonnistui."}}
+  :actions {:accept-invitation "Hyväksy kutsu"
             :accept-invitation-already-member "Olet jo jäsen."
             :accept-invitation-success "Hakemukseen liittyminen onnistui."
             :accept-licenses "Hyväksy käyttöehdot"

@@ -14,3 +14,44 @@
     (test-helpers/create-user! {:eppn "handler-user"})
     (test-helpers/create-workflow! {:handlers ["handler-user"]})
     (is (= #{:handler} (workflow/get-all-workflow-roles "handler-user")))))
+
+(deftest test-crud-workflow
+  (testing "creating"
+    (let [id (workflow/create-workflow! {:userid "owner"
+                                         :organization {:organization/id "abc"}
+                                         :type :workflow/default
+                                         :title "test-crud-workflow-title"
+                                         :handlers ["bob" "handler"]
+                                         :forms []})]
+      (is (number? id))
+      (is (= {:archived false
+              :licenses []
+              :organization {:organization/id "abc"}
+              :title "test-crud-workflow-title"
+              :workflow {:type :workflow/default
+                         :handlers [{:userid "bob" :name nil :email nil}
+                                    {:userid "handler" :name nil :email nil}]
+                         :forms []}
+              :id id
+              :owneruserid "owner"
+              :modifieruserid "owner"
+              :enabled true}
+             (workflow/get-workflow id)))
+
+      (testing "editing"
+        (workflow/edit-workflow! {:id id
+                                  :handlers ["bob" "handler" "alice"]})
+        (is (= {:archived false
+                :licenses []
+                :organization {:organization/id "abc"}
+                :title "test-crud-workflow-title"
+                :workflow {:type :workflow/default
+                           :handlers [{:userid "bob" :name nil :email nil}
+                                      {:userid "handler" :name nil :email nil}
+                                      {:userid "alice" :name nil :email nil}]
+                           :forms []}
+                :id id
+                :owneruserid "owner"
+                :modifieruserid "owner"
+                :enabled true}
+               (workflow/get-workflow id)))))))

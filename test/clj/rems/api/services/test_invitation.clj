@@ -28,14 +28,14 @@
         (testing "without any type"
           (is (= {:success false
                   :errors
-                  [{:type :errors/invalid-invitation-type :workflow-id nil}]}
+                  [{:type :t.accept-invitation.errors/invalid-invitation-type :workflow-id nil}]}
                  (invitation/create-invitation! {:userid "owner"
                                                  :name "Dorothy Vaughan"
                                                  :email "dorothy.vaughan@nasa.gov"}))))
 
         (testing "with invalid workflow"
           (is (= {:success false
-                  :errors [{:type :errors/invalid-workflow :workflow-id 42}]}
+                  :errors [{:type :t.accept-invitation.errors/invalid-workflow :workflow-id 42}]}
                  (invitation/create-invitation! {:userid "owner"
                                                  :name "Dorothy Vaughan"
                                                  :email "dorothy.vaughan@nasa.gov"
@@ -47,21 +47,31 @@
               (let [invitation (invitation/create-invitation! {:userid "owner"
                                                                :name "Dorothy Vaughan"
                                                                :email "dorothy.vaughan@nasa.gov"
-                                                               :workflow-id workflow-id})]
+                                                               :workflow-id workflow-id})
+                    invitation-id (:invitation/id invitation)]
                 (is (= {:success true} (dissoc invitation :invitation/id)))
-                (is (number? (:invitation/id invitation)))
-                (is (= "dorothy.vaughan@nasa.gov" (:to (first @sent-email)))))))))
+                (is (number? invitation-id))
+                (is (= "dorothy.vaughan@nasa.gov" (:to (first @sent-email))))
 
-      (testing "after creating invitations"
-        (let [invitations (invitation/get-invitations nil)]
-          (is (= [{:invitation/name "Dorothy Vaughan"
-                   :invitation/email "dorothy.vaughan@nasa.gov"
-                   :invitation/invited-by {:userid "owner"
-                                           :name "Owner"
-                                           :email "owner@example.com"}
-                   :invitation/created test-time
-                   :invitation/workflow {:workflow/id workflow-id}}]
-                 (mapv #(dissoc % :invitation/token :invitation/id)
-                       invitations)))
-          (is (number? (:invitation/id (first invitations))))
-          (is (= :not-present (:invitation/token (first invitations) :not-present)) "must not reveal token"))))))
+                (testing "after creating invitations"
+                  (let [invitations (invitation/get-invitations nil)]
+                    (is (= [{:invitation/name "Dorothy Vaughan"
+                             :invitation/email "dorothy.vaughan@nasa.gov"
+                             :invitation/invited-by {:userid "owner"
+                                                     :name "Owner"
+                                                     :email "owner@example.com"}
+                             :invitation/created test-time
+                             :invitation/sent test-time
+                             :invitation/workflow {:workflow/id workflow-id}}]
+                           (mapv #(dissoc % :invitation/token :invitation/id)
+                                 invitations)))
+                    (is (contains? (set (map :invitation/id invitations)) invitation-id))
+                    (is (= :not-present (:invitation/token (first invitations) :not-present)) "must not reveal token")
+
+                    (testing "accept invitation"
+                      (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
+                            response (invitation/accept-invitation! {:userid "frank"
+                                                                     :token token})]
+                        (is (= {:success true
+                                :invitation/workflow {:workflow/id workflow-id}}
+                               response))))))))))))))

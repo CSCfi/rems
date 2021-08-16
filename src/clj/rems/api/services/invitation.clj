@@ -1,5 +1,6 @@
 (ns rems.api.services.invitation
   (:require [rems.api.services.util :as util]
+            [rems.db.applications :as applications]
             [rems.db.invitation :as invitation]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
@@ -19,7 +20,7 @@
 (defn- invalid-invitation-type-error [cmd]
   (when-not (:workflow-id cmd) ; so far we only support invitation to workflow
     {:success false
-     :errors [{:type :errors/invalid-invitation-type
+     :errors [{:type :t.accept-invitation.errors/invalid-invitation-type
                :workflow-id (:workflow-id cmd)}]}))
 
 (defn- invalid-workflow-error [cmd]
@@ -29,7 +30,7 @@
       (let [organization (:organization workflow)]
         (util/check-allowed-organization! organization))
       {:success false
-       :errors [{:type :errors/invalid-workflow :workflow-id workflow-id}]})))
+       :errors [{:type :t.accept-invitation.errors/invalid-workflow :workflow-id workflow-id}]})))
 
 (defn get-invitations-full [cmd]
   (->> cmd
@@ -40,6 +41,16 @@
   (->> cmd
        get-invitations-full
        (mapv (partial apply-user-permissions (:userid cmd)))))
+
+(defn get-invitation-full [id]
+  (->> {:ids [id]}
+       get-invitations-full
+       first))
+
+(defn get-invitation [id]
+  (->> {:ids [id]}
+       get-invitations
+       first))
 
 
 (defn create-invitation! [cmd]
@@ -56,10 +67,35 @@
         {:success (not (nil? id))
          :invitation/id id})))
 
+(defn accept-invitation! [{:keys [userid token]}]
+  (if-let [invitation (first (invitation/get-invitations {:token token}))]
+    (if-let [workflow-id (get-in invitation [:invitation/workflow :workflow/id])]
+      (let [workflow (workflow/get-workflow workflow-id)
+            handlers (set (map :userid (get-in workflow [:workflow :handlers])))]
+        (if (contains? handlers userid)
+          {:success false
+           :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
+          (do
+            (workflow/edit-workflow! {:id (:workflow/id workflow)
+                                      :handlers (conj handlers userid)})
+            (invitation/accept-invitation! userid token)
+            (applications/reload-cache!)
+            {:success true
+             :invitation/workflow {:workflow/id (:id workflow)}})))
+      {:success false
+       :errors [{:key :t.accept-invitation.errors/invalid-invitation-type}]})
+    {:success false
+     :errors [{:key :t.accept-invitation.errors/invalid-token :token token}]}))
+
 (comment
   (binding [rems.context/*user* {:eppn "owner"}
             rems.context/*roles* #{:owner}]
     (create-invitation! {:userid "owner"
+                         :name "Dorothy Vaughan"
                          :email "dorothy.vaughan@nasa.gov"
                          :workflow-id 1}))
-  (get-invitations nil))
+  (accept-invitation! {:userid "alice" :token "doesnotexist"})
+  (get-invitations nil)
+  (get-invitations-full nil)
+  (workflow/get-workflow 1)
+  (accept-invitation! {:userid "frank" :token "81fd5dafe9e789450f557a728ee789ad"}))

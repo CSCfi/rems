@@ -39,4 +39,5 @@
              (->> (api-call :get "/api/invitations" nil test-data/+test-api-key+ "owner")
                   (mapv #(dissoc %
                                  :invitation/id ; always different from sequence
-                                 :invitation/created))))))))  ; should be checked in service
+                                 :invitation/created ; should be checked in service
+                                 :invitation/sent))))))))  ; should be checked in service
