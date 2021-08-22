@@ -120,6 +120,8 @@ Handlers do not get notified when they have been assigned as a handler but they 
 
 :exclamation: Note! After saving a workflow, you cannot edit anything else than its name, organization and the handlers.
 
+:exclamation: It's possible to invite a handler by email, if they do not have a REMS user yet. At the moment, this is only possible using the API.
+
 #### Adding a form to a workflow
 
 You can connect an application form to a workflow. This is useful, for example, if you have some **basic questions that apply to all the applications**, for example, billing information. When you use a workflow that has a form connected to it, you do not have to add the same questions manually every time you create a new application form.
