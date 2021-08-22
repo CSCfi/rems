@@ -5,15 +5,16 @@
             [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.email.core :as email]
             [rems.testing-util :refer [fixed-time-fixture with-user]])
-  (:import [org.joda.time DateTime DateTimeZone]))
+  (:import [org.joda.time DateTime DateTimeUtils DateTimeZone]))
 
-(def test-time (DateTime. 10000 DateTimeZone/UTC))
+(def invitation-time (DateTime. 10000 DateTimeZone/UTC))
+(def acceptance-time (DateTime. 20000 DateTimeZone/UTC))
 
 (use-fixtures
   :once
   test-db-fixture
   caches-fixture
-  (fixed-time-fixture test-time))
+  (fixed-time-fixture invitation-time))
 
 (use-fixtures :each rollback-db-fixture)
 
@@ -60,8 +61,8 @@
                              :invitation/invited-by {:userid "owner"
                                                      :name "Owner"
                                                      :email "owner@example.com"}
-                             :invitation/created test-time
-                             :invitation/sent test-time
+                             :invitation/created invitation-time
+                             :invitation/sent invitation-time
                              :invitation/workflow {:workflow/id workflow-id}}]
                            (mapv #(dissoc % :invitation/token :invitation/id)
                                  invitations)))
@@ -75,6 +76,8 @@
                                 :errors [{:key :t.accept-invitation.errors/invalid-token :token "doesnotexist"}]}
                                response))))
 
+                    (DateTimeUtils/setCurrentMillisFixed (.getMillis acceptance-time))
+
                     (testing "accept invitation"
                       (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
                             response (invitation/accept-invitation! {:userid "frank"
@@ -82,6 +85,23 @@
                         (is (= {:success true
                                 :invitation/workflow {:workflow/id workflow-id}}
                                response))))
+
+                    (testing "after accepting invitation"
+                      (let [invitations (invitation/get-invitations nil)]
+                        (is (= [{:invitation/name "Dorothy Vaughan"
+                                 :invitation/email "dorothy.vaughan@nasa.gov"
+                                 :invitation/invited-user {:userid "frank"
+                                                           :name nil
+                                                           :email nil}
+                                 :invitation/invited-by {:userid "owner"
+                                                         :name "Owner"
+                                                         :email "owner@example.com"}
+                                 :invitation/created invitation-time
+                                 :invitation/sent invitation-time
+                                 :invitation/accepted acceptance-time
+                                 :invitation/workflow {:workflow/id workflow-id}}]
+                               (mapv #(dissoc % :invitation/token :invitation/id)
+                                     invitations)))))
 
                     (testing "accept invitation again"
                       (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
