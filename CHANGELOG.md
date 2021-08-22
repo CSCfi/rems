@@ -8,6 +8,12 @@ have notable changes.
 
 Changes since v2.19
 
+**NB: This release contains migrations!**
+
+### Additions
+- Handlers can be invited to a workflow by email using the API (#2650)
+
+
 ## v2.19 "Nahkahousuntie" 2021-06-28
 
 ### Fixes
