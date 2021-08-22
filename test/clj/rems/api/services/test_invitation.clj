@@ -68,10 +68,25 @@
                     (is (contains? (set (map :invitation/id invitations)) invitation-id))
                     (is (= :not-present (:invitation/token (first invitations) :not-present)) "must not reveal token")
 
+                    (testing "accept invitation with fake code"
+                      (let [response (invitation/accept-invitation! {:userid "frank"
+                                                                     :token "doesnotexist"})]
+                        (is (= {:success false
+                                :errors [{:key :t.accept-invitation.errors/invalid-token :token "doesnotexist"}]}
+                               response))))
+
                     (testing "accept invitation"
                       (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
                             response (invitation/accept-invitation! {:userid "frank"
                                                                      :token token})]
                         (is (= {:success true
                                 :invitation/workflow {:workflow/id workflow-id}}
+                               response))))
+
+                    (testing "accept invitation again"
+                      (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
+                            response (invitation/accept-invitation! {:userid "frank"
+                                                                     :token token})]
+                        (is (= {:success false
+                                :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
                                response))))))))))))))
