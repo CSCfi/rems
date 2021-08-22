@@ -20,6 +20,7 @@
 
 (deftest test-crud-invitation
   (test-helpers/create-user! {:eppn "owner" :commonName "owner" :mail "owner@example.com"} :owner)
+  (test-helpers/create-user! {:eppn "new-handler" :commonName "New Handler" :mail "new-handler@example.com"})
   (let [workflow-id (test-helpers/create-workflow! {})]
     (with-user "owner"
       (testing "before creating invitations"
@@ -70,7 +71,7 @@
                     (is (= :not-present (:invitation/token (first invitations) :not-present)) "must not reveal token")
 
                     (testing "accept invitation with fake code"
-                      (let [response (invitation/accept-invitation! {:userid "frank"
+                      (let [response (invitation/accept-invitation! {:userid "new-handler"
                                                                      :token "doesnotexist"})]
                         (is (= {:success false
                                 :errors [{:key :t.accept-invitation.errors/invalid-token :token "doesnotexist"}]}
@@ -80,7 +81,7 @@
 
                     (testing "accept invitation"
                       (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
-                            response (invitation/accept-invitation! {:userid "frank"
+                            response (invitation/accept-invitation! {:userid "new-handler"
                                                                      :token token})]
                         (is (= {:success true
                                 :invitation/workflow {:workflow/id workflow-id}}
@@ -90,9 +91,9 @@
                       (let [invitations (invitation/get-invitations nil)]
                         (is (= [{:invitation/name "Dorothy Vaughan"
                                  :invitation/email "dorothy.vaughan@nasa.gov"
-                                 :invitation/invited-user {:userid "frank"
-                                                           :name nil
-                                                           :email nil}
+                                 :invitation/invited-user {:userid "new-handler"
+                                                           :name "New Handler"
+                                                           :email "new-handler@example.com"}
                                  :invitation/invited-by {:userid "owner"
                                                          :name "Owner"
                                                          :email "owner@example.com"}
@@ -105,7 +106,7 @@
 
                     (testing "accept invitation again"
                       (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
-                            response (invitation/accept-invitation! {:userid "frank"
+                            response (invitation/accept-invitation! {:userid "new-handler"
                                                                      :token token})]
                         (is (= {:success false
                                 :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
