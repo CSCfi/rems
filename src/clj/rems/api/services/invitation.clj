@@ -86,16 +86,3 @@
        :errors [{:key :t.accept-invitation.errors/invalid-invitation-type}]})
     {:success false
      :errors [{:key :t.accept-invitation.errors/invalid-token :token token}]}))
-
-(comment
-  (binding [rems.context/*user* {:eppn "owner"}
-            rems.context/*roles* #{:owner}]
-    (create-invitation! {:userid "owner"
-                         :name "Dorothy Vaughan"
-                         :email "dorothy.vaughan@nasa.gov"
-                         :workflow-id 1}))
-  (accept-invitation! {:userid "alice" :token "doesnotexist"})
-  (get-invitations nil)
-  (get-invitations-full nil)
-  (workflow/get-workflow 1)
-  (accept-invitation! {:userid "frank" :token "81fd5dafe9e789450f557a728ee789ad"}))
