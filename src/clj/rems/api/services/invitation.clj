@@ -76,7 +76,7 @@
           {:success false
            :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
           (do
-            (workflow/edit-workflow! {:id (:workflow/id workflow)
+            (workflow/edit-workflow! {:id workflow-id
                                       :handlers (conj handlers userid)})
             (invitation/accept-invitation! userid token)
             (applications/reload-cache!)
