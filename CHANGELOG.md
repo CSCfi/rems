@@ -13,6 +13,8 @@ Changes since v2.19
 ### Additions
 - Handlers can be invited to a workflow by email using the API (#2650)
 
+## Fixes
+- Show the selected but disabled resources in Change resources autocomplete (#2702, #2693)
 
 ## v2.19 "Nahkahousuntie" 2021-06-28
 
