@@ -736,7 +736,7 @@
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-get :workflow-title) :handlers []}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
                                                                             :workflow-id (btu/context-get :workflow-id)}))
-    (test-helpers/create-user! {:eppn "new-handler" :commonName "New Handler"})
+    (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name"})
     (with-user "owner"
       (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
                                                                                 :name "Dorothy Vaughan"
@@ -753,15 +753,15 @@
       (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
       (is (btu/eventually-visible? {:css ".login-btn"}))
       (btu/scroll-and-click {:css ".login-btn"})
-      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-handler"}]))
-      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-handler"}])
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
       (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-get :workflow-title)}]))
       (is (= {"Organization" "The Default Organization"
               "Title" (btu/context-get :workflow-title)
               "Type" "Master workflow"
-              "Handlers" "New Handler"
+              "Handlers" "Invited Person Name"
               "Active" true
               "Forms" ""}
              (slurp-fields :workflow))))))
