@@ -6,9 +6,11 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.19
+Changes since v2.20
 
-## Fixes
+## v2.20 "Vattuniemenkatu" 2021-08-24
+
+### Fixes
 - Show the selected but disabled resources in Change resources autocomplete (#2702, #2693)
 
 ## v2.19 "Nahkahousuntie" 2021-06-28
