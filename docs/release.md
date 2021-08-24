@@ -34,7 +34,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
    - Leave `Changes since v[x.y]` text under `## Unreleased`
 
-3. Create a pull request for those changes
+3. Create a pull request for those changes (e.g. branch `release-2.6` with commit `release: v2.6`)
 
 4. After the branch is merged to master:
 
