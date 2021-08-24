@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.20
 
+### Additions
+- "More info" support for DOI style resources (when :enable-doi flag is set) (#2701)
+
 ## v2.20 "Vattuniemenkatu" 2021-08-24
 
 ### Fixes
