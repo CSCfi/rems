@@ -299,4 +299,5 @@
  :render-css-file? false
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
- :enable-ega false} ; should the EGA features be shown in the UI
+ :enable-ega false ; should the EGA features be shown in the UI
+ :enable-doi false} ; should the DOI features be shown in the UI
