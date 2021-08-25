@@ -180,8 +180,9 @@
  (fn [[categories language] _]
    (map (fn [category]
           {:key (:id category)
-          ;;  :organization {:value (get-in resource [:organization :organization/short-name language])}
+           :organization {:value (get-in category [:organization])}
            :id {:value (:id category)}
+           :name {:value (get-in category [:data :name])}
           ;;  :active (let [checked? (status-flags/active? resource)]
           ;;            {:td [:td.active
           ;;                  [readonly-checkbox {:value checked?}]]
@@ -200,11 +201,11 @@
 (defn- categories-list []
   (let [resources-table {:id ::categories
                          :columns [{:key :id
+                                    :title "id"}
+                                   {:key :organization
                                     :title (text :t.administration/organization)}
-                                  ;;  {:key :commands
-                                  ;;   :sortable? false
-                                  ;;   :filterable? false}
-                                   ]
+                                   {:key :name
+                                    :title "name"}]
                          :rows [::categories-table-rows]
                          :default-sort-column :title}]
     [:div.mt-3
@@ -240,4 +241,4 @@
         ;;     ;; [status-flags/disabled-and-archived-explanation]
         ;;  ]
         ;;  [catalogue-list]
-        [:div "here should be categories list"]])]))
+        ])]))
