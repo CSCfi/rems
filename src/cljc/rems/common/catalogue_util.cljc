@@ -20,13 +20,13 @@
 
 ;; https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 ;; "For the 74.9M DOIs we have seen this matches 74.4M of them. If you need to use only one pattern then use this one."
-(defn- doi? [resid]
+(defn- parse-doi [resid]
   (and resid (re-find #"(?i)10.\d{4,9}[-._;()/:A-Z0-9]+$" resid)))
 
 (defn- doi-catalogue-item-url [resid {:keys [enable-doi doi-organization]}]
   (when enable-doi
-    (some->> (doi? resid)
-             (str (or doi-organization "https://doi.org/")))))
+    (when-let [doi (parse-doi resid)]
+      (str (or doi-organization "https://doi.org/") doi))))
 
 ;; Resource can have different schemas here (V2Resource vs. CatalogueItem)
 (defn catalogue-item-more-info-url [resource-or-item language config]
@@ -74,7 +74,8 @@
         "setting custom EGA organization works"))
 
   (testing "DOI"
-    (is (= nil (catalogue-item-more-info-url {:resource/ext-id "10.1109/5.771073"} nil {})))
+    (testing "should return nil without :enable-doi feature flag"
+      (is (= nil (catalogue-item-more-info-url {:resource/ext-id "10.1109/5.771073"} nil {}))))
     (is (= "https://doi.org/10.1109/5.771073" (catalogue-item-more-info-url {:resource/ext-id "10.1109/5.771073"} nil {:enable-doi true}))
         "DOI works for catalogue item")
     (is (= "https://doi.org/10.24340/djay-9b5tjc" (catalogue-item-more-info-url {:resource/ext-id "https://doi.org/10.24340/djay-9b5tjc"} nil {:enable-doi true}))
