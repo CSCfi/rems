@@ -81,6 +81,7 @@
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
                    :categories "Categories"
+                   :category "Category"
                    :change "Vaihda"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"

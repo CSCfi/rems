@@ -81,6 +81,7 @@
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
                    :categories "Categories"
+                   :category "Category"
                    :change "Ändra"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"

@@ -27,6 +27,7 @@
     :dispatch-n [[::workflows {:disabled true :archived true}]
                  [::resources {:disabled true :archived true}]
                  [::forms {:disabled true :archived true}]
+                 [::categories]
                  (when catalogue-item-id [::catalogue-item])]}))
 
 (rf/reg-sub ::catalogue-item-id (fn [db _] (::catalogue-item-id db)))
@@ -42,6 +43,9 @@
 
 (rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
 (rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
+
+(rf/reg-sub ::selected-category (fn [db _] (get-in db [::form :category])))
+(rf/reg-event-db ::set-selected-category (fn [db [_ category]] (assoc-in db [::form :category] category)))
 
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
@@ -86,11 +90,11 @@
                         ;; create disabled catalogue items by default
                         (assoc :enabled false))
             :handler (flash-message/default-success-handler
-                      :top
-                      description
-                      (fn [response]
-                        (navigate! (str "/administration/catalogue-items/"
-                                        (:id response)))))
+                       :top
+                       description
+                       (fn [response]
+                         (navigate! (str "/administration/catalogue-items/"
+                                         (:id response)))))
             :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
@@ -102,10 +106,10 @@
                     :organization (:organization request)
                     :localizations (:localizations request)}
            :handler (flash-message/default-success-handler
-                     :top
-                     description
-                     (fn [_]
-                       (navigate! (str "/administration/catalogue-items/" id))))
+                      :top
+                      description
+                      (fn [_]
+                        (navigate! (str "/administration/catalogue-items/" id))))
            :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
@@ -122,16 +126,19 @@
         (when-let [workflows (get-in db [::workflows :data])]
           (when-let [resources (get-in db [::resources :data])]
             (when-let [forms (get-in db [::forms :data])]
-              {::form {:workflow (item-by-id workflows :id wfid)
-                       :resource (item-by-id resources :id resource-id)
-                       :form (item-by-id forms :form/id formid)
-                       :organization organization
-                       :title (map-vals :title localizations)
-                       :infourl (map-vals :infourl localizations)}}))))))))
+              (when-let [categories (get-in db [::categories :data])]
+                {::form {:workflow (item-by-id workflows :id wfid)
+                         :resource (item-by-id resources :id resource-id)
+                         :form (item-by-id forms :form/id formid)
+                         :category (first categories)
+                         :organization organization
+                         :title (map-vals :title localizations)
+                         :infourl (map-vals :infourl localizations)}})))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::forms "/api/forms" {:on-success #(rf/dispatch [::update-loading!])})
+(fetcher/reg-fetcher ::categories "/api/categories" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
                                                                   :on-success #(rf/dispatch [::update-loading!])})
 
@@ -144,6 +151,7 @@
 (def ^:private workflow-dropdown-id "workflow-dropdown")
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
+(def ^:private category-dropdown-id "category-dropdown")
 
 (defn- catalogue-item-organization-field []
   [organization-field context {:keys [:organization]}])
@@ -242,6 +250,25 @@
          :placeholder (text :t.administration/no-form)
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
+(defn- catalogue-item-category-field []
+  (let [categories @(rf/subscribe [::categories])
+        editing? @(rf/subscribe [::editing?])
+        selected-category @(rf/subscribe [::selected-category])
+        item-selected? #(= (:id %) (:id selected-category))]
+    [:div.form-group
+     [:label.administration-field-label {:for category-dropdown-id} (text :t.administration/category)]
+     (if editing?
+       (let [category (item-by-id categories :id (:id selected-category))]
+         [fields/readonly-field {:id category-dropdown-id
+                                 :value (:id category)}])
+       [dropdown/dropdown
+        {:id category-dropdown-id
+         :items categories
+         :item-key :id
+         :item-label #(:id %)
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-category %])}])]))
+
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel
                :class "btn btn-secondary"}
@@ -270,6 +297,7 @@
         loading? (or @(rf/subscribe [::workflows :fetching?])
                      @(rf/subscribe [::resources :fetching?])
                      @(rf/subscribe [::forms :fetching?])
+                     @(rf/subscribe [::categories :fetching?])
                      @(rf/subscribe [::catalogue-item :fetching?]))
         form @(rf/subscribe [::form])]
     [:div
@@ -291,6 +319,7 @@
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
+                   [catalogue-item-category-field]
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]

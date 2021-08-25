@@ -83,6 +83,7 @@
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
                    :categories "Categories"
+                   :category "Category"
                    :change "Change"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
