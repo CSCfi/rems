@@ -397,7 +397,10 @@
         language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
-                :let [form-id (:form/id form)]]
+                :let [form-id (:form/id form)]
+                :when (->> (:form/fields form)
+                           (remove :field/private)
+                           seq)]
             [collapsible/component
              {:id "application-fields"
               :class "mb-3"
