@@ -12,7 +12,9 @@
     (format-category category)))
 
 (defn get-categories []
-  (db/get-categories))
+  (map
+   #(format-category %)
+   (db/get-categories)))
 
 
 

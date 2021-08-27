@@ -44,8 +44,8 @@
 (rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
 (rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
-(rf/reg-sub ::selected-category (fn [db _] (get-in db [::form :category])))
-(rf/reg-event-db ::set-selected-category (fn [db [_ category]] (assoc-in db [::form :category] category)))
+(rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
+(rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
 
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
@@ -130,7 +130,7 @@
                 {::form {:workflow (item-by-id workflows :id wfid)
                          :resource (item-by-id resources :id resource-id)
                          :form (item-by-id forms :form/id formid)
-                         :category (first categories)
+                         :categories (first categories)
                          :organization organization
                          :title (map-vals :title localizations)
                          :infourl (map-vals :infourl localizations)}})))))))))
@@ -253,7 +253,7 @@
 (defn- catalogue-item-category-field []
   (let [categories @(rf/subscribe [::categories])
         editing? @(rf/subscribe [::editing?])
-        selected-category @(rf/subscribe [::selected-category])
+        selected-category @(rf/subscribe [::selected-categories])
         item-selected? #(= (:id %) (:id selected-category))]
     [:div.form-group
      [:label.administration-field-label {:for category-dropdown-id} (text :t.administration/category)]
@@ -266,8 +266,9 @@
          :items categories
          :item-key :id
          :item-label #(:id %)
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-category %])}])]))
+         :item-selected? #(contains? (set selected-category) %)
+         :multi? true
+         :on-change #(rf/dispatch [::set-selected-categories %])}])]))
 
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel

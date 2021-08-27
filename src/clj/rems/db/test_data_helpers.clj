@@ -239,10 +239,11 @@
                        :actor actor})
     app-id))
 
-(defn create-category! [{:keys [id data]
+(defn create-category! [{:keys [id data organization]
                          :as command}]
   (let [result (categories/create-category! {:id id
-                                             :data data})]
+                                             :data data
+                                             :organization organization})]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

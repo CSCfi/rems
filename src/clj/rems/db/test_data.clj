@@ -7,6 +7,7 @@
             [rems.api.services.form :as form]
             [rems.json :as json]
             [rems.api.services.organizations :as organizations]
+            [rems.api.services.categories :as categories]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
@@ -1169,16 +1170,6 @@
 
     ; create category
 
-    (db/create-category! {:id 89
-                          :data (json/generate-string {:name "Category 1"})
-                          :organization "text"})
-    (db/create-category! {:id 90
-                          :data (json/generate-string {:name "Category 2"})
-                          :organization "text"})
-    (db/create-category! {:id 91
-                          :data (json/generate-string {:name "Category 3"})
-                          :organization "text"})
-
     (let [applicant (users :applicant1)
           handler (users :approver2)
           reviewer (users :reviewer)
@@ -1207,6 +1198,18 @@
                  :actor handler
                  :reviewers [reviewer]
                  :comment "please have a look"}))))
+    (categories/create-category! {:data {:title {:en "Category EN"
+                                                 :fi "Category FI"
+                                                 :sv "Category SV"}}
+                                  :organization {:organization/id "organization1"}})
+    (categories/create-category! {:data {:title {:en "Category EN"
+                                                 :fi "Category FI"
+                                                 :sv "Category SV"}}
+                                  :organization {:organization/id "organization1"}})
+    (categories/create-category! {:data {:title {:en "Category EN"
+                                                 :fi "Category FI"
+                                                 :sv "Category SV"}}
+                                  :organization {:organization/id "organization1"}})))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)

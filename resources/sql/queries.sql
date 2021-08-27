@@ -682,12 +682,14 @@ WHERE id = :id;
 
 -- :name create-category! :insert
 -- :doc Create a single category item
-INSERT INTO category (id, data, organization) 
-VALUES (:id, :data::jsonb, :organization);
+INSERT INTO category (data, organization) 
+VALUES (:data::jsonb, :organization)
+ON CONFLICT (id) DO NOTHING 
+RETURNING id;
 
 -- :name get-categories :*
 -- :doc Get all category items
-SELECT id, data::text, organization FROM category;
+SELECT id, data::jsonb, organization FROM category;
 
 -- :name get-category-by-id! :? :1
-SELECT id, data FROM category WHERE id = :id;
+SELECT id, data::jsonb, organization FROM category WHERE id = :id;

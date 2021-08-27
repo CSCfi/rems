@@ -241,7 +241,7 @@
 
 (defn wrap-base [handler]
   (-> handler
-      ((if (:dev env) wrap-dev identity))
+      ;; ((if (:dev env) wrap-dev identity))
       wrap-fix-location-header
       wrap-unauthorized-and-forbidden
       wrap-logging

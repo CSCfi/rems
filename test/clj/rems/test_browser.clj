@@ -30,8 +30,10 @@
             [rems.testing-util :refer [with-user]]
             [rems.text :as text]))
 
-(comment ; convenience for development testing
-  (btu/init-driver! :chrome "http://localhost:3000/" :development))
+;; (comment ; convenience for development testing
+;;   )
+
+(btu/init-driver! :chrome "http://localhost:3000/" :development)
 
 (use-fixtures :each btu/fixture-refresh-driver)
 
