@@ -29,9 +29,6 @@
    (when-not (empty? (:application/description application))
      (str ", \"" (:application/description application) "\""))))
 
-(defn- format-workflow-for-email [workflow]
-  (:name workflow))
-
 (defn- resources-for-email [application]
   (->> (:application/resources application)
        (map #(get-in % [:catalogue-item/title context/*lang*]))
@@ -293,13 +290,13 @@
          :subject (text-format :t.email.workflow-handler-invitation/subject
                                (:invitation/name invitation)
                                (get-in invitation [:invitation/invited-by :name])
-                               (format-workflow-for-email workflow)
+                               (:title workflow)
                                (invitation-link (:invitation/token invitation)))
          :body (str
                 (text-format :t.email.workflow-handler-invitation/message
                              (:invitation/name invitation)
                              (get-in invitation [:invitation/invited-by :name])
-                             (format-workflow-for-email workflow)
+                             (:title workflow)
                              (invitation-link (:invitation/token invitation)))
                 (text :t.email/regards)
                 (text :t.email/footer))}))))

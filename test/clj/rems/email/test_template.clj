@@ -506,4 +506,4 @@
              :invitation/invited-by {:name "Eliza Owner"}
              :invitation/token "secret"
              :invitation/workflow {:workflow/id 5}}
-            {:name "Template Workflow"})))))
+            {:title "Template Workflow"})))))
