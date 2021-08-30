@@ -35,7 +35,7 @@
 
 ;; Fonts of the app
 
-(defn generate-at-font-faces
+(defn- at-font-faces
   "The theme :font-family settings will override these fonts is set.
 
   Reason for this function to be included into our screen.css
@@ -64,7 +64,7 @@
                              :font-weight 400
                              :font-style "normal"})))
 
-(defn- generate-form-placeholder-styles []
+(defn- form-placeholder-styles []
   (list
    [".form-control::placeholder" {:color "#555"}] ; Standard
    [".form-control::-webkit-input-placeholder" {:color "#555"}] ; WebKit, Blink, Edge
@@ -74,7 +74,7 @@
                                        :opacity 1}] ; Mozilla Firefox 19+
    [".form-control:-ms-input-placeholder" {:color "#555"}])) ; Internet Explorer 10-11
 
-(defn- generate-media-queries []
+(defn- media-queries []
   (list
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
@@ -86,7 +86,7 @@
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
-(defn- generate-logo-styles []
+(defn- logo-styles []
   (list
    [:.logo-menu {:height logo-height-menu
                  :background-color (theme-getx :logo-bgcolor)
@@ -126,7 +126,7 @@
                          [:.logo {:height logo-height}]
                          [:.logo-menu {:display "none"}]))))
 
-(defn- generate-phase-styles []
+(defn- phase-styles []
   [:.phases {:width "100%"
              :height (u/px 40)
              :display "flex"
@@ -165,7 +165,7 @@
                    :background-color (theme-getx :phase-bgcolor-completed)
                    :border-color (theme-getx :phase-bgcolor-completed)}]]])
 
-(defn- generate-actions-float-menu
+(defn- actions-float-menu
   "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
   and to avoid yet another random JS-library we make the element scrollable with a dynamic max-height. This can
   break if the 105px space is not enough anymore but works for now.
@@ -199,7 +199,7 @@
     (-> (theme-getx :table-hover-bgcolor :table-bgcolor :color3)
         (c/darken 15))))
 
-(defn- generate-rems-table-styles []
+(defn- rems-table-styles []
   (list
    [:.rems-table.cart {:background "#fff"
                        :color "#000"
@@ -257,19 +257,19 @@
    [:.text-highlight {:color (theme-getx :color3)
                       :font-weight "bold"}]))
 
-(defn- generate-form-group []
+(defn- form-group []
   {:position "relative"
    :border-radius (u/rem 0.4)
    :padding (u/px 10)
    :margin-top 0
    :margin-bottom (u/px 16)})
 
-(defn- generate-dashed-form-group []
-  (assoc (generate-form-group)
+(defn- dashed-form-group []
+  (assoc (form-group)
          :border "2px dashed #ccc"))
 
-(defn- generate-solid-form-group []
-  (assoc (generate-form-group)
+(defn- solid-form-group []
+  (assoc (form-group)
          :border "2px solid #eee"))
 
 (defn- remove-nil-vals
@@ -358,7 +358,7 @@
 
 (defn build-screen []
   (list
-   (generate-at-font-faces)
+   (at-font-faces)
    [:* {:margin 0}]
    [:a
     :button
@@ -585,7 +585,7 @@
                    :min-width "100%"}]
 
    ;; Logo, login, etc.
-   (generate-logo-styles)
+   (logo-styles)
    ;; Footer
    (let [footer-text-color (theme-getx :footer-color :table-heading-color)]
      [:footer {:width "100%"
@@ -615,12 +615,12 @@
                  :margin-bottom (u/px 20)}
     [:&:hover {:filter "brightness(80%)"}]]
 
-   (generate-rems-table-styles)
+   (rems-table-styles)
    [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
-   (generate-media-queries)
+   (media-queries)
    [:.example-page {:margin (u/rem 2)}]
    [(s/> :.example-page :h1) {:margin "4rem 0"}]
    [(s/> :.example-page :h2) {:margin-top (u/rem 8)
@@ -702,12 +702,12 @@
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
-   [:.dashed-group (generate-dashed-form-group)]
-   [:.solid-group (generate-solid-form-group)]
+   [:.dashed-group (dashed-form-group)]
+   [:.solid-group (solid-form-group)]
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
-   [:.form-field (generate-solid-form-group)]
+   [:.form-field (solid-form-group)]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
@@ -716,16 +716,16 @@
     {:float "right"
      :font-size (u/rem 1.2)}
     [:* {:margin-left (u/em 0.25)}]]
-   [:.new-form-field (assoc (generate-dashed-form-group)
+   [:.new-form-field (assoc (dashed-form-group)
                             :text-align "center")]
 
-   [:.form-field-visibility (assoc (generate-solid-form-group)
+   [:.form-field-visibility (assoc (solid-form-group)
                                    :margin-left 0
                                    :margin-right 0)]
-   [:.form-field-option (assoc (generate-solid-form-group)
+   [:.form-field-option (assoc (solid-form-group)
                                :margin-left 0
                                :margin-right 0)]
-   [:.new-form-field-option (assoc (generate-dashed-form-group)
+   [:.new-form-field-option (assoc (dashed-form-group)
                                    :text-align "center")]
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
@@ -849,8 +849,8 @@
     (make-important
      {:color "#555"})]
 
-   (generate-phase-styles)
-   (generate-actions-float-menu)
+   (phase-styles)
+   (actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
    ;; print styling
@@ -879,7 +879,7 @@
     [:.collapse-toggle.collapse {:display :none}])
 
    ;; These must be last as the parsing fails when the first non-standard element is met
-   (generate-form-placeholder-styles)))
+   (form-placeholder-styles)))
 
 (defn- render-css-file [language content]
   (let [dir-name (str "target/resources/public/css/" (name language))
