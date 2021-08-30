@@ -42,11 +42,12 @@
     (GET "/" []
       :summary "Get invitations"
       :roles +admin-read-roles+
-      :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
-                     {archived :- (describe s/Bool "whether to include archived workflows") false}]
+      :query-params [{sent :- (describe s/Bool "whether to include sent invitations") nil}
+                     {accepted :- (describe s/Bool "whether to include accepted invitations") nil}]
       :return [InvitationResponse]
-      (ok (invitation/get-invitations (merge (when-not disabled {:enabled true})
-                                             (when-not archived {:archived false})))))
+      (ok (invitation/get-invitations (merge {:userid (getx-user-id)}
+                                             (when (some? sent) {:sent sent})
+                                             (when (some? accepted) {:accepted accepted})))))
 
     (POST "/create" []
       :summary "Create an invitation. The invitation will be sent asynchronously to the recipient."

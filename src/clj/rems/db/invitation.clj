@@ -38,10 +38,12 @@
       (assoc :invitation/id (:id row))))
 
 (defn get-invitations
-  [{:keys [workflow-id ids token]}]
+  [{:keys [workflow-id ids token sent accepted]}]
   (cond->> (db/get-invitations {:ids ids :token token})
     true (map fix-row-from-db)
-    workflow-id (filter (comp #{workflow-id} :workflow/id :invitation/workflow))))
+    workflow-id (filter (comp #{workflow-id} :workflow/id :invitation/workflow))
+    (some? sent) ((if sent filter remove) :invitation/sent)
+    (some? accepted) ((if accepted filter remove) :invitation/accepted)))
 
 (defn accept-invitation! [userid token]
   (when-let [invitation (first (get-invitations {:token token}))]
