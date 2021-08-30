@@ -6,6 +6,7 @@
             [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.json]
+            [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -71,3 +72,77 @@
                                               :name "Katherine Johnson"}
                     :invitation/workflow {:workflow/id workflow-id}}
                    (dissoc accepted-invitation :invitation/id :invitation/created :invitation/sent :invitation/accepted)))))))))
+
+(deftest test-invitations-api-security
+  (api-call :post "/api/organizations/create"
+            {:organization/id "test-organization"
+             :organization/name {:fi "Testiorganisaatio"
+                                 :en "Test Organization"}
+             :organization/short-name {:fi "ORG"
+                                       :en "ORG"}
+             :organization/owners [{:userid "organization-owner2"}]
+             :organization/review-emails []}
+            "42" "owner")
+  (test-helpers/create-user! {:eppn "katherine" :mail "katherine.johnson@nasa.gov" :commonName "Katherine Johnson"})
+  (let [workflow-id (test-helpers/create-workflow! {:organization {:organization/id "test-organization"}})
+        invitation-id (:invitation/id (with-user "owner"
+                                        (invitation/create-invitation! {:userid "owner"
+                                                                        :name "Katherine Johnson"
+                                                                        :email "katherine.johnson@nasa.gov"
+                                                                        :workflow-id workflow-id})))
+        token (:invitation/token (with-user "owner" (invitation/get-invitation-full invitation-id)))]
+    (testing "without authentication"
+      (testing "list"
+        (let [response (api-response :get "/api/invitations")]
+          (is (response-is-unauthorized? response))
+          (is (= "unauthorized" (read-body response)))))
+
+      (testing "create"
+        (let [response (api-response :post "/api/invitations/create"
+                                     {:name "Katherine Johnson"
+                                      :email "katherine.johnson@nasa.gov"
+                                      :workflow-id workflow-id})]
+          (is (response-is-unauthorized? response))
+          (is (= "Invalid anti-forgery token" (read-body response)))))
+
+      (testing "accept-invitation"
+        (let [response (api-response :post (str "/api/invitations/accept-invitation?token=" token) nil)]
+          (is (response-is-unauthorized? response))
+          (is (= "Invalid anti-forgery token" (read-body response))))))
+
+    (testing "create"
+      (testing "without owner role"
+        (let [response (api-response :post "/api/invitations/create"
+                                     {:name "Katherine Johnson"
+                                      :email "katherine.johnson@nasa.gov"
+                                      :workflow-id workflow-id}
+                                     "42" "alice")]
+          (is (response-is-forbidden? response))
+          (is (= "forbidden" (read-body response)))))
+
+      (testing "for an owner of wrong organization"
+        (let [response (api-response :post "/api/invitations/create"
+                                     {:name "Katherine Johnson"
+                                      :email "katherine.johnson@nasa.gov"
+                                      :workflow-id workflow-id}
+                                     "42" "organization-owner1")]
+          (is (response-is-forbidden? response))
+          (is (= "forbidden" (read-body response)))))
+
+      (testing "given owner role"
+        (api-call :post "/api/invitations/create"
+                  {:name "Katherine Johnson"
+                   :email "katherine.johnson@nasa.gov"
+                   :workflow-id workflow-id}
+                  "42" "owner"))
+
+      (testing "given organization-owner role"
+        (api-call :post "/api/invitations/create"
+                  {:name "Katherine Johnson"
+                   :email "katherine.johnson@nasa.gov"
+                   :workflow-id workflow-id}
+                  "42" "organization-owner2")))
+
+    (testing "accept-invitation"
+      (let [response (api-response :post (str "/api/invitations/accept-invitation?token=" token) nil "42" "katherine")]
+        (is (response-is-ok? response))))))
