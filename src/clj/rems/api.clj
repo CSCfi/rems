@@ -25,14 +25,14 @@
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.auth :as auth]
             [rems.db.core :as db]
-            [rems.json :refer [muuntaja]]
+            [rems.json :as json]
             [rems.util :refer [get-user-id]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
-            [schema.core :as s]
-            [rems.json :as json])
-  (:import [rems.auth ForbiddenException UnauthorizedException]
+            [schema.core :as s])
+  (:import clojure.lang.ExceptionInfo
+           [rems.auth ForbiddenException UnauthorizedException]
            rems.DataException
            rems.InvalidRequestException
            rems.TryAgainException))
@@ -78,6 +78,12 @@
   [exception _ex-data _request]
   (log/error "data exception" (pr-str (.-data exception)))
   (-> (service-unavailable (json/generate-string (.-data exception)))
+      (response/content-type "application/json")))
+
+(defn ex-info-handler
+  [exception ex-data _request]
+  (log/error exception (str (.getMessage exception) " " (pr-str ex-data)))
+  (-> (internal-server-error)
       (response/content-type "application/json")))
 
 (defn with-logging
@@ -137,10 +143,11 @@
   (audit-log-middleware
    (api
     {;; TODO: should this be in rems.middleware?
-     :formats muuntaja
+     :formats json/muuntaja
      :middleware [cors-middleware
                   transaction-middleware]
      :exceptions {:handlers {UnauthorizedException unauthorized-handler
+                             ExceptionInfo ex-info-handler
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
                              TryAgainException try-again-handler

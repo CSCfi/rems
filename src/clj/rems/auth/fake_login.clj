@@ -15,7 +15,9 @@
 
 (defn- fake-login [session username]
   (assoc (redirect "/redirect")
-         :session (assoc session :identity (users/get-raw-user-attributes username))))
+         :session (assoc session
+                         :identity (users/get-raw-user-attributes username)
+                         :access-token (str "access-token-" username)))) ; fake access token
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]

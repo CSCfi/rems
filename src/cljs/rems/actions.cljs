@@ -1,11 +1,13 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [re-frame.core :as rf]
+  (:require [cljs-time.core :as time-core]
+            [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
+            [rems.profile :as profile]
             [rems.search :as search]
             [rems.text :refer [text]]))
 
@@ -14,10 +16,13 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db
                 ::todo-applications
-                ::handled-applications)
+                ::handled-applications
+                ::user-settings)
     :dispatch-n [[::todo-applications]
+                 [::user-settings]
                  [:rems.table/reset]]}))
 
+(fetcher/reg-fetcher ::user-settings "/api/user-settings") ; for the EGA warning
 (fetcher/reg-fetcher ::todo-applications "/api/applications/todo")
 (fetcher/reg-fetcher ::handled-applications "/api/applications/handled")
 
@@ -54,6 +59,7 @@
   [:div
    [document-title (text :t.navigation/actions)]
    [flash-message/component :top]
+   [profile/maybe-ega-api-key-warning]
    [:div.spaced-sections
     [collapsible/component
      {:id "todo-applications"
