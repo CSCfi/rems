@@ -6,12 +6,10 @@
   (:require [buddy.core.keys :as keys]
             [clj-time.coerce]
             [clj-time.core :as time]
-            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.common.util :refer [getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.jwt :as jwt]
-            [rems.testing-util :refer [with-fixed-time]]
             [schema.core :as s])
   (:import java.time.Instant))
 
@@ -57,41 +55,16 @@
 
 (def +default-length+ (time/years 1))
 
-(defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby]}]
+(defn- entitlement->visa-claims [{:keys [resid _catappid start end _mail userid _approvedby dac-id]}]
   {:iss (:public-url env)
    :sub userid
    :iat (clj-time.coerce/to-epoch (time/now))
    :exp (clj-time.coerce/to-epoch (or end (time/plus (time/now) +default-length+)))
    :ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str resid)
-                   :source (:public-url env)
+                   :source (or dac-id (:public-url env))
                    :by "dac" ; the Data Access Commitee acts via REMS
                    :asserted (clj-time.coerce/to-epoch start)}})
-
-(deftest test-entitlement->visa-claims
-  (with-redefs [env {:public-url "https://rems.example/"}]
-    (with-fixed-time (time/date-time 2010 01 01)
-      (fn []
-        (is (= {:iss "https://rems.example/"
-                :sub "user@example.com"
-                :iat (clj-time.coerce/to-epoch "2010")
-                :exp (clj-time.coerce/to-epoch "2011")
-                :ga4gh_visa_v1 {:type "ControlledAccessGrants"
-                                :value "urn:1234"
-                                :source "https://rems.example/"
-                                :by "dac"
-                                :asserted (clj-time.coerce/to-epoch "2009")}}
-               (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :userid "user@example.com"})))
-        (is (= {:iss "https://rems.example/"
-                :sub "user@example.com"
-                :iat (clj-time.coerce/to-epoch "2010")
-                :exp (clj-time.coerce/to-epoch "2010-06-02")
-                :ga4gh_visa_v1 {:type "ControlledAccessGrants"
-                                :value "urn:1234"
-                                :source "https://rems.example/"
-                                :by "dac"
-                                :asserted (clj-time.coerce/to-epoch "2009")}}
-               (entitlement->visa-claims {:resid "urn:1234" :start (time/date-time 2009) :end (time/date-time 2010 6 2) :userid "user@example.com"})))))))
 
 (defn- entitlement->visa [entitlement]
   (sign-visa (entitlement->visa-claims entitlement)))
@@ -127,3 +100,10 @@
     (some identity
           (doall (for [visa visas]
                    (visa->researcher-status-by (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
+
+(defn visa->claims
+  "Peek into the contents of the visa / JWT token without verifying it.
+
+  Useful for testing or debugging."
+  [visa]
+  (jwt/peek visa))

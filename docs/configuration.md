@@ -52,6 +52,25 @@ This option should not be used in production. Keep also in mind that anyone with
 
 ## Entitlements
 
+REMS can push entitlements to external systems with a few different options. There are currently two distinct versions. The original entitlement post (v1) and a newer refined approach called entitlement push (v2).
+
+### Entitlement push (v2)
+
+The entitlement push can be configured using the `:entitlement-push` key like so in your `config.edn`. Any number of external system targets can be defined.
+
+```edn
+  :entitlement-push [{:id "ega"
+                      :type :ega
+                      :connect-server-url "https://ega.server.url:1234/ega-openid-connect-server"
+                      :permission-server-url "https://ega.server.url:1234/ega-permissions"
+                      :client-id "..."
+                      :client-secret "..."}
+```
+
+So far the only supported type is `:ega`, i.e. entitlements are meant to be pushed to [European Genome-Phoenome Archive](https://ega-archive.org/). Enable the EGA support also by adding `:enable-ega true`.
+
+### Entitlement post (v1)
+
 REMS can submit a HTTP POST request for every entitlement granted or
 revoked.
 

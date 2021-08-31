@@ -61,7 +61,7 @@
         (testing "slow transaction should hit timeout"
           ;; more than the connection idle timeout of 8s
           (reset! sleep-time (* 10 1000))
-          (is (= {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"clojure.lang.ExceptionInfo\"}"}
+          (is (= {:status 500 :body ""}
                  (save-draft!))))
         (testing "subsequent transactions should pass"
           (reset! sleep-time nil)

@@ -31,7 +31,8 @@
    :oidc-extra-attributes [{:attribute s/Str
                             s/Keyword s/Any}]
    :dev s/Bool
-   (s/optional-key :enable-ega) s/Bool})
+   (s/optional-key :enable-ega) s/Bool
+   (s/optional-key :enable-doi) s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -69,7 +70,8 @@
                             :languages
                             :oidc-extra-attributes
                             :enable-assign-external-id-ui
-                            :enable-ega])))
+                            :enable-ega
+                            :enable-doi])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"

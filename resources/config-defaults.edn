@@ -73,10 +73,23 @@
  :mail-from nil
  :email-retry-period "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 
+ ;; External systems for pushing entitlements (v1)
+ ;;
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
-                       :remove nil
-                       :ga4gh nil} ;; Url where entitlements are pushed in ga4gh format, see https://github.com/ga4gh-duri/ga4gh-duri.github.io/
+                       :remove nil}
+
+ ;; External systems for pushing entitlements (v2)
+ ;; NB: remember feature flag `:enable-ega`
+ ;;
+ ;; Example:
+ ;; :entitlement-push [{:id "ega"
+ ;;                     :type :ega
+ ;;                     :connect-server-url "https://ega.ebi.ac.uk:8053/ega-openid-connect-server"
+ ;;                     :permission-server-url "https://ega.ebi.ac.uk:8053/ega-permissions"
+ ;;                     :client-id "..."
+ ;;                     :client-secret "..."}
+ :entitlement-push nil
 
  ;; Default length for entitlements, in days. This only affects the UI of the approve command.
  ;; The default, nil, means indefinite entitlements.
@@ -287,7 +300,7 @@
  ;; enable /api/permissions/:user
  ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
- ;; Keys for signing GA4GH Visas produced by permissions api.
+ ;; Keys for signing GA4GH Visas produced by permissions api or sent to EGA.
  ;; Format: path to file containing key in JWK (Json Web Key) format
  :ga4gh-visa-private-key nil
  :ga4gh-visa-public-key nil
@@ -299,4 +312,5 @@
  :render-css-file? false
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
- :enable-ega false} ; should the EGA features be shown in the UI
+ :enable-ega false ; should the EGA features be shown in the UI
+ :enable-doi false} ; should the DOI features be shown in the UI
