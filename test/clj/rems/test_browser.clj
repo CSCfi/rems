@@ -692,9 +692,9 @@
                                                                     [(btu/context-get :catalogue-id)]
                                                                     "test-invite-decider"))
     (test-helpers/submit-application (btu/context-get :application-id) "alice")
-    (test-helpers/create-user! {:eppn "new-reviewer" :commonName "New Reviewer"}))
+    (test-helpers/create-user! {:eppn "new-decider" :commonName "New Decider"}))
   (btu/with-postmortem
-    (testing "handler invites reviewer"
+    (testing "handler invites decider"
       (login-as "developer")
       (go-to-application (btu/context-get :application-id))
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
@@ -723,13 +723,13 @@
       (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
       (is (btu/eventually-visible? {:css ".login-btn"}))
       (btu/scroll-and-click {:css ".login-btn"})
-      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-reviewer"}]))
-      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-reviewer"}])
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"})))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
-              :event/actor "new-reviewer"}
+              :event/actor "new-decider"}
              (-> (btu/context-get :application-id)
                  applications/get-application-internal
                  :application/events
@@ -745,7 +745,7 @@
     (testing "check decision event"
       (is (= {:application/decision :approved
               :application/comment "ok"
-              :event/actor "new-reviewer"
+              :event/actor "new-decider"
               :event/type :application.event/decided}
              (-> (btu/context-get :application-id)
                  applications/get-application-internal
