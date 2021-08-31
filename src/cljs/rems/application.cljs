@@ -402,8 +402,7 @@
                            (remove :field/private)
                            seq)]
             [collapsible/component
-             {:id "application-fields"
-              :class "mb-3"
+             {:class "application-fields mb-3"
               :title (or (get-in form [:form/external-title language]) (text :t.form/application))
               :always (into [:div.fields]
                             (for [field (:form/fields form)

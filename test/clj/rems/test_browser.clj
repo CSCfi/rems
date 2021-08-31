@@ -119,6 +119,15 @@
   (btu/wait-page-loaded)
   (btu/screenshot "application-page.png"))
 
+(defn apply-for-resource-bundle []
+  (btu/scroll-and-click [{:css "table.cart"}
+                         {:fn/has-text "Apply for"}
+                         {:xpath "./ancestor::tr"}
+                         {:css ".apply-for-catalogue-items"}])
+  (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
+  (btu/wait-page-loaded)
+  (btu/screenshot "application-page.png"))
+
 ;;; application page
 
 (defn slurp-fields [selector]
@@ -161,12 +170,17 @@
 (defn fill-form-field
   "Fills a form field named by `label` with `text`.
 
-  Optionally give `:index` when several items match. It starts from 1."
+  Optionally give `:index` when several items match. It starts from 1.
+  Optionally give `:form-nth` when several forms exist. It starts from 1."
   [label text & [opts]]
   (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
+  (assert (> (:form-nth opts 1) 0) "indexing starts at 1") ; css pseudo-selector works the same way as above
 
-  (let [el (nth (btu/query-all [{:css ".fields"}
-                                {:tag :label :fn/has-text label}])
+  (let [el (nth (btu/query-all (into (if-let [form-nth (:form-nth opts)]
+                                       [{:css (str ".application-fields:nth-child(" form-nth ")")}]
+                                       [])
+                                     [{:css ".fields"}
+                                      {:tag :label :fn/has-text label}]))
                 (dec (:index opts 1)))
         id (btu/get-element-attr-el el :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
@@ -272,8 +286,9 @@
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
+      (add-to-cart "Private form workflow")
       (btu/gather-axe-results)
-      (apply-for-resource "Default workflow")
+      (apply-for-resource-bundle)
       (btu/gather-axe-results)
 
       (btu/context-assoc! :application-id (get-application-id))
@@ -344,6 +359,8 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
+        (fill-form-field "Private text field" "Private field answer" {:form-nth 2})
+
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
           (is (btu/eventually-visible? :status-success)))
@@ -398,7 +415,7 @@
               (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
-                      :resource "Default workflow"
+                      :resource "Default workflow, Private form workflow"
                       :state "Applied"
                       :description "Test name"}
                      (get-application-summary (btu/context-get :application-id)))))
@@ -434,7 +451,8 @@
                       ["text" ""]
                       ["texta" ""]
                       ["phone-number" "+358450000100"]
-                      ["ip-address" "142.250.74.110"]]
+                      ["ip-address" "142.250.74.110"]
+                      ["text" "Private field answer"]]
                      (for [field (select [:application/forms ALL :form/fields ALL] application)]
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)
@@ -562,7 +580,11 @@
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
-                                                                            :field/type :description}]}))
+                                                                            :field/type :description}
+                                                                           {:field/title {:en "private" :fi "fi" :sv "sv"}
+                                                                            :field/optional true
+                                                                            :field/type :text
+                                                                            :field/privacy :private}]}))
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:title {:en "First catalogue item"
                                                                                     :fi "First catalogue item"
@@ -608,6 +630,10 @@
               "Nickname" "In Wonderland"
               "Applicant researcher status" true}
              (slurp-fields :applicant-info))))
+    (testing "handler should see all form fields"
+      (is (= {"description" "test-handling"
+              "private (optional)" ""}
+             (slurp-fields {:css ".fields"}))))
 
     (testing "remove the disabled catalogue item"
       (is (btu/eventually-visible? {:css ".alert-warning"}) "sees disabled catalogue item warning")
@@ -765,6 +791,54 @@
               "Active" true
               "Forms" ""}
              (slurp-fields :workflow))))))
+
+(deftest test-invite-reviewer
+  (testing "create test data"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :private-form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "private" :fi "fi" :sv "sv"}
+                                                                                    :field/optional true
+                                                                                    :field/type :text
+                                                                                    :field/privacy :private}]}))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
+                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :catalogue-id-2 (test-helpers/create-catalogue-item! {:form-id (btu/context-get :private-form-id)
+                                                                              :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
+                                                                    [(btu/context-get :catalogue-id)
+                                                                     (btu/context-get :catalogue-id-2)]
+                                                                    "test-invite-reviewer"))
+    (test-helpers/submit-application (btu/context-get :application-id) "alice"))
+  (btu/with-postmortem
+    (testing "handler invites reviewer"
+      (login-as "developer")
+      (go-to-application (btu/context-get :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
+
+      (btu/scroll-and-click :request-review-dropdown)
+      (is (btu/eventually-visible? :request-review-action-button))
+      (btu/scroll-and-click :request-review-action-button)
+
+      (is (btu/eventually-visible? :actions-request-review))
+      (btu/scroll-and-click [:actions-request-review
+                             {:css ".form-group > .dropdown-container"}])
+      (is (btu/eventually-visible? {:css ".dropdown-select__menu"}))
+
+      (btu/scroll-and-click [{:css ".dropdown-select__menu"}
+                             {:tag :div :fn/has-text "Carl Reviewer"}])
+
+      (btu/scroll-and-click :request-review-button)
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (logout))
+    (testing "reviewer should see applicant non-private form answers"
+      (login-as "carl")
+      (go-to-application (btu/context-get :application-id))
+      (is (= (count (btu/query-all {:css ".fields"}))
+             1))
+      (is (= {"description" "test-invite-reviewer"}
+             (slurp-fields {:css ".fields"}))))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
