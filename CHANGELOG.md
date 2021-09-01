@@ -16,6 +16,9 @@ Changes since v2.20
 - Handlers can be invited to a workflow by email using the API (#2650)
 - Entitlement expiration field in application actions will now accept only future dates (#2674)
 
+### Changes
+- Reviewers are no longer able to see private field questions in generated application pdf. Forms are also no longer rendered in application page if they contain only private fields (#2161)
+
 ## v2.20 "Vattuniemenkatu" 2021-08-24
 
 ### Fixes
