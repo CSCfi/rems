@@ -40,6 +40,76 @@
                    (#'pdf/render-fields data)))))))
     (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
 
+;; reviewer should not be able to see applicant private form fields
+(deftest test-pdf-reviewer-private-fields
+  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
+  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com"})
+  (let [resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"})
+        form (test-helpers/create-form! {:form/internal-name  "Form"
+                                         :form/external-title {:en "Form"
+                                                               :fi  "Lomake"
+                                                               :sv "Blankett"}
+                                         :form/fields [{:field/type :text
+                                                        :field/privacy :private
+                                                        :field/title {:en "Text field"
+                                                                      :fi "Tekstikenttä"
+                                                                      :sv "Textfält"}
+                                                        :field/optional false
+                                                        :field/info-text {:en "Explanation of how to fill in text field"
+                                                                          :fi "Selitys tekstikentän täyttämisestä"
+                                                                          :sv "Förklaring till hur man fyller i textfält"}
+                                                        :field/placeholder {:en "Placeholder text"
+                                                                            :fi "Täyteteksti"
+                                                                            :sv "Textexempel"}}]})
+        catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
+                                                             :title {:en "Catalogue item"
+                                                                     :fi "Katalogi-itemi"}
+                                                             :form-id form})
+        applicant "alice"
+        handler "developer"
+        application-id (test-helpers/create-application! {:actor applicant
+                                                          :catalogue-item-ids [catalogue-item]
+                                                          :time (time/date-time 2000)})]
+    (testing "fill and submit"
+      (test-helpers/fill-form! {:time (time/date-time 2000)
+                                :actor applicant
+                                :application-id application-id
+                                :field-value "pdf test"
+                                :optional-fields true})
+      (test-helpers/command! {:time (time/date-time 2001)
+                              :application-id application-id
+                              :type :application.command/submit
+                              :actor applicant}))
+    (testing "add reviewer"
+      (test-helpers/command! {:time (time/date-time 2003)
+                              :type :application.command/request-review
+                              :application-id application-id
+                              :actor handler
+                              :reviewers ["carl"]
+                              :comment "please have a look"}))
+    (testing "pdf contents"
+      (is (= [{}
+              [[:heading {:spacing-before 20} "Application 2000/1: "]
+               [:paragraph "This PDF generated at" " " "2010-01-01 00:00"]
+               [:paragraph "State" [:phrase ": " "Applied"]]
+               [:heading {:spacing-before 20} "Applicants"]
+               [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>. Accepted terms of use: Yes"]
+               []
+               [:heading {:spacing-before 20} "Resources"]
+               [:list [[:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Terms of use"] []]
+              [nil]
+              [[:heading {:spacing-before 20} "Events"]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer requested a review from Carl Reviewer." nil "\nComment: please have a look" nil]]]]]
+             (with-language :en
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
+
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
