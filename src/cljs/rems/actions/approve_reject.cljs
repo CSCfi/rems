@@ -5,7 +5,7 @@
             [re-frame.core :as rf]
             [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
             [rems.atoms :refer [close-symbol]]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text localize-utc-date]]))
 
 (def ^:private action-form-id "approve-reject")
 
@@ -84,6 +84,9 @@
                             :id "approve-end"
                             :name "approve-end"
                             :value end
+                            :min (-> (time/now)
+                                     (time/plus (time/days 1))
+                                     localize-utc-date)
                             :required false
                             :on-change #(on-set-entitlement-end (.. % -target -value))}]
       (when end
