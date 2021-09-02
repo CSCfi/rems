@@ -5,7 +5,9 @@
             [rems.application.model :as model]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
-            [rems.util :refer [assert-ex getx]])
+            [rems.util :refer [assert-ex getx]]
+            [rems.testing-util :refer [with-fixed-time]]
+            [clj-time.core :as time])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
            [org.joda.time DateTime]))
@@ -904,14 +906,16 @@
       (is (= {:event/type :application.event/approved
               :event/time test-time
               :event/actor handler-user-id
-              :entitlement/end (DateTime. 1234)
+              :entitlement/end (time/plus (DateTime. 1234) (time/days 1))
               :application/id app-id
               :application/comment "fine"}
-             (ok-command application
-                         {:type :application.command/approve
-                          :actor handler-user-id
-                          :entitlement-end (DateTime. 1234)
-                          :comment "fine"}))))
+             (with-fixed-time (DateTime. 1234)
+               (fn []
+                 (ok-command application
+                             {:type :application.command/approve
+                              :actor handler-user-id
+                              :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
+                              :comment "fine"}))))))
     (testing "rejected successfully"
       (is (= {:event/type :application.event/rejected
               :application/comment "bad"
@@ -921,7 +925,13 @@
              (ok-command application
                          {:type :application.command/reject
                           :actor handler-user-id
-                          :comment "bad"}))))))
+                          :comment "bad"}))))
+    (testing "throws with past entitlement end-date"
+      (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
+             (fail-command application
+                           {:type :application.command/approve
+                            :actor handler-user-id
+                            :entitlement-end (DateTime. 1234)}))))))
 
 (deftest test-close
   (let [application (apply-events nil

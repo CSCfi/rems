@@ -10,7 +10,8 @@
             [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
-            [schema.core :as s])
+            [schema.core :as s]
+            [clj-time.core :as time])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
@@ -320,6 +321,13 @@
        (mapv (fn [license]
                {:license/id (:id license)}))))
 
+(defn- entitlement-end-not-in-future-error
+  "Checks that entitlement date time, if provided, is in the future."
+  [dt]
+  (when dt
+    (when-not (time/after? dt (time/today-at 23 59 59))
+      {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]})))
+
 (defn- application-created-event! [{:keys [catalogue-item-ids time actor] :as cmd}
                                    {:keys [allocate-application-ids! get-catalogue-item get-workflow]
                                     :as injections}]
@@ -387,10 +395,11 @@
 
 (defmethod command-handler :application.command/approve
   [cmd application injections]
-  (add-comment-and-attachments cmd injections
-                               (merge {:event/type :application.event/approved}
-                                      (when-let [end (:entitlement-end cmd)]
-                                        {:entitlement/end end}))))
+  (or (entitlement-end-not-in-future-error (:entitlement-end cmd))
+      (add-comment-and-attachments cmd injections
+                                   (merge {:event/type :application.event/approved}
+                                          (when-let [end (:entitlement-end cmd)]
+                                            {:entitlement/end end})))))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
