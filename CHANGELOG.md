@@ -14,6 +14,7 @@ Changes since v2.20
 - "More info" support for DOI style resources (when `:enable-doi` flag is set) (#2701)
 - There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 - Handlers can be invited to a workflow by email using the API (#2650)
+- Entitlement expiration field in application actions will now accept only future dates (#2674)
 
 ## v2.20 "Vattuniemenkatu" 2021-08-24
 
