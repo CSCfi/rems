@@ -62,8 +62,9 @@
                                                                             :fi "Täyteteksti"
                                                                             :sv "Textexempel"}}]})
         catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
-                                                             :title {:en "Catalogue item"
-                                                                     :fi "Katalogi-itemi"}
+                                                             :title {:en "Resouce"
+                                                                     :fi "Resurssi"
+                                                                     :sv "Resurs"}
                                                              :form-id form})
         applicant "alice"
         handler "developer"
@@ -89,22 +90,22 @@
                               :comment "please have a look"}))
     (testing "pdf contents"
       (is (= [{}
-              [[:heading {:spacing-before 20} "Application 2000/1: "]
-               [:paragraph "This PDF generated at" " " "2010-01-01 00:00"]
-               [:paragraph "State" [:phrase ": " "Applied"]]
-               [:heading {:spacing-before 20} "Applicants"]
-               [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>. Accepted terms of use: Yes"]
+              [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+               [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+               [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+               [:heading {:spacing-before 20} "Sökande"]
+               [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
                []
-               [:heading {:spacing-before 20} "Resources"]
-               [:list [[:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]]]
-              [[:heading {:spacing-before 20} "Terms of use"] []]
-              [nil]
-              [[:heading {:spacing-before 20} "Events"]
+               [:heading {:spacing-before 20} "Resurser"]
+               [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Licenser"] []]
+              []
+              [[:heading {:spacing-before 20} "Händelser"]
                [:list
-                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]
-                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil nil]
-                 [:phrase "2003-01-01 00:00" " " "Developer requested a review from Carl Reviewer." nil "\nComment: please have a look" nil]]]]]
-             (with-language :en
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer begärde granskning av Carl Reviewer." nil "\nKommentar: please have a look" nil]]]]]
+             (with-language :sv
                (fn []
                  (with-fixed-time (time/date-time 2010)
                    (fn []

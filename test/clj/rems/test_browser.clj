@@ -110,16 +110,7 @@
                          {:xpath "./ancestor::tr"}
                          {:css ".add-to-cart"}]))
 
-(defn apply-for-resource [resource-name]
-  (btu/scroll-and-click [{:css "table.cart"}
-                         {:fn/text resource-name}
-                         {:xpath "./ancestor::tr"}
-                         {:css ".apply-for-catalogue-items"}])
-  (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
-  (btu/wait-page-loaded)
-  (btu/screenshot "application-page.png"))
-
-(defn apply-for-resource-bundle []
+(defn click-cart-apply []
   (btu/scroll-and-click [{:css "table.cart"}
                          {:fn/has-text "Apply for"}
                          {:xpath "./ancestor::tr"}
@@ -174,15 +165,15 @@
   Optionally give `:form-nth` when several forms exist. It starts from 1."
   [label text & [opts]]
   (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
-  (assert (> (:form-nth opts 1) 0) "indexing starts at 1") ; css pseudo-selector works the same way as above
+  (assert (> (:form-index opts 1) 0) "indexing starts at 1") ; as above
 
-  (let [el (nth (btu/query-all (into (if-let [form-nth (:form-nth opts)]
-                                       [{:css (str ".application-fields:nth-child(" form-nth ")")}]
-                                       [])
-                                     [{:css ".fields"}
-                                      {:tag :label :fn/has-text label}]))
-                (dec (:index opts 1)))
-        id (btu/get-element-attr-el el :for)]
+  (let [index (dec (:index opts 1))
+        form-index (dec (:form-index opts 1))
+        id (-> (btu/query-all {:css ".fields"})
+               (nth form-index)
+               (btu/children {:tag :label :fn/has-text label})
+               (nth index)
+               (btu/get-element-attr-el :for))]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
 
@@ -288,7 +279,7 @@
       (add-to-cart "Default workflow")
       (add-to-cart "Private form workflow")
       (btu/gather-axe-results)
-      (apply-for-resource-bundle)
+      (click-cart-apply)
       (btu/gather-axe-results)
 
       (btu/context-assoc! :application-id (get-application-id))
@@ -359,7 +350,7 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
-        (fill-form-field "Private text field" "Private field answer" {:form-nth 2})
+        (fill-form-field "Private text field" "Private field answer" {:form-index 2})
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
@@ -582,7 +573,7 @@
                                                                             :field/optional false
                                                                             :field/type :description}
                                                                            {:field/title {:en "private" :fi "fi" :sv "sv"}
-                                                                            :field/optional true
+                                                                            :field/optional false
                                                                             :field/type :text
                                                                             :field/privacy :private}]}))
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {}))
@@ -632,7 +623,7 @@
              (slurp-fields :applicant-info))))
     (testing "handler should see all form fields"
       (is (= {"description" "test-handling"
-              "private (optional)" ""}
+              "private" "test-handling"}
              (slurp-fields {:css ".fields"}))))
 
     (testing "remove the disabled catalogue item"
