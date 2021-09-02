@@ -1,0 +1,4 @@
+CREATE TABLE duo_code (
+  id VARCHAR(255) NOT NULL PRIMARY KEY,
+  data jsonb NOT NULL
+);

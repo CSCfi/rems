@@ -679,3 +679,16 @@ WHERE id = :id;
 -- :name delete-invitation! :!
 DELETE FROM invitation
 WHERE id = :id;
+
+-- :name get-duo-codes :? :*
+SELECT
+  id,
+  data::TEXT AS data
+FROM duo_code
+ORDER BY id;
+
+-- :name upsert-duo-code! :insert
+INSERT INTO duo_code(id, data) VALUES (:id, :data::jsonb)
+ON CONFLICT (id) DO UPDATE
+SET data = :data::jsonb
+RETURNING id;
