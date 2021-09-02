@@ -15,6 +15,7 @@
             [rems.api.extra-pages :refer [extra-pages-api]]
             [rems.api.forms :refer [forms-api]]
             [rems.api.health :refer [health-api]]
+            [rems.api.invitations :refer [invitations-api]]
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.organizations :refer [organizations-api]]
             [rems.api.permissions :refer [permissions-api]]
@@ -184,6 +185,7 @@
       extra-pages-api
       forms-api
       health-api
+      invitations-api
       licenses-api
       organizations-api
       permissions-api

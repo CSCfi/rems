@@ -14,10 +14,12 @@
             [com.rpl.specter :refer [select ALL]]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.form :as forms]
+            [rems.api.services.invitation :as invitations]
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resources]
             [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
+            [rems.common.util :refer [getx]]
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -724,6 +726,45 @@
                  :application/events
                  last
                  (select-keys [:application/decision :application/comment :event/actor :event/type])))))))
+
+(deftest test-invite-handler
+  (testing "create test data"
+    (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                            :field/optional false
+                                                                            :field/type :description}]}))
+    (btu/context-assoc! :workflow-title (str "test-invite-handler " (btu/get-seed)))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-get :workflow-title) :handlers []}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
+                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name"})
+    (with-user "owner"
+      (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
+                                                                                :name "Dorothy Vaughan"
+                                                                                :email "dorothy.vaughan@nasa.gov"
+                                                                                :workflow-id (btu/context-get :workflow-id)}) :invitation/id))))
+  (btu/with-postmortem
+    (testing "get invitation token"
+      (let [invitation (-> (btu/context-get :invitation-id) invitations/get-invitation-full)
+            token (:invitation/token invitation)]
+        (is (string? token))
+        (btu/context-assoc! :token token)))
+
+    (testing "accept invitation"
+      (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
+      (btu/wait-page-loaded)
+      (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
+      (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-get :workflow-title)}]))
+      (is (= {"Organization" "The Default Organization"
+              "Title" (btu/context-get :workflow-title)
+              "Type" "Master workflow"
+              "Handlers" "Invited Person Name"
+              "Active" true
+              "Forms" ""}
+             (slurp-fields :workflow))))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"

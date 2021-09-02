@@ -10,6 +10,7 @@
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
+            [rems.db.invitation :as invitation]
             [rems.db.outbox :as outbox]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
@@ -51,6 +52,20 @@
                                             (map #(= :waiting-for-your-review (:application/todo %))))]
                               (template/reviewer-reminder-email lang reviewer apps))))
                      (remove nil?))]
+    (enqueue-email! email)))
+
+(defn- render-invitation-template [invitation]
+  (let [lang (:default-language env)] ; we don't know the preferred languages here since there is no user
+    (cond (:invitation/workflow invitation)
+          (let [workflow (workflow/get-workflow (get-in invitation [:invitation/workflow :workflow/id]))]
+            (assert workflow "Can't send invitation, missing workflow")
+            (template/workflow-handler-invitation-email lang invitation workflow)))))
+
+(defn generate-invitation-emails! [invitations]
+  (doseq [invitation invitations
+          :when (not (:invitation/sent invitation))
+          :let [email (render-invitation-template invitation)]]
+    (invitation/mail-sent! (:invitation/id invitation))
     (enqueue-email! email)))
 
 ;;; Email poller

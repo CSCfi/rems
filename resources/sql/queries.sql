@@ -652,3 +652,30 @@ RETURNING id;
 UPDATE organization
 SET data = :data::jsonb, modified = :time, modifierUserId = :user
 WHERE id = :id;
+
+-- :name add-invitation! :insert
+INSERT INTO invitation (invitationdata)
+VALUES (:invitationdata::jsonb)
+ON CONFLICT (id) DO NOTHING
+RETURNING id;
+
+-- :name get-invitations :? :*
+SELECT id, invitationdata::TEXT
+FROM invitation
+WHERE 1 = 1
+/*~ (when (:token params) */
+  AND invitationdata->>'invitation/token' = :token
+/*~ ) ~*/
+/*~ (when (:ids params) */
+  AND id IN (:v*:ids)
+/*~ ) ~*/
+ORDER BY id ASC;
+
+-- :name set-invitation! :!
+UPDATE invitation
+SET invitationdata = :invitationdata::jsonb
+WHERE id = :id;
+
+-- :name delete-invitation! :!
+DELETE FROM invitation
+WHERE id = :id;

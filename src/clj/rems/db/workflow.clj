@@ -19,13 +19,13 @@
 (def ^:private validate-workflow-body
   (s/validator WorkflowBody))
 
-(defn create-workflow! [{:keys [user-id organization type title handlers forms]}]
+(defn create-workflow! [{:keys [userid organization type title handlers forms]}]
   (let [body {:type type
               :handlers handlers
               :forms forms}]
     (:id (db/create-workflow! {:organization (:organization/id organization)
-                               :owneruserid user-id
-                               :modifieruserid user-id
+                               :owneruserid userid
+                               :modifieruserid userid
                                :title title
                                :workflow (json/generate-string
                                           (validate-workflow-body body))}))))
@@ -57,3 +57,20 @@
   (when (some #(contains? (set (map :userid (get-in % [:workflow :handlers]))) userid)
               (get-workflows nil))
     #{:handler}))
+
+(defn- unrich-workflow [workflow]
+  ;; TODO: service does this too
+  ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
+  (if (get-in workflow [:workflow :handlers])
+    (update-in workflow [:workflow :handlers] #(map :userid %))
+    workflow))
+
+(defn edit-workflow! [{:keys [id organization title handlers]}]
+  (let [workflow (unrich-workflow (get-workflow id))
+        workflow-body (cond-> (:workflow workflow)
+                        handlers (assoc :handlers handlers))]
+    (db/edit-workflow! {:id (or id (:id workflow))
+                        :title (or title (:title workflow))
+                        :organization (or (:organization/id organization) (get-in workflow [:organization :organization/id]))
+                        :workflow (json/generate-string workflow-body)}))
+  {:success true})

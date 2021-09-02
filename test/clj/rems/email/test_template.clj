@@ -4,6 +4,7 @@
             [rems.application.model :as model]
             [rems.config]
             [rems.db.user-settings :as user-settings]
+            [rems.db.workflow :as workflow]
             [rems.email.template :as template]
             [rems.locales])
   (:import (org.joda.time DateTime)))
@@ -492,3 +493,17 @@
                 :application/applicant {:userid "arnold"
                                         :email "arnold@example.com"
                                         :name "Arnold Applicant"}}]))))))
+
+(deftest test-workflow-handler-invitation-email
+  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
+    (is (= {:to "hamza@institute.org"
+            :subject "Invitation to handle applications"
+            :body "Dear Hamza Handler,\n\nEliza Owner has invited you to be a handler of applications of workflow Template Workflow.\n\nYou can view the workflow at http://example.com/accept-invitation?token=secret"}
+           (template/workflow-handler-invitation-email
+            :en
+            {:invitation/name "Hamza Handler"
+             :invitation/email "hamza@institute.org"
+             :invitation/invited-by {:name "Eliza Owner"}
+             :invitation/token "secret"
+             :invitation/workflow {:workflow/id 5}}
+            {:title "Template Workflow"})))))

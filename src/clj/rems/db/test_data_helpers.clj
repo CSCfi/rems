@@ -146,7 +146,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (workflow/create-workflow!
-                  {:user-id actor
+                  {:userid actor
                    :organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)

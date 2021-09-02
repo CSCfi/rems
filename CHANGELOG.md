@@ -8,8 +8,12 @@ have notable changes.
 
 Changes since v2.20
 
+**NB: This release contains migrations!**
+
 ### Additions
 - "More info" support for DOI style resources (when `:enable-doi` flag is set) (#2701)
+- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
+- Handlers can be invited to a workflow by email using the API (#2650)
 
 ## v2.20 "Vattuniemenkatu" 2021-08-24
 
@@ -24,7 +28,6 @@ Changes since v2.20
 
 ### Additions
 - Pdf applications now contain license text (for inline licenses), url (for link licenses) or attachment name (for attachment licenses), and license acceptance status for applicant and members. (#2688)
-- There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 
 ## v2.18 "Särkiniemientie" 2021-05-18
 

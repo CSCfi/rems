@@ -752,12 +752,12 @@
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
-(defn- personalize-todo [application user-id]
+(defn- personalize-todo [application userid]
   (cond-> application
-    (contains? (::latest-review-request-by-user application) user-id)
+    (contains? (::latest-review-request-by-user application) userid)
     (assoc :application/todo :waiting-for-your-review)
 
-    (contains? (::latest-decision-request-by-user application) user-id)
+    (contains? (::latest-decision-request-by-user application) userid)
     (assoc :application/todo :waiting-for-your-decision)))
 
 (defn- visible-attachment-ids [application]
@@ -788,22 +788,22 @@
   (or (contains? roles :applicant)
       (contains? roles :member)))
 
-(defn see-application? [application user-id]
-  (let [permissions (permissions/user-roles application user-id)]
+(defn see-application? [application userid]
+  (let [permissions (permissions/user-roles application userid)]
     (if (= :application.state/draft (:application/state application))
       (user-is-applicant-or-member permissions)
       (not= #{:everyone-else} permissions))))
 
-(defn apply-user-permissions [application user-id]
-  (let [see-application? (see-application? application user-id)
-        roles (permissions/user-roles application user-id)
-        permissions (permissions/user-permissions application user-id)
+(defn apply-user-permissions [application userid]
+  (let [see-application? (see-application? application userid)
+        roles (permissions/user-roles application userid)
+        permissions (permissions/user-permissions application userid)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
-          (personalize-todo user-id)
+          (personalize-todo userid)
           (hide-non-public-information)
           (apply-privacy roles)
           (hide-attachments)

@@ -1,5 +1,12 @@
 {:t
- {:actions {:accept-invitation "Acceptera inbjudan"
+ {:accept-invitation {:header "Acceptera inbjudan"
+                      :title "Acceptera inbjudan"
+                      :success {:workflow "Du är nu handläggaren."}
+                      :errors {:already-member {:workflow "Du är redan handläggaren."}
+                               :invalid-invitation-type "Acceptering misslyckades."
+                               :invalid-token [:div [:p "Acceptering misslyckades."] [:p "Vänligen kontrollera koden för inbjudan " [:code "%1"]]]
+                               :invalid-workflow "Acceptering misslyckades."}}
+  :actions {:accept-invitation "Acceptera inbjudan"
             :accept-invitation-already-member "Du deltar redan."
             :accept-invitation-success "Du deltar nu i ansökan."
             :accept-licenses "Acceptera licenserna"
@@ -361,8 +368,10 @@
           :reviewer-invited {:subject "Inbjudan att delta i behandling av ansökan %3" ; TODO check
                              :message "%1,\n\nDu är inbjuden att delta i handling av %2s ansökan %3 om tillgång till material.\n\nDu kan granska ansökningen här: %4"} ; TODO check
           :reviewer-reminder {:application "%1, skickad av %2"
-                              :message "%1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska ansökningarna här:  %3"
-                              :subject "Ansökningar väntar på granskning"}}
+                              :message "%1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska ansökningarna här: %3"
+                              :subject "Ansökningar väntar på granskning"}
+          :workflow-handler-invitation {:message "%1,\n\n%2 har bjudit in dig som handläggare av ansökningar till arbetsflöde %3.\n\nDu kan granska arbetsflöden här: %4"
+                                        :subject "Inbjudan att delta i handling av ansökningar"}}
   :footer "CSC – IT-centret för forskning"
   :form {:accepted-licenses "Licenserna har accepterats"
          :actions "Funktioner"

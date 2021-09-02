@@ -9,10 +9,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ token]]
-   {:db (assoc db ::token token)
-    ::accept-invitation token}))
-
-(rf/reg-sub ::token (fn [db] (::token db "")))
+   {::accept-invitation token}))
 
 (rf/reg-fx
  ::accept-invitation

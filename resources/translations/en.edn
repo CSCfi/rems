@@ -1,5 +1,12 @@
 {:t
- {:actions {:accept-invitation "Accept invitation"
+ {:accept-invitation {:header "Accept invitation"
+                      :title "Accept invitation"
+                      :success {:workflow "Successfully joined workflow handling."}
+                      :errors {:already-member {:workflow "You are already a handler."}
+                               :invalid-invitation-type "Accepting invitation failed."
+                               :invalid-token [:span "Accepting the invitation failed. Check the invitation token " [:code "%1"]]
+                               :invalid-workflow "Accepting invitation failed."}}
+  :actions {:accept-invitation "Accept invitation"
             :accept-invitation-already-member "You are already a member."
             :accept-invitation-success "Successfully joined the application."
             :accept-licenses "Accept the terms of use"
@@ -403,7 +410,9 @@
                              :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
           :reviewer-reminder {:application "%1, submitted by %2"
                               :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
-                              :subject "Applications pending review"}}
+                              :subject "Applications pending review"}
+          :workflow-handler-invitation {:message "Dear %1,\n\n%2 has invited you to be a handler of applications of workflow %3.\n\nYou can view the workflow at %4"
+                                        :subject "Invitation to handle applications"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"

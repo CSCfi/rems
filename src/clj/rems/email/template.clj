@@ -281,3 +281,22 @@
                               (application-util/get-member-name reviewer)
                               list
                               (str (:public-url env) "actions"))})))))
+
+(defn workflow-handler-invitation-email [lang invitation workflow]
+  (with-language lang
+    (fn []
+      (when workflow
+        {:to (:invitation/email invitation)
+         :subject (text-format :t.email.workflow-handler-invitation/subject
+                               (:invitation/name invitation)
+                               (get-in invitation [:invitation/invited-by :name])
+                               (:title workflow)
+                               (invitation-link (:invitation/token invitation)))
+         :body (str
+                (text-format :t.email.workflow-handler-invitation/message
+                             (:invitation/name invitation)
+                             (get-in invitation [:invitation/invited-by :name])
+                             (:title workflow)
+                             (invitation-link (:invitation/token invitation)))
+                (text :t.email/regards)
+                (text :t.email/footer))}))))
