@@ -40,36 +40,54 @@
                    (#'pdf/render-fields data)))))))
     (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
 
-;; reviewer should not be able to see applicant private form fields
-(deftest test-pdf-reviewer-private-fields
+(deftest test-pdf-privacy
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com"})
+  (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
   (let [resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"})
+        resource-2 (test-helpers/create-resource! {:resource-ext-id "pdf-resource-2-ext"})
+        wfid (test-helpers/create-workflow! {})
         form (test-helpers/create-form! {:form/internal-name  "Form"
                                          :form/external-title {:en "Form"
                                                                :fi  "Lomake"
                                                                :sv "Blankett"}
                                          :form/fields [{:field/type :text
+                                                        :field/title {:en "Public text field"
+                                                                      :fi "Julkinen tekstikenttä"
+                                                                      :sv "Offentligt textfält"}
+                                                        :field/optional false}
+                                                       {:field/type :text
                                                         :field/privacy :private
-                                                        :field/title {:en "Text field"
-                                                                      :fi "Tekstikenttä"
-                                                                      :sv "Textfält"}
-                                                        :field/optional false
-                                                        :field/info-text {:en "Explanation of how to fill in text field"
-                                                                          :fi "Selitys tekstikentän täyttämisestä"
-                                                                          :sv "Förklaring till hur man fyller i textfält"}
-                                                        :field/placeholder {:en "Placeholder text"
-                                                                            :fi "Täyteteksti"
-                                                                            :sv "Textexempel"}}]})
+                                                        :field/title {:en "Private text field"
+                                                                      :fi "Yksityinen tekstikenttä"
+                                                                      :sv "Privat textfält"}
+                                                        :field/optional false}]})
+        private-form (test-helpers/create-form! {:form/internal-name  "Private form"
+                                                 :form/external-title {:en "Private form"
+                                                                       :fi "Yksityinen lomake"
+                                                                       :sv "Privat blankett"}
+                                                 :form/fields [{:field/type :text
+                                                                :field/privacy :private
+                                                                :field/title {:en "Private text field"
+                                                                              :fi "Yksityinen tekstikenttä"
+                                                                              :sv "Privat textfält"}
+                                                                :field/optional false}]})
         catalogue-item (test-helpers/create-catalogue-item! {:resource-id resource
-                                                             :title {:en "Resouce"
+                                                             :workflow-id wfid
+                                                             :title {:en "Resource"
                                                                      :fi "Resurssi"
                                                                      :sv "Resurs"}
                                                              :form-id form})
+        catalogue-item-2 (test-helpers/create-catalogue-item! {:resource-id resource-2
+                                                               :workflow-id wfid
+                                                               :title {:en "Resource 2"
+                                                                       :fi "Resurssi 2"
+                                                                       :sv "Resurs 2"}
+                                                               :form-id private-form})
         applicant "alice"
         handler "developer"
         application-id (test-helpers/create-application! {:actor applicant
-                                                          :catalogue-item-ids [catalogue-item]
+                                                          :catalogue-item-ids [catalogue-item catalogue-item-2]
                                                           :time (time/date-time 2000)})]
     (testing "fill and submit"
       (test-helpers/fill-form! {:time (time/date-time 2000)
@@ -88,28 +106,118 @@
                               :actor handler
                               :reviewers ["carl"]
                               :comment "please have a look"}))
-    (testing "pdf contents"
-      (is (= [{}
-              [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
-               [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
-               [:paragraph "Status" [:phrase ": " "Inlämnad"]]
-               [:heading {:spacing-before 20} "Sökande"]
-               [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
-               []
-               [:heading {:spacing-before 20} "Resurser"]
-               [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]]]]
-              [[:heading {:spacing-before 20} "Licenser"] []]
-              []
-              [[:heading {:spacing-before 20} "Händelser"]
-               [:list
-                [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
-                 [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]
-                 [:phrase "2003-01-01 00:00" " " "Developer begärde granskning av Carl Reviewer." nil "\nKommentar: please have a look" nil]]]]]
-             (with-language :sv
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
+    (testing "decide"
+      (test-helpers/command! {:time (time/date-time 2003)
+                              :application-id application-id
+                              :type :application.command/request-decision
+                              :comment "please decide"
+                              :deciders ["david"]
+                              :actor handler})
+      (test-helpers/command! {:time (time/date-time 2003)
+                              :application-id application-id
+                              :type :application.command/decide
+                              :comment "I have decided"
+                              :decision :approved
+                              :actor "david"}))
+
+    (let [all-form-fields [[[:heading {:spacing-before 20} "Blankett"]
+                            [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
+                              [:paragraph "pdf test"]]
+                             [[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
+                              [:paragraph "pdf test"]]]]
+                           [[:heading {:spacing-before 20} "Privat blankett"]
+                            [[[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
+                              [:paragraph "pdf test"]]]]]
+          only-public-fields [[[:heading {:spacing-before 20} "Blankett"]
+                               [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
+                                 [:paragraph "pdf test"]]]]]
+          all-events [[:heading {:spacing-before 20} "Händelser"]
+                      [:list
+                       [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
+                        [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]
+                        [:phrase "2003-01-01 00:00" " " "Developer begärde granskning av Carl Reviewer." nil "\nKommentar: please have a look" nil]
+                        [:phrase "2003-01-01 00:00" " " "Developer begärde beslut från användare David Decider." nil "\nKommentar: please decide" nil]
+                        [:phrase "2003-01-01 00:00" " " "David Decider behandlade ansökan." "\nDavid Decider godkände ansökan." "\nKommentar: I have decided" nil]]]]
+          only-applicant-events [[:heading {:spacing-before 20} "Händelser"]
+                                 [:list
+                                  [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
+                                   [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]]]]]
+      (testing "alice should not see reviewer and decider actions"
+        (is (= [{}
+                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+                 [:heading {:spacing-before 20} "Sökande"]
+                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+                 []
+                 [:heading {:spacing-before 20} "Resurser"]
+                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+                [[:heading {:spacing-before 20} "Licenser"] []]
+                all-form-fields
+                only-applicant-events]
+               (with-language :sv
+                 (fn []
+                   (with-fixed-time (time/date-time 2010)
+                     (fn []
+                       (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))))
+      (testing "handler should see complete application"
+        (is (= [{}
+                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+                 [:heading {:spacing-before 20} "Sökande"]
+                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+                 []
+                 [:heading {:spacing-before 20} "Resurser"]
+                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+                [[:heading {:spacing-before 20} "Licenser"] []]
+                all-form-fields
+                all-events]
+               (with-language :sv
+                 (fn []
+                   (with-fixed-time (time/date-time 2010)
+                     (fn []
+                       (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))))
+      (testing "decider should see complete application"
+        (is (= [{}
+                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+                 [:heading {:spacing-before 20} "Sökande"]
+                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+                 []
+                 [:heading {:spacing-before 20} "Resurser"]
+                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+                [[:heading {:spacing-before 20} "Licenser"] []]
+                all-form-fields
+                all-events]
+               (with-language :sv
+                 (fn []
+                   (with-fixed-time (time/date-time 2010)
+                     (fn []
+                       (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))))
+      (testing "reviewer should not see private fields"
+        (is (= [{}
+                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+                 [:heading {:spacing-before 20} "Sökande"]
+                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+                 []
+                 [:heading {:spacing-before 20} "Resurser"]
+                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+                [[:heading {:spacing-before 20} "Licenser"] []]
+                only-public-fields
+                all-events]
+               (with-language :sv
+                 (fn []
+                   (with-fixed-time (time/date-time 2010)
+                     (fn []
+                       (#'pdf/render-application (applications/get-application-for-user "carl" application-id))))))))))))
 
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
