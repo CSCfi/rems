@@ -40,7 +40,7 @@
                    (#'pdf/render-fields data)))))))
     (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
 
-(deftest test-pdf-privacy
+(deftest test-pdf-private-form-fields
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
   (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com"})
   (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
