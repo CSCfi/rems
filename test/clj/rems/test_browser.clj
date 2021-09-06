@@ -350,7 +350,7 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
-        (fill-form-field "Private text field" "Private field answer" {:form-index 2})
+        (fill-form-field "Simple text field" "Private field answer" {:form-index 2})
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
