@@ -397,6 +397,8 @@
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
          :invalid-attachment "Filtyp inte tillåten."
+         :too-large-attachment "Bilaga storlek är inte tillåten"
+         :attachment-max-size "Maximal storlek på bilaga"
          :licenses "Licenser"
          :maxlength "(max %1 tecken)"
          :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."

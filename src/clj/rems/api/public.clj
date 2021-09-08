@@ -25,6 +25,7 @@
    :catalogue-is-public s/Bool
    :extra-pages [ExtraPage]
    :enable-assign-external-id-ui s/Bool
+   :attachment-max-size (s/maybe s/Int)
    :entitlement-default-length-days (s/maybe s/Int)
    :languages [s/Keyword]
    :default-language s/Keyword
@@ -71,7 +72,8 @@
                             :oidc-extra-attributes
                             :enable-assign-external-id-ui
                             :enable-ega
-                            :enable-doi])))
+                            :enable-doi
+                            :attachment-max-size])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"

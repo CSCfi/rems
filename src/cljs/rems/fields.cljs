@@ -1,6 +1,7 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
@@ -305,7 +306,8 @@
 
 (defn- upload-button [id status on-upload]
   (let [upload-id (str id "-input")
-        info-id (str id "-info")]
+        info-id (str id "-info")
+        config @(rf/subscribe [:rems.config/config])]
     [:div.upload-file.mr-2
      [:input {:style {:display "none"}
               :type "file"
@@ -335,9 +337,15 @@
       {:info-id info-id
        :aria-label-text (text :t.form/upload-extensions)
        :focus-when-collapse-opened focus-when-collapse-opened
-       :body-text [:span [text :t.form/upload-extensions]
-                   ": "
-                   attachment-types/allowed-extensions-string]}]]))
+       :body-text [:<>
+                   [:div
+                    [:span [text :t.form/upload-extensions]
+                     ": "
+                     attachment-types/allowed-extensions-string]]
+                   [:div
+                    [:span [text :t.form/attachment-max-size]
+                     ": "
+                     (:attachment-max-size config)]]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group

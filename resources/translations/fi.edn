@@ -397,6 +397,8 @@
          :failed "Epäonnistui"
          :has-accepted-licenses "Käyttöehdot hyväksytty."
          :invalid-attachment "Liitteen tiedostomuoto ei ole sallittu."
+         :too-large-attachment "Liitetiedoston koko ei ole sallituissa rajoissa"
+         :attachment-max-size "Liitetiedoston suurin sallittu koko"
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."

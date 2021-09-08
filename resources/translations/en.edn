@@ -438,6 +438,8 @@
          :failed "Failed"
          :has-accepted-licenses "Terms of use accepted."
          :invalid-attachment "Attachment file type not allowed."
+         :too-large-attachment "Attachment size is too large"
+         :attachment-max-size "Allowed maximum size of attachment"
          :licenses "Terms of use"
          ;; %1 - number
          :maxlength "(max %1 characters)"

@@ -228,32 +228,44 @@
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
-        description [text :t.form/upload]]
+        description [text :t.form/upload]
+        config @(rf/subscribe [:rems.config/config])
+        file-size (.. file (get "file") -size)]
     (rf/dispatch [::set-attachment-status form-id field-id :pending])
-    (post! "/api/applications/add-attachment"
-           {:url-params {:application-id application-id}
-            :body file
+    (if (some-> (:attachment-max-size config)
+                (< file-size))
+      (do
+        (rf/dispatch [::set-attachment-status form-id field-id :error])
+        (flash-message/show-default-error! :actions description
+                                           [:div
+                                            [:p [text :t.form/too-large-attachment]]
+                                            [:p [text :t.form/attachment-max-size]
+                                             ": "
+                                             (:attachment-max-size config)]]))
+      (post! "/api/applications/add-attachment"
+             {:url-params {:application-id application-id}
+              :body file
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
-            :handler (fn [response]
+              :handler (fn [response]
                        ;; no need to check (:success response) - the API can't fail at the moment
                        ;; no race condition here: events are handled in a FIFO manner
-                       (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
-                                                                         (conj current-attachments (:id response)))])
-                       (rf/dispatch [::save-application description
-                                     #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
-            :error-handler (fn [response]
-                             (rf/dispatch [::set-attachment-status form-id field-id :error])
-                             (if (= 415 (:status response))
-                               (flash-message/show-default-error! :actions description
-                                                                  [:div
-                                                                   [:p [text :t.form/invalid-attachment]]
-                                                                   [:p [text :t.form/upload-extensions]
-                                                                    ": "
-                                                                    attachment-types/allowed-extensions-string]])
-                               ((flash-message/default-error-handler :actions description) response)))})
-    {}))
+                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                           (conj current-attachments (:id response)))])
+                         (rf/dispatch [::save-application description
+                                       #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
+              :error-handler (fn [response]
+                               (rf/dispatch [::set-attachment-status form-id field-id :error])
+                               (if (= 415 (:status response))
+                                 (flash-message/show-default-error! :actions description
+                                                                    [:div
+                                                                     [:p [text :t.form/invalid-attachment]]
+                                                                     [:p [text :t.form/upload-extensions]
+                                                                      ": "
+                                                                      attachment-types/allowed-extensions-string]])
+                                 ((flash-message/default-error-handler :actions description) response)))})))
+  {})
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
