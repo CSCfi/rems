@@ -169,12 +169,10 @@
                             (boolean (:field/optional field))
                             false)}
          (when (common-form/supports-date-bounds? field)
-           (when-let [keyseq (-> (get-in field [:field/date-bounds :date-bounds/type])
-                                 ({:min-date [:date-bounds/min-date]
-                                   :max-date [:date-bounds/max-date]
-                                   :both [:date-bounds/min-date :date-bounds/max-date]})
-                                 (conj :date-bounds/type))]
-             {:field/date-bounds (select-keys (:field/date-bounds field) keyseq)}))
+           (when (= :private (get-in field [:field/privacy]))
+             {:field/privacy (:field/privacy field)})
+           (when-let [past-or-future (#{:past :future} (get-in field [:field/date-bounds :date-bounds/type]))]
+             {:field/date-bounds past-or-future}))
          (when (common-form/supports-info-text? field)
            (when-let [v (build-localized-string (:field/info-text field) languages)]
              {:field/info-text v}))
@@ -473,7 +471,9 @@
          :class (when error-type "is-invalid")
          :on-change #(rf/dispatch [::form-field-date-bounds-type field-index (keyword (.. % -target -value))])
          :value (or date-bounds-type "")}
-        (doall (for [opt-kw [:t.create-form.date-bounds/none
+        (doall (for [opt-kw [:t.create-form.date-bounds/past
+                             :t.create-form.date-bounds/future
+                             :t.create-form.date-bounds/none
                              :t.create-form.date-bounds/min-date
                              :t.create-form.date-bounds/max-date
                              :t.create-form.date-bounds/both]

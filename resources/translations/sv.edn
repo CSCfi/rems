@@ -259,7 +259,9 @@
                 :column-key "Id"
                 :column-label "Titel"
                 :confirm-remove-field "Ta bort fält?" ; TODO check
-                :date-bounds {:both "Både"
+                :date-bounds {:past "Tidigare"
+                              :future "Framtida"
+                              :both "Både"
                               :max-date "Slutdatum"
                               :min-date "Startdatum"
                               :none "Ingen begränsning"}
