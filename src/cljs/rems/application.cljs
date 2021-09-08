@@ -245,26 +245,35 @@
       (post! "/api/applications/add-attachment"
              {:url-params {:application-id application-id}
               :body file
-            ;; force saving a draft when you upload an attachment.
-            ;; this ensures that the attachment is not left
-            ;; dangling (with no references to it)
+              ;; force saving a draft when you upload an attachment.
+              ;; this ensures that the attachment is not left
+              ;; dangling (with no references to it)
               :handler (fn [response]
-                       ;; no need to check (:success response) - the API can't fail at the moment
-                       ;; no race condition here: events are handled in a FIFO manner
+                         ;; no need to check (:success response) - the API can't fail at the moment
+                         ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
                          (rf/dispatch [::save-application description
                                        #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
-                               (if (= 415 (:status response))
-                                 (flash-message/show-default-error! :actions description
-                                                                    [:div
-                                                                     [:p [text :t.form/invalid-attachment]]
-                                                                     [:p [text :t.form/upload-extensions]
-                                                                      ": "
-                                                                      attachment-types/allowed-extensions-string]])
-                                 ((flash-message/default-error-handler :actions description) response)))})))
+                               (cond (= 413 (:status response))
+                                     (flash-message/show-default-error! :actions description
+                                                                        [:div
+                                                                         [:p [text :t.form/invalid-attachment]]
+                                                                         [:p [text :t.form/upload-extensions]
+                                                                          ": "
+                                                                          attachment-types/allowed-extensions-string]])
+
+                                     (= 415 (:status response))
+                                     (flash-message/show-default-error! :actions description
+                                                                        [:div
+                                                                         [:p [text :t.form/invalid-attachment]]
+                                                                         [:p [text :t.form/upload-extensions]
+                                                                          ": "
+                                                                          attachment-types/allowed-extensions-string]])
+
+                                     :else ((flash-message/default-error-handler :actions description) response)))})))
   {})
 
 (rf/reg-event-fx ::save-attachment save-attachment)

@@ -29,7 +29,8 @@
     {:success (not (nil? licid))
      :id licid}))
 
-(defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
+(defn create-license-attachment! [{:keys [tempfile filename content-type] :as file} user-id]
+  (attachments/check-size file)
   (attachments/check-allowed-attachment filename)
   (let [byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]

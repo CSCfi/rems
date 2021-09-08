@@ -6,12 +6,17 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
-  (:import [rems InvalidRequestException]))
+  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
+
+(defn check-size
+  [file]
+  (when (= :too-large (:error file)) ; set already by the multipart upload wrapper
+    (throw (PayloadTooLargeException. (str "File is too large")))))
 
 (defn check-allowed-attachment
   [filename]
   (when-not (attachment-types/allowed-extension? filename)
-    (throw (InvalidRequestException. (str "Unsupported extension: " filename)))))
+    (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
 
 (defn get-attachment [attachment-id]
   (when-let [{:keys [modifieruserid type appid filename data]} (db/get-attachment {:id attachment-id})]
