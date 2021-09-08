@@ -10,7 +10,7 @@
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [focus-when-collapse-opened linkify]]))
+            [rems.util :refer [focus-when-collapse-opened linkify format-file-size]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -343,9 +343,8 @@
                      ": "
                      attachment-types/allowed-extensions-string]]
                    [:div
-                    [:span [text :t.form/attachment-max-size]
-                     ": "
-                     (:attachment-max-size config)]]]}]]))
+                    (text-format :t.form/attachment-max-size
+                                 (format-file-size (:attachment-max-size config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group

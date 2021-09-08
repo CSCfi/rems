@@ -39,7 +39,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
 ;;;; Helpers
 
@@ -230,7 +230,8 @@
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
         description [text :t.form/upload]
         config @(rf/subscribe [:rems.config/config])
-        file-size (.. file (get "file") -size)]
+        file-size (.. file (get "file") -size)
+        file-name (.. file (get "file") -name)]
     (rf/dispatch [::set-attachment-status form-id field-id :pending])
     (if (some-> (:attachment-max-size config)
                 (< file-size))
@@ -239,9 +240,8 @@
         (flash-message/show-default-error! :actions description
                                            [:div
                                             [:p [text :t.form/too-large-attachment]]
-                                            [:p [text :t.form/attachment-max-size]
-                                             ": "
-                                             (:attachment-max-size config)]]))
+                                            [:p (str file-name " " (format-file-size file-size))]
+                                            [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]]))
       (post! "/api/applications/add-attachment"
              {:url-params {:application-id application-id}
               :body file
