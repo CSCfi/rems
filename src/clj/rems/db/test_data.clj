@@ -1170,17 +1170,17 @@
           handler (users :approver2)
           reviewer (users :reviewer)
           catid-1 (create-catalogue-item! {:actor owner
-                                           :title {:en "Test workflow"
-                                                   :fi "Testityövuo"
-                                                   :sv "Test arbetsflöde"}
+                                           :title {:en "Default workflow with public and private fields"
+                                                   :fi "Testityövuo julkisilla ja yksityisillä lomakekentillä"
+                                                   :sv "Standard arbetsflöde med publika och privata textfält"}
                                            :resource-id res1
                                            :form-id form-with-public-and-private-fields
                                            :organization {:organization/id "nbn"}
                                            :workflow-id (:default workflows)})
           catid-2 (create-catalogue-item! {:actor owner
-                                           :title {:en "Test workflow with private form"
-                                                   :fi "Testityövuo yksityisellä lomakkeella"
-                                                   :sv "Test arbetsflöde med privat blankett"}
+                                           :title {:en "Default workflow with private form"
+                                                   :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                   :sv "Standard arbetsflöde med privat blankett"}
                                            :resource-id res2
                                            :form-id form-private-nbn
                                            :organization {:organization/id "nbn"}

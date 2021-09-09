@@ -572,7 +572,7 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}
-                                                                           {:field/title {:en "private" :fi "fi" :sv "sv"}
+                                                                           {:field/title {:en "private en" :fi "private fi" :sv "private sv"}
                                                                             :field/optional false
                                                                             :field/type :text
                                                                             :field/privacy :private}]}))
@@ -623,7 +623,7 @@
              (slurp-fields :applicant-info))))
     (testing "handler should see all form fields"
       (is (= {"description" "test-handling"
-              "private" "test-handling"}
+              "private en" "test-handling"}
              (slurp-fields {:css ".fields"}))))
 
     (testing "remove the disabled catalogue item"

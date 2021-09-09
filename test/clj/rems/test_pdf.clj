@@ -120,104 +120,126 @@
                               :decision :approved
                               :actor "david"}))
 
-    (let [all-form-fields [[[:heading {:spacing-before 20} "Blankett"]
-                            [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
-                              [:paragraph "pdf test"]]
-                             [[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
-                              [:paragraph "pdf test"]]]]
-                           [[:heading {:spacing-before 20} "Privat blankett"]
-                            [[[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
-                              [:paragraph "pdf test"]]]]]
-          only-public-fields [[[:heading {:spacing-before 20} "Blankett"]
-                               [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
-                                 [:paragraph "pdf test"]]]]]
-          all-events [[:heading {:spacing-before 20} "Händelser"]
-                      [:list
-                       [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
-                        [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]
-                        [:phrase "2003-01-01 00:00" " " "Developer begärde granskning av Carl Reviewer." nil "\nKommentar: please have a look" nil]
-                        [:phrase "2003-01-01 00:00" " " "Developer begärde beslut från användare David Decider." nil "\nKommentar: please decide" nil]
-                        [:phrase "2003-01-01 00:00" " " "David Decider behandlade ansökan." "\nDavid Decider godkände ansökan." "\nKommentar: I have decided" nil]]]]
-          only-applicant-events [[:heading {:spacing-before 20} "Händelser"]
-                                 [:list
-                                  [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
-                                   [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]]]]]
-      (testing "alice should not see reviewer and decider actions"
-        (is (= [{}
-                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
-                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
-                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
-                 [:heading {:spacing-before 20} "Sökande"]
-                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
-                 []
-                 [:heading {:spacing-before 20} "Resurser"]
-                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
-                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
-                [[:heading {:spacing-before 20} "Licenser"] []]
-                all-form-fields
-                only-applicant-events]
-               (with-language :sv
-                 (fn []
-                   (with-fixed-time (time/date-time 2010)
-                     (fn []
-                       (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))))
-      (testing "handler should see complete application"
-        (is (= [{}
-                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
-                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
-                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
-                 [:heading {:spacing-before 20} "Sökande"]
-                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
-                 []
-                 [:heading {:spacing-before 20} "Resurser"]
-                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
-                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
-                [[:heading {:spacing-before 20} "Licenser"] []]
-                all-form-fields
-                all-events]
-               (with-language :sv
-                 (fn []
-                   (with-fixed-time (time/date-time 2010)
-                     (fn []
-                       (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))))
-      (testing "decider should see complete application"
-        (is (= [{}
-                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
-                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
-                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
-                 [:heading {:spacing-before 20} "Sökande"]
-                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
-                 []
-                 [:heading {:spacing-before 20} "Resurser"]
-                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
-                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
-                [[:heading {:spacing-before 20} "Licenser"] []]
-                all-form-fields
-                all-events]
-               (with-language :sv
-                 (fn []
-                   (with-fixed-time (time/date-time 2010)
-                     (fn []
-                       (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))))
-      (testing "reviewer should not see private fields"
-        (is (= [{}
-                [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
-                 [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
-                 [:paragraph "Status" [:phrase ": " "Inlämnad"]]
-                 [:heading {:spacing-before 20} "Sökande"]
-                 [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
-                 []
-                 [:heading {:spacing-before 20} "Resurser"]
-                 [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
-                         [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
-                [[:heading {:spacing-before 20} "Licenser"] []]
-                only-public-fields
-                all-events]
-               (with-language :sv
-                 (fn []
-                   (with-fixed-time (time/date-time 2010)
-                     (fn []
-                       (#'pdf/render-application (applications/get-application-for-user "carl" application-id))))))))))))
+    (testing "alice should not see reviewer and decider actions"
+      (is (= [{}
+              [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+               [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+               [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+               [:heading {:spacing-before 20} "Sökande"]
+               [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+               []
+               [:heading {:spacing-before 20} "Resurser"]
+               [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                       [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Licenser"] []]
+              [[[:heading {:spacing-before 20} "Blankett"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
+                  [:paragraph "pdf test"]]]]
+               [[:heading {:spacing-before 20} "Privat blankett"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Privat textfält"]
+                  [:paragraph "pdf test"]]]]]
+              [[:heading {:spacing-before 20} "Händelser"]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]]]]]
+             (with-language :sv
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))))
+    (testing "handler should see complete application"
+      (is (= [{}
+              [[:heading {:spacing-before 20} "Application 2000/1: "]
+               [:paragraph "This PDF generated at" " " "2010-01-01 00:00"]
+               [:paragraph "State" [:phrase ": " "Applied"]]
+               [:heading {:spacing-before 20} "Applicants"]
+               [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>. Accepted terms of use: Yes"]
+               []
+               [:heading {:spacing-before 20} "Resources"]
+               [:list [[:phrase "Resource" " (" "pdf-resource-ext" ")"]
+                       [:phrase "Resource 2" " (" "pdf-resource-2-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Terms of use"] []]
+              [[[:heading {:spacing-before 20} "Form"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Public text field"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph {:spacing-before 8, :style :bold} "Private text field"]
+                  [:paragraph "pdf test"]]]]
+               [[:heading {:spacing-before 20} "Private form"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Private text field"]
+                  [:paragraph "pdf test"]]]]]
+              [[:heading {:spacing-before 20} "Events"]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created application 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer requested a review from Carl Reviewer." nil "\nComment: please have a look" nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer requested a decision from David Decider." nil "\nComment: please decide" nil]
+                 [:phrase "2003-01-01 00:00" " " "David Decider filed a decision for the application." "\nDavid Decider approved the application." "\nComment: I have decided" nil]]]]]
+             (with-language :en
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))))
+    (testing "decider should see complete application"
+      (is (= [{}
+              [[:heading {:spacing-before 20} "Hakemus 2000/1: "]
+               [:paragraph "Tämä PDF luotu" " " "2010-01-01 00:00"]
+               [:paragraph "Tila" [:phrase ": " "Haettu"]]
+               [:heading {:spacing-before 20} "Hakijat"]
+               [:paragraph "Hakija" ": " "Alice Applicant (alice) <alice@example.com>. Käyttöehdot hyväksytty: Kyllä"]
+               []
+               [:heading {:spacing-before 20} "Resurssit"]
+               [:list [[:phrase "Resurssi" " (" "pdf-resource-ext" ")"]
+                       [:phrase "Resurssi 2" " (" "pdf-resource-2-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Käyttöehdot"] []]
+              [[[:heading {:spacing-before 20} "Lomake"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Julkinen tekstikenttä"]
+                  [:paragraph "pdf test"]]
+                 [[:paragraph {:spacing-before 8, :style :bold} "Yksityinen tekstikenttä"]
+                  [:paragraph "pdf test"]]]]
+               [[:heading {:spacing-before 20} "Yksityinen lomake"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Yksityinen tekstikenttä"]
+                  [:paragraph "pdf test"]]]]]
+              [[:heading {:spacing-before 20} "Tapahtumat"]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant loi hakemuksen 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant lähetti hakemuksen käsiteltäväksi." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer pyysi katselmointia käyttäjältä Carl Reviewer." nil "\nKommentti: please have a look" nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer pyysi päätöstä käyttäjältä David Decider." nil "\nKommentti: please decide" nil]
+                 [:phrase "2003-01-01 00:00" " " "David Decider teki päätöksen hakemukselle." "\nDavid Decider hyväksyi hakemuksen." "\nKommentti: I have decided" nil]]]]]
+             (with-language :fi
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))))
+    (testing "reviewer should not see private fields"
+      (is (= [{}
+              [[:heading {:spacing-before 20} "Ansökan 2000/1: "]
+               [:paragraph "Denna pdf skapades" " " "2010-01-01 00:00"]
+               [:paragraph "Status" [:phrase ": " "Inlämnad"]]
+               [:heading {:spacing-before 20} "Sökande"]
+               [:paragraph "Sökande" ": " "Alice Applicant (alice) <alice@example.com>. Licenserna har accepterats: Ja"]
+               []
+               [:heading {:spacing-before 20} "Resurser"]
+               [:list [[:phrase "Resurs" " (" "pdf-resource-ext" ")"]
+                       [:phrase "Resurs 2" " (" "pdf-resource-2-ext" ")"]]]]
+              [[:heading {:spacing-before 20} "Licenser"] []]
+              [[[:heading {:spacing-before 20} "Blankett"]
+                [[[:paragraph {:spacing-before 8, :style :bold} "Offentligt textfält"]
+                  [:paragraph "pdf test"]]]]]
+              [[:heading {:spacing-before 20} "Händelser"]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer begärde granskning av Carl Reviewer." nil "\nKommentar: please have a look" nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer begärde beslut från användare David Decider." nil "\nKommentar: please decide" nil]
+                 [:phrase "2003-01-01 00:00" " " "David Decider behandlade ansökan." "\nDavid Decider godkände ansökan." "\nKommentar: I have decided" nil]]]]]
+             (with-language :sv
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
 
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
