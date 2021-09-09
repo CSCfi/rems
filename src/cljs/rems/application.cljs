@@ -397,10 +397,12 @@
         language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
-                :let [form-id (:form/id form)]]
+                :let [form-id (:form/id form)]
+                :when (->> (:form/fields form)
+                           (remove :field/private)
+                           seq)]
             [collapsible/component
-             {:id "application-fields"
-              :class "mb-3"
+             {:class "mb-3"
               :title (or (get-in form [:form/external-title language]) (text :t.form/application))
               :always (into [:div.fields]
                             (for [field (:form/fields form)

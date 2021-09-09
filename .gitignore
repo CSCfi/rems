@@ -22,3 +22,5 @@
 /browsertest-errors/
 /browsertest-downloads/
 /browsertest-accessibility-report/
+/.calva/
+/.lsp/

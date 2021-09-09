@@ -962,6 +962,41 @@
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                        :sv "Exempelblankett med alla fälttyper"})
+
+        form-with-public-and-private-fields (create-form! {:actor owner
+                                                           :organization {:organization/id "nbn"}
+                                                           :form/internal-name "Public and private fields form"
+                                                           :form/external-title {:en "Form"
+                                                                                 :fi "Lomake"
+                                                                                 :sv "Blankett"}
+                                                           :form/fields [{:field/title {:en "Simple text field"
+                                                                                        :fi "Yksinkertainen tekstikenttä"
+                                                                                        :sv "Textfält"}
+                                                                          :field/optional false
+                                                                          :field/type :text
+                                                                          :field/max-length 100}
+                                                                         {:field/title {:en "Private text field"
+                                                                                        :fi "Yksityinen tekstikenttä"
+                                                                                        :sv "Privat textfält"}
+                                                                          :field/optional false
+                                                                          :field/type :text
+                                                                          :field/max-length 100
+                                                                          :field/privacy :private}]})
+
+        form-private-nbn (create-form! {:actor owner
+                                        :organization {:organization/id "nbn"}
+                                        :form/internal-name "Simple form"
+                                        :form/external-title {:en "Form"
+                                                              :fi "Lomake"
+                                                              :sv "Blankett"}
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
+
         form-private-thl (create-form! {:actor owner
                                         :organization {:organization/id "thl"}
                                         :form/internal-name "Simple form"
@@ -1129,7 +1164,36 @@
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization {:organization/id "organization1"}
-                             :workflow-id (:organization-owner workflows)})))
+                             :workflow-id (:organization-owner workflows)})
+
+    (let [applicant (users :applicant1)
+          handler (users :approver2)
+          reviewer (users :reviewer)
+          catid-1 (create-catalogue-item! {:actor owner
+                                           :title {:en "Default workflow with public and private fields"
+                                                   :fi "Testityövuo julkisilla ja yksityisillä lomakekentillä"
+                                                   :sv "Standard arbetsflöde med publika och privata textfält"}
+                                           :resource-id res1
+                                           :form-id form-with-public-and-private-fields
+                                           :organization {:organization/id "nbn"}
+                                           :workflow-id (:default workflows)})
+          catid-2 (create-catalogue-item! {:actor owner
+                                           :title {:en "Default workflow with private form"
+                                                   :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                   :sv "Standard arbetsflöde med privat blankett"}
+                                           :resource-id res2
+                                           :form-id form-private-nbn
+                                           :organization {:organization/id "nbn"}
+                                           :workflow-id (:default workflows)})
+          app-id (create-draft! applicant [catid-1 catid-2] "two-form draft application")]
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
+      (command! {:type :application.command/request-review
+                 :application-id app-id
+                 :actor handler
+                 :reviewers [reviewer]
+                 :comment "please have a look"}))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)

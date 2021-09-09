@@ -209,8 +209,11 @@
                                                                 :field/max-length 100
                                                                 :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
+        res-id2 (test-helpers/create-resource! nil)
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
-                                                                                               :sv "sv"} :resource-id res-id1})
+                                                                                               :sv "Standard arbetsflöde"} :resource-id res-id1})
+        item-id2 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Private form workflow" :fi "Yksityinen lomaketyövuo"
+                                                                                                       :sv "Private blankettarbetsflöde"} :resource-id res-id2})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
     (test-helpers/create-workflow-licence! wfid link)
     (test-helpers/create-workflow-licence! wfid text)

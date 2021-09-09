@@ -131,9 +131,12 @@
 (defn- render-fields [application]
   (let [filenames (attachment-filenames application)]
     (doall
-     (for [form (getx application :application/forms)]
+     (for [form (getx application :application/forms)
+           :let [fields (->> (getx form :form/fields)
+                             (remove :field/private))]
+           :when (seq fields)]
        (list [:heading heading-style (or (get-in form [:form/external-title context/*lang*]) (text :t.form/application))]
-             (doall (for [field (getx form :form/fields)]
+             (doall (for [field fields]
                       (render-field filenames field))))))))
 
 (def license-title-style {:style :bold})
