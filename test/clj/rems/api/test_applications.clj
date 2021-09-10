@@ -1310,7 +1310,7 @@
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-unsupported-media-type? response))))
-     (testing "uploading a too large file for a draft"
+    (testing "uploading a too large file for a draft"
       (let [response (-> (upload-request too-large-content)
                          (authenticate api-key user-id)
                          handler)]
