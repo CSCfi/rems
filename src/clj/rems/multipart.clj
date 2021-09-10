@@ -21,25 +21,21 @@
                 (recur (+ read-so-far size))))))))))
 
 (deftest test-size-checking-copy
-  (let [data [0x0 0x1 0x2 0x4 0x2 0xF]]
+  (let [data [0x0 0x1 0x2 0x4 0x2 0xF]
+        copy (fn [opts]
+               (let [input (io/input-stream (byte-array data))
+                     output (ByteArrayOutputStream. (count data))
+                     maybe-error (size-checking-copy input output opts)]
+                 [maybe-error (seq (.toByteArray output))]))]
     (testing "default parameters, essentially infinite"
-      (let [input (io/input-stream (byte-array data))
-            output (ByteArrayOutputStream. (count data))]
-        (size-checking-copy input output {})
-        (is (= data (seq (.toByteArray output))))))
+      (is (= [nil data] (copy {}))))
 
     (testing "too large, chunked behavior"
-      (let [input (io/input-stream (byte-array data))
-            output (ByteArrayOutputStream. (count data))]
-        (size-checking-copy input output {:buffer-size 2 :max-size 3})
-        (is (= [0 1] (seq (.toByteArray output)))
-            "copies in chunks, already 2 x 2 > 3")))
+      (is (= [:too-large [0 1]] (copy {:buffer-size 2 :max-size 3}))
+          "copies in chunks, already 2 x 2 > 3"))
 
     (testing "too large, byte at a time"
-      (let [input (io/input-stream (byte-array data))
-            output (ByteArrayOutputStream. (count data))]
-        (size-checking-copy input output {:buffer-size 1 :max-size 3})
-        (is (= [0 1 2] (seq (.toByteArray output))))))))
+      (is (= [:too-large [0 1 2]] (copy {:buffer-size 1 :max-size 3}))))))
 
 (defn size-limiting-temp-file-store
   "Drop-in replacement for `ring.middleware.multipart-params.temp-file/temp-file-store` that
