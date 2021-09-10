@@ -260,10 +260,9 @@
                                (cond (= 413 (:status response))
                                      (flash-message/show-default-error! :actions description
                                                                         [:div
-                                                                         [:p [text :t.form/invalid-attachment]]
-                                                                         [:p [text :t.form/upload-extensions]
-                                                                          ": "
-                                                                          attachment-types/allowed-extensions-string]])
+                                                                         [:p [text :t.form/too-large-attachment]]
+                                                                         [:p (str file-name " " (format-file-size file-size))]
+                                                                         [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]])
 
                                      (= 415 (:status response))
                                      (flash-message/show-default-error! :actions description
