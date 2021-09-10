@@ -29,9 +29,9 @@
          :aria-expanded "false"
          :aria-controls (str info-id "-collapse")}
         [:i.fa.fa-info-circle]]
-   [:div.info-collapse.collapse {:id (str info-id "-collapse")
-                                 :ref focus-when-collapse-opened
-                                 :tab-index "-1"}
+   [:div.info-collapse.collapse.my-3 {:id (str info-id "-collapse")
+                                      :ref focus-when-collapse-opened
+                                      :tab-index "-1"}
     content]])
 
 
