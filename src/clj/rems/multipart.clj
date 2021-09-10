@@ -1,6 +1,7 @@
 (ns rems.multipart
   "Namespace for handling multipart requests."
   (:require [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some]]
             [ring.middleware.multipart-params.temp-file])
@@ -58,6 +59,8 @@
        (force clean-up)
        (let [temp-file (#'ring.middleware.multipart-params.temp-file/make-temp-file file-set)
              maybe-error (size-checking-copy (:stream item) (io/output-stream temp-file) options)]
+         (when maybe-error
+           (log/error "Upload is too large, filename" (:filename item) "max size" (:max-size options)))
          (-> (select-keys item [:filename :content-type])
              (assoc-some :tempfile (when-not maybe-error temp-file)
                          :error maybe-error
