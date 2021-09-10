@@ -455,7 +455,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :upload-extensions "Allowed file types"
+         :upload-extensions "Allowed file types: %1."
          ;; %1 - field name
          :validation {:column-values-missing "All columns must have values for table \"%1\"."
                       :columns-required "At least one column is required."

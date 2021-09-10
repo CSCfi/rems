@@ -413,7 +413,7 @@
          :submit "Lämna in ansökningen"
          :success "Genomfört"
          :upload "Lägg till bilaga"
-         :upload-extensions "Tillåtna filtyper"
+         :upload-extensions "Tillåtna filtyper: %1."
          :validation {:column-values-missing "Alla kolumner måste fyllas i i tabell \"%1\"."
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."

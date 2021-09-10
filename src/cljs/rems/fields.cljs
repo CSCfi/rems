@@ -335,13 +335,11 @@
         nil)]
      [info-collapse
       {:info-id info-id
-       :aria-label-text (text :t.form/upload-extensions)
+       :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
        :focus-when-collapse-opened focus-when-collapse-opened
        :body-text [:<>
                    [:div
-                    [:span [text :t.form/upload-extensions]
-                     ": "
-                     attachment-types/allowed-extensions-string]]
+                    [:span [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]]
                    [:div
                     (text-format :t.form/attachment-max-size
                                  (format-file-size (:attachment-max-size config)))]]}]]))

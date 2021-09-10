@@ -268,9 +268,7 @@
                                      (flash-message/show-default-error! :actions description
                                                                         [:div
                                                                          [:p [text :t.form/invalid-attachment]]
-                                                                         [:p [text :t.form/upload-extensions]
-                                                                          ": "
-                                                                          attachment-types/allowed-extensions-string]])
+                                                                         [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
 
                                      :else ((flash-message/default-error-handler :actions description) response)))})))
   {})

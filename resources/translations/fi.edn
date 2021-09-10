@@ -413,7 +413,7 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
-         :upload-extensions "Sallitut tiedostomuodot"
+         :upload-extensions "Sallitut tiedostomuodot: %1."
          :validation {:column-values-missing "Kaikki sarakkeet on täytettävä taulukossa \"%1\"."
                       :columns-required "Vähintään yksi sarake vaaditaan."
                       :invalid-email "Sähköpostiosoite ei kelpaa."
