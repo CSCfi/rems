@@ -10,6 +10,9 @@ Changes since v2.20
 
 **NB: This release contains migrations!**
 
+### Breaking changes
+- Application attachment file size can now be limited with configuration option `:attachment-max-size`. Configuration default size per attachment is 10MB. (#2715)
+
 ### Additions
 - "More info" support for DOI style resources (when `:enable-doi` flag is set) (#2701)
 - There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
