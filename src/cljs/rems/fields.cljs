@@ -18,11 +18,10 @@
 (defn info-collapse
   "Collapse field from Bootstrap that shows extra information about input fields.
 
-  `:info-id`         - id of the element being described
-  `:aria-label-text` - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
-  `:focus-when-collapse-opened` - element that is focused when the info is opened
-  `:content`         - component that is shown if open"
-  [{:keys [info-id aria-label-text focus-when-collapse-opened content]}]
+  `:info-id`           - id of the element being described
+  `:aria-label-text`   - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
+  `:content`           - component that is shown if open"
+  [{:keys [info-id aria-label-text content]}]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
          :href (str "#" (str info-id "-collapse"))
@@ -143,7 +142,6 @@
         [info-collapse
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
-          :focus-when-collapse-opened focus-when-collapse-opened
           :content (linkify info-text)}])]
      (when (and previous-value
                 (not= value previous-value))
@@ -336,7 +334,6 @@
      [info-collapse
       {:info-id info-id
        :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
-       :focus-when-collapse-opened focus-when-collapse-opened
        :content [:div
                  [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]
                  [:p (text-format :t.form/attachment-max-size
