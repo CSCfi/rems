@@ -18,11 +18,11 @@
 (defn info-collapse
   "Collapse field from Bootstrap that shows extra information about input fields.
 
-  `:info-id` - id of the element being described
+  `:info-id`         - id of the element being described
   `:aria-label-text` - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
   `:focus-when-collapse-opened` - element that is focused when the info is opened
-  `:body-text` - component that is shown if open"
-  [{:keys [info-id aria-label-text focus-when-collapse-opened body-text]}]
+  `:content`         - component that is shown if open"
+  [{:keys [info-id aria-label-text focus-when-collapse-opened content]}]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
          :href (str "#" (str info-id "-collapse"))
@@ -33,7 +33,7 @@
    [:div.info-collapse.collapse {:id (str info-id "-collapse")
                                  :ref focus-when-collapse-opened
                                  :tab-index "-1"}
-    body-text]])
+    content]])
 
 
 (defn- diff [value previous-value]
@@ -144,7 +144,7 @@
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
           :focus-when-collapse-opened focus-when-collapse-opened
-          :body-text (linkify info-text)}])]
+          :content (linkify info-text)}])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -337,12 +337,10 @@
       {:info-id info-id
        :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
        :focus-when-collapse-opened focus-when-collapse-opened
-       :body-text [:<>
-                   [:div
-                    [:span [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]]
-                   [:div
-                    (text-format :t.form/attachment-max-size
-                                 (format-file-size (:attachment-max-size config)))]]}]]))
+       :content [:div
+                 [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]
+                 [:p (text-format :t.form/attachment-max-size
+                                  (format-file-size (:attachment-max-size config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group
