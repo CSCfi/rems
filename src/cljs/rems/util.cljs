@@ -2,9 +2,10 @@
   (:require [accountant.core :as accountant]
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
-            [goog.string :refer [parseInt]]
+            [goog.string :refer [format]]
             [promesa.core :as p]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [clojure.test :refer [deftest are testing]]))
 
 ;; TODO move to cljc
 (defn getx
@@ -171,3 +172,39 @@
          (fn []
            (.focus elem)
            false))))
+
+(defn- strip-trailing-zeroes
+  [s]
+  (let [without-decimal-zeroes (clojure.string/replace s #"\.[0]*$" "")
+        without-trailing-zeroes (clojure.string/replace s #"[0]+$" "")]
+    (if (and (= without-decimal-zeroes s)
+             (clojure.string/includes? s "."))
+      without-trailing-zeroes
+      without-decimal-zeroes)))
+
+(defn format-file-size
+  [size]
+  (when (or (zero? size) (pos? size))
+    (let [[file-size type] (condp > size
+                             (Math/pow 1000 2) [(/ size 1000.0) "KB"]
+                             (Math/pow 1000 3) [(/ size (Math/pow 1000 2)) "MB"]
+                             (Math/pow 1000 4) [(/ size (Math/pow 1000 3)) "GB"]
+                             [size "B"])]
+      (-> (format "%.2f" file-size)
+          strip-trailing-zeroes
+          (str " " type)))))
+
+(deftest test-format-file-size
+  (testing "should format sizes correctly"
+    (are [expected input] (= expected (format-file-size input))
+      "1 KB" 1000
+      "10 KB" (* 1000 10)
+      "1 GB" (* 1000 1000 1000)
+      "1.55 MB" (* 1000 1000 1.55)
+      "0.01 KB" (* 1000 0.012345)
+      "0.02 KB" (* 1000 0.016789)
+      "0 KB" 0
+      nil -1
+      nil nil
+      nil {}
+      nil [])))

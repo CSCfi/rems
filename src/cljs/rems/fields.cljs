@@ -1,6 +1,7 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
@@ -9,7 +10,7 @@
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [focus-when-collapse-opened linkify]]))
+            [rems.util :refer [focus-when-collapse-opened linkify format-file-size]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -305,7 +306,8 @@
 
 (defn- upload-button [id status on-upload]
   (let [upload-id (str id "-input")
-        info-id (str id "-info")]
+        info-id (str id "-info")
+        config @(rf/subscribe [:rems.config/config])]
     [:div.upload-file.mr-2
      [:input {:style {:display "none"}
               :type "file"
@@ -335,9 +337,14 @@
       {:info-id info-id
        :aria-label-text (text :t.form/upload-extensions)
        :focus-when-collapse-opened focus-when-collapse-opened
-       :body-text [:span [text :t.form/upload-extensions]
-                   ": "
-                   attachment-types/allowed-extensions-string]}]]))
+       :body-text [:<>
+                   [:div
+                    [:span [text :t.form/upload-extensions]
+                     ": "
+                     attachment-types/allowed-extensions-string]]
+                   [:div
+                    (text-format :t.form/attachment-max-size
+                                 (format-file-size (:attachment-max-size config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group

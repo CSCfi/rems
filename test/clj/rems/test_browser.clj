@@ -244,6 +244,9 @@
 (defn get-validation-summary []
   (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top ul li"})))
 
+(defn get-error-summary []
+  (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-actions > *"})))
+
 (defn get-validation-for-field [label]
   (let [el (first (btu/query-all [{:css ".fields"}
                                   {:tag :label :fn/has-text label}]))
@@ -316,6 +319,17 @@
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
           (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-attachments)))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
+
+        (testing "uploading oversized attachment should display error"
+          (let [reset-config (btu/set-client-config {:attachment-max-size 900})]
+            (btu/upload-file attachment-field-upload-selector "test-data/test-oversize-attachment.txt")
+            (is (btu/eventually-visible? :status-failed))
+            (is (= ["Upload an attachment: Failed"
+                    (str/join "\n" ["Attachment size is too large"
+                                    "test-oversize-attachment.txt 1.22 KB"
+                                    "Allowed maximum size of attachment: 0.9 KB"])]
+                   (get-error-summary)))
+            (reset-config)))
 
         (is (not (btu/field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
