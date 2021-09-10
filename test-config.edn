@@ -11,7 +11,7 @@
  :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
                          {:attribute "picture"}]
  :languages [:en :fi :sv]
- :attachment-max-size 1000
+ :attachment-max-size 10000
  :enable-pdf-api true
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
