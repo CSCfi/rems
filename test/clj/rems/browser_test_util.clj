@@ -503,7 +503,7 @@
 
 (defn set-client-config
   [config]
-  (js-execute "return window.rems.config.test_set_config_BANG_(arguments[0]);" config)
+  (js-execute "return window.rems.config.set_config_BANG_(arguments[0]);" config)
   (fn []
     (js-async "var args = arguments;
                var callback = args[args.length - 1];

@@ -28,7 +28,7 @@
   (let [config @(rf/subscribe [::config])]
     (boolean (:dev config))))
 
-(defn ^:export test-set-config!
+(defn ^:export set-config!
   [js-config]
   (rf/dispatch-sync [::loaded-config (merge @(rf/subscribe [::config])
                                             (js->clj js-config :keywordize-keys true))]))

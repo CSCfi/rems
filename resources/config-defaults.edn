@@ -292,8 +292,9 @@
  ;; Show "Assign external id" action button in UI for handlers
  :enable-assign-external-id-ui false
 
- ;; maximum size of attachment files in bytes (10485760 = 10MB)
- :attachment-max-size 10485760
+ ;; maximum size of attachment files in bytes (10000000 = 10MB)
+ ;; nil = no limit
+ :attachment-max-size 10000000
 
  ;; Experimental features
 
