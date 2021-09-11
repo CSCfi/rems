@@ -325,9 +325,9 @@
             (btu/upload-file attachment-field-upload-selector "resources/public/img/rems_logo_fi.png")
             (is (btu/eventually-visible? :status-failed))
             (is (= ["Upload an attachment: Failed"
-                    (str/join "\n" ["Attachment size is too large"
+                    (str/join "\n" ["The attachment is too large."
                                     "rems_logo_fi.png 10.34 KB"
-                                    "Allowed maximum size of attachment: 0.9 KB"])]
+                                    "Allowed maximum size of an attachment: 0.9 KB."])]
                    (get-error-summary)))
             (reset-config)))
 
