@@ -86,7 +86,6 @@
       :summary "Add an attachment file that will be used in a license"
       :roles +admin-write-roles+
       :multipart-params [file :- schema/FileUpload]
-      :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
       (ok (licenses/create-license-attachment! file (getx-user-id))))
 
