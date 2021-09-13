@@ -10,16 +10,16 @@
 (defn size-checking-copy
   "Basically what `io/copy` does bit with size checking."
   [^InputStream input ^OutputStream output opts]
-  (let [buffer (make-array Byte/TYPE (:buffer-size opts 1024))]
+  (let [buffer (make-array Byte/TYPE (:buffer-size opts 1024))
+        max-size (:max-size opts)]
     (loop [read-so-far 0]
       (let [size (.read input buffer)]
         (when (pos? size)
-          (let [max-size (:max-size opts)]
-            (if (and max-size (> (+ read-so-far size) max-size))
-              :too-large
-              (do
-                (.write output buffer 0 size)
-                (recur (+ read-so-far size))))))))))
+          (if (and max-size (> (+ read-so-far size) max-size))
+            :too-large
+            (do
+              (.write output buffer 0 size)
+              (recur (+ read-so-far size)))))))))
 
 (deftest test-size-checking-copy
   (let [data [0x0 0x1 0x2 0x4 0x2 0xF]
