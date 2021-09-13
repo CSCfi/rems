@@ -50,8 +50,8 @@
 
   See also `ring.middleware.multipart-params.temp-file/temp-file-store`"
   {:arglists '([] [options])}
-  ([] (size-limiting-temp-file-store {:expires-in 3600}))
-  ([{:keys [expires-in] :as options}]
+  ([] (size-limiting-temp-file-store {:expires-in 3600 :max-size nil}))
+  ([{:keys [expires-in max-size] :as options}]
    (let [file-set (atom #{})
          clean-up (delay (#'ring.middleware.multipart-params.temp-file/start-clean-up file-set expires-in))]
      (#'ring.middleware.multipart-params.temp-file/ensure-shutdown-clean-up file-set)
@@ -60,7 +60,7 @@
        (let [temp-file (#'ring.middleware.multipart-params.temp-file/make-temp-file file-set)
              maybe-error (size-checking-copy (:stream item) (io/output-stream temp-file) options)]
          (when maybe-error
-           (log/error "Upload is too large, filename" (:filename item) "max size" (:max-size options)))
+           (log/error "Upload is too large, filename" (:filename item) "max size" max-size))
          (-> (select-keys item [:filename :content-type])
              (assoc-some :tempfile (when-not maybe-error temp-file)
                          :error maybe-error
