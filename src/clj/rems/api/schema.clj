@@ -4,7 +4,8 @@
             [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+  (:import [org.joda.time DateTime]
+           [java.io File]))
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
@@ -270,3 +271,10 @@
           :application/events
           :application/forms
           :application/licenses))
+
+(s/defschema FileUpload
+  {:filename s/Str
+   :content-type s/Str
+   :size s/Int
+   (s/optional-key :error) s/Keyword
+   (s/optional-key :tempfile) File})

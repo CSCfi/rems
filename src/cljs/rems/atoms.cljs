@@ -60,14 +60,14 @@
 (defn flash-message
   "Displays a notification (aka flash) message.
 
-   :id - HTML element ID
-   :status   - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
-   :contents - content to show inside the notification"
-  [{:keys [id status contents]}]
+   :id      - HTML element ID
+   :status  - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
+   :content - content to show inside the notification"
+  [{:keys [id status content]}]
   (when status
     [:div.flash-message.alert {:class (str "alert-" (name status))
                                :id id}
-     contents]))
+     content]))
 
 (defn checkbox
   "Displays a checkbox."
@@ -187,11 +187,11 @@
        (component-info flash-message)
        (example "flash-message with info"
                 [flash-message {:status :info
-                                :contents "Hello world"}])
+                                :content "Hello world"}])
 
        (example "flash-message with error"
                 [flash-message {:status :danger
-                                :contents "You fail"}])
+                                :content "You fail"}])
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
                 [readonly-checkbox {:value false}])

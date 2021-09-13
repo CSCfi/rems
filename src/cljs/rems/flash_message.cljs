@@ -45,16 +45,16 @@
             (assoc ::message (assoc message :expires (+ 500 (current-time-millis))))
             (update ::message-id inc))}))
 
-(defn show-success! [location contents]
+(defn show-success! [location content]
   (rf/dispatch [::show-flash-message {:status :success
                                       :location location
-                                      :contents contents
+                                      :content content
                                       :page @(rf/subscribe [:page])}]))
 
-(defn show-error! [location contents]
+(defn show-error! [location content]
   (rf/dispatch [::show-flash-message {:status :danger
                                       :location location
-                                      :contents contents
+                                      :content content
                                       :page @(rf/subscribe [:page])}]))
 
 (defn component [location]
@@ -74,7 +74,7 @@
           ^{:key (::message-id message)} ; re-render to trigger CSS animations
           [atoms/flash-message {:id (location-to-id (:location message))
                                 :status (:status message)
-                                :contents (:contents message)}])))}))
+                                :content (:content message)}])))}))
 
 ;;; Helpers for typical messages
 

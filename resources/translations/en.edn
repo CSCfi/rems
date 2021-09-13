@@ -438,8 +438,8 @@
          :failed "Failed"
          :has-accepted-licenses "Terms of use accepted."
          :invalid-attachment "Attachment file type not allowed."
-         :too-large-attachment "Attachment size is too large"
-         :attachment-max-size "Allowed maximum size of attachment: %1"
+         :too-large-attachment "The attachment is too large."
+         :attachment-max-size "Allowed maximum size of an attachment: %1."
          :licenses "Terms of use"
          ;; %1 - number
          :maxlength "(max %1 characters)"
@@ -455,7 +455,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :upload-extensions "Allowed file types"
+         :upload-extensions "Allowed file types: %1."
          ;; %1 - field name
          :validation {:column-values-missing "All columns must have values for table \"%1\"."
                       :columns-required "At least one column is required."

@@ -322,12 +322,12 @@
 
         (testing "uploading oversized attachment should display error"
           (let [reset-config (btu/set-client-config {:attachment-max-size 900})]
-            (btu/upload-file attachment-field-upload-selector "test-data/test-oversize-attachment.txt")
+            (btu/upload-file attachment-field-upload-selector "resources/public/img/rems_logo_fi.png")
             (is (btu/eventually-visible? :status-failed))
             (is (= ["Upload an attachment: Failed"
-                    (str/join "\n" ["Attachment size is too large"
-                                    "test-oversize-attachment.txt 1.22 KB"
-                                    "Allowed maximum size of attachment: 0.9 KB"])]
+                    (str/join "\n" ["The attachment is too large."
+                                    "rems_logo_fi.png 10.34 KB"
+                                    "Allowed maximum size of an attachment: 0.9 KB."])]
                    (get-error-summary)))
             (reset-config)))
 

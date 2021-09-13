@@ -165,7 +165,11 @@
           :else
           (/ (.-bottom bounds) (.-height bounds)))))
 
-(defn focus-when-collapse-opened [elem]
+(defn focus-when-collapse-opened
+  "Focuses the given element when the (Bootstrap) collapse has opened.
+
+   Used typically with a `ref`."
+  [elem]
   (when elem
     (.on (js/$ elem)
          "shown.bs.collapse"

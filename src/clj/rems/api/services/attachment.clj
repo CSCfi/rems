@@ -37,6 +37,8 @@
       (throw-forbidden))))
 
 (defn add-application-attachment [user-id application-id file]
+  (attachments/check-size file)
+  (attachments/check-allowed-attachment (:filename file))
   (let [application (applications/get-application-for-user user-id application-id)]
     (when-not (some (set/union commands/commands-with-comments
                                #{:application.command/save-draft})

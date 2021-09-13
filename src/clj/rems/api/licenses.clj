@@ -85,8 +85,7 @@
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
       :roles +admin-write-roles+
-      :multipart-params [file :- upload/TempFileUpload]
-      :middleware [multipart/wrap-multipart-params]
+      :multipart-params [file :- schema/FileUpload]
       :return AttachmentMetadata
       (ok (licenses/create-license-attachment! file (getx-user-id))))
 
