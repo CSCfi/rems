@@ -24,3 +24,4 @@
 /browsertest-accessibility-report/
 /.calva/
 /.lsp/
+/.clj-kondo/
