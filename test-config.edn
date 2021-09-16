@@ -12,6 +12,8 @@
                          {:attribute "picture"}]
  :languages [:en :fi :sv]
  :attachment-max-size 10000
+ :enable-expired-draft-application-processing false
+ :draft-application-expiration-threshold 90
  :enable-pdf-api true
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
