@@ -18,6 +18,7 @@ Changes since v2.20
 - There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 - Handlers can be invited to a workflow by email using the API (#2650)
 - Entitlement expiration field in application actions will now accept only future dates (#2674)
+- Draft status applications can now be removed automatically after an expiration threshold is exceeded, using configuration option `:application-expiration`. This feature is disabled by default. (#2665)
 
 ### Changes
 - Reviewers are no longer able to see private field questions in generated application pdf. Forms are also no longer rendered in application page if they contain only private fields (#2161)
