@@ -32,7 +32,7 @@
                       (filter is-expired-draft?)
                       (map :application/id))]
     (try
-      (applications/remove-application-data! app-id)
+      (applications/delete-application! app-id)
       (log/info "Succesfully removed application" app-id)
       (catch Throwable t
         (log/error "Failed to remove application" app-id ":" t))))

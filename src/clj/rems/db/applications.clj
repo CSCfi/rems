@@ -283,7 +283,7 @@
   :start (scheduler/start! reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
-(defn remove-application-data!
+(defn delete-application!
   [app-id]
   (let [application (get-application app-id)]
     (assert (= :application.state/draft (:application/state application))
@@ -292,6 +292,6 @@
   (db/delete-application-events! {:application app-id})
   (db/delete-application! {:application app-id}))
 
-(defn delete-application! [app-id]
-  (remove-application-data! app-id)
+(defn delete-application-and-reload-cache! [app-id]
+  (delete-application! app-id)
   (reload-cache!))
