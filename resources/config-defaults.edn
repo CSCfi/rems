@@ -297,9 +297,11 @@
  :attachment-max-size 10000000
 
  ;; Should draft applications be deleted after a set period of time has passed?
- :enable-expired-draft-application-processing false
- ;; Expiration threshold in days as number
- :draft-application-expiration-threshold 90
+ ;; Use map as value to indicate expired draft applications should be removed, e.g.
+ ;; {:draft "P90D"}
+ ;; nil = feature not enabled.
+ ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
+ :application-expiration nil
 
  ;; Experimental features
 
