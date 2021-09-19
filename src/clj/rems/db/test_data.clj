@@ -8,7 +8,6 @@
             [rems.api.services.organizations :as organizations]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
-            [rems.db.duo :as duo]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
@@ -1275,8 +1274,7 @@
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)
-  (create-items! +fake-users+)
-  (duo/load-duo-codes!))
+  (create-items! +fake-users+))
 
 (defn create-demo-data! []
   (assert-no-existing-data!)
@@ -1287,8 +1285,7 @@
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)
-    (create-items! users)
-    (duo/load-duo-codes!)))
+    (create-items! users)))
 
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)
