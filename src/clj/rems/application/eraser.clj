@@ -8,29 +8,37 @@
             [rems.config :refer [env]])
   (:import [org.joda.time Period]))
 
-(defn- is-expired-draft?
+(defn- is-expired?
   [application]
-  (let [expiration-threshold (some-> env :application-expiration :application.state/draft Period/parse)
-        last-activity (:application/last-activity application)
-        state (:application/state application)]
+  (let [last-activity (:application/last-activity application)
+        state (:application/state application)
+        expiration-threshold (some-> env :application-expiration state Period/parse)]
     (when expiration-threshold
-      (and (= :application.state/draft state)
-           (time/before? last-activity (time/minus (time/now) expiration-threshold))))))
+      (time/before? last-activity (time/minus (time/now) expiration-threshold)))))
 
-(deftest test-is-expired-draft
-  (with-redefs [env {:application-expiration {:application.state/draft "P90D"}}]
-    (testing "should identify expired draft application"
-      (is (true? (is-expired-draft? {:application/state :application.state/draft
-                                     :application/last-activity (time/minus (time/now) (time/days 90) (time/seconds 1))})))
-      (is (false? (is-expired-draft? {:application/state :application.state/draft
-                                      :application/last-activity (time/now)})))
-      (is (false? (is-expired-draft? {:application/state :application.state/submitted
-                                      :application/last-activity (time/minus (time/now) (time/days 90))}))))))
+(deftest test-is-expired
+  (with-redefs [env {:application-expiration {:application.state/draft "P90D"
+                                              :application.state/closed "P7D"}}]
+    (testing "should identify expired application by state"
+      (let [over-90d-ago (time/minus (time/now) (time/days 90) (time/seconds 1))
+            over-7d-ago (time/minus (time/now) (time/days 7) (time/seconds 1))
+            over-1d-ago (time/minus (time/now) (time/days 1) (time/seconds 1))]
+        (is (true? (is-expired? {:application/state :application.state/draft
+                                 :application/last-activity over-90d-ago})))
+        (is (false? (is-expired? {:application/state :application.state/draft
+                                  :application/last-activity over-7d-ago})))
+        (is (true? (is-expired? {:application/state :application.state/closed
+                                 :application/last-activity over-7d-ago})))
+        (is (false? (is-expired? {:application/state :application.state/closed
+                                  :application/last-activity over-1d-ago})))
+        (is (nil? (is-expired? {:application/state :application.state/rejected
+                                :application/last-activity over-90d-ago})))))))
 
-(defn remove-expired-applications! []
+(defn- remove-expired-applications!
+  []
   (log/info :start #'remove-expired-applications!)
   (doseq [app-id (->> (applications/get-all-unrestricted-applications)
-                      (filter is-expired-draft?)
+                      (filter is-expired?)
                       (map :application/id))]
     (try
       (applications/delete-application! app-id)
@@ -40,16 +48,16 @@
   (applications/reload-cache!)
   (log/info :finish #'remove-expired-applications!))
 
-(mount/defstate expired-draft-poller
+(mount/defstate expired-application-poller
   :start (when (:application-expiration env)
            (scheduler/start! remove-expired-applications! (.toStandardDuration (time/days 1))))
-  :stop (scheduler/stop! expired-draft-poller))
+  :stop (scheduler/stop! expired-application-poller))
 
 (comment
-  (mount/defstate expired-draft-poller-test
+  (mount/defstate expired-application-poller-test
     :start (scheduler/start! (fn [] (with-redefs [env {:application-expiration {:application.state/draft "P90D"}}]
                                       (remove-expired-applications!))) (.toStandardDuration (time/seconds 10)))
-    :stop (scheduler/stop! expired-draft-poller-test))
-  (mount/start #{#'expired-draft-poller-test})
-  (mount/stop #{#'expired-draft-poller-test}))
+    :stop (scheduler/stop! expired-application-poller-test))
+  (mount/start #{#'expired-application-poller-test})
+  (mount/stop #{#'expired-application-poller-test}))
 
