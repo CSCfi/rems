@@ -15,7 +15,7 @@
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.email.core] ;; to enable email polling
-            [rems.application.eraser] ;; to enable draft application clean-up job
+            [rems.application.eraser] ;; to enable expired application clean-up job
             [rems.entitlements :as entitlements]
             [rems.layout :as layout]
             [rems.middleware :refer [wrap-cacheable wrap-base]]

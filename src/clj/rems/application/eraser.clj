@@ -34,7 +34,7 @@
         (is (nil? (is-expired? {:application/state :application.state/rejected
                                 :application/last-activity over-90d-ago})))))))
 
-(defn- remove-expired-applications!
+(defn remove-expired-applications!
   []
   (log/info :start #'remove-expired-applications!)
   (doseq [app-id (->> (applications/get-all-unrestricted-applications)

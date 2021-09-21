@@ -297,8 +297,8 @@
  :attachment-max-size 10000000
 
  ;; Should applications be deleted after a set period of time has passed?
- ;; Use map with key as required application state, and value as ISO-8601 duration of maximum age without updates to application:
- ;; {:application.state/draft "P90D"}
+ ;; Use map with key as required application state, and value as ISO-8601 duration:
+ ;; {:application.state/draft "P90D" :application.state/closed "P7D"}
  ;; nil = feature not enabled.
  ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
  :application-expiration nil
