@@ -116,102 +116,108 @@
   (let [usage #(do
                  (println "Usage:")
                  (println (:doc (meta #'-main))))]
-    (case (first args)
-      "help"
-      (usage)
-
-      ("migrate" "rollback")
+    (if-not (seq args)
+      ;; start app by default if no CLI command was supplied
+      (apply start-app args)
       (do
-        (mount/start #'rems.config/env)
-        (migrations/migrate args (select-keys env [:database-url])))
+        (case (first args)
+          "help"
+          (usage)
 
-      "reset"
-      (do
-        (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
-        (when (= "YES" (read-line))
+          ("migrate" "rollback")
           (do
-            (println "Running reset")
             (mount/start #'rems.config/env)
-            (migrations/migrate args (select-keys env [:database-url])))))
+            (migrations/migrate args (select-keys env [:database-url])))
 
-      "test-data"
-      (do
-        (mount/start #'rems.config/env
-                     #'rems.db.core/*db*
-                     #'rems.locales/translations)
-        (log/info "Creating test data")
-        (test-data/create-test-data!)
-        (test-data/create-performance-test-data!)
-        (log/info "Test data created"))
+          "reset"
+          (do
+            (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
+            (when (= "YES" (read-line))
+              (do
+                (println "Running reset")
+                (mount/start #'rems.config/env)
+                (migrations/migrate args (select-keys env [:database-url])))))
 
-      "demo-data"
-      (do
-        (mount/start #'rems.config/env
-                     #'rems.db.core/*db*
-                     #'rems.locales/translations)
-        (test-data/create-demo-data!))
+          "test-data"
+          (do
+            (mount/start #'rems.config/env
+                         #'rems.db.core/*db*
+                         #'rems.locales/translations)
+            (log/info "Creating test data")
+            (test-data/create-test-data!)
+            (test-data/create-performance-test-data!)
+            (log/info "Test data created"))
 
-      "api-key"
-      (let [[_ command api-key & command-args] args]
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (case command
-          "get" (do)
-          "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
-          "delete" (api-key/delete-api-key! api-key)
-          "set-users" (api-key/update-api-key! api-key {:users command-args})
-          "allow" (let [[method path] command-args
-                        entry {:method method :path path}
-                        old (:paths (api-key/get-api-key api-key))]
-                    (api-key/update-api-key! api-key {:paths (conj old entry)}))
-          "allow-all" (api-key/update-api-key! api-key {:paths nil})
-          (do (usage)
-              (System/exit 1)))
-        (if api-key
-          (prn (api-key/get-api-key api-key))
-          (mapv prn (api-key/get-api-keys))))
+          "demo-data"
+          (do
+            (mount/start #'rems.config/env
+                         #'rems.db.core/*db*
+                         #'rems.locales/translations)
+            (test-data/create-demo-data!))
 
-      "ega"
-      (let [[_ command userid username password config-id & _] args]
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (case command
-          "api-key" (let [ega-config (->> (:entitlement-push env)
-                                          (filter (comp #{:ega} :type))
-                                          (find-first (comp #{config-id} :id)))]
-                      (assert ega-config (str "Could not find :entitlement-push with :type :ega and :id " (pr-str config-id)))
-                      (ega/generate-api-key-with-account {:userid userid :username username :password password :config ega-config}))
-          (do (usage)
-              (System/exit 1))))
+          "api-key"
+          (let [[_ command api-key & command-args] args]
+            (mount/start #'rems.config/env #'rems.db.core/*db*)
+            (case command
+              "get" (do)
+              "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+              "delete" (api-key/delete-api-key! api-key)
+              "set-users" (api-key/update-api-key! api-key {:users command-args})
+              "allow" (let [[method path] command-args
+                            entry {:method method :path path}
+                            old (:paths (api-key/get-api-key api-key))]
+                        (api-key/update-api-key! api-key {:paths (conj old entry)}))
+              "allow-all" (api-key/update-api-key! api-key {:paths nil})
+              (do (usage)
+                  (System/exit 1)))
+            (if api-key
+              (prn (api-key/get-api-key api-key))
+              (mapv prn (api-key/get-api-keys))))
 
-      "list-users"
-      (do
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (doseq [u (users/get-all-users)]
-          (-> u
-              (assoc :roles (roles/get-roles (:userid u)))
-              json/generate-string
-              println)))
+          "ega"
+          (let [[_ command userid username password config-id & _] args]
+            (mount/start #'rems.config/env #'rems.db.core/*db*)
+            (case command
+              "api-key" (let [ega-config (->> (:entitlement-push env)
+                                              (filter (comp #{:ega} :type))
+                                              (find-first (comp #{config-id} :id)))]
+                          (assert ega-config (str "Could not find :entitlement-push with :type :ega and :id " (pr-str config-id)))
+                          (ega/generate-api-key-with-account {:userid userid :username username :password password :config ega-config}))
+              (do (usage)
+                  (System/exit 1))))
 
-      "grant-role"
-      (let [[_ role user] args]
-        (if (not (and role user))
-          (do (usage)
-              (System/exit 1))
-          (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-              (roles/add-role! user (keyword role)))))
+          "list-users"
+          (do
+            (mount/start #'rems.config/env #'rems.db.core/*db*)
+            (doseq [u (users/get-all-users)]
+              (-> u
+                  (assoc :roles (roles/get-roles (:userid u)))
+                  json/generate-string
+                  println)))
 
-      "remove-role"
-      (let [[_ role user] args]
-        (if (not (and role user))
-          (do (usage)
-              (System/exit 1))
-          (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-              (roles/remove-role! user (keyword role)))))
+          "grant-role"
+          (let [[_ role user] args]
+            (if (not (and role user))
+              (do (usage)
+                  (System/exit 1))
+              (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+                  (roles/add-role! user (keyword role)))))
 
-      "validate"
-      (do
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (when-not (validate/validate)
-          (System/exit 2)))
+          "remove-role"
+          (let [[_ role user] args]
+            (if (not (and role user))
+              (do (usage)
+                  (System/exit 1))
+              (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+                  (roles/remove-role! user (keyword role)))))
 
-      ;; default
-      (apply start-app args))))
+          "validate"
+          (do
+            (mount/start #'rems.config/env #'rems.db.core/*db*)
+            (when-not (validate/validate)
+              (System/exit 2)))
+
+          ;; show usage if command is unrecognized
+          (usage))
+        ;; exit CLI after succesful command execution
+        (System/exit 0)))))
