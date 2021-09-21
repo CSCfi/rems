@@ -1,12 +1,11 @@
-(ns ^:integration rems.application.test-cleaner
+(ns ^:integration rems.application.test-eraser
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.applications :as applications]
             [rems.application.eraser :as eraser]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
-            [rems.config :refer [env]]))
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
@@ -39,7 +38,7 @@
       (events/add-event! submitted-event))
     app-id))
 
-(deftest test-cleaner
+(deftest test-eraser
   (testing "removes expired draft applications"
     (let [app-id-1 (add-dummy-application! {:draft? true :date-time (time/now) :actor "alice"})
           app-id-2 (add-dummy-application! {:date-time (time/now) :actor "alice"})
