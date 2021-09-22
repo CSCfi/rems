@@ -218,6 +218,8 @@
               (System/exit 2)))
 
           ;; show usage if command is unrecognized
-          (usage))
+          (do
+            (usage)
+            (System/exit 1)))
         ;; exit CLI after succesful command execution
         (System/exit 0)))))
