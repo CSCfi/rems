@@ -694,7 +694,7 @@ SELECT id, data::jsonb, organization FROM category;
 -- :name get-category-by-id! :? :1
 SELECT id, data::jsonb, organization FROM category WHERE id = :id;
 
--- :name edit-category-by-id! :? :1
+-- :name edit-category-by-id! :!
 UPDATE category
-SET data = :data::jsonb
+SET (data, organization) = (:data::jsonb, :organization)
 WHERE id = :id;

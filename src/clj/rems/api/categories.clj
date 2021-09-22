@@ -77,5 +77,5 @@
       ;; :roles +admin-write-roles+
       ;; :path-params [id :- (describe s/Int "category id")]
       :body [command CreateCategoryCommand]
-      :return CreateCategoryResponse
+      :return PostCategoriesResponse
       (ok (categories/edit-category command)))))

@@ -25,9 +25,13 @@
   (categories/get-categories))
 
 (defn edit-category [{:keys [id data organization]}]
-  (categories/edit-category {:id id
-                             :data (json/generate-string data)
-                             :organization (:organization/id organization)}))
+  (categories/edit-category! {:id id
+                              :data (json/generate-string data)
+                              :organization organization})
+  ;; (applications/reload-cache!)
+  (dependencies/reset-cache!)
+  {:success true
+   :id id})
 
 
 

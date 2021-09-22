@@ -11,7 +11,7 @@
             [rems.spinner :as spinner]
 
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [navigate! post! trim-when-string fetch]]))
+            [rems.util :refer [navigate! post! put! trim-when-string fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -34,6 +34,7 @@
 
 (rf/reg-sub ::category (fn [db _] (::category db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+(rf/reg-sub ::id (fn [db _] (::id db)))
 
 (rf/reg-event-fx
  ::fetch-category-result
@@ -81,7 +82,16 @@
    {:db (assoc db ::loading? true)}))
 
 
-
+;; (rf/reg-event-fx
+;;  ::edit-category
+;;  (fn [_ [_ request]]
+;;    (let [description [text :t.administration/edit-workflow]]
+;;      (put! "/api/categories/edit"
+;;            {:params request
+;;             :handler (flash-message/default-success-handler
+;;                        :top description #(navigate! (str "/administration/categories/" (:id request))))
+;;             :error-handler (flash-message/default-error-handler :top description)}))
+;;    {}))
 
 
 ;; form submit
@@ -114,10 +124,10 @@
  ::edit-category
  (fn [_ [_ request]]
    (let [description "Edit category"]
-     (put! "/api/workflows/edit"
+     (put! "/api/categories/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                       :top description #(navigate! (str "/administration/workflows/" (:id request))))
+                       :top description #(navigate! (str "/administration/categories/" (:id request))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -146,12 +156,15 @@
                  :organization {:organization/id (get-in form [:organization :organization/id])}
                 ;;  (trim-when-string (:en (:organization/short-name (:organization form))))
                  ;; (trim-when-string (get-in (:organization form) [:organization/id]))
-                 }]
+                 }
+        id @(rf/subscribe [::id])]
     [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
-                  (rf/dispatch [::create-category request]))
+                  (if id
+                    (rf/dispatch [::edit-category request])
+                    (rf/dispatch [::create-category request])))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 

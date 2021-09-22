@@ -31,23 +31,12 @@
    #(format-category %)
    (db/get-categories)))
 
-;; (defn edit-category [id]
-;;   (db/edit-category-by-id! {:id id}))
-
-(defn edit-category [id]
-  (let [category (get-category id)
-        newCategory (db/edit-category-by-id! {:id (:id category)
-                                              :data (json/generate-string {:title {:en "Test"}})})
-        ;; :organization (get-in category [:organization :organization/id])
-        ;; newCategory (db/edit-category-by-id! {:id (:id category)
-        ;;                                       :data 
-        ;;                                       :organization (get-in category [:organization :organization/id])
-        ;;                                       })
-        ]
-    ;; newCategory
-
-    ;; (format-category-id (join-dependencies newCategory))
-    ))
+(defn edit-category! [{:keys [id data organization]}]
+  (let [category (get-category id)]
+    (db/edit-category-by-id! {:id (or id (:id category))
+                              :data (or (json/generate-string data) (:data category))
+                              :organization (or (:organization/id organization) (get-in category [:organization :organization/id]))}))
+  {:success true})
 
 
 
