@@ -66,16 +66,16 @@
       (if-let [category (categories/get-category id)]
         (ok category)
         (not-found-json-response)))
-    ;; (GET "/" []
-    ;;   :summary "Get categories"
-    ;;   :return GetCategoriesResponse
-    ;;   (ok (categories/get-categories))
-    ;;   ;; (not-found-json-response)
-    ;;   )
-
     (POST "/create" []
       :summary "Create category"
       ;; :roles +admin-write-roles+
       :body [command CreateCategoryCommand]
       :return PostCategoriesResponse
-      (ok (categories/create-category! command)))))
+      (ok (categories/create-category! command)))
+    (PUT "/edit" []
+      :summary "Edit workflow title and handlers"
+      ;; :roles +admin-write-roles+
+      ;; :path-params [id :- (describe s/Int "category id")]
+      :body [command CreateCategoryCommand]
+      :return CreateCategoryResponse
+      (ok (categories/edit-category command)))))

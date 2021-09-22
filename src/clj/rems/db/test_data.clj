@@ -1168,8 +1168,6 @@
                              :organization {:organization/id "organization1"}
                              :workflow-id (:organization-owner workflows)})
 
-    ; create category
-
     (let [applicant (users :applicant1)
           handler (users :approver2)
           reviewer (users :reviewer)
@@ -1197,7 +1195,9 @@
                  :application-id app-id
                  :actor handler
                  :reviewers [reviewer]
-                 :comment "please have a look"}))))
+                 :comment "please have a look"}))
+
+          ;; create category
     (categories/create-category! {:data {:title {:en "Category EN"
                                                  :fi "Category FI"
                                                  :sv "Category SV"}}
@@ -1210,6 +1210,7 @@
                                                  :fi "Category FI"
                                                  :sv "Category SV"}}
                                   :organization {:organization/id "organization1"}})))
+
 
 (defn create-organizations! [users]
   (let [owner (users :owner)

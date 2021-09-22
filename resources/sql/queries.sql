@@ -693,3 +693,8 @@ SELECT id, data::jsonb, organization FROM category;
 
 -- :name get-category-by-id! :? :1
 SELECT id, data::jsonb, organization FROM category WHERE id = :id;
+
+-- :name edit-category-by-id! :? :1
+UPDATE category
+SET data = :data::jsonb
+WHERE id = :id;

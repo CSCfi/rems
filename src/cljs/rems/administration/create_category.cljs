@@ -17,7 +17,9 @@
  ::enter-page
  (fn [{:keys [db]} [_ id]]
    {:db (assoc db
-               ::form {}
+               ::form {:title {:localizations {:en "En"
+                                               :fi "FI"
+                                               :sv "SV"}}}
                ::editing? (some? id)
                ::id id)
     :dispatch-n [(when id [::fetch-category id])]}))
@@ -39,8 +41,28 @@
    {:db (-> db
             (assoc ::category category)
             (dissoc ::loading?)
-            (assoc ::form {:title (:title (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true))
-                           :organization (:organization category)}))}))
+            (assoc ::form {;;  (:title 
+                          ;;          (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true)
+                          ;;                 )
+                           :organization (:organization category)}))
+    ;; :dispatch-n [::fetch-category-success]
+    }))
+
+
+(rf/reg-event-db
+ ::fetch-category-success
+ (fn [db [_ {:keys [data organization]}]]
+   (update db ::form merge {:title {:localizations {:en (:en (:title (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true)))
+                                                    :fi "FI"
+                                                    :sv "SV"}}
+                            :organization organization})))
+
+;; (update db ::form merge {:title title
+;;                          :organization organization
+;;                          :type (:type workflow)
+;;                          :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
+;;                          :handlers (get workflow :handlers)})
+
 
 ;; (update db ::form merge {:title title
 ;;                          :organization organization
@@ -52,7 +74,9 @@
  ::fetch-category
  (fn [{:keys [db]} [_ category-id]]
    (fetch (str "/api/categories/" category-id)
-          {:handler #(rf/dispatch [::fetch-category-result %])
+          {:handler (fn [response]
+                      ;; (rf/dispatch [::fetch-category-result response])
+                      (rf/dispatch [::fetch-category-success response]))
            :error-handler (flash-message/default-error-handler :top "Fetch category")})
    {:db (assoc db ::loading? true)}))
 
@@ -84,6 +108,17 @@
              :handler (flash-message/default-success-handler
                         :top description #(navigate! (str "/administration/categories/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
+(rf/reg-event-fx
+ ::edit-category
+ (fn [_ [_ request]]
+   (let [description "Edit category"]
+     (put! "/api/workflows/edit"
+           {:params request
+            :handler (flash-message/default-success-handler
+                       :top description #(navigate! (str "/administration/workflows/" (:id request))))
+            :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 ;;;; UI
@@ -140,14 +175,9 @@
          :title "Create category"
          :always [:div
                   [:div#resource-editor.fields
-                ;;  [category-id-field]
                    (for [language languages]
                      [category-name-field language])
                    [category-organization-field]
-
-
-                  ;;  [resource-licenses-field]
-
                    [:div.col.commands
                     [cancel-button]
                     [save-resource-button form]]]
@@ -161,7 +191,6 @@
          :title "Edit category"
          :always [:div
                   [:div#resource-editor.fields
-                ;;  [category-id-field]
                    (for [language languages]
                      [category-name-field language])
                    [category-organization-field]
