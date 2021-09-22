@@ -8,6 +8,7 @@
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
+            [clj-time.core :as time]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -282,11 +283,15 @@
   :start (scheduler/start! reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
-(defn delete-application! [app-id]
+(defn delete-application!
+  [app-id]
   (let [application (get-application app-id)]
     (assert (= :application.state/draft (:application/state application))
             (str "Tried to delete application " app-id " which is not a draft!")))
   (db/delete-application-attachments! {:application app-id})
   (db/delete-application-events! {:application app-id})
-  (db/delete-application! {:application app-id})
+  (db/delete-application! {:application app-id}))
+
+(defn delete-application-and-reload-cache! [app-id]
+  (delete-application! app-id)
   (reload-cache!))
