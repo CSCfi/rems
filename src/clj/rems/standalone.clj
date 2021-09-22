@@ -217,9 +217,9 @@
             (when-not (validate/validate)
               (System/exit 2)))
 
-          ;; show usage if command is unrecognized
+          ;; show usage if argument is unrecognized
           (do
-            (println "Unrecognized command:" (first args))
+            (println "Unrecognized argument:" (first args))
             (usage)
             (System/exit 1)))
         ;; exit CLI after succesful command execution
