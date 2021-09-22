@@ -13,8 +13,9 @@
   (let [last-activity (:application/last-activity application)
         state (:application/state application)
         expiration-threshold (some-> env :application-expiration state Period/parse)]
-    (when expiration-threshold
-      (time/before? last-activity (time/minus (time/now) expiration-threshold)))))
+    (if expiration-threshold
+      (time/before? last-activity (time/minus (time/now) expiration-threshold))
+      false)))
 
 (deftest test-is-expired
   (with-redefs [env {:application-expiration {:application.state/draft "P90D"
@@ -23,16 +24,16 @@
       (let [over-90d-ago (time/minus (time/now) (time/days 90) (time/seconds 1))
             over-7d-ago (time/minus (time/now) (time/days 7) (time/seconds 1))
             over-1d-ago (time/minus (time/now) (time/days 1) (time/seconds 1))]
-        (is (true? (is-expired? {:application/state :application.state/draft
-                                 :application/last-activity over-90d-ago})))
-        (is (false? (is-expired? {:application/state :application.state/draft
-                                  :application/last-activity over-7d-ago})))
-        (is (true? (is-expired? {:application/state :application.state/closed
-                                 :application/last-activity over-7d-ago})))
-        (is (false? (is-expired? {:application/state :application.state/closed
-                                  :application/last-activity over-1d-ago})))
-        (is (nil? (is-expired? {:application/state :application.state/rejected
-                                :application/last-activity over-90d-ago})))))))
+        (is (is-expired? {:application/state :application.state/draft
+                          :application/last-activity over-90d-ago}))
+        (is (not (is-expired? {:application/state :application.state/draft
+                               :application/last-activity over-7d-ago})))
+        (is (is-expired? {:application/state :application.state/closed
+                          :application/last-activity over-7d-ago}))
+        (is (not (is-expired? {:application/state :application.state/closed
+                               :application/last-activity over-1d-ago})))
+        (is (not (is-expired? {:application/state :application.state/rejected
+                               :application/last-activity over-90d-ago})))))))
 
 (defn remove-expired-applications!
   []
