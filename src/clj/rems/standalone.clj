@@ -121,6 +121,9 @@
       (apply start-app args)
       (do
         (case (first args)
+          "run"
+          (apply start-app args)
+
           "help"
           (usage)
 
