@@ -52,7 +52,8 @@
 (mount/defstate expired-application-poller
   :start (when (:application-expiration env)
            (scheduler/start! remove-expired-applications! (.toStandardDuration (time/days 1))))
-  :stop (scheduler/stop! expired-application-poller))
+  :stop (when expired-application-poller
+          (scheduler/stop! expired-application-poller)))
 
 (comment
   (mount/defstate expired-application-poller-test
