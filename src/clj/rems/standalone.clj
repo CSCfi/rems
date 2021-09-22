@@ -116,7 +116,7 @@
   (let [usage #(do
                  (println "Usage:")
                  (println (:doc (meta #'-main))))]
-    (if-not (seq args)
+    (if (empty? args)
       ;; start app by default if no CLI command was supplied
       (apply start-app args)
       (do
@@ -219,6 +219,7 @@
 
           ;; show usage if command is unrecognized
           (do
+            (println "Unrecognized command:" (first args))
             (usage)
             (System/exit 1)))
         ;; exit CLI after succesful command execution
