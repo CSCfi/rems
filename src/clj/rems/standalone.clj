@@ -123,7 +123,7 @@
         (case (first args)
           "run"
           (apply start-app args)
-          
+
           "help"
           (usage)
 
