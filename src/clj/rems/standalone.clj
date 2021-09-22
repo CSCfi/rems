@@ -217,7 +217,6 @@
             (when-not (validate/validate)
               (System/exit 2)))
 
-          ;; show usage if argument is unrecognized
           (do
             (println "Unrecognized argument:" (first args))
             (usage)
