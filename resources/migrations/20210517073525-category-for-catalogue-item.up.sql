@@ -3,3 +3,6 @@ CREATE TABLE category (
   data jsonb,
   organization varchar(255)
 );
+
+ALTER TABLE catalogue_item
+ ADD COLUMN categories jsonb;
