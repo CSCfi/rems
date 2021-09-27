@@ -49,6 +49,14 @@
 
 (s/defschema ResourceLicense License)
 
+
+(s/defschema Category
+  {(s/optional-key :id) s/Int
+   (s/optional-key :data) s/Any
+   (s/optional-key :organization) schema-base/OrganizationId})
+
+(s/defschema CatalogueItemCategory Category)
+
 (s/defschema Event
   (assoc schema-base/EventBase
          :event/actor-attributes schema-base/UserWithAttributes

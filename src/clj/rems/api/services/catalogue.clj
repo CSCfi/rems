@@ -4,11 +4,13 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.json :as json]
             [rems.db.organizations :as organizations]))
 
-(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
+(defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
+                                                  {:categories (json/generate-string categories)}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start]))))
         loc-ids
         (doall

@@ -35,6 +35,7 @@
    :wfid s/Int
    :organization schema-base/OrganizationId
    :localizations WriteCatalogueItemLocalizations
+   (s/optional-key :categories) [schema/CatalogueItemCategory]
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
 

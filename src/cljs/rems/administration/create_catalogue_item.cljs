@@ -74,7 +74,8 @@
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
                                                :infourl (-> (get-in form [:infourl lang])
                                                             empty-string-to-nil
-                                                            trim-when-string)}]))}]
+                                                            trim-when-string)}]))
+                 :categories (map :id (:categories form))}]
     (when (valid-request? form request languages)
       request)))
 

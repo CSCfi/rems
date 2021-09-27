@@ -6,10 +6,9 @@
             ;; [rems.administration.components :refer [organization-field text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
-            [rems.dropdown :as dropdown]
+            ;; [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
-            [rems.spinner :as spinner]
-
+            ;; [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [navigate! post! put! trim-when-string fetch]]))
 
@@ -29,8 +28,6 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
-;; (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
-;;                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
 
 (rf/reg-sub ::category (fn [db _] (::category db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
@@ -54,45 +51,17 @@
  ::fetch-category-success
  (fn [db [_ {:keys [data organization]}]]
    (update db ::form merge {:title {:localizations {:en (:en (:title (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true)))
-                                                    :fi "FI"
-                                                    :sv "SV"}}
+                                                    :fi (:fi (:title (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true)))
+                                                    :sv (:sv (:title (js->clj (. js/JSON (parse (get-in category [:data]))) :keywordize-keys true)))}}
                             :organization organization})))
-
-;; (update db ::form merge {:title title
-;;                          :organization organization
-;;                          :type (:type workflow)
-;;                          :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
-;;                          :handlers (get workflow :handlers)})
-
-
-;; (update db ::form merge {:title title
-;;                          :organization organization
-;;                          :type (:type workflow)
-;;                          :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
-;;                          :handlers (get workflow :handlers)})
-
 (rf/reg-event-fx
  ::fetch-category
  (fn [{:keys [db]} [_ category-id]]
    (fetch (str "/api/categories/" category-id)
           {:handler (fn [response]
-                      ;; (rf/dispatch [::fetch-category-result response])
                       (rf/dispatch [::fetch-category-success response]))
            :error-handler (flash-message/default-error-handler :top "Fetch category")})
    {:db (assoc db ::loading? true)}))
-
-
-;; (rf/reg-event-fx
-;;  ::edit-category
-;;  (fn [_ [_ request]]
-;;    (let [description [text :t.administration/edit-workflow]]
-;;      (put! "/api/categories/edit"
-;;            {:params request
-;;             :handler (flash-message/default-success-handler
-;;                        :top description #(navigate! (str "/administration/categories/" (:id request))))
-;;             :error-handler (flash-message/default-error-handler :top description)}))
-;;    {}))
-
 
 ;; form submit
 
@@ -147,8 +116,7 @@
 
 (defn- category-name-field [language]
   [text-field context {:keys [:title :localizations language]
-                       :label (str "Category name " language)
-                       :placeholder "name category"}])
+                       :label (str "Category name " language)}])
 
 (defn- save-resource-button [form]
   (let [request {;;  :id (js/parseInt (trim-when-string (:id form)))
@@ -193,11 +161,7 @@
                    [category-organization-field]
                    [:div.col.commands
                     [cancel-button]
-                    [save-resource-button form]]]
-                ;; (if loading?
-                ;;   [:div#resource-loader [spinner/big]]
-                ;;   )
-                  ]}]
+                    [save-resource-button form]]]]}]
 
        [collapsible/component
         {:id "create-resource"
@@ -209,8 +173,4 @@
                    [category-organization-field]
                    [:div.col.commands
                     [cancel-button]
-                    [save-resource-button form]]]
-                ;; (if loading?
-                ;;   [:div#resource-loader [spinner/big]]
-                ;;   )
-                  ]}])]))
+                    [save-resource-button form]]]]}])]))

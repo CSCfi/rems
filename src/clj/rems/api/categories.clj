@@ -11,8 +11,6 @@
 
 (s/defschema Category
   {(s/optional-key :id) s/Int
-  ;;  :owneruserid s/Any
-  ;;  :modifieruserid s/Any
    (s/optional-key :data) s/Any
    (s/optional-key :organization) schema-base/OrganizationId})
 

@@ -71,8 +71,10 @@ WHERE id = :id;
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(formid, resid, wfid, organization, enabled, archived, start)
+(formid, resid, wfid, organization, categories, enabled, archived, start)
 VALUES (:form, :resid, :wfid, :organization,
+/*~ (if (:categories params) */ :categories::jsonb /*~*/ NULL /*~ ) ~*/
+,
 --~ (if (contains? params :enabled) ":enabled" "true")
 ,
 --~ (if (contains? params :archived) ":archived" "false")
