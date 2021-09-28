@@ -8,6 +8,7 @@
             [rems.api.services.organizations :as organizations]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
+            [rems.db.duo :as duo]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
@@ -1271,6 +1272,7 @@
 (defn create-test-data! []
   (assert-no-existing-data!)
   (create-test-api-key!)
+  (duo/load-duo-codes!)
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)
@@ -1282,6 +1284,7 @@
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
     (api-key/add-api-key! 55 {:comment "Finna"})
+    (duo/load-duo-codes!)
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)

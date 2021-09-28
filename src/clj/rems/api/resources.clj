@@ -18,7 +18,8 @@
    :resid s/Str
    :enabled s/Bool
    :archived s/Bool
-   :licenses [schema/ResourceLicense]})
+   :licenses [schema/ResourceLicense]
+   (s/optional-key :resource/duo) {(s/optional-key :duo/codes) [schema-base/DuoCodeFull]}})
 
 (s/defschema Resources
   [Resource])
@@ -26,7 +27,8 @@
 (s/defschema CreateResourceCommand
   {:resid s/Str
    :organization schema-base/OrganizationId
-   :licenses [s/Int]})
+   :licenses [s/Int]
+   (s/optional-key :resource/duo) {(s/optional-key :duo/codes) [schema-base/DuoCode]}})
 
 (s/defschema CreateResourceResponse
   {:success s/Bool

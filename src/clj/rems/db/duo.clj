@@ -5,6 +5,7 @@
             [clojure.set :refer [difference]]
             [clojure.string :as str]
             [medley.core :refer [remove-vals update-existing]]
+            [rems.common.util :refer [index-by]]
             [rems.config]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -135,7 +136,13 @@
 (comment
   (get-duo-codes))
 
-
+(defn join-duo-codes [k x]
+  (let [codes (get-duo-codes) ;; TODO: cache
+        code-by-id (index-by codes [:id])
+        unknown-value {:label {:en "unknown code"}
+                       :description {:en "Unknown code"}}
+        code-or-default (fn [duo] (code-by-id (:id duo) (merge unknown-value duo)))]
+    (update-in x [k :duo/codes] (partial mapv code-or-default))))
 
 
 (comment
