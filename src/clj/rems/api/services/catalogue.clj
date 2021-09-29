@@ -10,7 +10,7 @@
 (defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
-                                                  {:categories (json/generate-string categories)}
+                                                  (when categories {:categories (json/generate-string [categories])})
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start]))))
         loc-ids
         (doall
