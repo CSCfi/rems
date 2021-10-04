@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.20
+Changes since v2.21
+
+## v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04
 
 **NB: This release contains migrations!**
 
