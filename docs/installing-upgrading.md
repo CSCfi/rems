@@ -7,7 +7,7 @@ This is a short guide for running REMS as an uberjar. We also provide a [Dockerf
 1. Write a configuration file. See [configuration.md](configuration.md) for instructions.
 1. Run rems with a command like
 
-        java -Drems.config=path/to/your/rems/config -jar rems.jar
+        java -Drems.config=path/to/your/rems/config -jar rems.jar run
 
 # Administering REMS
 

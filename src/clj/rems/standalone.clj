@@ -85,6 +85,8 @@
 
 (defn -main
   "Arguments can be either arguments to mount/start-with-args, or one of
+     \"run\" -- start the REMS application
+     \"help\" -- show this help
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
      \"reset\" -- empties database and runs migrations to empty db
