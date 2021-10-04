@@ -12,6 +12,7 @@ Changes since v2.20
 
 ### Breaking changes
 - Application attachment file size can now be limited with configuration option `:attachment-max-size`. Configuration default size per attachment is 10MB. (#2715)
+- REMS standalone CLI no longer starts the server by default if no arguments are provided, and will print usage help if unrecognized command is passed. (#2518 #2738)
 
 ### Additions
 - "More info" support for DOI style resources (when `:enable-doi` flag is set) (#2701)
