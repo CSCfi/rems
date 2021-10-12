@@ -278,3 +278,19 @@
    :size s/Int
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
+
+(s/defschema DuoCode
+  (-> schema-base/DuoCodeFull
+      (dissoc :restrictions)
+      (assoc (s/optional-key :type) s/Keyword)
+      (assoc (s/optional-key :simple?) s/Bool)))
+
+(s/defschema DuoCodes
+  [DuoCode])
+
+(s/defschema MondoCode
+  {:id s/Str
+   :label s/Str})
+
+(s/defschema MondoCodes
+  [MondoCode])

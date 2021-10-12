@@ -124,7 +124,9 @@
   "Adds convenience attributes to DUO codes."
   [duo]
   (merge duo
-         (when (contains? simple-codes (:id duo)) {:simple? true})))
+         (if-let [complex-type (:type (get complex-codes (:id duo)))]
+           {:type complex-type}
+           {:simple? true})))
 
 (defn get-duo-codes
   "Gets the DUO codes from the database."
