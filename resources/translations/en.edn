@@ -327,7 +327,10 @@
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO codes"
+                           :restriction {:MONDO "Disease (MONDO)"
+                                         :months "Approved for (months)"}}}
   :create-workflow {:decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"

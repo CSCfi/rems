@@ -302,7 +302,10 @@
                    :title "Lisenssin nimi"}
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO koodit"
+                           :restriction {:MONDO "Tauti (MONDO)"
+                                         :months "Voimassa (kuukautta)"}}}
   :create-workflow {:decider-workflow "Päättäjätyövuo"
                     :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on."
                     :default-workflow "Oletustyövuo"

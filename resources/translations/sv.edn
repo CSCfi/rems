@@ -302,7 +302,10 @@
                    :title "Licensens namn"}
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO koder"
+                           :restriction {:MONDO "Sjukdom (MONDO)"
+                                         :months "Giltig i (månader)"}}}
   :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
