@@ -1,7 +1,8 @@
 (ns rems.keepalive
   (:require [cljs-time.core :as time]
             [re-frame.core :as rf]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch]]
+            [goog.functions :refer [throttle]]))
 
 (def keepalive-interval (time/minutes 1))
 
@@ -19,6 +20,10 @@
          (keepalive!)
          (assoc db ::next-keepalive (time/plus now keepalive-interval)))))))
 
+(defn- keepalive-listener [_]
+  (rf/dispatch [::activity]))
+
 (defn register-keepalive-listeners! []
-  (doseq [event ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]]
-    (.addEventListener js/document event (fn [_] (rf/dispatch [::activity])) true)))
+  (let [throttled-keepalive-listener (throttle keepalive-listener 10000)]
+    (doseq [event ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]]
+      (.addEventListener js/document event throttled-keepalive-listener true))))
