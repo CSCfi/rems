@@ -20,12 +20,13 @@
   `:clearable?` should there be a clear selection button?
   `:placeholder` text to show when nothing is selected, defaults to (text :t.dropdown/placeholder)
   `:on-change` called each time the value changes, one or seq"
-  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? placeholder on-change disabled?]
+  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? placeholder on-change disabled? loading?]
     :or {item-key identity
          item-label identity
          hide-selected? multi?
          item-selected? (constantly false)
-         item-disabled? (constantly false)}}]
+         item-disabled? (constantly false)
+         loading? false}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
   [:> js/Select {:className (str/trimr (str "dropdown-container " class))
                  :classNamePrefix "dropdown-select"
@@ -42,7 +43,8 @@
                  :options (into-array items)
                  :value (into-array (filter item-selected? items))
                  :onChange #(on-change (if (array? %) (array-seq %) %))
-                 :placeholder (or placeholder (text :t.dropdown/placeholder))}])
+                 :placeholder (or placeholder (text :t.dropdown/placeholder))
+                 :isLoading loading?}])
 
 (defn guide
   []

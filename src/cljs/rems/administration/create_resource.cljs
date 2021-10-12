@@ -1,24 +1,30 @@
 (ns rems.administration.create-resource
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [com.rpl.specter :refer [must transform]]
+            [medley.core :refer [assoc-some remove-vals]]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [organization-field text-field]]
+            [rems.administration.components :refer [organization-field text-field date-field localized-text-field input-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text get-localized-title]]
+            [rems.text :refer [text get-localized-title localized]]
             [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
    {:db (dissoc db ::form)
-    :dispatch-n [[::licenses {:active true}]]}))
+    :dispatch-n [[::licenses {:active true}]
+                 [::duos {:active true}]
+                 [::mondo-codes {:active true}]]}))
 
 (fetcher/reg-fetcher ::licenses "/api/licenses")
+(fetcher/reg-fetcher ::duos "/api/duos")
+(fetcher/reg-fetcher ::mondo-codes "/api/duos/mondo-codes")
 
 ;; form state
 
@@ -28,17 +34,38 @@
 (rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] (sort-by :id licenses))))
 
+(rf/reg-sub ::selected-duos (fn [db _] (get-in db [::form :duos])))
+(rf/reg-event-db ::set-duos (fn [db [_ duos]] (assoc-in db [::form :duos] (sort-by :id duos))))
+
+(rf/reg-sub ::duo-restrictions (fn [db [_ duo]] (get-in db [::form :duo-restrictions duo])))
+(rf/reg-event-db ::set-duo-restrictions (fn [db [_ path restrictions]] (assoc-in db (into [::form :duo-restrictions] (flatten [path])) restrictions)))
+
 ;; form submit
 
-(defn- valid-request? [form request]
+(defn- value-when [pred x]
+  (when (pred x) x))
+
+(defn- map-duos-to-request [{:keys [duos duo-restrictions]}]
+  (let [join-duo-restrictions (fn [duo-id]
+                                (->> (get duo-restrictions duo-id)
+                                     (transform [(must :mondo)] (partial map :id))
+                                     (remove-vals #(or (str/blank? %) (empty? %)))
+                                     (value-when (comp not empty?))))]
+    (map (fn [{:keys [id]}]
+           (-> {:id id}
+               (assoc-some :restrictions (join-duo-restrictions id))))
+         duos)))
+
+(defn- valid-request? [request]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :resid (trim-when-string (:resid form))
-                 :licenses (map :id (:licenses form))}]
-    (when (valid-request? form request)
+                 :licenses (map :id (:licenses form))
+                 :resource/duo {:duo/codes (map-duos-to-request form)}}]
+    (when (valid-request? request)
       request)))
 
 (rf/reg-event-fx
@@ -49,7 +76,7 @@
             {:params request
              ;; TODO: render the catalogue items that use this resource in the error handler
              :handler (flash-message/default-success-handler
-                       :top description #(navigate! (str "/administration/resources/" (:id %))))
+                        :top description #(navigate! (str "/administration/resources/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -87,6 +114,95 @@
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))
 
+(defn- duo-restrictions [duo]
+  (let [duo-id (:id duo)
+        duo-type (:type duo)
+        duo-restrictions @(rf/subscribe [::duo-restrictions duo-id])
+        restriction-label (text (keyword :t.create-resource.duos.restriction duo-type))]
+    (case duo-type
+      :MONDO
+      (let [update-path [duo-id :mondo]]
+        [:<>
+         [:label.administration-field-label {:for "mondos-dropdown"} restriction-label]
+         [dropdown/dropdown
+          {:id "mondos-dropdown"
+           :items @(rf/subscribe [::mondo-codes])
+           :item-key :id
+           :item-label (partial :id)
+           :item-selected? (partial (set (:mondo duo-restrictions)))
+           :multi? true
+           :on-change #(rf/dispatch [::set-duo-restrictions update-path %])}]
+         (when-let [mondos (seq (:mondo duo-restrictions))]
+           [:div {:style {:margin-top "1rem"}}
+            (doall
+             (for [{:keys [id label]} mondos]
+               ^{:key id}
+               [:div.form-field
+                [:p.administration-field-label id]
+                [:p label]]))])])
+
+      :date
+      (let [update-path [:duo-restrictions duo-id :date]]
+        [date-field context
+         {:label restriction-label
+          :keys update-path}])
+
+      :months
+      (let [update-path [:duo-restrictions duo-id :months]]
+        [input-field {:type :number
+                      :context context
+                      :keys update-path
+                      :label restriction-label
+                      :input-style {:max-width 200}}])
+
+      (:topic :location)
+      (let [update-path [:duo-restrictions duo-id duo-type]]
+        [localized-text-field context
+         {:keys update-path
+          :label restriction-label}])
+
+      (:institute :collaboration :project :users)
+      (let [update-path [:duo-restrictions duo-id duo-type]]
+        [text-field context
+         {:keys update-path
+          :label restriction-label}])
+      nil)))
+
+(defn- duo-field [duo]
+  [:<>
+   [:p
+    [:span.administration-field-label (:shorthand duo)]
+    [:span (str " - " (localized (:label duo)))]]
+   [:p (localized (:description duo))]
+   [:p (str "(" (:id duo) ")")]
+   [duo-restrictions duo]])
+
+(defn- resource-duos-field []
+  (let [duos @(rf/subscribe [::duos])
+        selected-duos @(rf/subscribe [::selected-duos])]
+    [:div.form-group
+     [:label.administration-field-label {:for "duos-dropdown"}
+      (text :t.create-resource.duos/select-duo-codes)]
+     [dropdown/dropdown
+      {:id "duos-dropdown"
+       :items duos
+       :item-key :id
+       :item-label #(let [shorthand (:shorthand %)
+                          label (localized (:label %))]
+                      (if (seq shorthand)
+                        (str shorthand " - " label)
+                        (str (:id %) " - " label)))
+       :item-selected? #(contains? (set selected-duos) %)
+       :multi? true
+       :on-change #(rf/dispatch [::set-duos %])}]
+     (when (seq selected-duos)
+       [:div {:style {:margin-top "1rem"}}
+        (doall
+         (for [duo selected-duos]
+           ^{:key (:id duo)}
+           [:div.form-field
+            [duo-field duo]]))])]))
+
 (defn- save-resource-button [form]
   (let [request (build-request form)]
     [:button#save.btn.btn-primary
@@ -104,7 +220,8 @@
 
 (defn create-resource-page []
   (let [loading? @(rf/subscribe [::licenses :fetching?])
-        form @(rf/subscribe [::form])]
+        form @(rf/subscribe [::form])
+        config @(rf/subscribe [:rems.config/config])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-resource)]
@@ -119,6 +236,8 @@
                    [resource-organization-field]
                    [resource-id-field]
                    [resource-licenses-field]
+                   (when (:enable-duo config)
+                     [resource-duos-field])
 
                    [:div.col.commands
                     [cancel-button]
