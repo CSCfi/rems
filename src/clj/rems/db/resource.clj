@@ -46,7 +46,7 @@
 (defn create-resource! [resource user-id]
   (let [data (when-let [duo (:resource/duo resource)]
                {:resource/duo {:duo/codes (for [code (:duo/codes duo)]
-                                            (select-keys code [:id]))}})
+                                            (select-keys code [:id :restrictions]))}})
         id (:id (db/create-resource! {:resid (:resid resource)
                                       :organization (get-in resource [:organization :organization/id])
                                       :owneruserid user-id
