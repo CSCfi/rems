@@ -102,8 +102,8 @@
                    (visa->researcher-status-by (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
 
 (defn visa->claims
-  "Peek into the contents of the visa / JWT token without verifying it.
+  "Show the contents of the visa / JWT token without verifying it.
 
   Useful for testing or debugging."
   [visa]
-  (jwt/peek visa))
+  (jwt/show visa))
