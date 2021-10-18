@@ -801,13 +801,7 @@
                                  :field/type :texta
                                  :field/placeholder {:en "The purpose of the project is to..."
                                                      :fi "Projektin tarkoitus on..."
-                                                     :sv "Det här projekt..."}}
-
-                                {:field/title {:en "Project extra"
-                                               :fi "Projektin extra"
-                                               :sv "Projektets extra"}
-                                 :field/optional true
-                                 :field/type :texta}]})
+                                                     :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
@@ -856,11 +850,6 @@
                         :field-values [{:form form-id
                                         :field (:field/id (first (:form/fields form)))
                                         :value (str "Performance test application " (UUID/randomUUID))}
-                                       {:form form-id
-                                        :field (:field/id (second (:form/fields form)))
-                                        ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
-                                        ;; to increase the memory requirements of an application
-                                        :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}
                                        {:form form-id
                                         :field (:field/id (second (:form/fields form)))
                                         ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
