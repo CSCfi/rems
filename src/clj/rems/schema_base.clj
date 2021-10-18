@@ -78,3 +78,14 @@
                                                          :email s/Str}]
           (s/optional-key :enabled) s/Bool
           (s/optional-key :archived) s/Bool}))
+
+(s/defschema DuoCode
+  {:id s/Str
+   (s/optional-key :restrictions) [{:type s/Keyword :values [s/Str]}]})
+
+(s/defschema DuoCodeFull
+  {:id s/Str
+   (s/optional-key :shorthand) (s/maybe s/Str)
+   :label LocalizedString
+   :description LocalizedString
+   (s/optional-key :restrictions) [{:type s/Keyword :values [s/Str]}]})

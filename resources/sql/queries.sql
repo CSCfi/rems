@@ -88,7 +88,8 @@ SELECT
   organization,
   resid,
   enabled,
-  archived
+  archived,
+  resourcedata::TEXT
 FROM resource;
 
 -- :name get-resource :? :1
@@ -99,7 +100,8 @@ SELECT
   organization,
   resid,
   enabled,
-  archived
+  archived,
+  resourcedata::TEXT
 FROM resource
 WHERE 1=1
 /*~ (when (:id params) */
@@ -113,8 +115,8 @@ WHERE 1=1
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, organization, ownerUserId, modifieruserid)
-VALUES (:resid, :organization, :owneruserid, :modifieruserid);
+(resid, organization, ownerUserId, modifieruserid, resourcedata)
+VALUES (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb);
 
 -- :name set-resource-enabled! :!
 -- TODO set modifieruserid?

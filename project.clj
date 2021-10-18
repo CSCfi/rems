@@ -50,6 +50,7 @@
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
                  [org.clojure/core.cache "1.0.207"]
                  [org.clojure/core.memoize "1.0.236"]
+                 [org.clojure/data.csv "1.0.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/tools.logging "1.1.0"]
                  [org.postgresql/postgresql "42.2.16"]

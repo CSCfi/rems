@@ -13,6 +13,7 @@
             [rems.api.services.resource :as resources]
             [rems.db.events :as events-db]
             [rems.db.organizations :as organizations]
+            [rems.ext.duo]
             [schema.core :as s]))
 
 (def ^:private validate-form-template
@@ -55,6 +56,9 @@
     (validate-forms)
     (events/validate-events (events-db/get-all-events-since 0))
     (validate-organizations)
+    (when (:enable-duo env)
+      (when (empty? (rems.ext.duo/get-duo-codes))
+        (throw (ex-info "No DUO codes though `:enable-duo` is set." {}))))
     (log/info "Validations passed")
     (catch Throwable t
       (log/error t "Validations failed" (with-out-str (when-let [data (ex-data t)]

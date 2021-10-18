@@ -32,7 +32,7 @@
    (for [res (resource/get-resources {})
          dep (concat
               (mapv (fn [license] {:license/id (:id license)}) (licenses/get-resource-licenses (:id res)))
-              [{:organization/id (:organization res)}])]
+              [(:organization res)])]
      {:from {:resource/id (:id res)} :to dep})
 
    (for [cat (catalogue/get-localized-catalogue-items {:archived true})
