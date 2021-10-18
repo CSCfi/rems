@@ -82,3 +82,18 @@
               buffer (ByteArrayOutputStream.)]
     (io/copy input buffer)
     (.toByteArray buffer)))
+
+(defn read-zip-entries
+  "Read the zip-file entries from the `stream` and returns those matching `re`."
+  [stream re]
+  (when stream
+    (loop [files []]
+      (if-let [entry (.getNextEntry stream)]
+        (if (re-matches re (.getName entry))
+          (let [baos (java.io.ByteArrayOutputStream.)]
+            (io/copy stream baos)
+            (recur (conj files {:name (.getName entry)
+                                :bytes (.toByteArray baos)})))
+          (recur files))
+        files))))
+
