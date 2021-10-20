@@ -81,7 +81,7 @@
 
 (def ^:private code-by-id (atom nil))
 
-(defn get-codes
+(defn- get-codes
   "Return codes or a code by `id` with fallback to a default value for unknown codes.
 
   Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
@@ -104,9 +104,10 @@
           unknown-value)))))
 
 (defn get-duo-codes
-  "Gets the DUO codes from the database."
+  "Gets the usable DUO codes from the database."
   []
-  (get-codes))
+  (->> (get-codes)
+       (remove (comp abstract-codes :id))))
 
 (comment
   (with-redefs [rems.config/env {:enable-duo true}]
