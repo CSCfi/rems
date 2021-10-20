@@ -1,9 +1,12 @@
 (ns rems.db.resource
-  (:require [rems.db.core :as db]
+  (:require [clojure.set]
+            [rems.db.core :as db]
+            [rems.ext.duo :as duo]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [rems InvalidRequestException]))
 
 (s/defschema ResourceDb
   {:id s/Int
@@ -44,6 +47,10 @@
   (some? (db/get-resource {:resid ext-id})))
 
 (defn create-resource! [resource user-id]
+  (let [missing-codes (clojure.set/difference (set (map :id (get-in resource [:resource/duo :duo/codes])))
+                                              (set (map :id (duo/get-duo-codes))))]
+    (when (seq missing-codes)
+      (throw (InvalidRequestException. (str "Invalid DUO codes: " (pr-str missing-codes))))))
   (let [data (when-let [duo (:resource/duo resource)]
                {:resource/duo {:duo/codes (for [code (:duo/codes duo)]
                                             (select-keys code [:id :restrictions]))}})
