@@ -8,4 +8,4 @@
 (defn register-keepalive-listeners! []
   (let [throttled-keepalive-listener (throttle keepalive! 60000)]
     (doseq [event ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]]
-      (.addEventListener js/document event throttled-keepalive-listener true))))
+      (.addEventListener js/document event throttled-keepalive-listener (js-obj "passive" true)))))
