@@ -81,11 +81,13 @@
 
 (s/defschema DuoCode
   {:id s/Str
-   (s/optional-key :restrictions) [{:type s/Keyword :values [s/Str]}]})
+   (s/optional-key :restrictions) [{:type s/Keyword
+                                    (s/optional-key :values) [s/Str]}]})
 
 (s/defschema DuoCodeFull
   {:id s/Str
    (s/optional-key :shorthand) (s/maybe s/Str)
    :label LocalizedString
    :description LocalizedString
-   (s/optional-key :restrictions) [{:type s/Keyword :values [s/Str]}]})
+   (s/optional-key :restrictions) [{:type s/Keyword
+                                    (s/optional-key :values) [s/Str]}]})
