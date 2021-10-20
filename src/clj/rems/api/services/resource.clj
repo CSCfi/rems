@@ -13,7 +13,7 @@
     (->> resource
          organizations/join-organization
          licenses/join-resource-licenses
-         (duo/join-duo-codes :resource/duo)
+         (duo/join-duo-codes [:resource/duo :duo/codes])
          (transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-resource [id]

@@ -3,6 +3,7 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.set :refer [difference]]
+            [clojure.test :refer [deftest is]]
             [medley.core :refer [update-existing]]
             [rems.common.util :refer [index-by]]
             [rems.config]
@@ -54,15 +55,15 @@
 
 (def complex-codes
   "Codes that require specific handling or an additional question."
-  {"DUO:0000007" {:type :MONDO}
-   "DUO:0000012" {:type :topic}
-   "DUO:0000020" {:type :collaboration}
-   "DUO:0000022" {:type :location}
-   "DUO:0000024" {:type :date}
-   "DUO:0000025" {:type :months}
-   "DUO:0000026" {:type :users}
-   "DUO:0000027" {:type :project}
-   "DUO:0000028" {:type :institute}})
+  {"DUO:0000007" {:restrictions [{:type :MONDO}]}
+   "DUO:0000012" {:restrictions [{:type :topic}]}
+   "DUO:0000020" {:restrictions [{:type :collaboration}]}
+   "DUO:0000022" {:restrictions [{:type :location}]}
+   "DUO:0000024" {:restrictions [{:type :date}]}
+   "DUO:0000025" {:restrictions [{:type :months}]}
+   "DUO:0000026" {:restrictions [{:type :users}]}
+   "DUO:0000027" {:restrictions [{:type :project}]}
+   "DUO:0000028" {:restrictions [{:type :institute}]}})
 
 (def abstract-codes #{"DUO:0000001" "DUO:0000017"}) ; not concrete types can't be used as tag
 
@@ -70,7 +71,7 @@
   "Adds convenience attributes to DUO codes."
   [duo]
   (merge duo
-         (when (contains? simple-codes (:id duo)) {:simple? true})))
+         (get complex-codes (:id duo))))
 
 (defn load-codes []
   (when (:enable-duo rems.config/env)
@@ -78,24 +79,90 @@
          edn/read-string
          (index-by [:id]))))
 
-(def ^:private code-by-id (delay (load-codes)))
+(def ^:private code-by-id (atom nil))
+
+(defn get-codes
+  "Return codes or a code by `id` with fallback to a default value for unknown codes.
+
+  Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
+  [& [id]]
+  (let [unknown-value {:label {:en "unknown code"}
+                       :description {:en "Unknown code"}}]
+    (if (:enable-duo rems.config/env)
+      (do
+        (when (nil? @code-by-id)
+          (reset! code-by-id (load-codes)))
+        (if (nil? id)
+          (vals @code-by-id)
+          (get @code-by-id id unknown-value)))
+
+      (do
+        (when (seq @code-by-id)
+          (reset! code-by-id nil))
+        (if (nil? id)
+          []
+          unknown-value)))))
 
 (defn get-duo-codes
   "Gets the DUO codes from the database."
   []
-  (->> @code-by-id
-       vals
-       (mapv enrich-duo-code)))
+  (get-codes))
 
 (comment
-  (get-duo-codes))
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (get-duo-codes)))
 
-(defn join-duo-codes [k x]
-  (let [unknown-value {:label {:en "unknown code"}
-                       :description {:en "Unknown code"}}
-        code-or-default (fn [duo] (get @code-by-id (:id duo) (merge unknown-value duo)))]
-    (update-in x [k :duo/codes] (partial mapv code-or-default))))
+(defn join-duo-codes [ks x]
+  (update-in x ks (partial mapv
+                           (fn [duo]
+                             (merge (get-codes (:id duo))
+                                    duo)))))
 
+(deftest test-join-duo-codes
+  (is (= {:id 1234
+          :resource/duo {:duo/codes [{:label {:en "unknown code"}
+                                      :description {:en "Unknown code"}
+                                      :id "DUO:0000021"}
+                                     {:label {:en "unknown code"}
+                                      :description {:en "Unknown code"}
+                                      :id "DUO:0000026"}
+                                     {:label {:en "unknown code"}
+                                      :description {:en "Unknown code"}
+                                      :id "DUO:0000027"
+                                      :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+         (join-duo-codes [:resource/duo :duo/codes]
+                         {:id 1234
+                          :resource/duo {:duo/codes [{:id "DUO:0000021"}
+                                                     {:id "DUO:0000026"}
+                                                     {:id "DUO:0000027"
+                                                      :restrictions [{:type :project
+                                                                      :values ["CSC/REMS"]}]}]}}))
+      "feature disabled")
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (is (= {:id 1234
+            :resource/duo {:duo/codes [{:id "DUO:0000021"
+                                        :shorthand "IRB"
+                                        :label {:en "ethics approval required"}
+                                        :description
+                                        {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
+                                       {:id "DUO:0000026",
+                                        :shorthand "US",
+                                        :label {:en "user specific restriction"},
+                                        :description {:en "This data use modifier indicates that use is limited to use by approved users."},
+                                        :restrictions [{:type :users}]}
+                                       {:id "DUO:0000027"
+                                        :shorthand "PS"
+                                        :label {:en "project specific restriction"}
+                                        :description
+                                        {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                                        :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+           (join-duo-codes [:resource/duo :duo/codes]
+                           {:id 1234
+                            :resource/duo {:duo/codes [{:id "DUO:0000021"}
+                                                       {:id "DUO:0000026"}
+                                                       {:id "DUO:0000027"
+                                                        :restrictions [{:type :project
+                                                                        :values ["CSC/REMS"]}]}]}})))))
 
 (comment
   ;; Here is code to load the latest DUO release
@@ -119,4 +186,4 @@
   (assert (empty? missing-types))
 
 
-  (spit "duo.edn" (-> duos :codes vec)))
+  (spit "duo.edn" (->> duos :codes (mapv enrich-duo-code))))

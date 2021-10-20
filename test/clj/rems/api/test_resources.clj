@@ -74,21 +74,31 @@
             (is (true? (:success result))))))
 
       (testing "DUO codes"
-        (let [result (api-call :post "/api/resources/create"
-                               {:resid "duo-test-resource"
-                                :organization {:organization/id "organization1"}
-                                :licenses [licid-org1]
-                                :resource/duo {:duo/codes [{:id "DUO:000123"} {:id "DUO:000456" :restrictions [{:type :location :values ["Finland"]}]}]}}
-                               +test-api-key+ user-id)
-              id (:id result)]
-          (is (:success result))
-          (is id)
+        (with-redefs [rems.config/env {:enable-duo true}]
+          (let [result (api-call :post "/api/resources/create"
+                                 {:resid "duo-test-resource"
+                                  :organization {:organization/id "organization1"}
+                                  :licenses [licid-org1]
+                                  :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000027" :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+                                 +test-api-key+ user-id)
+                id (:id result)]
+            (is (:success result))
+            (is id)
 
-          (testing "and fetch"
-            (let [resource (api-call :get (str "/api/resources/" id) nil
-                                     +test-api-key+ user-id)]
-              (is resource)
-              (is (= #{"DUO:000123" "DUO:000456"} (set (map :id (get-in resource [:resource/duo :duo/codes])))))))))
+            (testing "and fetch"
+              (let [resource (api-call :get (str "/api/resources/" id) nil
+                                       +test-api-key+ user-id)]
+                (is resource)
+                (is (= #{{:id "DUO:0000021"
+                          :shorthand "IRB"
+                          :label {:en "ethics approval required"}
+                          :description {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
+                         {:id "DUO:0000027"
+                          :shorthand "PS"
+                          :label {:en "project specific restriction"}
+                          :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                          :restrictions [{:type "project" :values ["CSC/REMS"]}]}}
+                       (set (get-in resource [:resource/duo :duo/codes])))))))))
 
       (testing "with mismatched organizations"
         (let [result (api-call :post "/api/resources/create"
