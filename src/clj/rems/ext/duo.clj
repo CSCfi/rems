@@ -2,6 +2,7 @@
   (:require [clojure.data.csv :as csv]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.pprint]
             [clojure.set :refer [difference]]
             [clojure.test :refer [deftest is]]
             [medley.core :refer [update-existing]]
@@ -187,4 +188,9 @@
   (assert (empty? missing-types))
 
 
-  (spit "duo.edn" (->> duos :codes (mapv enrich-duo-code))))
+  (spit "duo.edn" (let [codes (->> duos
+                                   :codes
+                                   (sort-by :id)
+                                   (mapv enrich-duo-code))]
+                    (with-out-str
+                      (clojure.pprint/write codes :dispatch clojure.pprint/code-dispatch)))))
