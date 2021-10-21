@@ -23,23 +23,23 @@
 (defn- mondo-class?
   "Is `x` an XML element representing a Mondo code?"
   [x]
-  (and (= :xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/Class (:tag x))
-       (str/starts-with? (get-in x [:attrs :xmlns.http%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23/about] "")
+  (and (= :Class (:tag x))
+       (str/starts-with? (get-in x [:attrs :rdf/about] "")
                          "http://purl.obolibrary.org/obo/MONDO_")))
 
 (defn- mondo-class-deprecated?
   "Is `x` an XML element representing something deprecated?"
   [x]
-  (some? (some (comp #{:xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/deprecated} :tag)
+  (some? (some (comp #{:deprecated} :tag)
                (:content x))))
 
 (defn- format-mondo-class
   "Takes the Mondo class XML element `x` and formats it for our internal use."
   [x]
-  (let [id (-> x :attrs :xmlns.http%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23/about)
+  (let [id (-> x :attrs :rdf/about)
         label (->> x
                    :content
-                   (find-first (comp #{:xmlns.http%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23/label} :tag))
+                   (find-first (comp #{:label} :tag))
                    :content
                    (str/join ""))]
     (assert (not (str/blank? id)))
@@ -59,12 +59,12 @@
 
 (def ^:private uninteresting-tags
   "The OWL file contains a lot of model that we are not interested in."
-  #{:xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/AnnotationProperty
-    :xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/ObjectProperty
-    :xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/Axiom
-    :xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/NamedIndividual
-    :xmlns.http%3A%2F%2Fwww.w3.org%2F2002%2F07%2Fowl%23/Restriction
-    :xmlns.http%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23/Description})
+  #{:AnnotationProperty
+    :ObjectProperty
+    :Axiom
+    :NamedIndividual
+    :Restriction
+    :Description})
 
 (defn- parse-mondo
   "Parses a Mondo OWL ontology from XML string `s`.
