@@ -59,25 +59,72 @@
             (let [resource (api-call :get (str "/api/resources/" id) nil
                                      +test-api-key+ user-id)]
               (is resource)
-              (is (= [licid-org1] (map :id (:licenses resource))))))
-
-          (testing "duplicate resource ID is allowed between organizations"
-            ;; need to create as owner to have access to other org
-            (let [result (api-call :post "/api/resources/create"
-                                   {:resid resid :organization {:organization/id "test-organization2"} :licenses []}
-                                   +test-api-key+ owner)]
-              (is (true? (:success result)))))
-
-          (testing "duplicate resource ID is allowed within one organization"
-            (let [result (api-call :post "/api/resources/create"
-                                   {:resid resid :organization {:organization/id "organization1"} :licenses []}
-                                   +test-api-key+ user-id)]
-              (is (true? (:success result))))))
-        (testing "with mismatched organizations"
+              (is (= [licid-org1] (map :id (:licenses resource)))))))
+        (testing "duplicate resource ID is allowed between organizations"
+          ;; need to create as owner to have access to other org
           (let [result (api-call :post "/api/resources/create"
-                                 {:resid resid :organization {:organization/id "organization1"} :licenses [licid-org1 licid-org2]}
+                                 {:resid resid :organization {:organization/id "test-organization2"} :licenses []}
+                                 +test-api-key+ owner)]
+            (is (true? (:success result)))))
+
+        (testing "duplicate resource ID is allowed within one organization"
+          (let [result (api-call :post "/api/resources/create"
+                                 {:resid resid :organization {:organization/id "organization1"} :licenses []}
                                  +test-api-key+ user-id)]
-            (is (true? (:success result)))))))
+            (is (true? (:success result))))))
+
+      (testing "DUO codes"
+        (testing "DUO not enabled"
+          (with-redefs [rems.config/env (:enable-duo false)]
+            (let [result (api-response :post "/api/resources/create"
+                                       {:resid "duo-test-resource"
+                                        :organization {:organization/id "organization1"}
+                                        :licenses [licid-org1]
+                                        :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000027" :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+                                       +test-api-key+ user-id)]
+              (is (response-is-bad-request? result)))))
+
+        (testing "DUO enabled"
+          (with-redefs [rems.config/env {:enable-duo true}]
+            (testing "unknown code"
+              (let [result (api-response :post "/api/resources/create"
+                                         {:resid "duo-test-resource"
+                                          :organization {:organization/id "organization1"}
+                                          :licenses [licid-org1]
+                                          :resource/duo {:duo/codes [{:id "DUO:does-not-exist"}]}}
+                                         +test-api-key+ user-id)]
+                (is (response-is-bad-request? result))))
+
+            (let [result (api-call :post "/api/resources/create"
+                                   {:resid "duo-test-resource"
+                                    :organization {:organization/id "organization1"}
+                                    :licenses [licid-org1]
+                                    :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000027" :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+                                   +test-api-key+ user-id)
+                  id (:id result)]
+              (is (:success result))
+              (is id)
+
+              (testing "and fetch"
+                (let [resource (api-call :get (str "/api/resources/" id) nil
+                                         +test-api-key+ user-id)]
+                  (is resource)
+                  (is (= #{{:id "DUO:0000021"
+                            :shorthand "IRB"
+                            :label {:en "ethics approval required"}
+                            :description {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
+                           {:id "DUO:0000027"
+                            :shorthand "PS"
+                            :label {:en "project specific restriction"}
+                            :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                            :restrictions [{:type "project" :values ["CSC/REMS"]}]}}
+                         (set (get-in resource [:resource/duo :duo/codes]))))))))))
+
+      (testing "with mismatched organizations"
+        (let [result (api-call :post "/api/resources/create"
+                               {:resid resid :organization {:organization/id "organization1"} :licenses [licid-org1 licid-org2]}
+                               +test-api-key+ user-id)]
+          (is (true? (:success result))))))
 
     (testing "create as organization-owner with incorrect organization"
       (let [response (api-response :post "/api/resources/create"

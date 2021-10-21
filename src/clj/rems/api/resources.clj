@@ -4,6 +4,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [rems.ext.duo :as duo]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -18,7 +19,8 @@
    :resid s/Str
    :enabled s/Bool
    :archived s/Bool
-   :licenses [schema/ResourceLicense]})
+   :licenses [schema/ResourceLicense]
+   (s/optional-key :resource/duo) {(s/optional-key :duo/codes) [schema-base/DuoCodeFull]}})
 
 (s/defschema Resources
   [Resource])
@@ -26,7 +28,8 @@
 (s/defschema CreateResourceCommand
   {:resid s/Str
    :organization schema-base/OrganizationId
-   :licenses [s/Int]})
+   :licenses [s/Int]
+   (s/optional-key :resource/duo) {(s/optional-key :duo/codes) [schema-base/DuoCode]}})
 
 (s/defschema CreateResourceResponse
   {:success s/Bool
@@ -45,6 +48,12 @@
       :return Resources
       (ok (resource/get-resources (merge (when-not disabled {:enabled true})
                                          (when-not archived {:archived false})))))
+
+    (GET "/duo-codes" []
+      :summary "Get DUO codes"
+      :roles +admin-read-roles+
+      :return [schema-base/DuoCodeFull]
+      (ok (duo/get-duo-codes)))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
