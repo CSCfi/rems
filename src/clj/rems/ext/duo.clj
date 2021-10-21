@@ -1,4 +1,7 @@
 (ns rems.ext.duo
+  "Loading and processing the Data Use Ontology
+
+  See https://github.com/EBISPOT/DUO"
   (:require [clojure.data.csv :as csv]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
