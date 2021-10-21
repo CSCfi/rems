@@ -5,6 +5,7 @@
   (:require [clojure.data.xml :as xml]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.pprint]
             [clojure.string :as str]
             [medley.core :refer [find-first update-existing]]
             [mount.core :as mount]
@@ -126,14 +127,14 @@
   ;; as a new release may bring codes that need special handling.
 
   (def latest-release (github/fetch-releases-latest-asset "monarch-initiative/mondo" "mondo.owl"))
+  (def latest-asset (-> latest-release :asset slurp strip-bom))
 
   ;; check to see if the new release is still the
   (assert (= supported-mondo-release-tag (:tag latest-release)))
 
   ;; save the codes to the file
-  (->> latest-release
-       :asset
-       slurp
-       strip-bom
-       parse-mondo
-       (spit "mondo.edn")))
+  (spit "mondo.edn"
+        (with-out-str
+          (clojure.pprint/write (parse-mondo latest-asset)
+                                :dispatch
+                                clojure.pprint/code-dispatch))))
