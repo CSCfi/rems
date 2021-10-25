@@ -7,8 +7,8 @@
             [clojure.java.io :as io]
             [clojure.pprint]
             [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             [medley.core :refer [find-first update-existing]]
-            [mount.core :as mount]
             [rems.config]
             [rems.common.util :refer [build-index]]
             [rems.github :as github]))
@@ -71,7 +71,7 @@
   "Parses a Mondo OWL ontology from XML string `s`.
 
   Returns a simplified, compressed format vector."
-  [s]
+  [^String s]
   (with-open [reader (io/reader (java.io.ByteArrayInputStream. (.getBytes s "UTF-8")))]
     (let [root (xml/parse reader :validating false)]
       (->> root
@@ -99,25 +99,61 @@
                      :value-fn (fn [x] {:id (first x)
                                         :label (second x)})})))
 
-(mount/defstate code-by-id
-  :start (when (:enable-duo rems.config/env)
-           (load-codes)))
+(def ^:private code-by-id (atom nil))
 
+(defn- get-codes
+  "Return codes or a code by `id` with fallback to a default value for unknown codes.
+
+  Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
+  [& [id]]
+  (let [unknown-value {:label "unknown code"}]
+    (if (:enable-duo rems.config/env)
+      (do
+        (when (nil? @code-by-id)
+          (reset! code-by-id (load-codes)))
+        (if (nil? id)
+          (vals @code-by-id)
+          (get @code-by-id id unknown-value)))
+
+      (do
+        (when (seq @code-by-id)
+          (reset! code-by-id nil))
+        (if (nil? id)
+          []
+          unknown-value)))))
 
 (defn get-mondo-codes
   []
-  (->> code-by-id
-       vals
+  (->> (get-codes)
        (sort-by :id)))
 
-(defn join-mondo-codes
-  "Join the Mondo codes under key `k` in `x`."
-  [k x]
-  (let [unknown-value {:id "unknown"
-                       :label "unknown"}
-        code-or-default (fn [mondo] (code-by-id (:id mondo) (merge unknown-value mondo)))]
-    (update-in x [k :mondo/codes] (partial mapv code-or-default))))
+(defn- search-match [code ^String search-text]
+  (let [text (str (:id code) " " (:label code))]
+    (.contains text search-text)))
 
+(deftest test-search-match
+  (is (search-match {:id "0000004" :label "test code coder"} "test")))
+
+(defn search-mondo-codes [search-text]
+  (as-> (get-codes) codes
+    (if (str/blank? search-text)
+      codes
+      (filterv #(search-match % search-text) codes))
+    (sort-by :id codes)))
+
+(defn join-mondo-code [duo-code]
+  (update-existing duo-code
+                   :restrictions
+                   (fn [restrictions]
+                     (for [restriction restrictions]
+                       (if (= :MONDO (:type restriction))
+                         (update-existing restriction
+                                          :values
+                                          (fn [values]
+                                            (mapv (fn [value]
+                                                    (get-codes (:id value)))
+                                                  values)))
+                         restriction)))))
 
 
 (comment

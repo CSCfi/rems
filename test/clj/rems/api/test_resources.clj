@@ -80,7 +80,9 @@
                                        {:resid "duo-test-resource"
                                         :organization {:organization/id "organization1"}
                                         :licenses [licid-org1]
-                                        :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000027" :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+                                        :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO :values [{:id "0000004"}]}]}
+                                                                   {:id "DUO:0000021"}
+                                                                   {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}]}}
                                        +test-api-key+ user-id)]
               (is (response-is-bad-request? result)))))
 
@@ -99,7 +101,9 @@
                                    {:resid "duo-test-resource"
                                     :organization {:organization/id "organization1"}
                                     :licenses [licid-org1]
-                                    :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000027" :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+                                    :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO :values [{:id "0000004"}]}]}
+                                                               {:id "DUO:0000021"}
+                                                               {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}]}}
                                    +test-api-key+ user-id)
                   id (:id result)]
               (is (:success result))
@@ -109,7 +113,13 @@
                 (let [resource (api-call :get (str "/api/resources/" id) nil
                                          +test-api-key+ user-id)]
                   (is resource)
-                  (is (= #{{:id "DUO:0000021"
+                  (is (= #{{:id "DUO:0000007"
+                            :shorthand "DS"
+                            :label {:en "disease specific research"}
+                            :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
+                            :restrictions [{:type "MONDO"
+                                            :values [{:id "0000004" :label "adrenocortical insufficiency"}]}]}
+                           {:id "DUO:0000021"
                             :shorthand "IRB"
                             :label {:en "ethics approval required"}
                             :description {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
@@ -117,7 +127,7 @@
                             :shorthand "PS"
                             :label {:en "project specific restriction"}
                             :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
-                            :restrictions [{:type "project" :values ["CSC/REMS"]}]}}
+                            :restrictions [{:type "project" :values [{:value "CSC/REMS"}]}]}}
                          (set (get-in resource [:resource/duo :duo/codes]))))))))))
 
       (testing "with mismatched organizations"
