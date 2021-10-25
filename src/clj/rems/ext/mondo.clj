@@ -139,6 +139,7 @@
     (if (str/blank? search-text)
       codes
       (filterv #(search-match % search-text) codes))
+    (take 100 codes)
     (sort-by :id codes)))
 
 (defn join-mondo-code [duo-code]

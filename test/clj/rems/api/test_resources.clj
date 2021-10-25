@@ -128,7 +128,26 @@
                             :label {:en "project specific restriction"}
                             :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
                             :restrictions [{:type "project" :values [{:value "CSC/REMS"}]}]}}
-                         (set (get-in resource [:resource/duo :duo/codes]))))))))))
+                         (set (get-in resource [:resource/duo :duo/codes]))))))
+
+              (testing "fetch DUO codes"
+                (is (= {:id "DUO:0000007"
+                        :shorthand "DS"
+                        :label {:en "disease specific research"}
+                        :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
+                        :restrictions [{:type "MONDO"}]}
+                       (first (api-call :get (str "/api/resources/duo-codes") nil +test-api-key+ user-id)))))
+
+              (testing "fetch Mondo codes"
+                (is (= {:id "0000001", :label "disease or disorder"}
+                       (first (api-call :get (str "/api/resources/mondo-codes") nil +test-api-key+ user-id)))))
+
+              (testing "search Mondo codes"
+                (is (= {:label "tenosynovitis of foot and ankle" :id "0002517"}
+                       (first (api-call :get (str "/api/resources/search-mondo-codes?search-text=foo") nil +test-api-key+ user-id))))
+                (is (= 100
+                       (count (api-call :get (str "/api/resources/search-mondo-codes?search-text=f") nil +test-api-key+ user-id)))
+                    "search is limited to maximum 100"))))))
 
       (testing "with mismatched organizations"
         (let [result (api-call :post "/api/resources/create"
