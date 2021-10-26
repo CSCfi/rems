@@ -1,4 +1,7 @@
 (ns rems.ext.duo
+  "Loading and processing the Data Use Ontology
+
+  See https://github.com/EBISPOT/DUO"
   (:require [clojure.data.csv :as csv]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
@@ -8,6 +11,7 @@
             [medley.core :refer [update-existing]]
             [rems.common.util :refer [index-by]]
             [rems.config]
+            [rems.ext.mondo :as mondo]
             [rems.github :as github]
             [rems.util :refer [read-zip-entries]]
             [schema.coerce :as coerce]
@@ -117,24 +121,30 @@
 (defn join-duo-codes [ks x]
   (update-in x ks (partial mapv
                            (fn [duo]
-                             (merge (get-codes (:id duo))
-                                    duo)))))
+                             (-> (get-codes (:id duo))
+                                 (merge duo)
+                                 mondo/join-mondo-code)))))
 
 (deftest test-join-duo-codes
   (is (= {:id 1234
-          :resource/duo {:duo/codes [{:label {:en "unknown code"}
+          :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                      :label {:en "unknown code"}
                                       :description {:en "Unknown code"}
-                                      :id "DUO:0000021"}
-                                     {:label {:en "unknown code"}
+                                      :restrictions [{:id "0000004"}]}
+                                     {:id "DUO:0000021"
+                                      :label {:en "unknown code"}
+                                      :description {:en "Unknown code"}}
+                                     {:id "DUO:0000026"
+                                      :label {:en "unknown code"}
+                                      :description {:en "Unknown code"}}
+                                     {:id "DUO:0000027"
+                                      :label {:en "unknown code"}
                                       :description {:en "Unknown code"}
-                                      :id "DUO:0000026"}
-                                     {:label {:en "unknown code"}
-                                      :description {:en "Unknown code"}
-                                      :id "DUO:0000027"
                                       :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
          (join-duo-codes [:resource/duo :duo/codes]
                          {:id 1234
-                          :resource/duo {:duo/codes [{:id "DUO:0000021"}
+                          :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:id "0000004"}]}
+                                                     {:id "DUO:0000021"}
                                                      {:id "DUO:0000026"}
                                                      {:id "DUO:0000027"
                                                       :restrictions [{:type :project
@@ -142,25 +152,30 @@
       "feature disabled")
   (with-redefs [rems.config/env {:enable-duo true}]
     (is (= {:id 1234
-            :resource/duo {:duo/codes [{:id "DUO:0000021"
+            :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                        :shorthand "DS"
+                                        :label {:en "disease specific research"}
+                                        :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
+                                        :restrictions [{:type :MONDO :values [{:id "0000004" :label "adrenocortical insufficiency"}]}]}
+                                       {:id "DUO:0000021"
                                         :shorthand "IRB"
                                         :label {:en "ethics approval required"}
-                                        :description
-                                        {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
-                                       {:id "DUO:0000026",
-                                        :shorthand "US",
-                                        :label {:en "user specific restriction"},
-                                        :description {:en "This data use modifier indicates that use is limited to use by approved users."},
+                                        :description {:en "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
+                                       {:id "DUO:0000026"
+                                        :shorthand "US"
+                                        :label {:en "user specific restriction"}
+                                        :description {:en "This data use modifier indicates that use is limited to use by approved users."}
                                         :restrictions [{:type :users}]}
                                        {:id "DUO:0000027"
                                         :shorthand "PS"
                                         :label {:en "project specific restriction"}
-                                        :description
-                                        {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                                        :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
                                         :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
            (join-duo-codes [:resource/duo :duo/codes]
                            {:id 1234
-                            :resource/duo {:duo/codes [{:id "DUO:0000021"}
+                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO
+                                                                                          :values [{:id "0000004"}]}]}
+                                                       {:id "DUO:0000021"}
                                                        {:id "DUO:0000026"}
                                                        {:id "DUO:0000027"
                                                         :restrictions [{:type :project

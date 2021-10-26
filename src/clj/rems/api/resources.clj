@@ -5,6 +5,7 @@
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.ext.duo :as duo]
+            [rems.ext.mondo :as mondo]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -54,6 +55,19 @@
       :roles +admin-read-roles+
       :return [schema-base/DuoCodeFull]
       (ok (duo/get-duo-codes)))
+
+    (GET "/mondo-codes" []
+      :summary "Get Mondo codes"
+      :roles +admin-read-roles+
+      :return [schema-base/MondoCodeFull]
+      (ok (mondo/get-mondo-codes)))
+
+    (GET "/search-mondo-codes" []
+      :summary "Search Mondo codes, maximum 100 results"
+      :roles +admin-read-roles+
+      :query-params [{search-text :- (describe s/Str "text to be contained in id or label of the code") nil}]
+      :return [schema-base/MondoCodeFull]
+      (ok (mondo/search-mondo-codes search-text)))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
