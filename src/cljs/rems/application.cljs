@@ -23,6 +23,7 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
+            [rems.administration.duo :refer [resource-duo-view-compact]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
@@ -39,7 +40,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size em-dash]]))
 
 ;;;; Helpers
 
@@ -793,18 +794,24 @@
                                   actions)]
                       forms)}])))
 
-(defn- render-resource [resource language config]
+(defn- render-resource [resource language]
   ^{:key (:catalogue-item/id resource)}
-  (let [config @(rf/subscribe [:rems.config/config])]
-    [:div.application-resource
-     (localized (:catalogue-item/title resource))
-     (when-let [url (catalogue-item-more-info-url resource language config)]
-       [:<>
-        (goog.string/unescapeEntities " &mdash; ")
-        [:a {:href url :target :_blank}
-         (text :t.catalogue/more-info) " " [external-link]]])]))
+  (let [config @(rf/subscribe [:rems.config/config])
+        duo-codes (get-in resource [:resource/duo :duo/codes])]
+    [:div.application-resource.solid-group
+     [:h3.resource-label
+      (localized (:catalogue-item/title resource))
+      (when-let [url (catalogue-item-more-info-url resource language config)]
+        [:<>
+         (str " " em-dash " ")
+         [:a {:href url :target :_blank}
+          (text :t.catalogue/more-info) " " [external-link]]])]
+     (when (seq duo-codes)
+       (into [:div.resource-duo-codes]
+             (for [code duo-codes]
+               [resource-duo-view-compact code (:catalogue-item/id resource)])))]))
 
-(defn- applied-resources [application userid language config]
+(defn- applied-resources [application userid language]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:userid (:application/applicant application)) userid)
@@ -817,7 +824,7 @@
                [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
-                       [render-resource resource language config]))]
+                       [render-resource resource language]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
@@ -845,7 +852,7 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid language config]]
+     [:div.mt-3 [applied-resources application userid language]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
