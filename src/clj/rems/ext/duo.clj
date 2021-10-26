@@ -60,7 +60,7 @@
 
 (def complex-codes
   "Codes that require specific handling or an additional question."
-  {"DUO:0000007" {:restrictions [{:type :MONDO}]}
+  {"DUO:0000007" {:restrictions [{:type :mondo}]}
    "DUO:0000012" {:restrictions [{:type :topic}]}
    "DUO:0000020" {:restrictions [{:type :collaboration}]}
    "DUO:0000022" {:restrictions [{:type :location}]}

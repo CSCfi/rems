@@ -147,7 +147,7 @@
                    :restrictions
                    (fn [restrictions]
                      (for [restriction restrictions]
-                       (if (= :MONDO (:type restriction))
+                       (if (= :mondo (:type restriction))
                          (update-existing restriction
                                           :values
                                           (fn [values]
