@@ -210,10 +210,32 @@
                                                                 :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
         res-id2 (test-helpers/create-resource! nil)
+        ;; duo-resource (test-helpers/create-resource! {:resource-ext-id "All DUO codes with restrictions"
+        ;;                                              :organization {:organization/id "nbn"}
+        ;;                                              :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+        ;;                                                                                                            :values ["MONDO:0000015"]}]}
+        ;;                                                                         {:id "DUO:0000012" :restrictions [{:type :topic
+        ;;                                                                                                            :values ["my research type"]}]}
+        ;;                                                                         {:id "DUO:0000020" :restrictions [{:type :collaboration
+        ;;                                                                                                            :values ["developers"]}]}
+        ;;                                                                         {:id "DUO:0000022" :restrictions [{:type :location
+        ;;                                                                                                            :values ["egentliga finland"]}]}
+        ;;                                                                         {:id "DUO:0000024" :restrictions [{:type :date
+        ;;                                                                                                            :values ["2021-10-29"]}]}
+        ;;                                                                         {:id "DUO:0000025" :restrictions [{:type :months
+        ;;                                                                                                            :values ["120"]}]}
+        ;;                                                                         {:id "DUO:0000026" :restrictions [{:type :users
+        ;;                                                                                                            :values ["alice"]}]}
+        ;;                                                                         {:id "DUO:0000027" :restrictions [{:type :project
+        ;;                                                                                                            :values ["rems"]}]}
+        ;;                                                                         {:id "DUO:0000028" :restrictions [{:type :institute
+        ;;                                                                                                            :values ["csc"]}]}]}})
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "Standard arbetsflöde"} :resource-id res-id1})
         item-id2 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Private form workflow" :fi "Yksityinen lomaketyövuo"
                                                                                                        :sv "Private blankettarbetsflöde"} :resource-id res-id2})
+        ;; item-id3 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
+        ;;                                                                                                :sv "Standard blankettarbetsflöde med DUO-koder"} :resource-id duo-resource})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
     (test-helpers/create-workflow-licence! wfid link)
     (test-helpers/create-workflow-licence! wfid text)
