@@ -212,3 +212,5 @@
       nil nil
       nil {}
       nil [])))
+
+(def em-dash (goog.string/unescapeEntities "&mdash;"))
