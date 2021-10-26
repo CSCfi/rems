@@ -123,7 +123,7 @@
           (-> (get-codes (:id duo))
               (merge duo)
               mondo/join-mondo-code))
-   duos))
+        duos))
 
 (defn join-duo-codes [ks x]
   (update-in x ks enrich-duo-codes))
