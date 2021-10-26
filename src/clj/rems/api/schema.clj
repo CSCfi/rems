@@ -101,7 +101,8 @@
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
    :catalogue-item/expired s/Bool
-   :catalogue-item/archived s/Bool})
+   :catalogue-item/archived s/Bool
+   (s/optional-key :resource/duo) {:duo/codes [schema-base/DuoCodeFull]}})
 
 (s/defschema V2License
   {:license/id s/Int
