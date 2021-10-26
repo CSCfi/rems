@@ -156,7 +156,7 @@
                                         :shorthand "DS"
                                         :label {:en "disease specific research"}
                                         :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
-                                        :restrictions [{:type :MONDO :values [{:id "0000004" :label "adrenocortical insufficiency"}]}]}
+                                        :restrictions [{:type :mondo :values [{:id "0000004" :label "adrenocortical insufficiency"}]}]}
                                        {:id "DUO:0000021"
                                         :shorthand "IRB"
                                         :label {:en "ethics approval required"}
@@ -173,7 +173,7 @@
                                         :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
            (join-duo-codes [:resource/duo :duo/codes]
                            {:id 1234
-                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO
+                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
                                                                                           :values [{:id "0000004"}]}]}
                                                        {:id "DUO:0000021"}
                                                        {:id "DUO:0000026"}
