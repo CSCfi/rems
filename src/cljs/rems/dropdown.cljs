@@ -44,6 +44,49 @@
                  :onChange #(on-change (if (array? %) (array-seq %) %))
                  :placeholder (or placeholder (text :t.dropdown/placeholder))}])
 
+(defn async-dropdown
+  "Single- or multi-choice, searchable dropdown menu with support for asynchronous data loading.
+
+  `:id` unique id for the input
+  `:class` additional classes for the input
+  `:item-key` getter for the key of an option, used as the id of an item
+  `:item-label` getter for the label of an option shown in the dropdown
+  `:hide-selected?` should the items that are selected be shown in the dropdown, defaults: false for single value, true for a multiple choice
+  `:item-selected?` is this item currently selected?
+  `:item-disabled?` is this item currently disabled?
+  `:disabled?` is the whole input disabled?
+  `:multi?` is this a multiple choice dropdown?
+  `:clearable?` should there be a clear selection button?
+  `:placeholder` text to show when nothing is selected, defaults to (text :t.dropdown/placeholder)
+  `:on-change` called each time the value changes, one or seq
+  `:loading?` should dropdown show \"loading\" (e.g. when loading data asynchronously)?
+  `:on-load-options` function called with :query-string and :on-data keys when dropdown should load new data"
+  [{:keys [id class item-key item-label hide-selected? item-disabled? disabled? multi? clearable? placeholder on-change loading? on-load-options]
+    :or {item-key identity
+         item-label identity
+         hide-selected? multi?
+         item-disabled? (constantly false)}}]
+  ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
+  [:> js/Select.Async {:className (str/trimr (str "dropdown-container " class))
+                       :classNamePrefix "dropdown-select-async"
+                       :getOptionLabel #(item-label (js->clj % :keywordize-keys true))
+                       :getOptionValue #(item-key (js->clj % :keywordize-keys true))
+                       :inputId id
+                       :isMulti multi?
+                       :isClearable clearable?
+                       :isDisabled disabled?
+                       :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
+                       :maxMenuHeight 200
+                       :noOptionsMessage #(text :t.dropdown/no-results)
+                       :hideSelectedOptions hide-selected?
+                       :onChange #(let [items (js->clj % :keywordize-keys true)]
+                                    (on-change (if (array? items) (array-seq items) items)))
+                       :placeholder (or placeholder (text :t.dropdown/placeholder))
+                       :loadOptions (fn [query-string callback]
+                                      (on-load-options {:query-string query-string
+                                                        :on-data #(callback (clj->js %))}))
+                       :loading loading?}])
+
 (defn guide
   []
   (let [on-change (fn [items] (println "items" items))
