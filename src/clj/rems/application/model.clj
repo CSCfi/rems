@@ -8,7 +8,11 @@
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.common.util :refer [conj-vec getx]]
-            [rems.permissions :as permissions]))
+            [rems.permissions :as permissions]
+            [rems.json :as json]
+            [rems.schema-base :as schema-base]
+            [schema.coerce :as coerce]
+            [rems.ext.duo :refer [enrich-duo-codes]]))
 
 ;;;; Application
 
@@ -438,21 +442,34 @@
                          :field/value)]
     (assoc application :application/description (str description))))
 
+(defn- assoc-some-in [m ks v]
+  (if (some? v)
+    (assoc-in m ks v)
+    m))
+
+(def ^:private coerce-DuoCodesDb
+  (coerce/coercer! [schema-base/DuoCode] coerce/string-coercion-matcher))
+
 (defn- enrich-resources [resources get-catalogue-item]
   (->> resources
        (map (fn [resource]
-              (let [item (get-catalogue-item (:catalogue-item/id resource))]
-                {:catalogue-item/id (:catalogue-item/id resource)
-                 :resource/ext-id (:resource/ext-id resource)
-                 :resource/id (:resource-id item)
-                 :catalogue-item/title (localization-for :title item)
-                 :catalogue-item/infourl (localization-for :infourl item)
+              (let [item (get-catalogue-item (:catalogue-item/id resource))
+                    duo-codes (-> (:resourcedata item)
+                                  json/parse-string
+                                  (get-in [:resource/duo :duo/codes])
+                                  coerce-DuoCodesDb)]
+                (-> {:catalogue-item/id (:catalogue-item/id resource)
+                     :resource/ext-id (:resource/ext-id resource)
+                     :resource/id (:resource-id item)
+                     :catalogue-item/title (localization-for :title item)
+                     :catalogue-item/infourl (localization-for :infourl item)
                  ;; TODO: remove unused keys
-                 :catalogue-item/start (:start item)
-                 :catalogue-item/end (:end item)
-                 :catalogue-item/enabled (:enabled item)
-                 :catalogue-item/expired (:expired item)
-                 :catalogue-item/archived (:archived item)})))
+                     :catalogue-item/start (:start item)
+                     :catalogue-item/end (:end item)
+                     :catalogue-item/enabled (:enabled item)
+                     :catalogue-item/expired (:expired item)
+                     :catalogue-item/archived (:archived item)}
+                    (assoc-some-in [:resource/duo :duo/codes] (enrich-duo-codes duo-codes))))))
        (sort-by :catalogue-item/id)
        vec))
 

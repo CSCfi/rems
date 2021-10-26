@@ -22,8 +22,10 @@
             [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
+            [rems.db.resource :as resource]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
+            [rems.ext.duo :as duo]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler])
   (:import [org.joda.time Duration]))
@@ -83,12 +85,14 @@
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
+   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id]
+                                                                       (catalogue/get-localized-catalogue-item id {:expand-resource-data? true})))
    :get-config (fn [] env)
    :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
    :get-user #(cache/lookup-or-miss user-cache % users/get-user)
    :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
    :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
+   :get-duo-code #(get (group-by :id (duo/get-duo-codes)) %)
    :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                   (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
