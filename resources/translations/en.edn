@@ -95,6 +95,10 @@
                    :disable "Disable"
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
+                   :duo {:codes "DUO codes"
+                         :code "DUO code"
+                         :description "Description"
+                         :resource-collapse-aria-label "Information about DUO code"}
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"
@@ -121,6 +125,7 @@
                    :modifier "Modifier"
                    :more-info "More info URL (optional)"
                    :name "Name"
+                   :no-duo-codes "No DUO codes"
                    :no-form "No form"
                    :no-licenses "No licenses"
                    :optional "(optional)"
@@ -327,7 +332,8 @@
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO codes"}}
   :create-workflow {:decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
@@ -338,6 +344,15 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
+  :duo {:restriction {:mondo "Disease (MONDO)"
+                      :topic "Allowed research type"
+                      :collaboration "Primary study investigator(s)"
+                      :location "Geographic region"
+                      :date "Publication moratorium until (date)"
+                      :months "Approved for (months)"
+                      :users "Approved user(s)"
+                      :project "Approved project"
+                      :institute "Approved institution"}}
   ;; Format parameters for all emails (unless otherwise noted):
   ;; %1 - name of recipient
   ;; %2 - name of event actor

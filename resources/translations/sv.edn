@@ -93,6 +93,10 @@
                    :disable "Avaktivera"
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
                    :display-archived "Visa arkiverade"
+                   :duo {:codes "DUO koder"
+                         :code "DUO kod"
+                         :description "Rubrik"
+                         :resource-collapse-aria-label "Info om DUO kod"}
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
@@ -118,6 +122,7 @@
                    :modifier "Ändringen gjordes av"
                    :more-info "Webbadress för tilläggsinformation (valfritt)"
                    :name "Namn"
+                   :no-duo-codes "Inga DUO koder"
                    :no-form "Ingen blankett"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
@@ -302,7 +307,8 @@
                    :title "Licensens namn"}
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO koder"}}
   :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
@@ -313,6 +319,15 @@
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
+  :duo {:restriction {:mondo "Sjukdom (MONDO)"
+                      :topic "Typ av forskning"
+                      :collaboration "Forskningsgruppledare"
+                      :location "Geografiska regionen"
+                      :date "Publikationsmoratorium (datum)"
+                      :months "Giltig i (månader)"
+                      :users "Godkända användare"
+                      :project "Godkänt projekt"
+                      :institute "Godkänd institution"}}
   :email {:applicant-changed {:subject-to-member "Sökande för ansökan %3 bytte"
                               :message-to-member "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6." ; TODO check
                               :subject-to-handler "(%3) Sökande bytte"
