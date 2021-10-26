@@ -469,7 +469,7 @@
                      :catalogue-item/enabled (:enabled item)
                      :catalogue-item/expired (:expired item)
                      :catalogue-item/archived (:archived item)}
-                    (assoc-some-in [:resource/duo :duo/codes] (enrich-duo-codes duo-codes))))))
+                    (assoc-some-in [:resource/duo :duo/codes] (seq (enrich-duo-codes duo-codes)))))))
        (sort-by :catalogue-item/id)
        vec))
 

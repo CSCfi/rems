@@ -92,7 +92,6 @@
    :get-user #(cache/lookup-or-miss user-cache % users/get-user)
    :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
    :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
-   :get-duo-code #(get (group-by :id (duo/get-duo-codes)) %)
    :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                   (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
