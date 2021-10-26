@@ -80,7 +80,7 @@
                                        {:resid "duo-test-resource"
                                         :organization {:organization/id "organization1"}
                                         :licenses [licid-org1]
-                                        :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO :values [{:id "0000004"}]}]}
+                                        :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "0000004"}]}]}
                                                                    {:id "DUO:0000021"}
                                                                    {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}]}}
                                        +test-api-key+ user-id)]
@@ -101,7 +101,7 @@
                                    {:resid "duo-test-resource"
                                     :organization {:organization/id "organization1"}
                                     :licenses [licid-org1]
-                                    :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :MONDO :values [{:id "0000004"}]}]}
+                                    :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "0000004"}]}]}
                                                                {:id "DUO:0000021"}
                                                                {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}]}}
                                    +test-api-key+ user-id)
@@ -117,7 +117,7 @@
                             :shorthand "DS"
                             :label {:en "disease specific research"}
                             :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
-                            :restrictions [{:type "MONDO"
+                            :restrictions [{:type "mondo"
                                             :values [{:id "0000004" :label "adrenocortical insufficiency"}]}]}
                            {:id "DUO:0000021"
                             :shorthand "IRB"
@@ -135,7 +135,7 @@
                         :shorthand "DS"
                         :label {:en "disease specific research"}
                         :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
-                        :restrictions [{:type "MONDO"}]}
+                        :restrictions [{:type "mondo"}]}
                        (first (api-call :get (str "/api/resources/duo-codes") nil +test-api-key+ user-id)))))
 
               (testing "fetch Mondo codes"
