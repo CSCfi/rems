@@ -133,10 +133,12 @@
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
                          :as command}]
   (let [actor (or actor (create-owner!))
+        duo-data (select-keys command [:resource/duo])
         result (with-user actor
-                 (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization (ensure-default-organization!))
-                                             :licenses (or license-ids [])}
+                 (resource/create-resource! (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                                                    :organization (or organization (ensure-default-organization!))
+                                                    :licenses (or license-ids [])}
+                                                   duo-data)
                                             actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
