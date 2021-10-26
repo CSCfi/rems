@@ -86,7 +86,7 @@
             {:params request
              ;; TODO: render the catalogue items that use this resource in the error handler
              :handler (flash-message/default-success-handler
-                        :top description #(navigate! (str "/administration/resources/" (:id %))))
+                       :top description #(navigate! (str "/administration/resources/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
