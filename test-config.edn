@@ -21,4 +21,5 @@
  :catalogue-is-public false
  :accessibility-report true
  :enable-ega true
- :enable-doi true}
+ :enable-doi true
+ :enable-duo true}

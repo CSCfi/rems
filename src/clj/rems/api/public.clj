@@ -33,7 +33,8 @@
                             s/Keyword s/Any}]
    :dev s/Bool
    (s/optional-key :enable-ega) s/Bool
-   (s/optional-key :enable-doi) s/Bool})
+   (s/optional-key :enable-doi) s/Bool
+   (s/optional-key :enable-duo) s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -73,6 +74,7 @@
                             :enable-assign-external-id-ui
                             :enable-ega
                             :enable-doi
+                            :enable-duo
                             :attachment-max-size])))
 
     (GET "/full" []
