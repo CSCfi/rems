@@ -40,7 +40,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size em-dash]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
 ;;;; Helpers
 
@@ -803,7 +803,7 @@
       (localized (:catalogue-item/title resource))
       (when-let [url (catalogue-item-more-info-url resource language config)]
         [:<>
-         (str " " em-dash " ")
+         " – "
          [:a {:href url :target :_blank}
           (text :t.catalogue/more-info) " " [external-link]]])]
      (when (seq duo-codes)

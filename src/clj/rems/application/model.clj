@@ -7,7 +7,7 @@
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [conj-vec getx]]
+            [rems.common.util :refer [conj-vec getx assoc-some-in]]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -441,11 +441,6 @@
                          (find-first #(= :description (:field/type %)))
                          :field/value)]
     (assoc application :application/description (str description))))
-
-(defn- assoc-some-in [m ks v]
-  (if (some? v)
-    (assoc-in m ks v)
-    m))
 
 (def ^:private coerce-DuoCodesDb
   (coerce/coercer! [schema-base/DuoCode] coerce/string-coercion-matcher))

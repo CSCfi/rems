@@ -33,9 +33,10 @@
         (map db/assoc-expired))))
 
 (defn get-localized-catalogue-item
-  ([id] (first (get-localized-catalogue-items {:ids [id] :archived true :expand-names? true})))
-  ([id options] (first (get-localized-catalogue-items (merge {:ids [id] :archived true :expand-names? true}
-                                                             options)))))
+  [id] (first (get-localized-catalogue-items {:ids [id]
+                                              :archived true
+                                              :expand-names? true
+                                              :expand-resource-data? true})))
 
 (defn reset-cache! []
   (memo/memo-clear! cached))
