@@ -228,11 +228,9 @@
   [context {:keys [label keys min max validation optional]}]
   (let [form @(rf/subscribe [(:get-form context)])
         value (get-in form keys)
-        ;; form-errors (when (:get-form-errors context)
-        ;;               @(rf/subscribe [(:get-form-errors context)]))
-        id (keys-to-id keys)
-        ;; error (get-in form-errors keys)
-        ]
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
+        id (keys-to-id keys)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [:div.form-group
      [:label.administration-field-label {:for id} label]
@@ -250,4 +248,5 @@
                            :max max
                            :on-change #(rf/dispatch [(:update-form context)
                                                      keys
-                                                     (.. % -target -value)])}]]))
+                                                     (.. % -target -value)])}]
+     [field-validation-message (get-in form-errors keys) label]]))
