@@ -20,10 +20,10 @@
  (fn [{:keys [db]}]
    {:db (dissoc db ::form)
     :dispatch-n [[::licenses {:active true}]
-                 [::duos {:active true}]]}))
+                 [::duo-codes {:active true}]]}))
 
 (fetcher/reg-fetcher ::licenses "/api/licenses")
-(fetcher/reg-fetcher ::duos "/api/resources/duo-codes")
+(fetcher/reg-fetcher ::duo-codes "/api/resources/duo-codes")
 (fetcher/reg-fetcher ::mondo-codes "/api/resources/search-mondo-codes")
 
 ;; form state
@@ -34,19 +34,16 @@
 (rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] (sort-by :id licenses))))
 
-(rf/reg-sub ::selected-duos (fn [db _] (get-in db [::form :duos])))
-(rf/reg-event-db ::set-duos (fn [db [_ duos]] (assoc-in db [::form :duos] (sort-by :id duos))))
+(rf/reg-sub ::selected-duo-codes (fn [db _] (get-in db [::form :duo-codes])))
+(rf/reg-event-db ::set-duo-codes (fn [db [_ duo-codes]] (assoc-in db [::form :duo-codes] (sort-by :id duo-codes))))
 
 (rf/reg-sub ::duo-restrictions (fn [db [_ duo]] (get-in db [::form :duo-restrictions duo])))
 (rf/reg-event-db ::set-duo-restrictions (fn [db [_ path restrictions]] (assoc-in db (into [::form :duo-restrictions] (flatten [path])) restrictions)))
 
 ;; form submit
 
-(defn- value-when [pred x]
-  (when (pred x) x))
-
-(defn- map-duos-to-request [{:keys [duos duo-restrictions]}]
-  (when (seq duos)
+(defn- map-duos-to-request [{:keys [duo-codes duo-restrictions]}]
+  (when (seq duo-codes)
     (let [join-duo-restrictions (fn [duo-id]
                                   (->> (get duo-restrictions duo-id)
                                        (remove-vals #(or (str/blank? %) (empty? %)))
@@ -55,11 +52,11 @@
                                                    (assoc :values (case type
                                                                     :mondo (mapv #(select-keys % [:id]) value)
                                                                     [{:value value}])))))
-                                       (value-when (comp not empty?))))]
+                                       seq))]
       (mapv (fn [{:keys [id]}]
               (-> {:id id}
                   (assoc-some :restrictions (join-duo-restrictions id))))
-            duos))))
+            duo-codes))))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
@@ -186,8 +183,8 @@
            [duo-restriction restriction (:id duo)]))])
 
 (defn- resource-duos-field []
-  (let [duos @(rf/subscribe [::duos])
-        selected-duos @(rf/subscribe [::selected-duos])]
+  (let [duos @(rf/subscribe [::duo-codes])
+        selected-duos @(rf/subscribe [::selected-duo-codes])]
     [:div.form-group
      [:label.administration-field-label {:for "duos-dropdown"}
       (text :t.create-resource.duos/select-duo-codes)]
@@ -202,7 +199,7 @@
                         (str (:id %) " – " label)))
        :item-selected? #(contains? (set selected-duos) %)
        :multi? true
-       :on-change #(rf/dispatch [::set-duos %])}]
+       :on-change #(rf/dispatch [::set-duo-codes %])}]
      (when (seq selected-duos)
        [:div {:style {:margin-top "1rem"}}
         (doall

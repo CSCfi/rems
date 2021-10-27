@@ -26,7 +26,7 @@
     (text :t.administration.duo/code) (:id duo)]
    [inline-info-field
     (text :t.administration.duo/description) (localized (:description duo))]
-   (when-let [restrictions (seq (:restrictions duo))]
+   (when-let [restrictions (->> (:restrictions duo) (filter (comp seq :values)) not-empty)]
      (for [restriction restrictions]
        ^{:key type}
        [duo-restriction restriction]))])
@@ -47,7 +47,7 @@
                    (text :t.administration.duo/code) (:id duo)]
                   [inline-info-field
                    (text :t.administration.duo/description) (localized (:description duo))]
-                  (when-let [restrictions (seq (:restrictions duo))]
+                  (when-let [restrictions (->> (:restrictions duo) (filter (comp seq :values)) not-empty)]
                     (for [restriction restrictions]
                       ^{:key type}
                       [duo-restriction restriction]))]}]]]))
