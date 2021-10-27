@@ -124,9 +124,8 @@
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))
 
-(defn- duo-restriction [restriction duo-id]
-  (let [type (:type restriction)
-        duo-restrictions @(rf/subscribe [::duo-restrictions duo-id])
+(defn- duo-restriction [{:keys [type]} duo-id]
+  (let [duo-restrictions @(rf/subscribe [::duo-restrictions duo-id])
         restriction-label (text (duo-restriction-label type))]
     (case type
       :mondo

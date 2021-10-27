@@ -9,12 +9,12 @@
 (defn- duo-restriction [{:keys [type values]}]
   (case type
     :mondo [:div.container-fluid.pt-2
-            [:label (get duo-restriction-label type)]
+            [:label (text (get duo-restriction-label type))]
             (into [:div.solid-group]
                   (for [mondo values]
                     ^{:key mondo}
                     [inline-info-field
-                     (str "MONDO:" (:id mondo)) (:label mondo)]))]
+                     (:id mondo) (:label mondo)]))]
 
     [inline-info-field
      (text (get duo-restriction-label type)) (-> values first :value)]))

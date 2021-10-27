@@ -86,18 +86,15 @@
 
 (def ^:private supported-mondo-release-tag "the version of Mondo we support so far" "v2021-10-01")
 
-
-
-
-
 (defn- load-codes
   "Load and index Mondo codes."
   []
-  (->> (slurp "mondo.edn")
-       edn/read-string
-       (build-index {:keys [first]
-                     :value-fn (fn [x] {:id (first x)
-                                        :label (second x)})})))
+  (let [make-mondo-label (comp (partial str "MONDO:") first)]
+    (->> (slurp "mondo.edn")
+         edn/read-string
+         (build-index {:keys [make-mondo-label]
+                       :value-fn (fn [x] {:id (make-mondo-label x)
+                                          :label (second x)})}))))
 
 (def ^:private code-by-id (atom nil))
 
