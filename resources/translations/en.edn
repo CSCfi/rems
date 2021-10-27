@@ -98,7 +98,7 @@
                    :duo {:codes "DUO codes"
                          :code "DUO code"
                          :description "Description"
-                         :resource-collapse-aria-label "Information about DUO code"}
+                         :about-duo-code "More info"}
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"
@@ -344,7 +344,7 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
-  :duo {:restriction {:mondo "Disease (MONDO)"
+  :duo {:restriction {:mondo "Disease (Mondo)"
                       :topic "Allowed research type"
                       :collaboration "Primary study investigator(s)"
                       :location "Geographic region"

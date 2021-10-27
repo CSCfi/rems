@@ -96,7 +96,7 @@
                    :duo {:codes "DUO koodit"
                          :code "DUO koodi"
                          :description "Kuvaus"
-                         :resource-collapse-aria-label "Tietoja DUO-koodista"}
+                         :about-duo-code "Lisätietoja"}
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
@@ -319,7 +319,7 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :duo {:restriction {:mondo "Tauti (MONDO)"
+  :duo {:restriction {:mondo "Tauti (Mondo)"
                       :topic "Tutkimuksen tyyppi"
                       :collaboration "Tutkimusryhmän johtaja(t)"
                       :location "Maantieteellinen alue"

@@ -96,7 +96,7 @@
                    :duo {:codes "DUO koder"
                          :code "DUO kod"
                          :description "Rubrik"
-                         :resource-collapse-aria-label "Info om DUO kod"}
+                         :about-duo-code "Info om"}
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
@@ -319,7 +319,7 @@
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."}
-  :duo {:restriction {:mondo "Sjukdom (MONDO)"
+  :duo {:restriction {:mondo "Sjukdom (Mondo)"
                       :topic "Typ av forskning"
                       :collaboration "Forskningsgruppledare"
                       :location "Geografiska regionen"

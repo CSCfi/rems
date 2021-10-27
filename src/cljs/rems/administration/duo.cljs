@@ -4,7 +4,6 @@
             [rems.collapsible :as collapsible]
             [rems.text :refer [localized text text-format]]
             [rems.fields :refer [info-collapse]]
-            [rems.util :refer [em-dash]]
             [rems.common.duo :refer [duo-restriction-label]]))
 
 (defn- duo-restriction [{:keys [type values]}]
@@ -22,16 +21,15 @@
 
 (defn- duo-view-compact [duo]
   [:div.form-item
-   [:h3.license-title (str (:shorthand duo) " " em-dash " " (localized (:label duo)))]
+   [:h3.license-title (str (:shorthand duo) " – " (localized (:label duo)))]
    [inline-info-field
     (text :t.administration.duo/code) (:id duo)]
    [inline-info-field
     (text :t.administration.duo/description) (localized (:description duo))]
    (when-let [restrictions (seq (:restrictions duo))]
-     (doall
-      (for [restriction restrictions]
-        ^{:key type}
-        [duo-restriction restriction])))])
+     (for [restriction restrictions]
+       ^{:key type}
+       [duo-restriction restriction]))])
 
 (defn resource-duo-view-compact
   "Same as duo-view-compact, but collapses restrictions by default and uses less prominent header."
@@ -40,20 +38,19 @@
                       (str "res-" resid "-" duoid))]
     [:div.pt-2 {:style {:word-break :break-word}}
      [:div
-      (str (:shorthand duo) " " em-dash " " (localized (:label duo)))
+      (str (:shorthand duo) " – " (localized (:label duo)))
       [info-collapse
        {:info-id duo-info-id
-        :aria-label-text (text-format :t.administration.duo/resource-collapse-aria-label)
+        :aria-label-text (text-format :t.administration.duo/about-duo-code)
         :content [:div.form-item.solid-group
                   [inline-info-field
                    (text :t.administration.duo/code) (:id duo)]
                   [inline-info-field
                    (text :t.administration.duo/description) (localized (:description duo))]
                   (when-let [restrictions (seq (:restrictions duo))]
-                    (doall
-                     (for [restriction restrictions]
-                       ^{:key type}
-                       [duo-restriction restriction])))]}]]]))
+                    (for [restriction restrictions]
+                      ^{:key type}
+                      [duo-restriction restriction]))]}]]]))
 
 (defn duos-view [duos]
   [collapsible/component

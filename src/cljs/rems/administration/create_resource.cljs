@@ -12,7 +12,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title localized]]
-            [rems.util :refer [navigate! post! trim-when-string em-dash]]
+            [rems.util :refer [navigate! post! trim-when-string]]
             [rems.common.duo :refer [duo-restriction-label]]))
 
 (rf/reg-event-fx
@@ -140,7 +140,7 @@
          [dropdown/async-dropdown
           {:id "mondos-dropdown"
            :item-key :id
-           :item-label #(str/join " " [(:id %) em-dash (:label %)])
+           :item-label #(str (:id %) " – " (:label %))
            :multi? true
            :on-change #(rf/dispatch [::set-duo-restrictions update-path %])
            :on-load-options fetch-mondo-codes
@@ -179,7 +179,7 @@
   [:<>
    [:p
     [:span.administration-field-label (:shorthand duo)]
-    [:span (str em-dash " " (localized (:label duo)))]]
+    [:span (str " – " (localized (:label duo)))]]
    [:p (localized (:description duo))]
    [:p (str "(" (:id duo) ")")]
    (into [:<>]
@@ -199,8 +199,8 @@
        :item-label #(let [shorthand (:shorthand %)
                           label (localized (:label %))]
                       (if (seq shorthand)
-                        (str shorthand " " em-dash " " label)
-                        (str (:id %) " " em-dash " " label)))
+                        (str shorthand " – " label)
+                        (str (:id %) " – " label)))
        :item-selected? #(contains? (set selected-duos) %)
        :multi? true
        :on-change #(rf/dispatch [::set-duos %])}]
