@@ -392,7 +392,6 @@
              (when-not (js/isNaN x)
                x))))
 
-
 (deftest test-parse-int
   (is (= nil (parse-int nil)))
   (is (= nil (parse-int "")))
@@ -426,3 +425,8 @@
 (deftest normalize-file-path-test
   (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
   (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
+
+(defn assoc-some-in [m ks v]
+  (if (some? v)
+    (assoc-in m ks v)
+    m))

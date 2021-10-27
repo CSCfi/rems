@@ -13,7 +13,8 @@
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title localized]]
             [rems.util :refer [navigate! post! trim-when-string]]
-            [rems.common.duo :refer [duo-restriction-label]]))
+            [rems.common.duo :refer [duo-restriction-label]]
+            [rems.common.util :refer [assoc-some-in]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -61,11 +62,6 @@
 (defn- valid-request? [request]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:resid request)))))
-
-(defn- assoc-some-in [m ks v]
-  (if (some? v)
-    (assoc-in m ks v)
-    m))
 
 (defn build-request [form]
   (let [request (-> {:organization {:organization/id (get-in form [:organization :organization/id])}
