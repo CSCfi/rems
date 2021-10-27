@@ -5,7 +5,6 @@
             [medley.core :refer [assoc-some remove-vals]]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [organization-field text-field date-field input-field]]
-            [rems.administration.duo :refer [duo-restriction-label]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
@@ -13,7 +12,8 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title localized]]
-            [rems.util :refer [navigate! post! trim-when-string em-dash]]))
+            [rems.util :refer [navigate! post! trim-when-string em-dash]]
+            [rems.common.duo :refer [duo-restriction-label]]))
 
 (rf/reg-event-fx
  ::enter-page

@@ -4,18 +4,8 @@
             [rems.collapsible :as collapsible]
             [rems.text :refer [localized text text-format]]
             [rems.fields :refer [info-collapse]]
-            [rems.util :refer [em-dash]]))
-
-(def duo-restriction-label
-  {:mondo :t.duo.restriction/mondo
-   :topic :t.duo.restriction/topic
-   :collaboration :t.duo.restriction/collaboration
-   :location :t.duo.restriction/location
-   :date :t.duo.restriction/date
-   :months :t.duo.restriction/months
-   :users :t.duo.restriction/users
-   :project :t.duo.restriction/project
-   :institute :t.duo.restriction/institute})
+            [rems.util :refer [em-dash]]
+            [rems.common.duo :refer [duo-restriction-label]]))
 
 (defn- duo-restriction [{:keys [type values]}]
   (case type
