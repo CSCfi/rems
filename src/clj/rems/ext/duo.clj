@@ -130,7 +130,8 @@
           :resource/duo {:duo/codes [{:id "DUO:0000007"
                                       :label {:en "unknown code"}
                                       :description {:en "Unknown code"}
-                                      :restrictions [{:type :mondo :values [{:id "MONDO:0000004"}]}]}
+                                      :restrictions [{:type :mondo :values [{:id "MONDO:0000004"
+                                                                             :label "unknown code"}]}]}
                                      {:id "DUO:0000021"
                                       :label {:en "unknown code"}
                                       :description {:en "Unknown code"}}

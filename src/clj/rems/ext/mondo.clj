@@ -103,7 +103,8 @@
 
   Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
   [& [id]]
-  (let [unknown-value {:label "unknown code"}]
+  (let [unknown-value {:id id
+                       :label "unknown code"}]
     (if (:enable-duo rems.config/env)
       (do
         (when (nil? @code-by-id)

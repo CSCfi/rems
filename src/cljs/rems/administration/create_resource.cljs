@@ -164,7 +164,7 @@
         [text-field context
          {:keys update-path
           :label restriction-label}])
-      
+
       nil)))
 
 (defn- duo-field [duo]
