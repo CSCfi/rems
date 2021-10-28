@@ -22,7 +22,7 @@
   :description
   {:en
    "This data use permission indicates that use is allowed provided it is related to the specified disease."},
-  :restrictions [{:type :MONDO}]}
+  :restrictions [{:type :mondo}]}
  {:id "DUO:0000011",
   :shorthand "POA",
   :label {:en "population origins or ancestry research only"},

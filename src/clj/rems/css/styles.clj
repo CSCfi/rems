@@ -270,6 +270,7 @@
 
 (defn- solid-form-group []
   (assoc (form-group)
+         :padding (u/rem 1)
          :border "2px solid #eee"))
 
 (defn- remove-nil-vals

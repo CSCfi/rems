@@ -8,9 +8,8 @@
             [clojure.pprint]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            [medley.core :refer [find-first update-existing]]
+            [medley.core :refer [find-first update-existing index-by]]
             [rems.config]
-            [rems.common.util :refer [build-index]]
             [rems.github :as github]))
 
 (defn- strip-bom
@@ -86,18 +85,13 @@
 
 (def ^:private supported-mondo-release-tag "the version of Mondo we support so far" "v2021-10-01")
 
-
-
-
-
 (defn- load-codes
   "Load and index Mondo codes."
   []
   (->> (slurp "mondo.edn")
        edn/read-string
-       (build-index {:keys [first]
-                     :value-fn (fn [x] {:id (first x)
-                                        :label (second x)})})))
+       (mapv (fn [[id label]] {:id (str "MONDO:" id) :label label}))
+       (index-by :id)))
 
 (def ^:private code-by-id (atom nil))
 
@@ -106,7 +100,8 @@
 
   Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
   [& [id]]
-  (let [unknown-value {:label "unknown code"}]
+  (let [unknown-value {:id id
+                       :label "unknown code"}]
     (if (:enable-duo rems.config/env)
       (do
         (when (nil? @code-by-id)
@@ -147,7 +142,7 @@
                    :restrictions
                    (fn [restrictions]
                      (for [restriction restrictions]
-                       (if (= :MONDO (:type restriction))
+                       (if (= :mondo (:type restriction))
                          (update-existing restriction
                                           :values
                                           (fn [values]

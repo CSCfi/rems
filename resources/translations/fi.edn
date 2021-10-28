@@ -93,6 +93,10 @@
                    :disable "Poista käytöstä"
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
+                   :duo {:codes "DUO koodit"
+                         :code "DUO koodi"
+                         :description "Kuvaus"
+                         :about-duo-code "Lisätietoja"}
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
@@ -118,6 +122,7 @@
                    :modifier "Muokkaaja"
                    :more-info "Lisätietoja-URL (valinnainen)"
                    :name "Nimi"
+                   :no-duo-codes "Ei DUO koodeja"
                    :no-form "Ei lomaketta"
                    :no-licenses "Ei lisenssejä"
                    :optional "(valinnainen)"
@@ -302,7 +307,8 @@
                    :title "Lisenssin nimi"}
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
-                    :resid-placeholder "urn:test:fi:some-uuid"}
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :duos {:select-duo-codes "DUO koodit"}}
   :create-workflow {:decider-workflow "Päättäjätyövuo"
                     :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on."
                     :default-workflow "Oletustyövuo"
@@ -313,6 +319,15 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
+  :duo {:restriction {:mondo "Tauti (Mondo)"
+                      :topic "Tutkimuksen tyyppi"
+                      :collaboration "Tutkimusryhmän johtaja(t)"
+                      :location "Maantieteellinen alue"
+                      :date "Julkaisuaika (pvm)"
+                      :months "Voimassa (kuukautta)"
+                      :users "Hyväksytyt käyttäjät"
+                      :project "Hyväksytty projekti"
+                      :institute "Hyväksytty instituutio"}}
   :email {:applicant-changed {:subject-to-member "Hakemuksen %3 hakija vaihtunut"
                               :message-to-member "Hyvä %1,\n\n%2 on vaihtanut hakemuksen %3 hakijan käyttäjäksi %4.\n\nVoit tarkastella hakemusta: %6."
                               :subject-to-handler "(%3) Hakija vaihtunut"
