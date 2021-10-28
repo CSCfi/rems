@@ -8,9 +8,8 @@
             [clojure.pprint]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            [medley.core :refer [find-first update-existing]]
+            [medley.core :refer [find-first update-existing index-by]]
             [rems.config]
-            [rems.common.util :refer [build-index]]
             [rems.github :as github]))
 
 (defn- strip-bom
@@ -89,12 +88,10 @@
 (defn- load-codes
   "Load and index Mondo codes."
   []
-  (let [make-mondo-label (comp (partial str "MONDO:") first)]
-    (->> (slurp "mondo.edn")
-         edn/read-string
-         (build-index {:keys [make-mondo-label]
-                       :value-fn (fn [x] {:id (make-mondo-label x)
-                                          :label (second x)})}))))
+  (->> (slurp "mondo.edn")
+       edn/read-string
+       (mapv (fn [[id label]] {:id (str "MONDO:" id) :label label}))
+       (index-by :id)))
 
 (def ^:private code-by-id (atom nil))
 
