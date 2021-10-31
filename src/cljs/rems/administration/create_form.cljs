@@ -450,8 +450,8 @@
         [date-bounds-type date-bounds-value] (map get-date-bounds suffixes)
         label-type (text :t.create-form/type-date-bounds)]
      [:div.form-group.field.row {:id (str "container-field" field-index)}
-      [:label.col-sm-3.col-form-label {:for id-type} label-type]
-      [:div.col-sm-9
+      [:label.col-sm-2.col-form-label {:for id-type} label-type]
+      [:div.col-sm-10
        [:select.form-control
         {:id id-type
          :class (when error-type "is-invalid")
