@@ -11,14 +11,11 @@
   `data-field-index` property for this. When a field is e.g. moved, it takes a while for
   React to re-render it. So we want to wait until the element is rendered to the new place
   with the new index before we can scroll to the new position."
-  (:require [cljs-time.core :as time]
-            [cljs-time.format :as time-format]
-            [cljs-time.local :as time-local]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [checkbox date-bound-field localized-text-field organization-field radio-button-group text-field text-field-inline]]
+            [rems.administration.components :refer [checkbox localized-text-field organization-field radio-button-group text-field text-field-inline]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -169,8 +166,6 @@
                             (boolean (:field/optional field))
                             false)}
          (when (common-form/supports-date-bounds? field)
-           (when (= :private (get-in field [:field/privacy]))
-             {:field/privacy (:field/privacy field)})
            (when-let [past-or-future (#{:past :future} (get-in field [:field/date-bounds :date-bounds/type]))]
              {:field/date-bounds past-or-future}))
          (when (common-form/supports-info-text? field)
@@ -310,14 +305,6 @@
 (defn- form-field-max-length-field [field-index]
   [text-field-inline context {:keys [:form/fields field-index :field/max-length]
                               :label (text :t.create-form/maxlength)}])
-
-(defn- form-field-min-date-field [field-index]
-  [date-bound-field context {:keys [:form/fields field-index :field/date-bounds :date-bounds/min-date]
-                             :label (text :t.create-form.date-bounds/min-date)}])
-
-(defn- form-field-max-date-field [field-index]
-  [date-bound-field context {:keys [:form/fields field-index :field/date-bounds :date-bounds/max-date]
-                             :label (text :t.create-form.date-bounds/max-date)}])
 
 (defn- add-form-field-option-button [field-index]
   [:a.add-option {:href "#"
@@ -462,7 +449,6 @@
         [id-type id-value] (map id-string suffixes)
         [date-bounds-type date-bounds-value] (map get-date-bounds suffixes)
         label-type (text :t.create-form/type-date-bounds)]
-    [:div {:class (when (#{:min-date :max-date :both} date-bounds-type) "form-field-date-bounds")}
      [:div.form-group.field.row {:id (str "container-field" field-index)}
       [:label.col-sm-3.col-form-label {:for id-type} label-type]
       [:div.col-sm-9
@@ -471,25 +457,14 @@
          :class (when error-type "is-invalid")
          :on-change #(rf/dispatch [::form-field-date-bounds-type field-index (keyword (.. % -target -value))])
          :value (or date-bounds-type "")}
-        (doall (for [opt-kw [:t.create-form.date-bounds/past
-                             :t.create-form.date-bounds/future
-                             :t.create-form.date-bounds/none
-                             :t.create-form.date-bounds/min-date
-                             :t.create-form.date-bounds/max-date
-                             :t.create-form.date-bounds/both]
+        (doall (for [opt-kw [:t.create-form.date-bounds/none
+                             :t.create-form.date-bounds/past
+                             :t.create-form.date-bounds/future]
                      :let [value (name opt-kw)]]
                  ^{:key (str field-index "-" value)}
                  [:option {:value value} (text opt-kw)]))]
        [:div.invalid-feedback
-        (when error-type (text-format error-type label-type))]]
-      (when (#{:min-date :max-date :both} date-bounds-type)
-        [:div.flex-row.flex-fill.justify-content-end.d-flex.flex-wrap
-         (and (#{:min-date :both} date-bounds-type)
-              ^{:key (str field-index "-min-date")}
-              [:div.col-sm-auto [form-field-min-date-field field-index]])
-         (and (#{:max-date :both} date-bounds-type)
-              ^{:key (str field-index "-max-date")}
-              [:div.col-sm-auto [form-field-max-date-field field-index]])])]]))
+        (when error-type (text-format error-type label-type))]]]))
 
 (defn- form-field-visibility
   "Component for specifying form field visibility rules"
