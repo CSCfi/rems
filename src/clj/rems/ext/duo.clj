@@ -118,12 +118,13 @@
   (with-redefs [rems.config/env {:enable-duo true}]
     (get-duo-codes)))
 
+(defn- enrich-duo-code [duo]
+  (-> (get-codes (:id duo))
+      (merge duo)
+      mondo/join-mondo-code))
+
 (defn enrich-duo-codes [duos]
-  (mapv (fn [duo]
-          (-> (get-codes (:id duo))
-              (merge duo)
-              mondo/join-mondo-code))
-        duos))
+  (mapv enrich-duo-code duos))
 
 (defn join-duo-codes [ks x]
   (update-in x ks enrich-duo-codes))
