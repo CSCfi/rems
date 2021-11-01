@@ -798,7 +798,8 @@
   ^{:key (:catalogue-item/id resource)}
   (let [config @(rf/subscribe [:rems.config/config])
         duo-codes (get-in resource [:resource/duo :duo/codes])]
-    [:div.application-resource.solid-group
+    [:div.application-resource
+     {:class (when (:enable-duo config) "solid-group")}
      [:h3.resource-label
       (localized (:catalogue-item/title resource))
       (when-let [url (catalogue-item-more-info-url resource language config)]
@@ -806,7 +807,8 @@
          " – "
          [:a {:href url :target :_blank}
           (text :t.catalogue/more-info) " " [external-link]]])]
-     (when (seq duo-codes)
+     (when (and (:enable-duo config)
+                (seq duo-codes))
        (into [:div.resource-duo-codes]
              (for [code duo-codes]
                [resource-duo-view-compact code (:catalogue-item/id resource)])))]))
