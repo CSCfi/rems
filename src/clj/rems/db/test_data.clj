@@ -709,7 +709,7 @@
                                         :organization {:organization/id "nbn"}
                                         :actor owner
                                         :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                      :values [{:value "MONDO:0000015"}]}]}
+                                                                                                      :values [{:id "MONDO:0000015"}]}]}
                                                                    {:id "DUO:0000012" :restrictions [{:type :topic
                                                                                                       :values [{:value "my research type"}]}]}
                                                                    {:id "DUO:0000020" :restrictions [{:type :collaboration
