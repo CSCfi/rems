@@ -20,7 +20,9 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (dissoc db ::form)
-    :dispatch-n [[::licenses] [::duo-codes]]}))
+    :dispatch-n (if (-> db :config :enable-duo)
+                  [[::licenses] [::duo-codes]]
+                  [[::licenses]])}))
 
 (fetcher/reg-fetcher ::licenses "/api/licenses")
 (fetcher/reg-fetcher ::duo-codes "/api/resources/duo-codes")
