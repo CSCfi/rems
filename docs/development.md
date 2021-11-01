@@ -5,8 +5,8 @@
 In order to get started with REMS, you need to have the following software installed:
 
    - Docker
-   - Java. Currently REMS should be working with Java versions 11 to 16
-   - leiningen. As of 2021-04-14, the project should work with lein version Leiningen 2.9.5 on Java 16 OpenJDK 64-Bit Server VM.
+   - Java. Currently REMS should be working with Java versions 11 to 17
+   - leiningen. As of 2021-11-01, the project should work with lein version Leiningen 2.9.7 on Java 17 OpenJDK 64-Bit Server VM.
 ### Mac OS installation for Apple M1 Chip (Apple Silicon M1)
 
 1. Java Installation: install Java via Azul, make sure you download the version of [Java for MacOS for ARM architecture](https://www.azul.com/downloads/zulu-community/?os=macos&architecture=arm-64-bit&package=jdk).
