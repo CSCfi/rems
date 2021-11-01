@@ -54,7 +54,7 @@
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
   (db/get-licenses
-   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
+   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id {}))
     :items [catalogue-item-id]}))
 
 (defn get-application-by-invitation-token [invitation-token]
