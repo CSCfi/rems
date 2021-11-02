@@ -8,7 +8,6 @@
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
-            [clj-time.core :as time]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -55,7 +54,7 @@
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
   (db/get-licenses
-   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
+   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id {}))
     :items [catalogue-item-id]}))
 
 (defn get-application-by-invitation-token [invitation-token]
@@ -83,7 +82,8 @@
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
+   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
+                                                                                                                          :expand-resource-data? true})))
    :get-config (fn [] env)
    :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
    :get-user #(cache/lookup-or-miss user-cache % users/get-user)

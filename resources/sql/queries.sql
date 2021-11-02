@@ -12,6 +12,9 @@
 -- - :archived true if archived items should be included
 SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived, ci.organization
 , res.id AS "resource-id"
+/*~ (when (:expand-resource-data? params) */
+, res.resourcedata::TEXT AS "resourcedata"
+/*~ ) ~*/
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"

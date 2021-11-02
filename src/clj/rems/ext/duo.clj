@@ -118,40 +118,45 @@
   (with-redefs [rems.config/env {:enable-duo true}]
     (get-duo-codes)))
 
+(defn- enrich-duo-code [duo]
+  (-> (get-codes (:id duo))
+      (merge duo)
+      mondo/join-mondo-code))
+
+(defn enrich-duo-codes [duos]
+  (mapv enrich-duo-code duos))
+
 (defn join-duo-codes [ks x]
-  (update-in x ks (partial mapv
-                           (fn [duo]
-                             (-> (get-codes (:id duo))
-                                 (merge duo)
-                                 mondo/join-mondo-code)))))
+  (update-in x ks enrich-duo-codes))
 
 (deftest test-join-duo-codes
-  (is (= {:id 1234
-          :resource/duo {:duo/codes [{:id "DUO:0000007"
-                                      :label {:en "unknown code"}
-                                      :description {:en "Unknown code"}
-                                      :restrictions [{:type :mondo :values [{:id "MONDO:0000004"
-                                                                             :label "unknown code"}]}]}
-                                     {:id "DUO:0000021"
-                                      :label {:en "unknown code"}
-                                      :description {:en "Unknown code"}}
-                                     {:id "DUO:0000026"
-                                      :label {:en "unknown code"}
-                                      :description {:en "Unknown code"}}
-                                     {:id "DUO:0000027"
-                                      :label {:en "unknown code"}
-                                      :description {:en "Unknown code"}
-                                      :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
-         (join-duo-codes [:resource/duo :duo/codes]
-                         {:id 1234
-                          :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                        :values [{:id "MONDO:0000004"}]}]}
-                                                     {:id "DUO:0000021"}
-                                                     {:id "DUO:0000026"}
-                                                     {:id "DUO:0000027"
-                                                      :restrictions [{:type :project
-                                                                      :values ["CSC/REMS"]}]}]}}))
-      "feature disabled")
+  (with-redefs [rems.config/env {:enable-duo false}]
+    (is (= {:id 1234
+            :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                        :label {:en "unknown code"}
+                                        :description {:en "Unknown code"}
+                                        :restrictions [{:type :mondo :values [{:id "MONDO:0000004"
+                                                                               :label "unknown code"}]}]}
+                                       {:id "DUO:0000021"
+                                        :label {:en "unknown code"}
+                                        :description {:en "Unknown code"}}
+                                       {:id "DUO:0000026"
+                                        :label {:en "unknown code"}
+                                        :description {:en "Unknown code"}}
+                                       {:id "DUO:0000027"
+                                        :label {:en "unknown code"}
+                                        :description {:en "Unknown code"}
+                                        :restrictions [{:type :project :values ["CSC/REMS"]}]}]}}
+           (join-duo-codes [:resource/duo :duo/codes]
+                           {:id 1234
+                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                          :values [{:id "MONDO:0000004"}]}]}
+                                                       {:id "DUO:0000021"}
+                                                       {:id "DUO:0000026"}
+                                                       {:id "DUO:0000027"
+                                                        :restrictions [{:type :project
+                                                                        :values ["CSC/REMS"]}]}]}}))
+        "feature disabled"))
   (with-redefs [rems.config/env {:enable-duo true}]
     (is (= {:id 1234
             :resource/duo {:duo/codes [{:id "DUO:0000007"

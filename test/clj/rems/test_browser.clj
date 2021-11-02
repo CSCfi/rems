@@ -253,6 +253,30 @@
         id (btu/get-element-attr-el el :for)]
     (btu/get-element-text {:id (str id "-error")})))
 
+;; TODO: return to DUO tests once features are complete
+;; (defn get-duo-codes [s]
+;;   (let [all-resources (-> (btu/query [{:class :application-resources}])
+;;                           (btu/children {:fn/has-class :application-resource}))
+;;         expected (->> all-resources
+;;                       (filter #(seq (btu/children % {:class :resource-label :fn/has-text s})))
+;;                       first)]
+;;     (-> (btu/child expected {:class :resource-duo-codes})
+;;         (btu/children {:tag :div :fn/has-class "pt-2"}))))
+
+;; (defn get-duo-code [s s2]
+;;   (let [has-code-value (re-pattern (str "(?s)^" s2 ".*"))]
+;;     (->> (get-duo-codes s)
+;;          (filter #(re-matches has-code-value (btu/value-of-el %)))
+;;          first)))
+
+;; (defn duo-code-fields [el]
+;;   (->> (btu/children el {:fn/has-class :form-group})
+;;        (map (fn [form]
+;;               [(-> (btu/child form {:index 1})
+;;                    btu/value-of-el)
+;;                (-> (btu/child form {:index 2})
+;;                    btu/value-of-el)]))))
+
 ;; applications page
 
 (defn get-application-summary [application-id]
@@ -281,6 +305,7 @@
       (go-to-catalogue)
       (add-to-cart "Default workflow")
       (add-to-cart "Private form workflow")
+      ;; (add-to-cart "Default workflow with DUO codes")
       (btu/gather-axe-results)
       (click-cart-apply)
       (btu/gather-axe-results)
@@ -310,6 +335,39 @@
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text area" "Test2")
         (set-date-for-label "Date field" "2050-01-02")
+
+        ;; TODO: return to DUO tests once features are complete
+        ;; (testing "check resource DUO codes"
+        ;;   (comment
+        ;;     (-> (get-duo-code "Default workflow with DUO codes" "DS — disease specific research")
+        ;;         (btu/child {:tag :button})
+        ;;         btu/click-el))
+
+        ;;   (let [res-label "Default workflow with DUO codes"]
+        ;;     (is (btu/eventually-visible? [{:class :application-resources} {:class :resource-label :fn/has-text res-label}]))
+        ;;     (is (= (->> (get-duo-codes res-label)
+        ;;                 (map btu/value-of-el)
+        ;;                 set)
+        ;;            #{"DS — disease specific research"
+        ;;              "RS — research specific restrictions"
+        ;;              "COL — collaboration required"
+        ;;              "GS — geographical restriction"
+        ;;              "MOR — publication moratorium"
+        ;;              "TS — time limit on use"
+        ;;              "US — user specific restriction"
+        ;;              "PS — project specific restriction"
+        ;;              "IS — institution specific restriction"}))
+
+        ;;     (testing "toggle DUO code open and verify fields"
+        ;;       (let [duo-label "DS — disease specific research"
+        ;;             duo (get-duo-code res-label duo-label)]
+        ;;         (btu/click-el (btu/child duo {:tag :button}))
+        ;;         (btu/eventually-visible? {:tag :div :fn/has-text "DUO:0000007"})
+        ;;         (is (= (duo-code-fields duo)
+        ;;                [["DUO code" "DUO:0000007"]
+        ;;                 ["Description" "This data use permission indicates that use is allowed provided it is related to the specified disease."]
+
+        ;;                 ["Disease (MONDO)" "MONDO:0000015"]]))))))
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
@@ -380,8 +438,6 @@
                  (get-validation-for-field "Email field"))))
 
         (fill-form-field "Email field" "@example.com")
-
-
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
           (btu/scroll-and-click :submit)
@@ -981,6 +1037,17 @@
               "Active" true}
              (slurp-fields :license))))))
 
+;; TODO: return to DUO tests once features are complete
+;; (def duo-codes (->> (slurp "duo.edn")
+;;                     clojure.edn/read-string
+;;                     (group-by :id)))
+
+;; (defn select-duo-code [code]
+;;   (let [duo (first (get duo-codes code))
+;;         shorthand (:shorthand duo)
+;;         label (get-in duo [:label :en])]
+;;     (select-option "DUO codes" (str shorthand " — " label))))
+
 (defn create-resource []
   (testing "create resource"
     (btu/with-postmortem
@@ -991,6 +1058,8 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-get :resid))
       (select-option "License" (str (btu/context-get :license-name) " EN"))
+      ;; (select-duo-code "DUO:0000026")
+      ;; (fill-form-field "Approved user(s)" "developers developers developers")
       (btu/screenshot "about-to-create-resource.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))

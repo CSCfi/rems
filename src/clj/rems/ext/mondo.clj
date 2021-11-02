@@ -147,9 +147,21 @@
                                           :values
                                           (fn [values]
                                             (mapv (fn [value]
-                                                    (get-codes (:id value)))
+                                                    (if-some [id (:id value)]
+                                                      (get-codes id)
+                                                      value))
                                                   values)))
                          restriction)))))
+
+(deftest test-join-mondo-code
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (is (= nil (join-mondo-code nil)))
+    (is (= {:restrictions []} (join-mondo-code {:restrictions []})))
+    (is (= {:restrictions [{:type :mondo}]} (join-mondo-code {:restrictions [{:type :mondo}]})))
+    (is (= {:restrictions [{:type :mondo :values []}]} (join-mondo-code {:restrictions [{:type :mondo :values []}]})))
+    (is (= {:restrictions [{:type :mondo :values [{:value "MONDO:0000005"}]}]} (join-mondo-code {:restrictions [{:type :mondo :values [{:value "MONDO:0000005"}]}]}))
+        "technically an invalid value but should not be changed")
+    (is (= {:restrictions [{:type :mondo :values [{:id "MONDO:0000005" :label "alopecia, isolated"}]}]} (join-mondo-code {:restrictions [{:type :mondo :values [{:id "MONDO:0000005"}]}]})))))
 
 
 (comment
