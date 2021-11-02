@@ -1,6 +1,6 @@
 # 017: Applicant Form UX
 
-Authors: @opqdonut, @Macroz, @marharyta
+Authors: @opqdonut, @Macroz, @marharyta, @aatkin
 
 This ADR aims to collect together some topics like validations in
 frontend, autosaving, etc. that are related to the Applicant's user
@@ -83,7 +83,6 @@ button.
 
 Here's a step-by-step plan for fixing these. We might not end up doing all of the steps.
 
-1. (Problem A) Make save succeed even with validation errors. Show validation errors in yellow (instead of red).
-2. (Problem B) Run validations in the frontend after the user has stopped typing.
-3. TODO
-4. TODO
+1. (Problem A) Make save succeed even with validation errors. Show validation errors in yellow (instead of red). [#2766](https://github.com/CSCfi/rems/issues/2766)
+2. (Problem B) Run validations in the frontend after the user has stopped typing. [#2614](https://github.com/CSCfi/rems/issues/2614)
+3. (Problem B) Autosave in the background by replacing/patching the latest draft-saved event. If the latest event is not a draft-saved then create a new one. [#2767](https://github.com/CSCfi/rems/issues/2767)
