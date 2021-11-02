@@ -159,10 +159,14 @@ Implement the "Login" section of this ADR, and also write the
 necessary database migrations (see also Migration under Open questions
 below).
 
+[Issue #2771](https://github.com/CSCfi/rems/issues/2771)
+
 ## 4. Support for external ids in APIs
 
 Implement the "User identity resolution" section of this ADR, one API
 at a time. This should probably be in the same release as step 3.
+
+[Issue #2772](https://github.com/CSCfi/rems/issues/2772)
 
 # Open questions
 
@@ -184,6 +188,8 @@ Should we allow external user ids in `x-rems-user-id`?
 
 Should we have an API for searching / resolving users?
 
+[Issue #2773](https://github.com/CSCfi/rems/issues/2773)
+
 ## Migration
 
 Should we migrate existing userids to new random values or keep them
@@ -196,3 +202,5 @@ attributes. Is storing the data in JSONB fine or should we also add
 new columns?
 
 We can also use Lucene to implement user searching.
+
+[Issue #2774](https://github.com/CSCfi/rems/issues/2774)
