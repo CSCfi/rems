@@ -1432,7 +1432,7 @@
         (testing "create table field"
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
           (btu/scroll-and-click :fields-3-type-table)
-          (is (btu/eventually-visible? :fields-3-add-option))
+          (is (btu/eventually-visible? :fields-3-add-column))
           (btu/fill-human :fields-3-title-en "Table (EN)")
           (btu/fill-human :fields-3-title-fi "Table (FI)")
           (btu/fill-human :fields-3-title-sv "Table (SV)")
@@ -1487,7 +1487,9 @@
                            "(max 127 characters)"))
         (is (btu/has-text? {:tag :label :class :application-field-label :fn/has-text "Text area (EN)"}
                            "(optional)"))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"})))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
+        (is (btu/visible? {:tag :legend :class :application-field-label :fn/has-text "Multi-select list (EN)"}))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Table (EN)"})))
 
       (testing "info collapse can be toggled"
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
@@ -1530,7 +1532,7 @@
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
-        (btu/scroll-and-click :field-editor-fld2-collapse-more-link)
+        (btu/scroll-and-click :field-editor-fld4-collapse-more-link)
         (btu/scroll-and-click :fields-0-type-description)
         (btu/scroll-and-click :fields-0-info-text-more-link)
         (is (btu/eventually-visible? :fields-0-info-text-en))
@@ -1566,7 +1568,7 @@
                 :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
-                               :field/id "fld2"
+                               :field/id "fld4"
                                :field/max-length nil
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
@@ -1581,7 +1583,37 @@
                                :field/id "opt"
                                :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
                                                {:key "false" :label {:fi "Ei" :en "No" :sv "Nej"}}]
-                               :field/optional false}]
+                               :field/optional false}
+                              {:field/id "fld2"
+                               :field/optional false
+                               :field/options [{:key "multi-select-option-1"
+                                                :label {:en "Multi-select option 1 (EN)"
+                                                        :fi "Multi-select option 1 (FI)"
+                                                        :sv "Multi-select option 1 (SV)"}}
+                                               {:key "multi-select-option-0"
+                                                :label {:en "Multi-select option 0 (EN)"
+                                                        :fi "Multi-select option 0 (FI)"
+                                                        :sv "Multi-select option 0 (SV)"}}]
+                               :field/title {:en "Multi-select list (EN)"
+                                             :fi "Multi-select list (FI)"
+                                             :sv "Multi-select list (SV)"}
+                               :field/type "multiselect"}
+                              {:field/columns [{:key "table-column-0"
+                                                :label {:en "Table column 0 (EN)"
+                                                        :fi "Table column 0 (FI)"
+                                                        :sv "Table column 0 (SV)"}}
+                                               {:key "table-column-1"
+                                                :label {:en "Table column 1 (EN)"
+                                                        :fi "Table column 1 (FI)"
+                                                        :sv "Table column 1 (SV)"}}
+                                               {:key "table-column-2"
+                                                :label {:en "Table column 2 (EN)"
+                                                        :fi "Table column 2 (FI)"
+                                                        :sv "Table column 2 (SV)"}}]
+                               :field/id "fld3"
+                               :field/optional false
+                               :field/title {:en "Table (EN)" :fi "Table (FI)" :sv "Table (SV)"}
+                               :field/type "table"}]
                 :form/errors nil
                 :enabled true
                 :archived false}
