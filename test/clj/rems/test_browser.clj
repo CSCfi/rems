@@ -1427,10 +1427,47 @@
           (is (= (->> (btu/query-all [{:id "container-form-1-field-fld2"} {:class "form-check"}])
                       (mapv btu/value-of-el))
                  ["multi-select-option-1"
-                  "multi-select-option-0"]))))
+                  "multi-select-option-0"])))
+
+        (testing "create table field"
+          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+          (btu/scroll-and-click :fields-3-type-table)
+          (is (btu/eventually-visible? :fields-3-add-option))
+          (btu/fill-human :fields-3-title-en "Table (EN)")
+          (btu/fill-human :fields-3-title-fi "Table (FI)")
+          (btu/fill-human :fields-3-title-sv "Table (SV)")
+
+          (btu/scroll-and-click :fields-3-add-column)
+          (btu/fill-human :fields-3-columns-0-key "table-column-0")
+          (btu/fill-human :fields-3-columns-0-label-en "Table column 0 (EN)")
+          (btu/fill-human :fields-3-columns-0-label-fi "Table column 0 (FI)")
+          (btu/fill-human :fields-3-columns-0-label-sv "Table column 0 (SV)")
+
+          (btu/scroll-and-click :fields-3-add-column)
+          (btu/fill-human :fields-3-columns-1-key "table-column-1")
+          (btu/fill-human :fields-3-columns-1-label-en "Table column 1 (EN)")
+          (btu/fill-human :fields-3-columns-1-label-fi "Table column 1 (FI)")
+          (btu/fill-human :fields-3-columns-1-label-sv "Table column 1 (SV)")
+
+          (btu/scroll-and-click :fields-3-add-column)
+          (btu/fill-human :fields-3-columns-2-key "table-column-2")
+          (btu/fill-human :fields-3-columns-2-label-en "Table column 2 (EN)")
+          (btu/fill-human :fields-3-columns-2-label-fi "Table column 2 (FI)")
+          (btu/fill-human :fields-3-columns-2-label-sv "Table column 2 (SV)")
+
+          (btu/fill-human :form-1-field-fld3-row0-table-column-0 "value 0")
+          (btu/fill-human :form-1-field-fld3-row0-table-column-1 "value 1")
+          (btu/fill-human :form-1-field-fld3-row0-table-column-2 "value 2")
+
+          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"} {:css "table > thead > tr > th"}])
+                      (mapv btu/value-of-el)
+                      (filter (comp not clojure.string/blank?)))
+                 ["Table column 0 (EN)" "Table column 1 (EN)" "Table column 2 (EN)"]))
+          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"} {:css "table > tbody > tr > td > input.form-control"}])
+                      (map btu/value-of-el))
+                 ["value 0" "value 1" "value 2"]))))
 
       ;; TODO test validations?
-
       (btu/scroll-and-click :save))
 
     (testing "view form"
