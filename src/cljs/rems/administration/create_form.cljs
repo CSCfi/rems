@@ -315,10 +315,14 @@
   [items/remove-button #(rf/dispatch [::remove-form-field-option field-index option-index])])
 
 (defn- move-form-field-option-up-button [field-index option-index]
-  [items/move-up-button #(rf/dispatch [::move-form-field-option-up field-index option-index])])
+  [items/move-up-button
+   {:on-click #(rf/dispatch [::move-form-field-option-up field-index option-index])
+    :class (str "fields-" field-index "-option-" option-index)}])
 
 (defn- move-form-field-option-down-button [field-index option-index]
-  [items/move-down-button #(rf/dispatch [::move-form-field-option-down field-index option-index])])
+  [items/move-down-button
+   {:on-click #(rf/dispatch [::move-form-field-option-down field-index option-index])
+    :class (str "fields-" field-index "-option-" option-index)}])
 
 (defn- form-field-option-field [field-index option-index]
   [:div.form-field-option
@@ -357,10 +361,12 @@
   [items/remove-button #(rf/dispatch [::remove-form-field-column field-index column-index])])
 
 (defn- move-form-field-column-up-button [field-index column-index]
-  [items/move-up-button #(rf/dispatch [::move-form-field-column-up field-index column-index])])
+  [items/move-up-button
+   {:on-click #(rf/dispatch [::move-form-field-column-up field-index column-index])}])
 
 (defn- move-form-field-column-down-button [field-index column-index]
-  [items/move-down-button #(rf/dispatch [::move-form-field-column-down field-index column-index])])
+  [items/move-down-button
+   {:on-click #(rf/dispatch [::move-form-field-column-down field-index column-index])}])
 
 (defn- form-field-column-field [field-index column-index]
   [:div.form-field-option
@@ -550,10 +556,12 @@
                           (rf/dispatch [::remove-form-field field-index]))])
 
 (defn- move-form-field-up-button [field-index]
-  [items/move-up-button #(rf/dispatch [::move-form-field-up field-index])])
+  [items/move-up-button
+   {:on-click #(rf/dispatch [::move-form-field-up field-index])}])
 
 (defn- move-form-field-down-button [field-index]
-  [items/move-down-button #(rf/dispatch [::move-form-field-down field-index])])
+  [items/move-down-button
+   {:on-click #(rf/dispatch [::move-form-field-down field-index])}])
 
 (defn- save-form-button [on-click]
   [:button.btn.btn-primary
