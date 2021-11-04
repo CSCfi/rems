@@ -1465,7 +1465,28 @@
                  ["Table column 0 (EN)" "Table column 1 (EN)" "Table column 2 (EN)"]))
           (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"} {:css "table > tbody > tr > td > input.form-control"}])
                       (map btu/value-of-el))
-                 ["value 0" "value 1" "value 2"]))))
+                 ["value 0" "value 1" "value 2"])))
+
+        (testing "create date field"
+          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+          (btu/scroll-and-click :fields-4-type-date)
+          (is (btu/eventually-visible? {:id :form-1-field-fld4 :tag :label :css "[type=date]"}))
+
+          (btu/fill-human :fields-4-title-en "Date field (EN)")
+          (btu/fill-human :fields-4-title-fi "Date field (FI)")
+          (btu/fill-human :fields-4-title-sv "Date field (SV)")
+
+          (btu/scroll-and-click :fields-4-info-text-more-link)
+          (is (btu/eventually-visible? :fields-4-info-text-en))
+          (btu/fill-human :fields-4-info-text-en "Info text (EN)")
+          (btu/fill-human :fields-4-info-text-fi "Info text (FI)")
+          (btu/fill-human :fields-4-info-text-sv "Info text (SV)")
+          (is (btu/eventually-visible? [:container-form-1-field-fld4 {:tag :button :fn/has-class "info-button"}]))
+
+          (btu/scroll-and-click [:container-form-1-field-fld4 {:tag :button :fn/has-class "info-button"}])
+          (is (btu/eventually-visible? :form-1-field-fld4-collapse))
+          (is (= (btu/value-of :form-1-field-fld4-collapse)
+                 "Info text (EN)"))))
 
       ;; TODO test validations?
       (btu/scroll-and-click :save))
@@ -1532,7 +1553,7 @@
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
-        (btu/scroll-and-click :field-editor-fld4-collapse-more-link)
+        (btu/scroll-and-click :field-editor-fld5-collapse-more-link)
         (btu/scroll-and-click :fields-0-type-description)
         (btu/scroll-and-click :fields-0-info-text-more-link)
         (is (btu/eventually-visible? :fields-0-info-text-en))
@@ -1568,7 +1589,7 @@
                 :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "description"
-                               :field/id "fld4"
+                               :field/id "fld5"
                                :field/max-length nil
                                :field/optional false}
                               {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
@@ -1613,7 +1634,12 @@
                                :field/id "fld3"
                                :field/optional false
                                :field/title {:en "Table (EN)" :fi "Table (FI)" :sv "Table (SV)"}
-                               :field/type "table"}]
+                               :field/type "table"}
+                              {:field/title {:fi "Date field (FI)" :en "Date field (EN)" :sv "Date field (SV)"}
+                               :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                               :field/type "date"
+                               :field/id "fld5"
+                               :field/optional false}]
                 :form/errors nil
                 :enabled true
                 :archived false}
