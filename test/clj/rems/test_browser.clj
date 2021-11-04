@@ -1470,7 +1470,7 @@
         (testing "create date field"
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
           (btu/scroll-and-click :fields-4-type-date)
-          (is (btu/eventually-visible? {:id :form-1-field-fld4 :tag :label :css "[type=date]"}))
+          (is (btu/eventually-visible? {:id :form-1-field-fld4 :tag :input :css "[type=date]"}))
 
           (btu/fill-human :fields-4-title-en "Date field (EN)")
           (btu/fill-human :fields-4-title-fi "Date field (FI)")
