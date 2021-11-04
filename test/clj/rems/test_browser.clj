@@ -1510,7 +1510,8 @@
                            "(optional)"))
         (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Option list (EN)"}))
         (is (btu/visible? {:tag :legend :class :application-field-label :fn/has-text "Multi-select list (EN)"}))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Table (EN)"})))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Table (EN)"}))
+        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Date field (EN)"})))
 
       (testing "info collapse can be toggled"
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
