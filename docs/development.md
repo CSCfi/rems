@@ -165,4 +165,28 @@ components in various configurations and is useful for example to develop and do
 
 See a running guide as example [https://rems-dev.rahtiapp.fi/guide](https://rems-dev.rahtiapp.fi/guide).
 
+## Developing database migrations
 
+We use [Migratus](https://github.com/yogthos/migratus) for database migrations. It supports both SQL and Clojure code-based migrations. See `src/clj/rems/migrations/example.clj` for example on code-based migration.
+
+To create new migration:
+
+```sh
+lein migratus create feature-name
+```
+
+This will create two new files:
+```
+resources/migrations/20211105110533-feature-name.down.sql
+resources/migrations/20211105110533-feature-name.up.sql
+```
+
+To run specific migration down (use only timestamp as identifier):
+```sh
+lein migratus down 20211105110533
+```
+
+To run specific migration up:
+```sh
+lein migratus up 20211105110533
+```
