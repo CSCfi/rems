@@ -13,7 +13,8 @@
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
             [rems.db.test-data-users :refer :all]
-            [rems.testing-util :refer [with-user]])
+            [rems.testing-util :refer [with-user]]
+            [rems.config])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -705,27 +706,28 @@
                                                                         :organization {:organization/id "hus"}
                                                                         :actor owner
                                                                         :license-ids [license2 extra-license attachment-license]})
-        duo-resource (create-resource! {:resource-ext-id "All DUO codes with restrictions"
-                                        :organization {:organization/id "nbn"}
-                                        :actor owner
-                                        :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                      :values [{:id "MONDO:0000015"}]}]}
-                                                                   {:id "DUO:0000012" :restrictions [{:type :topic
-                                                                                                      :values [{:value "my research type"}]}]}
-                                                                   {:id "DUO:0000020" :restrictions [{:type :collaboration
-                                                                                                      :values [{:value "developers"}]}]}
-                                                                   {:id "DUO:0000022" :restrictions [{:type :location
-                                                                                                      :values [{:value "egentliga finland"}]}]}
-                                                                   {:id "DUO:0000024" :restrictions [{:type :date
-                                                                                                      :values [{:value "2021-10-29"}]}]}
-                                                                   {:id "DUO:0000025" :restrictions [{:type :months
-                                                                                                      :values [{:value "120"}]}]}
-                                                                   {:id "DUO:0000026" :restrictions [{:type :users
-                                                                                                      :values [{:value "alice"}]}]}
-                                                                   {:id "DUO:0000027" :restrictions [{:type :project
-                                                                                                      :values [{:value "rems"}]}]}
-                                                                   {:id "DUO:0000028" :restrictions [{:type :institute
-                                                                                                      :values [{:value "csc"}]}]}]}})
+        duo-resource (when (:enable-duo rems.config/env)
+                       (create-resource! {:resource-ext-id "All DUO codes with restrictions"
+                                          :organization {:organization/id "nbn"}
+                                          :actor owner
+                                          :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                        :values [{:id "MONDO:0000015"}]}]}
+                                                                     {:id "DUO:0000012" :restrictions [{:type :topic
+                                                                                                        :values [{:value "my research type"}]}]}
+                                                                     {:id "DUO:0000020" :restrictions [{:type :collaboration
+                                                                                                        :values [{:value "developers"}]}]}
+                                                                     {:id "DUO:0000022" :restrictions [{:type :location
+                                                                                                        :values [{:value "egentliga finland"}]}]}
+                                                                     {:id "DUO:0000024" :restrictions [{:type :date
+                                                                                                        :values [{:value "2021-10-29"}]}]}
+                                                                     {:id "DUO:0000025" :restrictions [{:type :months
+                                                                                                        :values [{:value "120"}]}]}
+                                                                     {:id "DUO:0000026" :restrictions [{:type :users
+                                                                                                        :values [{:value "alice"}]}]}
+                                                                     {:id "DUO:0000027" :restrictions [{:type :project
+                                                                                                        :values [{:value "rems"}]}]}
+                                                                     {:id "DUO:0000028" :restrictions [{:type :institute
+                                                                                                        :values [{:value "csc"}]}]}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
@@ -949,30 +951,31 @@
                  :reviewers [reviewer]
                  :comment "please have a look"}))
 
-    (let [applicant (users :applicant1)
-          handler (users :approver2)
-          reviewer (users :reviewer)
-          cat-id (create-catalogue-item! {:actor owner
-                                          :title {:en "Default workflow with DUO codes"
-                                                  :fi "Testityövuo DUO koodeilla"
-                                                  :sv "Standard arbetsflöde med DUO koder"}
-                                          :infourl {:en "http://www.google.com"
-                                                    :fi "http://www.google.fi"
-                                                    :sv "http://www.google.se"}
-                                          :resource-id duo-resource
-                                          :form-id form
-                                          :organization {:organization/id "nbn"}
-                                          :workflow-id (:default workflows)})
-          app-id (create-draft! applicant [cat-id] "application with DUO codes")]
-      (create-draft! applicant [cat-id] "draft application with DUO codes")
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-review
-                 :application-id app-id
-                 :actor handler
-                 :reviewers [reviewer]
-                 :comment "please have a look"}))))
+    (when (:enable-duo rems.config/env)
+      (let [applicant (users :applicant1)
+            handler (users :approver2)
+            reviewer (users :reviewer)
+            cat-id (create-catalogue-item! {:actor owner
+                                            :title {:en "Default workflow with DUO codes"
+                                                    :fi "Testityövuo DUO koodeilla"
+                                                    :sv "Standard arbetsflöde med DUO koder"}
+                                            :infourl {:en "http://www.google.com"
+                                                      :fi "http://www.google.fi"
+                                                      :sv "http://www.google.se"}
+                                            :resource-id duo-resource
+                                            :form-id form
+                                            :organization {:organization/id "nbn"}
+                                            :workflow-id (:default workflows)})
+            app-id (create-draft! applicant [cat-id] "application with DUO codes")]
+        (create-draft! applicant [cat-id] "draft application with DUO codes")
+        (command! {:type :application.command/submit
+                   :application-id app-id
+                   :actor applicant})
+        (command! {:type :application.command/request-review
+                   :application-id app-id
+                   :actor handler
+                   :reviewers [reviewer]
+                   :comment "please have a look"})))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
