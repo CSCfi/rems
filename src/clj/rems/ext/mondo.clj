@@ -88,7 +88,7 @@
 (defn- load-codes
   "Load and index Mondo codes."
   []
-  (->> (slurp "mondo.edn")
+  (->> (slurp (io/resource "mondo.edn"))
        edn/read-string
        (mapv (fn [[id label]] {:id (str "MONDO:" id) :label label}))
        (index-by :id)))
@@ -177,7 +177,7 @@
   (assert (= supported-mondo-release-tag (:tag latest-release)))
 
   ;; save the codes to the file
-  (spit "mondo.edn"
+  (spit "resources/mondo.edn"
         (with-out-str
           (clojure.pprint/write (parse-mondo latest-asset)
                                 :dispatch
