@@ -9,7 +9,8 @@
             [medley.core :refer [assoc-some]]))
 
 (s/defschema CategoryData
-  {(s/optional-key :description) schema-base/LocalizedString
+  {:title schema-base/LocalizedString
+   (s/optional-key :description) schema-base/LocalizedString
    (s/optional-key :children) [{:id s/Int}]})
 
 (def ^:private validate-categorydata
@@ -54,10 +55,10 @@
     (reload-cache!))
   (vals @categories-cache))
 
-(defn- get-categorydata [{:keys [children description]}]
-  (-> {}
-      (assoc-some :children children)
-      (assoc-some :description description)))
+(defn- get-categorydata [{:keys [title description children]}]
+  (-> {:title title}
+      (assoc-some :description description)
+      (assoc-some :children children)))
 
 (defn- categorydata->json [category]
   (-> (get-categorydata category)
