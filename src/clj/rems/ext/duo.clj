@@ -80,7 +80,7 @@
 
 (defn load-codes []
   (when (:enable-duo rems.config/env)
-    (->> (slurp "duo.edn")
+    (->> (slurp (io/resource "duo.edn"))
          edn/read-string
          (index-by [:id]))))
 
@@ -210,9 +210,10 @@
   (assert (empty? missing-types))
 
 
-  (spit "duo.edn" (let [codes (->> duos
-                                   :codes
-                                   (sort-by :id)
-                                   (mapv enrich-duo-code))]
-                    (with-out-str
-                      (clojure.pprint/write codes :dispatch clojure.pprint/code-dispatch)))))
+  (spit "resources/duo.edn"
+        (let [codes (->> duos
+                         :codes
+                         (sort-by :id)
+                         (mapv enrich-duo-code))]
+          (with-out-str
+            (clojure.pprint/write codes :dispatch clojure.pprint/code-dispatch)))))
