@@ -4,6 +4,7 @@
             [buddy.core.keys :as buddy-keys]
             [buddy.sign.jwe :as buddy-jwe]
             [buddy.sign.jwt :as buddy-jwt]
+            [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [clojure.core.memoize]
             [clojure.string :as str]
@@ -48,13 +49,6 @@
 (defn sign [claims secret & [opts]]
   (buddy-jwt/sign claims secret opts))
 
-(defn validate [jwt issuer audience now]
-  (let [public-key (fetch-public-key jwt)]
-    (buddy-jwt/unsign jwt public-key (merge {:alg :rs256
-                                             :now now}
-                                            (when issuer {:iss issuer})
-                                            (when audience {:aud audience})))))
-
 (defn validate-visa [visa now]
   (let [public-key (fetch-visa-public-key visa)]
     (buddy-jwt/unsign visa public-key {:alg :rs256
@@ -85,3 +79,11 @@
                            :by "dac"}
            :iat 2524608000}]
          (show "eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMC9hcGkvandrIiwidHlwIjoiSldUIiwia2lkIjoiMjAxMS0wNC0yOSJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAvIiwic3ViIjoiZWxpeGlyLXVzZXIiLCJpYXQiOjI1MjQ2MDgwMDAsImV4cCI6MjU1NjE0NDAwMCwiZ2E0Z2hfdmlzYV92MSI6eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoiRUdBRDAwMDAxMDA2NjczIiwic291cmNlIjoiRUdBQzAwMDAxMDAwOTA4IiwiYnkiOiJkYWMiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMH19.LnfsNxVfM_NfuxYYQtZexp975Hc3hrCxTG0fhMrgTakSLXa6gASc5MPn14seqsTjuyhtmUnu7WrCEVxko8WRvJybGDWmdbrycYafNg4amevtbs7hTPCkqAXD1DcuP53LDeLhSl_YrNgfz4aDE0uaw37I8TAsqdAeDALcZqQ6SIwF5wBG_wRWtKTPmDp-GTpzy9STx-nrIqw3SYeftunlI4wDs5avaktDuOpgMl8TVUGodGFjJsZjN8UOhKgSsGdXDGmu4FeeIjJt9Sa_dsCQPZQ1GpHyg1lFa63FZPPOy2-F9TNZcHJR1vFxKLD9U8Lvr11-EFjIiGuDg6miiWyodw"))))
+
+(defn validate [jwt issuer audience now]
+  (log/debug "JWT: " (show jwt))
+  (let [public-key (fetch-public-key jwt)]
+    (buddy-jwt/unsign jwt public-key (merge {:alg :rs256
+                                             :now now}
+                                            (when issuer {:iss issuer})
+                                            (when audience {:aud audience})))))
