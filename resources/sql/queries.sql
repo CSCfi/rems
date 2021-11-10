@@ -684,3 +684,25 @@ WHERE id = :id;
 -- :name delete-invitation! :!
 DELETE FROM invitation
 WHERE id = :id;
+
+-- :name get-category-by-id :? :1
+SELECT id, categorydata::TEXT, organization
+FROM category
+WHERE id = :id;
+
+-- :name get-categories :*
+SELECT id, categorydata::TEXT, organization
+FROM category;
+
+-- :name create-category! :insert
+INSERT INTO category (categorydata, organization)
+VALUES (:categorydata::jsonb, :organization);
+
+-- :name update-category! :!
+UPDATE category
+SET (categorydata, organization) = (:categorydata::jsonb, :organization)
+WHERE id = :id;
+
+-- :name delete-category! :!
+DELETE FROM category
+WHERE id = :id;
