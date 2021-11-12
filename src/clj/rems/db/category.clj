@@ -9,9 +9,9 @@
             [medley.core :refer [assoc-some]]))
 
 (s/defschema CategoryData
-  {:title schema-base/LocalizedString
-   (s/optional-key :description) schema-base/LocalizedString
-   (s/optional-key :children) [{:id s/Int}]})
+  {:category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/children) [{:category/id s/Int}]})
 
 (def ^:private validate-categorydata
   (s/validator CategoryData))
@@ -27,9 +27,9 @@
 (defn- format-category [category]
   (let [categorydata (json/parse-string (:categorydata category))]
     (-> category
-        (update :organization (fn [organization-id] {:organization/id organization-id}))
         (dissoc :categorydata)
-        (merge categorydata))))
+        (merge categorydata)
+        (update :organization (fn [o] {:organization/id o})))))
 
 (def ^:private categories-cache (atom nil))
 
@@ -55,10 +55,10 @@
     (reload-cache!))
   (vals @categories-cache))
 
-(defn- get-categorydata [{:keys [title description children]}]
-  (-> {:title title}
-      (assoc-some :description description)
-      (assoc-some :children children)))
+(defn- get-categorydata [category]
+  (-> {:category/title (:category/title category)}
+      (assoc-some :category/description (:category/description category))
+      (assoc-some :category/children (:category/children category))))
 
 (defn- categorydata->json [category]
   (-> (get-categorydata category)
@@ -79,5 +79,18 @@
     id))
 
 (defn delete-category! [id]
-  (:id (db/delete-category! {:id id}))
+  (db/delete-category! {:id id})
   (reload-cache!))
+
+(defn- enrich-category [id]
+  (let [unknown-category {:category/id id
+                          :category/title {:fi "Tuntematon kategoria"
+                                           :sv "Okänd kategori"
+                                           :en "Unknown category"}}]
+    (if-let [cat (get-category id)]
+      {:category/id (:id cat)
+       :category/title (:category/title cat)}
+      unknown-category)))
+
+(defn enrich-categories [categories]
+  (mapv (comp enrich-category :category/id) categories))
