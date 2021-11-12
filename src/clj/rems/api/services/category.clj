@@ -8,14 +8,14 @@
     (->> category
          organizations/join-organization)))
 
-(defn join-categories [ks m]
+(defn join-categories [m ks]
   (update-in m ks category/enrich-categories))
 
 (defn get-category [id]
   (when-let [category (category/get-category id)]
-    (->> category
-         join-dependencies
-         (join-categories [:category/children]))))
+    (-> category
+        join-dependencies
+        (join-categories [:category/children]))))
 
 (defn get-categories []
   (map join-dependencies (category/get-categories)))
