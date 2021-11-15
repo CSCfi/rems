@@ -1,6 +1,7 @@
 (ns rems.form-validation
   "Pure functions for form validation logic"
-  (:require [clojure.string :as str]
+  (:require [clj-time.core :as time]
+            [clojure.string :as str]
             [rems.common.form :as form]
             [rems.common.util :refer [+email-regex+
                                       +phone-number-regex+
@@ -115,6 +116,17 @@
       {:field-id (:field/id field)
        :type     :t.form.validation/invalid-value})))
 
+(defn- date-out-of-bound-error [field]
+  (when (= (:field/type field) :date)
+    (let [bound-type (get-in field [:field/date-bounds :date-bounds/type])
+          valid-dt? (case bound-type
+                      :past time/before?
+                      :future time/after?
+                      (constantly true))
+          dt (:field/value field)]
+      (when-not (valid-dt? dt (time/today-at 23 59 59))
+         {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}))))
+
 (defn- wrong-value-type-error [field]
   (let [value (:field/value field)]
     (case (:field/type field)
@@ -138,7 +150,8 @@
       (invalid-option-error field)
       (invalid-multiselect-error field)
       (missing-columns-error field)
-      (invalid-attachment-error field)))
+      (invalid-attachment-error field)
+      (date-out-of-bound-error field)))
 
 (defn- validate-field-submit [field]
   (or (required-error field)

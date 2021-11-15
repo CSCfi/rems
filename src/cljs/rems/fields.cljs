@@ -220,7 +220,7 @@
   [{:keys [validation on-change] :as opts}]
   (let [value (:field/value opts)
         optional (:field/optional opts)
-        type (:date-bounds/type (:field/date-bounds opts))
+        type (get-in opts [:field/date-bounds :date-bounds/type])
         min (when (#{:future} type) (-> (time/today) (time/plus (time/days 1)) (localize-utc-date)))
         max (when (#{:past} type) (-> (time/today) (localize-utc-date)))]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
