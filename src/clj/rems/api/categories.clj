@@ -8,8 +8,10 @@
             [schema.core :as s]))
 
 (s/defschema CreateCategoryResponse
-  (merge schema/SuccessResponse
-         {:id s/Int}))
+  (s/if (comp false? :success)
+    schema/SuccessResponse
+    (merge schema/SuccessResponse
+           {:id s/Int})))
 
 (def categories-api
   (context "/categories" []

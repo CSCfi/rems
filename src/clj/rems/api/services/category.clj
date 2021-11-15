@@ -21,20 +21,29 @@
 (defn get-categories []
   (map join-dependencies (category/get-categories)))
 
+(defn- check-category-children [children]
+  (let [not-found (remove #(category/get-category (:category/id %)) children)]
+    (when (seq not-found)
+      {:success false
+       :errors [{:type :t.administration.errors/dependencies-not-found
+                 :categories not-found}]})))
+
 (defn create-category! [command]
-  (util/check-allowed-organization! (:organization command))
-  (let [id (category/create-category! command)]
-    (dependencies/reset-cache!)
-    {:success true
-     :id id}))
+  (or (util/check-allowed-organization! (:organization command))
+      (check-category-children (:category/children command))
+      (let [id (category/create-category! command)]
+        (dependencies/reset-cache!)
+        {:success true
+         :id id})))
 
 (defn update-category! [command]
-  (let [id (:category/id command)
-        data (dissoc command :category/id)]
-    (util/check-allowed-organization! (:organization data))
-    (category/update-category! id data)
-    (dependencies/reset-cache!)
-    {:success true}))
+  (or (util/check-allowed-organization! (:organization command))
+      (check-category-children (:category/children command))
+      (let [id (:category/id command)
+            data (dissoc command :category/id)]
+        (category/update-category! id data)
+        (dependencies/reset-cache!)
+        {:success true})))
 
 (defn delete-category! [command]
   (or (dependencies/in-use-error {:category/id (:category/id command)})
