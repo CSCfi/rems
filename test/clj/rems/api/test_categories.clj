@@ -86,7 +86,7 @@
         (is (false? (:success result)))
         (is (= (:errors result)
                [{:type "t.administration.errors/dependencies-not-found"
-                :categories [{:category/id 9999999}]}]))))))
+                 :categories [{:category/id 9999999}]}]))))))
 
 (deftest categories-api-update-test
   (let [owner "owner"
