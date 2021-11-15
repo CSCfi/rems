@@ -77,26 +77,16 @@
                                                       :category/title (get create-category-data :category/title)}]})]
             (is (= category expected))))))
 
-    (testing "enrich unknown categories"
+    (testing "creating category with non-existing children should fail"
       (let [owner "owner"
             result (api-call :post "/api/categories"
                              (merge create-category-data
                                     {:category/children [{:category/id 9999999}]})
-                             +test-api-key+ owner)
-            id (:id result)]
-        (is (true? (:success result)))
-        (is (int? id))
-
-        (let [category (api-call :get (str "/api/categories/" id) nil
-                                 +test-api-key+ owner)
-              expected (merge create-category-data
-                              join-organization
-                              {:id id
-                               :category/children [{:category/id 9999999
-                                                    :category/title {:fi "Tuntematon kategoria"
-                                                                     :sv "Okänd kategori"
-                                                                     :en "Unknown category"}}]})]
-          (is (= category expected)))))))
+                             +test-api-key+ owner)]
+        (is (false? (:success result)))
+        (is (= (:errors result)
+               [{:type "t.administration.errors/dependencies-not-found"
+                :categories [{:category/id 9999999}]}]))))))
 
 (deftest categories-api-update-test
   (let [owner "owner"
