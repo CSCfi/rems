@@ -1,7 +1,8 @@
 (ns rems.api.services.category
   (:require [rems.db.category :as category]
             [rems.db.organizations :as organizations]
-            [rems.api.services.util :as util]))
+            [rems.api.services.util :as util]
+            [rems.api.services.dependencies :as dependencies]))
 
 (defn- join-dependencies [category]
   (when category
@@ -23,6 +24,7 @@
 (defn create-category! [command]
   (util/check-allowed-organization! (:organization command))
   (let [id (category/create-category! command)]
+    (dependencies/reset-cache!)
     {:success true
      :id id}))
 
@@ -31,8 +33,12 @@
         data (dissoc command :category/id)]
     (util/check-allowed-organization! (:organization data))
     (category/update-category! id data)
+    (dependencies/reset-cache!)
     {:success true}))
 
 (defn delete-category! [command]
-  (category/delete-category! (:category/id command))
-  {:success true})
+  (or (dependencies/in-use-error {:category/id (:category/id command)})
+      (do
+        (category/delete-category! (:category/id command))
+        (dependencies/reset-cache!)
+        {:success true})))
