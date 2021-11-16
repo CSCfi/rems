@@ -1,2 +1,0 @@
--- intentionally left blank:
---  - no need to re-add the column

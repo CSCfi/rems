@@ -1,7 +1,6 @@
 CREATE TABLE category (
   id serial NOT NULL PRIMARY KEY,
-  categorydata jsonb,
-  organization varchar(255)
+  categorydata jsonb
 );
 --;;
 ALTER TABLE catalogue_item
