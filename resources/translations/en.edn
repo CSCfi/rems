@@ -108,7 +108,8 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:dependencies-archived "Archived dependencies:"
-                            :in-use-by "It is in use by:"}
+                            :in-use-by "It is in use by:"
+                            :dependencies-not-found "Missing dependencies:"}
                    :export-applications "Export applications"
                    :external-title "Title"
                    :form "Form"

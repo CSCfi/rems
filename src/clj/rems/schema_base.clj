@@ -98,3 +98,6 @@
          {(s/optional-key :shorthand) (s/maybe s/Str)
           :label LocalizedString
           :description LocalizedString}))
+
+(s/defschema CategoryId
+  {:category/id s/Int})

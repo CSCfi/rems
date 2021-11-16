@@ -106,7 +106,8 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
-                            :in-use-by "Se on käytössä täällä:"}
+                            :in-use-by "Se on käytössä täällä:"
+                            :dependencies-not-found "Puuttuvia riippuvuuksia:"}
                    :export-applications "Vie hakemuksia"
                    :external-title "Nimi"
                    :form "Lomake"

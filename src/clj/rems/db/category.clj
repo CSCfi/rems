@@ -9,16 +9,15 @@
             [medley.core :refer [assoc-some]]))
 
 (s/defschema CategoryData
-  {:title schema-base/LocalizedString
-   (s/optional-key :description) schema-base/LocalizedString
-   (s/optional-key :children) [{:id s/Int}]})
+  {:category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (def ^:private validate-categorydata
   (s/validator CategoryData))
 
 (s/defschema CategoryDb
-  (-> {:id s/Int
-       :organization schema-base/OrganizationId}
+  (-> {:id s/Int}
       (merge CategoryData)))
 
 (def ^:private coerce-CategoryDb
@@ -27,7 +26,6 @@
 (defn- format-category [category]
   (let [categorydata (json/parse-string (:categorydata category))]
     (-> category
-        (update :organization (fn [organization-id] {:organization/id organization-id}))
         (dissoc :categorydata)
         (merge categorydata))))
 
@@ -55,10 +53,10 @@
     (reload-cache!))
   (vals @categories-cache))
 
-(defn- get-categorydata [{:keys [title description children]}]
-  (-> {:title title}
-      (assoc-some :description description)
-      (assoc-some :children children)))
+(defn- get-categorydata [category]
+  (-> {:category/title (:category/title category)}
+      (assoc-some :category/description (:category/description category))
+      (assoc-some :category/children (:category/children category))))
 
 (defn- categorydata->json [category]
   (-> (get-categorydata category)
@@ -66,18 +64,29 @@
       json/generate-string))
 
 (defn create-category! [category]
-  (let [id (:id (db/create-category! {:organization (get-in category [:organization :organization/id])
-                                      :categorydata (categorydata->json category)}))]
+  (let [id (:id (db/create-category! {:categorydata (categorydata->json category)}))]
     (reload-cache!)
     id))
 
 (defn update-category! [id category]
   (let [id (:id (db/update-category! {:id id
-                                      :organization (get-in category [:organization :organization/id])
                                       :categorydata (categorydata->json category)}))]
     (reload-cache!)
     id))
 
 (defn delete-category! [id]
-  (:id (db/delete-category! {:id id}))
+  (db/delete-category! {:id id})
   (reload-cache!))
+
+(defn- enrich-category [id]
+  (let [unknown-category {:category/id id
+                          :category/title {:fi "Tuntematon kategoria"
+                                           :sv "Okänd kategori"
+                                           :en "Unknown category"}}]
+    (if-let [cat (get-category id)]
+      {:category/id (:id cat)
+       :category/title (:category/title cat)}
+      unknown-category)))
+
+(defn enrich-categories [categories]
+  (mapv (comp enrich-category :category/id) categories))

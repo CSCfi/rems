@@ -279,3 +279,29 @@
    :size s/Int
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
+
+(s/defschema Category
+  {:id s/Int
+   :category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/children) [schema-base/CategoryId]})
+
+(s/defschema CategoryOverview
+  (merge schema-base/CategoryId
+         {:category/title schema-base/LocalizedString}))
+
+(s/defschema CategoryFull
+  (merge Category
+         {(s/optional-key :category/children) [CategoryOverview]}))
+
+(s/defschema CreateCategoryCommand
+  {:category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/children) [schema-base/CategoryId]})
+
+(s/defschema UpdateCategoryCommand
+  (merge CreateCategoryCommand
+         schema-base/CategoryId))
+
+(s/defschema DeleteCategoryCommand
+  schema-base/CategoryId)

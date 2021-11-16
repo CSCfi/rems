@@ -686,21 +686,21 @@ DELETE FROM invitation
 WHERE id = :id;
 
 -- :name get-category-by-id :? :1
-SELECT id, categorydata::TEXT, organization
+SELECT id, categorydata::TEXT
 FROM category
 WHERE id = :id;
 
 -- :name get-categories :*
-SELECT id, categorydata::TEXT, organization
+SELECT id, categorydata::TEXT
 FROM category;
 
 -- :name create-category! :insert
-INSERT INTO category (categorydata, organization)
-VALUES (:categorydata::jsonb, :organization);
+INSERT INTO category (categorydata)
+VALUES (:categorydata::jsonb);
 
 -- :name update-category! :!
 UPDATE category
-SET (categorydata, organization) = (:categorydata::jsonb, :organization)
+SET categorydata = :categorydata::jsonb
 WHERE id = :id;
 
 -- :name delete-category! :!
