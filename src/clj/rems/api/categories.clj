@@ -8,7 +8,7 @@
             [schema.core :as s]))
 
 (s/defschema CreateCategoryResponse
-  (s/if (comp false? :success)
+  (s/if (comp not :success)
     schema/SuccessResponse
     (merge schema/SuccessResponse
            {:id s/Int})))

@@ -35,7 +35,7 @@
         {:success true})))
 
 (defn delete-category! [command]
-  (or (dependencies/in-use-error {:category/id (:category/id command)})
+  (or (dependencies/in-use-error (select-keys command [:category/id]))
       (do
         (category/delete-category! (:category/id command))
         (dependencies/reset-cache!)

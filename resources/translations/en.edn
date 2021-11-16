@@ -109,7 +109,7 @@
                    :end "End"
                    :errors {:dependencies-archived "Archived dependencies:"
                             :in-use-by "It is in use by:"
-                            :dependencies-not-found "Not found dependencies:"}
+                            :dependencies-not-found "Missing dependencies:"}
                    :export-applications "Export applications"
                    :external-title "Title"
                    :form "Form"

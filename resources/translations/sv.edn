@@ -107,7 +107,7 @@
                    :end "Slut"
                    :errors {:dependencies-archived "Arkiverade beroenden:"
                             :in-use-by "Aktiv i:"
-                            :dependencies-not-found "Inte hittade beroenden:"}
+                            :dependencies-not-found "Saknade beroenden:"}
                    :export-applications "exportera ansökningar"
                    :external-title "Namn"
                    :form "Blankett"

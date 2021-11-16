@@ -34,7 +34,7 @@
 
         (testing "and fetch"
           (let [result (api-call :get (str "/api/categories/" (:id category)) nil
-                                   +test-api-key+ owner)
+                                 +test-api-key+ owner)
                 expected (merge create-category-data
                                 {:id (:id category)})]
             (is (= result expected))))))
@@ -55,7 +55,7 @@
           (is (int? (:id category)))
 
           (let [result (api-call :get (str "/api/categories/" (:id category)) nil
-                                   +test-api-key+ owner)
+                                 +test-api-key+ owner)
                 expected (merge create-category-data
                                 {:id (:id category)
                                  :category/children [{:category/id (:id dep-category)
@@ -95,10 +95,10 @@
 
         (testing "and update"
           (let [update-result (api-call :put "/api/categories"
-                                  (merge create-category-data
-                                         update-category-data
-                                         {:category/id (:id category)})
-                                  +test-api-key+ owner)]
+                                        (merge create-category-data
+                                               update-category-data
+                                               {:category/id (:id category)})
+                                        +test-api-key+ owner)]
             (is (:success update-result))
 
             (let [result (api-call :get (str "/api/categories/" (:id category)) nil
