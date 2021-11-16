@@ -11,14 +11,13 @@
 (s/defschema CategoryData
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
-   (s/optional-key :category/children) [{:category/id s/Int}]})
+   (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (def ^:private validate-categorydata
   (s/validator CategoryData))
 
 (s/defschema CategoryDb
-  (-> {:id s/Int
-       :organization schema-base/OrganizationId}
+  (-> {:id s/Int}
       (merge CategoryData)))
 
 (def ^:private coerce-CategoryDb
@@ -28,8 +27,7 @@
   (let [categorydata (json/parse-string (:categorydata category))]
     (-> category
         (dissoc :categorydata)
-        (merge categorydata)
-        (update :organization (fn [o] {:organization/id o})))))
+        (merge categorydata))))
 
 (def ^:private categories-cache (atom nil))
 
@@ -66,14 +64,12 @@
       json/generate-string))
 
 (defn create-category! [category]
-  (let [id (:id (db/create-category! {:organization (get-in category [:organization :organization/id])
-                                      :categorydata (categorydata->json category)}))]
+  (let [id (:id (db/create-category! {:categorydata (categorydata->json category)}))]
     (reload-cache!)
     id))
 
 (defn update-category! [id category]
   (let [id (:id (db/update-category! {:id id
-                                      :organization (get-in category [:organization :organization/id])
                                       :categorydata (categorydata->json category)}))]
     (reload-cache!)
     id))

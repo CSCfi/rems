@@ -282,28 +282,26 @@
 
 (s/defschema Category
   {:id s/Int
-   :organization schema-base/OrganizationOverview
    :category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
-   (s/optional-key :category/children) [{:category/id s/Int}]})
+   (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (s/defschema CategoryOverview
-  {:category/id s/Int
-   :category/title schema-base/LocalizedString})
+  (merge schema-base/CategoryId
+         {:category/title schema-base/LocalizedString}))
 
 (s/defschema CategoryFull
   (merge Category
          {(s/optional-key :category/children) [CategoryOverview]}))
 
 (s/defschema CreateCategoryCommand
-  {:organization schema-base/OrganizationId
-   :category/title schema-base/LocalizedString
+  {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
-   (s/optional-key :category/children) [{:category/id s/Int}]})
+   (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (s/defschema UpdateCategoryCommand
   (merge CreateCategoryCommand
-         {:category/id s/Int}))
+         schema-base/CategoryId))
 
 (s/defschema DeleteCategoryCommand
-  {:category/id s/Int})
+  schema-base/CategoryId)

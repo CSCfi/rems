@@ -3,7 +3,7 @@
             [rems.api.schema :as schema]
             [rems.api.services.category :as category]
             [rems.api.util :refer [not-found-json-response]]
-            [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
+            [rems.common.roles :refer [+admin-read-roles+]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -34,21 +34,21 @@
 
     (POST "/" []
       :summary "Create category"
-      :roles +admin-write-roles+
+      :roles #{:owner}
       :body [command schema/CreateCategoryCommand]
       :return CreateCategoryResponse
       (ok (category/create-category! command)))
 
     (PUT "/" []
       :summary "Update category"
-      :roles +admin-write-roles+
+      :roles #{:owner}
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
       (ok (category/update-category! command)))
 
     (POST "/remove" []
       :summary "Delete category"
-      :roles +admin-write-roles+
+      :roles #{:owner}
       :body [command schema/DeleteCategoryCommand]
       :return schema/SuccessResponse
       (ok (category/delete-category! command)))))

@@ -11,22 +11,13 @@
 
 (deftest categories-api-create-test
   (let [owner "owner"
-        org-owner "organization-owner1"
-        create-category-data {:organization {:organization/id "organization1"}
-                              :category/title {:fi "integraatiotesti"
+        create-category-data {:category/title {:fi "integraatiotesti"
                                                :sv "integrationstest"
                                                :en "integration test"}
                               :category/description {:fi "integraatiotesti"
                                                      :sv "integrationstest"
                                                      :en "integration test"}
-                              :category/children []}
-        join-organization {:organization {:organization/id "organization1"
-                                          :organization/short-name {:en "ORG 1"
-                                                                    :fi "ORG 1"
-                                                                    :sv "ORG 1"}
-                                          :organization/name {:en "Organization 1"
-                                                              :fi "Organization 1"
-                                                              :sv "Organization 1"}}}]
+                              :category/children []}]
 
     (testing "fetch nonexistent"
       (let [response (api-response :get "/api/categories/9999999" nil
@@ -34,48 +25,42 @@
         (is (response-is-not-found? response))
         (is (= {:error "not found"} (read-body response)))))
 
-    (doseq [user-id [owner org-owner]]
-      (testing "create"
-        (let [result (api-call :post "/api/categories"
+    (testing "create"
+      (let [category (api-call :post "/api/categories"
                                create-category-data
-                               +test-api-key+ user-id)
-              id (:id result)]
-          (is (true? (:success result)))
-          (is (int? id))
+                               +test-api-key+ owner)]
+        (is (:success category))
+        (is (int? (:id category)))
 
-          (testing "and fetch"
-            (let [category (api-call :get (str "/api/categories/" id) nil
-                                     +test-api-key+ user-id)
-                  expected (merge create-category-data
-                                  join-organization
-                                  {:id id})]
-              (is (= category expected)))))))
+        (testing "and fetch"
+          (let [result (api-call :get (str "/api/categories/" (:id category)) nil
+                                   +test-api-key+ owner)
+                expected (merge create-category-data
+                                {:id (:id category)})]
+            (is (= result expected))))))
 
     (testing "adding category as children"
       (let [owner "owner"
-            result (api-call :post "/api/categories"
-                             create-category-data
-                             +test-api-key+ owner)
-            id-1 (:id result)]
-        (is (true? (:success result)))
-        (is (int? id-1))
+            dep-category (api-call :post "/api/categories"
+                                   create-category-data
+                                   +test-api-key+ owner)]
+        (is (:success dep-category))
+        (is (int? (:id dep-category)))
 
-        (let [result-2 (api-call :post "/api/categories"
+        (let [category (api-call :post "/api/categories"
                                  (merge create-category-data
-                                        {:category/children [{:category/id id-1}]})
-                                 +test-api-key+ owner)
-              id-2 (:id result-2)]
-          (is (true? (:success result-2)))
-          (is (int? id-2))
+                                        {:category/children [{:category/id (:id dep-category)}]})
+                                 +test-api-key+ owner)]
+          (is (:success category))
+          (is (int? (:id category)))
 
-          (let [category (api-call :get (str "/api/categories/" id-2) nil
+          (let [result (api-call :get (str "/api/categories/" (:id category)) nil
                                    +test-api-key+ owner)
                 expected (merge create-category-data
-                                join-organization
-                                {:id id-2
-                                 :category/children [{:category/id id-1
+                                {:id (:id category)
+                                 :category/children [{:category/id (:id dep-category)
                                                       :category/title (get create-category-data :category/title)}]})]
-            (is (= category expected))))))
+            (is (= result expected))))))
 
     (testing "creating category with non-existing children should fail"
       (let [owner "owner"
@@ -83,16 +68,14 @@
                              (merge create-category-data
                                     {:category/children [{:category/id 9999999}]})
                              +test-api-key+ owner)]
-        (is (false? (:success result)))
+        (is (not (:success result)))
         (is (= (:errors result)
                [{:type "t.administration.errors/dependencies-not-found"
                  :categories [{:category/id 9999999}]}]))))))
 
 (deftest categories-api-update-test
   (let [owner "owner"
-        org-owner "organization-owner1"
-        create-category-data {:organization {:organization/id "organization1"}
-                              :category/title {:fi "integraatiotesti"
+        create-category-data {:category/title {:fi "integraatiotesti"
                                                :sv "integrationstest"
                                                :en "integration test"}
                               :category/description {:fi "integraatiotesti"
@@ -101,46 +84,33 @@
                               :category/children []}
         update-category-data {:category/title {:fi "integraatiotesti 2"
                                                :sv "integrationstest 2"
-                                               :en "integration test 2"}}
-        join-organization {:organization {:organization/id "organization1"
-                                          :organization/short-name {:en "ORG 1"
-                                                                    :fi "ORG 1"
-                                                                    :sv "ORG 1"}
-                                          :organization/name {:en "Organization 1"
-                                                              :fi "Organization 1"
-                                                              :sv "Organization 1"}}}]
+                                               :en "integration test 2"}}]
 
-    (doseq [user-id [owner org-owner]]
-      (testing "create"
-        (let [result (api-call :post "/api/categories"
+    (testing "create"
+      (let [category (api-call :post "/api/categories"
                                create-category-data
-                               +test-api-key+ user-id)
-              id (:id result)]
-          (is (true? (:success result)))
-          (is (int? id))
+                               +test-api-key+ owner)]
+        (is (:success category))
+        (is (int? (:id category)))
 
-          (testing "and update"
-            (let [result (api-call :put "/api/categories"
-                                   (merge create-category-data
-                                          update-category-data
-                                          {:category/id id})
-                                   +test-api-key+ user-id)]
-              (is (true? (:success result)))
-              (is (int? id))
+        (testing "and update"
+          (let [update-result (api-call :put "/api/categories"
+                                  (merge create-category-data
+                                         update-category-data
+                                         {:category/id (:id category)})
+                                  +test-api-key+ owner)]
+            (is (:success update-result))
 
-              (let [category (api-call :get (str "/api/categories/" id) nil
-                                       +test-api-key+ user-id)
-                    expected (merge create-category-data
-                                    update-category-data
-                                    join-organization
-                                    {:id id})]
-                (is (= category expected))))))))))
+            (let [result (api-call :get (str "/api/categories/" (:id category)) nil
+                                   +test-api-key+ owner)
+                  expected (merge create-category-data
+                                  update-category-data
+                                  {:id (:id category)})]
+              (is (= result expected)))))))))
 
 (deftest categories-api-delete-test
   (let [owner "owner"
-        org-owner "organization-owner1"
-        create-category-data {:organization {:organization/id "organization1"}
-                              :category/title {:fi "integraatiotesti"
+        create-category-data {:category/title {:fi "integraatiotesti"
                                                :sv "integrationstest"
                                                :en "integration test"}
                               :category/description {:fi "integraatiotesti"
@@ -148,49 +118,48 @@
                                                      :en "integration test"}
                               :category/children []}]
 
-    (doseq [user-id [owner org-owner]]
-      (testing "create"
-        (let [dep-category (api-call :post "/api/categories"
-                                     create-category-data
-                                     +test-api-key+ user-id)
-              category (api-call :post "/api/categories"
-                                 (merge create-category-data
-                                        {:category/children [{:category/id (:id dep-category)}]})
-                                 +test-api-key+ user-id)]
-          (is (true? (:success dep-category)))
-          (is (int? (:id dep-category)))
-          (is (true? (:success category)))
-          (is (int? (:id category)))
+    (testing "create"
+      (let [dep-category (api-call :post "/api/categories"
+                                   create-category-data
+                                   +test-api-key+ owner)
+            category (api-call :post "/api/categories"
+                               (merge create-category-data
+                                      {:category/children [{:category/id (:id dep-category)}]})
+                               +test-api-key+ owner)]
+        (is (:success dep-category))
+        (is (:success category))
+        (is (int? (:id dep-category)))
+        (is (int? (:id category)))
 
-          (testing "and delete"
-            (let [result (api-call :post "/api/categories/remove"
-                                   {:category/id (:id category)}
-                                   +test-api-key+ user-id)]
-              (is (true? (:success result)))
+        (testing "and delete"
+          (let [result (api-call :post "/api/categories/remove"
+                                 {:category/id (:id category)}
+                                 +test-api-key+ owner)]
+            (is (:success result))
 
-              (let [response (api-response :get (str "/api/categories/" (:id category)) nil
-                                           +test-api-key+ user-id)]
-                (is (response-is-not-found? response))
-                (is (= {:error "not found"} (read-body response)))))))))
+            (let [response (api-response :get (str "/api/categories/" (:id category)) nil
+                                         +test-api-key+ owner)]
+              (is (response-is-not-found? response))
+              (is (= {:error "not found"} (read-body response))))))))
 
     (testing "cannot delete category that is depended on by another category"
       (let [dep-category (api-call :post "/api/categories"
                                    create-category-data
                                    +test-api-key+ owner)]
-        (is (true? (:success dep-category)))
+        (is (:success dep-category))
         (is (int? (:id dep-category)))
 
         (let [category (api-call :post "/api/categories"
                                  (merge create-category-data
                                         {:category/children [{:category/id (:id dep-category)}]})
                                  +test-api-key+ owner)]
-          (is (true? (:success category)))
+          (is (:success category))
           (is (int? (:id category)))
 
           (let [result (api-call :post "/api/categories/remove"
                                  {:category/id (:id dep-category)}
                                  +test-api-key+ owner)]
-            (is (false? (:success result)))
+            (is (not (:success result)))
             (is (= (:errors result)
                    [{:type "t.administration.errors/in-use-by"
                      :categories [{:id (:id category)
