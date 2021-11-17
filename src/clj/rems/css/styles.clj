@@ -239,8 +239,13 @@
                  :background-color (theme-getx :table-hover-bgcolor :color2)}]
       {:background-color (theme-getx :table-stripe-color :table-bgcolor :color1)}
       [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]]]
+
     [:td.commands:last-child {:text-align "right"
-                              :padding-right (u/rem 1)}]]
+                              :padding-right (u/rem 1)}]
+
+    (for [i (range 10)]
+      [(str ".depth-" i) {:padding-left (u/rem (inc i))}])]
+
    [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
    [:.outer-cart {:border [[(u/px 1) :solid (theme-getx :color1)]]
