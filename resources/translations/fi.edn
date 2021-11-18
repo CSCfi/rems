@@ -427,6 +427,8 @@
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."
+                      :not-in-future "Päivämäärän \"%1\" pitää olla tuleva."
+                      :not-in-past "Päivämäärän \"%1\" pitää olla mennyt"
                       :unsupported "Field \"%1\" is not supported."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Siirrä alas"
