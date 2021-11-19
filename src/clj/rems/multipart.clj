@@ -58,7 +58,8 @@
      (fn [item]
        (force clean-up)
        (let [temp-file (#'ring.middleware.multipart-params.temp-file/make-temp-file file-set)
-             maybe-error (size-checking-copy (:stream item) (io/output-stream temp-file) options)]
+             maybe-error (with-open [os (io/output-stream temp-file)]
+                           (size-checking-copy (:stream item) os options))]
          (when maybe-error
            (log/error "Upload is too large, filename" (:filename item) "max size" max-size))
          (-> (select-keys item [:filename :content-type])
