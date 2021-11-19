@@ -17,7 +17,7 @@
   (s/validator CategoryData))
 
 (s/defschema CategoryDb
-  (-> {:id s/Int}
+  (-> {:category/id s/Int}
       (merge CategoryData)))
 
 (def ^:private coerce-CategoryDb
@@ -26,7 +26,8 @@
 (defn- format-category [category]
   (let [categorydata (json/parse-string (:categorydata category))]
     (-> category
-        (dissoc :categorydata)
+        (assoc :category/id (:id category))
+        (dissoc :categorydata :id)
         (merge categorydata))))
 
 (def ^:private categories-cache (atom nil))
@@ -39,7 +40,7 @@
   (let [categories (->> (db/get-categories)
                         (map #(-> (format-category %)
                                   coerce-CategoryDb
-                                  (replace-key :id :category/id))))]
+                                  (replace-key :id :category/id))))] ; TODO this could be map-keys too
     (reset! categories-cache (build-index {:keys [:category/id]} categories)))
   (log/info :end #'reload-cache!))
 
@@ -93,4 +94,4 @@
       unknown-category)))
 
 (defn enrich-categories [categories]
-  (mapv enrich-category categories))
+  (mapv (comp enrich-category :category/id) categories))

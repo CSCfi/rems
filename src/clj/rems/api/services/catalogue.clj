@@ -4,10 +4,13 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.db.category :as category]
             [rems.db.organizations :as organizations]
-            [rems.db.category :as category]))
+            [rems.common.util :refer [build-dags]]))
 
-(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
+;; TODO this bypasses the db layer
+;; TODO move catalogue item localizations into the catalogueitemdata
+(defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start])
@@ -42,6 +45,17 @@
 (defn get-localized-catalogue-item [id]
   (->> (catalogue/get-localized-catalogue-item id)
        join-dependencies))
+
+(defn get-catalogue-tree [& [query-params]]
+  (category/get-categories)
+  (->> (catalogue/get-localized-catalogue-items (or query-params {}))
+       (mapv join-dependencies)
+       #_(build-tree {:id-fn :category/id
+                    :child-id-fn :category-id
+                    :children-fn :category/children})))
+
+(comment
+  (get-catalogue-tree))
 
 (defn- check-allowed-to-edit! [id]
   (-> id

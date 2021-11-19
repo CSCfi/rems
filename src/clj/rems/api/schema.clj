@@ -281,6 +281,28 @@
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
 
+<<<<<<< HEAD
+=======
+(s/defschema Category
+  {:category/id s/Int
+   :category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/children) [schema-base/CategoryId]})
+
+(s/defschema CategoryOverview
+  (merge schema-base/CategoryId
+         {:category/title schema-base/LocalizedString}))
+
+(s/defschema CategoryFull
+  (merge Category
+         {(s/optional-key :category/children) [CategoryOverview]}))
+
+(s/defschema CategoryTree
+  (merge Category
+         {(s/optional-key :category/children) [(s/recursive #'CategoryTree)]
+          (s/optional-key :category/items) [CatalogueItem]}))
+
+>>>>>>> 13af0b7bc (wip: loading categories)
 (s/defschema CreateCategoryCommand
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString

@@ -12,6 +12,9 @@
 (s/defschema GetCatalogueResponse
   [schema/CatalogueItem])
 
+(s/defschema GetCatalogueTreeResponse
+  {:root schema/CategoryTree})
+
 (def catalogue-api
   (context "/catalogue" []
     :tags ["catalogue"]
@@ -22,6 +25,20 @@
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
         (ok (catalogue/get-localized-catalogue-items {:archived false}))
+
+        (not (roles/has-roles? :logged-in))
+        (throw-unauthorized)
+
+        :else
+        (throw-forbidden)))
+
+    (GET "/tree" []
+      :summary "Get the catalogue of items in a tree for the UI (does not include archived items)"
+      :return GetCatalogueTreeResponse
+      (cond
+        (or (:catalogue-is-public env)
+            (roles/has-roles? :logged-in))
+        (ok (catalogue/get-catalogue-tree {:archived false}))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)

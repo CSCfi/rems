@@ -279,6 +279,75 @@
   (is (= {false 1 true 2}
          (index-by [even?] [1 2 3 4]))))
 
+(defn build-dags
+  "Builds a tree out of `coll` with a parent having children `:children-fn`
+  and maps values with given `:value-fn`.
+
+  The identity of a node must be unique, but it can appear in several places of the tree
+  as long as it does not have any cycles.
+
+  `:id-fn`           - gives the identity of a value
+  `:child-id-fn`     - gives the identity of a child
+  `:children-fn`     - gives the children of a tree node, single or seq value allowed
+  `:set-children-fn` - sets the children of a tree node
+  `:value-fn`        - the value of a tree node, defaults to `identity`
+
+  Results is nested map, e.g.
+    (build-dags {:id-fn :a
+                 :children-fn :c}
+                 [{:a 1} {:a 2 :c [1]}])
+      ==> {:a 2 :c [{:a 1}]}"
+  [{:keys [id-fn child-id-fn children-fn set-children-fn value-fn]
+    :or {child-id-fn identity
+         set-children-fn (fn [node children]
+                           (if (seq children)
+                             (assoc node children-fn children)
+                             node))
+         value-fn identity}}
+   coll]
+  (let [children-set (set (for [x coll
+                                child (children-fn x)
+                                :when child]
+                            (child-id-fn child)))
+        roots (remove (comp children-set id-fn) coll)
+        node-by-id (index-by [id-fn] coll)]
+    (letfn [(expand-node [node]
+              (set-children-fn (value-fn node)
+                               (mapv (comp value-fn expand-node node-by-id child-id-fn)
+                                     (children-fn node))))]
+      (mapv expand-node roots))))
+
+(deftest test-build-dags
+  (is (= [{:id 3
+           :children [{:id 1
+                       :unrelated "x"}
+                      {:id 2
+                       :unrelated "z"
+                       :children [{:id 1
+                                   :unrelated "x"}]}]}
+          {:id 4
+           :unrelated "y"}]
+         (build-dags {:id-fn :id
+                      :children-fn :children}
+                     [{:id 1 :unrelated "x"}
+                      {:id 2 :unrelated "z" :children [1]}
+                      {:id 3 :children [1 2]}
+                      {:id 4 :unrelated "y"}])))
+
+  (is (= [{:id 3
+           :children [{:id 1
+                       :unrelated "x"}
+                      {:id 2
+                       :unrelated "z"
+                       :children [{:id 1
+                                   :unrelated "x"}]}]}]
+         (build-dags {:id-fn :id
+                      :child-id-fn :id
+                      :children-fn :children}
+                     [{:id 1 :unrelated "x"}
+                      {:id 2 :unrelated "z" :children [{:id 1}]}
+                      {:id 3 :children [{:id 1} {:id 2}]}]))))
+
 (defn distinct-by
   "Remove duplicates from sequence, comparing the value returned by key-fn.
    The first element that key-fn returns a given value for is retained.
@@ -440,12 +509,12 @@
 (defn replace-key
   "Replaces key `k1` with key `k2` in map `m`.
    If `k1` does not exist in `m`, returns `m`.
-   
+
    **Examples:**
    ```clojure
    (replace-key {:a 1} :a :b)
    ;;=> {:b 1}
-   
+
    (replace-key {:a 1} :b :c)
    ;;=> {:a 1}
    ```"

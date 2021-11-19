@@ -10,6 +10,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
+            [rems.tree :as tree]
             [rems.text :refer [text get-localized-title]]))
 
 (rf/reg-event-fx
@@ -72,6 +73,27 @@
                                  [cart/add-to-cart-button item language]))]}})
           catalogue))))
 
+(rf/reg-sub
+ ::catalogue-tree-rows
+ (fn [_ _]
+   [(rf/subscribe [::catalogue])
+    (rf/subscribe [:language])
+    (rf/subscribe [:logged-in])
+    (rf/subscribe [:rems.cart/cart])
+    (rf/subscribe [:rems.config/config])])
+ (fn [[catalogue language logged-in? cart config] _]
+   (let [cart-item-ids (set (map :id cart))]
+     (map (fn [item]
+            {:key (:id item)
+             :name {:value (get-localized-title item language)}
+             :commands {:td [:td.commands
+                             [catalogue-item-more-info item language config]
+                             (when logged-in?
+                               (if (contains? cart-item-ids (:id item))
+                                 [cart/remove-from-cart-button item language]
+                                 [cart/add-to-cart-button item language]))]}})
+          catalogue))))
+
 (defn draft-application-list []
   (let [applications ::draft-applications]
     (when (seq @(rf/subscribe [applications]))
@@ -85,18 +107,18 @@
          :default-sort-column :last-activity
          :default-sort-order :desc}]])))
 
-(defn- catalogue-table []
+(defn- catalogue-tree []
   (let [catalogue {:id ::catalogue
                    :columns [{:key :name
                               :title (text :t.catalogue/header)}
                              {:key :commands
                               :sortable? false
                               :filterable? false}]
-                   :rows [::catalogue-table-rows]
+                   :rows [::catalogue-tree-rows]
                    :default-sort-column :name}]
     [:div
-     [table/search catalogue]
-     [table/table catalogue]]))
+     #_[table/search catalogue]
+     [tree/tree catalogue]]))
 
 (defn catalogue-page []
   [:div
@@ -112,4 +134,4 @@
          [draft-application-list]
          [cart/cart-list-container]
          [:h2 (text :t.catalogue/apply-resources)]])
-      [catalogue-table]])])
+      [catalogue-tree]])])

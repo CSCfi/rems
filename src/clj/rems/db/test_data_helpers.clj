@@ -162,6 +162,26 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
+(defn create-category! [{:keys [actor title description]
+                         :as command}]
+  (let [actor (or actor (create-owner!))
+        result (with-user actor
+                 (category/create-category!
+                  {:category/title (or title {:en "Category"
+                                              :fi "Kategoria"
+                                              :sv "Kategori"})
+                   :category/description (or description {:en "Category description"
+                                                          :fi "Kategorian kuvaus"
+                                                          :sv "Beskrivning av kategori"})}))]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
+
+(comment
+  (create-category! {:actor "owner"
+                     :title {:en "Ordinary"
+                             :fi "Tavalliset"
+                             :sv "Vanliga"}}))
+
 (defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
