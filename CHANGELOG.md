@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.21
 
+### Fixes
+- Attachment uploading resulted in broken or empty files due to inproper stream handling, this behaviour is now fixed. (#2786)
+
 ## v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04
 
 **NB: This release contains migrations!**
