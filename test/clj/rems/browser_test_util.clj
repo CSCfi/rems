@@ -168,6 +168,9 @@
   (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow
   ;; Forms, workflows etc.
+  ;; These should match the rems.db.test-data closely enough
+  ;; so that one can use also development mode and dev db
+  ;; with the tests
   (let [link (test-helpers/create-license! {:actor "owner"
                                             :license/type :link
                                             :organization {:organization/id "nbn"}
@@ -212,8 +215,12 @@
         res-id2 (test-helpers/create-resource! nil)
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "Standard arbetsflöde"} :resource-id res-id1})
-        item-id2 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Private form workflow" :fi "Yksityinen lomaketyövuo"
-                                                                                                       :sv "Private blankettarbetsflöde"} :resource-id res-id2})
+        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+                                                :workflow-id wfid
+                                                :title {:en "Default workflow with private form"
+                                                        :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                        :sv "Standard arbetsflöde med privat blankett"}
+                                                :resource-id res-id2})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
     (test-helpers/create-workflow-licence! wfid link)
     (test-helpers/create-workflow-licence! wfid text)

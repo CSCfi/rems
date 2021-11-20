@@ -280,7 +280,7 @@
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
-      (add-to-cart "Private form workflow")
+      (add-to-cart "Default workflow with private form")
       (btu/gather-axe-results)
       (click-cart-apply)
       (btu/gather-axe-results)
@@ -420,7 +420,7 @@
               (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
-                      :resource "Default workflow, Private form workflow"
+                      :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
                       :description "Test name"}
                      (get-application-summary (btu/context-get :application-id)))))
