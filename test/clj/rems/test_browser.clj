@@ -397,6 +397,12 @@
         (accept-licenses)
         (btu/gather-axe-results)
 
+        (testing "attachment download"
+          (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
+          (btu/wait-for-downloads "test.txt")
+          (is (= (slurp "test-data/test.txt")
+                 (slurp (first (btu/downloaded-files "test.txt"))))))
+
         (send-application)
         (btu/gather-axe-results)
 
