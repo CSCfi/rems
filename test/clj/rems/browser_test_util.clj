@@ -54,7 +54,8 @@
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
-    [(io/file (:download-dir @test-context) name-or-regex)]
+    (let [f (io/file (:download-dir @test-context) name-or-regex)]
+      (when (.exists f) [f]))
     (for [file (.listFiles (:download-dir @test-context))
           :when (re-matches name-or-regex (.getName file))]
       file)))
