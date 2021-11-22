@@ -304,7 +304,7 @@
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
-      (add-to-cart "Private form workflow")
+      (add-to-cart "Default workflow with private form")
       ;; (add-to-cart "Default workflow with DUO codes")
       (btu/gather-axe-results)
       (click-cart-apply)
@@ -453,6 +453,12 @@
         (accept-licenses)
         (btu/gather-axe-results)
 
+        (testing "attachment download"
+          (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
+          (btu/wait-for-downloads "test.txt")
+          (is (= (slurp "test-data/test.txt")
+                 (slurp (first (btu/downloaded-files "test.txt"))))))
+
         (send-application)
         (btu/gather-axe-results)
 
@@ -476,7 +482,7 @@
               (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
-                      :resource "Default workflow, Private form workflow"
+                      :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
                       :description "Test name"}
                      (get-application-summary (btu/context-get :application-id)))))
