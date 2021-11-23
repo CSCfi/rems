@@ -84,7 +84,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
    A nice way to rename a minor release is to add a ..1 and "+1" to the name, e.g.
    
-   `v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04` becomes `v2.21.1 "Veneentekijän(tie|kuja|kaari)" +1 2021-11-2`
+   `v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04` becomes `v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-2`
    
    and create a branch `release: v2.21.1`.
    
