@@ -77,7 +77,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
    
    `git fetch; git checkout v2.21`
    
-   Then create the branch for the new release, e.g. `v2.21.1`.
+   Then create the branch for the new release, e.g. `release-2.21.1`.
    Then do commits, apply any patch, cherry-pick etc. as you wish.
    
 - Release naming
