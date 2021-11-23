@@ -86,9 +86,9 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
    
    `v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04` becomes `v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-2`
    
-   and create a branch `release: v2.21.1`.
+   and create a branch `release-2.21.1`.
    
- - Tag as normal and push the tag.
+ - Tag as normal and push the tag (e.g. `v2.21.1`).
 
    Circle will notice the tag and build the release for you.
    
