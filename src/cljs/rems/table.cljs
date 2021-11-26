@@ -403,7 +403,7 @@
 
 (defn guide []
   [:div
-   (namespace-info rems.table)
+  ;;  (namespace-info rems.table)
    (component-info table)
 
    (example "empty table"

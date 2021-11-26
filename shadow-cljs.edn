@@ -1,0 +1,33 @@
+{:dependencies [[cljs-ajax "0.8.0"]
+                [clj-commons/secretary "1.2.4"]
+                [com.andrewmcveigh/cljs-time "0.5.2"]
+                [com.rpl/specter "1.1.3"]
+                [com.taoensso/tempura "1.2.1"]
+                [funcool/promesa "5.1.0"]
+                [markdown-clj "1.10.5"]
+                [medley "1.3.0"]
+                [metosin/komponentit "0.3.10"]
+                [prismatic/schema-generators "0.1.3"]
+                [re-frame "0.11.0"]
+                [reagent "0.9.1"]
+                [reagent-utils "0.3.3"]
+                [venantius/accountant "0.2.5"]]
+ :source-paths ["env/dev/clj" "src/cljs" "src/cljc" "src/clj"]
+ :nrepl {:port 7002
+         :middleware [cider.piggieback/wrap-cljs-repl]}
+ :builds {:app {:target :browser
+                :output-dir "target/cljsbuild/public/js/"
+                :asset-path "/js"
+                :modules {:app {:entries [rems.app]}}
+                :compiler-options {
+                                ;;    :main "rems.app"
+                                ;;    :asset-path "/js/out"
+                                ;;    :output-to "target/cljsbuild/public/js/app.js"
+                                ;;    :output-dir "target/cljsbuild/public/js/"
+                                   :source-map true
+                                   :source-map-detail-level :all
+                                   :optimizations :none
+                                   :pretty-print true
+                                   :warnings {:munged-namespace false} ;; for rems.actions.delete
+                                ;;    :preloads [devtools.preload re-frisk.preload]
+                                   }}}}

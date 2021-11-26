@@ -26,3 +26,4 @@
 /.lsp/
 /.clj-kondo/
 /.vscode/
+/.shadow-cljs/

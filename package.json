@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "5.15.4",
+    "bootstrap": "4.6.1",
+    "jquery": "3.5.1",
+    "react": "16.9.0",
+    "react-dom": "16.9.0",
+    "react-select": "2.4.4"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.16.6"
+  },
+  "scripts": {
+    "dev": "shadow-cljs watch app"
+  }
+}
