@@ -31,6 +31,9 @@
 
 (def ^:private categories-cache (atom nil))
 
+(defn reset-cache! []
+  (reset! categories-cache nil))
+
 (defn reload-cache! []
   (log/info :start #'reload-cache!)
   (reset! categories-cache
