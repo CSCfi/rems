@@ -2,21 +2,12 @@
   (:require [clojure.test :refer :all]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.api.testing :refer :all]
-            [ring.mock.request :refer :all]
-            [rems.db.category :as category]))
+            [ring.mock.request :refer :all]))
 
 (use-fixtures
   :each
   api-fixture
   owners-fixture)
-
-(use-fixtures
-  :once
-  (fn [f]
-    (try
-      (f)
-      (finally
-        (category/reset-cache!)))))
 
 (deftest categories-api-create-test
   (let [owner "owner"

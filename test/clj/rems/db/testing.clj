@@ -10,6 +10,7 @@
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.applications]
+            [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
@@ -40,9 +41,11 @@
   (f))
 
 (defn caches-fixture [f]
-  ;; no specific teardown. relies on the teardown of test-db-fixture.
-  (mount/start #'rems.db.applications/all-applications-cache)
-  (f))
+  (try
+    (mount/start #'rems.db.applications/all-applications-cache)
+    (f)
+    (finally
+      (category/reset-cache!))))
 
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
