@@ -40,8 +40,7 @@
                         (map #(-> (format-category %)
                                   coerce-CategoryDb
                                   (replace-key :id :category/id))))]
-    (reset! categories-cache
-            (build-index {:keys [:category/id] :value-fn identity} categories)))
+    (reset! categories-cache (build-index {:keys [:category/id]} categories)))
   (log/info :end #'reload-cache!))
 
 (defn get-category
@@ -90,7 +89,7 @@
                                            :sv "Okänd kategori"
                                            :en "Unknown category"}}]
     (if-let [category (get-category id)]
-      (select-keys category [:category/id :category/title :category/description :category/children])
+      category
       unknown-category)))
 
 (defn enrich-categories [categories]

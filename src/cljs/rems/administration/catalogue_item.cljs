@@ -74,8 +74,7 @@
                      [inline-info-field (text :t.administration/categories)
                       (when-let [categories (:categories catalogue-item)]
                         (into [:<>]
-                              (->> categories
-                                   (map #(localized (:category/title %)))
+                              (->> (map #(localized (:category/title %)) categories)
                                    (interpose [:br]))))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
