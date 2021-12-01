@@ -6,10 +6,11 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text]]
+            [rems.text :refer [get-localized-title localize-time localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -70,6 +71,12 @@
                         [atoms/link nil
                          (str "/administration/forms/" (:formid catalogue-item))
                          (:form-name catalogue-item)])]
+                     [inline-info-field (text :t.administration/categories)
+                      (when-let [categories (:categories catalogue-item)]
+                        (into [:<>]
+                              (->> categories
+                                   (map #(localized (:category/title %)))
+                                   (interpose [:br]))))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
