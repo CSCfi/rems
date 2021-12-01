@@ -4,12 +4,14 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
-            [rems.db.organizations :as organizations]))
+            [rems.db.organizations :as organizations]
+            [rems.db.category :as category]))
 
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
-                                                  (select-keys command [:form :resid :wfid :enabled :archived :start]))))
+                                                  (select-keys command [:form :resid :wfid :enabled :archived :start])
+                                                  {:catalogueitemdata (catalogue/catalogueitemdata->json command)})))
         loc-ids
         (doall
          (for [[langcode localization] localizations]
@@ -26,11 +28,12 @@
 
 (defn- join-dependencies [item]
   (when item
-    (->> item
-         organizations/join-organization
+    (-> item
+        organizations/join-organization
+        (update :categories category/enrich-categories)
          ;; not used at the moment
-         #_licenses/join-catalogue-item-licenses
-         #_(transform [:licenses ALL] organizations/join-organization))))
+        #_licenses/join-catalogue-item-licenses
+        #_(transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-localized-catalogue-items [& [query-params]]
   (->> (catalogue/get-localized-catalogue-items (or query-params {}))
@@ -46,7 +49,7 @@
       :organization
       util/check-allowed-organization!))
 
-(defn edit-catalogue-item! [{:keys [id localizations organization]}]
+(defn edit-catalogue-item! [{:keys [id localizations organization] :as item}]
   (check-allowed-to-edit! id)
   (when (:organization/id organization)
     (util/check-allowed-organization! organization)
@@ -57,6 +60,9 @@
      (merge {:id id
              :langcode (name langcode)}
             (select-keys localization [:title :infourl]))))
+  (when-let [catalogueitemdata (catalogue/catalogueitemdata->json item)]
+    (db/set-catalogue-item-data! {:id id
+                                  :catalogueitemdata catalogueitemdata}))
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
   (applications/reload-cache!)

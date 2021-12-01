@@ -1,6 +1,7 @@
 (ns rems.api.categories
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
+            [rems.schema-base :as schema-base]
             [rems.api.services.category :as category]
             [rems.api.util :refer [not-found-json-response]]
             [rems.common.roles :refer [+admin-read-roles+]]
@@ -11,7 +12,7 @@
   (s/if (comp not :success)
     schema/SuccessResponse
     (merge schema/SuccessResponse
-           {:id s/Int})))
+           {:category/id s/Int})))
 
 (def categories-api
   (context "/categories" []
@@ -20,7 +21,7 @@
     (GET "/" []
       :summary "Get all categories"
       :roles +admin-read-roles+
-      :return [schema/Category]
+      :return [schema-base/Category]
       (ok (category/get-categories)))
 
     (GET "/:category-id" []

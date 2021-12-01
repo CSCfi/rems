@@ -436,3 +436,28 @@
   (is (= (assoc-some-in {} [:a :b] 1) {:a {:b 1}}))
   (is (= (assoc-some-in {:a {:b 1}} [:a :b] 2) {:a {:b 2}}))
   (is (= (assoc-some-in {:a {:b 1}} [:a :b] nil) {:a {:b 1}})))
+
+(defn replace-key
+  "Replaces key `k1` with key `k2` in map `m`.
+   If `k1` does not exist in `m`, returns `m`.
+   
+   **Examples:**
+   ```clojure
+   (replace-key {:a 1} :a :b)
+   ;;=> {:b 1}
+   
+   (replace-key {:a 1} :b :c)
+   ;;=> {:a 1}
+   ```"
+  [m k1 k2]
+  (if (contains? m k1)
+    (-> (assoc m k2 (get m k1))
+        (dissoc k1))
+    m))
+
+(deftest test-replace-key
+  (is (= {} (replace-key {} :a :b)))
+  (is (= nil (replace-key nil :a :b)))
+  (is (= [] (replace-key [] :a :b)))
+  (is (= {:b 1} (replace-key {:a 1} :a :b)))
+  (is (= {:a 1} (replace-key {:a 1} :b :c))))

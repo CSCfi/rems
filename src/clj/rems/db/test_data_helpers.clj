@@ -1,7 +1,9 @@
 (ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
+            [medley.core :refer [assoc-some]]
             [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
+            [rems.api.services.category :as category]
             [rems.api.services.command :as command]
             [rems.api.services.form :as form]
             [rems.api.services.licenses :as licenses]
@@ -160,7 +162,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start]
+(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
         localizations (into {}
@@ -169,16 +171,22 @@
                                      :infourl (get infourl lang)}]))
         result (with-user actor
                  (catalogue/create-catalogue-item!
-                  {:start (or start (time/now))
-                   :resid (or resource-id (create-resource! {:organization organization}))
-                   :form (if (contains? command :form-id) ; support :form-id nil
-                           form-id
-                           (create-form! {:organization organization}))
-                   :organization (or organization (ensure-default-organization!))
-                   :wfid (or workflow-id (create-workflow! {:organization organization}))
-                   :localizations (or localizations {})}))]
+                  (-> {:start (or start (time/now))
+                       :resid (or resource-id (create-resource! {:organization organization}))
+                       :form (if (contains? command :form-id) ; support :form-id nil
+                               form-id
+                               (create-form! {:organization organization}))
+                       :organization (or organization (ensure-default-organization!))
+                       :wfid (or workflow-id (create-workflow! {:organization organization}))
+                       :localizations (or localizations {})}
+                      (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
+
+(defn create-category! [command]
+  (let [result (category/create-category! command)]
+    (assert (:success result) {:command command :result result})
+    (:category/id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor time]}]
   (:application-id (command! {:time (or time (time/now))

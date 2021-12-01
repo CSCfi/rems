@@ -3,7 +3,7 @@
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
-            [rems.common.util :refer [build-index]]
+            [rems.common.util :refer [build-index replace-key]]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [medley.core :refer [assoc-some]]))
@@ -36,10 +36,12 @@
 
 (defn reload-cache! []
   (log/info :start #'reload-cache!)
-  (reset! categories-cache
-          (build-index {:keys [:id] :value-fn identity}
-                       (map (comp coerce-CategoryDb format-category)
-                            (db/get-categories))))
+  (let [categories (->> (db/get-categories)
+                        (map #(-> (format-category %)
+                                  coerce-CategoryDb
+                                  (replace-key :id :category/id))))]
+    (reset! categories-cache
+            (build-index {:keys [:category/id] :value-fn identity} categories)))
   (log/info :end #'reload-cache!))
 
 (defn get-category
@@ -81,15 +83,15 @@
   (db/delete-category! {:id id})
   (reload-cache!))
 
-(defn- enrich-category [id]
-  (let [unknown-category {:category/id id
+(defn- enrich-category [category]
+  (let [id (:category/id category)
+        unknown-category {:category/id id
                           :category/title {:fi "Tuntematon kategoria"
                                            :sv "Okänd kategori"
                                            :en "Unknown category"}}]
-    (if-let [cat (get-category id)]
-      {:category/id (:id cat)
-       :category/title (:category/title cat)}
+    (if-let [category (get-category id)]
+      (select-keys category [:category/id :category/title :category/description :category/children])
       unknown-category)))
 
 (defn enrich-categories [categories]
-  (mapv (comp enrich-category :category/id) categories))
+  (mapv enrich-category categories))
