@@ -23,9 +23,20 @@
         unused-form (test-helpers/create-form! {})
         wf-1 (test-helpers/create-workflow! {:forms [{:form/id shared-form}]})
         wf-2 (test-helpers/create-workflow! {:forms [{:form/id wf-form} {:form/id shared-form}]})
+        category-1 (test-helpers/create-category! {:category/title {:fi "Testikategoria"
+                                                                    :en "Test category"
+                                                                    :sv "Test kategori"}
+                                                   :category/description {:fi "Kuvaus"
+                                                                          :en "Description"
+                                                                          :sv "Rubrik"}
+                                                   :category/children []})
+        category-2 (test-helpers/create-category! {:category/title {:en "Test category"}
+                                                   :category/description {:en "Description"}
+                                                   :category/children [{:category/id category-1}]})
         cat-1 (test-helpers/create-catalogue-item! {:resource-id res-1
                                                     :form-id cat-form
-                                                    :workflow-id wf-1})
+                                                    :workflow-id wf-1
+                                                    :categories [{:category/id category-1}]})
         cat-2 (test-helpers/create-catalogue-item! {:resource-id res-1
                                                     :form-id shared-form
                                                     :workflow-id wf-2})]
@@ -58,11 +69,13 @@
                {:catalogue-item/id cat-1} #{{:resource/id res-1}
                                             {:form/id cat-form}
                                             {:workflow/id wf-1}
-                                            {:organization/id "default"}}
+                                            {:organization/id "default"}
+                                            {:category/id category-1}}
                {:catalogue-item/id cat-2} #{{:resource/id res-1}
                                             {:form/id shared-form}
                                             {:workflow/id wf-2}
-                                            {:organization/id "default"}}}
+                                            {:organization/id "default"}}
+               {:category/id category-2} #{{:category/id category-1}}}
               :reverse-dependencies
               {{:license/id shared-license} #{{:resource/id res-1}
                                               {:resource/id res-2}
@@ -92,7 +105,9 @@
                                               {:license/id resource-license}
                                               {:license/id unused-license}
                                               {:workflow/id wf-1}
-                                              {:workflow/id wf-2}}}}
+                                              {:workflow/id wf-2}}
+               {:category/id category-1} #{{:catalogue-item/id cat-1}
+                                           {:category/id category-2}}}}
              (#'dependencies/dependencies))))
 
     (testing "enrich-dependency"

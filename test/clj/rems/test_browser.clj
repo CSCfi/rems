@@ -1174,6 +1174,7 @@
               "Resource" (btu/context-get :resid)
               "Form" (or (btu/context-get :form-name)
                          "")
+              "Categories" ""
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
