@@ -2,7 +2,9 @@
   (:require [clojure.test :refer :all]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.api.testing :refer :all]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all]
+            [rems.db.test-data :as test-data]
+            [rems.db.test-data-helpers :as test-helpers]))
 
 (use-fixtures
   :each
@@ -164,4 +166,25 @@
             (is (= [{:type "t.administration.errors/in-use-by"
                      :categories [{:category/id (:category/id category)
                                    :category/title (:category/title create-category-data)}]}]
+                   (:errors result)))))))
+
+    (testing "cannot delete category that is depended on by a catalogue item"
+      (let [dep-category (api-call :post "/api/categories"
+                                   create-category-data
+                                   +test-api-key+ owner)]
+        (is (:success dep-category))
+        (is (int? (:category/id dep-category)))
+
+        (let [resource (test-helpers/create-resource! {:resource-ext-id "urn:1234"})
+              catalogue-item (test-helpers/create-catalogue-item! {:actor "owner"
+                                                                   :resource-id resource
+                                                                   :categories [(select-keys dep-category [:category/id])]})]
+          (is (int? catalogue-item))
+
+          (let [result (api-call :post "/api/categories/remove"
+                                 {:category/id (:category/id dep-category)}
+                                 +test-api-key+ owner)]
+            (is (not (:success result)))
+            (is (= [{:type "t.administration.errors/in-use-by"
+                     :catalogue-items [{:id catalogue-item :localizations {}}]}]
                    (:errors result)))))))))

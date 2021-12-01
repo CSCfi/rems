@@ -1272,6 +1272,7 @@
             "More info URL (optional) (FI)" ""
             "More info URL (optional) (SV)" ""
             "Form" "test-edit-catalogue-item form"
+            "Categories" "No categories"
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"}
            (slurp-fields :catalogue-item-editor)))
@@ -1288,6 +1289,7 @@
             "More info (FI)" ""
             "More info (SV)" ""
             "Form" "test-edit-catalogue-item form"
+            "Categories" ""
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"
             "End" ""
@@ -1311,6 +1313,7 @@
                 "More info URL (optional) (FI)" ""
                 "More info URL (optional) (SV)" ""
                 "Form" "test-edit-catalogue-item form"
+                "Categories" "No categories"
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"}
                (dissoc (slurp-fields :create-catalogue-item) "Start"))))
@@ -1326,6 +1329,7 @@
                 "More info (FI)" ""
                 "More info (SV)" ""
                 "Form" "test-edit-catalogue-item form"
+                "Categories" ""
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"
                 "End" ""
