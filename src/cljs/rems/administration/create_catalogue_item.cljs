@@ -130,22 +130,20 @@
         (when-let [workflows (get-in db [::workflows :data])]
           (when-let [resources (get-in db [::resources :data])]
             (when-let [forms (get-in db [::forms :data])]
-              (when-let [all-categories (get-in db [::categories :data])]
-                {::form {:workflow (item-by-id workflows :id wfid)
-                         :resource (item-by-id resources :id resource-id)
-                         :form (item-by-id forms :form/id formid)
-                         :organization organization
-                         :title (map-vals :title localizations)
-                         :infourl (map-vals :infourl localizations)
-                         :categories (let [all-categories-by-id (build-index {:keys [:category/id]} all-categories)]
-                                       (mapv #(get all-categories-by-id (:category/id %)) categories))}})))))))))
+              {::form {:workflow (item-by-id workflows :id wfid)
+                       :resource (item-by-id resources :id resource-id)
+                       :form (item-by-id forms :form/id formid)
+                       :organization organization
+                       :title (map-vals :title localizations)
+                       :infourl (map-vals :infourl localizations)
+                       :categories categories}}))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::forms "/api/forms" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
                                                                   :on-success #(rf/dispatch [::update-loading!])})
-(fetcher/reg-fetcher ::categories "/api/categories" {:on-success #(rf/dispatch [::update-loading!])})
+(fetcher/reg-fetcher ::categories "/api/categories")
 
 ;;;; UI
 

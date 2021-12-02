@@ -73,9 +73,7 @@
                          (:form-name catalogue-item)])]
                      [inline-info-field (text :t.administration/categories)
                       (when-let [categories (:categories catalogue-item)]
-                        (into [:<>]
-                              (->> (map #(localized (:category/title %)) categories)
-                                   (interpose [:br]))))]
+                        (str/join ", " (map #(localized (:category/title %)) categories)))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
