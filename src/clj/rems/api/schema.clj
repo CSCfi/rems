@@ -281,10 +281,6 @@
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
 
-(s/defschema CategoryFull
-  (merge schema-base/Category
-         {(s/optional-key :category/children) [schema-base/Category]}))
-
 (s/defschema CreateCategoryCommand
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString

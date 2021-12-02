@@ -107,3 +107,7 @@
          {:category/title LocalizedString
           (s/optional-key :category/description) LocalizedString
           (s/optional-key :category/children) [CategoryId]}))
+
+(s/defschema CategoryFull
+  (merge Category
+         {(s/optional-key :category/children) [Category]}))

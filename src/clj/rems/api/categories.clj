@@ -28,7 +28,7 @@
       :summary "Get category by id"
       :roles +admin-read-roles+
       :path-params [category-id :- (describe s/Int "category id")]
-      :return schema/CategoryFull
+      :return schema-base/CategoryFull
       (if-let [category (category/get-category category-id)]
         (ok category)
         (not-found-json-response)))
