@@ -99,7 +99,8 @@
                                                :form form-id
                                                :organization (get-in item [:organization :organization/id])
                                                :resid (:resource-id item)
-                                               :wfid (:wfid item)})]
+                                               :wfid (:wfid item)
+                                               :catalogueitemdata (catalogue/catalogueitemdata->json item)})]
 
       ;; copy localizations
       (doseq [[langcode localization] (:localizations item)]
