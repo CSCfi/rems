@@ -45,11 +45,15 @@
       :roles #{:owner}
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
-      (ok (category/update-category! command)))
+      (if (category/get-category (:category/id command))
+        (ok (category/update-category! command))
+        (not-found-json-response)))
 
     (POST "/remove" []
       :summary "Delete category"
       :roles #{:owner}
       :body [command schema/DeleteCategoryCommand]
       :return schema/SuccessResponse
-      (ok (category/delete-category! command)))))
+      (if (category/get-category (:category/id command))
+        (ok (category/delete-category! command))
+        (not-found-json-response)))))
