@@ -14,7 +14,7 @@
   (category/get-categories))
 
 (defn- check-category-children [children]
-  (when-let [not-found (seq (remove (comp category/get-category :category/id) children))]
+  (when-let [not-found (seq (remove #(category/get-category (:category/id %)) children))]
     {:success false
      :errors [{:type :t.administration.errors/dependencies-not-found
                :categories not-found}]}))
@@ -24,7 +24,7 @@
       (let [id (category/create-category! command)]
         (dependencies/reset-cache!)
         {:success true
-         :id id})))
+         :category/id id})))
 
 (defn update-category! [command]
   (or (check-category-children (:category/children command))

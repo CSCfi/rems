@@ -1,5 +1,6 @@
 (ns rems.administration.create-catalogue-item
-  (:require [clojure.string :as str]
+  (:require [clojure.set :refer [intersection]]
+            [clojure.string :as str]
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -11,8 +12,9 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
-            [rems.util :refer [navigate! post! put! trim-when-string]]))
+            [rems.text :refer [text localized]]
+            [rems.util :refer [navigate! post! put! trim-when-string]]
+            [rems.common.util :refer [build-index]]))
 
 (defn- item-by-id [items id-key id]
   (find-first #(= (id-key %) id) items))
@@ -27,6 +29,7 @@
     :dispatch-n [[::workflows {:disabled true :archived true}]
                  [::resources {:disabled true :archived true}]
                  [::forms {:disabled true :archived true}]
+                 [::categories]
                  (when catalogue-item-id [::catalogue-item])]}))
 
 (rf/reg-sub ::catalogue-item-id (fn [db _] (::catalogue-item-id db)))
@@ -42,6 +45,9 @@
 
 (rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
 (rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
+
+(rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
+(rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
 
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
@@ -70,7 +76,8 @@
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
                                                :infourl (-> (get-in form [:infourl lang])
                                                             empty-string-to-nil
-                                                            trim-when-string)}]))}]
+                                                            trim-when-string)}]))
+                 :categories (mapv #(select-keys % [:category/id]) (get-in form [:categories]))}]
     (when (valid-request? form request languages)
       request)))
 
@@ -100,7 +107,8 @@
     (put! "/api/catalogue-items/edit"
           {:params {:id id
                     :organization (:organization request)
-                    :localizations (:localizations request)}
+                    :localizations (:localizations request)
+                    :categories (:categories request)}
            :handler (flash-message/default-success-handler
                      :top
                      description
@@ -118,7 +126,7 @@
    (merge
     db
     (when (::editing? db)
-      (when-let [{:keys [wfid resource-id formid localizations organization]} (get-in db [::catalogue-item :data])]
+      (when-let [{:keys [wfid resource-id formid localizations organization categories]} (get-in db [::catalogue-item :data])]
         (when-let [workflows (get-in db [::workflows :data])]
           (when-let [resources (get-in db [::resources :data])]
             (when-let [forms (get-in db [::forms :data])]
@@ -127,13 +135,15 @@
                        :form (item-by-id forms :form/id formid)
                        :organization organization
                        :title (map-vals :title localizations)
-                       :infourl (map-vals :infourl localizations)}}))))))))
+                       :infourl (map-vals :infourl localizations)
+                       :categories categories}}))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::forms "/api/forms" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
                                                                   :on-success #(rf/dispatch [::update-loading!])})
+(fetcher/reg-fetcher ::categories "/api/categories")
 
 ;;;; UI
 
@@ -144,6 +154,7 @@
 (def ^:private workflow-dropdown-id "workflow-dropdown")
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
+(def ^:private categories-dropdown-id "categories-dropdown")
 
 (defn- catalogue-item-organization-field []
   [organization-field context {:keys [:organization]}])
@@ -242,6 +253,23 @@
          :placeholder (text :t.administration/no-form)
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
+(defn- catalogue-item-categories-field []
+  (let [categories @(rf/subscribe [::categories])
+        selected-categories @(rf/subscribe [::selected-categories])
+        item-selected? (set selected-categories)]
+    [:div.form-group
+     [:label.administration-field-label {:for categories-dropdown-id} (text :t.administration/categories)]
+     [dropdown/dropdown
+      {:id categories-dropdown-id
+       :items categories
+       :multi? true
+       :item-key :category/id
+       :item-label #(localized (:category/title %))
+       :item-selected? item-selected?
+       :clearable? true
+       :placeholder (text :t.administration/no-categories)
+       :on-change #(rf/dispatch [::set-selected-categories %])}]]))
+
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel
                :class "btn btn-secondary"}
@@ -270,7 +298,8 @@
         loading? (or @(rf/subscribe [::workflows :fetching?])
                      @(rf/subscribe [::resources :fetching?])
                      @(rf/subscribe [::forms :fetching?])
-                     @(rf/subscribe [::catalogue-item :fetching?]))
+                     @(rf/subscribe [::catalogue-item :fetching?])
+                     @(rf/subscribe [::categories :fetching?]))
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
@@ -291,6 +320,7 @@
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
+                   [catalogue-item-categories-field]
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]

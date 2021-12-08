@@ -36,12 +36,14 @@
    :organization schema-base/OrganizationId
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
-   (s/optional-key :archived) s/Bool})
+   (s/optional-key :archived) s/Bool
+   (s/optional-key :categories) [schema-base/CategoryId]})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
+   :localizations WriteCatalogueItemLocalizations
    (s/optional-key :organization) schema-base/OrganizationId
-   :localizations WriteCatalogueItemLocalizations})
+   (s/optional-key :categories) [schema-base/CategoryId]})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool

@@ -37,12 +37,16 @@
               [(:organization res)])]
      {:from {:resource/id (:id res)} :to dep})
 
-   (for [cat (catalogue/get-localized-catalogue-items {:archived true})
-         dep [{:form/id (:formid cat)}
-              {:resource/id (:resource-id cat)}
-              {:workflow/id (:wfid cat)}
-              {:organization/id (:organization cat)}]]
-     {:from {:catalogue-item/id (:id cat)} :to dep})
+   (flatten
+    (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
+          dep [{:form/id (:formid cat)}
+               {:resource/id (:resource-id cat)}
+               {:workflow/id (:wfid cat)}
+               {:organization/id (:organization cat)}]]
+      (into [{:from {:catalogue-item/id (:id cat)} :to dep}]
+            (mapv (fn [category]
+                    {:from {:catalogue-item/id (:id cat)}
+                     :to (select-keys category [:category/id])}) (:categories cat)))))
 
    (for [workflow (workflow/get-workflows {})
          dep (concat
@@ -53,7 +57,7 @@
 
    (for [cat (categories/get-categories)
          dep (mapv (fn [category] {:category/id (:category/id category)}) (:category/children cat))]
-     {:from {:category/id (:id cat)} :to dep})))
+     {:from {:category/id (:category/id cat)} :to dep})))
 
 (defn- add-status-bits [dep]
   (merge dep
@@ -109,7 +113,7 @@
                  {:organizations [(select-keys (enrich-dependency dep) [:organization/id :organization/name])]}
 
                  (:category/id dep)
-                 {:categories [(select-keys (enrich-dependency dep) [:id :category/title])]}))))
+                 {:categories [(select-keys (enrich-dependency dep) [:category/id :category/title])]}))))
 
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
