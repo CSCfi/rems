@@ -45,3 +45,14 @@
   [event]
   (fix-event-from-db (db/add-application-event! {:application (:application/id event)
                                                  :eventdata (event->json event)})))
+
+(defn update-event!
+  "Updates an event on top of an old one. Returns the event as it went into the db."
+  [event]
+  (let [old-event (first (db/get-application-event {:id (str (:event/id event))}))
+        event (-> old-event
+                  (merge event)
+                  (dissoc :event/id))]
+    (fix-event-from-db (db/update-application-event! {:id (:event/id old-event)
+                                                      :application (:application/id event)
+                                                      :eventdata (event->json event)}))))

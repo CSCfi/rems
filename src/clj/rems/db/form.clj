@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [map-keys filter-vals remove-keys]]
             [rems.api.schema :as schema]
+            [rems.common.util :refer [getx]]
             [rems.schema-base :as schema-base]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
@@ -38,6 +39,8 @@
       (->> (map-keys {:id :form/id
                       :form/internal-name :form/internal-name
                       :form/external-title :form/external-title
+                      :owneruserid :form/owner
+                      :modifieruserid :form/modifier
                       :organization :organization
                       :fields :form/fields
                       :enabled :enabled
@@ -139,3 +142,14 @@
                                                           :form/external-title (:form/external-title form)})
                            :user user-id
                            :fields (serialize-fields form)}))
+
+(defn update-form-template!
+  "Updates a form template. Not user action like #'edit-form-template! or #'save-form-template! are."
+  [form]
+  (:id (db/update-form-template! {:id (getx form :form/id)
+                                  :organization (:organization/id (:organization form))
+                                  :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
+                                                                 :form/external-title (:form/external-title form)})
+                                  :owner (:form/owner form)
+                                  :modifier (:form/modifier form)
+                                  :fields (serialize-fields form)})))
