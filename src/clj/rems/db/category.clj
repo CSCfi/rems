@@ -82,15 +82,5 @@
   (db/delete-category! {:id id})
   (reload-cache!))
 
-(defn- enrich-category [category]
-  (let [id (:category/id category)
-        unknown-category {:category/id id
-                          :category/title {:fi "Tuntematon kategoria"
-                                           :sv "Okänd kategori"
-                                           :en "Unknown category"}}]
-    (if-let [category (get-category id)]
-      category
-      unknown-category)))
-
 (defn enrich-categories [categories]
-  (mapv enrich-category categories))
+  (mapv #(get-category (:category/id %)) categories))
