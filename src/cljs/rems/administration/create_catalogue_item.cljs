@@ -1,6 +1,5 @@
 (ns rems.administration.create-catalogue-item
-  (:require [clojure.set :refer [intersection]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -13,8 +12,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text localized]]
-            [rems.util :refer [navigate! post! put! trim-when-string]]
-            [rems.common.util :refer [build-index]]))
+            [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
   (find-first #(= (id-key %) id) items))
