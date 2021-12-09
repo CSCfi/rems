@@ -15,6 +15,7 @@
             [rems.administration.category :refer [category-page]]
             [rems.administration.change-catalogue-item-form :refer [change-catalogue-item-form-page]]
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
+            [rems.administration.create-category :refer [create-category-page]]
             [rems.administration.create-form :refer [create-form-page]]
             [rems.administration.create-license :refer [create-license-page]]
             [rems.administration.create-organization :refer [create-organization-page]]
@@ -261,6 +262,7 @@
    :rems.administration/category category-page
    :rems.administration/change-catalogue-item-form change-catalogue-item-form-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
+   :rems.administration/create-category create-category-page
    :rems.administration/create-form create-form-page
    :rems.administration/create-license create-license-page
    :rems.administration/create-organization create-organization-page
@@ -441,6 +443,10 @@
 (secretary/defroute "/administration/categories" []
   (rf/dispatch [:rems.administration.categories/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/categories]))
+
+(secretary/defroute "/administration/categories/create" []
+  (rf/dispatch [:rems.administration.create-category/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-category]))
 
 (secretary/defroute "/administration/categories/:category-id" [category-id]
   (rf/dispatch [:rems.administration.category/enter-page category-id])

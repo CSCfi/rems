@@ -50,7 +50,9 @@
                  (localized (:category/description @category))]
                 [inline-info-field (text :t.administration/category-children)
                  (when-let [categories (:category/children @category)]
-                   (interpose ", " (map category-link categories)))]]}]
+                   (doall (interpose ", " (for [cat categories]
+                                            ^{:key {:category/id cat}}
+                                            [category-link cat]))))]]}]
      [:div.col.commands
       [administration/back-button "/administration/categories"]]]))
 

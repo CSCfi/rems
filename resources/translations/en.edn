@@ -283,6 +283,9 @@
              :show-more "Show more"}
   :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
+  :create-category {:title "Title"
+                    :description "Description"
+                    :children "Subcategories"}
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"

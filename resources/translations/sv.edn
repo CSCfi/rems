@@ -262,6 +262,9 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
                 :form-selection "Blankett"}
+  :create-category {:title "Titel"
+                    :description "Rubrik"
+                    :children "Underkategorier"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
