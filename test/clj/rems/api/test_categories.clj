@@ -3,7 +3,6 @@
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]
-            [rems.db.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]))
 
 (use-fixtures
@@ -109,7 +108,16 @@
                   expected (merge create-category-data
                                   update-category-data
                                   {:category/id (:category/id category)})]
-              (is (= expected result)))))))))
+              (is (= expected result)))))))
+
+    (testing "updating non-existing category returns 404"
+      (let [response (api-response :put "/api/categories"
+                                   (merge create-category-data
+                                          update-category-data
+                                          {:category/id 9999999})
+                                   +test-api-key+ owner)]
+        (is (not (:success response)))
+        (is (= {:error "not found"} (read-body response)))))))
 
 (deftest categories-api-delete-test
   (let [owner "owner"
@@ -187,4 +195,11 @@
             (is (not (:success result)))
             (is (= [{:type "t.administration.errors/in-use-by"
                      :catalogue-items [{:id catalogue-item :localizations {}}]}]
-                   (:errors result)))))))))
+                   (:errors result)))))))
+
+    (testing "deleting non-existing category returns 404"
+      (let [response (api-response :post "/api/categories/remove"
+                                   {:category/id 9999999}
+                                   +test-api-key+ owner)]
+        (is (not (:success response)))
+        (is (= {:error "not found"} (read-body response)))))))
