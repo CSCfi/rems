@@ -83,6 +83,7 @@
                    :categories "Kategorier"
                    :category "Kategori"
                    :category-description "Rubrik"
+                   :category-children "Underkategorier"
                    :change "Ändra"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"

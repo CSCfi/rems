@@ -85,6 +85,7 @@
                    :categories "Categories"
                    :category "Category"
                    :category-description "Description"
+                   :category-children "Subcategories"
                    :change "Change"
                    :comment "Comment"
                    :copy-as-new "Copy as new"

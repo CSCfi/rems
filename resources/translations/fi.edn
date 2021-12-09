@@ -83,6 +83,7 @@
                    :categories "Kategoriat"
                    :category "Kategoria"
                    :category-description "Kuvaus"
+                   :category-children "Alakategoriat"
                    :change "Vaihda"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"
