@@ -26,8 +26,15 @@
         {:success true
          :category/id id})))
 
+(defn- check-category-children-self [id children]
+  (when (seq (filter #(= (:category/id %) id) children))
+    {:success false
+     :errors [{:type :t.administration.errors/disallowed-subcategory
+               :category/id id}]}))
+
 (defn update-category! [command]
   (or (check-category-children (:category/children command))
+      (check-category-children-self (:category/id command) (:category/children command))
       (let [id (:category/id command)
             data (dissoc command :category/id)]
         (category/update-category! id data)
