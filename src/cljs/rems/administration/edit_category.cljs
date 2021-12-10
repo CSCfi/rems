@@ -1,24 +1,39 @@
-(ns rems.administration.create-category
+(ns rems.administration.edit-category
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.common.util :refer [parse-int]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text localized]]
-            [rems.util :refer [navigate! post!]]))
+            [rems.util :refer [navigate! put!]]))
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]}]
-   {:db (dissoc db ::form)
-    :dispatch-n [[::categories]]}))
+ (fn [{:keys [db]} [_ category-id]]
+   {:db (-> (dissoc db ::form)
+            (assoc ::category-id category-id))
+    :dispatch-n [[::categories]
+                 (when category-id [::category])]}))
+
+(rf/reg-event-db
+ ::update-loading!
+ (fn [db _]
+   (merge
+    db
+    (when-let [category (get-in db [::category :data])]
+      {::form {:title (:category/title category)
+               :description (:category/description category)
+               :categories (:category/children category)}}))))
 
 (fetcher/reg-fetcher ::categories "/api/categories")
+(fetcher/reg-fetcher ::category "/api/categories/:id" {:path-params (fn [db] {:id (::category-id db)})
+                                                       :on-success #(rf/dispatch [::update-loading!])})
 
 ;; form state
 
@@ -41,13 +56,14 @@
       request)))
 
 (rf/reg-event-fx
- ::create-category
- (fn [_ [_ request]]
-   (let [description [text :t.administration/save]]
-     (post! "/api/categories"
-            {:params request
+ ::edit-category
+ (fn [{:keys [db]} [_ request]]
+   (let [description [text :t.administration/save]
+         category-id (parse-int (::category-id db))]
+     (put! (str "/api/categories")
+            {:params (assoc request :category/id category-id)
              :handler (flash-message/default-success-handler
-                        :top description #(navigate! (str "/administration/categories/" (:category/id %))))
+                        :top description #(navigate! (str "/administration/categories/" category-id)))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -61,14 +77,16 @@
 
 (defn- category-title-field []
   [localized-text-field context {:keys [:title]
-                       :label (text :t.administration/category-title)}])
+                                 :label (text :t.administration/category-title)}])
 
 (defn- category-description-field []
   [localized-text-field context {:keys [:description]
-                       :label (text :t.administration/category-description)}])
+                                 :label (text :t.administration/category-description)}])
 
 (defn- category-children-field []
-  (let [categories @(rf/subscribe [::categories])
+  (let [category-id (:category/id @(rf/subscribe [::category]))
+        categories (->> @(rf/subscribe [::categories])
+                        (filter #(not= category-id (:category/id %))))
         selected-categories @(rf/subscribe [::selected-categories])
         item-selected? (set selected-categories)]
     [:div.form-group
@@ -89,25 +107,26 @@
      {:type :button
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
-                  (rf/dispatch [::create-category request]))
+                  (rf/dispatch [::edit-category request]))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/categories"
-   (text :t.administration/cancel)])
+  (let [category (rf/subscribe [::category])]
+    [atoms/link {:class "btn btn-secondary"}
+     (str "/administration/categories/" (:category/id @category))
+     (text :t.administration/cancel)]))
 
-(defn create-category-page []
+(defn edit-category-page []
   (let [loading? @(rf/subscribe [::categories :fetching?])
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
-     [document-title (text :t.administration/create-category)]
+     [document-title (text :t.administration/edit-category)]
      [flash-message/component :top]
      [collapsible/component
-      {:id "create-category"
-       :title (text :t.administration/create-category)
+      {:id "edit-category"
+       :title (localized (:title form))
        :always [:div
                 (if loading?
                   [:div#category-loader [spinner/big]]

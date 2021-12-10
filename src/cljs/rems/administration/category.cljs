@@ -1,10 +1,11 @@
 (ns rems.administration.category
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field localized-info-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
+            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text localized]]
             [rems.util :refer [fetch]]))
@@ -38,6 +39,11 @@
    (or (localized (:category/title category))
        (text :t.missing))])
 
+(defn- to-edit-category [category-id]
+  [atoms/link {:class "btn btn-primary"}
+   (str "/administration/categories/edit/" category-id)
+   (text :t.administration/edit)])
+
 (defn category-view []
   (let [category (rf/subscribe [::category])
         language (rf/subscribe [:language])]
@@ -46,15 +52,17 @@
       {:id "category"
        :title [:span (get-in @category [:category/title @language])]
        :always [:div
-                [inline-info-field (text :t.administration/category-description)
-                 (localized (:category/description @category))]
+                [localized-info-field (:category/title @category) {:label (text :t.administration/category-title)}]
+                [localized-info-field (:category/description @category) {:label (text :t.administration/category-description)}]
                 [inline-info-field (text :t.administration/category-children)
                  (when-let [categories (:category/children @category)]
                    (doall (interpose ", " (for [cat categories]
                                             ^{:key {:category/id cat}}
                                             [category-link cat]))))]]}]
      [:div.col.commands
-      [administration/back-button "/administration/categories"]]]))
+      [administration/back-button "/administration/categories"]
+      [roles/show-when roles/+admin-write-roles+
+       [to-edit-category (:category/id @category)]]]]))
 
 (defn category-page []
   (let [loading? (rf/subscribe [::loading?])]

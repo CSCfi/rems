@@ -82,6 +82,7 @@
                    :catalogue-items "Aineistot"
                    :categories "Kategoriat"
                    :category "Kategoria"
+                   :category-title "Otsikko"
                    :category-description "Kuvaus"
                    :category-children "Alakategoriat"
                    :change "Vaihda"
@@ -104,6 +105,7 @@
                          :about-duo-code "Lisätietoja"}
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
+                   :edit-category "Muokkaa kategoriaa"
                    :edit-form "Muokkaa lomaketta"
                    :edit-organization "Muokkaa organisaatiota"
                    :edit-workflow "Muokkaa työvuota"
@@ -260,9 +262,6 @@
              :show "Näytä"
              :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
-  :create-category {:title "Otsikko"
-                    :description "Kuvaus"
-                    :children "Alakategoriat"}
   :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta."
                 :form-selection "Lomake"}
   :create-form {:add-column "Lisää sarake"

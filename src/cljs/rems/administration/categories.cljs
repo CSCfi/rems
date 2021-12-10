@@ -41,6 +41,11 @@
    "/administration/categories/create"
    (text :t.administration/create-category)])
 
+(defn- to-edit-category [category-id]
+  [atoms/link {:class "btn btn-primary"}
+   (str "/administration/categories/edit/" category-id)
+   (text :t.administration/edit)])
+
 (defn- to-view-category [category-id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/categories/" category-id)
@@ -58,7 +63,9 @@
            :description {:value (-> (get-in category [:category/description language])
                                     (truncate 100))}
            :commands {:td [:td.commands
-                           [to-view-category (:category/id category)]]}})
+                           [to-view-category (:category/id category)]
+                           [roles/show-when roles/+admin-write-roles+
+                            [to-edit-category (:category/id category)]]]}})
         categories)))
 
 (defn- categories-list []

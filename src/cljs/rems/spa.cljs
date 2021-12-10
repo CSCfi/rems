@@ -21,6 +21,7 @@
             [rems.administration.create-organization :refer [create-organization-page]]
             [rems.administration.create-resource :refer [create-resource-page]]
             [rems.administration.create-workflow :refer [create-workflow-page]]
+            [rems.administration.edit-category :refer [edit-category-page]]
             [rems.administration.export-applications :refer [export-applications-page]]
             [rems.administration.form :refer [form-page]]
             [rems.administration.forms :refer [forms-page]]
@@ -268,6 +269,7 @@
    :rems.administration/create-organization create-organization-page
    :rems.administration/create-resource create-resource-page
    :rems.administration/create-workflow create-workflow-page
+   :rems.administration/edit-category edit-category-page
    :rems.administration/export-applications export-applications-page
    :rems.administration/form form-page
    :rems.administration/forms forms-page
@@ -451,6 +453,10 @@
 (secretary/defroute "/administration/categories/:category-id" [category-id]
   (rf/dispatch [:rems.administration.category/enter-page category-id])
   (rf/dispatch [:set-active-page :rems.administration/category]))
+
+(secretary/defroute "/administration/categories/edit/:category-id" [category-id]
+  (rf/dispatch [:rems.administration.edit-category/enter-page category-id])
+  (rf/dispatch [:set-active-page :rems.administration/edit-category]))
 
 (secretary/defroute "/administration/forms/create" []
   (rf/dispatch [:rems.administration.create-form/enter-page])

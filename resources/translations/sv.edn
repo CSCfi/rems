@@ -82,6 +82,7 @@
                    :catalogue-items "Katalogposter"
                    :categories "Kategorier"
                    :category "Kategori"
+                   :category-title "Titel"
                    :category-description "Rubrik"
                    :category-children "Underkategorier"
                    :change "Ändra"
@@ -104,6 +105,7 @@
                          :about-duo-code "Info om"}
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
+                   :edit-category "Ändra kategori"
                    :edit-form "Ändra blankett"
                    :edit-organization "Ändra organisation"
                    :edit-workflow "Ändra arbetsflöde"
@@ -262,9 +264,6 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
                 :form-selection "Blankett"}
-  :create-category {:title "Titel"
-                    :description "Rubrik"
-                    :children "Underkategorier"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
