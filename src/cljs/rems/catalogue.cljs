@@ -18,10 +18,12 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[::full-catalogue]
+                 [::full-catalogue-tree]
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
+(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree" {:result :roots})
 
 (rf/reg-sub
  ::catalogue
@@ -31,6 +33,15 @@
    (->> catalogue
         (filter :enabled)
         (remove :expired))))
+
+(rf/reg-sub
+ ::catalogue-tree
+ (fn [_ _]
+   (rf/subscribe [::full-catalogue-tree]))
+ (fn [catalogue _]
+   (->> catalogue
+        #_(filter :enabled)
+        #_(remove :expired))))
 
 (defn- filter-drafts-only [applications]
   (filter form-fields-editable? applications))
@@ -55,7 +66,7 @@
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
-   [(rf/subscribe [::catalogue])
+   [(rf/subscribe [::catalogue-tree])
     (rf/subscribe [:language])
     (rf/subscribe [:logged-in])
     (rf/subscribe [:rems.cart/cart])
@@ -76,23 +87,13 @@
 (rf/reg-sub
  ::catalogue-tree-rows
  (fn [_ _]
-   [(rf/subscribe [::catalogue])
+   [(rf/subscribe [::catalogue-tree])
     (rf/subscribe [:language])
     (rf/subscribe [:logged-in])
     (rf/subscribe [:rems.cart/cart])
     (rf/subscribe [:rems.config/config])])
  (fn [[catalogue language logged-in? cart config] _]
-   (let [cart-item-ids (set (map :id cart))]
-     (map (fn [item]
-            {:key (:id item)
-             :name {:value (get-localized-title item language)}
-             :commands {:td [:td.commands
-                             [catalogue-item-more-info item language config]
-                             (when logged-in?
-                               (if (contains? cart-item-ids (:id item))
-                                 [cart/remove-from-cart-button item language]
-                                 [cart/add-to-cart-button item language]))]}})
-          catalogue))))
+   catalogue))
 
 (defn draft-application-list []
   (let [applications ::draft-applications]
@@ -108,12 +109,33 @@
          :default-sort-order :desc}]])))
 
 (defn- catalogue-tree []
-  (let [catalogue {:id ::catalogue
+  (let [language @(rf/subscribe [:language])
+        logged-in? @(rf/subscribe [:logged-in])
+        cart @(rf/subscribe [:rems.cart/cart])
+        cart-item-ids (set (map :id cart))
+        config @(rf/subscribe [:rems.config/config])
+        catalogue {:id ::catalogue-tree
+                   :key #(or (some->> (:category/id %) (str "category_"))
+                             (:id %))
                    :columns [{:key :name
-                              :title (text :t.catalogue/header)}
+                              :value #(or (get (:category/title %) language) (get-localized-title % language))
+                              :title (text :t.catalogue/header)
+                              :tag #(if (:category/id %)
+                                      :h4
+                                      :div)
+                              :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
+                              :td #(if (:category/id %)
+                                     nil
+                                     [:td.commands
+                                      [catalogue-item-more-info % language config]
+                                      (when logged-in?
+                                        (if (contains? cart-item-ids (:id %))
+                                          [cart/remove-from-cart-button % language]
+                                          [cart/add-to-cart-button % language]))])
                               :sortable? false
                               :filterable? false}]
+                   :children #(concat (:category/children %) (:category/items %))
                    :rows [::catalogue-tree-rows]
                    :default-sort-column :name}]
     [:div
@@ -126,6 +148,7 @@
    [flash-message/component :top]
    (text :t.catalogue/intro)
    (if (or @(rf/subscribe [::full-catalogue :fetching?])
+           @(rf/subscribe [::full-catalogue-tree :fetching?])
            @(rf/subscribe [::draft-applications :fetching?]))
      [spinner/big]
      [:div

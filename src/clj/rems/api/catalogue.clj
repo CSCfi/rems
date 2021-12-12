@@ -13,7 +13,7 @@
   [schema/CatalogueItem])
 
 (s/defschema GetCatalogueTreeResponse
-  {:root schema/CategoryTree})
+  {:roots [schema/CategoryTree]})
 
 (def catalogue-api
   (context "/catalogue" []
@@ -38,7 +38,7 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-tree {:archived false}))
+        (ok (catalogue/get-catalogue-tree {:archived false :expand-catalogue-data? true}))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)

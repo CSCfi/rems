@@ -543,9 +543,12 @@
                                                      :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
         category {:category/id (create-category! {:actor owner
-                                                  :title {:en "Performance"
-                                                          :fi "Suorituskyky"
-                                                          :sv "Prestand"}})}
+                                                  :category/title {:en "Performance"
+                                                                   :fi "Suorituskyky"
+                                                                   :sv "Prestand"}
+                                                  :category/description {:en "These catalogue items are for performance test."
+                                                                         :fi "Nämä resurssit ovat suorituskykytestausta varten."
+                                                                         :sv "Dessa resurser är för prestand."}})}
         license-id (create-license! {:actor owner
                                      :license/type :text
                                      :organization {:organization/id "perf"}
@@ -820,13 +823,13 @@
 
         ;; Create categories
         ordinary-category {:category/id (create-category! {:actor owner
-                                                           :title {:en "Ordinary"
-                                                                   :fi "Tavalliset"
-                                                                   :sv "Vanliga"}})}
+                                                           :category/title {:en "Ordinary"
+                                                                            :fi "Tavalliset"
+                                                                            :sv "Vanliga"}})}
         special-category {:category/id (create-category! {:actor owner
-                                                          :title {:en "Special"
-                                                                  :fi "Erikoiset"
-                                                                  :sv "Speciellt"}})}]
+                                                          :category/title {:en "Special"
+                                                                           :fi "Erikoiset"
+                                                                           :sv "Speciellt"}})}]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -893,7 +896,7 @@
                              :form-id ega-form
                              :organization {:organization/id "csc"}
                              :workflow-id (:ega workflows)
-                             :categories [ordinary-category]})
+                             :categories [special-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"
@@ -912,7 +915,7 @@
                              :form-id form
                              :organization {:organization/id "nbn"}
                              :workflow-id (:auto-approve workflows)
-                             :categories [ordinary-category]})
+                             :categories [special-category]})
     (create-bona-fide-catalogue-item! (merge users +bot-users+))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
@@ -1099,4 +1102,5 @@
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-    (create-test-data!)))
+    (create-test-data!)
+    (create-performance-test-data!)))

@@ -94,4 +94,4 @@
       unknown-category)))
 
 (defn enrich-categories [categories]
-  (mapv (comp enrich-category :category/id) categories))
+  (mapv enrich-category categories))

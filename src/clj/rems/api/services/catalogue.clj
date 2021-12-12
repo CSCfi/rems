@@ -46,16 +46,22 @@
   (->> (catalogue/get-localized-catalogue-item id)
        join-dependencies))
 
+(comment
+  (get-localized-catalogue-item 16))
+
 (defn get-catalogue-tree [& [query-params]]
-  (category/get-categories)
-  (->> (catalogue/get-localized-catalogue-items (or query-params {}))
-       (mapv join-dependencies)
-       #_(build-tree {:id-fn :category/id
-                    :child-id-fn :category-id
-                    :children-fn :category/children})))
+  (let [catalogue-items (get-localized-catalogue-items query-params)
+        categories-with-items (for [category (category/get-categories)]
+                                (assoc category :category/items (filterv #(contains? (set (map :category/id (:categories %))) (:category/id category)) catalogue-items)))
+        top-level-categories (build-dags {:id-fn :category/id
+                                          :child-id-fn :category/id
+                                          :children-fn :category/children}
+                                         categories-with-items)]
+    {:roots (vec top-level-categories)}))
 
 (comment
-  (get-catalogue-tree))
+  (filterv (comp seq :categories) (get-localized-catalogue-items {:expand-catalogue-data? true}))
+  (get-catalogue-tree {:expand-catalogue-data? true :archived? false}))
 
 (defn- check-allowed-to-edit! [id]
   (-> id
