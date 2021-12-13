@@ -36,7 +36,8 @@
                      ;; %1 - organization name
                      :organization-does-not-exist "Organization \"%1\" does not exist"
                      :validation-errors "Check the following errors:"
-                     :entitlement-end-not-in-future "The expiration date for access rights must be in the future."}
+                     :entitlement-end-not-in-future "The expiration date for access rights must be in the future."
+                     :disallowed-subcategory "Disallowed subcategories:"}
             :export-entitlements "Export entitlements as CSV"
             :generate-ega-api-key-in-profile "Generate one at the Profile page."
             :handled-applications "Processed applications"

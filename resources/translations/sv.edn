@@ -34,7 +34,8 @@
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :validation-errors "Var vänlig kontrollera följande:"
-                     :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
+                     :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."
+                     :disallowed-subcategory "Underkategorier inte tillåten:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
