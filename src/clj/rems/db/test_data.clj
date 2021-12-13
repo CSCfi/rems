@@ -826,10 +826,19 @@
                                                            :category/title {:en "Ordinary"
                                                                             :fi "Tavalliset"
                                                                             :sv "Vanliga"}})}
+        technical-category {:category/id (create-category! {:actor owner
+                                                            :category/title {:en "Technical"
+                                                                             :fi "Tekniset"
+                                                                             :sv "Teknisk"}})}
+
         special-category {:category/id (create-category! {:actor owner
                                                           :category/title {:en "Special"
                                                                            :fi "Erikoiset"
-                                                                           :sv "Speciellt"}})}]
+                                                                           :sv "Speciellt"}
+                                                          :category/description {:en "Special catalogue items for demonstration purposes."
+                                                                                 :fi "Erikoiset resurssit demoja varten."
+                                                                                 :sv "Särskilda katalogposter för demonstration."}
+                                                          :category/children [technical-category]})}]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -844,7 +853,7 @@
                              :form-id form
                              :organization {:organization/id "nbn"}
                              :workflow-id (:master workflows)
-                             :categories [special-category]})
+                             :categories [technical-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
                                      :fi "Päättäjätyövuo"

@@ -120,22 +120,26 @@
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
                               :title (text :t.catalogue/header)
-                              :tag #(if (:category/id %)
-                                      :h4
-                                      :div)
+                              :content #(if (:category/id %)
+                                          [:div.my-2
+                                           [:h4.mb-0 {:class (str "fs-depth-" (:depth % 0))}
+                                            (get (:category/title %) language)]
+                                           (when-let [description (get (:category/description %) language)]
+                                             [:div.mt-3 description])]
+                                          [:div (get-localized-title % language)])
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
-                              :td #(if (:category/id %)
-                                     nil
-                                     [:td.commands
-                                      [catalogue-item-more-info % language config]
-                                      (when logged-in?
-                                        (if (contains? cart-item-ids (:id %))
-                                          [cart/remove-from-cart-button % language]
-                                          [cart/add-to-cart-button % language]))])
+                              :content #(if (:category/id %)
+                                          nil
+                                          [:div.commands.w-100
+                                           [catalogue-item-more-info % language config]
+                                           (when logged-in?
+                                             (if (contains? cart-item-ids (:id %))
+                                               [cart/remove-from-cart-button % language]
+                                               [cart/add-to-cart-button % language]))])
                               :sortable? false
                               :filterable? false}]
-                   :children #(concat (:category/children %) (:category/items %))
+                   :children #(concat (:category/items %) (:category/children %))
                    :rows [::catalogue-tree-rows]
                    :default-sort-column :name}]
     [:div

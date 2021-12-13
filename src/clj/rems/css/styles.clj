@@ -245,7 +245,11 @@
                               :padding-right (u/rem 1)}]
 
     (for [i (range 10)]
-      [(str ".depth-" i) {:padding-left (u/rem (inc i))}])]
+      [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
+    (for [i (range 10)]
+      [(str ".fs-depth-" i) {:font-size (str (format "%.2f"(+ 0.75 (Math/pow 2 (- i)))) "rem")}])
+    (for [i (range 10)]
+      [(str ".pad-depth-" i) {:padding-left (u/rem (+ 1.0 (* 1.8 i)))}])]
 
    [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]

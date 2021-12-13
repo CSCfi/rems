@@ -15,13 +15,13 @@
      ;; row defaults
      {:key ((:key tree) row)
       :children children
-      ;;:value row
-      }
+      :value (dissoc row :depth)
+      :depth (:depth row)}
 
      ;; column defaults
      {:columns (->> (:columns tree)
                     (map-indexed (fn [i column]
-                                   (let [first-column (= i 0)
+                                   (let [first-column? (= i 0)
                                          value (if-let [value-fn (:value column)]
                                                  (value-fn row)
                                                  (get row (:key column)))
@@ -31,30 +31,30 @@
                                                            value)
                                              :display-value display-value
                                              :filter-value (str/lower-case display-value)
-                                             :td (if-let [td-fn (:td column)]
-                                                   (td-fn row)
+                                             :td (when-let [content (if (:content column)
+                                                                      ((:content column) row)
+                                                                      [:div display-value])]
+                                                   (if-let [td-fn (:td column)]
+                                                     (td-fn row)
 
-                                                   [:td {:class [(name (:key column))
-                                                                 (str "depth-" (:depth row 0))]
-                                                         :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
-                                                    [:div.d-flex.flex-row.w-100.align-items-baseline
-                                                     (when expanded {:class "expanded"})
+                                                     [:td {:class [(name (:key column))
+                                                                   (str "bg-depth-" (:depth row 0))]
+                                                           :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
+                                                      [:div.d-flex.flex-row.w-100.align-items-baseline
+                                                       {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
+                                                                (when expanded "expanded")]}
 
-                                                     (when first-column
-                                                       (when (seq children)
-                                                         (if expanded
-                                                           [:i.pr-2.fas.fa-md.fa-chevron-up]
-                                                           [:i.pr-2.fas.fa-md.fa-chevron-down])))
+                                                       (when first-column?
+                                                         (when (seq children)
+                                                           (if expanded
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
-                                                     [(if (:tag column)
-                                                        ((:tag column) row)
-                                                        :div)
-
-                                                      display-value]]])}
+                                                       content]]))}
                                             (dissoc column :td :col-span))))))}
 
      ;; overrides
-     (select-keys row [:id :key :sort-value :display-value :filter-value :td]))))
+     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class]))))
 
 (rf/reg-sub
  ::rows
@@ -129,17 +129,18 @@
 
 (defn- table-row [row tree]
   (into [:tr {:data-row (:key row)
-              :class (when (seq (:children row))
-                       :clickable)
+              :class [(when-let [tr-class-fn (:tr-class tree)]
+                        (tr-class-fn (:value row)))
+                      (when (seq (:children row))
+                        :clickable)]
               :on-click (when (seq (:children row))
-                          #(rf/dispatch [::toggle-row-expanded tree (:key row)]))}
-         #_[:td (pr-str (:children row))]]
+                          #(rf/dispatch [::toggle-row-expanded tree (:key row)]))}]
         (mapv :td (:columns row))))
 
 (defn tree [tree]
   (let [rows @(rf/subscribe [::displayed-rows tree])
         language @(rf/subscribe [:language])]
-    #_(js/console.log ::tree (first rows))
+
     [:div.table-border
      [:table.rems-table {:id (name (:id tree))
                          :class (:id tree)}
