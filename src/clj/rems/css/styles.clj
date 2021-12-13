@@ -234,11 +234,12 @@
      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
-     [(s/& (s/nth-child "2n"))
-      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
-                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
-      {:background-color (theme-getx :table-stripe-color :table-bgcolor :color1)}
-      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]]]
+     (when (theme-getx :table-stripe-color nil)
+       [(s/& (s/nth-child "2n"))
+        [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                   :background-color (theme-getx :table-hover-bgcolor :color2)}]
+        {:background-color (theme-getx :table-stripe-color :table-bgcolor)}
+        [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]])]
 
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]
