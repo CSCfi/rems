@@ -35,15 +35,11 @@
 (fetcher/reg-fetcher ::category "/api/categories/:id" {:path-params (fn [db] {:id (::category-id db)})
                                                        :on-success #(rf/dispatch [::update-loading!])})
 
-;; form state
-
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
 (rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
-
-;; form submit
 
 (defn- valid-request? [request]
   (not (str/blank? (:category/title request))))
@@ -78,8 +74,6 @@
                        :top description #(navigate! "/administration/categories/"))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
-
-;;;; UI
 
 (def ^:private context
   {:get-form ::form
