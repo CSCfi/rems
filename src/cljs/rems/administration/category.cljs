@@ -38,8 +38,8 @@
          category-id (parse-int (get-in db [::category :category/id]))]
      (post! (str "/api/categories/delete")
             {:params {:category/id category-id}
-             :handler (flash-message/default-success-handler
-                        :top description #(navigate! "/administration/categories/"))
+             :handler (flash-message/status-update-handler
+                       :top description #(navigate! "/administration/categories/"))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

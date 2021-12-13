@@ -47,7 +47,7 @@
      (post! "/api/categories"
             {:params request
              :handler (flash-message/default-success-handler
-                        :top description #(navigate! (str "/administration/categories/" (:category/id %))))
+                       :top description #(navigate! (str "/administration/categories/" (:category/id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -61,11 +61,11 @@
 
 (defn- category-title-field []
   [localized-text-field context {:keys [:title]
-                       :label (text :t.administration/category-title)}])
+                                 :label (text :t.administration/category-title)}])
 
 (defn- category-description-field []
   [localized-text-field context {:keys [:description]
-                       :label (text :t.administration/category-description)}])
+                                 :label (text :t.administration/category-description)}])
 
 (defn- category-children-field []
   (let [categories @(rf/subscribe [::categories])

@@ -66,6 +66,7 @@
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
   (applications/reload-cache!)
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]

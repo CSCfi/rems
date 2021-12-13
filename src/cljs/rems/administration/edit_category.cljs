@@ -61,10 +61,10 @@
    (let [description [text :t.administration/save]
          category-id (parse-int (::category-id db))]
      (put! (str "/api/categories")
-            {:params (assoc request :category/id category-id)
-             :handler (flash-message/default-success-handler
-                        :top description #(navigate! (str "/administration/categories/" category-id)))
-             :error-handler (flash-message/default-error-handler :top description)}))
+           {:params (assoc request :category/id category-id)
+            :handler (flash-message/status-update-handler
+                      :top description #(navigate! (str "/administration/categories/" category-id)))
+            :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (rf/reg-event-fx
@@ -75,7 +75,7 @@
      (post! (str "/api/categories/delete")
             {:params {:category/id category-id}
              :handler (flash-message/default-success-handler
-                        :top description #(navigate! "/administration/categories/"))
+                       :top description #(navigate! "/administration/categories/"))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
