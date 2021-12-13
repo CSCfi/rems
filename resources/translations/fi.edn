@@ -34,8 +34,7 @@
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"
                      :validation-errors "Tarkasta seuraavat virheet:"
-                     :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."
-                     :disallowed-subcategory "Alakategoriat eivät ole sallittuja:"}
+                     :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
             :handled-applications "Käsitellyt hakemukset"
@@ -117,7 +116,8 @@
                    :end "Loppu"
                    :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
                             :in-use-by "Se on käytössä täällä:"
-                            :dependencies-not-found "Puuttuvia riippuvuuksia:"}
+                            :dependencies-not-found "Puuttuvia riippuvuuksia:"
+                            :disallowed-subcategory "Alakategoriat eivät ole sallittuja:"}
                    :export-applications "Vie hakemuksia"
                    :external-title "Nimi"
                    :form "Lomake"

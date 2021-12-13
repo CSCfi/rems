@@ -34,8 +34,7 @@
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :validation-errors "Var vänlig kontrollera följande:"
-                     :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."
-                     :disallowed-subcategory "Underkategorier inte tillåten:"}
+                     :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
@@ -117,7 +116,8 @@
                    :end "Slut"
                    :errors {:dependencies-archived "Arkiverade beroenden:"
                             :in-use-by "Aktiv i:"
-                            :dependencies-not-found "Saknade beroenden:"}
+                            :dependencies-not-found "Saknade beroenden:"
+                            :disallowed-subcategory "Underkategorier inte tillåten:"}
                    :export-applications "exportera ansökningar"
                    :external-title "Namn"
                    :form "Blankett"
