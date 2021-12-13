@@ -49,8 +49,7 @@
 (defn- category-link [category]
   [atoms/link nil
    (str "/administration/categories/" (:category/id category))
-   (or (localized (:category/title category))
-       (text :t.missing))])
+   (localized (:category/title category))])
 
 (defn- to-edit-category [category-id]
   [atoms/link {:class "btn btn-primary"}
