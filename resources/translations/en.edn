@@ -98,6 +98,8 @@
                    :create-resource "Create resource"
                    :create-workflow "Create workflow"
                    :created "Created"
+                   :delete "Delete"
+                   :delete-category "Delete category?"
                    :disable "Disable"
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"

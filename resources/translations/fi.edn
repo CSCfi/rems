@@ -96,6 +96,8 @@
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
+                   :delete "Poista"
+                   :delete-category "Poista kategoria?"
                    :disable "Poista käytöstä"
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"

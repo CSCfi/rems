@@ -6,9 +6,10 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.common.util :refer [parse-int]]
             [rems.spinner :as spinner]
             [rems.text :refer [text localized]]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch navigate! post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -30,6 +31,18 @@
             (assoc ::category category)
             (dissoc ::loading?))}))
 
+(rf/reg-event-fx
+ ::delete-category
+ (fn [{:keys [db]} _]
+   (let [description [text :t.administration/delete]
+         category-id (parse-int (get-in db [::category :category/id]))]
+     (post! (str "/api/categories/delete")
+            {:params {:category/id category-id}
+             :handler (flash-message/default-success-handler
+                        :top description #(navigate! "/administration/categories/"))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
 (rf/reg-sub ::category (fn [db _] (::category db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
@@ -43,6 +56,13 @@
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/categories/edit/" category-id)
    (text :t.administration/edit)])
+
+(defn- delete-category-button []
+  [:button#delete.btn.btn-primary
+   {:type :button
+    :on-click #(when (js/confirm (text :t.administration/delete-category))
+                 (rf/dispatch [::delete-category]))}
+   (text :t.administration/delete)])
 
 (defn category-view []
   (let [category (rf/subscribe [::category])
@@ -62,6 +82,7 @@
      [:div.col.commands
       [administration/back-button "/administration/categories"]
       [roles/show-when roles/+admin-write-roles+
+       [delete-category-button]
        [to-edit-category (:category/id @category)]]]]))
 
 (defn category-page []

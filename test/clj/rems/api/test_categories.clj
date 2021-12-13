@@ -143,7 +143,7 @@
         (is (int? (:category/id category)))
 
         (testing "and delete"
-          (let [result (api-call :post "/api/categories/remove"
+          (let [result (api-call :post "/api/categories/delete"
                                  {:category/id (:category/id category)}
                                  +test-api-key+ owner)]
             (is (:success result))
@@ -167,7 +167,7 @@
           (is (:success category))
           (is (int? (:category/id category)))
 
-          (let [result (api-call :post "/api/categories/remove"
+          (let [result (api-call :post "/api/categories/delete"
                                  {:category/id (:category/id dep-category)}
                                  +test-api-key+ owner)]
             (is (not (:success result)))
@@ -189,7 +189,7 @@
                                                                    :categories [(select-keys dep-category [:category/id])]})]
           (is (int? catalogue-item))
 
-          (let [result (api-call :post "/api/categories/remove"
+          (let [result (api-call :post "/api/categories/delete"
                                  {:category/id (:category/id dep-category)}
                                  +test-api-key+ owner)]
             (is (not (:success result)))
@@ -198,7 +198,7 @@
                    (:errors result)))))))
 
     (testing "deleting non-existing category returns 404"
-      (let [response (api-response :post "/api/categories/remove"
+      (let [response (api-response :post "/api/categories/delete"
                                    {:category/id 9999999}
                                    +test-api-key+ owner)]
         (is (not (:success response)))

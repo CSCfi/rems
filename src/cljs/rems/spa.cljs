@@ -450,13 +450,13 @@
   (rf/dispatch [:rems.administration.create-category/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-category]))
 
-(secretary/defroute "/administration/categories/:category-id" [category-id]
-  (rf/dispatch [:rems.administration.category/enter-page category-id])
-  (rf/dispatch [:set-active-page :rems.administration/category]))
-
 (secretary/defroute "/administration/categories/edit/:category-id" [category-id]
   (rf/dispatch [:rems.administration.edit-category/enter-page category-id])
   (rf/dispatch [:set-active-page :rems.administration/edit-category]))
+
+(secretary/defroute "/administration/categories/:category-id" [category-id]
+  (rf/dispatch [:rems.administration.category/enter-page category-id])
+  (rf/dispatch [:set-active-page :rems.administration/category]))
 
 (secretary/defroute "/administration/forms/create" []
   (rf/dispatch [:rems.administration.create-form/enter-page])

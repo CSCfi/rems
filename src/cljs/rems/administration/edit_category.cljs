@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text localized]]
-            [rems.util :refer [navigate! put!]]))
+            [rems.util :refer [navigate! put! post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -67,6 +67,18 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
+(rf/reg-event-fx
+ ::delete-category
+ (fn [{:keys [db]} _]
+   (let [description [text :t.administration/delete]
+         category-id (parse-int (::category-id db))]
+     (post! (str "/api/categories/delete")
+            {:params {:category/id category-id}
+             :handler (flash-message/default-success-handler
+                        :top description #(navigate! "/administration/categories/"))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
 ;;;; UI
 
 (def ^:private context
@@ -111,6 +123,13 @@
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
+(defn- delete-category-button []
+  [:button#delete.btn.btn-primary
+   {:type :button
+    :on-click #(when (js/confirm (text :t.administration/delete-category))
+                 (rf/dispatch [::delete-category]))}
+   (text :t.administration/delete)])
+
 (defn- cancel-button []
   (let [category (rf/subscribe [::category])]
     [atoms/link {:class "btn btn-secondary"}
@@ -137,4 +156,5 @@
 
                    [:div.col.commands
                     [cancel-button]
+                    [delete-category-button]
                     [save-category-button form]]])]}]]))
