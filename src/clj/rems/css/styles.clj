@@ -249,7 +249,7 @@
     (for [i (range 10)]
       [(str ".fs-depth-" i) {:font-size (str (format "%.2f"(+ 0.75 (Math/pow 2 (- i)))) "rem")}])
     (for [i (range 10)]
-      [(str ".pad-depth-" i) {:padding-left (u/rem (+ 1.0 (* 1.8 i)))}])]
+      [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
 
    [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
