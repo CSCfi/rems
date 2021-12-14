@@ -210,31 +210,3 @@
          (str " " (text-format :t.applications/entitlement-end (localize-utc-date end))))
 
        nil))))
-
-(defn truncate
-  "Truncate given string to first `n` characters,
-   appending \"...\" to the end by default.
-
-   Examples:
-   ```clojure
-   (truncate \"my long string\" 7)
-   ;;=> \"my long...\"
-   (truncate \"my long string\" 7 \"-\")
-   ;;=> \"my long-\"
-   ```"
-  ([s n] (truncate s n "..."))
-  ([s n end]
-   (if (> (count s) n)
-     (-> (take n s)
-         (concat end)
-         str/join)
-     s)))
-
-
-(deftest truncate-test
-  (is (= "my long..."
-         (truncate "my long string" 7)))
-  (is (= "my long-"
-         (truncate "my long string" 7 "-")))
-  (is (= "my long string"
-         (truncate "my long string" 50))))

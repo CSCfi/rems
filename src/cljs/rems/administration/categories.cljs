@@ -6,7 +6,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text truncate]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -60,8 +60,7 @@
    (map (fn [category]
           {:key (:category/id category)
            :title {:value (get-in category [:category/title language])}
-           :description {:value (-> (get-in category [:category/description language])
-                                    (truncate 100))}
+           :description {:value (get-in category [:category/description language])}
            :commands {:td [:td.commands
                            [to-view-category (:category/id category)]
                            [roles/show-when roles/+admin-write-roles+
