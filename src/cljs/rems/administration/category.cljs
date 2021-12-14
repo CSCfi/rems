@@ -36,7 +36,7 @@
  (fn [{:keys [db]} _]
    (let [description [text :t.administration/delete]
          category-id (parse-int (get-in db [::category :category/id]))]
-     (post! (str "/api/categories/delete")
+     (post! "/api/categories/delete"
             {:params {:category/id category-id}
              :handler (flash-message/status-update-handler
                        :top description #(navigate! "/administration/categories/"))
