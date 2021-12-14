@@ -13,28 +13,28 @@
 (defn get-categories []
   (category/get-categories))
 
-(defn- check-category-children [children]
+(defn- category-entities-not-found-error [children]
   (when-let [not-found (seq (remove #(category/get-category (:category/id %)) children))]
     {:success false
      :errors [{:type :t.administration.errors/dependencies-not-found
                :categories not-found}]}))
 
 (defn create-category! [command]
-  (or (check-category-children (:category/children command))
+  (or (category-entities-not-found-error (:category/children command))
       (let [id (category/create-category! command)]
         (dependencies/reset-cache!)
         {:success true
          :category/id id})))
 
-(defn- check-category-children-self [id children]
+(defn- self-as-subcategory-error [id children]
   (when (seq (filter #(= (:category/id %) id) children))
     {:success false
      :errors [{:type :t.administration.errors/self-as-subcategory-disallowed
                :category/id id}]}))
 
 (defn update-category! [command]
-  (or (check-category-children (:category/children command))
-      (check-category-children-self (:category/id command) (:category/children command))
+  (or (category-entities-not-found-error (:category/children command))
+      (self-as-subcategory-error (:category/id command) (:category/children command))
       (let [id (:category/id command)
             data (dissoc command :category/id)]
         (category/update-category! id data)
