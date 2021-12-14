@@ -16,45 +16,46 @@
   (let [children ((:children tree :children) row)]
     (merge
      ;; row defaults
-     {:key ((:key tree :key) row)
+     {:key ((:row-key tree :key) row)
       :children children
       :depth (:depth row 0)
       :value (dissoc row :depth)}
 
      ;; column defaults
-     {:columns (->> (:columns tree)
-                    (map-indexed (fn [i column]
-                                   (let [first-column? (= i 0)
-                                         value (if-let [value-fn (:value column (:key column))]
-                                                 (value-fn row)
-                                                 (get row (:key column)))
-                                         display-value (str value)]
-                                     (merge {:sort-value (if (string? value)
-                                                           (str/lower-case value)
-                                                           value)
-                                             :display-value display-value
-                                             :filter-value (str/lower-case display-value)
-                                             :td (when-let [content (if (:content column)
-                                                                      ((:content column) row)
-                                                                      [:div display-value])]
-                                                   (if-let [td-fn (:td column)]
-                                                     (td-fn row)
+     {:columns-by-key (->> (:columns tree)
+                           (map-indexed (fn [i column]
+                                          (let [first-column? (= i 0)
+                                                value (if-let [value-fn (:value column (:key column))]
+                                                        (value-fn row)
+                                                        (get row (:key column)))
+                                                display-value (str value)]
+                                            (merge {:sort-value (if (string? value)
+                                                                  (str/lower-case value)
+                                                                  value)
+                                                    :display-value display-value
+                                                    :filter-value (str/lower-case display-value)
+                                                    :td (when-let [content (if (:content column)
+                                                                             ((:content column) row)
+                                                                             [:div display-value])]
+                                                          (if-let [td-fn (:td column)]
+                                                            (td-fn row)
 
-                                                     [:td {:class [(name (:key column))
-                                                                   (str "bg-depth-" (:depth row 0))]
-                                                           :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
-                                                      [:div.d-flex.flex-row.w-100.align-items-baseline
-                                                       {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
-                                                                (when expanded "expanded")]}
+                                                            [:td {:class [(name (:key column))
+                                                                          (str "bg-depth-" (:depth row 0))]
+                                                                  :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
+                                                             [:div.d-flex.flex-row.w-100.align-items-baseline
+                                                              {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
+                                                                       (when expanded "expanded")]}
 
-                                                       (when first-column?
-                                                         (when (seq children)
-                                                           (if expanded
-                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
-                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
+                                                              (when first-column?
+                                                                (when (seq children)
+                                                                  (if expanded
+                                                                    [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
+                                                                    [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
-                                                       content]]))}
-                                            (dissoc column :td :col-span))))))}
+                                                              content]]))}
+                                                   (dissoc column :td :col-span)))))
+                           (index-by [:key]))}
 
      ;; overrides
      (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class]))))
@@ -63,14 +64,16 @@
  ::flattened-rows
  (fn [db [_ tree]]
    (let [rows @(rf/subscribe (:rows tree))
-         expanded-rows @(rf/subscribe [::expanded-rows tree])]
+         expanded-rows @(rf/subscribe [::expanded-rows tree])
+         filtering? (not (str/blank? (:filters @(rf/subscribe [::filtering tree]))))]
 
      (loop [flattened []
             rows rows]
        (if (empty? rows)
          flattened
          (let [row (first rows)
-               expanded? (contains? expanded-rows ((:key tree :key) row)) ; slightly unelegant to have this as parameter to row defaults
+               expanded? (or filtering? ; must look at all rows
+                             (contains? expanded-rows ((:row-key tree :key) row))) ; slightly unelegant to have this as parameter to row defaults
                row (apply-row-defaults tree row expanded?)
                depth (:depth row)
                new-depth (inc depth)
@@ -81,11 +84,132 @@
              (recur (into flattened [row])
                     (rest rows)))))))))
 
+(defn- flip [order]
+  (case order
+    :desc :asc
+    :desc))
+
+(defn- change-sort-order [old-column old-order new-column]
+  (if (= old-column new-column)
+    (flip old-order)
+    :asc))
+
+(rf/reg-event-db
+ ::toggle-sorting
+ (fn [db [_ tree sort-column]]
+   (update-in db [::sorting (:id tree)]
+              (fn [sorting]
+                (-> sorting
+                    (assoc :sort-column sort-column)
+                    (assoc :sort-order (change-sort-order (:sort-column sorting)
+                                                          (:sort-order sorting)
+                                                          sort-column)))))))
+
 (rf/reg-sub
+ ::sorting
+ (fn [db [_ tree]]
+   (or (get-in db [::sorting (:id tree)])
+       {:sort-order (or (:default-sort-order tree)
+                        :asc)
+        :sort-column (or (:default-sort-column tree)
+                         (-> tree :columns first :key))})))
+
+(rf/reg-event-db
+ ::set-filtering
+ (fn [db [_ tree filtering]]
+   (assoc-in db [::filtering (:id tree)] filtering)))
+
+(rf/reg-sub
+ ::filtering
+ (fn [db [_ tree]]
+   (get-in db [::filtering (:id tree)])))
+
+(defn search
+  "Search field component for filtering a `rems.tree/tree` instance
+  which takes the same `tree` parameter as this component.
+
+  See `rems.tree/Tree` for the `tree` parameter schema." ; TODO schema
+  [tree]
+  ;; (s/validate Tree tree)
+  (let [filtering @(rf/subscribe [::filtering tree])
+        on-search (fn [value]
+                    (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))]
+    [search/search-field {:id (str (name (:id tree)) "-search")
+                          :on-search on-search
+                          :searching? false}]))
+
+(rf/reg-sub
+ ::sorted-rows
+ (fn [[_ tree] _]
+   [(rf/subscribe [::flattened-rows tree])
+    (rf/subscribe [::sorting tree])])
+ (fn [[rows sorting] _]
+   (->> rows
+        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
+                 (case (:sort-order sorting)
+                   :desc #(compare %2 %1)
+                   #(compare %1 %2))))))
+
+(defn- sortable? [column]
+  (:sortable? column true))
+
+(defn- filterable? [column]
+  (:filterable? column true))
+
+(defn- display-row? [row filtered-columns search-terms]
+  (or (empty? filtered-columns) ; tree has no filtering enabled
+      (let [filtered-values (map (fn [column]
+                                   (str (get-in row [:columns-by-key (:key column) :filter-value])))
+                                 filtered-columns)]
+        (every? (fn [search-term]
+                  (some #(str/includes? % search-term) filtered-values))
+                search-terms))))
+
+(defn parse-search-terms [s]
+  (->> (re-seq #"\S+" (str s))
+       (map str/lower-case)))
+
+(rf/reg-sub
+ ::sorted-and-filtered-rows
+ (fn [[_ tree] _]
+   [(rf/subscribe [::sorted-rows tree])
+    (rf/subscribe [::filtering tree])])
+ (fn [[rows filtering] [_ tree]]
+   (let [search-terms (parse-search-terms (:filters filtering))
+         columns (->> (:columns tree)
+                      (filter filterable?))]
+     (->> rows
+          (map (fn [row]
+                 ;; performance optimization: hide DOM nodes instead of destroying them
+                 (assoc row ::display-row? (display-row? row columns search-terms))))))))
+
+(rf/reg-event-db
+ ::show-all-rows
+ (fn [db [_ tree]]
+   (assoc-in db [::max-rows (:id tree)] js/Number.MAX_SAFE_INTEGER)))
+
+(rf/reg-sub
+ ::max-rows
+ (fn [db [_ tree]]
+   (or (get-in db [::max-rows (:id tree)])
+       50)))
+
+(rf/reg-sub
+ ::displayed-rows
+ (fn [db [_ tree]]
+   (let [rows @(rf/subscribe [::sorted-and-filtered-rows tree])
+         max-rows @(rf/subscribe [::max-rows tree])
+         rows (filter ::display-row? rows)]
+     (take max-rows rows))))
+
+#_(rf/reg-sub
  ::displayed-rows
  (fn [db [_ tree]]
    (let [rows @(rf/subscribe [::flattened-rows tree])]
      rows)))
+
+
+
 
 (defn- set-toggle [set key]
   (let [set (or set #{})]
@@ -120,12 +244,12 @@
        (on-select expanded-rows))
      new-db)))
 
-(defn- table-header [tree]
+(defn- tree-header [tree]
   (into [:tr]
         (for [column (:columns tree)]
           [:th (:title column)])))
 
-(defn- table-row [row tree]
+(defn- tree-row [row tree]
   (into [:tr {:data-row (:key row)
               :class [(when-let [tr-class-fn (:tr-class tree)]
                         (tr-class-fn (:value row)))
@@ -133,21 +257,25 @@
                         :clickable)]
               :on-click (when (seq (:children row))
                           #(rf/dispatch [::toggle-row-expanded tree (:key row)]))}]
-        (mapv :td (:columns row))))
+        (for [column (:columns tree)]
+          (:td (get (:columns-by-key row) (:key column))))))
 
 (defn tree [tree]
   (let [rows @(rf/subscribe [::displayed-rows tree])
-        language @(rf/subscribe [:language])]
-
-    [:div.table-border
+        language @(rf/subscribe [:language])
+        max-rows @(rf/subscribe [::max-rows tree])
+        rows (if (< max-rows (count rows))
+               (filter ::display-row? rows)
+               rows)]
+    [:div.table-border ; TODO duplicate or generalize styles?
      [:table.rems-table {:id (name (:id tree))
                          :class (:id tree)}
       [:thead
-       [table-header tree]]
+       [tree-header tree]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
-       (for [row rows]
+       (for [row (take max-rows rows)]
          ^{:key (:key row)}
-         [table-row row tree])]]]))
+         [tree-row row tree])]]]))
 
 
 
@@ -161,7 +289,7 @@
    (component-info tree)
 
    (example "empty tree"
-            (rf/reg-sub ::empty-table-rows (fn [_ _] []))
+            (rf/reg-sub ::empty-tree-rows (fn [_ _] []))
 
             [tree {:id ::example0
                    :columns [{:key :first-name
@@ -172,46 +300,45 @@
                               :title "Last name"
                               :sortable? false
                               :filterable? false}]
-                   :rows [::empty-table-rows]
+                   :rows [::empty-tree-rows]
                    :default-sort-column :first-name}])
 
    (example "setup example data"
             (defn- example-commands [text]
-              [:div.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]])
+              [:div.commands.w-100 [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]])
 
             (def example-data
               [{:key 0
-                :category {:title "Users"}
+                :name "Users"
                 :children [{:key 1
-                            :category {:title "Applicants"}
+                            :name "Applicants"
                             :commands (example-commands "Applicants")}
                            {:key 2
-                            :category {:title "Handlers"}
+                            :name "Handlers"
                             :commands (example-commands "Handlers")}
                            {:key 3
-                            :category {:title "Administration"}
+                            :name "Administration"
                             :commands (example-commands "Administration")
                             :children [{:key 4
-                                        :category {:title "Reporters"}
+                                        :name "Reporters"
                                         :commands (example-commands "Reporters")}
                                        {:key 5
-                                        :category {:title "Owners"}
+                                        :name "Owners"
                                         :commands (example-commands "Owners")
                                         :children [{:key 6
-                                                    :category {:title "Super Owners"}
+                                                    :name "Super Owners"
                                                     :commands (example-commands "Super owners")}
                                                    {:key 7
-                                                    :category {:title "Org Owners"}
+                                                    :name "Org Owners"
                                                     :commands (example-commands "Org Owners")}]}]}]
                 :commands (example-commands "Users")}])
 
             (rf/reg-sub ::example-tree-rows (fn [_ _] example-data)))
 
-   (example "static tree with three rows"
+   (example "static tree with a three level hierarchy"
             [tree {:id ::example1
-                   :columns [{:key :category
+                   :columns [{:key :name
                               :title "Name"
-                              :value (comp :title :category)
                               :sortable? false
                               :filterable? false}
                              {:key :commands
@@ -243,19 +370,17 @@
                      :on-select #(reset! example-selected-rows %)}])
 
    ;; TODO implement sorting
-   ;; TODO implement filtering
-   #_(example "sortable and filterable tree"
-              [:p "Filtering and search can be added by using the " [:code "rems.table/search"] " component"]
-              (let [example2 {:id ::example2
-                              :columns [{:key :first-name
-                                         :title "First name"}
-                                        {:key :last-name
-                                         :title "Last name"}
-                                        {:key :commands
-                                         :sortable? false
-                                         :filterable? false}]
-                              :rows [::example-tree-rows]
-                              :default-sort-column :first-name}]
-                [:div
-                 [search example2]
-                 [tree example2]]))])
+   (example "sortable and filterable tree"
+            [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
+            (let [example2 {:id ::example2
+                            :columns [{:key :name
+                                       :title "Name"}
+                                      {:key :commands
+                                       :content :commands
+                                       :sortable? false
+                                       :filterable? false}]
+                            :rows [::example-tree-rows]
+                            :default-sort-column :title}]
+              [:div
+               [search example2]
+               [tree example2]]))])

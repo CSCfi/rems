@@ -84,17 +84,6 @@
                                  [cart/add-to-cart-button item language]))]}})
           catalogue))))
 
-(rf/reg-sub
- ::catalogue-tree-rows
- (fn [_ _]
-   [(rf/subscribe [::catalogue-tree])
-    (rf/subscribe [:language])
-    (rf/subscribe [:logged-in])
-    (rf/subscribe [:rems.cart/cart])
-    (rf/subscribe [:rems.config/config])])
- (fn [[catalogue language logged-in? cart config] _]
-   catalogue))
-
 (defn draft-application-list []
   (let [applications ::draft-applications]
     (when (seq @(rf/subscribe [applications]))
@@ -128,8 +117,8 @@
         cart-item-ids (set (map :id cart))
         config @(rf/subscribe [:rems.config/config])
         catalogue {:id ::catalogue-tree
-                   :key #(or (some->> (:category/id %) (str "category_"))
-                             (:id %))
+                   :row-key #(or (some->> (:category/id %) (str "category_"))
+                                 (:id %))
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
                               :title (text :t.catalogue/header)
@@ -142,8 +131,7 @@
                                           [:div (get-localized-title % language)])
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
-                              :content #(if (:category/id %)
-                                          nil
+                              :content #(when-not (:category/id %)
                                           [:div.commands.w-100
                                            [catalogue-item-more-info % language config]
                                            (when logged-in?
@@ -153,10 +141,10 @@
                               :sortable? false
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
-                   :rows [::catalogue-tree-rows]
+                   :rows [::catalogue-tree]
                    :default-sort-column :name}]
     [:div
-     #_[table/search catalogue]
+     [tree/search catalogue]
      [tree/tree catalogue]]))
 
 (defn catalogue-page []
