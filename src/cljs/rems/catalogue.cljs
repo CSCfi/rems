@@ -66,7 +66,7 @@
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
-   [(rf/subscribe [::catalogue-tree])
+   [(rf/subscribe [::catalogue])
     (rf/subscribe [:language])
     (rf/subscribe [:logged-in])
     (rf/subscribe [:rems.cart/cart])
@@ -108,6 +108,19 @@
          :default-sort-column :last-activity
          :default-sort-order :desc}]])))
 
+(defn- catalogue-table []
+  (let [catalogue {:id ::catalogue
+                   :columns [{:key :name
+                              :title (text :t.catalogue/header)}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false}]
+                   :rows [::catalogue-table-rows]
+                   :default-sort-column :name}]
+    [:div
+     [table/search catalogue]
+     [table/table catalogue]]))
+
 (defn- catalogue-tree []
   (let [language @(rf/subscribe [:language])
         logged-in? @(rf/subscribe [:logged-in])
@@ -147,18 +160,22 @@
      [tree/tree catalogue]]))
 
 (defn catalogue-page []
-  [:div
-   [document-title (text :t.catalogue/catalogue)]
-   [flash-message/component :top]
-   (text :t.catalogue/intro)
-   (if (or @(rf/subscribe [::full-catalogue :fetching?])
-           @(rf/subscribe [::full-catalogue-tree :fetching?])
-           @(rf/subscribe [::draft-applications :fetching?]))
-     [spinner/big]
-     [:div
-      (when @(rf/subscribe [:logged-in])
-        [:<>
-         [draft-application-list]
-         [cart/cart-list-container]
-         [:h2 (text :t.catalogue/apply-resources)]])
-      [catalogue-tree]])])
+  (let [config @(rf/subscribe [:rems.config/config])]
+    [:div
+     [document-title (text :t.catalogue/catalogue)]
+     [flash-message/component :top]
+     (text :t.catalogue/intro)
+     (if (or @(rf/subscribe [::full-catalogue :fetching?])
+             @(rf/subscribe [::full-catalogue-tree :fetching?])
+             @(rf/subscribe [::draft-applications :fetching?]))
+       [spinner/big]
+       [:div
+        (when @(rf/subscribe [:logged-in])
+          [:<>
+           [draft-application-list]
+           [cart/cart-list-container]
+           [:h2 (text :t.catalogue/apply-resources)]])
+        (when (:enable-catalogue-tree config)
+          [catalogue-tree])
+        (when (:enable-catalogue-table config)
+          [catalogue-table])])]))

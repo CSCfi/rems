@@ -33,7 +33,7 @@
         (throw-forbidden)))
 
     (GET "/tree" []
-      :summary "Get the catalogue of items in a tree for the UI (does not include archived items)"
+      :summary "Get the catalogue of items in a tree for the UI (does not include archived items) (EXPERIMENTAL)"
       :return GetCatalogueTreeResponse
       (cond
         (or (:catalogue-is-public env)
