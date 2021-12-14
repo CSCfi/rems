@@ -4,7 +4,7 @@
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [checkbox sort-symbol]]
-            [rems.common.util :refer [index-by]]
+            [rems.common.util :refer [conj-vec index-by]]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.search :as search]
             [rems.text :refer [text]]
@@ -57,8 +57,8 @@
                                                    (dissoc column :td :col-span)))))
                            (index-by [:key]))}
 
-     ;; overrides
-     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class]))))
+     ;; copied over
+     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class :parents]))))
 
 (rf/reg-sub
  ::flattened-rows
@@ -69,18 +69,28 @@
 
      (loop [flattened []
             rows rows]
+
        (if (empty? rows)
          flattened
+
          (let [row (first rows)
+               row-key ((:row-key tree :key) row)
                expanded? (or filtering? ; must look at all rows
-                             (contains? expanded-rows ((:row-key tree :key) row))) ; slightly unelegant to have this as parameter to row defaults
+                             (contains? expanded-rows row-key)) ; slightly unelegant to have this as parameter to row defaults
                row (apply-row-defaults tree row expanded?)
-               depth (:depth row)
-               new-depth (inc depth)
-               children (mapv #(assoc % :depth new-depth) (:children row))]
+               children (:children row)]
+
            (if (and expanded? (seq children))
-             (recur (into flattened [row])
-                    (into (vec children) (rest rows)))
+             (let [child-depth (inc (:depth row))
+                   child-parents (conj-vec (:parents row) row-key)
+                   new-rows (mapv #(assoc %
+                                          :depth child-depth
+                                          :parents child-parents)
+                                  children)]
+
+               (recur (into flattened [row])
+                      (into new-rows (rest rows))))
+
              (recur (into flattened [row])
                     (rest rows)))))))))
 
@@ -156,13 +166,13 @@
 (defn- filterable? [column]
   (:filterable? column true))
 
-(defn- display-row? [row filtered-columns search-terms]
-  (or (empty? filtered-columns) ; tree has no filtering enabled
-      (let [filtered-values (map (fn [column]
-                                   (str (get-in row [:columns-by-key (:key column) :filter-value])))
-                                 filtered-columns)]
+(defn- display-row? [row filterable-columns search-terms]
+  (or (empty? filterable-columns) ; tree has no filtering enabled
+      (let [filterable-values (map (fn [column]
+                                     (str (get-in row [:columns-by-key (:key column) :filter-value])))
+                                   filterable-columns)]
         (every? (fn [search-term]
-                  (some #(str/includes? % search-term) filtered-values))
+                  (some #(str/includes? % search-term) filterable-values))
                 search-terms))))
 
 (defn parse-search-terms [s]
@@ -176,12 +186,14 @@
     (rf/subscribe [::filtering tree])])
  (fn [[rows filtering] [_ tree]]
    (let [search-terms (parse-search-terms (:filters filtering))
-         columns (->> (:columns tree)
-                      (filter filterable?))]
-     (->> rows
-          (map (fn [row]
-                 ;; performance optimization: hide DOM nodes instead of destroying them
-                 (assoc row ::display-row? (display-row? row columns search-terms))))))))
+         filterable-columns (filter filterable? (:columns tree))
+         matching-rows (filter #(display-row? % filterable-columns search-terms) rows)
+         matching-rows-set (set (mapv :key matching-rows))
+         matching-rows-set (if (:show-matching-parents? tree)
+                             (into matching-rows-set (mapcat :parents matching-rows))
+                             matching-rows-set)]
+     (mapv #(assoc % ::display-row? (contains? matching-rows-set (:key %))) ; performance optimization: hide DOM nodes instead of destroying them
+           rows))))
 
 (rf/reg-event-db
  ::show-all-rows
@@ -349,30 +361,11 @@
                    :default-sort-column :title}])
 
    ;; TODO implement selection if needed
-   #_(example "tree with selectable rows"
-              [:p "The tree components supports selection of rows. You can provide a callback for when the set of selected rows changes."]
-              [:div [:p "You have " (count @example-selected-rows) " rows selected."]]
-              [tree {:id ::example-selectable
-                     :columns [{:key :first-name
-                                :title "First name"
-                                :sortable? false
-                                :filterable? false}
-                               {:key :last-name
-                                :title "Last name"
-                                :sortable? false
-                                :filterable? false}
-                               {:key :commands
-                                :sortable? false
-                                :filterable? false}]
-                     :rows [::example-tree-rows]
-                     :default-sort-column :first-name
-                     :selectable? true
-                     :on-select #(reset! example-selected-rows %)}])
-
    ;; TODO implement sorting
    (example "sortable and filterable tree"
             [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
             (let [example2 {:id ::example2
+                            :show-matching-parents? true
                             :columns [{:key :name
                                        :title "Name"}
                                       {:key :commands

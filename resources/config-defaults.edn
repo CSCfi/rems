@@ -328,4 +328,5 @@
  :enable-duo false ; should the DUO features be shown in the UI
 
  :enable-catalogue-table true ; show catalogue page table of items
- :enable-catalogue-tree false} ; show catalogue page tree of items
+ :enable-catalogue-tree false ; show catalogue page tree of items
+ :catalogue-tree-show-matching-parents true} ; should parent categories be shown if children match?

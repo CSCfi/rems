@@ -119,6 +119,7 @@
         catalogue {:id ::catalogue-tree
                    :row-key #(or (some->> (:category/id %) (str "category_"))
                                  (:id %))
+                   :show-matching-parents? (:catalogue-tree-show-matching-parents config)
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
                               :title (text :t.catalogue/header)
