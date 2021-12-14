@@ -95,7 +95,7 @@
                    :create-workflow "Nytt arbetsflöde"
                    :created "Skapad"
                    :delete "Radera"
-                   :delete-category "Radera kategori?"
+                   :delete-confirmation "Vill du verkligen radera?"
                    :description "Rubrik"
                    :disable "Avaktivera"
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."

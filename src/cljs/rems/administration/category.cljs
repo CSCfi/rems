@@ -59,7 +59,7 @@
 (defn- delete-category-button []
   [:button#delete.btn.btn-primary
    {:type :button
-    :on-click #(when (js/confirm (text :t.administration/delete-category))
+    :on-click #(when (js/confirm (text :t.administration/delete-confirmation))
                  (rf/dispatch [::delete-category]))}
    (text :t.administration/delete)])
 

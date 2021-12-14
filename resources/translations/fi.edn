@@ -95,7 +95,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :delete "Poista"
-                   :delete-category "Poista kategoria?"
+                   :delete-confirmation "Haluatko todella poistaa?"
                    :description "Kuvaus"
                    :disable "Poista käytöstä"
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
