@@ -116,7 +116,7 @@
                    :errors {:dependencies-archived "Arkiverade beroenden:"
                             :in-use-by "Aktiv i:"
                             :dependencies-not-found "Saknade beroenden:"
-                            :disallowed-subcategory "Underkategorier inte tillåten:"}
+                            :self-as-subcategory-disallowed "Kategori kan inte vara en underkategori till sig själv"}
                    :export-applications "exportera ansökningar"
                    :external-title "Namn"
                    :form "Blankett"

@@ -29,7 +29,7 @@
 (defn- check-category-children-self [id children]
   (when (seq (filter #(= (:category/id %) id) children))
     {:success false
-     :errors [{:type :t.administration.errors/disallowed-subcategory
+     :errors [{:type :t.administration.errors/self-as-subcategory-disallowed
                :category/id id}]}))
 
 (defn update-category! [command]
