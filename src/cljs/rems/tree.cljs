@@ -1,4 +1,5 @@
 (ns rems.tree
+  ;; TODO ns documentation
   (:require [clojure.string :as str]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
@@ -9,20 +10,22 @@
             [rems.text :refer [text]]
             [schema.core :as s]))
 
+;; TODO implement schema for the parameters
+
 (defn apply-row-defaults [tree row expanded]
-  (let [children ((:children tree (constantly nil)) row)]
+  (let [children ((:children tree :children) row)]
     (merge
      ;; row defaults
-     {:key ((:key tree) row)
+     {:key ((:key tree :key) row)
       :children children
-      :value (dissoc row :depth)
-      :depth (:depth row)}
+      :depth (:depth row 0)
+      :value (dissoc row :depth)}
 
      ;; column defaults
      {:columns (->> (:columns tree)
                     (map-indexed (fn [i column]
                                    (let [first-column? (= i 0)
-                                         value (if-let [value-fn (:value column)]
+                                         value (if-let [value-fn (:value column (:key column))]
                                                  (value-fn row)
                                                  (get row (:key column)))
                                          display-value (str value)]
@@ -57,14 +60,9 @@
      (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class]))))
 
 (rf/reg-sub
- ::rows
- (fn [db [_ tree]]
-   @(rf/subscribe (:rows tree))))
-
-(rf/reg-sub
  ::flattened-rows
  (fn [db [_ tree]]
-   (let [rows @(rf/subscribe [::rows tree])
+   (let [rows @(rf/subscribe (:rows tree))
          expanded-rows @(rf/subscribe [::expanded-rows tree])]
 
      (loop [flattened []
@@ -72,12 +70,12 @@
        (if (empty? rows)
          flattened
          (let [row (first rows)
-               expanded (contains? expanded-rows ((:key tree) row))
-               row (apply-row-defaults tree row expanded)
-               depth (:depth row 0)
+               expanded? (contains? expanded-rows ((:key tree :key) row)) ; slightly unelegant to have this as parameter to row defaults
+               row (apply-row-defaults tree row expanded?)
+               depth (:depth row)
                new-depth (inc depth)
                children (mapv #(assoc % :depth new-depth) (:children row))]
-           (if (and expanded (seq children))
+           (if (and expanded? (seq children))
              (recur (into flattened [row])
                     (into (vec children) (rest rows)))
              (recur (into flattened [row])
@@ -158,7 +156,7 @@
 (def example-selected-rows (reagent/atom nil))
 
 (defn guide []
-  #_[:div
+  [:div
    (namespace-info rems.tree)
    (component-info tree)
 
@@ -179,33 +177,33 @@
 
    (example "setup example data"
             (defn- example-commands [text]
-              {:td [:td.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]]})
+              [:div.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]])
 
             (def example-data
               [{:key 0
-                :category {:value "Users"}
+                :category {:title "Users"}
                 :children [{:key 1
-                            :category {:value "Applicants"}
+                            :category {:title "Applicants"}
                             :commands (example-commands "Applicants")}
                            {:key 2
-                            :category {:value "Handlers"}
+                            :category {:title "Handlers"}
                             :commands (example-commands "Handlers")}
                            {:key 3
-                            :category {:value "Administration"}
+                            :category {:title "Administration"}
                             :commands (example-commands "Administration")
                             :children [{:key 4
-                                        :category {:value "Reporters"}
+                                        :category {:title "Reporters"}
                                         :commands (example-commands "Reporters")}
                                        {:key 5
-                                        :category {:value "Owners"}
+                                        :category {:title "Owners"}
                                         :commands (example-commands "Owners")
                                         :children [{:key 6
-                                                    :category {:value "Super Owners"}
+                                                    :category {:title "Super Owners"}
                                                     :commands (example-commands "Super owners")}
                                                    {:key 7
-                                                    :category {:value "Org Owners"}
+                                                    :category {:title "Org Owners"}
                                                     :commands (example-commands "Org Owners")}]}]}]
-                :commands (example-commands "Handlers")}])
+                :commands (example-commands "Users")}])
 
             (rf/reg-sub ::example-tree-rows (fn [_ _] example-data)))
 
@@ -213,13 +211,17 @@
             [tree {:id ::example1
                    :columns [{:key :category
                               :title "Name"
+                              :value (comp :title :category)
                               :sortable? false
                               :filterable? false}
                              {:key :commands
+                              :content :commands
                               :sortable? false
                               :filterable? false}]
                    :rows [::example-tree-rows]
-                   :default-sort-column :name}])
+                   :default-sort-column :title}])
+
+   ;; TODO implement selection if needed
    #_(example "tree with selectable rows"
               [:p "The tree components supports selection of rows. You can provide a callback for when the set of selected rows changes."]
               [:div [:p "You have " (count @example-selected-rows) " rows selected."]]
@@ -239,6 +241,9 @@
                      :default-sort-column :first-name
                      :selectable? true
                      :on-select #(reset! example-selected-rows %)}])
+
+   ;; TODO implement sorting
+   ;; TODO implement filtering
    #_(example "sortable and filterable tree"
               [:p "Filtering and search can be added by using the " [:code "rems.table/search"] " component"]
               (let [example2 {:id ::example2
@@ -253,35 +258,4 @@
                               :default-sort-column :first-name}]
                 [:div
                  [search example2]
-                 [tree example2]]))
-   #_(example "richer example data"
-              [:p "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
-               "Also, filtering ignores the word \"Team\"."
-               "Also, the score has special styling."
-               "Eagles have special styling. :value is used for sorting & filtering but :td for rendering."]
-              (def example-data-rich
-                [{:key 1
-                  :team {:display-value "Team Hawks"
-                         :filter-value "hawks"
-                         :sort-value "0000hawks"}
-                  :points {:value 3
-                           :display-value "-> 3 <-"}}
-                 {:key 2
-                  :team {:value "Eagles"
-                         :td [:td.eagles-are-best [:em "Eagles"]]}
-                  :points {:value 4}}
-                 {:key 3
-                  :team {:value "Ravens"}
-                  :points {:value 0}}])
-
-              (rf/reg-sub ::example-rich-table-rows (fn [_ _] example-data-rich))
-              [:p "Now the data can be used like so"]
-              (let [example3 {:id ::example3
-                              :columns [{:key :team
-                                         :title "Team"}
-                                        {:key :points
-                                         :title "Points"}]
-                              :rows [::example-rich-table-rows]}]
-                [:div
-                 [search example3]
-                 [tree example3]]))])
+                 [tree example2]]))])
