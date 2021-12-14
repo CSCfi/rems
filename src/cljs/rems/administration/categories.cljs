@@ -73,7 +73,7 @@
                           :columns [{:key :title
                                      :title (text :t.administration/category)}
                                     {:key :description
-                                     :title (text :t.administration/category-description)}
+                                     :title (text :t.administration/description)}
                                     {:key :commands
                                      :sortable? false
                                      :filterable? false}]
