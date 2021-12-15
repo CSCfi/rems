@@ -257,7 +257,8 @@
           (for [column (:columns tree)]
             [:th
              (when (sortable? column)
-               {:on-click #(rf/dispatch [::toggle-sorting tree (:key column)])})
+               {:class "pointer"
+                :on-click #(rf/dispatch [::toggle-sorting tree (:key column)])})
              (:title column)
              " "
              (when (sortable? column)

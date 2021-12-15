@@ -328,7 +328,8 @@
           (for [column (:columns table)]
             [:th
              (when (sortable? column)
-               {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
+               {:class "pointer"
+                :on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
              (:title column)
              " "
              (when (sortable? column)
