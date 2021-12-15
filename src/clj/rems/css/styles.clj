@@ -247,7 +247,7 @@
     (for [i (range 10)]
       [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
     (for [i (range 10)]
-      [(str ".fs-depth-" i) {:font-size (str (format "%.2f"(+ 0.75 (Math/pow 2 (- i)))) "rem")}])
+      [(str ".fs-depth-" i) {:font-size (str (format "%.2f" (+ 0.75 (Math/pow 2 (- i)))) "rem")}])
     (for [i (range 10)]
       [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
 
