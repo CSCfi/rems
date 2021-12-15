@@ -5,6 +5,7 @@
             [buddy.sign.jwe :as buddy-jwe]
             [buddy.sign.jwt :as buddy-jwt]
             [clj-http.client :as http]
+            [clojure.core.memoize]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [rems.common.util :refer [getx index-by]]
@@ -28,6 +29,21 @@
         jwk (getx (indexed-jwks) key-id)]
     (buddy-keys/jwk->public-key jwk)))
 
+(defn- fetch-jku-jwks [visa]
+  (when-let [jku-uri (:jku visa)]
+    (getx (http/get jku-uri {:as :json}) :body)))
+
+(defn- indexed-jku-jwks [visa]
+  (index-by [:kid] (getx (fetch-jku-jwks visa) :keys)))
+
+(def memoized-indexed-jku-jwks
+  (clojure.core.memoize/ttl indexed-jku-jwks :ttl/threshold 60000)) ; cache for 1 minute
+
+(defn- fetch-visa-public-key [visa]
+  (let [key-id (:kid (buddy-jwe/decode-header visa))
+        jwk (getx (memoized-indexed-jku-jwks visa) key-id)]
+    (buddy-keys/jwk->public-key jwk)))
+
 (defn sign [claims secret & [opts]]
   (buddy-jwt/sign claims secret opts))
 
@@ -37,6 +53,12 @@
                                              :now now}
                                             (when issuer {:iss issuer})
                                             (when audience {:aud audience})))))
+
+(defn validate-visa [visa now]
+  (let [public-key (fetch-visa-public-key visa)]
+    (buddy-jwt/unsign visa public-key {:alg :rs256
+                                       :now now
+                                       :iss (:iss visa)})))
 
 (defn show
   "Show the claims of a JWT token without verifying anything."

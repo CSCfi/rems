@@ -90,6 +90,12 @@
                #_(= (:value visa) "https://doi.org/10.1038/s41431-018-0219-y"))
       (getx visa :by))))
 
+(defn trusted-issuers []
+  (set (:ga4gh-visa-trusted-issuers env)))
+
+(defn issuer-whitelisted? [iss jku]
+  (contains? (trusted-issuers) {:iss iss :jku jku}))
+
 (defn passport->researcher-status-by
   "Given an OIDC id token, check the visas in the :ga4gh_passport_v1
   claim. If any of the visas assert \"Bona Fide\" researcher status,
@@ -99,7 +105,19 @@
   (when-let [visas (:ga4gh_passport_v1 id-token)]
     (some identity
           (doall (for [visa visas]
-                   (visa->researcher-status-by (jwt/validate visa (:issuer oidc-configuration) nil (Instant/now))))))))
+                   (let [iss (:iss visa)
+                         jku (:jku visa)]
+                     (when (:log-authentication-details env)
+                       (log/debug "Checking visa " (pr-str visa))
+                       (log/debug "Checking issuer whitelist " {:iss iss :jku jku}))
+                     (if (issuer-whitelisted? iss jku)
+                       (do (when (:log-authentication-details env)
+                             (log/debug "Validating visa" (pr-str visa)))
+                           (try (visa->researcher-status-by (jwt/validate-visa visa (Instant/now)))
+                                (catch Throwable t
+                                  (log/warn "Invalid visa" t))))
+                       (do (log/warn ":ga4gh-visa-trusted-issuers does not contain " {:iss iss :jku jku})
+                           nil))))))))
 
 (defn visa->claims
   "Show the contents of the visa / JWT token without verifying it.

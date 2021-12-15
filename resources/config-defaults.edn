@@ -316,6 +316,10 @@
  :ga4gh-visa-private-key nil
  :ga4gh-visa-public-key nil
 
+ ;; set of trusted issuers and jku values for claims
+ ;; e.g. [{:iss "https://ega.ebi.ac.uk:8443/ega-openid-connect-server/" :jku "https://ega.ebi.ac.uk:8443/ega-openid-connect-server/jwk"}]
+ :ga4gh-visa-trusted-issuers []
+
  ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
  :catalogue-is-public false
 
