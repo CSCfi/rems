@@ -122,7 +122,7 @@
                    :show-matching-parents? (:catalogue-tree-show-matching-parents config)
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
-                              :sort-value #(str (get (:category/title %) language) "_" (get-localized-title % language))
+                              :sort-value #(str (get (:category/title %) language) "/" (get-localized-title % language))
                               :title (text :t.catalogue/header)
                               :content #(if (:category/id %)
                                           [:div.my-2
@@ -144,7 +144,7 @@
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
                    :rows [::catalogue-tree]
-                   :default-sort-column :name}]
+                   :default-sort-column :no-default-sort}]
     [:div
      [tree/search catalogue]
      [tree/tree catalogue]]))
