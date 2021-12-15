@@ -12,13 +12,14 @@
 
 ;; TODO implement schema for the parameters
 
-(defn apply-row-defaults [tree row expanded]
+(defn apply-row-defaults [tree row expanded?]
   (let [children ((:children tree :children) row)]
     (merge
      ;; row defaults
      {:key ((:row-key tree :key) row)
       :children children
       :depth (:depth row 0)
+      :expanded? expanded?
       :value (dissoc row :depth)}
 
      ;; column defaults
@@ -45,11 +46,11 @@
                                                                   :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
                                                              [:div.d-flex.flex-row.w-100.align-items-baseline
                                                               {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
-                                                                       (when expanded "expanded")]}
+                                                                       (when expanded? "expanded")]}
 
                                                               (when first-column?
                                                                 (when (seq children)
-                                                                  (if expanded
+                                                                  (if expanded?
                                                                     [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
                                                                     [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
@@ -60,33 +61,49 @@
      ;; copied over
      (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class :parents]))))
 
+(defn sort-rows [sorting rows]
+  (sort-by #(get-in % [:columns-by-key (:sort-column sorting) :sort-value])
+           (case (:sort-order sorting)
+             :desc #(compare %2 %1)
+             #(compare %1 %2))
+           rows))
+
 (rf/reg-sub
  ::flattened-rows
  (fn [db [_ tree]]
    (let [rows @(rf/subscribe (:rows tree))
          expanded-rows @(rf/subscribe [::expanded-rows tree])
-         filtering? (not (str/blank? (:filters @(rf/subscribe [::filtering tree]))))]
+         sorting @(rf/subscribe [::sorting tree])
+         filtering? (not (str/blank? (:filters @(rf/subscribe [::filtering tree]))))
+         expand-row (fn [row]
+                      (let [row-key ((:row-key tree :key) row)
+                            expanded? (or filtering? ; must look at all rows
+                                          (contains? expanded-rows row-key)) ; slightly unelegant to have this as parameter to row defaults
+                            row (apply-row-defaults tree row expanded?)]
+                        row))
+         initial-rows (->> rows
+                           (mapv expand-row)
+                           (sort-rows sorting))]
 
      (loop [flattened []
-            rows rows]
+            rows initial-rows]
 
        (if (empty? rows)
          flattened
 
-         (let [row (first rows)
-               row-key ((:row-key tree :key) row)
-               expanded? (or filtering? ; must look at all rows
-                             (contains? expanded-rows row-key)) ; slightly unelegant to have this as parameter to row defaults
-               row (apply-row-defaults tree row expanded?)
-               children (:children row)]
+         (let [row (first rows)]
 
-           (if (and expanded? (seq children))
+           (if (:expanded? row)
              (let [child-depth (inc (:depth row))
-                   child-parents (conj-vec (:parents row) row-key)
-                   new-rows (mapv #(assoc %
-                                          :depth child-depth
-                                          :parents child-parents)
-                                  children)]
+                   child-parents (conj-vec (:parents row) (:key row))
+                   new-rows (->> row
+                                 :children
+                                 (mapv #(assoc %
+                                               :depth child-depth
+                                               :parents child-parents))
+                                 (mapv expand-row)
+                                 (sort-rows sorting)
+                                 vec)]
 
                (recur (into flattened [row])
                       (into new-rows (rest rows))))
@@ -148,18 +165,6 @@
                           :on-search on-search
                           :searching? false}]))
 
-(rf/reg-sub
- ::sorted-rows
- (fn [[_ tree] _]
-   [(rf/subscribe [::flattened-rows tree])
-    (rf/subscribe [::sorting tree])])
- (fn [[rows sorting] _]
-   (->> rows
-        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
-                 (case (:sort-order sorting)
-                   :desc #(compare %2 %1)
-                   #(compare %1 %2))))))
-
 (defn- sortable? [column]
   (:sortable? column true))
 
@@ -180,9 +185,9 @@
        (map str/lower-case)))
 
 (rf/reg-sub
- ::sorted-and-filtered-rows
+ ::filtered-rows
  (fn [[_ tree] _]
-   [(rf/subscribe [::sorted-rows tree])
+   [(rf/subscribe [::flattened-rows tree])
     (rf/subscribe [::filtering tree])])
  (fn [[rows filtering] [_ tree]]
    (let [search-terms (parse-search-terms (:filters filtering))
@@ -209,19 +214,10 @@
 (rf/reg-sub
  ::displayed-rows
  (fn [db [_ tree]]
-   (let [rows @(rf/subscribe [::sorted-and-filtered-rows tree])
+   (let [rows @(rf/subscribe [::filtered-rows tree])
          max-rows @(rf/subscribe [::max-rows tree])
          rows (filter ::display-row? rows)]
      (take max-rows rows))))
-
-#_(rf/reg-sub
- ::displayed-rows
- (fn [db [_ tree]]
-   (let [rows @(rf/subscribe [::flattened-rows tree])]
-     rows)))
-
-
-
 
 (defn- set-toggle [set key]
   (let [set (or set #{})]
@@ -256,10 +252,19 @@
        (on-select expanded-rows))
      new-db)))
 
+
 (defn- tree-header [tree]
-  (into [:tr]
-        (for [column (:columns tree)]
-          [:th (:title column)])))
+  (let [sorting @(rf/subscribe [::sorting tree])]
+    (into [:tr #_(when (:selectable? tree) [selection-toggle-all tree])]
+          (for [column (:columns tree)]
+            [:th
+             (when (sortable? column)
+               {:on-click #(rf/dispatch [::toggle-sorting tree (:key column)])})
+             (:title column)
+             " "
+             (when (sortable? column)
+               (when (= (:key column) (:sort-column sorting))
+                 [sort-symbol (:sort-order sorting)]))]))))
 
 (defn- tree-row [row tree]
   (into [:tr {:data-row (:key row)
@@ -361,7 +366,6 @@
                    :default-sort-column :title}])
 
    ;; TODO implement selection if needed
-   ;; TODO implement sorting
    (example "sortable and filterable tree"
             [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
             (let [example2 {:id ::example2
