@@ -27,8 +27,7 @@
    [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
    [navbar/nav-link "/administration/reports" (text :t.administration/reports)]
    [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]
-   [navbar/nav-link "/administration/organizations" (text :t.administration/organizations)]
-   [navbar/nav-link "/administration/categories" (text :t.administration/categories)]])
+   [navbar/nav-link "/administration/organizations" (text :t.administration/organizations)]])
 
 (defn guide []
   [:div

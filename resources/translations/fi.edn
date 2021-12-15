@@ -129,6 +129,7 @@
                    :license-field "Lisenssi \"%1\""
                    :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
+                   :manage-categories "Hallinnoi kategorioita"
                    :modifier "Muokkaaja"
                    :more-info "Lisätietoja-URL (valinnainen)"
                    :name "Nimi"

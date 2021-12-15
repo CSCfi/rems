@@ -132,6 +132,7 @@
                    :license-field "License \"%1\""
                    :license-name "License name"
                    :licenses "Licenses"
+                   :manage-categories "Manage categories"
                    :modifier "Modifier"
                    :more-info "More info URL (optional)"
                    :name "Name"
