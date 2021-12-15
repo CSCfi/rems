@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.21.1
 
+### Additions
+- Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
+
 ## v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-23
 
 ### Fixes
