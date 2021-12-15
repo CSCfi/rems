@@ -913,7 +913,8 @@
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
                                      :fi "Työvuo automaattisella hyväksynnällä"
                                      :sv "Arbetsflöde med automatisk godkänning"}
@@ -1004,7 +1005,8 @@
                                             :resource-id duo-resource
                                             :form-id form
                                             :organization {:organization/id "nbn"}
-                                            :workflow-id (:default workflows)})
+                                            :workflow-id (:default workflows)
+                                            :categories [special-category]})
             app-id (create-draft! applicant [cat-id] "application with DUO codes")]
         (create-draft! applicant [cat-id] "draft application with DUO codes")
         (command! {:type :application.command/submit

@@ -13,7 +13,7 @@
   [schema/CatalogueItem])
 
 (s/defschema GetCatalogueTreeResponse
-  {:roots [schema/CategoryTree]})
+  {:roots [(s/either schema/CategoryTree schema/CatalogueItem)]})
 
 (def catalogue-api
   (context "/catalogue" []
