@@ -12,14 +12,13 @@
 
 ;; TODO implement schema for the parameters
 
-(defn apply-row-defaults [tree row expanded?]
+(defn apply-row-defaults [tree row]
   (let [children ((:children tree :children) row)]
     (merge
      ;; row defaults
      {:key ((:row-key tree :key) row)
       :children children
       :depth (:depth row 0)
-      :expanded? expanded?
       :value (dissoc row :depth)}
 
      ;; column defaults
@@ -46,11 +45,11 @@
                                                                   :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
                                                              [:div.d-flex.flex-row.w-100.align-items-baseline
                                                               {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
-                                                                       (when expanded? "expanded")]}
+                                                                       (when (:expanded? row) "expanded")]}
 
                                                               (when first-column?
                                                                 (when (seq children)
-                                                                  (if expanded?
+                                                                  (if (:expanded? row)
                                                                     [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
                                                                     [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
@@ -59,7 +58,7 @@
                            (index-by [:key]))}
 
      ;; copied over
-     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class :parents]))))
+     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class :parents :expanded?]))))
 
 (defn sort-rows [sorting rows]
   (sort-by #(get-in % [:columns-by-key (:sort-column sorting) :sort-value])
@@ -78,9 +77,8 @@
          expand-row (fn [row]
                       (let [row-key ((:row-key tree :key) row)
                             expanded? (or filtering? ; must look at all rows
-                                          (contains? expanded-rows row-key)) ; slightly unelegant to have this as parameter to row defaults
-                            row (apply-row-defaults tree row expanded?)]
-                        row))
+                                          (contains? expanded-rows row-key))]
+                        (apply-row-defaults tree (assoc row :expanded? expanded?))))
          initial-rows (->> rows
                            (mapv expand-row)
                            (sort-rows sorting))]
