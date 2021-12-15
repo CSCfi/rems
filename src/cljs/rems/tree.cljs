@@ -28,12 +28,18 @@
                                                 value (if-let [value-fn (:value column (:key column))]
                                                         (value-fn row)
                                                         (get row (:key column)))
-                                                display-value (str value)]
-                                            (merge {:sort-value (if (string? value)
-                                                                  (str/lower-case value)
-                                                                  value)
+                                                display-value (str value)
+                                                filter-value (if-let [filter-value-fn (:filter-value column)]
+                                                               (filter-value-fn row)
+                                                               (str/lower-case display-value))
+                                                sort-value (if-let [sort-value-fn (:sort-value column)]
+                                                             (sort-value-fn row)
+                                                             (if (string? value)
+                                                               (str/lower-case value)
+                                                               value))]
+                                            (merge {:sort-value sort-value
                                                     :display-value display-value
-                                                    :filter-value (str/lower-case display-value)
+                                                    :filter-value filter-value
                                                     :td (when-let [content (if (:content column)
                                                                              ((:content column) row)
                                                                              [:div display-value])]
@@ -54,7 +60,7 @@
                                                                     [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
                                                               content]]))}
-                                                   (dissoc column :td :col-span)))))
+                                                   (dissoc column :td :col-span :sort-value :filter-value)))))
                            (index-by [:key]))}
 
      ;; copied over
