@@ -122,6 +122,7 @@
                    :show-matching-parents? (:catalogue-tree-show-matching-parents config)
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
+                              :sort-value #(str (get (:category/title %) language) "_" (get-localized-title % language))
                               :title (text :t.catalogue/header)
                               :content #(if (:category/id %)
                                           [:div.my-2
