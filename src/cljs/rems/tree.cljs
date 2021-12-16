@@ -3,12 +3,10 @@
   (:require [clojure.string :as str]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
-            [rems.atoms :refer [checkbox sort-symbol]]
+            [rems.atoms :refer [sort-symbol]]
             [rems.common.util :refer [conj-vec index-by]]
             [rems.guide-util :refer [component-info example namespace-info]]
-            [rems.search :as search]
-            [rems.text :refer [text]]
-            [schema.core :as s]))
+            [rems.search :as search]))
 
 ;; TODO implement schema for the parameters
 
@@ -204,24 +202,12 @@
      (mapv #(assoc % ::display-row? (contains? matching-rows-set (:key %))) ; performance optimization: hide DOM nodes instead of destroying them
            rows))))
 
-(rf/reg-event-db
- ::show-all-rows
- (fn [db [_ tree]]
-   (assoc-in db [::max-rows (:id tree)] js/Number.MAX_SAFE_INTEGER)))
-
-(rf/reg-sub
- ::max-rows
- (fn [db [_ tree]]
-   (or (get-in db [::max-rows (:id tree)])
-       50)))
-
 (rf/reg-sub
  ::displayed-rows
  (fn [db [_ tree]]
    (let [rows @(rf/subscribe [::filtered-rows tree])
-         max-rows @(rf/subscribe [::max-rows tree])
          rows (filter ::display-row? rows)]
-     (take max-rows rows))))
+     rows)))
 
 (defn- set-toggle [set key]
   (let [set (or set #{})]
@@ -284,18 +270,14 @@
 
 (defn tree [tree]
   (let [rows @(rf/subscribe [::displayed-rows tree])
-        language @(rf/subscribe [:language])
-        max-rows @(rf/subscribe [::max-rows tree])
-        rows (if (< max-rows (count rows))
-               (filter ::display-row? rows)
-               rows)]
+        language @(rf/subscribe [:language])]
     [:div.table-border ; TODO duplicate or generalize styles?
      [:table.rems-table {:id (name (:id tree))
                          :class (:id tree)}
       [:thead
        [tree-header tree]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
-       (for [row (take max-rows rows)]
+       (for [row rows]
          ^{:key (:key row)}
          [tree-row row tree])]]]))
 
