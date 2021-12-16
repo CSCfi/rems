@@ -13,7 +13,8 @@
   [schema/CatalogueItem])
 
 (s/defschema GetCatalogueTreeResponse
-  {:roots [(s/either schema/CategoryTree schema/CatalogueItem)]})
+  {:roots [(s/either schema/CategoryTree
+                     schema/CatalogueItem)]}) ; catalogue items without categories end up on the root level
 
 (def catalogue-api
   (context "/catalogue" []
