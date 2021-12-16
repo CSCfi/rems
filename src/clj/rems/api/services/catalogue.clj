@@ -51,8 +51,12 @@
 
 (defn get-catalogue-tree [& [query-params]]
   (let [catalogue-items (get-localized-catalogue-items query-params)
-        categories-with-items (for [category (category/get-categories)]
-                                (assoc category :category/items (filterv #(contains? (set (map :category/id (:categories %))) (:category/id category)) catalogue-items)))
+        has-category? (fn [item category]
+                        (contains? (set (map :category/id (:categories item)))
+                                   (:category/id category)))
+        categories-with-items (for [category (category/get-categories)
+                                    :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
+                                (assoc category :category/items matching-items))
         items-without-category (for [item catalogue-items
                                      :when (empty? (:categories item))]
                                  item)
@@ -60,7 +64,8 @@
                                           :child-id-fn :category/id
                                           :children-fn :category/children}
                                          categories-with-items)]
-    {:roots (into (vec top-level-categories) items-without-category)}))
+    {:roots (into (vec top-level-categories)
+                  items-without-category)}))
 
 (comment
   (filterv (comp seq :categories) (get-localized-catalogue-items {:expand-catalogue-data? true}))
