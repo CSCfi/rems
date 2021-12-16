@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.21.1
 
+### Additions
+- (Experimental) Catalogue items can be assigned one or more categories and the catalogue shown as a tree grouped by category. There is an admin UI where categories can be created. See (#2768, #2764, #2770, #2769)
+
 ## v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-23
 
 ### Fixes
