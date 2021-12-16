@@ -40,8 +40,12 @@
    (rf/subscribe [::full-catalogue-tree]))
  (fn [catalogue _]
    (->> catalogue
-        #_(filter :enabled)
-        #_(remove :expired))))
+        (filter #(if (:category/id %)
+                   true ; always pass categories
+                   (:enabled %)))
+        (remove #(if (:category/id %)
+                   false ; always pass categories
+                   (:expired %))))))
 
 (defn- filter-drafts-only [applications]
   (filter form-fields-editable? applications))
