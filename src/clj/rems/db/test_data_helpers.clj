@@ -174,13 +174,7 @@
                                                           :fi "Kategorian kuvaus"
                                                           :sv "Beskrivning av kategori"})}))]
     (assert (:success result) {:command command :result result})
-    (:id result)))
-
-(comment
-  (create-category! {:actor "owner"
-                     :title {:en "Ordinary"
-                             :fi "Tavalliset"
-                             :sv "Vanliga"}}))
+    (:category/id result)))
 
 (defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
@@ -202,11 +196,6 @@
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
-
-(defn create-category! [command]
-  (let [result (category/create-category! command)]
-    (assert (:success result) {:command command :result result})
-    (:category/id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor time]}]
   (:application-id (command! {:time (or time (time/now))
