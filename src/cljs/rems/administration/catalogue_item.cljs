@@ -41,6 +41,11 @@
    (str "/administration/catalogue-items/edit/" id)
    (text :t.administration/edit)])
 
+(defn- manage-categories-button []
+  [atoms/link {:class "btn btn-primary"}
+   "/administration/categories"
+   (text :t.administration/manage-categories)])
+
 (defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -73,7 +78,14 @@
                          (:form-name catalogue-item)])]
                      [inline-info-field (text :t.administration/categories)
                       (when-let [categories (:categories catalogue-item)]
-                        (str/join ", " (map #(localized (:category/title %)) categories)))]
+                        (interpose
+                         ", "
+                         (doall
+                          (for [cat categories]
+                            ^{:key (:category/id cat)}
+                            [atoms/link nil
+                             (str "/administration/categories/" (:category/id cat))
+                             (localized (:category/title cat))]))))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
@@ -83,7 +95,8 @@
       [roles/show-when roles/+admin-write-roles+
        [edit-button id]
        [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]])])
+       [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]
+      [manage-categories-button]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])
