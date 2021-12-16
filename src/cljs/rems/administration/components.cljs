@@ -199,6 +199,16 @@
 (defn inline-info-field [text value & [opts]]
   [info-field text value (merge {:inline? true} opts)])
 
+(defn localized-info-field
+  "An info field for displaying text in all supported languages.
+  The data is passed in as a map of language to text."
+  [m {:keys [label]}]
+  (let [languages @(rf/subscribe [:languages])
+        to-label #(str label " (" (str/upper-case (name %)) ")")]
+    (into [:<>]
+          (for [lang languages]
+            [inline-info-field (to-label lang) (get m lang)]))))
+
 (defn organization-field [context {:keys [keys readonly]}]
   (let [label (text :t.administration/organization)
         organizations @(rf/subscribe [:owned-organizations])

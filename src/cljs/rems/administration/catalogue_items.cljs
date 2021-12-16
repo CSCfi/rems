@@ -86,6 +86,11 @@
                 (navigate! "/administration/catalogue-items/change-form"))}
    (text :t.administration/change-form)])
 
+(defn- categories-button []
+  [atoms/link {:class "btn btn-primary" :id :manage-categories}
+   "/administration/categories"
+   (text :t.administration/manage-categories)])
+
 (defn- view-button [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/catalogue-items/" catalogue-item-id)
@@ -180,7 +185,8 @@
           [[roles/show-when roles/+admin-write-roles+
             [:div.commands.text-left.pl-0
              [create-catalogue-item-button]
-             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
+             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]
+             [categories-button]]
             [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
                                                        (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
             [status-flags/disabled-and-archived-explanation]]

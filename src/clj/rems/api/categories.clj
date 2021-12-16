@@ -49,7 +49,7 @@
         (ok (category/update-category! command))
         (not-found-json-response)))
 
-    (POST "/remove" []
+    (POST "/delete" []
       :summary "Delete category"
       :roles #{:owner}
       :body [command schema/DeleteCategoryCommand]
