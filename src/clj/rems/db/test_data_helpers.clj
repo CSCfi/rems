@@ -162,17 +162,19 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-category! [{:keys [actor title description]
+(defn create-category! [{:keys [actor] :category/keys [title description children]
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (category/create-category!
-                  {:category/title (or title {:en "Category"
-                                              :fi "Kategoria"
-                                              :sv "Kategori"})
-                   :category/description (or description {:en "Category description"
-                                                          :fi "Kategorian kuvaus"
-                                                          :sv "Beskrivning av kategori"})}))]
+                  (merge {:category/title (or title {:en "Category"
+                                                     :fi "Kategoria"
+                                                     :sv "Kategori"})
+                          :category/description (or description {:en "Category description"
+                                                                 :fi "Kategorian kuvaus"
+                                                                 :sv "Beskrivning av kategori"})}
+                         (when (seq children)
+                           {:category/children children}))))]
     (assert (:success result) {:command command :result result})
     (:category/id result)))
 
