@@ -8,7 +8,7 @@
   (:import [java.io ByteArrayOutputStream InputStream OutputStream]))
 
 (defn size-checking-copy
-  "Basically what `io/copy` does bit with size checking."
+  "Basically what `io/copy` does but with size checking."
   [^InputStream input ^OutputStream output opts]
   (let [buffer (make-array Byte/TYPE (:buffer-size opts 1024))
         max-size (:max-size opts)]
@@ -30,6 +30,9 @@
                  [maybe-error (seq (.toByteArray output))]))]
     (testing "default parameters, essentially infinite"
       (is (= [nil data] (copy {}))))
+
+    (testing "small buffer size is no problem"
+      (is (= [nil data] (copy {:buffer-size 3}))))
 
     (testing "too large, chunked behavior"
       (is (= [:too-large [0 1]] (copy {:buffer-size 2 :max-size 3}))

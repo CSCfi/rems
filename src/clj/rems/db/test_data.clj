@@ -542,6 +542,13 @@
                                                      :fi "Projektin tarkoitus on..."
                                                      :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
+        category {:category/id (create-category! {:actor owner
+                                                  :category/title {:en "Performance"
+                                                                   :fi "Suorituskyky"
+                                                                   :sv "Prestand"}
+                                                  :category/description {:en "These catalogue items are for performance test."
+                                                                         :fi "Nämä resurssit ovat suorituskykytestausta varten."
+                                                                         :sv "Dessa resurser är för prestand."}})}
         license-id (create-license! {:actor owner
                                      :license/type :text
                                      :organization {:organization/id "perf"}
@@ -563,7 +570,8 @@
                                                           :resource-id resource-id
                                                           :form-id form-id
                                                           :organization {:organization/id "perf"}
-                                                          :workflow-id workflow-id}))))))
+                                                          :workflow-id workflow-id
+                                                          :categories [category]}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
                          (fn []
@@ -811,7 +819,26 @@
                                                              :fi "Kuvaus"
                                                              :sv "Text"}
                                                :field/optional false
-                                               :field/type :text}]})]
+                                               :field/type :text}]})
+
+        ;; Create categories
+        ordinary-category {:category/id (create-category! {:actor owner
+                                                           :category/title {:en "Ordinary"
+                                                                            :fi "Tavalliset"
+                                                                            :sv "Vanliga"}})}
+        technical-category {:category/id (create-category! {:actor owner
+                                                            :category/title {:en "Technical"
+                                                                             :fi "Tekniset"
+                                                                             :sv "Teknisk"}})}
+
+        special-category {:category/id (create-category! {:actor owner
+                                                          :category/title {:en "Special"
+                                                                           :fi "Erikoiset"
+                                                                           :sv "Speciellt"}
+                                                          :category/description {:en "Special catalogue items for demonstration purposes."
+                                                                                 :fi "Erikoiset resurssit demoja varten."
+                                                                                 :sv "Särskilda katalogposter för demonstration."}
+                                                          :category/children [technical-category]})}]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -825,7 +852,8 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:master workflows)})
+                             :workflow-id (:master workflows)
+                             :categories [technical-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
                                      :fi "Päättäjätyövuo"
@@ -836,7 +864,8 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:decider workflows)})
+                             :workflow-id (:decider workflows)
+                             :categories [special-category]})
     (let [catid (create-catalogue-item! {:actor owner
                                          :title {:en "Default workflow"
                                                  :fi "Oletustyövuo"
@@ -847,7 +876,8 @@
                                          :resource-id res1
                                          :form-id form
                                          :organization {:organization/id "nbn"}
-                                         :workflow-id (:default workflows)})]
+                                         :workflow-id (:default workflows)
+                                         :categories [ordinary-category]})]
       (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 2"
@@ -856,7 +886,8 @@
                              :resource-id res2
                              :form-id form-private-thl
                              :organization {:organization/id "csc"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 3"
                                      :fi "Oletustyövuo 3"
@@ -864,7 +895,8 @@
                              :resource-id res3
                              :form-id form-private-hus
                              :organization {:organization/id "hus"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
                                      :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
@@ -872,7 +904,8 @@
                              :resource-id ega-resource
                              :form-id ega-form
                              :organization {:organization/id "csc"}
-                             :workflow-id (:ega workflows)})
+                             :workflow-id (:ega workflows)
+                             :categories [special-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"
@@ -880,7 +913,8 @@
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
                                      :fi "Työvuo automaattisella hyväksynnällä"
                                      :sv "Arbetsflöde med automatisk godkänning"}
@@ -890,7 +924,8 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:auto-approve workflows)})
+                             :workflow-id (:auto-approve workflows)
+                             :categories [special-category]})
     (create-bona-fide-catalogue-item! (merge users +bot-users+))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
@@ -899,7 +934,8 @@
                                                     :resource-id res1
                                                     :form-id form
                                                     :organization {:organization/id "nbn"}
-                                                    :workflow-id (:default workflows)})]
+                                                    :workflow-id (:default workflows)
+                                                    :categories [ordinary-category]})]
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
                                      (users :approver1))
@@ -911,7 +947,8 @@
                                                    :resource-id res1
                                                    :form-id form
                                                    :organization {:organization/id "nbn"}
-                                                   :workflow-id (:default workflows)})]
+                                                   :workflow-id (:default workflows)
+                                                   :categories [ordinary-category]})]
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
     (create-catalogue-item! {:actor organization-owner1
                              :title {:en "Owned by organization owner"
@@ -920,7 +957,8 @@
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization {:organization/id "organization1"}
-                             :workflow-id (:organization-owner workflows)})
+                             :workflow-id (:organization-owner workflows)
+                             :categories [special-category]})
 
     (let [applicant (users :applicant1)
           handler (users :approver2)
@@ -932,7 +970,8 @@
                                            :resource-id res1
                                            :form-id form-with-public-and-private-fields
                                            :organization {:organization/id "nbn"}
-                                           :workflow-id (:default workflows)})
+                                           :workflow-id (:default workflows)
+                                           :categories [ordinary-category]})
           catid-2 (create-catalogue-item! {:actor owner
                                            :title {:en "Default workflow with private form"
                                                    :fi "Oletustyövuo yksityisellä lomakkeella"
@@ -940,7 +979,8 @@
                                            :resource-id res2
                                            :form-id form-private-nbn
                                            :organization {:organization/id "nbn"}
-                                           :workflow-id (:default workflows)})
+                                           :workflow-id (:default workflows)
+                                           :categories [ordinary-category]})
           app-id (create-draft! applicant [catid-1 catid-2] "two-form draft application")]
       (command! {:type :application.command/submit
                  :application-id app-id
@@ -965,7 +1005,8 @@
                                             :resource-id duo-resource
                                             :form-id form
                                             :organization {:organization/id "nbn"}
-                                            :workflow-id (:default workflows)})
+                                            :workflow-id (:default workflows)
+                                            :categories [special-category]})
             app-id (create-draft! applicant [cat-id] "application with DUO codes")]
         (create-draft! applicant [cat-id] "draft application with DUO codes")
         (command! {:type :application.command/submit
@@ -1072,4 +1113,5 @@
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-    (create-test-data!)))
+    (create-test-data!)
+    (create-performance-test-data!)))

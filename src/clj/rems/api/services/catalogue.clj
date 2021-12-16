@@ -4,10 +4,13 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.db.category :as category]
             [rems.db.organizations :as organizations]
-            [rems.db.category :as category]))
+            [rems.common.util :refer [build-dags]]))
 
-(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
+;; TODO this bypasses the db layer
+;; TODO move catalogue item localizations into the catalogueitemdata
+(defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start])
@@ -42,6 +45,24 @@
 (defn get-localized-catalogue-item [id]
   (->> (catalogue/get-localized-catalogue-item id)
        join-dependencies))
+
+(defn get-catalogue-tree [& [query-params]]
+  (let [catalogue-items (get-localized-catalogue-items query-params)
+        has-category? (fn [item category]
+                        (contains? (set (map :category/id (:categories item)))
+                                   (:category/id category)))
+        categories-with-items (for [category (category/get-categories)
+                                    :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
+                                (assoc category :category/items matching-items))
+        items-without-category (for [item catalogue-items
+                                     :when (empty? (:categories item))]
+                                 item)
+        top-level-categories (build-dags {:id-fn :category/id
+                                          :child-id-fn :category/id
+                                          :children-fn :category/children}
+                                         categories-with-items)]
+    {:roots (into (vec top-level-categories)
+                  items-without-category)}))
 
 (defn- check-allowed-to-edit! [id]
   (-> id

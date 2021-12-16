@@ -10,6 +10,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
+            [rems.tree :as tree]
             [rems.text :refer [text get-localized-title]]))
 
 (rf/reg-event-fx
@@ -17,10 +18,12 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[::full-catalogue]
+                 [::full-catalogue-tree]
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
+(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree" {:result :roots})
 
 (rf/reg-sub
  ::catalogue
@@ -30,6 +33,19 @@
    (->> catalogue
         (filter :enabled)
         (remove :expired))))
+
+(rf/reg-sub
+ ::catalogue-tree
+ (fn [_ _]
+   (rf/subscribe [::full-catalogue-tree]))
+ (fn [catalogue _]
+   (->> catalogue
+        (filter #(if (:category/id %)
+                   true ; always pass categories
+                   (:enabled %)))
+        (remove #(if (:category/id %)
+                   false ; always pass categories
+                   (:expired %))))))
 
 (defn- filter-drafts-only [applications]
   (filter form-fields-editable? applications))
@@ -98,18 +114,62 @@
      [table/search catalogue]
      [table/table catalogue]]))
 
+(defn- catalogue-tree []
+  (let [language @(rf/subscribe [:language])
+        logged-in? @(rf/subscribe [:logged-in])
+        cart @(rf/subscribe [:rems.cart/cart])
+        cart-item-ids (set (map :id cart))
+        config @(rf/subscribe [:rems.config/config])
+        catalogue {:id ::catalogue-tree
+                   :row-key #(or (some->> (:category/id %) (str "category_"))
+                                 (:id %))
+                   :show-matching-parents? (:catalogue-tree-show-matching-parents config)
+                   :columns [{:key :name
+                              :value #(or (get (:category/title %) language) (get-localized-title % language))
+                              :sort-value #(str (get (:category/title %) language) "/" (get-localized-title % language))
+                              :title (text :t.catalogue/header)
+                              :content #(if (:category/id %)
+                                          [:div.my-2
+                                           [:h4.mb-0 {:class (str "fs-depth-" (:depth % 0))}
+                                            (get (:category/title %) language)]
+                                           (when-let [description (get (:category/description %) language)]
+                                             [:div.mt-3 description])]
+                                          [:div (get-localized-title % language)])
+                              :col-span #(if (:category/id %) 2 1)}
+                             {:key :commands
+                              :content #(when-not (:category/id %)
+                                          [:div.commands.w-100
+                                           [catalogue-item-more-info % language config]
+                                           (when logged-in?
+                                             (if (contains? cart-item-ids (:id %))
+                                               [cart/remove-from-cart-button % language]
+                                               [cart/add-to-cart-button % language]))])
+                              :sortable? false
+                              :filterable? false}]
+                   :children #(concat (:category/items %) (:category/children %))
+                   :rows [::catalogue-tree]
+                   :default-sort-column :no-default-sort}]
+    [:div
+     [tree/search catalogue]
+     [tree/tree catalogue]]))
+
 (defn catalogue-page []
-  [:div
-   [document-title (text :t.catalogue/catalogue)]
-   [flash-message/component :top]
-   (text :t.catalogue/intro)
-   (if (or @(rf/subscribe [::full-catalogue :fetching?])
-           @(rf/subscribe [::draft-applications :fetching?]))
-     [spinner/big]
-     [:div
-      (when @(rf/subscribe [:logged-in])
-        [:<>
-         [draft-application-list]
-         [cart/cart-list-container]
-         [:h2 (text :t.catalogue/apply-resources)]])
-      [catalogue-table]])])
+  (let [config @(rf/subscribe [:rems.config/config])]
+    [:div
+     [document-title (text :t.catalogue/catalogue)]
+     [flash-message/component :top]
+     (text :t.catalogue/intro)
+     (if (or @(rf/subscribe [::full-catalogue :fetching?])
+             @(rf/subscribe [::full-catalogue-tree :fetching?])
+             @(rf/subscribe [::draft-applications :fetching?]))
+       [spinner/big]
+       [:div
+        (when @(rf/subscribe [:logged-in])
+          [:<>
+           [draft-application-list]
+           [cart/cart-list-container]
+           [:h2 (text :t.catalogue/apply-resources)]])
+        (when (:enable-catalogue-tree config)
+          [catalogue-tree])
+        (when (:enable-catalogue-table config)
+          [catalogue-table])])]))

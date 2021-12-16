@@ -111,3 +111,4 @@
 (s/defschema CategoryFull
   (merge Category
          {(s/optional-key :category/children) [Category]}))
+

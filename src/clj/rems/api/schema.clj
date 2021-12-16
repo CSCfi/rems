@@ -281,6 +281,11 @@
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
 
+(s/defschema CategoryTree
+  (merge schema-base/Category
+         {(s/optional-key :category/children) [(s/recursive #'CategoryTree)]
+          (s/optional-key :category/items) [CatalogueItem]}))
+
 (s/defschema CreateCategoryCommand
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
@@ -292,3 +297,4 @@
 
 (s/defschema DeleteCategoryCommand
   schema-base/CategoryId)
+

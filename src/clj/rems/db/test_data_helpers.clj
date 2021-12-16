@@ -162,6 +162,22 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
+(defn create-category! [{:keys [actor] :category/keys [title description children]
+                         :as command}]
+  (let [actor (or actor (create-owner!))
+        result (with-user actor
+                 (category/create-category!
+                  (merge {:category/title (or title {:en "Category"
+                                                     :fi "Kategoria"
+                                                     :sv "Kategori"})
+                          :category/description (or description {:en "Category description"
+                                                                 :fi "Kategorian kuvaus"
+                                                                 :sv "Beskrivning av kategori"})}
+                         (when (seq children)
+                           {:category/children children}))))]
+    (assert (:success result) {:command command :result result})
+    (:category/id result)))
+
 (defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
@@ -182,11 +198,6 @@
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
-
-(defn create-category! [command]
-  (let [result (category/create-category! command)]
-    (assert (:success result) {:command command :result result})
-    (:category/id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor time]}]
   (:application-id (command! {:time (or time (time/now))
