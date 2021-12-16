@@ -590,7 +590,7 @@
                app-id (create-application! {:catalogue-item-ids [cat-item-id]
                                             :actor user-id})
                long-answer (random-long-string)]
-           (dotimes [i 2] ; user saves ~ 20 times while writing an application
+           (dotimes [i 20] ; user saves ~ 20 times while writing an application
              (command! {:type :application.command/save-draft
                         :application-id app-id
                         :actor user-id
