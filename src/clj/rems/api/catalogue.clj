@@ -24,7 +24,9 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-localized-catalogue-items {:archived false}))
+        (ok (catalogue/get-localized-catalogue-items (merge {:archived false}
+                                                            (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
+                                                              {:enabled true}))))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)
@@ -38,7 +40,9 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-tree {:archived false :expand-catalogue-data? true}))
+        (ok (catalogue/get-catalogue-tree (merge {:archived false :expand-catalogue-data? true}
+                                                 (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
+                                                   {:enabled true}))))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)

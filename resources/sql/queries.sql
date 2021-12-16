@@ -10,6 +10,7 @@
 -- - :workflow workflow id to fetch items for
 -- - :form form id to fetch items for
 -- - :archived true if archived items should be included
+-- - :enabled whether enabled items should be included or nil if doesn't matter
 SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived, ci.organization
 /*~ (when (:expand-catalogue-data? params) */
 , ci.catalogueitemdata::TEXT
@@ -47,6 +48,9 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (not (:archived params)) */
   AND ci.archived = false
+/*~ ) ~*/
+/*~ (when-not (nil? (:enabled params)) */
+  AND ci.enabled = :enabled
 /*~ ) ~*/
 ;
 
