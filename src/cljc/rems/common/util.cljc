@@ -284,7 +284,7 @@
   and maps values with given `:value-fn`.
 
   The identity of a node must be unique, but it can appear in several places of the tree
-  as long as it does not have any cycles.
+  as long as it does not have any cycles. Cycles will cause the nodes not to appear in the result.
 
   `:id-fn`           - gives the identity of a value
   `:child-id-fn`     - gives the identity of a child
@@ -346,7 +346,18 @@
                       :children-fn :children}
                      [{:id 1 :unrelated "x"}
                       {:id 2 :unrelated "z" :children [{:id 1}]}
-                      {:id 3 :children [{:id 1} {:id 2}]}]))))
+                      {:id 3 :children [{:id 1} {:id 2}]}])))
+
+  (testing "cyclic data"
+    (is (= [{:id 5 :unrelated "survives"}]
+           (build-dags {:id-fn :id
+                        :child-id-fn :id
+                        :children-fn :children}
+                       [{:id 1 :unrelated "x" :children [{:id 3}]}
+                        {:id 2 :unrelated "y" :children [{:id 1}]}
+                        {:id 3 :unrelated "z" :children [{:id 2} {:id 4}]}
+                        {:id 4 :unrelated "is destroyed in a cycle"}
+                        {:id 5 :unrelated "survives"}])))))
 
 (defn distinct-by
   "Remove duplicates from sequence, comparing the value returned by key-fn.
