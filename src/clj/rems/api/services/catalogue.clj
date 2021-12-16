@@ -46,9 +46,6 @@
   (->> (catalogue/get-localized-catalogue-item id)
        join-dependencies))
 
-(comment
-  (get-localized-catalogue-item 16))
-
 (defn get-catalogue-tree [& [query-params]]
   (let [catalogue-items (get-localized-catalogue-items query-params)
         has-category? (fn [item category]
@@ -66,10 +63,6 @@
                                          categories-with-items)]
     {:roots (into (vec top-level-categories)
                   items-without-category)}))
-
-(comment
-  (filterv (comp seq :categories) (get-localized-catalogue-items {:expand-catalogue-data? true}))
-  (get-catalogue-tree {:expand-catalogue-data? true :archived? false}))
 
 (defn- check-allowed-to-edit! [id]
   (-> id
