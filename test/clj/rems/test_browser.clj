@@ -2083,31 +2083,64 @@
     (is true)))  ; avoid no assertions warning
 
 (deftest test-categories
+  (test-helpers/create-category! {:actor "owner"
+                                  :category/title {:en "E2E category 1 (EN)"
+                                                   :fi "E2E category 1 (FI)"
+                                                   :sv "E2E category 1 (SV)"}})
+  (test-helpers/create-category! {:actor "owner"
+                                  :category/title {:en "E2E category 2 (EN)"
+                                                   :fi "E2E category 2 (FI)"
+                                                   :sv "E2E category 2 (SV)"}})
+
   (btu/with-postmortem
     (login-as "owner")
+    (go-to-admin "Catalogue items")
     (btu/scroll-and-click {:fn/text "Manage categories"})
+    (is (btu/eventually-visible? {:tag :h1 :fn/text "Categories"}))
 
     (testing "create new category"
       (btu/scroll-and-click :create-category)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create category"}))
 
-      (btu/fill-human :title-en "Test category")
-      (btu/fill-human :title-fi "Testikategoria")
-      (btu/fill-human :title-sv "Test kategori")
-      (btu/fill-human :description-en "Description")
-      (btu/fill-human :description-fi "Kuvaus")
-      (btu/fill-human :description-sv "Rubrik")
-      (select-option "Subcategories" "Ordinary")
-      (select-option "Subcategories" "Technical")
+      (btu/fill-human :title-en "E2E Test category (EN)")
+      (btu/fill-human :title-fi "E2E Test category (FI)")
+      (btu/fill-human :title-sv "E2E Test category (SV)")
+      (btu/fill-human :description-en "Description (EN)")
+      (btu/fill-human :description-fi "Description (FI)")
+      (btu/fill-human :description-sv "Description (SV)")
+      (select-option "Subcategories" "E2E category 1 (EN)")
+      (select-option "Subcategories" "E2E category 2 (EN)")
       (btu/scroll-and-click :save)
 
       (testing "after create"
         (is (btu/eventually-visible? :category))
-        (is (= {"Title (EN)" "Test category"
-                "Title (FI)" "Testikategoria"
-                "Title (SV)" "Test kategori"
-                "Description (EN)" "Description"
-                "Description (FI)" "Kuvaus"
-                "Description (SV)" "Rubrik"
-                "Subcategories" "Ordinary, Technical"}
+        (is (= {"Title (EN)" "E2E Test category (EN)"
+                "Title (FI)" "E2E Test category (FI)"
+                "Title (SV)" "E2E Test category (SV)"
+                "Description (EN)" "Description (EN)"
+                "Description (FI)" "Description (FI)"
+                "Description (SV)" "Description (SV)"
+                "Subcategories" "E2E category 1 (EN), E2E category 2 (EN)"}
+               (slurp-fields :category)))))
+
+    (testing "edit category"
+      (btu/scroll-and-click {:tag :a :fn/text "Edit"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit category"}))
+
+      (btu/clear :title-en)
+      (btu/fill-human :title-en "Edited title (EN)")
+      (doall
+       (for [subcategory-remove-button (btu/query-all {:css "div.dropdown-select__multi-value__remove"})]
+         (btu/click-el subcategory-remove-button)))
+      (btu/scroll-and-click :save)
+
+      (testing "after edit"
+        (is (btu/eventually-visible? :category))
+        (is (= {"Title (EN)" "Edited title (EN)"
+                "Title (FI)" "E2E Test category (FI)"
+                "Title (SV)" "E2E Test category (SV)"
+                "Description (EN)" "Description (EN)"
+                "Description (FI)" "Description (FI)"
+                "Description (SV)" "Description (SV)"
+                "Subcategories" ""}
                (slurp-fields :category)))))))
