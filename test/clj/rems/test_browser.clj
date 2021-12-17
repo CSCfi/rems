@@ -2096,7 +2096,8 @@
     (login-as "owner")
     (go-to-admin "Catalogue items")
     (btu/scroll-and-click {:fn/text "Manage categories"})
-    (is (btu/eventually-visible? {:tag :h1 :fn/text "Categories"}))
+    (is (btu/eventually-visible? :categories))
+
 
     (testing "create new category"
       (btu/scroll-and-click :create-category)
@@ -2143,4 +2144,16 @@
                 "Description (FI)" "Description (FI)"
                 "Description (SV)" "Description (SV)"
                 "Subcategories" ""}
-               (slurp-fields :category)))))))
+               (slurp-fields :category)))))
+
+    (testing "delete category"
+      (btu/scroll-and-click :delete)
+      (btu/wait-has-alert) ;; are you sure you want to delete?
+      (btu/accept-alert)
+
+      (is (btu/eventually-visible? :categories))
+      (is (= #{"E2E category 1 (EN)" "E2E category 2 (EN)" "Ordinary" "Special" "Technical"}
+             (->> (slurp-rows :categories)
+                  (map #(get % "title"))
+                  (filter some?)
+                  set))))))
