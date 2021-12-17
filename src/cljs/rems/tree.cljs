@@ -11,10 +11,12 @@
 ;; TODO implement schema for the parameters
 
 (defn apply-row-defaults [tree row]
-  (let [children ((:children tree :children) row)]
+  (let [children ((:children tree :children) row)
+        row-key ((:row-key tree :key) row)]
     (merge
      ;; row defaults
-     {:key ((:row-key tree :key) row)
+     {:key row-key
+      :react-key (str (str/join "_" (:parents row)) "_" row-key)
       :children children
       :depth (:depth row 0)
       :value (dissoc row :depth)}
@@ -278,7 +280,7 @@
        [tree-header tree]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
-         ^{:key (:key row)}
+         ^{:key (:react-key row)} ; row key can be duplicated because it's a DAG
          [tree-row row tree])]]]))
 
 
