@@ -2081,3 +2081,33 @@
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
     (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true)))  ; avoid no assertions warning
+
+(deftest test-categories
+  (btu/with-postmortem
+    (login-as "owner")
+    (btu/scroll-and-click {:fn/text "Manage categories"})
+
+    (testing "create new category"
+      (btu/scroll-and-click :create-category)
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create category"}))
+
+      (btu/fill-human :title-en "Test category")
+      (btu/fill-human :title-fi "Testikategoria")
+      (btu/fill-human :title-sv "Test kategori")
+      (btu/fill-human :description-en "Description")
+      (btu/fill-human :description-fi "Kuvaus")
+      (btu/fill-human :description-sv "Rubrik")
+      (select-option "Subcategories" "Ordinary")
+      (select-option "Subcategories" "Technical")
+      (btu/scroll-and-click :save)
+
+      (testing "after create"
+        (is (btu/eventually-visible? :category))
+        (is (= {"Title (EN)" "Test category"
+                "Title (FI)" "Testikategoria"
+                "Title (SV)" "Test kategori"
+                "Description (EN)" "Description"
+                "Description (FI)" "Kuvaus"
+                "Description (SV)" "Rubrik"
+                "Subcategories" "Ordinary, Technical"}
+               (slurp-fields :category)))))))
