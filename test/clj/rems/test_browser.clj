@@ -2100,7 +2100,7 @@
 
     (testing "create new category"
       (btu/scroll-and-click :create-category)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create category"}))
+      (is (btu/eventually-visible? :create-category))
 
       (btu/fill-human :title-en "E2E Test category (EN)")
       (btu/fill-human :title-fi "E2E Test category (FI)")
@@ -2125,7 +2125,7 @@
 
     (testing "edit category"
       (btu/scroll-and-click {:tag :a :fn/text "Edit"})
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit category"}))
+      (is (btu/eventually-visible? :edit-category))
 
       (btu/clear :title-en)
       (btu/fill-human :title-en "Edited title (EN)")
