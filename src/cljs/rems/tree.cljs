@@ -81,13 +81,13 @@
          expanded-rows @(rf/subscribe [::expanded-rows tree])
          sorting @(rf/subscribe [::sorting tree])
          filtering? (not (str/blank? (:filters @(rf/subscribe [::filtering tree]))))
-         expand-row (fn [row]
-                      (let [row-key ((:row-key tree :key) row)
-                            expanded? (or filtering? ; must look at all rows
-                                          (contains? expanded-rows row-key))]
-                        (apply-row-defaults tree (assoc row :expanded? expanded?))))
+         apply-defaults (fn [row]
+                          (let [row-key ((:row-key tree :key) row)
+                                expanded? (or filtering? ; must look at all rows
+                                              (contains? expanded-rows row-key))]
+                            (apply-row-defaults tree (assoc row :expanded? expanded?))))
          initial-rows (->> rows
-                           (mapv expand-row)
+                           (mapv apply-defaults)
                            (sort-rows sorting))]
 
      (loop [flattened []
@@ -106,7 +106,7 @@
                                  (mapv #(assoc %
                                                :depth child-depth
                                                :parents child-parents))
-                                 (mapv expand-row)
+                                 (mapv apply-defaults)
                                  (sort-rows sorting)
                                  vec)]
 
