@@ -1,6 +1,7 @@
 (ns rems.tree
   ;; TODO ns documentation
   (:require [clojure.string :as str]
+            [goog.functions :refer [debounce]]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [sort-symbol]]
@@ -163,8 +164,9 @@
   [tree]
   ;; (s/validate Tree tree)
   (let [filtering @(rf/subscribe [::filtering tree])
-        on-search (fn [value]
-                    (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))]
+        on-search (debounce (fn [value]
+                              (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))
+                            500)]
     [search/search-field {:id (str (name (:id tree)) "-search")
                           :on-search on-search
                           :searching? false}]))
