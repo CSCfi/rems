@@ -29,7 +29,9 @@
                                                 value (if-let [value-fn (:value column (:key column))]
                                                         (value-fn row)
                                                         (get row (:key column)))
-                                                display-value (str value)
+                                                display-value (if-let [display-value-fn (:display-value column)]
+                                                                (display-value-fn row)
+                                                                (str value))
                                                 filter-value (if-let [filter-value-fn (:filter-value column)]
                                                                (filter-value-fn row)
                                                                (str/lower-case display-value))
