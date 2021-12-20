@@ -98,7 +98,7 @@
 (defn get-ancestors-of [id]
   (let [parents (apply merge-with
                        clojure.set/union
-                       (for [category (get-category-tree)
+                       (for [category (get-categories)
                              child (:category/children category)]
                          {(:category/id child) #{(:category/id category)}}))]
     (loop [open (parents id)
@@ -112,12 +112,12 @@
                  (conj closed node-id)))))))
 
 (deftest test-get-ancestors-of []
-  (with-redefs [get-category-tree (constantly [{:category/id :a :category/children [{:category/id :b} {:category/id :d}]}
-                                               {:category/id :b :category/children [{:category/id :c}]}
-                                               {:category/id :c}
-                                               {:category/id :d :category/children [{:category/id :e}]}
-                                               {:category/id :e :category/children [{:category/id :f}]}
-                                               {:category/id :f}])]
+  (with-redefs [get-categories (constantly [{:category/id :a :category/children [{:category/id :b} {:category/id :d}]}
+                                            {:category/id :b :category/children [{:category/id :c}]}
+                                            {:category/id :c}
+                                            {:category/id :d :category/children [{:category/id :e}]}
+                                            {:category/id :e :category/children [{:category/id :f}]}
+                                            {:category/id :f}])]
     (is (= #{} (get-ancestors-of :not-found)))
     (is (= #{:a} (get-ancestors-of :b)))
     (is (= #{:a :b} (get-ancestors-of :c)))
