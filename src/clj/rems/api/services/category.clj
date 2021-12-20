@@ -33,14 +33,11 @@
                :category/id id}]}))
 
 (defn- parent-as-subcategory-error [id children]
-  (let [parent? #(-> (set (map :category/id (:category/children %)))
-                     (contains? id))
-        parents (map :category/id (filter parent? (category/get-categories)))
-        children (map :category/id children)]
-    (when-let [looping-parents (seq (filter (partial (set children)) parents))]
+  (let [ancestors (category/get-ancestors-of id)]
+    (when-let [looping-parents (seq (filter #(ancestors (:category/id %)) children))]
       {:success false
        :errors [{:type :t.administration.errors/parent-as-subcategory-disallowed
-                 :categories (mapv #(select-keys (category/get-category %)
+                 :categories (mapv #(select-keys (category/get-category (:category/id %))
                                                  [:category/id :category/title])
                                    looping-parents)}]})))
 

@@ -122,8 +122,12 @@
                      :category/id (:category/id category)}]
                    (:errors result)))))
 
-        (testing "should error when setting parent categories as category children"
-          (let [subcategory (api-call :post "/api/categories"
+        (testing "should error when setting ancestor categories as category children"
+          (let [ancestor-category (api-call :post "/api/categories"
+                                            (merge create-category-data
+                                                   {:category/children [{:category/id (:category/id category)}]})
+                                            +test-api-key+ owner)
+                subcategory (api-call :post "/api/categories"
                                       create-category-data
                                       +test-api-key+ owner)
                 update-parent-result (api-call :put "/api/categories"
@@ -134,12 +138,15 @@
                 loop-update-result (api-call :put "/api/categories"
                                              (merge create-category-data
                                                     {:category/id (:category/id subcategory)
-                                                     :category/children [{:category/id (:category/id category)}]})
+                                                     :category/children [{:category/id (:category/id ancestor-category)}
+                                                                         {:category/id (:category/id category)}]})
                                              +test-api-key+ owner)]
             (is (:success update-parent-result))
             (is (not (:success loop-update-result)))
             (is (= [{:type "t.administration.errors/parent-as-subcategory-disallowed"
-                     :categories [{:category/id (:category/id category)
+                     :categories [{:category/id (:category/id ancestor-category)
+                                   :category/title (:category/title create-category-data)}
+                                  {:category/id (:category/id category)
                                    :category/title (:category/title create-category-data)}]}]
                    (:errors loop-update-result)))))))
 
