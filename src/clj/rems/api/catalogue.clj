@@ -41,7 +41,9 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-tree (merge {:archived false :expand-catalogue-data? true}
+        (ok (catalogue/get-catalogue-tree (merge {:archived false
+                                                  :expand-catalogue-data? true
+                                                  :empty false}
                                                  (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
                                                    {:enabled true}))))
 

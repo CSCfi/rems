@@ -54,6 +54,14 @@
         categories-with-items (for [category (category/get-categories)
                                     :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
                                 (assoc category :category/items matching-items))
+        categories-with-items (filter (fn [category]
+                                        (case (:empty query-params)
+                                          nil true ; not set, include all
+                                          false (or (seq (:category/children category))
+                                                    (seq (:category/items category)))
+                                          true (and (empty? (:category/children category))
+                                                    (empty? (:category/items category)))))
+                                      categories-with-items)
         items-without-category (for [item catalogue-items
                                      :when (empty? (:categories item))]
                                  item)
