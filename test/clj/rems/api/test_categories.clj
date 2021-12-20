@@ -143,7 +143,7 @@
                                              +test-api-key+ owner)]
             (is (:success update-parent-result))
             (is (not (:success loop-update-result)))
-            (is (= [{:type "t.administration.errors/parent-as-subcategory-disallowed"
+            (is (= [{:type "t.administration.errors/ancestor-as-subcategory-disallowed"
                      :categories [{:category/id (:category/id ancestor-category)
                                    :category/title (:category/title create-category-data)}
                                   {:category/id (:category/id category)

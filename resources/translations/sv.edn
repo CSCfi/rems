@@ -117,7 +117,7 @@
                             :in-use-by "Aktiv i:"
                             :dependencies-not-found "Saknade beroenden:"
                             :self-as-subcategory-disallowed "Kategori kan inte vara en underkategori till sig själv"
-                            :parent-as-subcategory-disallowed "Övre kategori kan inte vara en underkategori"}
+                            :ancestor-as-subcategory-disallowed "Kategori kan inte vara en underkatori, eftersom den skulle bilda en loop"}
                    :export-applications "exportera ansökningar"
                    :external-title "Namn"
                    :form "Blankett"

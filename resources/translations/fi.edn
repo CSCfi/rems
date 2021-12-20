@@ -117,7 +117,7 @@
                             :in-use-by "Se on käytössä täällä:"
                             :dependencies-not-found "Puuttuvia riippuvuuksia:"
                             :self-as-subcategory-disallowed "Kategoriaa ei voi asettaa itsensä alakategoriaksi"
-                            :parent-as-subcategory-disallowed "Yläkategoriaa ei voida asettaa alakategoriaksi"}
+                            :ancestor-as-subcategory-disallowed "Kategoriaa ei voi asettaa alakategoriaksi, koska se muodostaisi silmukan"}
                    :export-applications "Vie hakemuksia"
                    :external-title "Nimi"
                    :form "Lomake"

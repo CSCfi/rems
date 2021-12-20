@@ -119,7 +119,7 @@
                             :in-use-by "It is in use by:"
                             :dependencies-not-found "Missing dependencies:"
                             :self-as-subcategory-disallowed "Cannot set category as it's own subcategory"
-                            :parent-as-subcategory-disallowed "Cannot set parent category as subcategory"}
+                            :ancestor-as-subcategory-disallowed "Cannot set category as subcategory, because it would create a loop"}
                    :export-applications "Export applications"
                    :external-title "Title"
                    :form "Form"
