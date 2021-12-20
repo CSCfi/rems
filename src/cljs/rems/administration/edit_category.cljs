@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field]]
+            [rems.administration.components :refer [localized-text-field number-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [parse-int]]
@@ -29,6 +29,7 @@
     (when-let [category (get-in db [::category :data])]
       {::form {:title (:category/title category)
                :description (:category/description category)
+               :display-order (:category/display-order category)
                :categories (:category/children category)}}))))
 
 (fetcher/reg-fetcher ::categories "/api/categories")
@@ -47,6 +48,7 @@
 (defn build-request [form]
   (let [request {:category/title (:title form)
                  :category/description (:description form)
+                 :category/display-order (parse-int (:display-order form))
                  :category/children (map #(select-keys % [:category/id]) (:categories form))}]
     (when (valid-request? request)
       request)))
@@ -89,6 +91,10 @@
   [localized-text-field context {:keys [:description]
                                  :label (str (text :t.administration/description) " "
                                              (text :t.administration/optional))}])
+
+(defn- category-display-order-field []
+  [number-field context {:keys [:display-order]
+                         :label (text :t.administration/display-order)}])
 
 (defn- category-children-field []
   (let [category-id (:category/id @(rf/subscribe [::category]))
@@ -147,6 +153,7 @@
                   [:div#category-editor.fields
                    [category-title-field]
                    [category-description-field]
+                   [category-display-order-field]
                    [category-children-field]
 
                    [:div.col.commands

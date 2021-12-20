@@ -289,6 +289,7 @@
 (s/defschema CreateCategoryCommand
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/display-order) s/Int
    (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (s/defschema UpdateCategoryCommand

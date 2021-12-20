@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field]]
+            [rems.administration.components :refer [localized-text-field number-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
@@ -32,6 +32,7 @@
 (defn build-request [form]
   (let [request {:category/title (:title form)
                  :category/description (:description form)
+                 :category/display-order (:display-order form)
                  :category/children (map #(select-keys % [:category/id]) (:categories form))}]
     (when (valid-request? request)
       request)))
@@ -60,6 +61,10 @@
 (defn- category-description-field []
   [localized-text-field context {:keys [:description]
                                  :label (text :t.administration/description)}])
+
+(defn- category-display-order-field []
+  [number-field context {:keys [:display-order]
+                         :label (text :t.administration/display-order)}])
 
 (defn- category-children-field []
   (let [categories @(rf/subscribe [::categories])
@@ -108,6 +113,7 @@
                   [:div#category-editor.fields
                    [category-title-field]
                    [category-description-field]
+                   [category-display-order-field]
                    [category-children-field]
 
                    [:div.col.commands

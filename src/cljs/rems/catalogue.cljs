@@ -126,7 +126,9 @@
                    :show-matching-parents? (:catalogue-tree-show-matching-parents config)
                    :columns [{:key :name
                               :value #(or (get (:category/title %) language) (get-localized-title % language))
-                              :sort-value #(str (get (:category/title %) language) "/" (get-localized-title % language))
+                              :sort-value #(vector (:category/display-order % 2147483647) ; can't use Java Integer/MAX_VALUE here but anything that is not set is last
+                                                   (get (:category/title %) language "_") ; "_" means not set i.e. item is last
+                                                   (get-localized-title % language))
                               :title (text :t.catalogue/header)
                               :content #(if (:category/id %)
                                           [:div.my-2
@@ -148,7 +150,7 @@
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
                    :rows [::catalogue-tree]
-                   :default-sort-column :no-default-sort}]
+                   :default-sort-column :name}]
     [:div
      [tree/search catalogue]
      [tree/tree catalogue]]))

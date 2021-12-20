@@ -106,6 +106,7 @@
   (merge CategoryId
          {:category/title LocalizedString
           (s/optional-key :category/description) LocalizedString
+          (s/optional-key :category/display-order) s/Int
           (s/optional-key :category/children) [CategoryId]}))
 
 (s/defschema CategoryFull
