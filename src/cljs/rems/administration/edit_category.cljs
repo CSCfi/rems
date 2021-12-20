@@ -87,7 +87,8 @@
 
 (defn- category-description-field []
   [localized-text-field context {:keys [:description]
-                                 :label (text :t.administration/description)}])
+                                 :label (str (text :t.administration/description) " "
+                                             (text :t.administration/optional))}])
 
 (defn- category-children-field []
   (let [category-id (:category/id @(rf/subscribe [::category]))
