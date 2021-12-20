@@ -98,6 +98,7 @@
 (defn get-ancestors-of [id]
   (let [parents (apply merge-with
                        clojure.set/union
+                       {}
                        (for [category (get-categories)
                              child (:category/children category)]
                          {(:category/id child) #{(:category/id category)}}))]
@@ -121,4 +122,8 @@
     (is (= #{} (get-ancestors-of :not-found)))
     (is (= #{:a} (get-ancestors-of :b)))
     (is (= #{:a :b} (get-ancestors-of :c)))
-    (is (= #{:a :d :e} (get-ancestors-of :f)))))
+    (is (= #{:a :d :e} (get-ancestors-of :f))))
+
+  (with-redefs [get-categories (constantly [{:category/id :a}])]
+    (is (= #{} (get-ancestors-of :not-found)))
+    (is (= #{} (get-ancestors-of :a)))))
