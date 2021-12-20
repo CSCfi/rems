@@ -1,6 +1,7 @@
 (ns rems.tree
   ;; TODO ns documentation
   (:require [clojure.string :as str]
+            [goog.functions :refer [debounce]]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [sort-symbol]]
@@ -11,10 +12,12 @@
 ;; TODO implement schema for the parameters
 
 (defn apply-row-defaults [tree row]
-  (let [children ((:children tree :children) row)]
+  (let [children ((:children tree :children) row)
+        row-key ((:row-key tree :key) row)]
     (merge
      ;; row defaults
-     {:key ((:row-key tree :key) row)
+     {:key row-key
+      :react-key (str (str/join "_" (:parents row)) "_" row-key)
       :children children
       :depth (:depth row 0)
       :value (dissoc row :depth)}
@@ -78,13 +81,13 @@
          expanded-rows @(rf/subscribe [::expanded-rows tree])
          sorting @(rf/subscribe [::sorting tree])
          filtering? (not (str/blank? (:filters @(rf/subscribe [::filtering tree]))))
-         expand-row (fn [row]
-                      (let [row-key ((:row-key tree :key) row)
-                            expanded? (or filtering? ; must look at all rows
-                                          (contains? expanded-rows row-key))]
-                        (apply-row-defaults tree (assoc row :expanded? expanded?))))
+         apply-defaults (fn [row]
+                          (let [row-key ((:row-key tree :key) row)
+                                expanded? (or filtering? ; must look at all rows
+                                              (contains? expanded-rows row-key))]
+                            (apply-row-defaults tree (assoc row :expanded? expanded?))))
          initial-rows (->> rows
-                           (mapv expand-row)
+                           (mapv apply-defaults)
                            (sort-rows sorting))]
 
      (loop [flattened []
@@ -103,7 +106,7 @@
                                  (mapv #(assoc %
                                                :depth child-depth
                                                :parents child-parents))
-                                 (mapv expand-row)
+                                 (mapv apply-defaults)
                                  (sort-rows sorting)
                                  vec)]
 
@@ -161,8 +164,9 @@
   [tree]
   ;; (s/validate Tree tree)
   (let [filtering @(rf/subscribe [::filtering tree])
-        on-search (fn [value]
-                    (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))]
+        on-search (debounce (fn [value]
+                              (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))
+                            500)]
     [search/search-field {:id (str (name (:id tree)) "-search")
                           :on-search on-search
                           :searching? false}]))
@@ -278,7 +282,7 @@
        [tree-header tree]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
-         ^{:key (:key row)}
+         ^{:key (:react-key row)} ; row key can be duplicated because it's a DAG
          [tree-row row tree])]]]))
 
 
