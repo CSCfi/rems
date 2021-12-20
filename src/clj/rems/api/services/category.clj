@@ -32,9 +32,22 @@
      :errors [{:type :t.administration.errors/self-as-subcategory-disallowed
                :category/id id}]}))
 
+(defn- parent-as-subcategory-error [id children]
+  (let [parent? #(-> (set (map :category/id (:category/children %)))
+                     (contains? id))
+        parents (map :category/id (filter parent? (category/get-categories)))
+        children (map :category/id children)]
+    (when-let [looping-parents (seq (filter (partial (set children)) parents))]
+      {:success false
+       :errors [{:type :t.administration.errors/parent-as-subcategory-disallowed
+                 :categories (mapv #(select-keys (category/get-category %)
+                                                 [:category/id :category/title])
+                                   looping-parents)}]})))
+
 (defn update-category! [command]
   (or (category-entities-not-found-error (:category/children command))
       (self-as-subcategory-error (:category/id command) (:category/children command))
+      (parent-as-subcategory-error (:category/id command) (:category/children command))
       (let [id (:category/id command)
             data (dissoc command :category/id)]
         (category/update-category! id data)

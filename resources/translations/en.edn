@@ -118,7 +118,8 @@
                    :errors {:dependencies-archived "Archived dependencies:"
                             :in-use-by "It is in use by:"
                             :dependencies-not-found "Missing dependencies:"
-                            :self-as-subcategory-disallowed "Cannot set category as it's own subcategory"}
+                            :self-as-subcategory-disallowed "Cannot set category as it's own subcategory"
+                            :parent-as-subcategory-disallowed "Cannot set parent category as subcategory"}
                    :export-applications "Export applications"
                    :external-title "Title"
                    :form "Form"

@@ -111,8 +111,7 @@
               (is (= expected result)))))
 
         (testing "updating category with self as child should fail"
-          (let [owner "owner"
-                result (api-call :put "/api/categories"
+          (let [result (api-call :put "/api/categories"
                                  (merge create-category-data
                                         update-category-data
                                         {:category/id (:category/id category)
@@ -121,7 +120,28 @@
             (is (not (:success result)))
             (is (= [{:type "t.administration.errors/self-as-subcategory-disallowed"
                      :category/id (:category/id category)}]
-                   (:errors result)))))))
+                   (:errors result)))))
+
+        (testing "should error when setting parent categories as category children"
+          (let [subcategory (api-call :post "/api/categories"
+                                      create-category-data
+                                      +test-api-key+ owner)
+                update-parent-result (api-call :put "/api/categories"
+                                               (merge create-category-data
+                                                      {:category/id (:category/id category)
+                                                       :category/children [{:category/id (:category/id subcategory)}]})
+                                               +test-api-key+ owner)
+                loop-update-result (api-call :put "/api/categories"
+                                             (merge create-category-data
+                                                    {:category/id (:category/id subcategory)
+                                                     :category/children [{:category/id (:category/id category)}]})
+                                             +test-api-key+ owner)]
+            (is (:success update-parent-result))
+            (is (not (:success loop-update-result)))
+            (is (= [{:type "t.administration.errors/parent-as-subcategory-disallowed"
+                     :categories [{:category/id (:category/id category)
+                                   :category/title (:category/title create-category-data)}]}]
+                   (:errors loop-update-result)))))))
 
     (testing "updating non-existing category returns 404"
       (let [response (api-response :put "/api/categories"
