@@ -1,9 +1,10 @@
 (ns rems.db.category
   (:require [clojure.tools.logging :as log]
+            [clojure.test :refer [deftest is]]
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
-            [rems.common.util :refer [build-index replace-key]]
+            [rems.common.util :refer [build-dags build-index replace-key]]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [medley.core :refer [assoc-some]]))
@@ -85,3 +86,39 @@
 
 (defn enrich-categories [categories]
   (mapv #(get-category (:category/id %)) categories))
+
+(defn get-category-tree []
+  (let [categories (get-categories)
+        top-level-categories (build-dags {:id-fn :category/id
+                                          :child-id-fn :category/id
+                                          :children-fn :category/children}
+                                         categories)]
+    top-level-categories))
+
+(defn get-ancestors-of [id]
+  (let [parents (apply merge-with
+                       clojure.set/union
+                       (for [category (get-category-tree)
+                             child (:category/children category)]
+                         {(:category/id child) #{(:category/id category)}}))]
+    (loop [open (parents id)
+           closed #{}]
+
+      (if (empty? open)
+        closed
+
+        (let [node-id (first open)]
+          (recur (into (rest open) (parents node-id))
+                 (conj closed node-id)))))))
+
+(deftest test-get-ancestors-of []
+  (with-redefs [get-category-tree (constantly [{:category/id :a :category/children [{:category/id :b} {:category/id :d}]}
+                                               {:category/id :b :category/children [{:category/id :c}]}
+                                               {:category/id :c}
+                                               {:category/id :d :category/children [{:category/id :e}]}
+                                               {:category/id :e :category/children [{:category/id :f}]}
+                                               {:category/id :f}])]
+    (is (= #{} (get-ancestors-of :not-found)))
+    (is (= #{:a} (get-ancestors-of :b)))
+    (is (= #{:a :b} (get-ancestors-of :c)))
+    (is (= #{:a :d :e} (get-ancestors-of :f)))))
