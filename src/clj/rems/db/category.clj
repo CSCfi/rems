@@ -1,5 +1,6 @@
 (ns rems.db.category
   (:require [clojure.tools.logging :as log]
+            [clojure.set]
             [clojure.test :refer [deftest is]]
             [rems.db.core :as db]
             [rems.json :as json]
