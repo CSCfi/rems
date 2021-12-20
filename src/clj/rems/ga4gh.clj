@@ -105,14 +105,15 @@
   (when-let [visas (:ga4gh_passport_v1 id-token)]
     (some identity
           (doall (for [visa visas]
-                   (let [iss (:iss visa)
-                         jku (:jku visa)]
+                   (let [opened-visa (apply merge (jwt/show visa))
+                         iss (:iss opened-visa)
+                         jku (:jku opened-visa)]
                      (when (:log-authentication-details env)
-                       (log/debug "Checking visa " (pr-str visa))
+                       (log/debug "Checking visa " (pr-str visa) opened-visa)
                        (log/debug "Checking issuer whitelist " {:iss iss :jku jku}))
                      (if (issuer-whitelisted? iss jku)
                        (do (when (:log-authentication-details env)
-                             (log/debug "Validating visa" (pr-str visa)))
+                             (log/debug "Validating visa" (pr-str visa) opened-visa))
                            (try (visa->researcher-status-by (jwt/validate-visa visa (Instant/now)))
                                 (catch Throwable t
                                   (log/warn "Invalid visa" t))))
