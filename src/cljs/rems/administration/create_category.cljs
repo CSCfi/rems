@@ -62,18 +62,21 @@
 
 (defn- category-description-field []
   [localized-text-field context {:keys [:description]
-                                 :label (text :t.administration/description)}])
+                                 :label (str (text :t.administration/description) " "
+                                             (text :t.administration/optional))}])
 
 (defn- category-display-order-field []
   [number-field context {:keys [:display-order]
-                         :label (text :t.administration/display-order)}])
+                         :label (str (text :t.administration/display-order) " "
+                                     (text :t.administration/optional))}])
 
 (defn- category-children-field []
   (let [categories @(rf/subscribe [::categories])
         selected-categories @(rf/subscribe [::selected-categories])
         item-selected? (set selected-categories)]
     [:div.form-group
-     [:label.administration-field-label {:for categories-dropdown-id} (text :t.administration/category-children)]
+     [:label.administration-field-label {:for categories-dropdown-id}
+      (str (text :t.administration/category-children) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
        :items categories

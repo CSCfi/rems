@@ -1,5 +1,6 @@
 (ns rems.administration.edit-category
   (:require [clojure.string :as str]
+            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field number-field]]
@@ -46,10 +47,11 @@
   (not (str/blank? (:category/title request))))
 
 (defn build-request [form]
-  (let [request {:category/title (:title form)
-                 :category/description (:description form)
-                 :category/display-order (parse-int (:display-order form))
-                 :category/children (map #(select-keys % [:category/id]) (:categories form))}]
+  (let [request (-> {:category/title (:title form)}
+                    (assoc-some :category/description (:description form))
+                    (assoc-some :category/display-order (parse-int (:display-order form)))
+                    (assoc-some :category/children (seq (map #(select-keys % [:category/id])
+                                                             (:categories form)))))]
     (when (valid-request? request)
       request)))
 
@@ -94,7 +96,8 @@
 
 (defn- category-display-order-field []
   [number-field context {:keys [:display-order]
-                         :label (text :t.administration/display-order)}])
+                         :label (str (text :t.administration/display-order) " "
+                                     (text :t.administration/optional))}])
 
 (defn- category-children-field []
   (let [category-id (:category/id @(rf/subscribe [::category]))
@@ -103,7 +106,8 @@
         selected-categories @(rf/subscribe [::selected-categories])
         item-selected? (set selected-categories)]
     [:div.form-group
-     [:label.administration-field-label {:for categories-dropdown-id} (text :t.administration/category-children)]
+     [:label.administration-field-label {:for categories-dropdown-id}
+      (str (text :t.administration/category-children) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
        :items categories
