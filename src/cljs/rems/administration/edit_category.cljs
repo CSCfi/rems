@@ -1,5 +1,6 @@
 (ns rems.administration.edit-category
   (:require [clojure.string :as str]
+            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field number-field]]
@@ -42,15 +43,31 @@
 (rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
 (rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
 
-(defn- valid-request? [request]
-  (not (str/blank? (:category/title request))))
+(defn- valid-localization? [text]
+  (not (str/blank? text)))
 
-(defn build-request [form]
-  (let [request {:category/title (:title form)
-                 :category/description (:description form)
-                 :category/display-order (parse-int (:display-order form))
-                 :category/children (map #(select-keys % [:category/id]) (:categories form))}]
-    (when (valid-request? request)
+(defn- valid-request? [request languages]
+  (and (= (set languages)
+          (set (keys (:category/title request))))
+       (every? valid-localization? (vals (:category/title request)))
+       (if-some [description (:category/description request)]
+         (and (= (set languages)
+                 (set (keys description)))
+              (every? valid-localization? (vals description)))
+         true)))
+
+(defn- empty-map-is-nil [m]
+  (if (every? str/blank? (vals m))
+    nil
+    m))
+
+(defn build-request [form languages]
+  (let [request (-> {:category/title (:title form)}
+                    (assoc-some :category/description (empty-map-is-nil (:description form)))
+                    (assoc-some :category/display-order (:display-order form))
+                    (assoc-some :category/children (seq (map #(select-keys % [:category/id])
+                                                             (:categories form)))))]
+    (when (valid-request? request languages)
       request)))
 
 (rf/reg-event-fx
@@ -94,7 +111,8 @@
 
 (defn- category-display-order-field []
   [number-field context {:keys [:display-order]
-                         :label (text :t.administration/display-order)}])
+                         :label (str (text :t.administration/display-order) " "
+                                     (text :t.administration/optional))}])
 
 (defn- category-children-field []
   (let [category-id (:category/id @(rf/subscribe [::category]))
@@ -103,7 +121,8 @@
         selected-categories @(rf/subscribe [::selected-categories])
         item-selected? (set selected-categories)]
     [:div.form-group
-     [:label.administration-field-label {:for categories-dropdown-id} (text :t.administration/category-children)]
+     [:label.administration-field-label {:for categories-dropdown-id}
+      (str (text :t.administration/category-children) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
        :items categories
@@ -114,8 +133,8 @@
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))
 
-(defn- save-category-button [form]
-  (let [request (build-request form)]
+(defn- save-category-button [form languages]
+  (let [request (build-request form languages)]
     [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
@@ -139,7 +158,8 @@
 
 (defn edit-category-page []
   (let [loading? @(rf/subscribe [::categories :fetching?])
-        form @(rf/subscribe [::form])]
+        form @(rf/subscribe [::form])
+        languages @(rf/subscribe [:languages])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/edit-category)]
@@ -159,4 +179,4 @@
                    [:div.col.commands
                     [cancel-button]
                     [delete-category-button]
-                    [save-category-button form]]])]}]]))
+                    [save-category-button form languages]]])]}]]))
