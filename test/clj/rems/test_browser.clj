@@ -1145,6 +1145,10 @@
 (defn create-catalogue-item []
   (testing "create catalogue item"
     (btu/with-postmortem
+      (test-helpers/create-category! {:actor "owner"
+                                      :category/title {:en "E2E create-catalogue-item category (EN)"
+                                                       :fi "E2E create-catalogue-item category (FI)"
+                                                       :sv "E2E create-catalogue-item category (SV)"}})
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
@@ -1157,6 +1161,7 @@
       (select-option "Resource" (btu/context-get :resid))
       (when-let [form-name (btu/context-get :form-name)]
         (select-option "Form" form-name))
+      (select-option "Categories" "E2E create-catalogue-item category (EN)")
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
@@ -1174,7 +1179,7 @@
               "Resource" (btu/context-get :resid)
               "Form" (or (btu/context-get :form-name)
                          "")
-              "Categories" ""
+              "Categories" "E2E create-catalogue-item category (EN)"
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
