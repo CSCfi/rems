@@ -73,7 +73,7 @@
      (post! (str "/api/categories/delete")
             {:params {:category/id category-id}
              :handler (flash-message/status-update-handler
-                       :top description #(navigate! "/administration/categories/"))
+                       :top description #(navigate! "/administration/categories"))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

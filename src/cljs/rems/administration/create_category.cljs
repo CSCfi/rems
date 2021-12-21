@@ -1,6 +1,7 @@
 (ns rems.administration.create-category
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [medley.core :refer [assoc-some]]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field number-field]]
             [rems.atoms :as atoms :refer [document-title]]
@@ -30,10 +31,11 @@
   (not (str/blank? (:category/title request))))
 
 (defn build-request [form]
-  (let [request {:category/title (:title form)
-                 :category/description (:description form)
-                 :category/display-order (:display-order form)
-                 :category/children (map #(select-keys % [:category/id]) (:categories form))}]
+  (let [request (-> {:category/title (:title form)}
+                    (assoc-some :category/description (:description form))
+                    (assoc-some :category/display-order (:display-order form))
+                    (assoc-some :category/children (seq (map #(select-keys % [:category/id])
+                                                             (:categories form)))))]
     (when (valid-request? request)
       request)))
 
