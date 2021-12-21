@@ -62,9 +62,9 @@
   (vals @categories-cache))
 
 (defn- get-categorydata [category]
-  (let [display-order(some-> (:category/display-order category)
-                             (max 0)
-                             (min 1000000))]
+  (let [display-order (some-> (:category/display-order category)
+                              (max 0)
+                              (min 1000000))]
     (-> {:category/title (:category/title category)}
         (assoc-some :category/description (:category/description category))
         (assoc-some :category/display-order display-order)
