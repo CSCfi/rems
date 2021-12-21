@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.21.1
+Changes since v2.22
+
+## v2.22 "Vattuniemenkuja" 2021-12-21
 
 ### Additions
 - (Experimental) Catalogue items can be assigned one or more categories and the catalogue shown as a tree grouped by category. There is an admin UI where categories can be created. See (#2768, #2764, #2770, #2769)
