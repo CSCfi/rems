@@ -132,7 +132,7 @@
                               :title (text :t.catalogue/header)
                               :content #(if (:category/id %)
                                           [:div.my-2
-                                           [:h4.mb-0 {:class (str "fs-depth-" (:depth % 0))}
+                                           [:h3.mb-0 {:class (str "fs-depth-" (:depth % 0))}
                                             (get (:category/title %) language)]
                                            (when-let [description (get (:category/description %) language)]
                                              [:div.mt-3 description])]
