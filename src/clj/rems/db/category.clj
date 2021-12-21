@@ -62,10 +62,13 @@
   (vals @categories-cache))
 
 (defn- get-categorydata [category]
-  (-> {:category/title (:category/title category)}
-      (assoc-some :category/description (:category/description category))
-      (assoc-some :category/display-order (:category/display-order category))
-      (assoc-some :category/children (:category/children category))))
+  (let [display-order(some-> (:category/display-order category)
+                             (max 0)
+                             (min 1000000))]
+    (-> {:category/title (:category/title category)}
+        (assoc-some :category/description (:category/description category))
+        (assoc-some :category/display-order display-order)
+        (assoc-some :category/children (:category/children category)))))
 
 (defn- categorydata->json [category]
   (-> (get-categorydata category)
