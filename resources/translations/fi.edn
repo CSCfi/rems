@@ -116,7 +116,8 @@
                    :errors {:dependencies-archived "Arkistoidut riippuvuudet:"
                             :in-use-by "Se on käytössä täällä:"
                             :dependencies-not-found "Puuttuvia riippuvuuksia:"
-                            :self-as-subcategory-disallowed "Kategoriaa ei voi asettaa itsensä alakategoriaksi"}
+                            :self-as-subcategory-disallowed "Kategoriaa ei voi asettaa itsensä alakategoriaksi"
+                            :ancestor-as-subcategory-disallowed "Kategoriaa ei voi asettaa alakategoriaksi, koska se muodostaisi silmukan"}
                    :export-applications "Vie hakemuksia"
                    :external-title "Nimi"
                    :form "Lomake"
