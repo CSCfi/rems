@@ -27,16 +27,31 @@
 (rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
 (rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
 
-(defn- valid-request? [request]
-  (not (str/blank? (:category/title request))))
+(defn- valid-localization? [text]
+  (not (str/blank? text)))
 
-(defn build-request [form]
+(defn- valid-request? [request languages]
+  (and (= (set languages)
+          (set (keys (:category/title request))))
+       (every? valid-localization? (vals (:category/title request)))
+       (if-some [description (:category/description request)]
+         (and (= (set languages)
+                 (set (keys description)))
+              (every? valid-localization? (vals description)))
+         true)))
+
+(defn- empty-map-is-nil [m]
+  (if (every? str/blank? (vals m))
+    nil
+    m))
+
+(defn build-request [form languages]
   (let [request (-> {:category/title (:title form)}
-                    (assoc-some :category/description (:description form))
+                    (assoc-some :category/description (empty-map-is-nil (:description form)))
                     (assoc-some :category/display-order (:display-order form))
                     (assoc-some :category/children (seq (map #(select-keys % [:category/id])
                                                              (:categories form)))))]
-    (when (valid-request? request)
+    (when (valid-request? request languages)
       request)))
 
 (rf/reg-event-fx
@@ -87,8 +102,8 @@
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))
 
-(defn- save-category-button [form]
-  (let [request (build-request form)]
+(defn- save-category-button [form languages]
+  (let [request (build-request form languages)]
     [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
@@ -104,7 +119,8 @@
 
 (defn create-category-page []
   (let [loading? @(rf/subscribe [::categories :fetching?])
-        form @(rf/subscribe [::form])]
+        form @(rf/subscribe [::form])
+        languages @(rf/subscribe [:languages])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-category)]
@@ -123,4 +139,4 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-category-button form]]])]}]]))
+                    [save-category-button form languages]]])]}]]))
