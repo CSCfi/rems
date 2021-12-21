@@ -13,6 +13,7 @@
 (s/defschema CategoryData
   {:category/title schema-base/LocalizedString
    (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/display-order) s/Int
    (s/optional-key :category/children) [schema-base/CategoryId]})
 
 (def ^:private validate-categorydata
@@ -61,9 +62,13 @@
   (vals @categories-cache))
 
 (defn- get-categorydata [category]
-  (-> {:category/title (:category/title category)}
-      (assoc-some :category/description (:category/description category))
-      (assoc-some :category/children (:category/children category))))
+  (let [display-order (some-> (:category/display-order category)
+                              (max 0)
+                              (min 1000000))]
+    (-> {:category/title (:category/title category)}
+        (assoc-some :category/description (:category/description category))
+        (assoc-some :category/display-order display-order)
+        (assoc-some :category/children (:category/children category)))))
 
 (defn- categorydata->json [category]
   (-> (get-categorydata category)

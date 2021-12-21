@@ -73,6 +73,7 @@
        :always [:div
                 [localized-info-field (:category/title @category) {:label (text :t.administration/title)}]
                 [localized-info-field (:category/description @category) {:label (text :t.administration/description)}]
+                [inline-info-field (text :t.administration/display-order) (:category/display-order @category)]
                 [inline-info-field (text :t.administration/category-children)
                  (when-let [categories (:category/children @category)]
                    (doall (interpose ", " (for [cat categories]

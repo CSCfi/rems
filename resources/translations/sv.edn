@@ -100,6 +100,7 @@
                    :disable "Avaktivera"
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
                    :display-archived "Visa arkiverade"
+                   :display-order "Visningsordning"
                    :duo {:codes "DUO koder"
                          :code "DUO kod"
                          :description "Rubrik"

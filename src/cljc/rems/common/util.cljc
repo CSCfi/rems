@@ -478,6 +478,19 @@
   (is (= nil (parse-int "a")))
   (is (= 7 (parse-int "7"))))
 
+(defn clamp
+  "Clamps `x` to be between `low` and `high` inclusive."
+  [x low high]
+  (-> x
+      (min high)
+      (max low)))
+
+(deftest test-clamp
+  (is (= 0 (clamp -1 0 1)))
+  (is (= 0 (clamp 1 0 0)))
+  (is (= 1 (clamp 2 0 1)))
+  (is (= 0 (clamp 0 0 1))))
+
 (defn remove-empty-keys
   "Given a map, recursively remove keys with empty map or nil values.
 

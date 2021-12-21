@@ -102,6 +102,7 @@
                    :disable "Disable"
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
+                   :display-order "Display order"
                    :duo {:codes "DUO codes"
                          :code "DUO code"
                          :description "Description"

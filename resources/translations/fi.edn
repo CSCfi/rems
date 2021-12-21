@@ -100,6 +100,7 @@
                    :disable "Poista käytöstä"
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
+                   :display-order "Näyttöjärjestys"
                    :duo {:codes "DUO koodit"
                          :code "DUO koodi"
                          :description "Kuvaus"

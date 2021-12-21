@@ -59,6 +59,9 @@
  (fn [[categories language] _]
    (map (fn [category]
           {:key (:category/id category)
+           :display-order {:value (:category/display-order category)
+                           :sort-value [(:category/display-order category 2147483647)  ; can't use Java Integer/MAX_VALUE here but anything that is not set is last
+                                        (get-in category [:category/title language])]} ; secondary sort-key is the same in the catalogue
            :title {:value (get-in category [:category/title language])}
            :description {:value (get-in category [:category/description language])}
            :commands {:td [:td.commands
@@ -69,7 +72,9 @@
 
 (defn- categories-list []
   (let [categories-table {:id ::categories
-                          :columns [{:key :title
+                          :columns [{:key :display-order
+                                     :title (text :t.administration/display-order)}
+                                    {:key :title
                                      :title (text :t.administration/category)}
                                     {:key :description
                                      :title (text :t.administration/description)}
@@ -77,7 +82,7 @@
                                      :sortable? false
                                      :filterable? false}]
                           :rows [::categories-table-rows]
-                          :default-sort-column :title}]
+                          :default-sort-column :display-order}]
     [:div.mt-3
      [table/search categories-table]
      [table/table categories-table]]))

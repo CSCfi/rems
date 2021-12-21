@@ -15,6 +15,7 @@
         create-category-data {:category/title {:fi "integraatiotesti"
                                                :sv "integrationstest"
                                                :en "integration test"}
+                              :category/display-order 10000000 ; will be capped to max value
                               :category/description {:fi "integraatiotesti"
                                                      :sv "integrationstest"
                                                      :en "integration test"}
@@ -37,7 +38,8 @@
           (let [result (api-call :get (str "/api/categories/" (:category/id category)) nil
                                  +test-api-key+ owner)
                 expected (merge create-category-data
-                                {:category/id (:category/id category)})]
+                                {:category/id (:category/id category)
+                                 :category/display-order 1000000})]
             (is (= expected result))))))
 
     (testing "adding category as children"
@@ -59,7 +61,9 @@
                                  +test-api-key+ owner)
                 expected (merge create-category-data
                                 {:category/id (:category/id category)
-                                 :category/children [(merge {:category/id (:category/id dep-category)}
+                                 :category/display-order 1000000
+                                 :category/children [(merge {:category/id (:category/id dep-category)
+                                                             :category/display-order 1000000}
                                                             (select-keys create-category-data
                                                                          [:category/title :category/description :category/children]))]})]
             (is (= expected result))))))
