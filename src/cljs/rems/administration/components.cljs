@@ -20,6 +20,7 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.common.roles :as roles]
+            [rems.common.util :refer [clamp parse-int]]
             [rems.text :refer [text text-format]]))
 
 (defn- key-to-id [key]
@@ -78,6 +79,7 @@
   [context keys]
   (input-field (merge keys {:context context
                             :type "number"
+                            :normalizer #(some-> % parse-int (clamp (:min keys 0) (:max keys 1000000)))
                             :min 0
                             :max 1000000})))
 
