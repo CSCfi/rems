@@ -2082,35 +2082,46 @@
     (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true)))  ; avoid no assertions warning
 
-(deftest test-categories
-  (test-helpers/create-category! {:actor "owner"
-                                  :category/title {:en "E2E category 1 (EN)"
-                                                   :fi "E2E category 1 (FI)"
-                                                   :sv "E2E category 1 (SV)"}})
-  (test-helpers/create-category! {:actor "owner"
-                                  :category/title {:en "E2E category 2 (EN)"
-                                                   :fi "E2E category 2 (FI)"
-                                                   :sv "E2E category 2 (SV)"}})
+(defn fill-category-fields [{:keys [title description display-order categories]}]
+  (btu/fill-human :title-en (str title " (EN)"))
+  (btu/fill-human :title-fi (str title " (FI)"))
+  (btu/fill-human :title-sv (str title " (SV)"))
+  (when description
+    (btu/fill-human :description-en (str description " (EN)"))
+    (btu/fill-human :description-fi (str description " (FI)"))
+    (btu/fill-human :description-sv (str description " (SV)")))
+  (when display-order
+    (btu/fill-human :display-order (str display-order)))
+  (when (seq categories)
+    (doall
+     (for [cat categories]
+       (select-option "Subcategories" cat)))))
 
+(defn navigate-to-categories []
+  (go-to-admin "Catalogue items")
+  (is (btu/eventually-visible? :catalogue))
+  (btu/scroll-and-click {:fn/text "Manage categories"})
+  (is (btu/eventually-visible? :categories)))
+
+(defn navigate-to-category [title]
+  (navigate-to-categories)
+  (btu/fill-human :categories-search title)
+  (btu/click-el (btu/query {:css ".commands > *" :fn/text "View"}))
+  (is (btu/eventually-visible? :category)))
+
+(deftest test-categories
   (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Catalogue items")
     (btu/scroll-and-click {:fn/text "Manage categories"})
     (is (btu/eventually-visible? :categories))
 
-
     (testing "create new category"
       (btu/scroll-and-click :create-category)
       (is (btu/eventually-visible? :create-category))
-
-      (btu/fill-human :title-en "E2E Test category (EN)")
-      (btu/fill-human :title-fi "E2E Test category (FI)")
-      (btu/fill-human :title-sv "E2E Test category (SV)")
-      (btu/fill-human :description-en "Description (EN)")
-      (btu/fill-human :description-fi "Description (FI)")
-      (btu/fill-human :description-sv "Description (SV)")
-      (select-option "Subcategories" "E2E category 1 (EN)")
-      (select-option "Subcategories" "E2E category 2 (EN)")
+      (fill-category-fields {:title "E2E Test category"
+                             :description "Description"
+                             :display-order 1})
       (btu/scroll-and-click :save)
 
       (testing "after create"
@@ -2121,13 +2132,13 @@
                 "Description (EN)" "Description (EN)"
                 "Description (FI)" "Description (FI)"
                 "Description (SV)" "Description (SV)"
-                "Subcategories" "E2E category 1 (EN), E2E category 2 (EN)"}
+                "Display order" "1"
+                "Subcategories" ""}
                (slurp-fields :category)))))
 
     (testing "edit category"
-      (btu/scroll-and-click {:tag :a :fn/text "Edit"})
-      (is (btu/eventually-visible? :edit-category))
-
+      (navigate-to-category "E2E Test category (EN)")
+      (btu/scroll-and-click {:fn/text "Edit"})
       (btu/clear :title-en)
       (btu/fill-human :title-en "Edited title (EN)")
       (doall
@@ -2143,8 +2154,42 @@
                 "Description (EN)" "Description (EN)"
                 "Description (FI)" "Description (FI)"
                 "Description (SV)" "Description (SV)"
+                "Display order" "1"
                 "Subcategories" ""}
                (slurp-fields :category)))))
+
+    (testing "shows error on updating ancestor category as child"
+      (navigate-to-categories)
+
+      (testing "create ancestor category"
+        (btu/scroll-and-click :create-category)
+        (is (btu/eventually-visible? :create-category))
+        (fill-category-fields {:title "E2E Ancestor category"
+                               :description "Description"
+                               :categories ["Edited title (EN)"]})
+        (btu/scroll-and-click :save)
+
+        (testing "after create"
+          (is (btu/eventually-visible? :category))
+          (is (= {"Title (EN)" "E2E Ancestor category (EN)"
+                  "Title (FI)" "E2E Ancestor category (FI)"
+                  "Title (SV)" "E2E Ancestor category (SV)"
+                  "Description (EN)" ""
+                  "Description (FI)" ""
+                  "Description (SV)" ""
+                  "Display order" ""
+                  "Subcategories" ""}
+                 (slurp-fields :category)))))
+
+      (navigate-to-category "Edited title (EN)")
+      (btu/scroll-and-click {:fn/text "Edit"})
+      (select-option "Subcategories" "E2E Ancestor category (EN)")
+      (btu/scroll-and-click {:fn/text "Save"})
+      (is (= ["Save: Failed"
+              "Cannot set category as subcategory, because it would create a loop"
+              "Category: E2E Ancestor category (EN)"]
+             (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
+                 (str/split-lines)))))
 
     (testing "delete category"
       (btu/scroll-and-click :delete)
