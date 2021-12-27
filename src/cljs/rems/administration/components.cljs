@@ -38,41 +38,6 @@
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
-(defn date-bound-field [context {:keys [keys label]}]
-  (let [form @(rf/subscribe [(:get-form context)])
-        form-errors (when (:get-form-errors context)
-                      @(rf/subscribe [(:get-form-errors context)]))
-        value (get-in form keys)
-        id (keys-to-id keys)
-        error (get-in form-errors keys)
-        [field-keys this-bound] ((juxt butlast last) keys)
-        field-state (get-in form field-keys)
-        other-bound ({:date-bounds/min-date :date-bounds/max-date
-                      :date-bounds/max-date :date-bounds/min-date} this-bound)
-        other-bound-value (get field-state other-bound)
-        [min max] (when (= :both (:date-bounds/type field-state))
-                    ({:date-bounds/max-date [other-bound-value nil]
-                      :date-bounds/min-date [nil other-bound-value]} this-bound))]
-    [:div.field
-     [:label
-      {:for id :class "col-sm-auto col-form-label"}
-      label]
-     [:div
-      [:input.form-control {:type "date"
-                            :id id
-                            :name id
-                            :class (when error "is-invalid")
-                            :value (get-in form keys)
-                            :required true
-                            :aria-required true
-                            :aria-invalid (when error true)
-                            :aria-describedby (when error (str id "-error"))
-                            :min min
-                            :max max
-                            :on-change #(rf/dispatch [(:update-form context)
-                                                      keys (.. % -target -value)])}]
-      [field-validation-message error label]]]))
-
 (defn input-field [{:keys [keys label placeholder context type normalizer readonly inline?]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)

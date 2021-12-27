@@ -166,7 +166,7 @@
                             (boolean (:field/optional field))
                             false)}
          (when (common-form/supports-date-bounds? field)
-           (when-let [past-or-future (#{:past :future} (get-in field [:field/date-bounds :date-bounds/type]))]
+           (when-let [past-or-future (#{:past :future} (get field :field/date-bounds))]
              {:field/date-bounds past-or-future}))
          (when (common-form/supports-info-text? field)
            (when-let [v (build-localized-string (:field/info-text field) languages)]
@@ -420,19 +420,7 @@
 (rf/reg-event-db
  ::form-field-date-bounds-type
  (fn [db [_ field-index date-bounds-type]]
-   (assoc-in db [::form :data :form/fields field-index :field/date-bounds :date-bounds/type] date-bounds-type)))
-
-(rf/reg-event-db
- ::form-field-date-bounds-field
- (fn [db [_ field-index date-bounds-field]]
-   (assoc-in db [::form :data :form/fields field-index :field/date-bounds :date-bounds/field] date-bounds-field)))
-
-(rf/reg-event-db
- ::form-field-date-bounds-values
- (fn [db [_ field-index date-bounds]]
-   (assoc-in db
-             [::form :data :form/fields field-index :field/date-bounds :date-bounds/values]
-             date-bounds)))
+   (assoc-in db [::form :data :form/fields field-index :field/date-bounds] date-bounds-type)))
 
 (defn- form-field-date-bounds
   "Component for specifying date form field date bounds"
@@ -443,11 +431,9 @@
         suffixes ["type" "value"]
         get-error #(get-in form-errors [:form/fields field-index :field/date-bounds (keyword "date-bounds" %)])
         id-string #(str "fields-" field-index "--" %)
-        date-bounds (get-in form [:form/fields field-index :field/date-bounds])
-        get-date-bounds #(get date-bounds (keyword "date-bounds" %))
+        date-bounds-type (get-in form [:form/fields field-index :field/date-bounds])
         [error-type error-value] (map get-error suffixes)
         [id-type id-value] (map id-string suffixes)
-        [date-bounds-type date-bounds-value] (map get-date-bounds suffixes)
         label-type (text :t.create-form/type-date-bounds)]
      [:div.form-group.field.row {:id (str "container-field" field-index)}
       [:label.col-sm-2.col-form-label {:for id-type} label-type]
