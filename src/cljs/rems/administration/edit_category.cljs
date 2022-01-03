@@ -152,7 +152,7 @@
 
 (defn- cancel-button []
   (let [category (rf/subscribe [::category])]
-    [atoms/link {:class "btn btn-secondary"}
+    [atoms/link {:class "btn btn-secondary" :id :cancel}
      (str "/administration/categories/" (:category/id @category))
      (text :t.administration/cancel)]))
 

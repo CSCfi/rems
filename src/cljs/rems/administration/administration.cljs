@@ -14,7 +14,7 @@
 
 (defn back-button [href]
   (let [previous-page @(rf/subscribe [::previous-page])]
-    [atoms/link {:class "btn btn-secondary"}
+    [atoms/link {:class "btn btn-secondary" :id :back}
      (or previous-page href)
      (text :t.administration/back)]))
 

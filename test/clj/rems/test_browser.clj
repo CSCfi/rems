@@ -2121,9 +2121,7 @@
 (deftest test-categories
   (btu/with-postmortem
     (login-as "owner")
-    (go-to-admin "Catalogue items")
-    (btu/scroll-and-click {:fn/text "Manage categories"})
-    (is (btu/eventually-visible? :categories))
+    (navigate-to-categories)
 
     (testing "create new category"
       (btu/scroll-and-click :create-category)
@@ -2146,15 +2144,12 @@
                (slurp-fields :category)))))
 
     (testing "edit category"
-      (btu/scroll-and-click {:fn/text "Back"})
+      (btu/scroll-and-click :back)
       (navigate-to-category "E2E Test category (EN)")
-      (btu/scroll-and-click {:fn/text "Edit"})
+      (btu/scroll-and-click :edit)
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
       (btu/fill-human :title-en "Edited title (EN)")
-      (doall
-       (for [subcategory-remove-button (btu/query-all {:css "div.dropdown-select__multi-value__remove"})]
-         (btu/click-el subcategory-remove-button)))
       (btu/scroll-and-click :save)
 
       (testing "after edit"
@@ -2170,13 +2165,14 @@
                (slurp-fields :category)))))
 
     (testing "shows error on updating ancestor category as child"
-      (btu/scroll-and-click {:fn/text "Back"})
+      (btu/scroll-and-click :back)
 
       (testing "create ancestor category"
         (btu/scroll-and-click :create-category)
         (is (btu/eventually-visible? :create-category))
         (fill-category-fields {:title "E2E Ancestor category"
                                :description "Description"
+                               :display-order 2
                                :categories ["Edited title (EN)"]})
         (btu/scroll-and-click :save)
 
@@ -2188,16 +2184,16 @@
                   "Description (EN)" "Description (EN)"
                   "Description (FI)" "Description (FI)"
                   "Description (SV)" "Description (SV)"
-                  "Display order" ""
+                  "Display order" "2"
                   "Subcategories" "Edited title (EN)"}
                  (slurp-fields :category)))))
 
-      (btu/scroll-and-click {:fn/text "Back"})
+      (btu/scroll-and-click :back)
       (navigate-to-category "Edited title (EN)")
-      (btu/scroll-and-click {:fn/text "Edit"})
+      (btu/scroll-and-click :edit)
       (btu/wait-visible :categories-dropdown)
       (select-option "Subcategories" "E2E Ancestor category (EN)")
-      (btu/scroll-and-click {:fn/text "Save"})
+      (btu/scroll-and-click :save)
       (btu/wait-visible {:css "#flash-message-top"})
       (is (= ["Save: Failed"
               "Cannot set category as subcategory, because it would create a loop"
@@ -2205,7 +2201,8 @@
              (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
                  (str/split-lines))))
 
-      (testing "show dependency error on delete category"
+      (testing "shows dependency error on delete category"
+        (btu/scroll-and-click :cancel)
         (btu/scroll-and-click :delete)
         (btu/wait-has-alert)
         (btu/accept-alert)
@@ -2217,7 +2214,7 @@
                    (str/split-lines))))))
 
     (testing "delete category"
-      (testing "contains created categories before delete"
+      (testing "should contain created categories before delete"
         (navigate-to-categories)
         (is (= #{"Edited title (EN)" "E2E Ancestor category (EN)"}
                (->> (set (slurp-categories-by-title))
