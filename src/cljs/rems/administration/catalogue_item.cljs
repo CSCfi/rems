@@ -6,10 +6,11 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text]]
+            [rems.text :refer [get-localized-title localize-time localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -39,6 +40,11 @@
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/catalogue-items/edit/" id)
    (text :t.administration/edit)])
+
+(defn- manage-categories-button []
+  [atoms/link {:class "btn btn-primary"}
+   "/administration/categories"
+   (text :t.administration/manage-categories)])
 
 (defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3
@@ -70,6 +76,16 @@
                         [atoms/link nil
                          (str "/administration/forms/" (:formid catalogue-item))
                          (:form-name catalogue-item)])]
+                     [inline-info-field (text :t.administration/categories)
+                      (when-let [categories (:categories catalogue-item)]
+                        (interpose
+                         ", "
+                         (doall
+                          (for [cat categories]
+                            ^{:key (:category/id cat)}
+                            [atoms/link nil
+                             (str "/administration/categories/" (:category/id cat))
+                             (localized (:category/title cat))]))))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
@@ -79,7 +95,8 @@
       [roles/show-when roles/+admin-write-roles+
        [edit-button id]
        [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]])])
+       [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]
+      [manage-categories-button]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

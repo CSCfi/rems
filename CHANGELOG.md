@@ -6,7 +6,20 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.21
+Changes since v2.22
+
+## v2.22 "Vattuniemenkuja" 2021-12-21
+
+### Additions
+- (Experimental) Catalogue items can be assigned one or more categories and the catalogue shown as a tree grouped by category. There is an admin UI where categories can be created. See (#2768, #2764, #2770, #2769)
+
+### Breaking changes
+- The API used to return disabled items for all users, but in the future only for administrative users. The disabled items were never visible to normal users in our UI. This may technically break the usage of the catalogue API if a regular user or public catalogue is used.
+
+## v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-23
+
+### Fixes
+- Attachment uploading resulted in broken or empty files due to improper stream handling, this behaviour is now fixed. (#2786)
 
 ## v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04
 

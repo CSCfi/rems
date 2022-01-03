@@ -32,7 +32,8 @@
    :enabled s/Bool
    :archived s/Bool
    :expired s/Bool
-   :localizations CatalogueItemLocalizations})
+   :localizations CatalogueItemLocalizations
+   (s/optional-key :categories) [schema-base/Category]})
 
 (s/defschema License
   {:id s/Int
@@ -279,3 +280,22 @@
    :size s/Int
    (s/optional-key :error) s/Keyword
    (s/optional-key :tempfile) File})
+
+(s/defschema CategoryTree
+  (merge schema-base/Category
+         {(s/optional-key :category/children) [(s/recursive #'CategoryTree)]
+          (s/optional-key :category/items) [CatalogueItem]}))
+
+(s/defschema CreateCategoryCommand
+  {:category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/display-order) s/Int
+   (s/optional-key :category/children) [schema-base/CategoryId]})
+
+(s/defschema UpdateCategoryCommand
+  (merge CreateCategoryCommand
+         schema-base/CategoryId))
+
+(s/defschema DeleteCategoryCommand
+  schema-base/CategoryId)
+

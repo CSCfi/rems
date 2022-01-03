@@ -20,6 +20,7 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.common.roles :as roles]
+            [rems.common.util :refer [clamp parse-int]]
             [rems.text :refer [text text-format]]))
 
 (defn- key-to-id [key]
@@ -36,7 +37,7 @@
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
-(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline? input-style]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline? input-style] :as opts}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
@@ -50,16 +51,17 @@
                        "administration-field-label")}
       label]
      [:div {:class (when inline? "col")}
-      [:input.form-control {:type type
-                            :id id
-                            :style input-style
-                            :disabled readonly
-                            :placeholder placeholder
-                            :class (when error "is-invalid")
-                            :value (get-in form keys)
-                            :on-change #(rf/dispatch [(:update-form context)
-                                                      keys
-                                                      (normalizer (.. % -target -value))])}]
+      [:input.form-control (merge {:type type
+                                   :id id
+                                   :style input-style
+                                   :disabled readonly
+                                   :placeholder placeholder
+                                   :class (when error "is-invalid")
+                                   :value (get-in form keys)
+                                   :on-change #(rf/dispatch [(:update-form context)
+                                                             keys
+                                                             (normalizer (.. % -target -value))])}
+                                  (select-keys opts [:min :max]))]
       [field-validation-message error label]]]))
 
 (defn text-field
@@ -71,6 +73,15 @@
   "A basic text field, label next to field"
   [context keys]
   (input-field (merge keys {:context context :type "text" :inline? true})))
+
+(defn number-field
+  "A basic number field, full page width."
+  [context keys]
+  (input-field (merge keys {:context context
+                            :type "number"
+                            :normalizer #(some-> % parse-int (clamp (:min keys 0) (:max keys 1000000)))
+                            :min 0
+                            :max 1000000})))
 
 (defn textarea-autosize
   "A basic textarea, full page width."
@@ -198,6 +209,16 @@
 
 (defn inline-info-field [text value & [opts]]
   [info-field text value (merge {:inline? true} opts)])
+
+(defn localized-info-field
+  "An info field for displaying text in all supported languages.
+  The data is passed in as a map of language to text."
+  [m {:keys [label]}]
+  (let [languages @(rf/subscribe [:languages])
+        to-label #(str label " (" (str/upper-case (name %)) ")")]
+    (into [:<>]
+          (for [lang languages]
+            [inline-info-field (to-label lang) (get m lang)]))))
 
 (defn organization-field [context {:keys [keys readonly]}]
   (let [label (text :t.administration/organization)

@@ -18,6 +18,7 @@
             [rems.profile :as profile]
             [rems.spinner :as spinner]
             [rems.table :as table]
+            [rems.tree :as tree]
             [rems.user :as user]))
 
 (defn color-box [id hex]
@@ -129,6 +130,7 @@
 
     [:h2 "Misc components"]
     [table/guide]
+    [tree/guide]
     [dropdown/guide]
     [phase/guide]
     [atoms/guide]

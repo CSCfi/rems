@@ -13,7 +13,11 @@
               :resource {:id 456
                          :organization {:organization/id "organization1"}}
               :form {:form/id 789
-                     :organization {:organization/id "organization1"}}}
+                     :organization {:organization/id "organization1"}}
+              :categories [{:category/id 1
+                            :category/title {:fi "fi" :en "en" :sv "sv"}
+                            :category/description {:fi "fi" :en "en" :sv "sv"}
+                            :category/children []}]}
         languages [:en :fi]]
 
     (testing "valid form"
@@ -24,7 +28,8 @@
               :localizations {:en {:title "en title"
                                    :infourl "hello"}
                               :fi {:title "fi title"
-                                   :infourl nil}}}
+                                   :infourl nil}}
+              :categories [{:category/id 1}]}
              (build-request form languages))))
 
     (testing "missing form"
@@ -35,7 +40,8 @@
               :localizations {:en {:title "en title"
                                    :infourl "hello"}
                               :fi {:title "fi title"
-                                   :infourl nil}}}
+                                   :infourl nil}}
+              :categories [{:category/id 1}]}
              (build-request (assoc form :form nil)
                             languages))))
 

@@ -279,6 +279,86 @@
   (is (= {false 1 true 2}
          (index-by [even?] [1 2 3 4]))))
 
+(defn build-dags
+  "Builds a tree out of `coll` with a parent having children `:children-fn`
+  and maps values with given `:value-fn`.
+
+  The identity of a node must be unique, but it can appear in several places of the tree
+  as long as it does not have any cycles. Cycles will cause the nodes not to appear in the result.
+
+  `:id-fn`           - gives the identity of a value
+  `:child-id-fn`     - gives the identity of a child
+  `:children-fn`     - gives the children of a tree node, single or seq value allowed
+  `:set-children-fn` - sets the children of a tree node
+  `:value-fn`        - the value of a tree node, defaults to `identity`
+
+  Results is nested map, e.g.
+    (build-dags {:id-fn :a
+                 :children-fn :c}
+                 [{:a 1} {:a 2 :c [1]}])
+      ==> {:a 2 :c [{:a 1}]}"
+  [{:keys [id-fn child-id-fn children-fn set-children-fn value-fn]
+    :or {child-id-fn identity
+         set-children-fn (fn [node children]
+                           (if (seq children)
+                             (assoc node children-fn children)
+                             node))
+         value-fn identity}}
+   coll]
+  (let [children-set (set (for [x coll
+                                child (children-fn x)
+                                :when child]
+                            (child-id-fn child)))
+        roots (remove (comp children-set id-fn) coll)
+        node-by-id (index-by [id-fn] coll)]
+    (letfn [(expand-node [node]
+              (set-children-fn (value-fn node)
+                               (mapv (comp value-fn expand-node node-by-id child-id-fn)
+                                     (children-fn node))))]
+      (mapv expand-node roots))))
+
+(deftest test-build-dags
+  (is (= [{:id 3
+           :children [{:id 1
+                       :unrelated "x"}
+                      {:id 2
+                       :unrelated "z"
+                       :children [{:id 1
+                                   :unrelated "x"}]}]}
+          {:id 4
+           :unrelated "y"}]
+         (build-dags {:id-fn :id
+                      :children-fn :children}
+                     [{:id 1 :unrelated "x"}
+                      {:id 2 :unrelated "z" :children [1]}
+                      {:id 3 :children [1 2]}
+                      {:id 4 :unrelated "y"}])))
+
+  (is (= [{:id 3
+           :children [{:id 1
+                       :unrelated "x"}
+                      {:id 2
+                       :unrelated "z"
+                       :children [{:id 1
+                                   :unrelated "x"}]}]}]
+         (build-dags {:id-fn :id
+                      :child-id-fn :id
+                      :children-fn :children}
+                     [{:id 1 :unrelated "x"}
+                      {:id 2 :unrelated "z" :children [{:id 1}]}
+                      {:id 3 :children [{:id 1} {:id 2}]}])))
+
+  (testing "cyclic data"
+    (is (= [{:id 5 :unrelated "survives"}]
+           (build-dags {:id-fn :id
+                        :child-id-fn :id
+                        :children-fn :children}
+                       [{:id 1 :unrelated "x" :children [{:id 3}]}
+                        {:id 2 :unrelated "y" :children [{:id 1}]}
+                        {:id 3 :unrelated "z" :children [{:id 2} {:id 4}]}
+                        {:id 4 :unrelated "is destroyed in a cycle"}
+                        {:id 5 :unrelated "survives"}])))))
+
 (defn distinct-by
   "Remove duplicates from sequence, comparing the value returned by key-fn.
    The first element that key-fn returns a given value for is retained.
@@ -398,6 +478,19 @@
   (is (= nil (parse-int "a")))
   (is (= 7 (parse-int "7"))))
 
+(defn clamp
+  "Clamps `x` to be between `low` and `high` inclusive."
+  [x low high]
+  (-> x
+      (min high)
+      (max low)))
+
+(deftest test-clamp
+  (is (= 0 (clamp -1 0 1)))
+  (is (= 0 (clamp 1 0 0)))
+  (is (= 1 (clamp 2 0 1)))
+  (is (= 0 (clamp 0 0 1))))
+
 (defn remove-empty-keys
   "Given a map, recursively remove keys with empty map or nil values.
 
@@ -436,3 +529,28 @@
   (is (= (assoc-some-in {} [:a :b] 1) {:a {:b 1}}))
   (is (= (assoc-some-in {:a {:b 1}} [:a :b] 2) {:a {:b 2}}))
   (is (= (assoc-some-in {:a {:b 1}} [:a :b] nil) {:a {:b 1}})))
+
+(defn replace-key
+  "Replaces key `k1` with key `k2` in map `m`.
+   If `k1` does not exist in `m`, returns `m`.
+
+   **Examples:**
+   ```clojure
+   (replace-key {:a 1} :a :b)
+   ;;=> {:b 1}
+
+   (replace-key {:a 1} :b :c)
+   ;;=> {:a 1}
+   ```"
+  [m k1 k2]
+  (if (contains? m k1)
+    (-> (assoc m k2 (get m k1))
+        (dissoc k1))
+    m))
+
+(deftest test-replace-key
+  (is (= {} (replace-key {} :a :b)))
+  (is (= nil (replace-key nil :a :b)))
+  (is (= [] (replace-key [] :a :b)))
+  (is (= {:b 1} (replace-key {:a 1} :a :b)))
+  (is (= {:a 1} (replace-key {:a 1} :b :c))))

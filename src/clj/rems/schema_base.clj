@@ -98,3 +98,18 @@
          {(s/optional-key :shorthand) (s/maybe s/Str)
           :label LocalizedString
           :description LocalizedString}))
+
+(s/defschema CategoryId
+  {:category/id s/Int})
+
+(s/defschema Category
+  (merge CategoryId
+         {:category/title LocalizedString
+          (s/optional-key :category/description) LocalizedString
+          (s/optional-key :category/display-order) s/Int
+          (s/optional-key :category/children) [CategoryId]}))
+
+(s/defschema CategoryFull
+  (merge Category
+         {(s/optional-key :category/children) [Category]}))
+

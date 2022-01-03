@@ -8,7 +8,7 @@
   (:import [java.io ByteArrayOutputStream InputStream OutputStream]))
 
 (defn size-checking-copy
-  "Basically what `io/copy` does bit with size checking."
+  "Basically what `io/copy` does but with size checking."
   [^InputStream input ^OutputStream output opts]
   (let [buffer (make-array Byte/TYPE (:buffer-size opts 1024))
         max-size (:max-size opts)]
@@ -30,6 +30,9 @@
                  [maybe-error (seq (.toByteArray output))]))]
     (testing "default parameters, essentially infinite"
       (is (= [nil data] (copy {}))))
+
+    (testing "small buffer size is no problem"
+      (is (= [nil data] (copy {:buffer-size 3}))))
 
     (testing "too large, chunked behavior"
       (is (= [:too-large [0 1]] (copy {:buffer-size 2 :max-size 3}))
@@ -58,7 +61,8 @@
      (fn [item]
        (force clean-up)
        (let [temp-file (#'ring.middleware.multipart-params.temp-file/make-temp-file file-set)
-             maybe-error (size-checking-copy (:stream item) (io/output-stream temp-file) options)]
+             maybe-error (with-open [os (io/output-stream temp-file)]
+                           (size-checking-copy (:stream item) os options))]
          (when maybe-error
            (log/error "Upload is too large, filename" (:filename item) "max size" max-size))
          (-> (select-keys item [:filename :content-type])

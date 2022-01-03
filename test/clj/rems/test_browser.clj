@@ -304,7 +304,7 @@
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
-      (add-to-cart "Private form workflow")
+      (add-to-cart "Default workflow with private form")
       ;; (add-to-cart "Default workflow with DUO codes")
       (btu/gather-axe-results)
       (click-cart-apply)
@@ -453,6 +453,12 @@
         (accept-licenses)
         (btu/gather-axe-results)
 
+        (testing "attachment download"
+          (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
+          (btu/wait-for-downloads "test.txt")
+          (is (= (slurp "test-data/test.txt")
+                 (slurp (first (btu/downloaded-files "test.txt"))))))
+
         (send-application)
         (btu/gather-axe-results)
 
@@ -476,7 +482,7 @@
               (btu/gather-axe-results)
 
               (is (= {:id (btu/context-get :application-id)
-                      :resource "Default workflow, Private form workflow"
+                      :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
                       :description "Test name"}
                      (get-application-summary (btu/context-get :application-id)))))
@@ -1139,6 +1145,10 @@
 (defn create-catalogue-item []
   (testing "create catalogue item"
     (btu/with-postmortem
+      (test-helpers/create-category! {:actor "owner"
+                                      :category/title {:en "E2E create-catalogue-item category (EN)"
+                                                       :fi "E2E create-catalogue-item category (FI)"
+                                                       :sv "E2E create-catalogue-item category (SV)"}})
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
@@ -1151,6 +1161,7 @@
       (select-option "Resource" (btu/context-get :resid))
       (when-let [form-name (btu/context-get :form-name)]
         (select-option "Form" form-name))
+      (select-option "Categories" "E2E create-catalogue-item category (EN)")
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
@@ -1168,6 +1179,7 @@
               "Resource" (btu/context-get :resid)
               "Form" (or (btu/context-get :form-name)
                          "")
+              "Categories" "E2E create-catalogue-item category (EN)"
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
@@ -1265,6 +1277,7 @@
             "More info URL (optional) (FI)" ""
             "More info URL (optional) (SV)" ""
             "Form" "test-edit-catalogue-item form"
+            "Categories" "No categories"
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"}
            (slurp-fields :catalogue-item-editor)))
@@ -1281,6 +1294,7 @@
             "More info (FI)" ""
             "More info (SV)" ""
             "Form" "test-edit-catalogue-item form"
+            "Categories" ""
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"
             "End" ""
@@ -1304,6 +1318,7 @@
                 "More info URL (optional) (FI)" ""
                 "More info URL (optional) (SV)" ""
                 "Form" "test-edit-catalogue-item form"
+                "Categories" "No categories"
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"}
                (dissoc (slurp-fields :create-catalogue-item) "Start"))))
@@ -1319,6 +1334,7 @@
                 "More info (FI)" ""
                 "More info (SV)" ""
                 "Form" "test-edit-catalogue-item form"
+                "Categories" ""
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"
                 "End" ""

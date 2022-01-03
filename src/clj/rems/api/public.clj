@@ -34,7 +34,10 @@
    :dev s/Bool
    (s/optional-key :enable-ega) s/Bool
    (s/optional-key :enable-doi) s/Bool
-   (s/optional-key :enable-duo) s/Bool})
+   (s/optional-key :enable-duo) s/Bool
+   (s/optional-key :enable-catalogue-table) s/Bool
+   (s/optional-key :enable-catalogue-tree) s/Bool
+   (s/optional-key :catalogue-tree-show-matching-parents) s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -75,7 +78,10 @@
                             :enable-ega
                             :enable-doi
                             :enable-duo
-                            :attachment-max-size])))
+                            :attachment-max-size
+                            :enable-catalogue-table
+                            :enable-catalogue-tree
+                            :catalogue-tree-show-matching-parents])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"

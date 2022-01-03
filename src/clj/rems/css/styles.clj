@@ -234,13 +234,23 @@
      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
-     [(s/& (s/nth-child "2n"))
-      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
-                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
-      {:background-color (theme-getx :table-stripe-color :table-bgcolor :color1)}
-      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]]]
+     (when (theme-getx :table-stripe-color nil)
+       [(s/& (s/nth-child "2n"))
+        [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                   :background-color (theme-getx :table-hover-bgcolor :color2)}]
+        {:background-color (theme-getx :table-stripe-color :table-bgcolor)}
+        [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]])]
+
     [:td.commands:last-child {:text-align "right"
-                              :padding-right (u/rem 1)}]]
+                              :padding-right (u/rem 1)}]
+
+    (for [i (range 10)]
+      [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
+    (for [i (range 10)]
+      [(str ".fs-depth-" i) {:font-size (str (format "%.2f" (+ 0.75 (Math/pow 2 (- i)))) "rem")}])
+    (for [i (range 10)]
+      [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
+
    [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
    [:.outer-cart {:border [[(u/px 1) :solid (theme-getx :color1)]]
