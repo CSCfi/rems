@@ -1435,15 +1435,16 @@
           (btu/fill-human :fields-2-options-1-label-fi "Multi-select option 1 (FI)")
           (btu/fill-human :fields-2-options-1-label-sv "Multi-select option 1 (SV)")
 
-          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld2"} {:class "form-check"}])
-                      (mapv btu/value-of-el))
-                 ["multi-select-option-0"
-                  "multi-select-option-1"]))
-          (btu/scroll-and-click {:class "move-up fields-2-option-1"})
-          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld2"} {:class "form-check"}])
-                      (mapv btu/value-of-el))
-                 ["multi-select-option-1"
-                  "multi-select-option-0"])))
+          (testing "change multi-select option order"
+            (is (= (map btu/value-of-el (btu/query-all [{:id "container-form-1-field-fld2"}
+                                                        {:class "form-check"}]))
+                   ["multi-select-option-0"
+                    "multi-select-option-1"]))
+            (btu/scroll-and-click {:class "move-up fields-2-option-1"})
+            (is (= (map btu/value-of-el (btu/query-all [{:id "container-form-1-field-fld2"}
+                                                        {:class "form-check"}]))
+                   ["multi-select-option-1"
+                    "multi-select-option-0"]))))
 
         (testing "create table field"
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
@@ -1471,22 +1472,20 @@
           (btu/fill-human :fields-3-columns-2-label-fi "Table column 2 (FI)")
           (btu/fill-human :fields-3-columns-2-label-sv "Table column 2 (SV)")
 
-          (btu/fill-human :form-1-field-fld3-row0-table-column-0 "value 0")
-          (btu/fill-human :form-1-field-fld3-row0-table-column-1 "value 1")
-          (btu/fill-human :form-1-field-fld3-row0-table-column-2 "value 2")
-
-          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"} {:css "table > thead > tr > th"}])
-                      (mapv btu/value-of-el)
-                      (filter (comp not clojure.string/blank?)))
-                 ["Table column 0 (EN)" "Table column 1 (EN)" "Table column 2 (EN)"]))
-          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"} {:css "table > tbody > tr > td > input.form-control"}])
-                      (map btu/value-of-el))
-                 ["value 0" "value 1" "value 2"])))
+          (is (= (->> (btu/query-all [{:id "container-form-1-field-fld3"}
+                                      {:css "table > thead > tr > th"}])
+                      (map btu/value-of-el)
+                      (remove str/blank?))
+                 ["Table column 0 (EN)"
+                  "Table column 1 (EN)"
+                  "Table column 2 (EN)"])))
 
         (testing "create date field"
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
           (btu/scroll-and-click :fields-4-type-date)
-          (is (btu/eventually-visible? {:id :form-1-field-fld4 :tag :input :css "[type=date]"}))
+          (is (btu/eventually-visible? {:id "form-1-field-fld4"
+                                        :tag :input
+                                        :css "[type=date]"}))
 
           (btu/fill-human :fields-4-title-en "Date field (EN)")
           (btu/fill-human :fields-4-title-fi "Date field (FI)")
@@ -1655,7 +1654,7 @@
                               {:field/title {:fi "Date field (FI)" :en "Date field (EN)" :sv "Date field (SV)"}
                                :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                :field/type "date"
-                               :field/id "fld5"
+                               :field/id "fld4"
                                :field/optional false}]
                 :form/errors nil
                 :enabled true
