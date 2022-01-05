@@ -354,6 +354,11 @@ UPDATE license
 SET archived = :archived
 WHERE id = :id;
 
+-- :name update-license! :!
+UPDATE license
+SET (ownerUserId, modifierUserId, organization, type, enabled, archived) = (:owneruserid, :modifieruserid, :organization, :type::license_type, :enabled, :archived)
+WHERE id = :id;
+
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
 (modifierUserId, filename, type, data, start)
