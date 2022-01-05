@@ -4,10 +4,21 @@
             [rems.json :as json]
             [rems.db.users :as users]
             [rems.schema-base :as schema-base]
+            [schema.core :as s]
             [schema.coerce :as coerce]
             [clj-time.core :as time-core])
   (:import [org.joda.time DateTime]
            rems.DataException))
+
+(s/defschema OrganizationRaw
+  (merge schema-base/OrganizationOverview
+         {(s/optional-key :organization/modifier) schema-base/User
+          (s/optional-key :organization/last-modified) DateTime
+          (s/optional-key :organization/owners) [schema-base/User]
+          (s/optional-key :organization/review-emails) [{:name schema-base/LocalizedString
+                                                         :email s/Str}]
+          (s/optional-key :enabled) s/Bool
+          (s/optional-key :archived) s/Bool}))
 
 (def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
 
@@ -23,6 +34,9 @@
 (def ^:private coerce-organization-overview
   (coerce/coercer! schema-base/OrganizationOverview json/coercion-matcher))
 
+(def ^:private coerce-organization-raw
+  (coerce/coercer! OrganizationRaw json/coercion-matcher))
+
 (def ^:private coerce-organization-full
   (coerce/coercer! schema-base/OrganizationFull json/coercion-matcher))
 
@@ -35,10 +49,14 @@
 
 (defn get-organizations-raw []
   (->> (db/get-organizations)
-       (map parse-organization)
-       (map #(update % :organization/owners (partial mapv (comp users/get-user :userid))))
-       (map #(update % :organization/modifier (comp users/get-user :userid)))
-       (map coerce-organization-full)))
+       (mapv parse-organization)
+       (mapv coerce-organization-raw)))
+
+(defn get-organizations []
+  (->> (get-organizations-raw)
+       (mapv #(update % :organization/owners (partial mapv (comp users/get-user :userid))))
+       (mapv #(update % :organization/modifier (comp users/get-user :userid)))
+       (mapv coerce-organization-full)))
 
 (defn getx-organization-by-id [id]
   (assert id)
@@ -63,10 +81,13 @@
         (update-existing :organization (fn [_] organization-overview)))))
 
 (defn set-organization! [userid organization]
-  (db/set-organization! {:id (:organization/id organization)
-                         :data (json/generate-string organization)
-                         :user userid
-                         :time (time-core/now)}))
+  (let [stripped-organization (-> organization
+                                  (update :organization/modifier select-keys [:userid])
+                                  (update :organization/owners (partial mapv #(select-keys % [:userid]))))]
+    (db/set-organization! {:id (:organization/id organization)
+                           :data (json/generate-string stripped-organization)
+                           :user userid
+                           :time (time-core/now)})))
 
 (defn update-organization! [userid id update-fn]
   (let [id (:organization/id id id)
