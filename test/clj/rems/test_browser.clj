@@ -1829,17 +1829,17 @@
                                  :field/optional false}
                                 {:field/title {:fi "Email field (FI)" :en "Email field (EN)" :sv "Email field (SV)"}
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                                 :field/type "text"
+                                 :field/type "email"
                                  :field/id "fld6"
                                  :field/optional false}
                                 {:field/title {:fi "Phone number field (FI)" :en "Phone number field (EN)" :sv "Phone number field (SV)"}
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                                 :field/type "text"
+                                 :field/type "phone-number"
                                  :field/id "fld7"
                                  :field/optional false}
                                 {:field/title {:fi "IP address field (FI)" :en "IP address field (EN)" :sv "IP address field (SV)"}
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
-                                 :field/type "text"
+                                 :field/type "ip-address"
                                  :field/id "fld8"
                                  :field/optional false}]
                   :form/errors nil
