@@ -1677,12 +1677,16 @@
         (is (= (->> (btu/query-all {:css ".application-field-label"})
                     (filter btu/visible-el?)
                     (map btu/get-element-text-el))
-               ["Text field (EN) (max 127 characters) (optional)"
+               ["Description (EN)"
+                "Text field (EN) (max 127 characters) (optional)"
                 "Text area (EN) (max 127 characters) (optional)"
                 "Option list (EN)"
                 "Multi-select list (EN)"
                 "Table (EN)"
-                "Date field (EN)"])))
+                "Date field (EN)"
+                "Email field (EN)"
+                "Phone number field (EN)"
+                "IP address field (EN)"])))
 
       (testing "info collapse can be toggled"
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
