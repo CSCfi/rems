@@ -499,6 +499,10 @@ SELECT resid FROM resource_licenses WHERE licid = :id;
 -- :name get-workflows-for-license :? :*
 SELECT wfid FROM workflow_licenses WHERE licid = :id;
 
+-- :name get-all-roles :? :*
+SELECT userid, role
+FROM roles;
+
 -- :name get-roles :? :*
 SELECT role
 FROM roles
@@ -515,11 +519,21 @@ DELETE FROM roles
 WHERE userId = :user
   AND role = :role;
 
+
+-- :name remove-roles! :!
+DELETE FROM roles
+WHERE userId = :user;
+
+
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET userAttrs = :userattrs::jsonb;
+
+-- :name remove-user! :!
+DELETE from users
+WHERE userId = :user;
 
 -- :name update-user-settings! :!
 INSERT INTO user_settings (userId, settings)
