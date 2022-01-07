@@ -63,3 +63,20 @@
       (db/create-resource-license! {:resid id
                                     :licid licid}))
     id))
+
+(defn update-resource! [resource]
+  (when-let [old-resource (get-resource (:id resource))]
+    (let [amended (dissoc (merge old-resource
+                                 resource)
+                          :id)
+          data (when-let [duo (:resource/duo amended)]
+                 {:resource/duo {:duo/codes (for [code (:duo/codes duo)]
+                                              (select-keys code [:id :restrictions]))}})]
+      (db/update-resource! {:id (:id resource)
+                            :resid (:resid amended)
+                            :organization (get-in amended [:organization :organization/id])
+                            :owneruserid (:owneruserid amended)
+                            :modifieruserid (:modifieruserid amended)
+                            :enabled (:enabled amended)
+                            :archived (:archived amended)
+                            :resourcedata (json/generate-string data)}))))

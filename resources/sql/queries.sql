@@ -135,6 +135,11 @@ INSERT INTO resource
 (resid, organization, ownerUserId, modifieruserid, resourcedata)
 VALUES (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb);
 
+-- :name update-resource! :!
+UPDATE resource
+SET (resid, organization, ownerUserId, modifieruserid, resourcedata) = (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb)
+WHERE id = :id;
+
 -- :name set-resource-enabled! :!
 -- TODO set modifieruserid?
 UPDATE resource
