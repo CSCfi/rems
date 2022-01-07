@@ -82,7 +82,7 @@
 
 (defn set-organization! [userid organization]
   (let [stripped-organization (-> organization
-                                  (update :organization/modifier select-keys [:userid])
+                                  (dissoc :organization/modifier) ; in :user
                                   (update :organization/owners (partial mapv #(select-keys % [:userid]))))]
     (db/set-organization! {:id (:organization/id organization)
                            :data (json/generate-string stripped-organization)
