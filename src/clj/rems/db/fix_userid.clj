@@ -1,6 +1,8 @@
 
 (ns rems.db.fix-userid
-  (:require [rems.db.api-key]
+  (:require rems.api.services.dependencies
+            [rems.db.api-key]
+            [rems.db.applications]
             [rems.db.attachments]
             [rems.db.blacklist]
             [rems.db.core]
@@ -133,11 +135,14 @@
                      (= old-userid (:revokedby old))
                      (assoc :revokedby new-userid))]
          :when (not= new old)
-         :let [params [(-> new
-                           (assoc :user (:userid old))
-                           (assoc :resource (:resourceid old))
-                           (assoc :application (:catAppId old))
-                           (assoc :id (:entitlementId old)))]]]
+         :let [params [{:user (:userid new)
+                        :resource (:resourceid new)
+                        :application (:catappid new)
+                        :approvedby (:approvedby new)
+                        :revokedby (:revokedby new)
+                        :start (:start new)
+                        :end (:end new)
+                        :id (:entitlementid new)}]]]
      (do
        (apply prn #'fix-entitlement old params)
        (when-not simulate?
@@ -208,7 +213,7 @@
                                                                      {:userid new-userid}
                                                                      %)))]
          :when (or (not= new old)
-                   (not= modifier (:organization/modifier old)))
+                   (not= modifier (get-in old [:organization/modifier :userid])))
          :let [params [modifier new]]]
      (do
        (apply prn #'fix-organization old params)
@@ -268,10 +273,10 @@
 ;; users, settings and secrets in one go
 
 (defn fix-user [old-userid new-userid simulate?]
-  (let [old-user (rems.db.users/get-user old-userid)
-        old-settings (rems.db.user-settings/get-user-settings old-userid)
-        old-secrets (rems.db.user-secrets/get-user-secrets old-userid)]
-    (when (some? old-user) ; referential constraint will force this to exist
+  (when (rems.db.users/user-exists? old-userid) ; referential constraints will force this to exist at least
+    (let [old-user (rems.db.users/get-user old-userid)
+          old-settings (rems.db.user-settings/get-user-settings old-userid)
+          old-secrets (rems.db.user-secrets/get-user-secrets old-userid)]
       (apply prn #'fix-user old-user old-settings old-secrets)
       (when-not simulate?
         (rems.db.user-secrets/delete-user-secrets! old-userid)
@@ -311,3 +316,28 @@
   (fix-workflow "bona-fide-bot" "frank" false))
 
 ;; nothing to fix in workflow_licenses
+
+(defn fix-all [old-userid new-userid simulate?]
+  (let [result (doall
+                (for [f [#'fix-apikey
+                         #'fix-application-event
+                         #'fix-attachment
+                         #'fix-audit-log
+                         #'fix-blacklist-event
+                         #'fix-entitlement
+                         #'fix-form-template
+                         #'fix-invitation
+                         #'fix-organization
+                         #'fix-resource
+                         #'fix-roles
+                         #'fix-user
+                         #'fix-workflow]]
+                  [(:name (meta f))
+                   (f old-userid new-userid simulate?)]))]
+    (rems.db.applications/reload-cache!)
+    (rems.api.services.dependencies/reset-cache!)
+    result))
+
+(comment
+  (fix-all "owner" "elsa" false)
+  (fix-all "alice" "frank" false))
