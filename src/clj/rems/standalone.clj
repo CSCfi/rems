@@ -15,6 +15,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.fix-userid]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.users :as users]
@@ -111,7 +112,8 @@
         Example regex: /api/applications/[0-9]+/?
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed.
-     \"ega api-key <userid> <username> <password> <config-id>\" -- generate a new API-Key for the user using EGA login"
+     \"ega api-key <userid> <username> <password> <config-id>\" -- generate a new API-Key for the user using EGA login
+     \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new"
   [& args]
   (exit-on-signals!)
   (log/info "REMS" git/+version+)
@@ -222,6 +224,17 @@
           (mount/start #'rems.config/env #'rems.db.core/*db*)
           (when-not (validate/validate)
             (System/exit 2)))
+
+        "rename-user"
+        (let [[_ old-userid new-userid] args]
+          (if (not (and old-userid new-userid))
+            (do (usage)
+                (System/exit 1))
+            (do (println "\n\n*** Renaming a user's identity can't easily be undone. ***\nType 'YES' to proceed or anything else to run a simulation only.")
+                (let [simulate? (not= "YES" (read-line))]
+                  (println (if simulate? "Simulating only..." "Renaming..."))
+                  (mount/start #'rems.config/env #'rems.db.core/*db*)
+                  (rems.db.fix-userid/fix-all old-userid new-userid simulate?)))))
 
         (do
           (println "Unrecognized argument:" (first args))
