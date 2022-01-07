@@ -1341,7 +1341,29 @@
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
-(defn field
+(defn create-context-field!
+  "Utility function that keeps track of created form fields in
+   context object. Stores form field in stack with `id`, that can
+   optionally be passed in `opts`. Form field can also be created into
+   bottom of stack using `:insert-first` in `opts`.
+   
+   Useful for keeping track of created form fields in form tests."
+  [kw & [opts]]
+  (let [created-count (inc (or (btu/context-get :create-form-field/created-count) 0))
+        fields (or (btu/context-get :create-form-field/fields) [])
+        id (:id opts (str "fld" created-count))]
+    (btu/context-assoc! :create-form-field/created-count created-count)
+    (if (:insert-first opts)
+      (btu/context-assoc! :create-form-field/fields (into [{kw id}] fields))
+      (btu/context-assoc! :create-form-field/fields (conj fields {kw id})))))
+
+(defn field-selector
+  "Utility function that returns keyword of form `:fields-0-attr`.
+   When given only keyword `attr`, uses current last index of context
+   form fields. Otherwise `idx` is used to create selector.
+   
+   Useful for automatically creating contextually correct fields selector
+   in form tests, where a lot of fields need to be filled."
   ([attr]
    (let [fields (btu/context-get :create-form-field/fields)
          idx (dec (count fields))]
@@ -1349,21 +1371,18 @@
   ([idx attr]
    (keyword (str "fields-" idx "-" (name attr)))))
 
-(defn create-context-field! [kw & [opts]]
-  (let [created-count (inc (or (btu/context-get :create-form-field/created-count)
-                               0))
-        fields (or (btu/context-get :create-form-field/fields) [])]
-    (btu/context-assoc! :create-form-field/created-count created-count)
-    (if (:insert-first opts)
-      (btu/context-assoc! :create-form-field/fields (into [{kw created-count}] fields))
-      (btu/context-assoc! :create-form-field/fields (conj fields {kw created-count})))))
+(defn field-container-selector [id] {:id (str "container-form-1-field-" id)})
+(defn field-collapse-selector [id] {:id (str "form-1-field-" id "-collapse")})
+(defn field-upload-collapse-selector [id] {:id (str "upload-form-1-field-" id "-info-collapse")})
 
-(defn context-fld [kw]
+(defn field-id
+  "Utility function that finds created form field with given `kw`
+  and returns the associated id."
+  [kw]
   (some->> (or (btu/context-get :create-form-field/fields) [])
            (map #(get % kw))
            (filter some?)
-           first
-           (str "fld")))
+           first))
 
 (deftest test-form-editor
   (btu/context-assoc! :create-form-field/fields nil)
@@ -1394,117 +1413,116 @@
           (create-context-field! :create-form-field/text)
 
           (btu/scroll-and-click {:class :add-form-field})
-          ;; using ids to fill the fields because the label structure is complicated
-          (is (btu/eventually-visible? (field :title-en)))
-          (btu/fill-human (field :title-en) "Text field (EN)")
-          (btu/fill-human (field :title-fi) "Text field (FI)")
-          (btu/fill-human (field :title-sv) "Text field (SV)")
+          (is (btu/eventually-visible? (field-selector :title-en)))
+          (btu/fill-human (field-selector :title-en) "Text field (EN)")
+          (btu/fill-human (field-selector :title-fi) "Text field (FI)")
+          (btu/fill-human (field-selector :title-sv) "Text field (SV)")
 
-          (btu/scroll-and-click (field :placeholder-more-link))
-          (is (btu/eventually-visible? (field :placeholder-en)))
-          (btu/fill-human (field :placeholder-en) "Placeholder (EN)")
-          (btu/fill-human (field :placeholder-fi) "Placeholder (FI)")
-          (btu/fill-human (field :placeholder-sv) "Placeholder (SV)")
+          (btu/scroll-and-click (field-selector :placeholder-more-link))
+          (is (btu/eventually-visible? (field-selector :placeholder-en)))
+          (btu/fill-human (field-selector :placeholder-en) "Placeholder (EN)")
+          (btu/fill-human (field-selector :placeholder-fi) "Placeholder (FI)")
+          (btu/fill-human (field-selector :placeholder-sv) "Placeholder (SV)")
 
-          (btu/scroll-and-click (field :info-text-more-link))
-          (is (btu/eventually-visible? (field :info-text-en)))
-          (btu/fill-human (field :info-text-en) "") ; should not get passed as is blank
-          (btu/fill-human (field :info-text-fi) " ")
-          (btu/fill-human (field :info-text-sv) "")
+          (btu/scroll-and-click (field-selector :info-text-more-link))
+          (is (btu/eventually-visible? (field-selector :info-text-en)))
+          (btu/fill-human (field-selector :info-text-en) "")
+          (btu/fill-human (field-selector :info-text-fi) " ")
+          (btu/fill-human (field-selector :info-text-sv) "")
 
-          (btu/scroll-and-click (field :type-text))
-          (btu/scroll-and-click (field :optional))
-          (btu/scroll-and-click (field :additional-more-link))
-          (btu/fill-human (field :max-length) "127"))
+          (btu/scroll-and-click (field-selector :type-text))
+          (btu/scroll-and-click (field-selector :optional))
+          (btu/scroll-and-click (field-selector :additional-more-link))
+          (btu/fill-human (field-selector :max-length) "127"))
 
         (testing "create text area"
           (create-context-field! :create-form-field/text-area)
 
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (is (btu/eventually-visible? (field :title-en)))
-          (btu/fill-human (field :title-en) "Text area (EN)")
-          (btu/fill-human (field :title-fi) "Text area (FI)")
-          (btu/fill-human (field :title-sv) "Text area (SV)")
+          (is (btu/eventually-visible? (field-selector :title-en)))
+          (btu/fill-human (field-selector :title-en) "Text area (EN)")
+          (btu/fill-human (field-selector :title-fi) "Text area (FI)")
+          (btu/fill-human (field-selector :title-sv) "Text area (SV)")
 
-          (btu/scroll-and-click (field :placeholder-more-link))
-          (is (btu/eventually-visible? (field :placeholder-en)))
-          (btu/fill-human (field :placeholder-en) "Placeholder (EN)")
-          (btu/fill-human (field :placeholder-fi) "Placeholder (FI)")
-          (btu/fill-human (field :placeholder-sv) "Placeholder (SV)")
+          (btu/scroll-and-click (field-selector :placeholder-more-link))
+          (is (btu/eventually-visible? (field-selector :placeholder-en)))
+          (btu/fill-human (field-selector :placeholder-en) "Placeholder (EN)")
+          (btu/fill-human (field-selector :placeholder-fi) "Placeholder (FI)")
+          (btu/fill-human (field-selector :placeholder-sv) "Placeholder (SV)")
 
-          (btu/scroll-and-click (field :info-text-more-link))
-          (is (btu/eventually-visible? (field :info-text-en)))
-          (btu/fill-human (field :info-text-en) "") ; should not get passed as is blank
-          (btu/fill-human (field :info-text-fi) " ")
-          (btu/fill-human (field :info-text-sv) "")
+          (btu/scroll-and-click (field-selector :info-text-more-link))
+          (is (btu/eventually-visible? (field-selector :info-text-en)))
+          (btu/fill-human (field-selector :info-text-en) "")
+          (btu/fill-human (field-selector :info-text-fi) " ")
+          (btu/fill-human (field-selector :info-text-sv) "")
 
-          (btu/scroll-and-click (field :type-texta))
-          (btu/scroll-and-click (field :optional))
-          (btu/scroll-and-click (field :additional-more-link))
-          (btu/fill-human (field :max-length) "127"))
+          (btu/scroll-and-click (field-selector :type-texta))
+          (btu/scroll-and-click (field-selector :optional))
+          (btu/scroll-and-click (field-selector :additional-more-link))
+          (btu/fill-human (field-selector :max-length) "127"))
 
         (testing "create option field"
           (create-context-field! :create-form-field/option)
 
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (is (btu/eventually-visible? (field :title-en)))
-          (btu/fill-human (field :title-en) "Option list (EN)")
-          (btu/fill-human (field :title-fi) "Option list (FI)")
-          (btu/fill-human (field :title-sv) "Option list (SV)")
+          (is (btu/eventually-visible? (field-selector :title-en)))
+          (btu/fill-human (field-selector :title-en) "Option list (EN)")
+          (btu/fill-human (field-selector :title-fi) "Option list (FI)")
+          (btu/fill-human (field-selector :title-sv) "Option list (SV)")
 
-          (btu/scroll-and-click (field :info-text-more-link))
-          (is (btu/eventually-visible? (field :info-text-en)))
-          (btu/fill-human (field :info-text-en) "Info text (EN)")
-          (btu/fill-human (field :info-text-fi) "Info text (FI)")
-          (btu/fill-human (field :info-text-sv) "Info text (SV)")
+          (btu/scroll-and-click (field-selector :info-text-more-link))
+          (is (btu/eventually-visible? (field-selector :info-text-en)))
+          (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+          (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+          (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
 
-          (btu/scroll-and-click (field :type-option))
+          (btu/scroll-and-click (field-selector :type-option))
           (btu/scroll-and-click {:class :add-option})
-          (is (btu/eventually-visible? (field :options-0-key)))
-          (btu/fill-human (field :options-0-key) "true")
-          (btu/fill-human (field :options-0-label-en) "Yes")
-          (btu/fill-human (field :options-0-label-fi) "Kyllä")
-          (btu/fill-human (field :options-0-label-sv) "Ja")
+          (is (btu/eventually-visible? (field-selector :options-0-key)))
+          (btu/fill-human (field-selector :options-0-key) "true")
+          (btu/fill-human (field-selector :options-0-label-en) "Yes")
+          (btu/fill-human (field-selector :options-0-label-fi) "Kyllä")
+          (btu/fill-human (field-selector :options-0-label-sv) "Ja")
 
           (btu/scroll-and-click {:class :add-option})
-          (is (btu/eventually-visible? (field :options-1-key)))
-          (btu/fill-human (field :options-1-key) "false")
-          (btu/fill-human (field :options-1-label-en) "No")
-          (btu/fill-human (field :options-1-label-fi) "Ei")
-          (btu/fill-human (field :options-1-label-sv) "Nej"))
+          (is (btu/eventually-visible? (field-selector :options-1-key)))
+          (btu/fill-human (field-selector :options-1-key) "false")
+          (btu/fill-human (field-selector :options-1-label-en) "No")
+          (btu/fill-human (field-selector :options-1-label-fi) "Ei")
+          (btu/fill-human (field-selector :options-1-label-sv) "Nej"))
 
         (testing "create multi-select field"
           (create-context-field! :create-form-field/multi-select)
 
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (btu/scroll-and-click (field :type-multiselect))
-          (is (btu/eventually-visible? (field :add-option)))
-          (btu/fill-human (field :title-en) "Multi-select list (EN)")
-          (btu/fill-human (field :title-fi) "Multi-select list (FI)")
-          (btu/fill-human (field :title-sv) "Multi-select list (SV)")
+          (btu/scroll-and-click (field-selector :type-multiselect))
+          (is (btu/eventually-visible? (field-selector :add-option)))
+          (btu/fill-human (field-selector :title-en) "Multi-select list (EN)")
+          (btu/fill-human (field-selector :title-fi) "Multi-select list (FI)")
+          (btu/fill-human (field-selector :title-sv) "Multi-select list (SV)")
 
-          (btu/scroll-and-click (field :add-option))
-          (is (btu/eventually-visible? (field :options-0-key)))
-          (btu/fill-human (field :options-0-key) "multi-select-option-0")
-          (btu/fill-human (field :options-0-label-en) "Multi-select option 0 (EN)")
-          (btu/fill-human (field :options-0-label-fi) "Multi-select option 0 (FI)")
-          (btu/fill-human (field :options-0-label-sv) "Multi-select option 0 (SV)")
+          (btu/scroll-and-click (field-selector :add-option))
+          (is (btu/eventually-visible? (field-selector :options-0-key)))
+          (btu/fill-human (field-selector :options-0-key) "multi-select-option-0")
+          (btu/fill-human (field-selector :options-0-label-en) "Multi-select option 0 (EN)")
+          (btu/fill-human (field-selector :options-0-label-fi) "Multi-select option 0 (FI)")
+          (btu/fill-human (field-selector :options-0-label-sv) "Multi-select option 0 (SV)")
 
-          (btu/scroll-and-click (field :add-option))
-          (is (btu/eventually-visible? (field :options-1-key)))
-          (btu/fill-human (field :options-1-key) "multi-select-option-1")
-          (btu/fill-human (field :options-1-label-en) "Multi-select option 1 (EN)")
-          (btu/fill-human (field :options-1-label-fi) "Multi-select option 1 (FI)")
-          (btu/fill-human (field :options-1-label-sv) "Multi-select option 1 (SV)")
+          (btu/scroll-and-click (field-selector :add-option))
+          (is (btu/eventually-visible? (field-selector :options-1-key)))
+          (btu/fill-human (field-selector :options-1-key) "multi-select-option-1")
+          (btu/fill-human (field-selector :options-1-label-en) "Multi-select option 1 (EN)")
+          (btu/fill-human (field-selector :options-1-label-fi) "Multi-select option 1 (FI)")
+          (btu/fill-human (field-selector :options-1-label-sv) "Multi-select option 1 (SV)")
 
           (testing "change multi-select option order"
-            (let [fld (context-fld :create-form-field/multi-select)]
-              (is (= (map btu/value-of-el (btu/query-all [{:id (str "container-form-1-field-" fld)}
+            (let [id (field-id :create-form-field/multi-select)]
+              (is (= (map btu/value-of-el (btu/query-all [(field-container-selector id)
                                                           {:class "form-check"}]))
                      ["multi-select-option-0"
                       "multi-select-option-1"]))
-              (btu/scroll-and-click {:class (str "move-up " (name (field :option-1)))})
-              (is (= (map btu/value-of-el (btu/query-all [{:id (str "container-form-1-field-" fld)}
+              (btu/scroll-and-click {:class (str "move-up " (name (field-selector :option-1)))})
+              (is (= (map btu/value-of-el (btu/query-all [(field-container-selector id)
                                                           {:class "form-check"}]))
                      ["multi-select-option-1"
                       "multi-select-option-0"])))))
@@ -1513,32 +1531,32 @@
           (create-context-field! :create-form-field/table)
 
           (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (btu/scroll-and-click (field :type-table))
-          (is (btu/eventually-visible? (field :add-column)))
-          (btu/fill-human (field :title-en) "Table (EN)")
-          (btu/fill-human (field :title-fi) "Table (FI)")
-          (btu/fill-human (field :title-sv) "Table (SV)")
+          (btu/scroll-and-click (field-selector :type-table))
+          (is (btu/eventually-visible? (field-selector :add-column)))
+          (btu/fill-human (field-selector :title-en) "Table (EN)")
+          (btu/fill-human (field-selector :title-fi) "Table (FI)")
+          (btu/fill-human (field-selector :title-sv) "Table (SV)")
 
-          (btu/scroll-and-click (field :add-column))
-          (btu/fill-human (field :columns-0-key) "table-column-0")
-          (btu/fill-human (field :columns-0-label-en) "Table column 0 (EN)")
-          (btu/fill-human (field :columns-0-label-fi) "Table column 0 (FI)")
-          (btu/fill-human (field :columns-0-label-sv) "Table column 0 (SV)")
+          (btu/scroll-and-click (field-selector :add-column))
+          (btu/fill-human (field-selector :columns-0-key) "table-column-0")
+          (btu/fill-human (field-selector :columns-0-label-en) "Table column 0 (EN)")
+          (btu/fill-human (field-selector :columns-0-label-fi) "Table column 0 (FI)")
+          (btu/fill-human (field-selector :columns-0-label-sv) "Table column 0 (SV)")
 
-          (btu/scroll-and-click (field :add-column))
-          (btu/fill-human (field :columns-1-key) "table-column-1")
-          (btu/fill-human (field :columns-1-label-en) "Table column 1 (EN)")
-          (btu/fill-human (field :columns-1-label-fi) "Table column 1 (FI)")
-          (btu/fill-human (field :columns-1-label-sv) "Table column 1 (SV)")
+          (btu/scroll-and-click (field-selector :add-column))
+          (btu/fill-human (field-selector :columns-1-key) "table-column-1")
+          (btu/fill-human (field-selector :columns-1-label-en) "Table column 1 (EN)")
+          (btu/fill-human (field-selector :columns-1-label-fi) "Table column 1 (FI)")
+          (btu/fill-human (field-selector :columns-1-label-sv) "Table column 1 (SV)")
 
-          (btu/scroll-and-click (field :add-column))
-          (btu/fill-human (field :columns-2-key) "table-column-2")
-          (btu/fill-human (field :columns-2-label-en) "Table column 2 (EN)")
-          (btu/fill-human (field :columns-2-label-fi) "Table column 2 (FI)")
-          (btu/fill-human (field :columns-2-label-sv) "Table column 2 (SV)")
+          (btu/scroll-and-click (field-selector :add-column))
+          (btu/fill-human (field-selector :columns-2-key) "table-column-2")
+          (btu/fill-human (field-selector :columns-2-label-en) "Table column 2 (EN)")
+          (btu/fill-human (field-selector :columns-2-label-fi) "Table column 2 (FI)")
+          (btu/fill-human (field-selector :columns-2-label-sv) "Table column 2 (SV)")
 
-          (let [fld (context-fld :create-form-field/table)]
-            (is (= (->> (btu/query-all [{:id (str "container-form-1-field-" fld)}
+          (let [id (field-id :create-form-field/table)]
+            (is (= (->> (btu/query-all [(field-container-selector id)
                                         {:css "table > thead > tr > th"}])
                         (map btu/value-of-el)
                         (remove str/blank?))
@@ -1549,163 +1567,150 @@
         (testing "create date field"
           (create-context-field! :create-form-field/date)
 
-          (let [fld (context-fld :create-form-field/date)
-                container-field-selector (str "container-form-1-field-" fld)
-                collapse-selector (str "form-1-field-" fld "-collapse")]
+          (let [id (field-id :create-form-field/date)]
             (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field :type-date))
+            (btu/scroll-and-click (field-selector :type-date))
             (is (btu/eventually-visible? {:css (str "input"
-                                                    "#form-1-field-" fld
+                                                    "#form-1-field-" id
                                                     "[type='date']")}))
+            (btu/fill-human (field-selector :title-en) "Date field (EN)")
+            (btu/fill-human (field-selector :title-fi) "Date field (FI)")
+            (btu/fill-human (field-selector :title-sv) "Date field (SV)")
 
-            (btu/fill-human (field :title-en) "Date field (EN)")
-            (btu/fill-human (field :title-fi) "Date field (FI)")
-            (btu/fill-human (field :title-sv) "Date field (SV)")
-
-            (btu/scroll-and-click (field :info-text-more-link))
-            (is (btu/eventually-visible? (field :info-text-en)))
-            (btu/fill-human (field :info-text-en) "Info text (EN)")
-            (btu/fill-human (field :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [{:id container-field-selector}
+            (btu/scroll-and-click (field-selector :info-text-more-link))
+            (is (btu/eventually-visible? (field-selector :info-text-en)))
+            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
                                           {:tag :button :fn/has-class "info-button"}]))
 
-            (btu/scroll-and-click [{:id container-field-selector}
+            (btu/scroll-and-click [(field-container-selector id)
                                    {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? {:id collapse-selector}))
-            (is (= (btu/value-of {:id collapse-selector})
+            (is (btu/eventually-visible? (field-collapse-selector id)))
+            (is (= (btu/value-of (field-collapse-selector id))
                    "Info text (EN)"))))
 
         (testing "create email address field"
           (create-context-field! :create-form-field/email)
 
-          (let [fld (context-fld :create-form-field/email)
-                container-field-selector (str "container-form-1-field-" fld)
-                collapse-selector (str "form-1-field-" fld "-collapse")]
+          (let [id (field-id :create-form-field/email)]
             (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field :type-email))
+            (btu/scroll-and-click (field-selector :type-email))
             (is (btu/eventually-visible? {:css (str "input"
-                                                    "#form-1-field-" fld
+                                                    "#form-1-field-" id
                                                     "[type='email']")}))
 
-            (btu/fill-human (field :title-en) "Email field (EN)")
-            (btu/fill-human (field :title-fi) "Email field (FI)")
-            (btu/fill-human (field :title-sv) "Email field (SV)")
+            (btu/fill-human (field-selector :title-en) "Email field (EN)")
+            (btu/fill-human (field-selector :title-fi) "Email field (FI)")
+            (btu/fill-human (field-selector :title-sv) "Email field (SV)")
 
-            (btu/scroll-and-click (field :info-text-more-link))
-            (is (btu/eventually-visible? (field :info-text-en)))
-            (btu/fill-human (field :info-text-en) "Info text (EN)")
-            (btu/fill-human (field :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [{:id container-field-selector}
+            (btu/scroll-and-click (field-selector :info-text-more-link))
+            (is (btu/eventually-visible? (field-selector :info-text-en)))
+            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
                                           {:tag :button :fn/has-class "info-button"}]))
 
-            (btu/scroll-and-click [{:id container-field-selector}
+            (btu/scroll-and-click [(field-container-selector id)
                                    {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? {:id collapse-selector}))
-            (is (= (btu/value-of {:id collapse-selector})
+            (is (btu/eventually-visible? (field-collapse-selector id)))
+            (is (= (btu/value-of (field-collapse-selector id))
                    "Info text (EN)"))))
 
         (testing "create phone number field"
           (create-context-field! :create-form-field/phone-number)
 
-          (let [fld (context-fld :create-form-field/phone-number)
-                container-field-selector (str "container-form-1-field-" fld)
-                collapse-selector (str "form-1-field-" fld "-collapse")]
+          (let [id (field-id :create-form-field/phone-number)]
             (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field :type-phone-number))
+            (btu/scroll-and-click (field-selector :type-phone-number))
             (is (btu/eventually-visible? {:css (str "input"
-                                                    "#form-1-field-" fld
+                                                    "#form-1-field-" id
                                                     "[type='tel']")}))
 
-            (btu/fill-human (field :title-en) "Phone number field (EN)")
-            (btu/fill-human (field :title-fi) "Phone number field (FI)")
-            (btu/fill-human (field :title-sv) "Phone number field (SV)")
+            (btu/fill-human (field-selector :title-en) "Phone number field (EN)")
+            (btu/fill-human (field-selector :title-fi) "Phone number field (FI)")
+            (btu/fill-human (field-selector :title-sv) "Phone number field (SV)")
 
-            (btu/scroll-and-click (field :info-text-more-link))
-            (is (btu/eventually-visible? (field :info-text-en)))
-            (btu/fill-human (field :info-text-en) "Info text (EN)")
-            (btu/fill-human (field :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [{:id container-field-selector}
+            (btu/scroll-and-click (field-selector :info-text-more-link))
+            (is (btu/eventually-visible? (field-selector :info-text-en)))
+            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
                                           {:tag :button :fn/has-class "info-button"}]))
 
-            (btu/scroll-and-click [{:id container-field-selector}
+            (btu/scroll-and-click [(field-container-selector id)
                                    {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? {:id collapse-selector}))
-            (is (= (btu/value-of {:id collapse-selector})
+            (is (btu/eventually-visible? (field-collapse-selector id)))
+            (is (= (btu/value-of (field-collapse-selector id))
                    "Info text (EN)"))))
 
         (testing "create ip address field"
           (create-context-field! :create-form-field/ip-address)
 
-          (let [fld (context-fld :create-form-field/ip-address)
-                container-field-selector (str "container-form-1-field-" fld)
-                collapse-selector (str "form-1-field-" fld "-collapse")]
+          (let [id (field-id :create-form-field/ip-address)]
             (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field :type-ip-address))
+            (btu/scroll-and-click (field-selector :type-ip-address))
             (is (btu/eventually-visible? {:css (str "input"
-                                                    "#form-1-field-" fld
+                                                    "#form-1-field-" id
                                                     "[type='text']")}))
-            (btu/fill-human (field :title-en) "IP address field (EN)")
-            (btu/fill-human (field :title-fi) "IP address field (FI)")
-            (btu/fill-human (field :title-sv) "IP address field (SV)")
+            (btu/fill-human (field-selector :title-en) "IP address field (EN)")
+            (btu/fill-human (field-selector :title-fi) "IP address field (FI)")
+            (btu/fill-human (field-selector :title-sv) "IP address field (SV)")
 
-            (btu/scroll-and-click (field :info-text-more-link))
-            (is (btu/eventually-visible? (field :info-text-en)))
-            (btu/fill-human (field :info-text-en) "Info text (EN)")
-            (btu/fill-human (field :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [{:id container-field-selector}
+            (btu/scroll-and-click (field-selector :info-text-more-link))
+            (is (btu/eventually-visible? (field-selector :info-text-en)))
+            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
                                           {:tag :button :fn/has-class "info-button"}]))
 
-            (btu/scroll-and-click [{:id container-field-selector}
+            (btu/scroll-and-click [(field-container-selector id)
                                    {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? {:id collapse-selector}))
-            (is (= (btu/value-of {:id collapse-selector})
+            (is (btu/eventually-visible? (field-collapse-selector id)))
+            (is (= (btu/value-of (field-collapse-selector id))
                    "Info text (EN)"))))
 
         (testing "create attachment field"
           (create-context-field! :create-form-field/attachment)
 
-          (def fld (context-fld :create-form-field/attachment))
-          (def container-field-selector (str "container-form-1-field-" fld))
-          (def collapse-selector (str "form-1-field-" fld "-collapse"))
-          (def upload-collapse-selector (str "upload-form-1-field-" fld "-info-collapse"))
+          (let [id (field-id :create-form-field/attachment)]
+            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+            (btu/scroll-and-click (field-selector :type-attachment))
+            (is (btu/eventually-invisible? {:css (str "input"
+                                                      "#upload-form-1-field-" id "-input"
+                                                      "[type='file']")}))
+            (is (btu/eventually-visible? {:css (str "button"
+                                                    "#upload-form-1-field-" id)}))
+            (is (btu/eventually-visible? [(field-container-selector id)
+                                          {:css "div.upload-file"}
+                                          {:tag :button :fn/has-class "info-button"}]))
+            (btu/scroll-and-click [(field-container-selector id)
+                                   {:css "div.upload-file"}
+                                   {:tag :button :fn/has-class "info-button"}])
+            (is (btu/eventually-visible? (field-upload-collapse-selector id)))
 
-          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (btu/scroll-and-click (field :type-attachment))
-          (is (btu/eventually-invisible? {:css (str "input"
-                                                    "#upload-form-1-field-" fld "-input"
-                                                    "[type='file']")}))
-          (is (btu/eventually-visible? {:css (str "button"
-                                                  "#upload-form-1-field-" fld)}))
-          (is (btu/eventually-visible? [{:id container-field-selector}
-                                        {:css "div.upload-file"}
-                                        {:tag :button :fn/has-class "info-button"}]))
-          (btu/scroll-and-click [{:id container-field-selector}
-                                 {:css "div.upload-file"}
-                                 {:tag :button :fn/has-class "info-button"}])
-          (is (btu/eventually-visible? {:id upload-collapse-selector}))
+            (btu/fill-human (field-selector :title-en) "Attachment field (EN)")
+            (btu/fill-human (field-selector :title-fi) "Attachment field (FI)")
+            (btu/fill-human (field-selector :title-sv) "Attachment field (SV)")
 
-          (btu/fill-human (field :title-en) "Attachment field (EN)")
-          (btu/fill-human (field :title-fi) "Attachment field (FI)")
-          (btu/fill-human (field :title-sv) "Attachment field (SV)")
+            (btu/scroll-and-click (field-selector :info-text-more-link))
+            (is (btu/eventually-visible? (field-selector :info-text-en)))
+            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
+            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
+            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
+                                          {:css "label.application-field-label"}
+                                          {:tag :button :fn/has-class "info-button"}]))
 
-          (btu/scroll-and-click (field :info-text-more-link))
-          (is (btu/eventually-visible? (field :info-text-en)))
-          (btu/fill-human (field :info-text-en) "Info text (EN)")
-          (btu/fill-human (field :info-text-fi) "Info text (FI)")
-          (btu/fill-human (field :info-text-sv) "Info text (SV)")
-          (is (btu/eventually-visible? [{:id container-field-selector}
-                                        {:css "label.application-field-label"}
-                                        {:tag :button :fn/has-class "info-button"}]))
-
-          (btu/scroll-and-click [{:id container-field-selector}
-                                 {:tag :button :fn/has-class "info-button"}])
-          (is (btu/eventually-visible? {:id collapse-selector}))
-          (is (= (btu/value-of {:id collapse-selector})
-                 "Info text (EN)"))))
+            (btu/scroll-and-click [(field-container-selector id)
+                                   {:tag :button :fn/has-class "info-button"}])
+            (is (btu/eventually-visible? (field-collapse-selector id)))
+            (is (= (btu/value-of (field-collapse-selector id))
+                   "Info text (EN)")))))
       (btu/scroll-and-click :save))
 
     (testing "view form"
@@ -1762,10 +1767,10 @@
         (create-context-field! :create-form-field/description {:insert-first true})
 
         (btu/scroll-and-click {:class :add-form-field})
-        (btu/scroll-and-click (field 0 :type-description))
-        (btu/fill-human (field 0 :title-en) "Description (EN)")
-        (btu/fill-human (field 0 :title-fi) "Description (FI)")
-        (btu/fill-human (field 0 :title-sv) "Description (SV)")
+        (btu/scroll-and-click (field-selector 0 :type-description))
+        (btu/fill-human (field-selector 0 :title-en) "Description (EN)")
+        (btu/fill-human (field-selector 0 :title-fi) "Description (FI)")
+        (btu/fill-human (field-selector 0 :title-sv) "Description (SV)")
 
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
@@ -1776,28 +1781,28 @@
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
-          (let [fld (context-fld :create-form-field/description)]
-            (btu/scroll-and-click {:id (str "field-editor-" fld "-collapse-more-link")}))
+          (let [id (field-id :create-form-field/description)]
+            (btu/scroll-and-click {:id (str "field-editor-" id "-collapse-more-link")}))
 
-          (btu/scroll-and-click (field 0 :type-description))
-          (btu/scroll-and-click (field 0 :info-text-more-link))
-          (is (btu/eventually-visible? (field 0 :info-text-en)))
-          (btu/fill-human (field 0 :info-text-en) "Info text (EN)")
-          (btu/fill-human (field 0 :info-text-fi) "Info text (FI)")
-          (btu/fill-human (field 0 :info-text-sv) " ")
+          (btu/scroll-and-click (field-selector 0 :type-description))
+          (btu/scroll-and-click (field-selector 0 :info-text-more-link))
+          (is (btu/eventually-visible? (field-selector 0 :info-text-en)))
+          (btu/fill-human (field-selector 0 :info-text-en) "Info text (EN)")
+          (btu/fill-human (field-selector 0 :info-text-fi) "Info text (FI)")
+          (btu/fill-human (field-selector 0 :info-text-sv) " ")
 
           (btu/scroll-and-click :save)
 
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Edit form"}))
-          (is (btu/visible? {:id (field 0 :info-text-sv) :fn/has-class :is-invalid}))
+          (is (btu/visible? {:id (field-selector 0 :info-text-sv) :fn/has-class :is-invalid}))
         ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
           (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
 
         (testing "successful save"
-          (btu/fill-human (field 0 :info-text-sv) "Info text (SV)")
+          (btu/fill-human (field-selector 0 :info-text-sv) "Info text (SV)")
           (btu/scroll-and-click :save)
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))))
