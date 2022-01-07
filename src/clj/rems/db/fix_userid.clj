@@ -4,8 +4,17 @@
             [rems.db.attachments]
             [rems.db.blacklist]
             [rems.db.core]
+            [rems.db.events]
             [rems.db.form]
-            [rems.db.events]))
+            [rems.db.invitation]
+            [rems.db.licenses]
+            [rems.db.organizations]
+            [rems.db.resource]
+            [rems.db.roles]
+            [rems.db.user-secrets]
+            [rems.db.user-settings]
+            [rems.db.users]
+            [rems.db.workflow]))
 
 (defn fix-apikey [old-userid new-userid simulate?]
   (doall
@@ -160,17 +169,145 @@
 (comment
   (fix-form-template "owner" "frank" false))
 
- ;; public | invitation                         | table    | rems
- ;; public | license                            | table    | rems
- ;; public | license_attachment                 | table    | rems
- ;; public | license_localization               | table    | rems
- ;; public | organization                       | table    | rems
- ;; public | outbox                             | table    | rems
- ;; public | resource                           | table    | rems
- ;; public | resource_licenses                  | table    | rems
- ;; public | roles                              | table    | rems
- ;; public | user_secrets                       | table    | rems
- ;; public | user_settings                      | table    | rems
- ;; public | users                              | table    | rems
- ;; public | workflow                           | table    | rems
- ;; public | workflow_licenses                  | table    | rems
+(defn fix-invitation [old-userid new-userid simulate?]
+  (doall
+   (for [old (rems.db.invitation/get-invitations nil)
+         :let [new (cond-> old
+                     (= old-userid (get-in old [:invitation/invited-by :userid]))
+                     (assoc-in [:invitation/invited-by :userid] new-userid)
+
+                     (= old-userid (get-in old [:invitation/invited-user :userid]))
+                     (assoc-in [:invitation/invited-user :userid] new-userid))]
+         :when (not= new old)
+         :let [params [new]]]
+     (do
+       (apply prn #'fix-invitation old params)
+       (when-not simulate?
+         (apply rems.db.invitation/update-invitation! params))
+       {:old old :params params}))))
+
+(comment
+  (fix-invitation "alice" "frank" false))
+
+
+;; nothing to fix in license
+;; NB: the owneruserid and modifieruserid are not actually used
+
+;; nothing to fix in license_attachment
+;; NB: the modifieruserid is not actually used
+
+;; nothing to fix in license_localization
+
+(defn fix-organization [old-userid new-userid simulate?]
+  (doall
+   (for [old (rems.db.organizations/get-organizations-raw)
+         :let [modifier (if (= old-userid (get-in old [:organization/modifier :userid]))
+                          new-userid
+                          (get-in old [:organization/modifier :userid]))
+               new (update old :organization/owners (partial mapv #(if (= old-userid (:userid %))
+                                                                     {:userid new-userid}
+                                                                     %)))]
+         :when (or (not= new old)
+                   (not= modifier (:organization/modifier old)))
+         :let [params [modifier new]]]
+     (do
+       (apply prn #'fix-organization old params)
+       (when-not simulate?
+         (apply rems.db.organizations/set-organization! params))
+       {:old old :params params}))))
+
+(comment
+  (fix-organization "organization-owner2" "frank" false))
+
+;; nothing to fix in outbox
+;; NB: this is a table that should contain rows only momentarily
+
+
+(defn fix-resource [old-userid new-userid simulate?]
+  (doall
+   (for [old (rems.db.resource/get-resources nil)
+         :let [new (cond-> old
+                     (= old-userid (:owneruserid old))
+                     (assoc :owneruserid new-userid)
+
+                     (= old-userid (:modifieruserid old))
+                     (assoc :modifieruserid new-userid))]
+         :when (not= new old)
+         :let [params [new]]]
+     (do
+       (apply prn #'fix-resource old params)
+       (when-not simulate?
+         (apply rems.db.resource/update-resource! params))
+       {:old old :params params}))))
+
+(comment
+  (fix-resource "alice" "frank" false))
+
+;; nothing to fix in resource_licenses
+
+
+(defn fix-roles [old-userid new-userid simulate?]
+  (doall
+   (for [old (rems.db.roles/get-all-roles)
+         :let [new (if (= old-userid (:userid old))
+                     (assoc old :userid new-userid)
+                     old)]
+         :when (not= new old)
+         :let [params [new]]]
+     (do
+       (apply prn #'fix-roles old params)
+       (when-not simulate?
+         (rems.db.roles/remove-roles! old-userid)
+         (apply rems.db.roles/update-roles! params))
+       {:old old :params params}))))
+
+(comment
+  (fix-roles "frank" "owner" false))
+
+;; NB: referential constraints force use to handle
+;; users, settings and secrets in one go
+
+(defn fix-user [old-userid new-userid simulate?]
+  (let [old-user (rems.db.users/get-user old-userid)
+        old-settings (rems.db.user-settings/get-user-settings old-userid)
+        old-secrets (rems.db.user-secrets/get-user-secrets old-userid)]
+    (when (some? old-user) ; referential constraint will force this to exist
+      (apply prn #'fix-user old-user old-settings old-secrets)
+      (when-not simulate?
+        (rems.db.user-secrets/delete-user-secrets! old-userid)
+        (rems.db.user-settings/delete-user-settings! old-userid)
+        (rems.db.users/remove-user! old-userid)
+        (rems.db.users/add-user! (assoc old-user :userid new-userid))
+        (rems.db.user-secrets/update-user-secrets! new-userid old-secrets)
+        (rems.db.user-settings/update-user-settings! new-userid old-settings))
+      {:old {:user old-user :settings old-settings :secrets old-secrets}
+       :params [new-userid]})))
+
+(comment
+  (rems.db.users/get-user "alice")
+  (fix-user "alice" "frank" false))
+
+
+;; NB: the owneruserid and modifieruserid are not actually used
+(defn fix-workflow [old-userid new-userid simulate?]
+  (doall
+   (for [old (rems.db.workflow/get-workflows nil)
+         :let [old {:id (:id old)
+                    :organization (:organization old)
+                    :title (:title old)
+                    :handlers (mapv :userid (get-in old [:workflow :handlers]))}
+               new (update old :handlers (partial mapv #(if (= old-userid %)
+                                                          new-userid ; NB: format is different
+                                                          %)))]
+         :when (not= new old)
+         :let [params [new]]]
+     (do
+       (apply prn #'fix-workflow old params)
+       (when-not simulate?
+         (apply rems.db.workflow/edit-workflow! params))
+       {:old old :params params}))))
+
+(comment
+  (fix-workflow "bona-fide-bot" "frank" false))
+
+;; nothing to fix in workflow_licenses
