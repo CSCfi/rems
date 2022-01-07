@@ -127,3 +127,7 @@
 (defn join-user [x]
   (when-let [userid (:userid x)]
     (get-user userid)))
+
+(defn remove-user! [userid]
+  (assert userid)
+  (db/remove-user! {:user userid}))
