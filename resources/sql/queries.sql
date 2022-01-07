@@ -596,7 +596,7 @@ ORDER BY id ASC;
 -- :name get-application-event :? :*
 SELECT id, eventdata::TEXT
 FROM application_event
-WHERE eventdata->>'event/id' = :id;
+WHERE id = :id;
 
 
 -- :name get-application-events-since :? :*
