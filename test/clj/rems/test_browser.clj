@@ -1663,9 +1663,49 @@
                                    {:tag :button :fn/has-class "info-button"}])
             (is (btu/eventually-visible? {:id collapse-selector}))
             (is (= (btu/value-of {:id collapse-selector})
-                   "Info text (EN)")))))
+                   "Info text (EN)"))))
 
-      ;; TODO test validations?
+        (testing "create attachment field"
+          (create-context-field! :create-form-field/attachment)
+
+          (def fld (context-fld :create-form-field/attachment))
+          (def container-field-selector (str "container-form-1-field-" fld))
+          (def collapse-selector (str "form-1-field-" fld "-collapse"))
+          (def upload-collapse-selector (str "upload-form-1-field-" fld "-info-collapse"))
+
+          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+          (btu/scroll-and-click (field :type-attachment))
+          (is (btu/eventually-invisible? {:css (str "input"
+                                                    "#upload-form-1-field-" fld "-input"
+                                                    "[type='file']")}))
+          (is (btu/eventually-visible? {:css (str "button"
+                                                  "#upload-form-1-field-" fld)}))
+          (is (btu/eventually-visible? [{:id container-field-selector}
+                                        {:css "div.upload-file"}
+                                        {:tag :button :fn/has-class "info-button"}]))
+          (btu/scroll-and-click [{:id container-field-selector}
+                                 {:css "div.upload-file"}
+                                 {:tag :button :fn/has-class "info-button"}])
+          (is (btu/eventually-visible? {:id upload-collapse-selector}))
+
+          (btu/fill-human (field :title-en) "Attachment field (EN)")
+          (btu/fill-human (field :title-fi) "Attachment field (FI)")
+          (btu/fill-human (field :title-sv) "Attachment field (SV)")
+
+          (btu/scroll-and-click (field :info-text-more-link))
+          (is (btu/eventually-visible? (field :info-text-en)))
+          (btu/fill-human (field :info-text-en) "Info text (EN)")
+          (btu/fill-human (field :info-text-fi) "Info text (FI)")
+          (btu/fill-human (field :info-text-sv) "Info text (SV)")
+          (is (btu/eventually-visible? [{:id container-field-selector}
+                                        {:css "label.application-field-label"}
+                                        {:tag :button :fn/has-class "info-button"}]))
+
+          (btu/scroll-and-click [{:id container-field-selector}
+                                 {:tag :button :fn/has-class "info-button"}])
+          (is (btu/eventually-visible? {:id collapse-selector}))
+          (is (= (btu/value-of {:id collapse-selector})
+                 "Info text (EN)"))))
       (btu/scroll-and-click :save))
 
     (testing "view form"
@@ -1691,7 +1731,8 @@
                 "Date field (EN)"
                 "Email field (EN)"
                 "Phone number field (EN)"
-                "IP address field (EN)"])))
+                "IP address field (EN)"
+                "Attachment field (EN)"])))
 
       (testing "info collapse can be toggled"
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
@@ -1756,7 +1797,7 @@
           (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
 
         (testing "successful save"
-          (btu/fill-human :fields-0-info-text-sv "Info text (SV)")
+          (btu/fill-human (field 0 :info-text-sv) "Info text (SV)")
           (btu/scroll-and-click :save)
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))))
@@ -1773,7 +1814,7 @@
                   :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                  :field/type "description"
-                                 :field/id "fld10"
+                                 :field/id "fld11"
                                  :field/max-length nil
                                  :field/optional false}
                                 {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
@@ -1844,6 +1885,11 @@
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                  :field/type "ip-address"
                                  :field/id "fld9"
+                                 :field/optional false}
+                                {:field/title {:fi "Attachment field (FI)" :en "Attachment field (EN)" :sv "Attachment field (SV)"}
+                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                 :field/type "attachment"
+                                 :field/id "fld10"
                                  :field/optional false}]
                   :form/errors nil
                   :enabled true
