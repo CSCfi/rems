@@ -279,14 +279,17 @@
           old-secrets (rems.db.user-secrets/get-user-secrets old-userid)]
       (apply prn #'fix-user old-user old-settings old-secrets)
       (when-not simulate?
-        (rems.db.user-secrets/delete-user-secrets! old-userid)
-        (rems.db.user-settings/delete-user-settings! old-userid)
-        (rems.db.users/remove-user! old-userid)
         (rems.db.users/add-user! (assoc old-user :userid new-userid))
         (rems.db.user-secrets/update-user-secrets! new-userid old-secrets)
         (rems.db.user-settings/update-user-settings! new-userid old-settings))
       {:old {:user old-user :settings old-settings :secrets old-secrets}
        :params [new-userid]})))
+
+(defn remove-old-user [old-userid simulate?]
+  (when-not simulate?
+    (rems.db.user-secrets/delete-user-secrets! old-userid)
+    (rems.db.user-settings/delete-user-settings! old-userid)
+    (rems.db.users/remove-user! old-userid)))
 
 (comment
   (rems.db.users/get-user "alice")
@@ -319,7 +322,8 @@
 
 (defn fix-all [old-userid new-userid simulate?]
   (let [result (doall
-                (for [f [#'fix-apikey
+                (for [f [#'fix-user ; many tables refer to user
+                         #'fix-apikey
                          #'fix-application-event
                          #'fix-attachment
                          #'fix-audit-log
@@ -330,12 +334,11 @@
                          #'fix-organization
                          #'fix-resource
                          #'fix-roles
-                         #'fix-user
                          #'fix-workflow]]
                   [(:name (meta f))
                    (f old-userid new-userid simulate?)]))]
+    (remove-old-user old-userid simulate?)
     (rems.db.applications/reload-cache!)
-    (rems.api.services.dependencies/reset-cache!)
     result))
 
 (comment
