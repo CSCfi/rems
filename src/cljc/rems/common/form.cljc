@@ -94,7 +94,7 @@
 (defn supports-max-length? [field]
   (contains? #{:description :text :texta} (:field/type field)))
 
-(defn supports-date-bounds? [field]
+(defn supports-date-bound? [field]
   (contains? #{:date} (:field/type field)))
 
 (defn supports-options? [field]

@@ -101,7 +101,10 @@
     (dissoc :field/privacy)
 
     (= :always (get-in field [:field/visibility :visibility/type]))
-    (dissoc :field/visibility)))
+    (dissoc :field/visibility)
+
+    (= :none (:field/date-bound field))
+    (dissoc :field/date-bound)))
 
 (defn- normalize-field-definitions [fields]
   (map normalize-field-definition fields))

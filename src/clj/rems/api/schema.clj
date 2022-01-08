@@ -131,7 +131,7 @@
   {:field/id schema-base/FieldId
    :field/type (s/enum :attachment :date :description :email :header :ip-address :label :multiselect :option :phone-number :text :texta :table)
    :field/title schema-base/LocalizedString
-   (s/optional-key :field/date-bounds) (rjs/field
+   (s/optional-key :field/date-bound) (rjs/field
                                          (s/enum :none :past :future)
                                          {:description "None by default"})
    (s/optional-key :field/placeholder) schema-base/LocalizedString

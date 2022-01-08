@@ -165,9 +165,9 @@
           :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (common-form/supports-date-bounds? field)
-           (when-let [past-or-future (#{:past :future} (get field :field/date-bounds))]
-             {:field/date-bounds past-or-future}))
+         (when (common-form/supports-date-bound? field)
+           (when-let [past-or-future (#{:past :future} (get field :field/date-bound))]
+             {:field/date-bound past-or-future}))
          (when (common-form/supports-info-text? field)
            (when-let [v (build-localized-string (:field/info-text field) languages)]
              {:field/info-text v}))
@@ -403,6 +403,41 @@
       [])))
 
 (rf/reg-event-db
+  ::form-field-date-bound-type
+  (fn [db [_ field-index date-bound-type]]
+    (assoc-in db [::form :data :form/fields field-index :field/date-bound] date-bound-type)))
+
+(defn- form-field-date-bound
+  "Component for specifying date form field date bounds"
+  [field-index]
+  (let [form @(rf/subscribe [::form-data])
+        form-errors @(rf/subscribe [::form-errors])
+        lang @(rf/subscribe [:language])
+        suffixes ["type" "value"]
+        get-error #(get-in form-errors [:form/fields field-index :field/date-bound (keyword "date-bound" %)])
+        id-string #(str "fields-" field-index "--" %)
+        date-bound-type (get-in form [:form/fields field-index :field/date-bound])
+        [error-type error-value] (map get-error suffixes)
+        [id-type id-value] (map id-string suffixes)
+        label-type (text :t.create-form/type-date-bound)]
+    [:div.form-group.field.row {:id (str "container-field" field-index)}
+     [:label.col-sm-2.col-form-label {:for id-type} label-type]
+     [:div.col-sm-10
+      [:select.form-control
+       {:id id-type
+        :class (when error-type "is-invalid")
+        :on-change #(rf/dispatch [::form-field-date-bound-type field-index (keyword (.. % -target -value))])
+        :value (or date-bound-type :none)}
+       (doall (for [opt-kw [:t.create-form.date-bound/none
+                            :t.create-form.date-bound/past
+                            :t.create-form.date-bound/future]
+                    :let [value (name opt-kw)]]
+                ^{:key (str field-index "-" value)}
+                [:option {:value value} (text opt-kw)]))]
+      [:div.invalid-feedback
+       (when error-type (text-format error-type label-type))]]]))
+
+(rf/reg-event-db
  ::form-field-visibility-type
  (fn [db [_ field-index visibility-type]]
    (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/type] visibility-type)))
@@ -416,41 +451,6 @@
  ::form-field-visibility-values
  (fn [db [_ field-index visibility-value]]
    (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/values] visibility-value)))
-
-(rf/reg-event-db
- ::form-field-date-bounds-type
- (fn [db [_ field-index date-bounds-type]]
-   (assoc-in db [::form :data :form/fields field-index :field/date-bounds] date-bounds-type)))
-
-(defn- form-field-date-bounds
-  "Component for specifying date form field date bounds"
-  [field-index]
-  (let [form @(rf/subscribe [::form-data])
-        form-errors @(rf/subscribe [::form-errors])
-        lang @(rf/subscribe [:language])
-        suffixes ["type" "value"]
-        get-error #(get-in form-errors [:form/fields field-index :field/date-bounds (keyword "date-bounds" %)])
-        id-string #(str "fields-" field-index "--" %)
-        date-bounds-type (get-in form [:form/fields field-index :field/date-bounds])
-        [error-type error-value] (map get-error suffixes)
-        [id-type id-value] (map id-string suffixes)
-        label-type (text :t.create-form/type-date-bounds)]
-     [:div.form-group.field.row {:id (str "container-field" field-index)}
-      [:label.col-sm-2.col-form-label {:for id-type} label-type]
-      [:div.col-sm-10
-       [:select.form-control
-        {:id id-type
-         :class (when error-type "is-invalid")
-         :on-change #(rf/dispatch [::form-field-date-bounds-type field-index (keyword (.. % -target -value))])
-         :value (or date-bounds-type "")}
-        (doall (for [opt-kw [:t.create-form.date-bounds/none
-                             :t.create-form.date-bounds/past
-                             :t.create-form.date-bounds/future]
-                     :let [value (name opt-kw)]]
-                 ^{:key (str field-index "-" value)}
-                 [:option {:value value} (text opt-kw)]))]
-       [:div.invalid-feedback
-        (when error-type (text-format error-type label-type))]]]))
 
 (defn- form-field-visibility
   "Component for specifying form field visibility rules"
@@ -740,8 +740,8 @@
                    [form-field-id-field index]
                    (when (common-form/supports-max-length? field)
                      [form-field-max-length-field index])
-                   (when (common-form/supports-date-bounds? field)
-                     [form-field-date-bounds index])
+                   (when (common-form/supports-date-bound? field)
+                     [form-field-date-bound index])
                    (when (common-form/supports-privacy? field)
                      [form-field-privacy index])
                    (when (common-form/supports-visibility? field)

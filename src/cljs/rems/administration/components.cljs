@@ -13,9 +13,7 @@
     :keys   - List of keys, a path to the component's data in the form state,
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
-  (:require [cljs-time.core :as time]
-            [cljs-time.format :as time-format]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
             [rems.collapsible :as collapsible]
