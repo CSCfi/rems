@@ -293,6 +293,11 @@
      :t.form.validation/options-required
      (apply merge (mapv #(validate-option %1 %2 languages) options (range))))})
 
+(defn- validate-date-bound [field]
+  (let [date-bound-type (get field :field/date-bound :none)]
+    (when-not (contains? #{:none :past :future} date-bound-type)
+      {:field/date-bound :t.form.validation/invalid-value})))
+
 (defn- validate-columns [columns languages]
   {:field/columns
    (if (empty? columns)
@@ -362,6 +367,9 @@
                         (if (supports-options? field)
                           (validate-options (:field/options field) languages)
                           (validate-not-present field :field/options))
+                        (if (supports-date-bound? field)
+                          (validate-date-bound (:field/date-bound field))
+                          (validate-not-present field :field/date-bound))
                         (if (supports-columns? field)
                           (validate-columns (:field/columns field) languages)
                           (validate-not-present field :field/columns))
