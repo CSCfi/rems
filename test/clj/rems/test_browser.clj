@@ -2095,7 +2095,7 @@
     (btu/fill-human :display-order (str display-order)))
   (when (seq categories)
     (doseq [cat categories]
-     (select-option "Subcategories" cat))))
+      (select-option "Subcategories" cat))))
 
 (defn navigate-to-categories []
   (go-to-admin "Catalogue items")
