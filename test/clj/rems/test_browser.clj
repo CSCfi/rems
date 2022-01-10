@@ -1710,7 +1710,31 @@
                                    {:tag :button :fn/has-class "info-button"}])
             (is (btu/eventually-visible? (field-collapse-selector id)))
             (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)")))))
+                   "Info text (EN)"))))
+
+        (testing "create label field"
+          (create-context-field! :create-form-field/label)
+
+          (let [id (field-id :create-form-field/label)]
+            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+            (btu/scroll-and-click (field-selector :type-label))
+            (btu/fill-human (field-selector :title-en) "Label (EN)")
+            (btu/fill-human (field-selector :title-fi) "Label (FI)")
+            (btu/fill-human (field-selector :title-sv) "Label (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
+                                          {:tag :label :fn/text "Label (EN)"}]))))
+
+        (testing "create header field"
+          (create-context-field! :create-form-field/header)
+
+          (let [id (field-id :create-form-field/header)]
+            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
+            (btu/scroll-and-click (field-selector :type-header))
+            (btu/fill-human (field-selector :title-en) "Header (EN)")
+            (btu/fill-human (field-selector :title-fi) "Header (FI)")
+            (btu/fill-human (field-selector :title-sv) "Header (SV)")
+            (is (btu/eventually-visible? [(field-container-selector id)
+                                          {:tag :h3 :fn/text "Header (EN)"}])))))
       (btu/scroll-and-click :save))
 
     (testing "view form"
@@ -1725,7 +1749,8 @@
              (slurp-fields :form)))
       (testing "preview"
         (is (btu/eventually-visible? {:tag :button :fn/has-class :info-button}))
-        (is (= (->> (btu/query-all {:css ".application-field-label"})
+        (is (= (->> (btu/query-all {:css ".field-preview > .form-group"})
+                    (mapcat #(btu/children % {:css ".application-field-label,label,h3"}))
                     (filter btu/visible-el?)
                     (map btu/get-element-text-el))
                ["Text field (EN) (max 127 characters) (optional)"
@@ -1737,7 +1762,9 @@
                 "Email field (EN)"
                 "Phone number field (EN)"
                 "IP address field (EN)"
-                "Attachment field (EN)"])))
+                "Attachment field (EN)"
+                "Label (EN)"
+                "Header (EN)"])))
 
       (testing "info collapse can be toggled"
         (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
@@ -1819,7 +1846,7 @@
                   :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                  :field/type "description"
-                                 :field/id "fld11"
+                                 :field/id "fld13"
                                  :field/max-length nil
                                  :field/optional false}
                                 {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
@@ -1895,6 +1922,14 @@
                                  :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
                                  :field/type "attachment"
                                  :field/id "fld10"
+                                 :field/optional false}
+                                {:field/title {:fi "Label (FI)" :en "Label (EN)" :sv "Label (SV)"}
+                                 :field/type "label"
+                                 :field/id "fld11"
+                                 :field/optional false}
+                                {:field/title {:fi "Header (FI)" :en "Header (EN)" :sv "Header (SV)"}
+                                 :field/type "header"
+                                 :field/id "fld12"
                                  :field/optional false}]
                   :form/errors nil
                   :enabled true
