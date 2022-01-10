@@ -2094,25 +2094,14 @@
   (when display-order
     (btu/fill-human :display-order (str display-order)))
   (when (seq categories)
-    (doall
-     (for [cat categories]
-       (select-option "Subcategories" cat)))))
+    (doseq [cat categories]
+     (select-option "Subcategories" cat))))
 
 (defn navigate-to-categories []
   (go-to-admin "Catalogue items")
   (is (btu/eventually-visible? :catalogue))
   (btu/scroll-and-click {:fn/text "Manage categories"})
   (is (btu/eventually-visible? :categories)))
-
-(defn navigate-to-category [title]
-  (btu/fill-human :categories-search title)
-  ;; search only hides rows, so we need to iterate visible elements to find correct row
-  (let [view-button (->> (btu/query-all {:css "#categories > tbody > tr > .commands"})
-                         (mapcat #(btu/children % {:fn/text "View"}))
-                         (filter btu/visible-el?)
-                         first)]
-    (btu/click-el view-button)
-    (is (btu/eventually-visible? :category))))
 
 (defn slurp-categories-by-title []
   (->> (map #(get % "title") (slurp-rows :categories))
@@ -2145,7 +2134,10 @@
 
     (testing "edit category"
       (btu/scroll-and-click :back)
-      (navigate-to-category "E2E Test category (EN)")
+      (is (btu/eventually-visible? :categories))
+      (click-row-action [:categories]
+                        {:fn/text "E2E Test category (EN)"}
+                        (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
@@ -2189,7 +2181,10 @@
                  (slurp-fields :category)))))
 
       (btu/scroll-and-click :back)
-      (navigate-to-category "Edited title (EN)")
+      (is (btu/eventually-visible? :categories))
+      (click-row-action [:categories]
+                        {:fn/text "Edited title (EN)"}
+                        (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :categories-dropdown)
       (select-option "Subcategories" "E2E Ancestor category (EN)")
@@ -2216,10 +2211,13 @@
     (testing "delete category"
       (testing "should contain created categories before delete"
         (navigate-to-categories)
+        (is (btu/eventually-visible? :categories))
         (is (= #{"Edited title (EN)" "E2E Ancestor category (EN)"}
                (->> (set (slurp-categories-by-title))
                     (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))
-      (navigate-to-category "E2E Ancestor category (EN)")
+      (click-row-action [:categories]
+                        {:fn/text "E2E Ancestor category (EN)"}
+                        (select-button-by-label "View"))
       (btu/scroll-and-click :delete)
       (btu/wait-has-alert)
       (btu/accept-alert)
