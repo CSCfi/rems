@@ -10,6 +10,7 @@
   NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
             [clojure.string :as str]
+            [clojure.set :refer [intersection]]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
             [rems.api.services.catalogue :as catalogue]
@@ -2081,3 +2082,146 @@
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
     (user-settings/delete-user-settings! "alice") ; clear language settings
     (is true)))  ; avoid no assertions warning
+
+(defn fill-category-fields [{:keys [title description display-order categories]}]
+  (btu/fill-human :title-en (str title " (EN)"))
+  (btu/fill-human :title-fi (str title " (FI)"))
+  (btu/fill-human :title-sv (str title " (SV)"))
+  (when description
+    (btu/fill-human :description-en (str description " (EN)"))
+    (btu/fill-human :description-fi (str description " (FI)"))
+    (btu/fill-human :description-sv (str description " (SV)")))
+  (when display-order
+    (btu/fill-human :display-order (str display-order)))
+  (when (seq categories)
+    (doseq [cat categories]
+      (select-option "Subcategories" cat))))
+
+(defn navigate-to-categories []
+  (go-to-admin "Catalogue items")
+  (is (btu/eventually-visible? :catalogue))
+  (btu/scroll-and-click {:fn/text "Manage categories"})
+  (is (btu/eventually-visible? :categories)))
+
+(defn slurp-categories-by-title []
+  (->> (map #(get % "title") (slurp-rows :categories))
+       (filter some?)))
+
+(deftest test-categories
+  (btu/with-postmortem
+    (login-as "owner")
+    (navigate-to-categories)
+
+    (testing "create new category"
+      (btu/scroll-and-click :create-category)
+      (is (btu/eventually-visible? :create-category))
+      (fill-category-fields {:title "E2E Test category"
+                             :description "Description"
+                             :display-order 1})
+      (btu/scroll-and-click :save)
+
+      (testing "after create"
+        (is (btu/eventually-visible? :category))
+        (is (= {"Title (EN)" "E2E Test category (EN)"
+                "Title (FI)" "E2E Test category (FI)"
+                "Title (SV)" "E2E Test category (SV)"
+                "Description (EN)" "Description (EN)"
+                "Description (FI)" "Description (FI)"
+                "Description (SV)" "Description (SV)"
+                "Display order" "1"
+                "Subcategories" ""}
+               (slurp-fields :category)))))
+
+    (testing "edit category"
+      (btu/scroll-and-click :back)
+      (is (btu/eventually-visible? :categories))
+      (click-row-action [:categories]
+                        {:fn/text "E2E Test category (EN)"}
+                        (select-button-by-label "View"))
+      (btu/scroll-and-click :edit)
+      (btu/wait-visible :title-en)
+      (btu/clear :title-en)
+      (btu/fill-human :title-en "Edited title (EN)")
+      (btu/scroll-and-click :save)
+
+      (testing "after edit"
+        (is (btu/eventually-visible? :category))
+        (is (= {"Title (EN)" "Edited title (EN)"
+                "Title (FI)" "E2E Test category (FI)"
+                "Title (SV)" "E2E Test category (SV)"
+                "Description (EN)" "Description (EN)"
+                "Description (FI)" "Description (FI)"
+                "Description (SV)" "Description (SV)"
+                "Display order" "1"
+                "Subcategories" ""}
+               (slurp-fields :category)))))
+
+    (testing "shows error on updating ancestor category as child"
+      (btu/scroll-and-click :back)
+
+      (testing "create ancestor category"
+        (btu/scroll-and-click :create-category)
+        (is (btu/eventually-visible? :create-category))
+        (fill-category-fields {:title "E2E Ancestor category"
+                               :description "Description"
+                               :display-order 2
+                               :categories ["Edited title (EN)"]})
+        (btu/scroll-and-click :save)
+
+        (testing "after create"
+          (is (btu/eventually-visible? :category))
+          (is (= {"Title (EN)" "E2E Ancestor category (EN)"
+                  "Title (FI)" "E2E Ancestor category (FI)"
+                  "Title (SV)" "E2E Ancestor category (SV)"
+                  "Description (EN)" "Description (EN)"
+                  "Description (FI)" "Description (FI)"
+                  "Description (SV)" "Description (SV)"
+                  "Display order" "2"
+                  "Subcategories" "Edited title (EN)"}
+                 (slurp-fields :category)))))
+
+      (btu/scroll-and-click :back)
+      (is (btu/eventually-visible? :categories))
+      (click-row-action [:categories]
+                        {:fn/text "Edited title (EN)"}
+                        (select-button-by-label "View"))
+      (btu/scroll-and-click :edit)
+      (btu/wait-visible :categories-dropdown)
+      (select-option "Subcategories" "E2E Ancestor category (EN)")
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:css "#flash-message-top"})
+      (is (= ["Save: Failed"
+              "Cannot set category as subcategory, because it would create a loop"
+              "Category: E2E Ancestor category (EN)"]
+             (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
+                 (str/split-lines))))
+
+      (testing "shows dependency error on delete category"
+        (btu/scroll-and-click :cancel)
+        (btu/scroll-and-click :delete)
+        (btu/wait-has-alert)
+        (btu/accept-alert)
+        (is (btu/eventually-visible? {:css "#flash-message-top"}))
+        (is (= ["Delete: Failed"
+                "It is in use by:"
+                "Category: E2E Ancestor category (EN)"]
+               (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
+                   (str/split-lines))))))
+
+    (testing "delete category"
+      (testing "should contain created categories before delete"
+        (navigate-to-categories)
+        (is (btu/eventually-visible? :categories))
+        (is (= #{"Edited title (EN)" "E2E Ancestor category (EN)"}
+               (->> (set (slurp-categories-by-title))
+                    (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))
+      (click-row-action [:categories]
+                        {:fn/text "E2E Ancestor category (EN)"}
+                        (select-button-by-label "View"))
+      (btu/scroll-and-click :delete)
+      (btu/wait-has-alert)
+      (btu/accept-alert)
+      (is (btu/eventually-visible? :categories))
+      (is (= #{"Edited title (EN)"}
+             (->> (set (slurp-categories-by-title))
+                  (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))))
