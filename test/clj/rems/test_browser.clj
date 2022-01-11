@@ -1748,11 +1748,12 @@
               "Active" true}
              (slurp-fields :form)))
       (testing "preview"
-        (is (btu/eventually-visible? {:tag :button :fn/has-class :info-button}))
-        (is (= (->> (btu/query-all {:css ".field-preview > .form-group"})
-                    (mapcat #(btu/children % {:css ".application-field-label,label,h3"}))
+        (is (btu/eventually-visible? :preview-form-contents))
+        (is (= (->> (btu/query-all [:preview-form-contents
+                                    {:class :field-preview}])
                     (filter btu/visible-el?)
-                    (map btu/get-element-text-el))
+                    (map btu/get-element-text-el)
+                    (map (comp first str/split-lines))) ;; first element is the label/header
                ["Text field (EN) (max 127 characters) (optional)"
                 "Text area (EN) (max 127 characters) (optional)"
                 "Option list (EN)"
