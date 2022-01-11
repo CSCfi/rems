@@ -42,9 +42,10 @@
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
-(defn move-up-button [on-click]
-  [:a.move-up
-   {:href "#"
+(defn move-up-button [{:keys [on-click class]}]
+  [:a
+   {:className (str "move-up " class)
+    :href "#"
     :on-click (fn [event]
                 (.preventDefault event)
                 (on-click))
@@ -53,9 +54,10 @@
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
 
-(defn move-down-button [on-click]
-  [:a.move-down
-   {:href "#"
+(defn move-down-button [{:keys [on-click class]}]
+  [:a
+   {:className (str "move-down " class)
+    :href "#"
     :on-click (fn [event]
                 (.preventDefault event)
                 (on-click))
