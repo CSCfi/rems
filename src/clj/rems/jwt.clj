@@ -29,19 +29,20 @@
         jwk (getx (indexed-jwks) key-id)]
     (buddy-keys/jwk->public-key jwk)))
 
-(defn- fetch-jku-jwks [visa]
-  (when-let [jku-uri (:jku visa)]
-    (getx (http/get jku-uri {:as :json}) :body)))
+(defn- fetch-jku-jwks [jku]
+  (getx (http/get jku {:as :json}) :body))
 
-(defn- indexed-jku-jwks [visa]
-  (index-by [:kid] (getx (fetch-jku-jwks visa) :keys)))
+(defn- indexed-jku-jwks [jku]
+  (when jku
+    (index-by [:kid] (getx (fetch-jku-jwks jku) :keys))))
 
 (def memoized-indexed-jku-jwks
   (clojure.core.memoize/ttl indexed-jku-jwks :ttl/threshold 60000)) ; cache for 1 minute
 
 (defn- fetch-visa-public-key [visa]
-  (let [key-id (:kid (buddy-jwe/decode-header visa))
-        jwk (getx (memoized-indexed-jku-jwks visa) key-id)]
+  (let [decoded-visa (buddy-jwe/decode-header visa)
+        key-id (:kid decoded-visa)
+        jwk (getx (memoized-indexed-jku-jwks (:jku decoded-visa)) key-id)]
     (buddy-keys/jwk->public-key jwk)))
 
 (defn sign [claims secret & [opts]]
