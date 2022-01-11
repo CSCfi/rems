@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.22
 
+### Additions
+- There is a new experimental CLI command `rename-user` to handle the case where a single user's identity has changed. After running this command, one should also refresh the caches of the application server by restart.
+
 ## v2.22 "Vattuniemenkuja" 2021-12-21
 
 ### Additions

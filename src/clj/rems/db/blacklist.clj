@@ -1,5 +1,6 @@
 (ns rems.db.blacklist
-  (:require [rems.db.core :as db]
+  (:require [rems.common.util :refer [getx]]
+            [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.db.users :as users]
             [rems.json :as json]
@@ -48,6 +49,10 @@
 
 (defn add-event! [event]
   (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
+
+(defn update-event! [event]
+  (db/update-blacklist-event! {:id (getx event :event/id)
+                               :eventdata (-> event check-foreign-keys event->json)}))
 
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))
