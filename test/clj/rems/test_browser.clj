@@ -2602,11 +2602,16 @@
                  (str/split-lines))))
 
       (testing "shows dependency error on delete category"
-        (btu/scroll-and-click :cancel)
+        (navigate-to-categories)
+        (click-row-action [:categories]
+                          {:fn/text "Edited title (EN)"}
+                          (select-button-by-label "View"))
+
         (btu/scroll-and-click :delete)
         (btu/wait-has-alert)
         (btu/accept-alert)
         (is (btu/eventually-visible? {:css "#flash-message-top"}))
+
         (is (= ["Delete: Failed"
                 "It is in use by:"
                 "Category: E2E Ancestor category (EN)"]
