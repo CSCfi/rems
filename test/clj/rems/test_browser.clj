@@ -2607,6 +2607,8 @@
         (btu/wait-has-alert)
         (btu/accept-alert)
         (is (btu/eventually-visible? {:css "#flash-message-top"}))
+        (Thread/sleep 500) ;; wait for headless mode to catch up with re-rendering
+
         (is (= ["Delete: Failed"
                 "It is in use by:"
                 "Category: E2E Ancestor category (EN)"]

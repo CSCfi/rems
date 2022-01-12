@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.22
+Changes since v2.23
+
+## v2.23 "Melkonkatu" 2022-01-12
 
 ### Additions
 - The change applicant command is now possible for the handler even for returned applications.
