@@ -56,7 +56,6 @@
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
-        :application.command/change-applicant ;; could allow this, but decided to not do it right now
         :application.command/return
         :application.command/approve
         :application.command/reject

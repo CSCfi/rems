@@ -800,14 +800,14 @@
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
                                     :member {:userid "elsa"}}))))
-    (testing "can't change applicant of returned application"
+    (testing "can change applicant of returned application"
       (is (= {:success true}
              (send-command handler {:type :application.command/return
                                     :application-id app-id})))
-      (is (= {:success false :errors [{:type "forbidden"}]}
+      (is (= {:success true}
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
-                                    :member {:userid "malice"}}))))))
+                                    :member {:userid "alice"}}))))))
 
 (deftest test-application-validation
   (let [user-id "alice"
