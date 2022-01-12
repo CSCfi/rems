@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.22
+Changes since v2.23
+
+## v2.23 "Melkonkatu" 2022-01-12
 
 ### Additions
 - There is a new experimental CLI command `rename-user` to handle the case where a single user's identity has changed. After running this command, one should also refresh the caches of the application server by restart.
