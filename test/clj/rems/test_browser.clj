@@ -2602,15 +2602,12 @@
                  (str/split-lines))))
 
       (testing "shows dependency error on delete category"
-        (navigate-to-categories)
-        (click-row-action [:categories]
-                          {:fn/text "Edited title (EN)"}
-                          (select-button-by-label "View"))
-
+        (btu/scroll-and-click :cancel)
         (btu/scroll-and-click :delete)
         (btu/wait-has-alert)
         (btu/accept-alert)
         (is (btu/eventually-visible? {:css "#flash-message-top"}))
+        (Thread/sleep 500) ;; wait for headless mode to catch up with re-rendering
 
         (is (= ["Delete: Failed"
                 "It is in use by:"
