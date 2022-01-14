@@ -98,8 +98,6 @@ VALUES (:form, :resid, :wfid, :organization,
 -- :name get-resources :? :*
 SELECT
   id,
-  owneruserid,
-  modifieruserid,
   organization,
   resid,
   enabled,
@@ -110,8 +108,6 @@ FROM resource;
 -- :name get-resource :? :1
 SELECT
   id,
-  owneruserid,
-  modifieruserid,
   organization,
   resid,
   enabled,
@@ -130,12 +126,12 @@ WHERE 1=1
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, organization, ownerUserId, modifieruserid, resourcedata)
-VALUES (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb);
+(resid, organization, resourcedata)
+VALUES (:resid, :organization, :resourcedata::jsonb);
 
 -- :name update-resource! :!
 UPDATE resource
-SET (resid, organization, ownerUserId, modifieruserid, resourcedata) = (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb)
+SET (resid, organization, resourcedata) = (:resid, :organization, :resourcedata::jsonb)
 WHERE id = :id;
 
 -- :name set-resource-enabled! :!

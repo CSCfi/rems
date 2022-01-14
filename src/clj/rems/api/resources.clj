@@ -14,8 +14,6 @@
 ;; TODO convert to V2Resource
 (s/defschema Resource
   {:id s/Int
-   :owneruserid s/Str
-   :modifieruserid s/Str
    :organization schema-base/OrganizationOverview
    :resid s/Str
    :enabled s/Bool
@@ -83,7 +81,7 @@
       :roles +admin-write-roles+
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
-      (ok (resource/create-resource! command (getx-user-id))))
+      (ok (resource/create-resource! command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive resource"

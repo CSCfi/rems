@@ -228,26 +228,7 @@
 ;; NB: this is a table that should contain rows only momentarily
 
 
-(defn fix-resource [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.resource/get-resources nil)
-         :let [new (cond-> old
-                     (= old-userid (:owneruserid old))
-                     (assoc :owneruserid new-userid)
-
-                     (= old-userid (:modifieruserid old))
-                     (assoc :modifieruserid new-userid))]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-resource old params)
-       (when-not simulate?
-         (apply rems.db.resource/update-resource! params))
-       {:old old :params params}))))
-
-(comment
-  (fix-resource "alice" "frank" false))
-
+;; nothing to fix in resource
 ;; nothing to fix in resource_licenses
 
 
@@ -332,7 +313,6 @@
                          #'fix-form-template
                          #'fix-invitation
                          #'fix-organization
-                         #'fix-resource
                          #'fix-roles
                          #'fix-workflow]]
                   [(:name (meta f))

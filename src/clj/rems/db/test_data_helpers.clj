@@ -140,8 +140,7 @@
                  (resource/create-resource! (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
                                                     :organization (or organization (ensure-default-organization!))
                                                     :licenses (or license-ids [])}
-                                                   duo-data)
-                                            actor))]
+                                                   duo-data)))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
