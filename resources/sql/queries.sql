@@ -55,13 +55,11 @@ WHERE 1=1
 ;
 
 -- :name set-catalogue-item-enabled! :!
--- TODO set modifieruserid?
 UPDATE catalogue_item
 SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-catalogue-item-archived! :!
--- TODO set modifieruserid?
 UPDATE catalogue_item
 SET archived = :archived
 WHERE id = :id;
@@ -141,13 +139,11 @@ SET (resid, organization, ownerUserId, modifieruserid, resourcedata) = (:resid, 
 WHERE id = :id;
 
 -- :name set-resource-enabled! :!
--- TODO set modifieruserid?
 UPDATE resource
 SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-resource-archived! :!
--- TODO set modifieruserid?
 UPDATE resource
 SET archived = :archived
 WHERE id = :id;
@@ -231,14 +227,12 @@ WHERE
 id = :id;
 
 -- :name set-form-template-enabled! :!
--- TODO set modifieruserid?
 UPDATE form_template
 SET enabled = :enabled
 WHERE
 id = :id;
 
 -- :name set-form-template-archived! :!
--- TODO set modifieruserid?
 UPDATE form_template
 SET archived = :archived
 WHERE
