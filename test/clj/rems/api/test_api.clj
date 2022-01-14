@@ -123,9 +123,7 @@
   (api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:eppn "owner"} :owner)
   (testing "a broken license without an organization"
-    (let [license-id (:id (db/create-license! {:owneruserid "owner"
-                                               :modifieruserid "owner"
-                                               :organization "does-not-exist"
+    (let [license-id (:id (db/create-license! {:organization "does-not-exist"
                                                :type "text"}))
           response (-> (api-response :get (str "/api/licenses/" license-id)
                                      nil

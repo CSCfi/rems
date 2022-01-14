@@ -66,7 +66,7 @@
       :roles +admin-write-roles+
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
-      (ok (licenses/create-license! command (getx-user-id))))
+      (ok (licenses/create-license! command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive license"

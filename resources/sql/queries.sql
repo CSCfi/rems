@@ -326,9 +326,9 @@ WHERE appid = :application;
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, organization, type)
+(organization, type)
 VALUES
-(:owneruserid, :modifieruserid, :organization, :type::license_type)
+(:organization, :type::license_type)
 
 -- :name set-license-enabled! :!
 UPDATE license
@@ -342,7 +342,7 @@ WHERE id = :id;
 
 -- :name update-license! :!
 UPDATE license
-SET (ownerUserId, modifierUserId, organization, type, enabled, archived) = (:owneruserid, :modifieruserid, :organization, :type::license_type, :enabled, :archived)
+SET (organization, type, enabled, archived) = (:organization, :type::license_type, :enabled, :archived)
 WHERE id = :id;
 
 -- :name create-license-attachment! :insert

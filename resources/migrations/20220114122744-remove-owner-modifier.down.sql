@@ -6,3 +6,7 @@ ADD COLUMN modifierUserId varchar(255);
 ALTER TABLE form_template
 ADD COLUMN ownerUserId varchar(255),
 ADD COLUMN modifierUserId varchar(255);
+--;;
+ALTER TABLE license
+ADD COLUMN ownerUserId varchar(255),
+ADD COLUMN modifierUserId varchar(255);

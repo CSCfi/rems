@@ -89,8 +89,7 @@
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
-                                                                      :attachment-id attachment-id})}
-                                           actor))]
+                                                                      :attachment-id attachment-id})}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
