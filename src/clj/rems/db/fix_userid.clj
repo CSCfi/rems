@@ -153,26 +153,7 @@
   (fix-entitlement "alice" "frank" false))
 
 ;; nothing to fix in external_application_id
-
-(defn fix-form-template [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.form/get-form-templates nil)
-         :let [new (cond-> old
-                     (= old-userid (:form/owner old))
-                     (assoc :form/owner new-userid)
-
-                     (= old-userid (:form/modifier old))
-                     (assoc :form/modifier new-userid))]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-form-template old params)
-       (when-not simulate?
-         (apply rems.db.form/update-form-template! params))
-       {:old old :params params}))))
-
-(comment
-  (fix-form-template "owner" "frank" false))
+;; nothing to fix in form_template
 
 (defn fix-invitation [old-userid new-userid simulate?]
   (doall
@@ -310,7 +291,6 @@
                          #'fix-audit-log
                          #'fix-blacklist-event
                          #'fix-entitlement
-                         #'fix-form-template
                          #'fix-invitation
                          #'fix-organization
                          #'fix-roles

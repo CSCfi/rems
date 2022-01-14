@@ -121,8 +121,7 @@
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (form/create-form! actor
-                                    {:organization (or organization (ensure-default-organization!))
+                 (form/create-form! {:organization (or organization (ensure-default-organization!))
                                      :form/internal-name (or internal-name "FORM")
                                      :form/external-title (or external-title
                                                               (into {}

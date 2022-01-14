@@ -172,9 +172,7 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived,
-  owneruserid,
-  modifieruserid
+  archived
 FROM form_template;
 
 -- :name get-form-template :? :1
@@ -184,28 +182,23 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived,
-  owneruserid,
-  modifieruserid
+  archived
 FROM form_template
 WHERE id = :id;
 
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(organization, modifierUserId, ownerUserId, fields, formdata)
+(organization, fields, formdata)
 VALUES
 (:organization,
- :user,
- :user,
  :fields::jsonb,
  :formdata::jsonb
 );
 
 -- :name edit-form-template! :!
 UPDATE form_template
-SET (organization, modifierUserId, fields, formdata) =
+SET (organization, fields, formdata) =
 (:organization,
- :user,
  :fields::jsonb,
  :formdata::jsonb)
 WHERE
@@ -213,10 +206,8 @@ id = :id;
 
 -- :name update-form-template! :!
 UPDATE form_template
-SET (organization, modifierUserId, ownerUserId, fields, formdata) =
+SET (organization, fields, formdata) =
 (:organization,
- :modifier,
- :owner,
  :fields::jsonb,
  :formdata::jsonb)
 WHERE
