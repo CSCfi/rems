@@ -9,3 +9,7 @@ DROP COLUMN IF EXISTS modifieruserid;
 ALTER TABLE license
 DROP COLUMN IF EXISTS owneruserid,
 DROP COLUMN IF EXISTS modifieruserid;
+--;;
+ALTER TABLE workflow
+DROP COLUMN IF EXISTS owneruserid,
+DROP COLUMN IF EXISTS modifieruserid;

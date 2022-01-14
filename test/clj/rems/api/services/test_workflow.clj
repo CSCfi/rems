@@ -48,8 +48,6 @@
                                                           :fi "Workflow Form FI"
                                                           :sv "Workflow Form SV"}}]}
                 :licenses []
-                :owneruserid "owner"
-                :modifieruserid "owner"
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -67,8 +65,6 @@
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
                            :forms []}
                 :licenses []
-                :owneruserid "owner"
-                :modifieruserid "owner"
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -86,8 +82,6 @@
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
                            :forms []}
                 :licenses []
-                :owneruserid "owner"
-                :modifieruserid "owner"
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))))

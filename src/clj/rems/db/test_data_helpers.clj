@@ -147,15 +147,13 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (workflow/create-workflow!
-                  {:userid actor
-                   :organization (or organization (ensure-default-organization!))
+                  {:organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)
                    :forms forms
-                   :handlers
-                   (or handlers
-                       (do (create-user! (get +fake-user-data+ "developer"))
-                           ["developer"]))}))]
+                   :handlers (or handlers
+                                 (do (create-user! (get +fake-user-data+ "developer"))
+                                     ["developer"]))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

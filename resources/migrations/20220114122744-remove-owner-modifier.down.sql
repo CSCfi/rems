@@ -10,3 +10,7 @@ ADD COLUMN modifierUserId varchar(255);
 ALTER TABLE license
 ADD COLUMN ownerUserId varchar(255),
 ADD COLUMN modifierUserId varchar(255);
+--;;
+ALTER TABLE workflow
+ADD COLUMN ownerUserId varchar(255),
+ADD COLUMN modifierUserId varchar(255);

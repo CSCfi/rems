@@ -368,11 +368,9 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(organization, ownerUserId, modifierUserId, title, workflowBody)
+(organization, title, workflowBody)
 VALUES
 (:organization,
- :owneruserid,
- :modifieruserid,
  :title,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
@@ -422,7 +420,7 @@ WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
+  wf.id, wf.organization, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 /*~ (when (:catid params) */
@@ -439,7 +437,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
+  wf.id, wf.organization, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 
