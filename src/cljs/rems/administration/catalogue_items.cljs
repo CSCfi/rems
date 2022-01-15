@@ -138,7 +138,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [view-button (:id item)]
-                           [roles/show-when roles/+admin-write-roles+
+                           [roles/show-when-correct-access roles/+admin-write-roles+ (get-in item [:organization :organization/id])
                             [catalogue-item/edit-button (:id item)]
                             [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
                             [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]]}})

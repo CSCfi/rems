@@ -554,3 +554,8 @@
   (is (= [] (replace-key [] :a :b)))
   (is (= {:b 1} (replace-key {:a 1} :a :b)))
   (is (= {:a 1} (replace-key {:a 1} :b :c))))
+
+(defn in?
+  "Returns a true boolean value when the collection contains a element value else nil."
+  [element collection]
+  (some #(= element %) collection))

@@ -1,6 +1,6 @@
 (ns rems.common.test-util
   (:require [clojure.test :refer [deftest is testing]]
-            [rems.common.util :refer [select-vals distinct-by]]))
+            [rems.common.util :refer [select-vals distinct-by in?]]))
 
 (deftest select-vals-test
   (is (= [] (select-vals nil nil)))
@@ -14,3 +14,7 @@
 (deftest test-distinct-by
   (is (= [1 2]
          (sort (distinct-by even? [1 2 3 4])))))
+
+(deftest test-in?
+  (is (= true (in? 1 '(1 2 3))))
+  (is (= nil (in? 4 '(1 2 3)))))

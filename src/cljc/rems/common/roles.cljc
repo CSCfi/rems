@@ -1,7 +1,8 @@
 (ns rems.common.roles
   (:refer-clojure :exclude [when])
   #?(:clj (:require [rems.context :as context])
-     :cljs (:require [re-frame.core :as rf])))
+     :cljs (:require [re-frame.core :as rf]
+                     [rems.common.util :refer [in?]])))
 
 (def +admin-write-roles+ #{:organization-owner :owner})
 (def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
@@ -32,7 +33,29 @@
             (boolean (some (set roles) context/*roles*)))
      :cljs (some (set roles) (:roles @(rf/subscribe [:identity])))))
 
+(defn is-with-organization?
+  "Determines if the user is part of an organization based on the passed in ID."
+  [organization-id]
+  #?(:cljs (let [owned-organizations @(rf/subscribe [:owned-organizations])]
+             (->> owned-organizations
+                 (map #(get-in % [:organization/id]))
+                 (in? organization-id)))))
+
+(defn has-permission?
+  "Does the current user have the proper permissions?
+   Permission is defined by having the proper role and is within an org."
+  [roles organization-id]
+  #?(:cljs
+     (and (apply has-roles? roles) (is-with-organization? organization-id))))
+
 #?(:cljs
-   (defn show-when [roles & body]
-     (clojure.core/when (apply has-roles? roles)
-       (into [:<>] body))))
+   (defn show-when
+     ([roles & body]
+      (clojure.core/when (apply has-roles? roles)
+                         (into [:<>] body)))))
+
+#?(:cljs
+   (defn show-when-correct-access
+     [roles organization-id & body]
+     (clojure.core/when (has-permission? roles organization-id)
+                        (into [:<>] body))))
