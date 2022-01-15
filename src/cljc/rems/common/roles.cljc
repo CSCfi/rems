@@ -38,8 +38,8 @@
   [organization-id]
   #?(:cljs (let [owned-organizations @(rf/subscribe [:owned-organizations])]
              (->> owned-organizations
-                 (map #(get-in % [:organization/id]))
-                 (in? organization-id)))))
+                  (map #(get-in % [:organization/id]))
+                  (in? organization-id)))))
 
 (defn has-permission?
   "Does the current user have the proper permissions?
@@ -52,10 +52,10 @@
    (defn show-when
      ([roles & body]
       (clojure.core/when (apply has-roles? roles)
-                         (into [:<>] body)))))
+        (into [:<>] body)))))
 
 #?(:cljs
    (defn show-when-correct-access
      [roles organization-id & body]
      (clojure.core/when (has-permission? roles organization-id)
-                        (into [:<>] body))))
+       (into [:<>] body))))
