@@ -485,15 +485,20 @@
                                     :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))})))
 
 (defmethod command-handler :application.command/change-resources
-  [cmd application injections]
-  (let [cat-ids (:catalogue-item-ids cmd)]
+  [cmd application {:keys [get-catalogue-item get-workflow] :as injections}]
+  (let [cat-ids (:catalogue-item-ids cmd)
+        workflow-id (-> (first cat-ids)
+                        get-catalogue-item
+                        :wfid)
+        workflow (get-workflow workflow-id)]
     (or (must-not-be-empty cmd :catalogue-item-ids)
         (invalid-catalogue-items cat-ids injections)
         (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
         (changes-original-workflow application cat-ids (:actor cmd) injections)
         (add-comment-and-attachments cmd injections
                                      {:event/type :application.event/resources-changed
-                                      :application/forms (build-forms-list cat-ids injections)
+                                      :application/forms (concat (get-in workflow [:workflow :forms])
+                                                                 (build-forms-list cat-ids injections))
                                       :application/resources (build-resources-list cat-ids injections)
                                       :application/licenses (build-licenses-list cat-ids injections)}))))
 
