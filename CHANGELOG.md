@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.23
 
+### Fixes
+- Workflow forms persist even if changing resources.
+
 ## v2.23 "Melkonkatu" 2022-01-12
 
 ### Additions

@@ -501,6 +501,7 @@
         cat-4-other-form 4
         form-1 1
         form-2 2
+        form-3 3
         wf-1 1
         wf-2 2
         license-1 1
@@ -517,7 +518,9 @@
                                              :event/actor handler-user-id
                                              :application/comment "This is good"
                                              :application/id app-id}])
-        injections {:get-catalogue-item
+        injections {:get-workflow {wf-1 {:workflow {:forms [{:form/id form-3}]}}
+                                   wf-2 {}}
+                    :get-catalogue-item
                     {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
                      cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
                      cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
@@ -533,7 +536,8 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/forms [{:form/id 1}]
+              :application/forms [{:form/id 3} ; workflow form must persist
+                                  {:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -566,7 +570,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/forms [{:form/id 1} {:form/id 2}]
+              :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
               :application/licenses [{:license/id license-1}]}
@@ -581,7 +585,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/forms [{:form/id 1}]
+              :application/forms [{:form/id 3} {:form/id 1}]
               :application/resources [{:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-2}]}
              (ok-command application
@@ -603,7 +607,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/forms [{:form/id 2}]
+              :application/forms [{:form/id 3} {:form/id 2}]
               :application/resources [{:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
               :application/licenses [{:license/id license-1}]}
              (ok-command application
@@ -618,7 +622,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
-              :application/forms [{:form/id 1}]
+              :application/forms [{:form/id 3} {:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -636,7 +640,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
-                :application/forms [{:form/id 1} {:form/id 2}]
+                :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
@@ -654,7 +658,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
-              :application/forms [{:form/id 1}]
+              :application/forms [{:form/id 3} {:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -672,7 +676,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
-                :application/forms [{:form/id 1} {:form/id 2}]
+                :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
