@@ -487,10 +487,7 @@
 (defmethod command-handler :application.command/change-resources
   [cmd application {:keys [get-catalogue-item get-workflow] :as injections}]
   (let [cat-ids (:catalogue-item-ids cmd)
-        workflow-id (-> (first cat-ids)
-                        get-catalogue-item
-                        :wfid)
-        workflow (get-workflow workflow-id)]
+        workflow (when (seq cat-ids) (get-workflow (-> (first cat-ids) get-catalogue-item :wfid)))]
     (or (must-not-be-empty cmd :catalogue-item-ids)
         (invalid-catalogue-items cat-ids injections)
         (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
