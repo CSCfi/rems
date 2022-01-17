@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.23
+Changes since v2.24
+
+## v2.24 "Heikkiläntie" 2022-01-17
 
 ### Fixes
 - Workflow forms persist even if changing resources.
