@@ -259,7 +259,7 @@
                 :column-key "Id"
                 :column-label "Titel"
                 :confirm-remove-field "Ta bort fält?" ; TODO check
-                :date-bounds {:future "Framtida"
+                :date-bound {:future "Framtida"
                               :none "Ingen gräns"
                               :past "Tidigare"}
                 :field-id "Fält id"
@@ -278,7 +278,7 @@
                 :required-table "Kräv minst en rad" ; TODO check
                 :type-attachment "Bilaga"
                 :type-date "Datum"
-                :type-date-bounds "Datumgräns"
+                :type-date-bound "Datumgräns"
                 :type-description "Ansökans rubrik"
                 :type-email "E-postadress"
                 :type-header "Titel"

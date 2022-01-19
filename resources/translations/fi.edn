@@ -259,7 +259,7 @@
                 :column-key "Tunniste"
                 :column-label "Otsikko"
                 :confirm-remove-field "Poista kenttä?"
-                :date-bounds {:none "Ei rajausta"
+                :date-bound {:none "Ei rajausta"
                               :past "Menneet"
                               :future "Tulevat"}
                 :field-id "Kentän tunniste"
@@ -278,7 +278,7 @@
                 :required-table "Vaadi vähintään yksi rivi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
-                :type-date-bounds "Päivämäärän rajaus"
+                :type-date-bound "Päivämäärän rajaus"
                 :type-description "Hakemuksen otsikko"
                 :type-email "Sähköpostiosoite"
                 :type-header "Otsikko"
