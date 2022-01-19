@@ -2338,7 +2338,7 @@
               "Name (SV)" "Review mail SV"
               "Name (EN)" "Review mail EN"
               "Email" "review.email@example.com"
-              "Active" true }
+              "Active" true}
              (slurp-fields :organization))))
 
     (testing "edit after creation"
@@ -2370,7 +2370,7 @@
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
-                "Active" true }
+                "Active" true}
                (slurp-fields :organization)))))
 
     (testing "use after creation"
