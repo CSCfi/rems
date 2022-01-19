@@ -295,29 +295,29 @@ ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement
 
 -- :name save-attachment! :insert
 INSERT INTO attachment
-(appId, modifierUserId, filename, type, data)
+(appId, userid, filename, type, data)
 VALUES
 (:application, :user, :filename, :type, :data);
 
 -- :name update-attachment! :!
 UPDATE attachment
-SET (appId, modifierUserId, filename, type) = (:application, :user, :filename, :type)
+SET (appId, userId, filename, type) = (:application, :user, :filename, :type)
 WHERE id = :id;
 
 -- :name get-attachment :? :1
-SELECT id, appid, filename, modifierUserId, type, data FROM attachment
+SELECT id, appid, filename, userId, type, data FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments :? :*
-SELECT id, appid, filename, modifierUserId, type
+SELECT id, appid, filename, userId, type
 FROM attachment;
 
 -- :name get-attachment-metadata :? :1
-SELECT id, appid, filename, modifierUserId, type FROM attachment
+SELECT id, appid, filename, userId, type FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments-for-application :? :*
-SELECT id, filename, type, modifierUserId FROM attachment
+SELECT id, filename, type, userId FROM attachment
 WHERE appid = :application-id;
 
 -- :name delete-application-attachments! :!
@@ -347,7 +347,7 @@ WHERE id = :id;
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
-(modifierUserId, filename, type, data, start)
+(userId, filename, type, data, start)
 VALUES
 (:user, :filename, :type, :data, :start);
 

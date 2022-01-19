@@ -18,3 +18,9 @@ ADD COLUMN modifierUserId varchar(255);
 ALTER TABLE organization
 ADD COLUMN modifierUserId varchar(255),
 ADD COLUMN modified timestamp DEFAULT CURRENT_TIMESTAMP;
+--;;
+ALTER TABLE attachment
+RENAME COLUMN IF EXISTS userId TO modifierUserId;
+--;;
+ALTER TABLE license_attachment
+RENAME COLUMN IF EXISTS userId TO modifierUserId;
