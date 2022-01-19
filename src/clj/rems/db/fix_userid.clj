@@ -177,11 +177,7 @@
 
 
 ;; nothing to fix in license
-;; NB: the owneruserid and modifieruserid are not actually used
-
 ;; nothing to fix in license_attachment
-;; NB: the modifieruserid is not actually used
-
 ;; nothing to fix in license_localization
 
 (defn fix-organization [old-userid new-userid simulate?]
@@ -254,7 +250,6 @@
   (fix-user "alice" "frank" false))
 
 
-;; NB: the owneruserid and modifieruserid are not actually used
 (defn fix-workflow [old-userid new-userid simulate?]
   (doall
    (for [old (rems.db.workflow/get-workflows nil)
