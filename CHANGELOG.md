@@ -6,15 +6,49 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.20
+Changes since v2.24
+
+## v2.24 "Heikkiläntie" 2022-01-17
+
+### Fixes
+- Workflow forms persist even if changing resources.
+
+## v2.23 "Melkonkatu" 2022-01-12
+
+### Additions
+- The change applicant command is now possible for the handler even for returned applications.
+- There is a new experimental CLI command `rename-user` to handle the case where a single user's identity has changed. After running this command, one should also refresh the caches of the application server by restart.
+
+## v2.22 "Vattuniemenkuja" 2021-12-21
+
+### Additions
+- (Experimental) Catalogue items can be assigned one or more categories and the catalogue shown as a tree grouped by category. There is an admin UI where categories can be created. See (#2768, #2764, #2770, #2769)
+
+### Breaking changes
+- The API used to return disabled items for all users, but in the future only for administrative users. The disabled items were never visible to normal users in our UI. This may technically break the usage of the catalogue API if a regular user or public catalogue is used.
+
+## v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-23
+
+### Fixes
+- Attachment uploading resulted in broken or empty files due to improper stream handling, this behaviour is now fixed. (#2786)
+
+## v2.21 "Veneentekijän(tie|kuja|kaari)" 2021-10-04
 
 **NB: This release contains migrations!**
+
+### Breaking changes
+- Application attachment file size can now be limited with configuration option `:attachment-max-size`. Configuration default size per attachment is 10MB. (#2715)
+- REMS standalone CLI no longer starts the server if unrecognized command is passed, and will print help instead. (#2518 #2738)
 
 ### Additions
 - "More info" support for DOI style resources (when `:enable-doi` flag is set) (#2701)
 - There is a new v2 push API to sync entitlements outside of REMS. So far the only supported type is `:ega`. See [configuration.md](docs/configuration.md) for more details. (#2466)
 - Handlers can be invited to a workflow by email using the API (#2650)
 - Entitlement expiration field in application actions will now accept only future dates (#2674)
+- Applications can now be removed automatically after an expiration threshold is exceeded, using configuration option `:application-expiration`. This feature is disabled by default. (#2665)
+
+### Changes
+- Reviewers are no longer able to see private field questions in generated application pdf. Forms are also no longer rendered in application page if they contain only private fields (#2161)
 
 ## v2.20 "Vattuniemenkatu" 2021-08-24
 

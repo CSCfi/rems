@@ -91,7 +91,7 @@
        (not (:expired item))
        (not (:archived item))))
 
-(defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows]}]
+(defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows categories]}]
   (let [language @(rf/subscribe [:language])]
     [:<>
      [:p (text type)]
@@ -129,7 +129,14 @@
               (text :t.administration/workflow) ": "
               [:a {:target :_blank
                    :href (str "/administration/workflows/" (:id w))}
-               (get-localized-title-for-anything w language)]]))]))
+               (get-localized-title-for-anything w language)]]))
+     (into [:ul]
+           (for [cat categories]
+             [:li
+              (text :t.administration/category) ": "
+              [:a {:target :_blank
+                   :href (str "/administration/categories/" (:category/id cat))}
+               (localized (:category/title cat))]]))]))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]

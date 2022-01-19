@@ -54,7 +54,7 @@
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
   (db/get-licenses
-   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
+   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id {}))
     :items [catalogue-item-id]}))
 
 (defn get-application-by-invitation-token [invitation-token]
@@ -82,7 +82,8 @@
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
+   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
+                                                                                                                          :expand-resource-data? true})))
    :get-config (fn [] env)
    :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
    :get-user #(cache/lookup-or-miss user-cache % users/get-user)
@@ -282,11 +283,15 @@
   :start (scheduler/start! reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
-(defn delete-application! [app-id]
+(defn delete-application!
+  [app-id]
   (let [application (get-application app-id)]
     (assert (= :application.state/draft (:application/state application))
             (str "Tried to delete application " app-id " which is not a draft!")))
   (db/delete-application-attachments! {:application app-id})
   (db/delete-application-events! {:application app-id})
-  (db/delete-application! {:application app-id})
+  (db/delete-application! {:application app-id}))
+
+(defn delete-application-and-reload-cache! [app-id]
+  (delete-application! app-id)
   (reload-cache!))

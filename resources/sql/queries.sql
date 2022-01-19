@@ -10,8 +10,15 @@
 -- - :workflow workflow id to fetch items for
 -- - :form form id to fetch items for
 -- - :archived true if archived items should be included
+-- - :enabled whether enabled items should be included or nil if doesn't matter
 SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived, ci.organization
+/*~ (when (:expand-catalogue-data? params) */
+, ci.catalogueitemdata::TEXT
+/*~ ) ~*/
 , res.id AS "resource-id"
+/*~ (when (:expand-resource-data? params) */
+, res.resourcedata::TEXT AS "resourcedata"
+/*~ ) ~*/
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
@@ -42,6 +49,9 @@ WHERE 1=1
 /*~ (when (not (:archived params)) */
   AND ci.archived = false
 /*~ ) ~*/
+/*~ (when-not (nil? (:enabled params)) */
+  AND ci.enabled = :enabled
+/*~ ) ~*/
 ;
 
 -- :name set-catalogue-item-enabled! :!
@@ -68,16 +78,23 @@ UPDATE catalogue_item
 SET organization = :organization
 WHERE id = :id;
 
+-- :name set-catalogue-item-data! :!
+UPDATE catalogue_item
+SET catalogueitemdata = :catalogueitemdata::jsonb
+WHERE id = :id;
+
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(formid, resid, wfid, organization, enabled, archived, start)
+(formid, resid, wfid, organization, enabled, archived, start, catalogueitemdata)
 VALUES (:form, :resid, :wfid, :organization,
 --~ (if (contains? params :enabled) ":enabled" "true")
 ,
 --~ (if (contains? params :archived) ":archived" "false")
 ,
 --~ (if (contains? params :start) ":start" "now()")
+,
+/*~ (if (contains? params :catalogueitemdata) */ :catalogueitemdata::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
 -- :name get-resources :? :*
@@ -88,7 +105,8 @@ SELECT
   organization,
   resid,
   enabled,
-  archived
+  archived,
+  resourcedata::TEXT
 FROM resource;
 
 -- :name get-resource :? :1
@@ -99,7 +117,8 @@ SELECT
   organization,
   resid,
   enabled,
-  archived
+  archived,
+  resourcedata::TEXT
 FROM resource
 WHERE 1=1
 /*~ (when (:id params) */
@@ -113,8 +132,13 @@ WHERE 1=1
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, organization, ownerUserId, modifieruserid)
-VALUES (:resid, :organization, :owneruserid, :modifieruserid);
+(resid, organization, ownerUserId, modifieruserid, resourcedata)
+VALUES (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb);
+
+-- :name update-resource! :!
+UPDATE resource
+SET (resid, organization, ownerUserId, modifieruserid, resourcedata) = (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb)
+WHERE id = :id;
 
 -- :name set-resource-enabled! :!
 -- TODO set modifieruserid?
@@ -156,7 +180,9 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived
+  archived,
+  owneruserid,
+  modifieruserid
 FROM form_template;
 
 -- :name get-form-template :? :1
@@ -166,7 +192,9 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived
+  archived,
+  owneruserid,
+  modifieruserid
 FROM form_template
 WHERE id = :id;
 
@@ -186,6 +214,17 @@ UPDATE form_template
 SET (organization, modifierUserId, fields, formdata) =
 (:organization,
  :user,
+ :fields::jsonb,
+ :formdata::jsonb)
+WHERE
+id = :id;
+
+-- :name update-form-template! :!
+UPDATE form_template
+SET (organization, modifierUserId, ownerUserId, fields, formdata) =
+(:organization,
+ :modifier,
+ :owner,
  :fields::jsonb,
  :formdata::jsonb)
 WHERE
@@ -223,6 +262,15 @@ VALUES (:application, :user, :resource, :approvedby, :start,
 /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
 );
 
+-- :name update-entitlement! :!
+UPDATE entitlement
+SET (catAppId, userId, resId, approvedby, start, endt, revokedby)
+= (:application, :user, :resource, :approvedby, :start,
+/*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/,
+/*~ (if (:revokedby params) */ :revokedby /*~*/ NULL /*~ ) ~*/
+)
+WHERE id = :id;
+
 -- :name end-entitlements! :!
 UPDATE entitlement
 SET (endt, revokedby) = (:end, :revokedby)
@@ -242,7 +290,7 @@ WHERE catAppId = :application
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
 --   :active-at -- only return entitlements with start<=active-at<end (or end undefined)
-SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail,
+SELECT entitlement.id AS entitlementId, res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail,
 entitlement.approvedby FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
@@ -270,9 +318,18 @@ INSERT INTO attachment
 VALUES
 (:application, :user, :filename, :type, :data);
 
--- :name get-attachment :? :1
-SELECT appid, filename, modifierUserId, type, data FROM attachment
+-- :name update-attachment! :!
+UPDATE attachment
+SET (appId, modifierUserId, filename, type) = (:application, :user, :filename, :type)
 WHERE id = :id;
+
+-- :name get-attachment :? :1
+SELECT id, appid, filename, modifierUserId, type, data FROM attachment
+WHERE id = :id;
+
+-- :name get-attachments :? :*
+SELECT id, appid, filename, modifierUserId, type
+FROM attachment;
 
 -- :name get-attachment-metadata :? :1
 SELECT id, appid, filename, modifierUserId, type FROM attachment
@@ -300,6 +357,11 @@ WHERE id = :id;
 -- :name set-license-archived! :!
 UPDATE license
 SET archived = :archived
+WHERE id = :id;
+
+-- :name update-license! :!
+UPDATE license
+SET (ownerUserId, modifierUserId, organization, type, enabled, archived) = (:owneruserid, :modifieruserid, :organization, :type::license_type, :enabled, :archived)
 WHERE id = :id;
 
 -- :name create-license-attachment! :insert
@@ -442,6 +504,10 @@ SELECT resid FROM resource_licenses WHERE licid = :id;
 -- :name get-workflows-for-license :? :*
 SELECT wfid FROM workflow_licenses WHERE licid = :id;
 
+-- :name get-all-roles :? :*
+SELECT userid, role
+FROM roles;
+
 -- :name get-roles :? :*
 SELECT role
 FROM roles
@@ -458,11 +524,21 @@ DELETE FROM roles
 WHERE userId = :user
   AND role = :role;
 
+
+-- :name remove-roles! :!
+DELETE FROM roles
+WHERE userId = :user;
+
+
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET userAttrs = :userattrs::jsonb;
+
+-- :name remove-user! :!
+DELETE from users
+WHERE userId = :user;
 
 -- :name update-user-settings! :!
 INSERT INTO user_settings (userId, settings)
@@ -517,6 +593,12 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY id ASC;
 
+-- :name get-application-event :? :*
+SELECT id, eventdata::TEXT
+FROM application_event
+WHERE id = :id;
+
+
 -- :name get-application-events-since :? :*
 SELECT id, eventdata::TEXT
 FROM application_event
@@ -533,6 +615,11 @@ LIMIT 1;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
+
+-- :name update-application-event! :!
+UPDATE application_event
+SET (appId, eventData) = (:application, :eventdata::jsonb)
+WHERE id = :id;
 
 -- :name delete-application-events! :!
 DELETE FROM application_event
@@ -581,6 +668,11 @@ VALUES (:prefix, :suffix);
 INSERT INTO blacklist_event (eventdata)
 VALUES (:eventdata::jsonb);
 
+-- :name update-blacklist-event! :!
+UPDATE blacklist_event
+SET eventdata = :eventdata::jsonb
+WHERE id = :id;
+
 -- :name get-blacklist-events :? :*
 SELECT id as "event/id", eventdata::text FROM blacklist_event
 WHERE 1=1
@@ -619,6 +711,17 @@ WHERE id = :id;
 -- :name add-to-audit-log! :!
 INSERT INTO audit_log (time, path, method, apikey, userid, status)
 VALUES (:time, :path, :method, :apikey, :userid, :status);
+
+-- :name update-audit-log! :!
+UPDATE audit_log
+SET (time, path, method, apikey, userid, status) = (:time-new, :path-new, :method-new, :apikey-new, :userid-new, :status-new)
+WHERE time = :time
+--~ (if (:path params) "AND path = :path" "AND path IS NULL")
+--~ (if (:method params) "AND method = :method" "AND method IS NULL")
+--~ (if (:apikey params) "AND apikey = :apikey" "AND apikey IS NULL")
+--~ (if (:userid params) "AND userid = :userid" "AND userid IS NULL")
+--~ (if (:status params) "AND status = :status" "AND status IS NULL")
+;
 
 -- :name get-audit-log
 SELECT * FROM audit_log
@@ -678,4 +781,26 @@ WHERE id = :id;
 
 -- :name delete-invitation! :!
 DELETE FROM invitation
+WHERE id = :id;
+
+-- :name get-category-by-id :? :1
+SELECT id, categorydata::TEXT
+FROM category
+WHERE id = :id;
+
+-- :name get-categories :*
+SELECT id, categorydata::TEXT
+FROM category;
+
+-- :name create-category! :insert
+INSERT INTO category (categorydata)
+VALUES (:categorydata::jsonb);
+
+-- :name update-category! :!
+UPDATE category
+SET categorydata = :categorydata::jsonb
+WHERE id = :id;
+
+-- :name delete-category! :!
+DELETE FROM category
 WHERE id = :id;

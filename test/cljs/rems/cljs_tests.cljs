@@ -30,4 +30,5 @@
            'rems.test-fields
            'rems.test-table
            'rems.test-util
-           'rems.text)
+           'rems.text
+           'rems.util)

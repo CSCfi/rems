@@ -1,0 +1,158 @@
+[{:id "DUO:0000001",
+  :shorthand "",
+  :label {:en "data use permission"},
+  :description
+  {:en
+   "A data item that is used to indicate consent permissions for datasets and/or materials, and relates to the purposes for which datasets and/or material might be removed, stored or used."}}
+ {:id "DUO:0000004",
+  :shorthand "NRES",
+  :label {:en "no restriction"},
+  :description
+  {:en
+   "This data use permission indicates there is no restriction on use."}}
+ {:id "DUO:0000006",
+  :shorthand "HMB",
+  :label {:en "health or medical or biomedical research"},
+  :description
+  {:en
+   "This data use permission indicates that use is allowed for health/medical/biomedical purposes; does not include the study of population origins or ancestry."}}
+ {:id "DUO:0000007",
+  :shorthand "DS",
+  :label {:en "disease specific research"},
+  :description
+  {:en
+   "This data use permission indicates that use is allowed provided it is related to the specified disease."},
+  :restrictions [{:type :mondo}]}
+ {:id "DUO:0000011",
+  :shorthand "POA",
+  :label {:en "population origins or ancestry research only"},
+  :description
+  {:en
+   "This data use permission indicates that use of the data is limited to the study of population origins or ancestry."}}
+ {:id "DUO:0000012",
+  :shorthand "RS",
+  :label {:en "research specific restrictions"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to studies of a certain research type."},
+  :restrictions [{:type :topic}]}
+ {:id "DUO:0000015",
+  :shorthand "NMDS",
+  :label {:en "no general methods research"},
+  :description
+  {:en
+   "This data use modifier indicates that use does not allow methods development research (e.g., development of software or algorithms)."}}
+ {:id "DUO:0000016",
+  :shorthand "GSO",
+  :label {:en "genetic studies only"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to genetic studies only (i.e., studies that include genotype research alone or both genotype and phenotype research, but not phenotype research exclusively)"}}
+ {:id "DUO:0000017",
+  :shorthand "",
+  :label {:en "data use modifier"},
+  :description
+  {:en "Data use modifiers indicate additional conditions for use."}}
+ {:id "DUO:0000018",
+  :shorthand "NPUNCU",
+  :label {:en "not for profit, non commercial use only"},
+  :description
+  {:en
+   "This data use modifier indicates that use of the data is limited to not-for-profit organizations and not-for-profit use, non-commercial use."}}
+ {:id "DUO:0000019",
+  :shorthand "PUB",
+  :label {:en "publication required"},
+  :description
+  {:en
+   "This data use modifier indicates that requestor agrees to make results of studies using the data available to the larger scientific community."}}
+ {:id "DUO:0000020",
+  :shorthand "COL",
+  :label {:en "collaboration required"},
+  :description
+  {:en
+   "This data use modifier indicates that the requestor must agree to collaboration with the primary study investigator(s)."},
+  :restrictions [{:type :collaboration}]}
+ {:id "DUO:0000021",
+  :shorthand "IRB",
+  :label {:en "ethics approval required"},
+  :description
+  {:en
+   "This data use modifier indicates that the requestor must provide documentation of local IRB/ERB approval."}}
+ {:id "DUO:0000022",
+  :shorthand "GS",
+  :label {:en "geographical restriction"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to within a specific geographic region."},
+  :restrictions [{:type :location}]}
+ {:id "DUO:0000024",
+  :shorthand "MOR",
+  :label {:en "publication moratorium"},
+  :description
+  {:en
+   "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."},
+  :restrictions [{:type :date}]}
+ {:id "DUO:0000025",
+  :shorthand "TS",
+  :label {:en "time limit on use"},
+  :description
+  {:en
+   "This data use modifier indicates that use is approved for a specific number of months."},
+  :restrictions [{:type :months}]}
+ {:id "DUO:0000026",
+  :shorthand "US",
+  :label {:en "user specific restriction"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to use by approved users."},
+  :restrictions [{:type :users}]}
+ {:id "DUO:0000027",
+  :shorthand "PS",
+  :label {:en "project specific restriction"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to use within an approved project."},
+  :restrictions [{:type :project}]}
+ {:id "DUO:0000028",
+  :shorthand "IS",
+  :label {:en "institution specific restriction"},
+  :description
+  {:en
+   "This data use modifier indicates that use is limited to use within an approved institution."},
+  :restrictions [{:type :institute}]}
+ {:id "DUO:0000029",
+  :shorthand "RTN",
+  :label {:en "return to database or resource"},
+  :description
+  {:en
+   "This data use modifier indicates that the requestor must return derived/enriched data to the database/resource."}}
+ {:id "DUO:0000042",
+  :shorthand "GRU",
+  :label {:en "general research use"},
+  :description
+  {:en
+   "This data use permission indicates that use is allowed for general research use for any research purpose."}}
+ {:id "DUO:0000043",
+  :shorthand "CC",
+  :label {:en "clinical care use"},
+  :description
+  {:en
+   "This data use modifier indicates that use is allowed for clinical use and care."}}
+ {:id "DUO:0000044",
+  :shorthand "NPOA",
+  :label {:en "population origins or ancestry research prohibited"},
+  :description
+  {:en
+   "This data use modifier indicates use for purposes of population, origin, or ancestry research is prohibited."}}
+ {:id "DUO:0000045",
+  :shorthand "NPU",
+  :label {:en "not for profit organisation use only"},
+  :description
+  {:en
+   "This data use modifier indicates that use of the data is limited to not-for-profit organizations."}}
+ {:id "DUO:0000046",
+  :shorthand "NCU",
+  :label {:en "non-commercial use only"},
+  :description
+  {:en
+   "This data use modifier indicates that use of the data is limited to not-for-profit use."}}]

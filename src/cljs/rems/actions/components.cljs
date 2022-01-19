@@ -6,7 +6,7 @@
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
+            [rems.text :refer [text text-format]]
             [rems.util :refer [post!]]))
 
 (defn- action-collapse-id [action-id]
@@ -132,9 +132,7 @@
                                 (flash-message/show-default-error! :actions description
                                                                    [:div
                                                                     [:p [text :t.form/invalid-attachment]]
-                                                                    [:p [text :t.form/upload-extensions]
-                                                                     ": "
-                                                                     attachment-types/allowed-extensions-string]])
+                                                                    [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
                                 ((flash-message/default-error-handler :actions description) response)))})
      {})))
 

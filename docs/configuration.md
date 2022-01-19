@@ -2,7 +2,7 @@
 
 REMS contains a number of configuration options that can be used to alter authentication options, theming or to add integration points, just to name a few.
 
-Configuration uses the [cprop](https://github.com/tolitius/cprop) library. You can specify the location of the configuration file by setting the `rems.config` system property: `java -Drems.config="../somepath/config.edn" -jar rems.jar` You can also configure the application using environment variables as described in the cprop documentation.
+Configuration uses the [cprop](https://github.com/tolitius/cprop) library. You can specify the location of the configuration file by setting the `rems.config` system property: `java -Drems.config="../somepath/config.edn" -jar rems.jar run` You can also configure the application using environment variables as described in the cprop documentation.
 
 The full list of available configuration options can be seen in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
 
@@ -134,4 +134,14 @@ Extra pages can be added to the navigation bar using `:extra-pages` configuratio
 
 REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything is printed to standard output. If you wish to customize logging, create your own Logback configuration file and specify its location using the `logback.configurationFile` system property:
 
-    java -Dlogback.configurationFile=logback-prod.xml -jar rems.jar
+    java -Dlogback.configurationFile=logback-prod.xml -jar rems.jar run
+
+## Application expiration scheduler
+
+REMS can be configured to delete applications after a set period of time has passed. Expiration can be defined for application states with ISO-8601 duration formatting. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
+
+```clojure
+{:application-expiration
+ {:application.state/draft "P90D" ;; delete draft applications that are over 90 days old
+  :application.state/closed "P7D"}} ;; delete closed applications that are over 7 days old
+```

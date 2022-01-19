@@ -5,13 +5,15 @@
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource]))
+            [rems.db.resource :as resource]
+            [rems.ext.duo :as duo]))
 
 (defn- join-dependencies [resource]
   (when resource
     (->> resource
          organizations/join-organization
          licenses/join-resource-licenses
+         (duo/join-duo-codes [:resource/duo :duo/codes])
          (transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-resource [id]
@@ -22,15 +24,9 @@
   (->> (resource/get-resources filters)
        (mapv join-dependencies)))
 
-(defn create-resource! [{:keys [resid organization licenses]} user-id]
-  (util/check-allowed-organization! organization)
-  (let [id (:id (db/create-resource! {:resid resid
-                                      :organization (:organization/id organization)
-                                      :owneruserid user-id
-                                      :modifieruserid user-id}))]
-    (doseq [licid licenses]
-      (db/create-resource-license! {:resid id
-                                    :licid licid}))
+(defn create-resource! [resource user-id]
+  (util/check-allowed-organization! (:organization resource))
+  (let [id (resource/create-resource! resource user-id)]
     ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
     (dependencies/reset-cache!)
     {:success true

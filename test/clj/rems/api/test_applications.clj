@@ -96,6 +96,11 @@
                         :filename "malicious_test.html"
                         :size (.length malicious-file)})
 
+(def too-large-content {:content-type "application/pdf"
+                        :filename "too_large.pdf"
+                        :error :too-large ; ideally we would not need to fake this error
+                        :size -1})
+
 ;;; tests
 
 (deftest test-application-api-session
@@ -795,14 +800,14 @@
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
                                     :member {:userid "elsa"}}))))
-    (testing "can't change applicant of returned application"
+    (testing "can change applicant of returned application"
       (is (= {:success true}
              (send-command handler {:type :application.command/return
                                     :application-id app-id})))
-      (is (= {:success false :errors [{:type "forbidden"}]}
+      (is (= {:success true}
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
-                                    :member {:userid "malice"}}))))))
+                                    :member {:userid "alice"}}))))))
 
 (deftest test-application-validation
   (let [user-id "alice"
@@ -1305,6 +1310,11 @@
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-unsupported-media-type? response))))
+    (testing "uploading a too large file for a draft"
+      (let [response (-> (upload-request too-large-content)
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-payload-too-large? response))))
     (testing "uploading attachment for a draft as handler"
       (let [response (-> (upload-request filecontent)
                          (authenticate api-key handler-id)

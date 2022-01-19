@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
@@ -12,7 +13,8 @@
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
             [rems.db.test-data-users :refer :all]
-            [rems.testing-util :refer [with-user]])
+            [rems.testing-util :refer [with-user]]
+            [rems.config])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -221,268 +223,6 @@
     :form/internal-name internal-name
     :form/external-title external-title
     :form/fields all-field-types-example}))
-
-;; TODO translate to swedish?
-;; TODO remove
-(defn create-thl-demo-form!
-  [users]
-  (create-form!
-   {:actor (users :owner)
-    :organization {:organization/id "thl"}
-    :form/internal-name "THL form"
-    :form/external-title {:en "Form"
-                          :fi "Lomake"
-                          :sv "Blankett"}
-    :form/fields [{:field/title {:en "Application title"
-                                 :fi "Hakemuksen otsikko"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :description
-                   :field/placeholder {:en "Study of.."
-                                       :fi "Tutkimus aiheesta.."
-                                       :sv "TODO"}}
-                  {:field/title {:en "1. Research project full title"
-                                 :fi "1. Tutkimusprojektin täysi nimi"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "2. This is an amendment of a previous approved application"
-                                 :fi "2. Hakemus täydentää edellistä hakemusta"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :option
-                   :field/options [{:key "false"
-                                    :label {:en "no"
-                                            :fi "ei"
-                                            :sv "TODO"}}
-                                   {:key "true"
-                                    :label {:en "yes"
-                                            :fi "kyllä"
-                                            :sv "TODO"}}]}
-                  {:field/title {:en "If yes, what were the previous project permit code/s?"
-                                 :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :text}
-                  {:field/title {:en "3. Study PIs (name, titile, affiliation, email)"
-                                 :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "4. Contact person for application if different than applicant (name, email)"
-                                 :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "5. Research project start date"
-                                 :fi "5. Projektin aloituspäivä"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :date}
-                  {:field/title {:en "6. Research project end date"
-                                 :fi "6. Projektin lopetuspäivä"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :date}
-                  {:field/title {:en "7. Describe in detail the aims of the study and analysis plan"
-                                 :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "8. If this is an amendment, please describe briefly what is new"
-                                 :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
-                                 :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "10. Place/plces of research, including place of sample and/or data analysis."
-                                 :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."
-                                 :sv "TODO"}
-                   :field/placeholder {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "11. Description of other research group members and their role in the applied project."
-                                 :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."
-                                 :sv "TODO"}
-                   :field/placeholder {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
-                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "12. Specify selection criteria of study participants (if applicable)"
-                                 :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
-                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
-                                 :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
-                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "14. Specify requested genomics or other omics data (if applicable)"
-                                 :fi "14. Kuvaile tarvittava genomiikkadata."
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
-                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"
-                                       :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "16. Are biological samples requested?"
-                                 :fi "16. Pyydetäänkö biologisia näytteitä?"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :option
-                   :field/options [{:key "false"
-                                    :label {:en "no"
-                                            :fi "ei"
-                                            :sv "TODO"}}
-                                   {:key "true"
-                                    :label {:en "yes"
-                                            :fi "kyllä"
-                                            :sv "TODO"}}]}
-                  {:field/title {:en "The type and amount of biological samples requested"
-                                 :fi "Biologisten näytteiden tyypit ja määrät."
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Type and amount of samples and any additional specific criteria."
-                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."
-                                       :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "17. What study results will be returned to THL Biobank (if any)?"
-                                 :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
-                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "Expected date for return of study results"
-                                 :fi "Odotettu tutkimustuloksien palautuspäivämäärä"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :date}
-                  {:field/title {:en "18. Ethical aspects of the project"
-                                 :fi "18. Tutkimuksen eettiset puolet"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "If you have any documents from an ethical board, please provide them as an attachment."
-                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "19. Project keywords (max 5)"
-                                 :fi "19. Projektin avainsanat (maks. 5)"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "List a few keywords that are related to this research project (please separate with comma)"
-                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "20. Planned publications (max 3)"
-                                 :fi "20. Suunnitellut julkaisut (maks. 3)"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Planned publication titles / research topics"
-                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "21. Funding information"
-                                 :fi "21. Rahoitus"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "List all funding sources which will be used for this research project."
-                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
-                                 :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Electronic invoice address when possible + invoicing reference"
-                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."
-                                       :sv "TODO"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "23. Other information"
-                                 :fi "23. Muuta"
-                                 :sv "TODO"}
-                   :field/placeholder {:en "Any other relevant information for the application"
-                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"
-                                       :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
-                                 :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"
-                                 :sv "TODO"}
-                   :field/optional false
-                   :field/type :multiselect
-                   :field/options [{:key "population_health"
-                                    :label {:en "Promoting the population's health"
-                                            :fi "Edistää kansanterveytttä"
-                                            :sv "TODO"}}
-                                   {:key "disease_mechanisms"
-                                    :label {:en "Identifying factors involved in disease mechanisms"
-                                            :fi "Tunnistaa tautien mekanismeja"
-                                            :sv "TODO"}}
-                                   {:key "disease_prevention"
-                                    :label {:en "Disease prevention"
-                                            :fi "Estää tautien leviämistä"
-                                            :sv "TODO"}}
-                                   {:key "health_product_development"
-                                    :label {:en "Developing products that promote the welfare and health of the population"
-                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."
-                                            :sv "TODO"}}
-                                   {:key "treatment_development"
-                                    :label {:en "Developing products and treatments for diseases"
-                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"
-                                            :sv "TODO"}}
-                                   {:key "other"
-                                    :label {:en "Other"
-                                            :fi "Muuta"
-                                            :sv "TODO"}}]}
-                  {:field/title {:en "Other, specify"
-                                 :fi "Muuta, tarkenna"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}
-                  {:field/title {:en "Data management plan (pdf)"
-                                 :fi "Datanhallintasuunnitelma (pdf)"
-                                 :sv "TODO"}
-                   :field/optional true
-                   :field/type :attachment}]}))
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
@@ -748,6 +488,18 @@
       (finally
         (.shutdownNow executor)))))
 
+(def ^:private vocabulary (-> "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
+                              str/lower-case
+                              (str/split #"[( \n)+]")
+                              distinct
+                              sort
+                              rest))
+
+(defn- random-long-string []
+  (str (str/join " " (repeatedly 1000 #(rand-nth vocabulary)))
+       ;; prevent string interning, just to be sure
+       (UUID/randomUUID)))
+
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
   (let [resource-count 1000
@@ -790,6 +542,13 @@
                                                      :fi "Projektin tarkoitus on..."
                                                      :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
+        category {:category/id (create-category! {:actor owner
+                                                  :category/title {:en "Performance"
+                                                                   :fi "Suorituskyky"
+                                                                   :sv "Prestand"}
+                                                  :category/description {:en "These catalogue items are for performance test."
+                                                                         :fi "Nämä resurssit ovat suorituskykytestausta varten."
+                                                                         :sv "Dessa resurser är för prestand."}})}
         license-id (create-license! {:actor owner
                                      :license/type :text
                                      :organization {:organization/id "perf"}
@@ -811,7 +570,8 @@
                                                           :resource-id resource-id
                                                           :form-id form-id
                                                           :organization {:organization/id "perf"}
-                                                          :workflow-id workflow-id}))))))
+                                                          :workflow-id workflow-id
+                                                          :categories [category]}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
                          (fn []
@@ -828,20 +588,20 @@
                user-id (rand-nth user-ids)
                handler (rand-nth handlers)
                app-id (create-application! {:catalogue-item-ids [cat-item-id]
-                                            :actor user-id})]
-           (command! {:type :application.command/save-draft
-                      :application-id app-id
-                      :actor user-id
-                      :field-values [{:form form-id
-                                      :field (:field/id (first (:form/fields form)))
-                                      :value (str "Performance test application " (UUID/randomUUID))}
-                                     {:form form-id
-                                      :field (:field/id (second (:form/fields form)))
-                                      ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
-                                      ;; to increase the memory requirements of an application
-                                      :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
-                                                  ;; prevent string interning, just to be sure
-                                                  (UUID/randomUUID))}]})
+                                            :actor user-id})
+               long-answer (random-long-string)]
+           (dotimes [i 20] ; user saves ~ 20 times while writing an application
+             (command! {:type :application.command/save-draft
+                        :application-id app-id
+                        :actor user-id
+                        :field-values [{:form form-id
+                                        :field (:field/id (first (:form/fields form)))
+                                        :value (str "Performance test application " (UUID/randomUUID))}
+                                       {:form form-id
+                                        :field (:field/id (second (:form/fields form)))
+                                        ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
+                                        ;; to increase the memory requirements of an application
+                                        :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}]}))
            (command! {:type :application.command/accept-licenses
                       :application-id app-id
                       :actor user-id
@@ -954,6 +714,28 @@
                                                                         :organization {:organization/id "hus"}
                                                                         :actor owner
                                                                         :license-ids [license2 extra-license attachment-license]})
+        duo-resource (when (:enable-duo rems.config/env)
+                       (create-resource! {:resource-ext-id "All DUO codes with restrictions"
+                                          :organization {:organization/id "nbn"}
+                                          :actor owner
+                                          :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                        :values [{:id "MONDO:0000015"}]}]}
+                                                                     {:id "DUO:0000012" :restrictions [{:type :topic
+                                                                                                        :values [{:value "my research type"}]}]}
+                                                                     {:id "DUO:0000020" :restrictions [{:type :collaboration
+                                                                                                        :values [{:value "developers"}]}]}
+                                                                     {:id "DUO:0000022" :restrictions [{:type :location
+                                                                                                        :values [{:value "egentliga finland"}]}]}
+                                                                     {:id "DUO:0000024" :restrictions [{:type :date
+                                                                                                        :values [{:value "2021-10-29"}]}]}
+                                                                     {:id "DUO:0000025" :restrictions [{:type :months
+                                                                                                        :values [{:value "120"}]}]}
+                                                                     {:id "DUO:0000026" :restrictions [{:type :users
+                                                                                                        :values [{:value "alice"}]}]}
+                                                                     {:id "DUO:0000027" :restrictions [{:type :project
+                                                                                                        :values [{:value "rems"}]}]}
+                                                                     {:id "DUO:0000028" :restrictions [{:type :institute
+                                                                                                        :values [{:value "csc"}]}]}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
@@ -962,6 +744,41 @@
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                        :sv "Exempelblankett med alla fälttyper"})
+
+        form-with-public-and-private-fields (create-form! {:actor owner
+                                                           :organization {:organization/id "nbn"}
+                                                           :form/internal-name "Public and private fields form"
+                                                           :form/external-title {:en "Form"
+                                                                                 :fi "Lomake"
+                                                                                 :sv "Blankett"}
+                                                           :form/fields [{:field/title {:en "Simple text field"
+                                                                                        :fi "Yksinkertainen tekstikenttä"
+                                                                                        :sv "Textfält"}
+                                                                          :field/optional false
+                                                                          :field/type :text
+                                                                          :field/max-length 100}
+                                                                         {:field/title {:en "Private text field"
+                                                                                        :fi "Yksityinen tekstikenttä"
+                                                                                        :sv "Privat textfält"}
+                                                                          :field/optional false
+                                                                          :field/type :text
+                                                                          :field/max-length 100
+                                                                          :field/privacy :private}]})
+
+        form-private-nbn (create-form! {:actor owner
+                                        :organization {:organization/id "nbn"}
+                                        :form/internal-name "Simple form"
+                                        :form/external-title {:en "Form"
+                                                              :fi "Lomake"
+                                                              :sv "Blankett"}
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
+
         form-private-thl (create-form! {:actor owner
                                         :organization {:organization/id "thl"}
                                         :form/internal-name "Simple form"
@@ -1002,7 +819,26 @@
                                                              :fi "Kuvaus"
                                                              :sv "Text"}
                                                :field/optional false
-                                               :field/type :text}]})]
+                                               :field/type :text}]})
+
+        ;; Create categories
+        ordinary-category {:category/id (create-category! {:actor owner
+                                                           :category/title {:en "Ordinary"
+                                                                            :fi "Tavalliset"
+                                                                            :sv "Vanliga"}})}
+        technical-category {:category/id (create-category! {:actor owner
+                                                            :category/title {:en "Technical"
+                                                                             :fi "Tekniset"
+                                                                             :sv "Teknisk"}})}
+
+        special-category {:category/id (create-category! {:actor owner
+                                                          :category/title {:en "Special"
+                                                                           :fi "Erikoiset"
+                                                                           :sv "Speciellt"}
+                                                          :category/description {:en "Special catalogue items for demonstration purposes."
+                                                                                 :fi "Erikoiset resurssit demoja varten."
+                                                                                 :sv "Särskilda katalogposter för demonstration."}
+                                                          :category/children [technical-category]})}]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -1016,7 +852,8 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:master workflows)})
+                             :workflow-id (:master workflows)
+                             :categories [technical-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
                                      :fi "Päättäjätyövuo"
@@ -1027,7 +864,8 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:decider workflows)})
+                             :workflow-id (:decider workflows)
+                             :categories [special-category]})
     (let [catid (create-catalogue-item! {:actor owner
                                          :title {:en "Default workflow"
                                                  :fi "Oletustyövuo"
@@ -1038,7 +876,8 @@
                                          :resource-id res1
                                          :form-id form
                                          :organization {:organization/id "nbn"}
-                                         :workflow-id (:default workflows)})]
+                                         :workflow-id (:default workflows)
+                                         :categories [ordinary-category]})]
       (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 2"
@@ -1047,7 +886,8 @@
                              :resource-id res2
                              :form-id form-private-thl
                              :organization {:organization/id "csc"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 3"
                                      :fi "Oletustyövuo 3"
@@ -1055,7 +895,8 @@
                              :resource-id res3
                              :form-id form-private-hus
                              :organization {:organization/id "hus"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
                                      :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
@@ -1063,7 +904,8 @@
                              :resource-id ega-resource
                              :form-id ega-form
                              :organization {:organization/id "csc"}
-                             :workflow-id (:ega workflows)})
+                             :workflow-id (:ega workflows)
+                             :categories [special-category]})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"
@@ -1071,7 +913,8 @@
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:default workflows)})
+                             :workflow-id (:default workflows)
+                             :categories [ordinary-category]})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
                                      :fi "Työvuo automaattisella hyväksynnällä"
                                      :sv "Arbetsflöde med automatisk godkänning"}
@@ -1081,26 +924,9 @@
                              :resource-id res1
                              :form-id form
                              :organization {:organization/id "nbn"}
-                             :workflow-id (:auto-approve workflows)})
+                             :workflow-id (:auto-approve workflows)
+                             :categories [special-category]})
     (create-bona-fide-catalogue-item! (merge users +bot-users+))
-    (let [thl-res (create-resource! {:resource-ext-id "thl"
-                                     :organization {:organization/id "thl"}
-                                     :actor owner})
-          thlform (create-thl-demo-form! users)
-          thl-wf (create-workflow! {:actor owner
-                                    :organization {:organization/id "thl"}
-                                    :title "THL workflow"
-                                    :type :workflow/default
-                                    :handlers [(:approver1 users) (:approver2 users)]})
-          thl-catid (create-catalogue-item! {:actor owner
-                                             :title {:en "THL catalogue item"
-                                                     :fi "THL katalogi-itemi"
-                                                     :sv "THL katalogartikel"}
-                                             :resource-id thl-res
-                                             :form-id thlform
-                                             :organization {:organization/id "thl"}
-                                             :workflow-id thl-wf})]
-      (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
                                                             :fi "Oletustyövuo (pois käytöstä)"
@@ -1108,7 +934,8 @@
                                                     :resource-id res1
                                                     :form-id form
                                                     :organization {:organization/id "nbn"}
-                                                    :workflow-id (:default workflows)})]
+                                                    :workflow-id (:default workflows)
+                                                    :categories [ordinary-category]})]
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
                                      (users :approver1))
@@ -1120,7 +947,8 @@
                                                    :resource-id res1
                                                    :form-id form
                                                    :organization {:organization/id "nbn"}
-                                                   :workflow-id (:default workflows)})]
+                                                   :workflow-id (:default workflows)
+                                                   :categories [ordinary-category]})]
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
     (create-catalogue-item! {:actor organization-owner1
                              :title {:en "Owned by organization owner"
@@ -1129,7 +957,66 @@
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization {:organization/id "organization1"}
-                             :workflow-id (:organization-owner workflows)})))
+                             :workflow-id (:organization-owner workflows)
+                             :categories [special-category]})
+
+    (let [applicant (users :applicant1)
+          handler (users :approver2)
+          reviewer (users :reviewer)
+          catid-1 (create-catalogue-item! {:actor owner
+                                           :title {:en "Default workflow with public and private fields"
+                                                   :fi "Testityövuo julkisilla ja yksityisillä lomakekentillä"
+                                                   :sv "Standard arbetsflöde med publika och privata textfält"}
+                                           :resource-id res1
+                                           :form-id form-with-public-and-private-fields
+                                           :organization {:organization/id "nbn"}
+                                           :workflow-id (:default workflows)
+                                           :categories [ordinary-category]})
+          catid-2 (create-catalogue-item! {:actor owner
+                                           :title {:en "Default workflow with private form"
+                                                   :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                   :sv "Standard arbetsflöde med privat blankett"}
+                                           :resource-id res2
+                                           :form-id form-private-nbn
+                                           :organization {:organization/id "nbn"}
+                                           :workflow-id (:default workflows)
+                                           :categories [ordinary-category]})
+          app-id (create-draft! applicant [catid-1 catid-2] "two-form draft application")]
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
+      (command! {:type :application.command/request-review
+                 :application-id app-id
+                 :actor handler
+                 :reviewers [reviewer]
+                 :comment "please have a look"}))
+
+    (when (:enable-duo rems.config/env)
+      (let [applicant (users :applicant1)
+            handler (users :approver2)
+            reviewer (users :reviewer)
+            cat-id (create-catalogue-item! {:actor owner
+                                            :title {:en "Default workflow with DUO codes"
+                                                    :fi "Testityövuo DUO koodeilla"
+                                                    :sv "Standard arbetsflöde med DUO koder"}
+                                            :infourl {:en "http://www.google.com"
+                                                      :fi "http://www.google.fi"
+                                                      :sv "http://www.google.se"}
+                                            :resource-id duo-resource
+                                            :form-id form
+                                            :organization {:organization/id "nbn"}
+                                            :workflow-id (:default workflows)
+                                            :categories [special-category]})
+            app-id (create-draft! applicant [cat-id] "application with DUO codes")]
+        (create-draft! applicant [cat-id] "draft application with DUO codes")
+        (command! {:type :application.command/submit
+                   :application-id app-id
+                   :actor applicant})
+        (command! {:type :application.command/request-review
+                   :application-id app-id
+                   :actor handler
+                   :reviewers [reviewer]
+                   :comment "please have a look"})))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
@@ -1226,4 +1113,5 @@
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-    (create-test-data!)))
+    (create-test-data!)
+    (create-performance-test-data!)))

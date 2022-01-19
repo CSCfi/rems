@@ -4,6 +4,7 @@
             [rems.administration.blacklist :as blacklist]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
+            [rems.administration.duo :refer [duos-view]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
@@ -48,22 +49,25 @@
              [blacklist/add-user-form {:resource/ext-id (:resid @(rf/subscribe [::resource]))}]]}])
 
 (defn resource-view [resource language]
-  [:div.spaced-vertically-3
-   [collapsible/component
-    {:id "resource"
-     :title [:span (andstr (get-in resource [:organization :organization/short-name language]) "/") (:resid resource)]
-     :always [:div
-              [inline-info-field (text :t.administration/organization) (get-in resource [:organization :organization/name language])]
-              [inline-info-field (text :t.administration/resource) (:resid resource)]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
-   [licenses-view (:licenses resource) language]
-   [resource-blacklist]
-   (let [id (:id resource)]
-     [:div.col.commands
-      [administration/back-button "/administration/resources"]
-      [roles/show-when roles/+admin-write-roles+
-       [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])])
+  (let [config @(rf/subscribe [:rems.config/config])]
+    [:div.spaced-vertically-3
+     [collapsible/component
+      {:id "resource"
+       :title [:span (andstr (get-in resource [:organization :organization/short-name language]) "/") (:resid resource)]
+       :always [:div
+                [inline-info-field (text :t.administration/organization) (get-in resource [:organization :organization/name language])]
+                [inline-info-field (text :t.administration/resource) (:resid resource)]
+                [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
+     [licenses-view (:licenses resource) language]
+     (when (:enable-duo config)
+       [duos-view (get-in resource [:resource/duo :duo/codes])])
+     [resource-blacklist]
+     (let [id (:id resource)]
+       [:div.col.commands
+        [administration/back-button "/administration/resources"]
+        [roles/show-when roles/+admin-write-roles+
+         [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
+         [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])]))
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])

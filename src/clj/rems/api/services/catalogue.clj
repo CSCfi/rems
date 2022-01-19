@@ -4,12 +4,17 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
-            [rems.db.organizations :as organizations]))
+            [rems.db.category :as category]
+            [rems.db.organizations :as organizations]
+            [rems.common.util :refer [build-dags]]))
 
-(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
+;; TODO this bypasses the db layer
+;; TODO move catalogue item localizations into the catalogueitemdata
+(defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
-                                                  (select-keys command [:form :resid :wfid :enabled :archived :start]))))
+                                                  (select-keys command [:form :resid :wfid :enabled :archived :start])
+                                                  {:catalogueitemdata (catalogue/catalogueitemdata->json command)})))
         loc-ids
         (doall
          (for [[langcode localization] localizations]
@@ -26,11 +31,12 @@
 
 (defn- join-dependencies [item]
   (when item
-    (->> item
-         organizations/join-organization
+    (-> item
+        organizations/join-organization
+        (update :categories category/enrich-categories)
          ;; not used at the moment
-         #_licenses/join-catalogue-item-licenses
-         #_(transform [:licenses ALL] organizations/join-organization))))
+        #_licenses/join-catalogue-item-licenses
+        #_(transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-localized-catalogue-items [& [query-params]]
   (->> (catalogue/get-localized-catalogue-items (or query-params {}))
@@ -40,13 +46,39 @@
   (->> (catalogue/get-localized-catalogue-item id)
        join-dependencies))
 
+(defn get-catalogue-tree [& [query-params]]
+  (let [catalogue-items (get-localized-catalogue-items query-params)
+        has-category? (fn [item category]
+                        (contains? (set (map :category/id (:categories item)))
+                                   (:category/id category)))
+        categories-with-items (for [category (category/get-categories)
+                                    :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
+                                (assoc category :category/items matching-items))
+        categories-with-items (filter (fn [category]
+                                        (case (:empty query-params)
+                                          nil true ; not set, include all
+                                          false (or (seq (:category/children category))
+                                                    (seq (:category/items category)))
+                                          true (and (empty? (:category/children category))
+                                                    (empty? (:category/items category)))))
+                                      categories-with-items)
+        items-without-category (for [item catalogue-items
+                                     :when (empty? (:categories item))]
+                                 item)
+        top-level-categories (build-dags {:id-fn :category/id
+                                          :child-id-fn :category/id
+                                          :children-fn :category/children}
+                                         categories-with-items)]
+    {:roots (into (vec top-level-categories)
+                  items-without-category)}))
+
 (defn- check-allowed-to-edit! [id]
   (-> id
       get-localized-catalogue-item
       :organization
       util/check-allowed-organization!))
 
-(defn edit-catalogue-item! [{:keys [id localizations organization]}]
+(defn edit-catalogue-item! [{:keys [id localizations organization] :as item}]
   (check-allowed-to-edit! id)
   (when (:organization/id organization)
     (util/check-allowed-organization! organization)
@@ -57,9 +89,13 @@
      (merge {:id id
              :langcode (name langcode)}
             (select-keys localization [:title :infourl]))))
+  (when-let [catalogueitemdata (catalogue/catalogueitemdata->json item)]
+    (db/set-catalogue-item-data! {:id id
+                                  :catalogueitemdata catalogueitemdata}))
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
   (applications/reload-cache!)
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
@@ -93,7 +129,8 @@
                                                :form form-id
                                                :organization (get-in item [:organization :organization/id])
                                                :resid (:resource-id item)
-                                               :wfid (:wfid item)})]
+                                               :wfid (:wfid item)
+                                               :catalogueitemdata (catalogue/catalogueitemdata->json item)})]
 
       ;; copy localizations
       (doseq [[langcode localization] (:localizations item)]

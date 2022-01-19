@@ -52,11 +52,13 @@
          organizations/join-organization)))
 
 (defn get-form-template [id]
-  (->> (form/get-form-template id)
-       join-dependencies))
+  (-> (form/get-form-template id)
+      (dissoc :form/owner :form/modifier)
+      join-dependencies))
 
 (defn get-form-templates [filters]
   (->> (form/get-form-templates filters)
+       (mapv #(dissoc % :form/owner :form/modifier))
        (mapv join-dependencies)))
 
 (defn edit-form! [userid form]

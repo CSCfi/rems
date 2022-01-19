@@ -1,7 +1,9 @@
 (ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
+            [medley.core :refer [assoc-some]]
             [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
+            [rems.api.services.category :as category]
             [rems.api.services.command :as command]
             [rems.api.services.form :as form]
             [rems.api.services.licenses :as licenses]
@@ -133,10 +135,12 @@
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
                          :as command}]
   (let [actor (or actor (create-owner!))
+        duo-data (select-keys command [:resource/duo])
         result (with-user actor
-                 (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization (ensure-default-organization!))
-                                             :licenses (or license-ids [])}
+                 (resource/create-resource! (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                                                    :organization (or organization (ensure-default-organization!))
+                                                    :licenses (or license-ids [])}
+                                                   duo-data)
                                             actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
@@ -158,7 +162,23 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start]
+(defn create-category! [{:keys [actor] :category/keys [title description children]
+                         :as command}]
+  (let [actor (or actor (create-owner!))
+        result (with-user actor
+                 (category/create-category!
+                  (merge {:category/title (or title {:en "Category"
+                                                     :fi "Kategoria"
+                                                     :sv "Kategori"})
+                          :category/description (or description {:en "Category description"
+                                                                 :fi "Kategorian kuvaus"
+                                                                 :sv "Beskrivning av kategori"})}
+                         (when (seq children)
+                           {:category/children children}))))]
+    (assert (:success result) {:command command :result result})
+    (:category/id result)))
+
+(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
         localizations (into {}
@@ -167,14 +187,15 @@
                                      :infourl (get infourl lang)}]))
         result (with-user actor
                  (catalogue/create-catalogue-item!
-                  {:start (or start (time/now))
-                   :resid (or resource-id (create-resource! {:organization organization}))
-                   :form (if (contains? command :form-id) ; support :form-id nil
-                           form-id
-                           (create-form! {:organization organization}))
-                   :organization (or organization (ensure-default-organization!))
-                   :wfid (or workflow-id (create-workflow! {:organization organization}))
-                   :localizations (or localizations {})}))]
+                  (-> {:start (or start (time/now))
+                       :resid (or resource-id (create-resource! {:organization organization}))
+                       :form (if (contains? command :form-id) ; support :form-id nil
+                               form-id
+                               (create-form! {:organization organization}))
+                       :organization (or organization (ensure-default-organization!))
+                       :wfid (or workflow-id (create-workflow! {:organization organization}))
+                       :localizations (or localizations {})}
+                      (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

@@ -105,6 +105,10 @@
   (assert-schema-errors response)
   (= 415 (:status response)))
 
+(defn response-is-payload-too-large? [response]
+  (assert-schema-errors response)
+  (= 413 (:status response)))
+
 (defn logged-in? [response]
   (str/includes? (get-in response [:headers "x-rems-roles"])
                  "logged-in"))

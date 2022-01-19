@@ -10,6 +10,7 @@
             [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
+            [rems.api.categories :refer [categories-api]]
             [rems.api.email :refer [email-api]]
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.extra-pages :refer [extra-pages-api]]
@@ -36,6 +37,8 @@
            [rems.auth ForbiddenException UnauthorizedException]
            rems.DataException
            rems.InvalidRequestException
+           rems.PayloadTooLargeException
+           rems.UnsupportedMediaTypeException
            rems.TryAgainException))
 
 (defn- plain-text [response]
@@ -85,6 +88,18 @@
   [exception ex-data _request]
   (log/error exception (str (.getMessage exception) " " (pr-str ex-data)))
   (-> (internal-server-error)
+      (response/content-type "application/json")))
+
+(defn payload-too-large-handler
+  [exception _ex-data _request]
+  (log/error exception (.getMessage exception))
+  (-> (request-entity-too-large)
+      (response/content-type "application/json")))
+
+(defn unsupported-media-type-handler
+  [exception _ex-data _request]
+  (log/error exception (.getMessage exception))
+  (-> (unsupported-media-type)
       (response/content-type "application/json")))
 
 (defn with-logging
@@ -153,6 +168,8 @@
                              InvalidRequestException invalid-handler
                              TryAgainException try-again-handler
                              DataException data-exception-handler
+                             PayloadTooLargeException payload-too-large-handler
+                             UnsupportedMediaTypeException unsupported-media-type-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
                              ::ex/request-validation (with-logging ex/request-validation-handler)
@@ -180,6 +197,7 @@
       blacklist-api
       catalogue-api
       catalogue-items-api
+      categories-api
       email-api
       entitlements-api
       extra-pages-api

@@ -78,3 +78,38 @@
                                                          :email s/Str}]
           (s/optional-key :enabled) s/Bool
           (s/optional-key :archived) s/Bool}))
+
+(s/defschema MondoCode
+  {:id s/Str})
+
+(s/defschema MondoCodeFull
+  (merge MondoCode
+         {:label s/Str}))
+
+(s/defschema DuoCode
+  {:id s/Str
+   (s/optional-key :restrictions) [{:type s/Keyword
+                                    (s/optional-key :values) [(s/conditional :value {:value s/Str}
+                                                                             :label MondoCodeFull
+                                                                             :id MondoCode)]}]})
+
+(s/defschema DuoCodeFull
+  (merge DuoCode
+         {(s/optional-key :shorthand) (s/maybe s/Str)
+          :label LocalizedString
+          :description LocalizedString}))
+
+(s/defschema CategoryId
+  {:category/id s/Int})
+
+(s/defschema Category
+  (merge CategoryId
+         {:category/title LocalizedString
+          (s/optional-key :category/description) LocalizedString
+          (s/optional-key :category/display-order) s/Int
+          (s/optional-key :category/children) [CategoryId]}))
+
+(s/defschema CategoryFull
+  (merge Category
+         {(s/optional-key :category/children) [Category]}))
+

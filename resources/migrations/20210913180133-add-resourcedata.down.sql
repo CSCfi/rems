@@ -1,0 +1,2 @@
+-- intentionally left blank:
+--  - no need to drop the column and potentially lose data

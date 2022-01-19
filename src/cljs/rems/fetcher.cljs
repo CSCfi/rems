@@ -52,7 +52,9 @@
   Given `(reg-fetcher ::foo \"/url\")`, registers the following:
 
   - Handler `[::foo]` fetches data from `/url`, i.e. get all items
-  - Handler `[::foo {:query \"bar\"]}` fetches data from `/url?query=bar`, i.e. do a search
+  - Handler `[::foo {:query \"bar\"]}` fetches data from `/url?query=bar`, i.e. do a search.
+  - Handler `[::foo {:query \"bar\"} {:on-data callback}]` as above, will call `:on-data` function
+    on successful fetch with returned data.
   - Subscription `[::foo]` returns the data that was last fetched
   - Subscription `[::foo :error]` returns the error message if the fetch failed
   - Subscription `[::foo :initialized?]` returns `true` if the data has been
@@ -75,13 +77,16 @@
         on-success (or (:on-success opts) (constantly nil))]
     (rf/reg-event-fx
      id
-     (fn [{:keys [db]} [_ query]]
+     (fn [{:keys [db]} [_ query {:keys [on-data]}]]
        (assert (or (nil? query) (map? query)) (pr-str query))
        ;; do only one fetch at a time - will retry after the pending fetch is finished
        (when-not (get-in db [id :fetching?])
          (fetch (process-path-params url (path-params db))
                 {:url-params query
-                 :handler #(rf/dispatch [result-id {:data %} query])
+                 :handler (fn [data]
+                            (rf/dispatch [result-id {:data data} query])
+                            (when on-data
+                              (on-data data)))
                  :error-handler (fn [response]
                                   ;; We use a custom error reporting mechanism instead of flash-message
                                   ;; because grabbing the focus is problematic for continuous search.

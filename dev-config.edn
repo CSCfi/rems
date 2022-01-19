@@ -30,6 +30,8 @@
  :application-deadline-days 4
  :application-id-column :generated-and-assigned-external-id
  :enable-assign-external-id-ui true
+ :attachment-max-size 10000000 ;; 10MB
+ :application-expiration nil
  :enable-pdf-api true
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
@@ -38,4 +40,6 @@
  :catalogue-is-public false
  :accessibility-report true
  :enable-ega true
- :enable-doi true}
+ :enable-doi true
+ :enable-duo true
+ :enable-catalogue-tree true}

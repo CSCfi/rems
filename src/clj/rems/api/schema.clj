@@ -4,7 +4,8 @@
             [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+  (:import [org.joda.time DateTime]
+           [java.io File]))
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
@@ -31,7 +32,8 @@
    :enabled s/Bool
    :archived s/Bool
    :expired s/Bool
-   :localizations CatalogueItemLocalizations})
+   :localizations CatalogueItemLocalizations
+   (s/optional-key :categories) [schema-base/Category]})
 
 (s/defschema License
   {:id s/Int
@@ -100,7 +102,8 @@
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
    :catalogue-item/expired s/Bool
-   :catalogue-item/archived s/Bool})
+   :catalogue-item/archived s/Bool
+   (s/optional-key :resource/duo) {:duo/codes [schema-base/DuoCodeFull]}})
 
 (s/defschema V2License
   {:license/id s/Int
@@ -273,3 +276,29 @@
           :application/events
           :application/forms
           :application/licenses))
+
+(s/defschema FileUpload
+  {:filename s/Str
+   :content-type s/Str
+   :size s/Int
+   (s/optional-key :error) s/Keyword
+   (s/optional-key :tempfile) File})
+
+(s/defschema CategoryTree
+  (merge schema-base/Category
+         {(s/optional-key :category/children) [(s/recursive #'CategoryTree)]
+          (s/optional-key :category/items) [CatalogueItem]}))
+
+(s/defschema CreateCategoryCommand
+  {:category/title schema-base/LocalizedString
+   (s/optional-key :category/description) schema-base/LocalizedString
+   (s/optional-key :category/display-order) s/Int
+   (s/optional-key :category/children) [schema-base/CategoryId]})
+
+(s/defschema UpdateCategoryCommand
+  (merge CreateCategoryCommand
+         schema-base/CategoryId))
+
+(s/defschema DeleteCategoryCommand
+  schema-base/CategoryId)
+

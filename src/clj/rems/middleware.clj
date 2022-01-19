@@ -20,6 +20,7 @@
             [rems.layout :refer [error-page]]
             [rems.logging :refer [with-mdc]]
             [rems.middleware.dev :refer [wrap-dev]]
+            [rems.multipart]
             [rems.util :refer [get-user-id getx-user-id update-present]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -233,8 +234,9 @@
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
       (assoc-in [:session :flash] true)
-      ; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
-      ; Different options for using lax cookies are described in the authentication ADR.
+      (assoc-in [:params :multipart] {:store (rems.multipart/size-limiting-temp-file-store {:max-size (:attachment-max-size env) :expires-in 3600})})
+      ;; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
+      ;; Different options for using lax cookies are described in the authentication ADR.
       (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
 
 (defn wrap-base [handler]

@@ -24,7 +24,6 @@
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
-            [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -208,14 +207,10 @@
     (POST "/add-attachment" []
       :summary "Add an attachment file related to an application"
       :roles #{:logged-in}
-      :multipart-params [file :- upload/TempFileUpload]
+      :multipart-params [file :- schema/FileUpload]
       :query-params [application-id :- (describe s/Int "application id")]
-      :middleware [multipart/wrap-multipart-params]
       :return SaveAttachmentResponse
-      (try
-        (ok (attachment/add-application-attachment (getx-user-id) application-id file))
-        (catch rems.InvalidRequestException e
-          (unsupported-media-type))))
+      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"

@@ -1,6 +1,5 @@
 (ns rems.spa
   (:require [accountant.core :as accountant]
-            [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [promesa.core :as p]
@@ -12,13 +11,17 @@
             [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
+            [rems.administration.categories :refer [categories-page]]
+            [rems.administration.category :refer [category-page]]
             [rems.administration.change-catalogue-item-form :refer [change-catalogue-item-form-page]]
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
+            [rems.administration.create-category :refer [create-category-page]]
             [rems.administration.create-form :refer [create-form-page]]
             [rems.administration.create-license :refer [create-license-page]]
             [rems.administration.create-organization :refer [create-organization-page]]
             [rems.administration.create-resource :refer [create-resource-page]]
             [rems.administration.create-workflow :refer [create-workflow-page]]
+            [rems.administration.edit-category :refer [edit-category-page]]
             [rems.administration.export-applications :refer [export-applications-page]]
             [rems.administration.form :refer [form-page]]
             [rems.administration.forms :refer [forms-page]]
@@ -256,13 +259,17 @@
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
+   :rems.administration/categories categories-page
+   :rems.administration/category category-page
    :rems.administration/change-catalogue-item-form change-catalogue-item-form-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
+   :rems.administration/create-category create-category-page
    :rems.administration/create-form create-form-page
    :rems.administration/create-license create-license-page
    :rems.administration/create-organization create-organization-page
    :rems.administration/create-resource create-resource-page
    :rems.administration/create-workflow create-workflow-page
+   :rems.administration/edit-category edit-category-page
    :rems.administration/export-applications export-applications-page
    :rems.administration/form form-page
    :rems.administration/forms forms-page
@@ -434,6 +441,22 @@
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
+
+(secretary/defroute "/administration/categories" []
+  (rf/dispatch [:rems.administration.categories/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/categories]))
+
+(secretary/defroute "/administration/categories/create" []
+  (rf/dispatch [:rems.administration.create-category/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-category]))
+
+(secretary/defroute "/administration/categories/edit/:category-id" [category-id]
+  (rf/dispatch [:rems.administration.edit-category/enter-page category-id])
+  (rf/dispatch [:set-active-page :rems.administration/edit-category]))
+
+(secretary/defroute "/administration/categories/:category-id" [category-id]
+  (rf/dispatch [:rems.administration.category/enter-page category-id])
+  (rf/dispatch [:set-active-page :rems.administration/category]))
 
 (secretary/defroute "/administration/forms/create" []
   (rf/dispatch [:rems.administration.create-form/enter-page])

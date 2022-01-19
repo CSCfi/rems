@@ -54,7 +54,8 @@
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
-    [(io/file (:download-dir @test-context) name-or-regex)]
+    (let [f (io/file (:download-dir @test-context) name-or-regex)]
+      (when (.exists f) [f]))
     (for [file (.listFiles (:download-dir @test-context))
           :when (re-matches name-or-regex (.getName file))]
       file)))
@@ -168,6 +169,9 @@
   (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow
   ;; Forms, workflows etc.
+  ;; These should match the rems.db.test-data closely enough
+  ;; so that one can use also development mode and dev db
+  ;; with the tests
   (let [link (test-helpers/create-license! {:actor "owner"
                                             :license/type :link
                                             :organization {:organization/id "nbn"}
@@ -209,8 +213,37 @@
                                                                 :field/max-length 100
                                                                 :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
+        res-id2 (test-helpers/create-resource! nil)
+        ;; duo-resource (test-helpers/create-resource! {:resource-ext-id "All DUO codes with restrictions"
+        ;;                                              :organization {:organization/id "nbn"}
+        ;;                                              :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+        ;;                                                                                                            :values ["MONDO:0000015"]}]}
+        ;;                                                                         {:id "DUO:0000012" :restrictions [{:type :topic
+        ;;                                                                                                            :values ["my research type"]}]}
+        ;;                                                                         {:id "DUO:0000020" :restrictions [{:type :collaboration
+        ;;                                                                                                            :values ["developers"]}]}
+        ;;                                                                         {:id "DUO:0000022" :restrictions [{:type :location
+        ;;                                                                                                            :values ["egentliga finland"]}]}
+        ;;                                                                         {:id "DUO:0000024" :restrictions [{:type :date
+        ;;                                                                                                            :values ["2021-10-29"]}]}
+        ;;                                                                         {:id "DUO:0000025" :restrictions [{:type :months
+        ;;                                                                                                            :values ["120"]}]}
+        ;;                                                                         {:id "DUO:0000026" :restrictions [{:type :users
+        ;;                                                                                                            :values ["alice"]}]}
+        ;;                                                                         {:id "DUO:0000027" :restrictions [{:type :project
+        ;;                                                                                                            :values ["rems"]}]}
+        ;;                                                                         {:id "DUO:0000028" :restrictions [{:type :institute
+        ;;                                                                                                            :values ["csc"]}]}]}})
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
-                                                                                               :sv "sv"} :resource-id res-id1})
+                                                                                               :sv "Standard arbetsflöde"} :resource-id res-id1})
+        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+                                                :workflow-id wfid
+                                                :title {:en "Default workflow with private form"
+                                                        :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                        :sv "Standard arbetsflöde med privat blankett"}
+                                                :resource-id res-id2})
+        ;; item-id3 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
+        ;;                                                                                                :sv "Standard blankettarbetsflöde med DUO-koder"} :resource-id duo-resource})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
     (test-helpers/create-workflow-licence! wfid link)
     (test-helpers/create-workflow-licence! wfid text)
@@ -497,3 +530,11 @@
             (reset! violations content)))
         (when (seq @violations)
           (throw (Exception. (str "\n\n\nThere are accessibility violations: " (count @violations) "\n\n\n"))))))))
+
+(defn set-client-config
+  [config]
+  (js-execute "return window.rems.config.set_config_BANG_(arguments[0]);" config)
+  (fn []
+    (js-async "var args = arguments;
+               var callback = args[args.length - 1];
+               window.rems.config.fetch_config_BANG_().then(callback);")))

@@ -4,7 +4,7 @@
   Includes functions for both forms and form templates."
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
-             [com.rpl.specter :refer [ALL select transform]]
+             [com.rpl.specter :refer [ALL transform]]
              [medley.core :refer [assoc-some find-first]]
              [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 

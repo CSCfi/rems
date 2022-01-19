@@ -51,9 +51,9 @@
         (when searching?
           [spinner/small])]
        (when info
-         [:div.search-tips.collapse {:id collapse-id
-                                     :ref focus-when-collapse-opened
-                                     :tab-index "-1"}
+         [:div.search-tips.collapse.my-3 {:id collapse-id
+                                          :ref focus-when-collapse-opened
+                                          :tab-index "-1"}
           info])])))
 
 (defn- application-search-info [] ; TODO: this should probably be almost completely in localized text

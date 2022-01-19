@@ -292,6 +292,17 @@
  ;; Show "Assign external id" action button in UI for handlers
  :enable-assign-external-id-ui false
 
+ ;; Maximum size of attachment files in bytes (10000000 = 10MB).
+ ;; nil = no limit
+ :attachment-max-size 10000000
+
+ ;; Should applications be deleted after a set period of time has passed?
+ ;; Use map with key as required application state, and value as ISO-8601 duration:
+ ;; {:application.state/draft "P90D" :application.state/closed "P7D"}
+ ;; nil = feature not enabled.
+ ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
+ :application-expiration nil
+
  ;; Experimental features
 
  ;; enable /api/applications/:id/experimental/pdf
@@ -313,4 +324,9 @@
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
  :enable-ega false ; should the EGA features be shown in the UI
- :enable-doi false} ; should the DOI features be shown in the UI
+ :enable-doi false ; should the DOI features be shown in the UI
+ :enable-duo false ; should the DUO features be shown in the UI
+
+ :enable-catalogue-table true ; show catalogue page table of items
+ :enable-catalogue-tree false ; show catalogue page tree of items
+ :catalogue-tree-show-matching-parents true} ; should parent categories be shown if children match?

@@ -23,6 +23,7 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
+            [rems.administration.duo :refer [resource-duo-view-compact]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
@@ -39,7 +40,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
 ;;;; Helpers
 
@@ -228,32 +229,50 @@
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
-        description [text :t.form/upload]]
+        description [text :t.form/upload]
+        config @(rf/subscribe [:rems.config/config])
+        file-size (.. file (get "file") -size)
+        file-name (.. file (get "file") -name)]
     (rf/dispatch [::set-attachment-status form-id field-id :pending])
-    (post! "/api/applications/add-attachment"
-           {:url-params {:application-id application-id}
-            :body file
-            ;; force saving a draft when you upload an attachment.
-            ;; this ensures that the attachment is not left
-            ;; dangling (with no references to it)
-            :handler (fn [response]
-                       ;; no need to check (:success response) - the API can't fail at the moment
-                       ;; no race condition here: events are handled in a FIFO manner
-                       (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
-                                                                         (conj current-attachments (:id response)))])
-                       (rf/dispatch [::save-application description
-                                     #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
-            :error-handler (fn [response]
-                             (rf/dispatch [::set-attachment-status form-id field-id :error])
-                             (if (= 415 (:status response))
-                               (flash-message/show-default-error! :actions description
-                                                                  [:div
-                                                                   [:p [text :t.form/invalid-attachment]]
-                                                                   [:p [text :t.form/upload-extensions]
-                                                                    ": "
-                                                                    attachment-types/allowed-extensions-string]])
-                               ((flash-message/default-error-handler :actions description) response)))})
-    {}))
+    (if (some-> (:attachment-max-size config)
+                (< file-size))
+      (do
+        (rf/dispatch [::set-attachment-status form-id field-id :error])
+        (flash-message/show-default-error! :actions description
+                                           [:div
+                                            [:p [text :t.form/too-large-attachment]]
+                                            [:p (str file-name " " (format-file-size file-size))]
+                                            [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]]))
+      (post! "/api/applications/add-attachment"
+             {:url-params {:application-id application-id}
+              :body file
+              ;; force saving a draft when you upload an attachment.
+              ;; this ensures that the attachment is not left
+              ;; dangling (with no references to it)
+              :handler (fn [response]
+                         ;; no need to check (:success response) - the API can't fail at the moment
+                         ;; no race condition here: events are handled in a FIFO manner
+                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                           (conj current-attachments (:id response)))])
+                         (rf/dispatch [::save-application description
+                                       #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
+              :error-handler (fn [response]
+                               (rf/dispatch [::set-attachment-status form-id field-id :error])
+                               (cond (= 413 (:status response))
+                                     (flash-message/show-default-error! :actions description
+                                                                        [:div
+                                                                         [:p [text :t.form/too-large-attachment]]
+                                                                         [:p (str file-name " " (format-file-size file-size))]
+                                                                         [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]])
+
+                                     (= 415 (:status response))
+                                     (flash-message/show-default-error! :actions description
+                                                                        [:div
+                                                                         [:p [text :t.form/invalid-attachment]]
+                                                                         [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
+
+                                     :else ((flash-message/default-error-handler :actions description) response)))})))
+  {})
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
@@ -397,10 +416,12 @@
         language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
-                :let [form-id (:form/id form)]]
+                :let [form-id (:form/id form)]
+                :when (->> (:form/fields form)
+                           (remove :field/private)
+                           seq)]
             [collapsible/component
-             {:id "application-fields"
-              :class "mb-3"
+             {:class "mb-3"
               :title (or (get-in form [:form/external-title language]) (text :t.form/application))
               :always (into [:div.fields]
                             (for [field (:form/fields form)
@@ -773,18 +794,26 @@
                                   actions)]
                       forms)}])))
 
-(defn- render-resource [resource language config]
+(defn- render-resource [resource language]
   ^{:key (:catalogue-item/id resource)}
-  (let [config @(rf/subscribe [:rems.config/config])]
+  (let [config @(rf/subscribe [:rems.config/config])
+        duo-codes (get-in resource [:resource/duo :duo/codes])]
     [:div.application-resource
-     (localized (:catalogue-item/title resource))
-     (when-let [url (catalogue-item-more-info-url resource language config)]
-       [:<>
-        (goog.string/unescapeEntities " &mdash; ")
-        [:a {:href url :target :_blank}
-         (text :t.catalogue/more-info) " " [external-link]]])]))
+     {:class (when (:enable-duo config) "solid-group")}
+     [:h3.resource-label
+      (localized (:catalogue-item/title resource))
+      (when-let [url (catalogue-item-more-info-url resource language config)]
+        [:<>
+         " – "
+         [:a {:href url :target :_blank}
+          (text :t.catalogue/more-info) " " [external-link]]])]
+     (when (and (:enable-duo config)
+                (seq duo-codes))
+       (into [:div.resource-duo-codes]
+             (for [code duo-codes]
+               [resource-duo-view-compact code (:catalogue-item/id resource)])))]))
 
-(defn- applied-resources [application userid language config]
+(defn- applied-resources [application userid language]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:userid (:application/applicant application)) userid)
@@ -797,7 +826,7 @@
                [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
-                       [render-resource resource language config]))]
+                       [render-resource resource language]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
@@ -825,7 +854,7 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid language config]]
+     [:div.mt-3 [applied-resources application userid language]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]

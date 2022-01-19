@@ -1,5 +1,6 @@
 (ns rems.db.invitation
-  (:require [rems.db.core :as db]
+  (:require [rems.common.util :refer [getx]]
+            [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -58,6 +59,15 @@
   (when-let [invitation (first (get-invitations {:ids [id]}))]
     (let [amended (merge (dissoc invitation :invitation/id)
                          {:invitation/sent (DateTime/now)})
+          json (json/generate-string (validate-InvitationData amended))]
+      (db/set-invitation! {:id (:invitation/id invitation)
+                           :invitationdata json}))))
+
+(defn update-invitation! [invitation]
+  (when-let [old-invitation (first (get-invitations {:ids [(getx invitation :invitation/id)]}))]
+    (let [amended (dissoc (merge old-invitation
+                                 invitation)
+                          :invitation/id)
           json (json/generate-string (validate-InvitationData amended))]
       (db/set-invitation! {:id (:invitation/id invitation)
                            :invitationdata json}))))

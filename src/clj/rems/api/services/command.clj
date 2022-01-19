@@ -32,7 +32,7 @@
 (defn- delete-applications [new-events]
   (doseq [event new-events]
     (when (= :application.event/deleted (:event/type event))
-      (applications/delete-application! (:application/id event))))
+      (applications/delete-application-and-reload-cache! (:application/id event))))
   [])
 
 ;; Process managers react to events with side effects & new commands.

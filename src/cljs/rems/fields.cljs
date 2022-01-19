@@ -1,7 +1,7 @@
 (ns rems.fields
   "UI components for form fields"
-  (:require [cljs-time.core :as time]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
@@ -10,7 +10,7 @@
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized localize-utc-date text text-format]]
-            [rems.util :refer [focus-when-collapse-opened linkify]]))
+            [rems.util :refer [focus-when-collapse-opened linkify format-file-size]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -18,11 +18,10 @@
 (defn info-collapse
   "Collapse field from Bootstrap that shows extra information about input fields.
 
-  `:info-id` - id of the element being described
-  `:aria-label-text` - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
-  `:focus-when-collapse-opened` - element that is focused when the info is opened
-  `:body-text` - component that is shown if open"
-  [{:keys [info-id aria-label-text focus-when-collapse-opened body-text]}]
+  `:info-id`           - id of the element being described
+  `:aria-label-text`   - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
+  `:content`           - component that is shown if open"
+  [{:keys [info-id aria-label-text content]}]
   [:<> [:button.info-button.btn.btn-link
         {:data-toggle "collapse"
          :href (str "#" (str info-id "-collapse"))
@@ -30,10 +29,10 @@
          :aria-expanded "false"
          :aria-controls (str info-id "-collapse")}
         [:i.fa.fa-info-circle]]
-   [:div.info-collapse.collapse {:id (str info-id "-collapse")
-                                 :ref focus-when-collapse-opened
-                                 :tab-index "-1"}
-    body-text]])
+   [:div.info-collapse.collapse.my-3 {:id (str info-id "-collapse")
+                                      :ref focus-when-collapse-opened
+                                      :tab-index "-1"}
+    content]])
 
 
 (defn- diff [value previous-value]
@@ -143,8 +142,7 @@
         [info-collapse
          {:info-id (field-name opts)
           :aria-label-text collapse-aria-label
-          :focus-when-collapse-opened focus-when-collapse-opened
-          :body-text (linkify info-text)}])]
+          :content (linkify info-text)}])]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button diff on-toggle-diff])
@@ -309,7 +307,8 @@
 
 (defn- upload-button [id status on-upload]
   (let [upload-id (str id "-input")
-        info-id (str id "-info")]
+        info-id (str id "-info")
+        config @(rf/subscribe [:rems.config/config])]
     [:div.upload-file.mr-2
      [:input {:style {:display "none"}
               :type "file"
@@ -337,11 +336,11 @@
         nil)]
      [info-collapse
       {:info-id info-id
-       :aria-label-text (text :t.form/upload-extensions)
-       :focus-when-collapse-opened focus-when-collapse-opened
-       :body-text [:span [text :t.form/upload-extensions]
-                   ": "
-                   attachment-types/allowed-extensions-string]}]]))
+       :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
+       :content [:div
+                 [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]
+                 [:p (text-format :t.form/attachment-max-size
+                                  (format-file-size (:attachment-max-size config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
   [:div.form-group
