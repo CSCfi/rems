@@ -720,19 +720,19 @@ WHERE 1=1
 ORDER BY time ASC;
 
 -- :name get-organizations :*
-SELECT id, modifierUserId, modified, data::text as data FROM organization;
+SELECT id, data::text as data FROM organization;
 
 -- :name get-organization-by-id :? :1
-SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
+SELECT id, data::text as data FROM organization WHERE id = :id;
 
 -- :name add-organization! :insert
-INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
+INSERT INTO organization(id, data) VALUES (:id, :data::jsonb)
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
 
 -- :name set-organization! :!
 UPDATE organization
-SET data = :data::jsonb, modified = :time, modifierUserId = :user
+SET data = :data::jsonb
 WHERE id = :id;
 
 -- :name add-invitation! :insert

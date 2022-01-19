@@ -187,15 +187,11 @@
 (defn fix-organization [old-userid new-userid simulate?]
   (doall
    (for [old (rems.db.organizations/get-organizations-raw)
-         :let [modifier (if (= old-userid (get-in old [:organization/modifier :userid]))
-                          new-userid
-                          (get-in old [:organization/modifier :userid]))
-               new (update old :organization/owners (partial mapv #(if (= old-userid (:userid %))
+         :let [new (update old :organization/owners (partial mapv #(if (= old-userid (:userid %))
                                                                      {:userid new-userid}
                                                                      %)))]
-         :when (or (not= new old)
-                   (not= modifier (get-in old [:organization/modifier :userid])))
-         :let [params [modifier new]]]
+         :when (not= new old)
+         :let [params [new]]]
      (do
        (apply prn #'fix-organization old params)
        (when-not simulate?

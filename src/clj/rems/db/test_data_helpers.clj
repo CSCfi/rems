@@ -62,8 +62,7 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization! actor
-                                                {:organization/id (or id "default")
+        result (organizations/add-organization! {:organization/id (or id "default")
                                                  :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
                                                  :organization/short-name (or short-name {:fi "Oletus" :en "Default" :sv "Standard"})
                                                  :organization/owners (or owners

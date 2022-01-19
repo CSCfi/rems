@@ -13,3 +13,7 @@ DROP COLUMN IF EXISTS modifieruserid;
 ALTER TABLE workflow
 DROP COLUMN IF EXISTS owneruserid,
 DROP COLUMN IF EXISTS modifieruserid;
+--;;
+ALTER TABLE organization
+DROP COLUMN IF EXISTS modifieruserid,
+DROP COLUMN IF EXISTS modified;

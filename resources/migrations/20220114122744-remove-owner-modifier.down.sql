@@ -14,3 +14,7 @@ ADD COLUMN modifierUserId varchar(255);
 ALTER TABLE workflow
 ADD COLUMN ownerUserId varchar(255),
 ADD COLUMN modifierUserId varchar(255);
+--;;
+ALTER TABLE organization
+ADD COLUMN modifierUserId varchar(255),
+ADD COLUMN modified timestamp DEFAULT CURRENT_TIMESTAMP;
