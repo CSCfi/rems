@@ -6,7 +6,7 @@ The resources in REMS do not necessarily have to be in electronic data sets. It 
 
 REMS is a service developed by [CSC – IT Center for Science Ltd.](https://www.csc.fi/en/home) and [Nitor](https://www.nitor.com/en).
 
-You can test how REMS works [using our demo environment](https://remsdemo.csc.fi/).
+You can test how REMS works [using our demo environment](https://rems-demo.rahtiapp.fi).
 
 ## Organisations who are already using REMS
 
