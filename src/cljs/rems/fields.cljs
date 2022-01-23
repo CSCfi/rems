@@ -215,11 +215,8 @@
                 :on-change (comp on-change event-value)}]]))
 
 (defn date-field
-  [{:keys [validation on-change] :as opts}]
-  (let [value (:field/value opts)
-        optional (:field/optional opts)
-        bound-type (get opts :field/date-bound)
-        min (when (= :future bound-type) (-> (time/today) (time/plus (time/days 1)) (localize-utc-date)))
+  [{:field/keys [value optional bound-type] :keys [validation on-change] :as opts}]
+  (let [min (when (= :future bound-type) (-> (time/today) (time/plus (time/days 1)) (localize-utc-date)))
         max (when (= :past bound-type) (-> (time/today) (localize-utc-date)))]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts

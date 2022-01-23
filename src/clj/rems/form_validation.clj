@@ -118,7 +118,7 @@
 
 (defn- date-out-of-bound-error [field]
   (when (= (:field/type field) :date)
-    (let [bound-type (get field :field/date-bound)
+    (let [bound-type (:field/date-bound field)
           dt (:field/value field)
           [valid-dt? dt-error] (case bound-type
                                  :past [time/before? :t.actions.errors/date-not-in-past]

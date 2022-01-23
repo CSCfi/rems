@@ -414,17 +414,13 @@
    (assoc-in db [::form :data :form/fields field-index :field/date-bound] date-bound-type)))
 
 (defn- form-field-date-bound
-  "Component for specifying date form field date bounds"
+  "Component for specifying a date bound to a date form field"
   [field-index]
   (let [form @(rf/subscribe [::form-data])
         form-errors @(rf/subscribe [::form-errors])
-        lang @(rf/subscribe [:language])
-        suffixes ["type" "value"]
-        get-error #(get-in form-errors [:form/fields field-index :field/date-bound (keyword "date-bound" %)])
-        id-string #(str "fields-" field-index "--" %)
         date-bound-type (get-in form [:form/fields field-index :field/date-bound])
-        [error-type error-value] (map get-error suffixes)
-        [id-type id-value] (map id-string suffixes)
+        error-type (get-in form-errors [:form/fields field-index :field/date-bound :date-bound/type])
+        id-type (str "fields-" field-index "--type")
         label-type (text :t.create-form/type-date-bound)]
     [:div.form-group.field.row {:id (str "container-field" field-index)}
      [:label.col-sm-2.col-form-label {:for id-type} label-type]
