@@ -278,9 +278,9 @@
                 :column-key "Tunniste"
                 :column-label "Otsikko"
                 :confirm-remove-field "Poista kenttä?"
-                :date-bound {:none "Ei rajausta"
-                              :past "Menneet"
-                              :future "Tulevat"}
+                :date-bound {:future "Tulevat"
+                             :past "Menneet"
+                             :none "Ei rajausta"}
                 :field-id "Kentän tunniste"
                 :field-n "Kenttä %1: %2"
                 :field-title "Kentän otsikko"

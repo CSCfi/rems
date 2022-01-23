@@ -409,9 +409,9 @@
       [])))
 
 (rf/reg-event-db
-  ::form-field-date-bound-type
-  (fn [db [_ field-index date-bound-type]]
-    (assoc-in db [::form :data :form/fields field-index :field/date-bound] date-bound-type)))
+ ::form-field-date-bound-type
+ (fn [db [_ field-index date-bound-type]]
+   (assoc-in db [::form :data :form/fields field-index :field/date-bound] date-bound-type)))
 
 (defn- form-field-date-bound
   "Component for specifying date form field date bounds"

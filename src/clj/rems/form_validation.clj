@@ -121,11 +121,11 @@
     (let [bound-type (get field :field/date-bound)
           dt (:field/value field)
           [valid-dt? dt-error] (case bound-type
-                              :past [time/before? :t.actions.errors/date-not-in-past]
-                              :future [time/after? :t.actions.errors/date-not-in-future]
-                              [(constantly true) nil])]
+                                 :past [time/before? :t.actions.errors/date-not-in-past]
+                                 :future [time/after? :t.actions.errors/date-not-in-future]
+                                 [(constantly true) nil])]
       (when-not (valid-dt? dt (time/today-at 23 59 59))
-         {:errors [{:type dt-error}]}))))
+        {:errors [{:type dt-error}]}))))
 
 (defn- wrong-value-type-error [field]
   (let [value (:field/value field)]

@@ -279,8 +279,8 @@
                 :column-label "Titel"
                 :confirm-remove-field "Ta bort fält?" ; TODO check
                 :date-bound {:future "Framtida"
-                              :none "Ingen gräns"
-                              :past "Tidigare"}
+                             :past "Tidigare"
+                             :none "Ingen gräns"}
                 :field-id "Fält id"
                 :field-n "Fält %1: %2"
                 :field-title "Fältets namn"

@@ -135,8 +135,8 @@
    :field/type (s/enum :attachment :date :description :email :header :ip-address :label :multiselect :option :phone-number :text :texta :table)
    :field/title schema-base/LocalizedString
    (s/optional-key :field/date-bound) (rjs/field
-                                         (s/enum :none :past :future)
-                                         {:description "None by default"})
+                                       (s/enum :none :past :future)
+                                       {:description "None by default"})
    (s/optional-key :field/placeholder) schema-base/LocalizedString
    :field/optional s/Bool
    (s/optional-key :field/options) [{:key s/Str
@@ -145,13 +145,13 @@
                                      :label schema-base/LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/privacy) (rjs/field
-                                     (s/enum :public :private)
-                                     {:description "Public by default"})
+                                    (s/enum :public :private)
+                                    {:description "Public by default"})
    (s/optional-key :field/visibility) (rjs/field
-                                        {:visibility/type (s/enum :always :only-if)
-                                         (s/optional-key :visibility/field) {:field/id schema-base/FieldId}
-                                         (s/optional-key :visibility/values) [s/Str]}
-                                        {:description "Always visible by default"})
+                                       {:visibility/type (s/enum :always :only-if)
+                                        (s/optional-key :visibility/field) {:field/id schema-base/FieldId}
+                                        (s/optional-key :visibility/values) [s/Str]}
+                                       {:description "Always visible by default"})
    (s/optional-key :field/info-text) schema-base/LocalizedString})
 
 (s/defschema NewFieldTemplate

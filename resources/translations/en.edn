@@ -301,8 +301,8 @@
                 :column-label "Label"
                 :confirm-remove-field "Remove this field?"
                 :date-bound {:future "Future"
-                              :none "Not limited"
-                              :past "Past"}
+                             :past "Past"
+                             :none "Not limited"}
                 :field-id "Field ID"
                 ;; %1 - field number
                 ;; %2 - field title
