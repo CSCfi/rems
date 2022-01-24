@@ -50,7 +50,7 @@
       :roles +admin-write-roles+
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (ok (form/create-form! (getx-user-id) command)))
+      (ok (form/create-form! command)))
 
     (GET "/:form-id" []
       :summary "Get form by id"
@@ -74,7 +74,7 @@
       :roles +admin-write-roles+
       :body [command EditFormCommand]
       :return schema/SuccessResponse
-      (ok (form/edit-form! (getx-user-id) command)))
+      (ok (form/edit-form! command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive form"

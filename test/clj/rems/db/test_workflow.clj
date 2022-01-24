@@ -33,8 +33,6 @@
                                     {:userid "handler" :name nil :email nil}]
                          :forms []}
               :id id
-              :owneruserid "owner"
-              :modifieruserid "owner"
               :enabled true}
              (workflow/get-workflow id)))
 
@@ -51,7 +49,5 @@
                                       {:userid "alice" :name nil :email nil}]
                            :forms []}
                 :id id
-                :owneruserid "owner"
-                :modifieruserid "owner"
                 :enabled true}
                (workflow/get-workflow id)))))))

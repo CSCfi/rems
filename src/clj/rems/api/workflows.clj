@@ -51,7 +51,7 @@
       :roles +admin-write-roles+
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
-      (ok (workflow/create-workflow! (assoc command :userid (getx-user-id)))))
+      (ok (workflow/create-workflow! command)))
 
     (PUT "/edit" []
       :summary "Edit workflow title and handlers"

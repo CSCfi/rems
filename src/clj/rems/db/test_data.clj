@@ -508,11 +508,11 @@
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
-        _perf (organizations/add-organization! owner {:organization/id "perf"
-                                                      :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
-                                                      :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
-                                                      :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
-                                                      :organization/review-emails []})
+        _perf (organizations/add-organization! {:organization/id "perf"
+                                                :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
+                                                :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
+                                                :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
+                                                :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
                                        :organization {:organization/id "perf"}
                                        :title "Performance tests"

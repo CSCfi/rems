@@ -19,13 +19,11 @@
 (def ^:private validate-workflow-body
   (s/validator WorkflowBody))
 
-(defn create-workflow! [{:keys [userid organization type title handlers forms]}]
+(defn create-workflow! [{:keys [organization type title handlers forms]}]
   (let [body {:type type
               :handlers handlers
               :forms forms}]
     (:id (db/create-workflow! {:organization (:organization/id organization)
-                               :owneruserid userid
-                               :modifieruserid userid
                                :title title
                                :workflow (json/generate-string
                                           (validate-workflow-body body))}))))

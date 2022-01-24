@@ -24,9 +24,9 @@
   (->> (resource/get-resources filters)
        (mapv join-dependencies)))
 
-(defn create-resource! [resource user-id]
+(defn create-resource! [resource]
   (util/check-allowed-organization! (:organization resource))
-  (let [id (resource/create-resource! resource user-id)]
+  (let [id (resource/create-resource! resource)]
     ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
     (dependencies/reset-cache!)
     {:success true

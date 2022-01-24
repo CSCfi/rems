@@ -19,11 +19,11 @@
     (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
 
 (defn get-attachment [attachment-id]
-  (when-let [{:keys [id modifieruserid type appid filename data]} (db/get-attachment {:id attachment-id})]
+  (when-let [{:keys [id userid type appid filename data]} (db/get-attachment {:id attachment-id})]
     (check-allowed-attachment filename)
     {:application/id appid
      :attachment/id id
-     :attachment/user modifieruserid
+     :attachment/user userid
      :attachment/filename filename
      :attachment/data data
      :attachment/type type}))
@@ -31,20 +31,20 @@
 (defn get-attachments
   "Gets attachments without the data."
   []
-  (for [{:keys [id modifieruserid type appid filename]} (db/get-attachments)]
+  (for [{:keys [id userid type appid filename]} (db/get-attachments)]
     (do
       (check-allowed-attachment filename)
       {:application/id appid
        :attachment/id id
-       :attachment/user modifieruserid
+       :attachment/user userid
        :attachment/filename filename
        :attachment/type type})))
 
 (defn get-attachment-metadata [attachment-id]
-  (when-let [{:keys [id modifieruserid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
+  (when-let [{:keys [id userid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
     {:application/id appid
      :attachment/id id
-     :attachment/user modifieruserid
+     :attachment/user userid
      :attachment/filename filename
      :attachment/type type}))
 
@@ -113,7 +113,7 @@
 (defn copy-attachment! [new-application-id attachment-id]
   (let [attachment (db/get-attachment {:id attachment-id})]
     (:id (db/save-attachment! {:application new-application-id
-                               :user (:modifieruserid attachment)
+                               :user (:userid attachment)
                                :filename (:filename attachment)
                                :type (:type attachment)
                                :data (:data attachment)}))))

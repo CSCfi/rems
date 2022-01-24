@@ -119,8 +119,6 @@
 (s/defschema Workflow
   {:id s/Int
    :organization schema-base/OrganizationOverview
-   :owneruserid schema-base/UserId
-   :modifieruserid schema-base/UserId
    :title s/Str
    :workflow s/Any
    :licenses [License]

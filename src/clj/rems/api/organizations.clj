@@ -51,7 +51,7 @@
       :roles #{:owner}
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
-      (ok (organizations/add-organization! (getx-user-id) command)))
+      (ok (organizations/add-organization! command)))
 
     (PUT "/edit" []
       :summary "Edit organization. Organization owners cannot change the owners."
@@ -66,14 +66,14 @@
       :roles #{:owner}
       :body [command schema/OrganizationArchivedCommand]
       :return schema/SuccessResponse
-      (ok (organizations/set-organization-archived! (getx-user-id) command)))
+      (ok (organizations/set-organization-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable the organization"
       :roles #{:owner}
       :body [command schema/OrganizationEnabledCommand]
       :return schema/SuccessResponse
-      (ok (organizations/set-organization-enabled! (getx-user-id) command)))
+      (ok (organizations/set-organization-enabled! command)))
 
     (GET "/available-owners" []
       :summary "List of available owners"
