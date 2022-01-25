@@ -1,11 +1,18 @@
 (ns rems.auth.fake-login
-  (:require [clojure.string :as str]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [hiccup.util :refer [url]]
             [rems.layout :as layout]
-            [rems.db.core :as db]
-            [rems.db.users :as users]
+            [rems.auth.oidc :as oidc]
+            [rems.config :refer [env]]
+            [rems.db.test-data-users :refer [+fake-user-data+ +demo-user-data+]]
+            [rems.common.util :refer [assoc-some-in]]
+            [rems.ga4gh :as ga4gh]
             [ring.util.response :refer [redirect]]))
+
+(defn get-fake-login-users []
+  (condp = (:fake-authentication-data env)
+    :test +fake-user-data+
+    :demo +demo-user-data+))
 
 (defn login-url []
   "/fake-login")
@@ -14,10 +21,18 @@
   "/fake-logout")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/redirect")
-         :session (assoc session
-                         :identity (users/get-raw-user-attributes username)
-                         :access-token (str "access-token-" username)))) ; fake access token
+  (let [users (get-fake-login-users)
+        id-data (get users username)
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
+    (when (oidc/should-map-userid? id-data) (oidc/create-user-mapping! id-data))
+    (-> (redirect "/redirect")
+        (assoc :session session)
+        (assoc-in [:session :access-token] (str "access-token-" username))
+        (assoc-in [:session :identity] (merge {:eppn (or (oidc/get-mapped-userid id-data) (oidc/get-userid id-data))
+                                               :commonName (some id-data [:name :unique_name :family_name :commonName])
+                                               :mail (some id-data [:email :mail])}
+                                              extra-attributes))
+        (assoc-some-in [:session :identity :researcher-status-by] (ga4gh/passport->researcher-status-by id-data)))))
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]
@@ -36,9 +51,7 @@
                                    [:div.col-md-8
                                     [:h1.text-center "Development Login"]
                                     [:div.users.d-flex.flex-wrap.justify-content-stretch.align-items-start
-                                     (->> (map :userid (db/get-users))
-                                          (remove #(str/starts-with? % "perftester"))
-                                          (remove #(str/ends-with? % "-bot"))
+                                     (->> (keys (get-fake-login-users))
                                           (sort)
                                           (distinct)
                                           (map user-selection))]]]]})))

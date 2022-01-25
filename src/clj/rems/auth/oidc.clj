@@ -2,8 +2,10 @@
   (:require [clj-http.client :as http]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [clojure.set :refer [difference]]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
+            [rems.db.user-mappings :as user-mappings]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
@@ -23,7 +25,7 @@
 (defn logout-url []
   "/oidc-logout")
 
-(defn- get-userid [id-data]
+(defn get-userid [id-data]
   (let [attr (getx env :oidc-userid-attribute)
         attrs (if (string? attr)
                 [attr]
@@ -42,6 +44,27 @@
     (is (= "456" (get-userid {:sub "123" :atr "456"})))
     (is (= "456" (get-userid {:sub "123" :atr "456" :fallback "78"})))
     (is (= "78" (get-userid {:fallback "78"})))))
+
+(defn get-mapped-userid [id-data]
+  (let [attrs (map keyword (:oidc-mapped-userid-attributes env))]
+    (->> (select-keys id-data attrs)
+         (keep (fn [[attr value]] (user-mappings/get-user-mapping (name attr) value)))
+         first)))
+
+(defn create-user-mapping! [id-data]
+  (let [mapped-attrs (map keyword (:oidc-mapped-userid-attributes env))
+        [attr userid] (first (select-keys id-data mapped-attrs))]
+    (user-mappings/create-user-mapping! {:from (name attr)
+                                         :from-value userid
+                                         :to-value (get-userid (apply dissoc id-data mapped-attrs))})))
+
+(defn should-map-userid? [id-data]
+  (let [mapped-attrs (map keyword (:oidc-mapped-userid-attributes env))
+        attrs (map keyword (-> (seq (:oidc-userid-attribute env))
+                               flatten))]
+    (and (get-mapped-userid id-data)
+         (some id-data mapped-attrs)
+         (some id-data (difference (set attrs) (set mapped-attrs))))))
 
 (defn oidc-callback [request]
   (let [response (-> (http/post (:token_endpoint oidc-configuration)

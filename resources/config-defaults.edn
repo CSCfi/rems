@@ -38,6 +38,10 @@
  ;; Show link to an alternative login service
  :alternative-login-url nil
 
+ ;; What login data is used when :authentication :fake configuration is enabled.
+ ;; Supported options: :test, :demo
+ :fake-authentication-data :test
+
  ;; For :oidc authentication
  ;; DEPRECATED, prefer :oidc-metadata-url instead
  :oidc-domain nil
@@ -52,6 +56,14 @@
  ;; single attribute or ["multiple" "attributes"] that are searched in
  ;; order and the first non-empty one used.
  :oidc-userid-attribute "sub"
+ ;; Which id-token attributes to use for user-id mapping. Must be a
+ ;; list of attributes ["elixirId"], which is searched in order
+ ;; and the first non-empty one is used. user-id mapping is created
+ ;; when OIDC token contains one mapped attribute and one non-mapped
+ ;; attribute (see :oidc-userid-attribute configuration). Mapped
+ ;; user-id is fetched and used for subsequent logins.
+ ;; nil => mapping disabled
+ :oidc-mapped-userid-attributes nil
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
  ;; Example:
  ;;   :oidc-additional-authorization-parameters "&acr_values=foo&ui_locales=sv"
