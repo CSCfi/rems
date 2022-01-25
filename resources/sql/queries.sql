@@ -812,3 +812,4 @@ FROM user_mappings;
 -- :name create-user-mapping! :insert
 INSERT INTO user_mappings (usermappingsdata)
 VALUES (:usermappingsdata::jsonb);
+
