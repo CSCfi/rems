@@ -58,3 +58,4 @@
 (defmacro with-fake-login-users [users & body]
   `(with-redefs [rems.auth.fake-login/get-fake-login-users (constantly ~users)]
      ~@body))
+
