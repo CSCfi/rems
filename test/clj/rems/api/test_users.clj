@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-users
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.testing-util :refer [with-fake-login-users]]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
@@ -118,3 +118,30 @@
                {:userid "frank" :name "Frank Roleless" :email "frank@example.com" :organizations [{:organization/id "frank"}]}}
              (set (api-call :get "/api/users/active" nil
                             +test-api-key+ "owner")))))))
+
+(deftest user-mapping-test
+  (with-fake-login-users {"alice" {:eppn "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                          "elixir-alice" {:eppn "alice" :elixirId "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+    (testing "log in alice"
+      (let [cookie (login-with-cookies "alice")]
+        (-> (request :get "/api/keepalive")
+            (header "Cookie" cookie)
+            handler
+            assert-response-is-ok)
+        (is (= [{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}]
+               (api-call :get "/api/users/active" nil
+                         +test-api-key+ "owner")))))
+
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :oidc-userid-attribute ["eppn" "elixirId"]
+                                         :oidc-mapped-userid-attributes ["elixirId"])]
+      (testing "log in elixir-alice"
+        (let [cookie (login-with-cookies "elixir-alice")]
+          (-> (request :get "/api/keepalive")
+              (header "Cookie" cookie)
+              handler
+              assert-response-is-ok)
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner")))))))))

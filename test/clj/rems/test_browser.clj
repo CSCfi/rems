@@ -29,7 +29,7 @@
             [rems.db.users :as users]
             [rems.db.user-settings :as user-settings]
             [rems.standalone]
-            [rems.testing-util :refer [with-user]]
+            [rems.testing-util :refer [with-user with-fake-login-users]]
             [rems.text :as text]))
 
 (comment ; convenience for development testing
@@ -691,6 +691,8 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
+      (Thread/sleep 500) ;; figure out what to wait for
+      (btu/screenshot "after-opening-applicant-info.png")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
               "Username" "alice"
@@ -789,13 +791,14 @@
                invitation))
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
-      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
-      (is (btu/eventually-visible? {:css ".login-btn"}))
-      (btu/scroll-and-click {:css ".login-btn"})
-      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
-      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
-      (btu/wait-page-loaded)
-      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"})))
+      (with-fake-login-users {"new-decider" {:eppn "new-decider" :commonName "New Decider"}}
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
+        (btu/wait-page-loaded)
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
@@ -845,21 +848,22 @@
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
-      (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
-      (is (btu/eventually-visible? {:css ".login-btn"}))
-      (btu/scroll-and-click {:css ".login-btn"})
-      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
-      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
-      (btu/wait-page-loaded)
-      (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
-      (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-get :workflow-title)}]))
-      (is (= {"Organization" "The Default Organization"
-              "Title" (btu/context-get :workflow-title)
-              "Type" "Master workflow"
-              "Handlers" "Invited Person Name"
-              "Active" true
-              "Forms" ""}
-             (slurp-fields :workflow))))))
+      (with-fake-login-users {"invited-person-id" {:eppn "invited-person-id" :commonName "Invited Person Name"}}
+        (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
+        (btu/wait-page-loaded)
+        (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
+        (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-get :workflow-title)}]))
+        (is (= {"Organization" "The Default Organization"
+                "Title" (btu/context-get :workflow-title)
+                "Type" "Master workflow"
+                "Handlers" "Invited Person Name"
+                "Active" true
+                "Forms" ""}
+               (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
   (testing "create test data"

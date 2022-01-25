@@ -8,8 +8,10 @@
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-test"
  :authentication :fake
+ :oidc-userid-attribute ["eppn"]
  :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
-                         {:attribute "picture"}]
+                         {:attribute "picture"}
+                         {:attribute "organizations"}]
  :languages [:en :fi :sv]
  :attachment-max-size 10000
  :application-expiration {:application.state/draft "P90D"}

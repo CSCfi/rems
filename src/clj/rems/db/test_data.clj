@@ -23,8 +23,9 @@
 ;;; generate test data
 
 (defn- create-users-and-roles! [users attrs]
-  (doseq [attr (vals attrs)]
-    (create-user! attr))
+  (doseq [user (vals users)]
+    (when-let [data (get attrs user)]
+      (create-user! data)))
   (roles/add-role! (users :owner) :owner)
   (roles/add-role! (users :reporter) :reporter))
 

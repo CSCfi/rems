@@ -2,8 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
-            [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.testing-util :refer [with-user]]))
+            [rems.application.rejecter-bot :as rejecter-bot]))
 
 (def +bot-users+
   {:approver-bot approver-bot/bot-userid
@@ -39,7 +38,8 @@
    "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1"}
    "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
-   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
+   "elixir-alice" {:eppn "alice" :elixirId "elixir-alice" :mail "alice@elixir-europe.org" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
