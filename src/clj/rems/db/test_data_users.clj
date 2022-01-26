@@ -28,19 +28,19 @@
    :roleless2 "frank"})
 
 (def +fake-user-data+
-  {"developer" {:eppn "developer" :email "developer@example.com" :name "Developer" :nickname "The Dev"}
-   "alice" {:eppn "alice" :email "alice@example.com" :name "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
-   "malice" {:eppn "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
-   "handler" {:eppn "handler" :email "handler@example.com" :name "Hannah Handler"}
-   "carl" {:eppn "carl" :email "carl@example.com" :name "Carl Reviewer"}
-   "elsa" {:eppn "elsa" :email "elsa@example.com" :name "Elsa Roleless"}
-   "frank" {:eppn "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
-   "organization-owner1" {:eppn "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
-   "organization-owner2" {:eppn "organization-owner2" :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
-   "owner" {:eppn "owner" :email "owner@example.com" :name "Owner"}
-   "reporter" {:eppn "reporter" :email "reporter@example.com" :name "Reporter"}
-   "elixir-alice" {:eppn "alice" :elixirId "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
-   "new-user" {:eppn "new-user" :email "new-user@example.com" :name "New User"}})
+  {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer" :nickname "The Dev"}
+   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
+   "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
+   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
+   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
+   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organizations [{:organization/id "frank"}]}
+   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1"}
+   "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
+   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
+   "elixir-alice" {:eppn "alice" :elixirId "elixir-alice" :mail "alice@elixir-europe.org" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "new-user" {:eppn "new-user" :mail "new-user@example.com" :commonName "New User"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -54,15 +54,15 @@
    :reporter "RDdomainreporter@funet.fi"})
 
 (def +demo-user-data+
-  {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :email "RDapplicant1.test@test_example.org" :name "RDapplicant1 REMSDEMO1" :organizations [{:organization/id "default"}]}
-   "RDapplicant2@funet.fi" {:eppn "RDapplicant2@funet.fi" :email "RDapplicant2.test@test_example.org" :name "RDapplicant2 REMSDEMO"}
-   "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
-   "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :email "RDapprover2.test@rems_example.org" :name "RDapprover2 REMSDEMO"}
-   "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :email "RDreview.test@rems_example.org" :name "RDreview REMSDEMO"}
-   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :email "RDowner.test@test_example.org" :name "RDowner REMSDEMO"}
-   "RDorganizationowner1@funet.fi" {:eppn "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
-   "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
-   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :email "RDdomainreporter.test@test_example.org" :name "RDdomainreporter REMSDEMO"}})
+  {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1" :organizations [{:organization/id "default"}]}
+   "RDapplicant2@funet.fi" {:eppn "RDapplicant2@funet.fi" :mail "RDapplicant2.test@test_example.org" :commonName "RDapplicant2 REMSDEMO"}
+   "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :mail "RDapprover1.test@rems_example.org" :commonName "RDapprover1 REMSDEMO"}
+   "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
+   "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
+   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
+   "RDorganizationowner1@funet.fi" {:eppn "RDorganizationowner1@funet.fi" :mail "RDorganizationowner1.test@test_example.org" :commonName "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
+   "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :mail "RDorganizationowner2.test@test_example.org" :commonName "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (def +oidc-users+
   {:applicant1 "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF"
