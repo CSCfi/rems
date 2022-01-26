@@ -4,11 +4,13 @@
             [buddy.core.keys :as buddy-keys]
             [buddy.sign.jwe :as buddy-jwe]
             [buddy.sign.jwt :as buddy-jwt]
+            [clojure.tools.logging :as log]
             [clj-http.client :as http]
+            [clojure.core.memoize]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [rems.common.util :refer [getx index-by]]
-            [rems.config :refer [oidc-configuration]]
+            [rems.config :refer [env oidc-configuration]]
             [rems.json :as json]))
 
 ;; Could consider caching this if it is a performance bottleneck.
@@ -28,15 +30,30 @@
         jwk (getx (indexed-jwks) key-id)]
     (buddy-keys/jwk->public-key jwk)))
 
+(defn- fetch-jku-jwks [jku]
+  (getx (http/get jku {:as :json}) :body))
+
+(defn- indexed-jku-jwks [jku]
+  (when jku
+    (index-by [:kid] (getx (fetch-jku-jwks jku) :keys))))
+
+(def memoized-indexed-jku-jwks
+  (clojure.core.memoize/ttl indexed-jku-jwks :ttl/threshold 60000)) ; cache for 1 minute
+
+(defn- fetch-visa-public-key [visa]
+  (let [decoded-visa (buddy-jwe/decode-header visa)
+        key-id (:kid decoded-visa)
+        jwk (getx (memoized-indexed-jku-jwks (:jku decoded-visa)) key-id)]
+    (buddy-keys/jwk->public-key jwk)))
+
 (defn sign [claims secret & [opts]]
   (buddy-jwt/sign claims secret opts))
 
-(defn validate [jwt issuer audience now]
-  (let [public-key (fetch-public-key jwt)]
-    (buddy-jwt/unsign jwt public-key (merge {:alg :rs256
-                                             :now now}
-                                            (when issuer {:iss issuer})
-                                            (when audience {:aud audience})))))
+(defn validate-visa [visa now]
+  (let [public-key (fetch-visa-public-key visa)]
+    (buddy-jwt/unsign visa public-key {:alg :rs256
+                                       :now now
+                                       :iss (:iss visa)})))
 
 (defn show
   "Show the claims of a JWT token without verifying anything."
@@ -62,3 +79,12 @@
                            :by "dac"}
            :iat 2524608000}]
          (show "eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMC9hcGkvandrIiwidHlwIjoiSldUIiwia2lkIjoiMjAxMS0wNC0yOSJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAvIiwic3ViIjoiZWxpeGlyLXVzZXIiLCJpYXQiOjI1MjQ2MDgwMDAsImV4cCI6MjU1NjE0NDAwMCwiZ2E0Z2hfdmlzYV92MSI6eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoiRUdBRDAwMDAxMDA2NjczIiwic291cmNlIjoiRUdBQzAwMDAxMDAwOTA4IiwiYnkiOiJkYWMiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMH19.LnfsNxVfM_NfuxYYQtZexp975Hc3hrCxTG0fhMrgTakSLXa6gASc5MPn14seqsTjuyhtmUnu7WrCEVxko8WRvJybGDWmdbrycYafNg4amevtbs7hTPCkqAXD1DcuP53LDeLhSl_YrNgfz4aDE0uaw37I8TAsqdAeDALcZqQ6SIwF5wBG_wRWtKTPmDp-GTpzy9STx-nrIqw3SYeftunlI4wDs5avaktDuOpgMl8TVUGodGFjJsZjN8UOhKgSsGdXDGmu4FeeIjJt9Sa_dsCQPZQ1GpHyg1lFa63FZPPOy2-F9TNZcHJR1vFxKLD9U8Lvr11-EFjIiGuDg6miiWyodw"))))
+
+(defn validate [jwt issuer audience now]
+  (when (:log-authentication-details env)
+    (log/debug "JWT: " (show jwt)))
+  (let [public-key (fetch-public-key jwt)]
+    (buddy-jwt/unsign jwt public-key (merge {:alg :rs256
+                                             :now now}
+                                            (when issuer {:iss issuer})
+                                            (when audience {:aud audience})))))
