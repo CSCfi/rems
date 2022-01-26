@@ -10,7 +10,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [rems.common.util :refer [getx index-by]]
-            [rems.config :refer [oidc-configuration]]
+            [rems.config :refer [env oidc-configuration]]
             [rems.json :as json]))
 
 ;; Could consider caching this if it is a performance bottleneck.
@@ -81,7 +81,8 @@
          (show "eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMC9hcGkvandrIiwidHlwIjoiSldUIiwia2lkIjoiMjAxMS0wNC0yOSJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAvIiwic3ViIjoiZWxpeGlyLXVzZXIiLCJpYXQiOjI1MjQ2MDgwMDAsImV4cCI6MjU1NjE0NDAwMCwiZ2E0Z2hfdmlzYV92MSI6eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoiRUdBRDAwMDAxMDA2NjczIiwic291cmNlIjoiRUdBQzAwMDAxMDAwOTA4IiwiYnkiOiJkYWMiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMH19.LnfsNxVfM_NfuxYYQtZexp975Hc3hrCxTG0fhMrgTakSLXa6gASc5MPn14seqsTjuyhtmUnu7WrCEVxko8WRvJybGDWmdbrycYafNg4amevtbs7hTPCkqAXD1DcuP53LDeLhSl_YrNgfz4aDE0uaw37I8TAsqdAeDALcZqQ6SIwF5wBG_wRWtKTPmDp-GTpzy9STx-nrIqw3SYeftunlI4wDs5avaktDuOpgMl8TVUGodGFjJsZjN8UOhKgSsGdXDGmu4FeeIjJt9Sa_dsCQPZQ1GpHyg1lFa63FZPPOy2-F9TNZcHJR1vFxKLD9U8Lvr11-EFjIiGuDg6miiWyodw"))))
 
 (defn validate [jwt issuer audience now]
-  (log/debug "JWT: " (show jwt))
+  (when (:log-authentication-details env)
+    (log/debug "JWT: " (show jwt)))
   (let [public-key (fetch-public-key jwt)]
     (buddy-jwt/unsign jwt public-key (merge {:alg :rs256
                                              :now now}
