@@ -10,9 +10,13 @@
             [ring.util.response :refer [redirect]]))
 
 (defn get-fake-login-users []
-  (condp = (:fake-authentication-data env)
+  (case (:fake-authentication-data env)
     :test +fake-user-data+
     :demo +demo-user-data+))
+
+(defn get-researcher-status [id-data]
+  (or (oidc/get-researcher-status id-data)
+      (select-keys id-data [:researcher-status-by])))
 
 (defn login-url []
   "/fake-login")
@@ -22,17 +26,13 @@
 
 (defn- fake-login [session username]
   (let [users (get-fake-login-users)
-        id-data (get users username)
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
+        id-data (get users username)]
     (when (oidc/should-map-userid? id-data) (oidc/create-user-mapping! id-data))
     (-> (redirect "/redirect")
         (assoc :session session)
         (assoc-in [:session :access-token] (str "access-token-" username))
-        (assoc-in [:session :identity] (merge {:eppn (or (oidc/get-mapped-userid id-data) (oidc/get-userid id-data))
-                                               :commonName (some id-data [:name :unique_name :family_name :commonName])
-                                               :mail (some id-data [:email :mail])}
-                                              extra-attributes))
-        (assoc-some-in [:session :identity :researcher-status-by] (ga4gh/passport->researcher-status-by id-data)))))
+        (assoc-in [:session :identity] (merge (oidc/get-user-attributes id-data)
+                                              (get-researcher-status id-data))))))
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]

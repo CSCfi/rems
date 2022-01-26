@@ -66,6 +66,19 @@
          (some id-data mapped-attrs)
          (some id-data (difference (set attrs) (set mapped-attrs))))))
 
+(defn get-user-attributes [id-data]
+  (let [identity-base {:eppn (or (get-mapped-userid id-data) (get-userid id-data))
+                       ;; need to maintain a fallback list of name attributes since identity
+                       ;; providers differ in what they give us
+                       :commonName (some id-data [:name :unique_name :family_name])
+                       :mail (:email id-data)}
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
+    (merge identity-base extra-attributes)))
+
+(defn get-researcher-status [user-info]
+  (when-let [by (ga4gh/passport->researcher-status-by user-info)]
+    {:researcher-status-by by}))
+
 (defn oidc-callback [request]
   (let [response (-> (http/post (:token_endpoint oidc-configuration)
                                 ;; NOTE Some IdPs don't support client id and secret in form params,
@@ -95,26 +108,17 @@
         ;; locale – could be used to set preferred lang on first login
         ;; email – non-unique (!) email
         id-data (jwt/validate id-token issuer audience now)
-        identity-base {:eppn (get-userid id-data)
-                       ;; need to maintain a fallback list of name attributes since identity
-                       ;; providers differ in what they give us
-                       :commonName (some id-data [:name :unique_name :family_name])
-                       :mail (:email id-data)}
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
-
         user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
-                    (-> (http/get url
-                                  {:headers {"Authorization" (str "Bearer " access-token)}})
+                    (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
                         :body
-                        json/parse-string))
-        researcher-status-attributes (when-let [by (ga4gh/passport->researcher-status-by user-info)]
-                                       {:researcher-status-by by})]
+                        json/parse-string))]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data user-info))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] (merge identity-base extra-attributes researcher-status-attributes)))))
+        (assoc-in [:session :identity] (merge (get-user-attributes id-data)
+                                              (get-researcher-status user-info))))))
 
 (defn- oidc-revoke [token]
   (when token
