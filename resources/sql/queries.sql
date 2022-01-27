@@ -805,11 +805,15 @@ WHERE id = :id;
 DELETE FROM category
 WHERE id = :id;
 
--- :name get-user-mappings :*
-SELECT usermappingsdata::TEXT
-FROM user_mappings;
+-- :name get-user-mapping :1
+SELECT userId
+FROM user_mappings
+WHERE extIdAttribute = :ext-id-attribute
+AND extIdValue = :ext-id-value;
 
 -- :name create-user-mapping! :insert
-INSERT INTO user_mappings (usermappingsdata)
-VALUES (:usermappingsdata::jsonb);
+INSERT INTO user_mappings (userId, extIdAttribute, extIdValue)
+VALUES (:user-id, :ext-id-attribute, :ext-id-value)
+ON CONFLICT (userId, extIdAttribute, extIdValue)
+DO NOTHING;
 

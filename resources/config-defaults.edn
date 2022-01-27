@@ -52,18 +52,11 @@
  :oidc-client-secret nil
  ;; Which scopes to pass to the authorization endpoint
  :oidc-scopes "openid profile email"
- ;; Which id-token attribute to use as the rems userid. Can be either
- ;; single attribute or ["multiple" "attributes"] that are searched in
+ ;; Which id-token attribute to use as the rems userid. Must be a
+ ;; list of attributes [{:attribute "multiple"} {:attribute "attributes"}] that are searched in
  ;; order and the first non-empty one used.
- :oidc-userid-attribute "sub"
- ;; Which id-token attributes to use for user-id mapping. Must be a
- ;; list of attributes ["elixirId"], which is searched in order
- ;; and the first non-empty one is used. user-id mapping is created
- ;; when OIDC token contains one mapped attribute and one non-mapped
- ;; attribute (see :oidc-userid-attribute configuration). Mapped
- ;; user-id is fetched and used for subsequent logins.
- ;; nil => mapping disabled
- :oidc-mapped-userid-attributes nil
+ ;; Attribute can be renamed using a map instead of string: {:attribute "sub" :rename "elixirId"}
+ :oidc-userid-attributes [{:attribute "sub"}]
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
  ;; Example:
  ;;   :oidc-additional-authorization-parameters "&acr_values=foo&ui_locales=sv"

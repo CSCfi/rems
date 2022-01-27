@@ -25,7 +25,7 @@
 (defn- fake-login [session username]
   (let [users (get-fake-login-users)
         id-data (get users username)]
-    (when (oidc/should-map-userid? id-data) (oidc/create-user-mapping! id-data))
+    (oidc/create-user-mapping! id-data)
     (-> (redirect "/redirect")
         (assoc :session session)
         (assoc-in [:session :access-token] (str "access-token-" username))

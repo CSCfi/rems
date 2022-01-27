@@ -2,7 +2,6 @@
   (:require [clj-http.client :as http]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [clojure.set :refer [difference]]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings :as user-mappings]
@@ -26,45 +25,52 @@
   "/oidc-logout")
 
 (defn get-userid [id-data]
-  (let [attr (getx env :oidc-userid-attribute)
-        attrs (if (string? attr)
-                [attr]
-                attr)]
-    (some #(get id-data (keyword %)) attrs)))
+  (let [attrs (->> (getx env :oidc-userid-attributes)
+                   (map (comp keyword :attribute)))]
+    (some #(get id-data %) attrs)))
 
 (deftest test-get-userid
-  (with-redefs [env {:oidc-userid-attribute "atr"}]
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}]}]
     (is (nil? (get-userid {:sub "123"})))
     (is (= "456" (get-userid {:sub "123" :atr "456"}))))
-  (with-redefs [env {:oidc-userid-attribute ["atr"]}]
-    (is (nil? (get-userid {:sub "123"})))
-    (is (= "456" (get-userid {:sub "123" :atr "456"}))))
-  (with-redefs [env {:oidc-userid-attribute ["atr" "sub" "fallback"]}]
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}
+                                              {:attribute "sub"}
+                                              {:attribute "fallback"}]}]
     (is (= "123" (get-userid {:sub "123"})))
     (is (= "456" (get-userid {:sub "123" :atr "456"})))
     (is (= "456" (get-userid {:sub "123" :atr "456" :fallback "78"})))
     (is (= "78" (get-userid {:fallback "78"})))))
 
+(defn- get-renamed-attribute [id-data]
+  (->> (:oidc-userid-attributes env)
+       (filter #(get id-data (keyword (:rename %))))
+       (some (fn [{:keys [attribute rename]}]
+               {:user-id (get id-data (keyword attribute))
+                :ext-id-attribute rename
+                :ext-id-value (get id-data (keyword rename))}))))
+
+(deftest test-get-renamed-attribute
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "sub"} {:attribute "eppn"}]}]
+    (is (= nil (get-renamed-attribute {})))
+    (is (= nil (get-renamed-attribute {:sub "alice"}))))
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"} "eppn"]}]
+    (is (= nil (get-renamed-attribute {:sub "alice"})))
+    (is (= {:user-id "alice" :ext-id-attribute "elixirId" :ext-id-value "elixir-alice"}
+           (get-renamed-attribute {:elixirId "elixir-alice" :sub "alice"})))
+    (is (= {:user-id nil :ext-id-attribute "elixirId" :ext-id-value "elixir-alice"}
+           (get-renamed-attribute {:elixirId "elixir-alice"})))))
+
 (defn get-mapped-userid [id-data]
-  (let [attrs (map keyword (:oidc-mapped-userid-attributes env))]
-    (->> (select-keys id-data attrs)
-         (keep (fn [[attr value]] (user-mappings/get-user-mapping (name attr) value)))
-         first)))
+  (let [pull-attr (juxt :ext-id-attribute :ext-id-value)]
+    (some->> id-data
+             get-renamed-attribute
+             pull-attr
+             (apply user-mappings/get-user-mapping))))
 
 (defn create-user-mapping! [id-data]
-  (let [mapped-attrs (map keyword (:oidc-mapped-userid-attributes env))
-        [attr userid] (first (select-keys id-data mapped-attrs))]
-    (user-mappings/create-user-mapping! {:from (name attr)
-                                         :from-value userid
-                                         :to-value (get-userid (apply dissoc id-data mapped-attrs))})))
-
-(defn should-map-userid? [id-data]
-  (let [mapped-attrs (map keyword (:oidc-mapped-userid-attributes env))
-        attrs (map keyword (-> (seq (:oidc-userid-attribute env))
-                               flatten))]
-    (and (get-mapped-userid id-data)
-         (some id-data mapped-attrs)
-         (some id-data (difference (set attrs) (set mapped-attrs))))))
+  (let [attrs (get-renamed-attribute id-data)]
+    (when (some->> attrs vals (every? some?))
+      (user-mappings/create-user-mapping! attrs))))
 
 (defn get-user-attributes [id-data]
   (let [identity-base {:eppn (or (get-mapped-userid id-data) (get-userid id-data))

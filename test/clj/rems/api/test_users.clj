@@ -133,7 +133,7 @@
                          +test-api-key+ "owner")))))
 
     (with-redefs [rems.config/env (assoc rems.config/env
-                                         :oidc-userid-attribute ["eppn" "elixirId"]
+                                         :oidc-userid-attributes ["eppn" "elixirId"]
                                          :oidc-mapped-userid-attributes ["elixirId"])]
       (testing "log in elixir-alice"
         (let [cookie (login-with-cookies "elixir-alice")]
