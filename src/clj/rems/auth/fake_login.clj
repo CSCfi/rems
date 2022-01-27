@@ -1,22 +1,16 @@
 (ns rems.auth.fake-login
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.util :refer [url]]
-            [medley.core :refer [map-vals]]
             [rems.layout :as layout]
             [rems.auth.oidc :as oidc]
             [rems.config :refer [env]]
-            [rems.db.test-data-users :refer [+fake-user-data+ +demo-user-data+]]
-            [rems.common.util :refer [replace-key]]
+            [rems.db.test-data-users :refer [+fake-idp-data+ +demo-idp-data+]]
             [ring.util.response :refer [redirect]]))
 
 (defn get-fake-login-users []
-  (let [users (case (:fake-authentication-data env)
-                :test +fake-user-data+
-                :demo +demo-user-data+)
-        format-user #(-> %
-                         (replace-key :mail :email)
-                         (replace-key :commonName :name))]
-    (map-vals format-user users)))
+  (case (:fake-authentication-data env)
+    :test +fake-idp-data+
+    :demo +demo-idp-data+))
 
 (defn get-researcher-status [id-data]
   (or (oidc/get-researcher-status id-data)
