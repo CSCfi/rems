@@ -132,9 +132,7 @@
                (api-call :get "/api/users/active" nil
                          +test-api-key+ "owner")))))
 
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :oidc-userid-attributes ["eppn" "elixirId"]
-                                         :oidc-mapped-userid-attributes ["elixirId"])]
+    (with-redefs [rems.config/env (assoc rems.config/env :oidc-userid-attributes [{:attribute "eppn" :rename "elixirId"}])]
       (testing "log in elixir-alice"
         (let [cookie (login-with-cookies "elixir-alice")]
           (-> (request :get "/api/keepalive")
