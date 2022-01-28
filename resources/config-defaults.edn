@@ -55,7 +55,7 @@
  ;; Which id-token attribute to use as the rems userid. Must be a
  ;; list of attributes [{:attribute "multiple"} {:attribute "attributes"}] that are searched in
  ;; order and the first non-empty one used.
- ;; Attribute can be renamed using a map instead of string: {:attribute "sub" :rename "elixirId"}
+ ;; Attribute can be renamed using :rename keyword: {:attribute "sub" :rename "elixirId"}
  :oidc-userid-attributes [{:attribute "sub"}]
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
  ;; Example:
