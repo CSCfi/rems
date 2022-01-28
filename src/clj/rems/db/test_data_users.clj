@@ -52,7 +52,7 @@
    "organization-owner2" {:eppn "organization-owner2" :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:eppn "owner" :email "owner@example.com" :name "Owner"}
    "reporter" {:eppn "reporter" :email "reporter@example.com" :name "Reporter"}
-   "elixir-alice" {:eppn "alice" :elixirId "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "alice-elixir" {:eppn "alice" :elixirId "alice-elixir" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
    "new-user" {:eppn "new-user" :email "new-user@example.com" :name "New User"}})
 
 (def +demo-users+

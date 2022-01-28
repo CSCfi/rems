@@ -6,5 +6,5 @@ CREATE TABLE user_mappings (
   FOREIGN KEY (userId) REFERENCES users
 );
 --;;
-CREATE INDEX index_user_mappings ON user_mappings(userId, extIdAttribute, extIdValue);
+CREATE INDEX index_user_mappings ON user_mappings(extIdAttribute, extIdValue);
 
