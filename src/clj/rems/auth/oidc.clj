@@ -27,7 +27,7 @@
 (defn get-userid [id-data]
   (let [attrs (->> (getx env :oidc-userid-attributes)
                    (map (comp keyword :attribute)))]
-    (some #(get id-data %) attrs)))
+    (some (partial get id-data) attrs)))
 
 (deftest test-get-userid
   (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}]}]
@@ -42,35 +42,35 @@
     (is (= "78" (get-userid {:fallback "78"})))))
 
 (defn- get-renamed-attribute [id-data]
-  (->> (:oidc-userid-attributes env)
-       (filter #(get id-data (keyword (:rename %))))
-       (some (fn [{:keys [attribute rename]}]
-               {:user-id (get id-data (keyword attribute))
-                :ext-id-attribute rename
-                :ext-id-value (get id-data (keyword rename))}))))
+  (let [rename-attrs (->> (getx env :oidc-userid-attributes)
+                          (filter #(get id-data (keyword (:rename %)))))]
+    (->> rename-attrs
+         (some (fn [{:keys [attribute rename]}]
+                 {:user-id (get id-data (keyword attribute))
+                  :ext-id-attribute rename
+                  :ext-id-value (get id-data (keyword rename))})))))
 
 (deftest test-get-renamed-attribute
-  (with-redefs [env {:oidc-userid-attributes [{:attribute "sub"} {:attribute "eppn"}]}]
-    (is (= nil (get-renamed-attribute {})))
-    (is (= nil (get-renamed-attribute {:sub "alice"}))))
-  (with-redefs [env {:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"} "eppn"]}]
-    (is (= nil (get-renamed-attribute {:sub "alice"})))
-    (is (= {:user-id "alice" :ext-id-attribute "elixirId" :ext-id-value "elixir-alice"}
-           (get-renamed-attribute {:elixirId "elixir-alice" :sub "alice"})))
-    (is (= {:user-id nil :ext-id-attribute "elixirId" :ext-id-value "elixir-alice"}
-           (get-renamed-attribute {:elixirId "elixir-alice"})))))
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}]}]
+    (is (nil? (get-renamed-attribute {:sub "123"})))
+    (is (nil? (get-renamed-attribute {:sub "123" :atr "456"}))))
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}
+                                              {:attribute "sub" :rename "elixirId"}]}]
+    (is (nil? (get-renamed-attribute {:sub "123"})))
+    (is (= {:user-id "123" :ext-id-attribute "elixirId" :ext-id-value "456"}
+           (get-renamed-attribute {:sub "123" :elixirId "456"})))
+    (is (= {:user-id nil :ext-id-attribute "elixirId" :ext-id-value "456"}
+           (get-renamed-attribute {:elixirId "456"})))))
 
-(defn get-mapped-userid [id-data]
-  (let [pull-attr (juxt :ext-id-attribute :ext-id-value)]
-    (some->> id-data
-             get-renamed-attribute
-             pull-attr
-             (apply user-mappings/get-user-mapping))))
+(defn- get-mapped-userid [id-data]
+  (when-let [attr (get-renamed-attribute id-data)]
+    (user-mappings/get-user-mapping (:ext-id-attribute attr)
+                                    (:ext-id-value attr))))
 
 (defn create-user-mapping! [id-data]
-  (let [attrs (get-renamed-attribute id-data)]
-    (when (some->> attrs vals (every? some?))
-      (user-mappings/create-user-mapping! attrs))))
+  (let [attr (get-renamed-attribute id-data)]
+    (when (some->> attr vals (every? some?))
+      (user-mappings/create-user-mapping! attr))))
 
 (defn get-user-attributes [id-data]
   (let [identity-base {:eppn (or (get-mapped-userid id-data) (get-userid id-data))
@@ -149,3 +149,4 @@
       (oidc-revoke (:access-token session))
       (assoc (redirect "/") :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))
+
