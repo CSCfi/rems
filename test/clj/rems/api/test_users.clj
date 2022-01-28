@@ -121,9 +121,9 @@
                             +test-api-key+ "owner")))))))
 
 (deftest user-mapping-test
-  (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                          "elixir-alice" {:sub "alice" :elixirId "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-    (with-redefs [rems.config/env (assoc rems.config/env :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}])]
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "elixir-alice" {:sub "alice" :elixirId "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
       (testing "log in alice"
         (let [cookie (login-with-cookies "alice")]
           (-> (request :get "/api/keepalive")
@@ -133,7 +133,7 @@
           (is (= [{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}]
                  (api-call :get "/api/users/active" nil
                            +test-api-key+ "owner")))))
-      (testing "log in elixir-alice"
+      (testing "log in elixir-alice and create user mapping"
         (is (nil? (user-mappings/get-user-mapping "elixirId" "elixir-alice")) "user mapping should not exist")
         (let [cookie (login-with-cookies "elixir-alice")]
           (-> (request :get "/api/keepalive")
@@ -144,5 +144,17 @@
                    {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
                  (set (api-call :get "/api/users/active" nil
                                 +test-api-key+ "owner"))))
-          (is (= "alice" (user-mappings/get-user-mapping "elixirId" "elixir-alice"))))))))
+          (is (= "alice" (user-mappings/get-user-mapping "elixirId" "elixir-alice"))))))
+    (with-fake-login-users {"elixir-alice" {:elixirId "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+      (testing "log in elixir-alice with user mapping"
+        (is (= "alice" (user-mappings/get-user-mapping "elixirId" "elixir-alice")))
+        (let [cookie (login-with-cookies "elixir-alice")]
+          (-> (request :get "/api/keepalive")
+              (header "Cookie" cookie)
+              handler
+              assert-response-is-ok)
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner")))))))))
 
