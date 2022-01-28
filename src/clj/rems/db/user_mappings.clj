@@ -11,8 +11,9 @@
   (s/validator UserMappings))
 
 (defn get-user-mapping [attribute value]
-  (:userId (db/get-user-mapping {:ext-id-attribute attribute
-                                 :ext-id-value value})))
+  (->> (db/get-user-mapping {:ext-id-attribute attribute
+                             :ext-id-value value})
+       (some :userid)))
 
 (defn create-user-mapping! [user-mapping]
   (-> user-mapping
