@@ -121,8 +121,8 @@
     (let [bound-type (:field/date-bound field)
           dt (:field/value field)
           [valid-dt? dt-error] (case bound-type
-                                 :past [time/before? :t.form.validation/date-not-in-past]
-                                 :future [time/after? :t.form.validation/date-not-in-future]
+                                 :past [time/before? :t.form.validation/not-in-past]
+                                 :future [time/after? :t.form.validation/not-in-future]
                                  [(constantly true) nil])]
       (when-not (valid-dt? dt (time/today-at 23 59 59))
         {:field-id (:field/id field)

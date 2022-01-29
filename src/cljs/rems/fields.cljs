@@ -1,6 +1,7 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            [cljs-time.core :as time]
             [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
@@ -215,9 +216,9 @@
                 :on-change (comp on-change event-value)}]]))
 
 (defn date-field
-  [{:field/keys [value optional bound-type] :keys [validation on-change] :as opts}]
-  (let [min (when (= :future bound-type) (-> (time/today) (time/plus (time/days 1)) (localize-utc-date)))
-        max (when (= :past bound-type) (-> (time/today) (localize-utc-date)))]
+  [{:field/keys [value optional date-bound] :keys [validation on-change] :as opts}]
+  (let [min (when (= date-bound :future) (-> (time/today) (time/plus (time/days 1)) (localize-utc-date)))
+        max (when (= date-bound :past) (-> (time/today) (localize-utc-date)))]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
