@@ -11,6 +11,9 @@ Changes since v2.24
 ### Breaking changes
 - The columns owneruserid and modifieruserid have been removed as the audit_log effectively serves the same purpose. They were not consistently used. For the attachments the column has been renamed to userid. This is a breaking change for the API as some of these were exposed, but likely not used or useful. (#2823)
 
+### Additions
+- Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
+
 ## v2.24 "Heikkiläntie" 2022-01-17
 
 ### Fixes
@@ -29,9 +32,6 @@ Changes since v2.24
 
 ### Breaking changes
 - The API used to return disabled items for all users, but in the future only for administrative users. The disabled items were never visible to normal users in our UI. This may technically break the usage of the catalogue API if a regular user or public catalogue is used.
-
-### Additions
-- Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
 
 ## v2.21.1 "Veneentekijän(tie|kuja|kaari) +1" 2021-11-23
 
