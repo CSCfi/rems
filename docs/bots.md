@@ -77,3 +77,5 @@ logs in to rems and performs the _decide_ action. At this point:
   - and if the decider posted an approve decision: the bot approves the application
   - and if the decider posted a reject decision: the bot rejects the application
 - If the decider doesn't have a ResearcherStatus visa, the bot rejects the application
+
+See [Bona fide pusher for an example use case](../resources/addons/bona-fide-pusher/README.md)
