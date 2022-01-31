@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.24
 
+**NB: This release contains migrations!**
+
 ### Breaking changes
 - The columns owneruserid and modifieruserid have been removed as the audit_log effectively serves the same purpose. They were not consistently used. For the attachments the column has been renamed to userid. This is a breaking change for the API as some of these were exposed, but likely not used or useful. (#2823)
 
