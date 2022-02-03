@@ -63,8 +63,8 @@
   [handler]
   (fn [request]
     (binding [context/*user* (keywordize-keys (:identity request))]
-      (when context/*user*
-        (users/add-user-raw! (get-user-id) context/*user*))
+      ;; (when context/*user*
+      ;;   (users/add-user-raw! (get-user-id) context/*user*))
       (with-mdc {:user (:eppn context/*user*)}
         (handler request)))))
 

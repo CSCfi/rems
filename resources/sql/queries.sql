@@ -813,7 +813,7 @@ AND extIdValue = :ext-id-value;
 
 -- :name create-user-mapping! :insert
 INSERT INTO user_mappings (userId, extIdAttribute, extIdValue)
-VALUES (:user-id, :ext-id-attribute, :ext-id-value)
+VALUES (:userid, :ext-id-attribute, :ext-id-value)
 ON CONFLICT (userId, extIdAttribute, extIdValue)
 DO NOTHING;
 

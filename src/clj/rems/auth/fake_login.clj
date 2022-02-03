@@ -24,12 +24,14 @@
 
 (defn- fake-login [session username]
   (let [users (get-fake-login-users)
-        id-data (get users username)]
-    (oidc/create-user-mapping! id-data)
+        id-data (-> (get users username) oidc/rename-userid-attributes)
+        userid (oidc/find-or-create-user! id-data)]
+    (oidc/save-user-mappings! id-data userid)
     (-> (redirect "/redirect")
         (assoc :session session)
         (assoc-in [:session :access-token] (str "access-token-" username))
         (assoc-in [:session :identity] (merge (oidc/get-user-attributes id-data)
+                                              {:eppn userid}
                                               (get-researcher-status id-data))))))
 
 (defn- user-selection [username]

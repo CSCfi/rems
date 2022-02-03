@@ -3,7 +3,7 @@
             [schema.core :as s]))
 
 (s/defschema UserMappings
-  {:user-id s/Str
+  {:userid s/Str
    :ext-id-attribute s/Str
    :ext-id-value s/Str})
 
@@ -11,7 +11,7 @@
   (s/validator UserMappings))
 
 (defn get-user-mapping [attribute value]
-  (->> (db/get-user-mapping {:ext-id-attribute attribute
+  (->> (db/get-user-mapping {:ext-id-attribute (name attribute)
                              :ext-id-value value})
        (some :userid)))
 
