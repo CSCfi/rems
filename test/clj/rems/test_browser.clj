@@ -791,7 +791,7 @@
                invitation))
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
-      (with-fake-login-users {"new-decider" {:eppn "new-decider" :name "New Decider"}}
+      (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider"}}
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
@@ -848,7 +848,7 @@
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
-      (with-fake-login-users {"invited-person-id" {:eppn "invited-person-id" :name "Invited Person Name"}}
+      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name"}}
         (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})

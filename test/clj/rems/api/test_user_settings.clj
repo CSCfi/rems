@@ -106,7 +106,7 @@
                  read-body-and-status))))
 
     (testing "success"
-      (with-fake-login-users {user-id {:eppn user-id}}
+      (with-fake-login-users {user-id {:sub user-id}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server
@@ -139,7 +139,7 @@
     (test-helpers/create-workflow! {:handlers [handler-id]})
 
     (testing "setup api-key to delete"
-      (with-fake-login-users {handler-id {:eppn handler-id}}
+      (with-fake-login-users {handler-id {:sub handler-id}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server
@@ -184,7 +184,7 @@
                  read-body-and-status))))
 
     (testing "success"
-      (with-fake-login-users {handler-id {:eppn handler-id}}
+      (with-fake-login-users {handler-id {:sub handler-id}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server
