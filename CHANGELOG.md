@@ -14,6 +14,7 @@ Changes since v2.24
 - The columns owneruserid and modifieruserid have been removed as the audit_log effectively serves the same purpose. They were not consistently used. For the attachments the column has been renamed to userid. This is a breaking change for the API as some of these were exposed, but likely not used or useful. (#2823)
 
 ### Additions
+- Bona fide pusher script for pushing bona fide status to Elixir. (#2513)
 - Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
 
 ## v2.24 "Heikkiläntie" 2022-01-17
