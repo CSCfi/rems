@@ -123,7 +123,7 @@
         :else
         (try
           (postal/send-message (merge {:host host :port port
-                                       :debug true}
+                                       :debug (true? (:smtp-debug env))
                                       (when-let [timeout (:smtp-connectiontimeout env)]
                                         {"mail.smtp.connectiontimeout" (str timeout)
                                          "mail.smtps.connectiontimeout" (str timeout)})
