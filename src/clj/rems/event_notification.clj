@@ -27,9 +27,13 @@
                               :socket-timeout timeout-ms
                               :conn-timeout timeout-ms})
           status (:status response)]
-      (when-not (= 200 status)
-        (log/error "Event notification response status" status)
-        (str "failed: " status)))
+
+      (if (= 200 status)
+        (log/infof "Sent event notification for event %s -> %s" (select-keys body [:event/id :application/id :event/type :event/time]) status )
+        (do
+          (log/error "Event notification response status" status)
+          (str "failed: " status))))
+
     (catch Exception e
       (log/error "Event notification failed" e)
       "failed: exception")))
@@ -49,7 +53,7 @@
       (outbox/attempt-succeeded! (:outbox/id entry)))))
 
 (mount/defstate event-notification-poller
-  :start (scheduler/start! process-outbox! (.toStandardDuration (time/seconds 10)))
+  :start (scheduler/start! "event-notification-poller" process-outbox! (.toStandardDuration (time/seconds 10)))
   :stop (scheduler/stop! event-notification-poller))
 
 (defn- add-to-outbox! [target body]

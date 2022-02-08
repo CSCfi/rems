@@ -280,7 +280,7 @@
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
-  :start (scheduler/start! reload-cache! (Duration/standardHours 1))
+  :start (scheduler/start! "all-applications-cache-reloader" reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
 (defn delete-application!

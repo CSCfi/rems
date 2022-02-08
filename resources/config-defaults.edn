@@ -70,6 +70,9 @@
  ;; Sending email.
  :smtp-host nil
  :smtp-port 25
+ :smtp-connectiontimeout 5000 ; milliseconds waiting for connection
+ :smtp-timeout 10000 ; milliseconds waiting for processing
+ :smtp-writetimeout 10000 ; milliseconds waiting for writes
  :mail-from nil
  :email-retry-period "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 

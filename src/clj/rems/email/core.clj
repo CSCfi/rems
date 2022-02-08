@@ -122,7 +122,18 @@
 
         :else
         (try
-          (postal/send-message {:host host :port port} email)
+          (postal/send-message (merge {:host host :port port
+                                       :debug true}
+                                      (when-let [timeout (:smtp-connectiontimeout env)]
+                                        {"mail.smtp.connectiontimeout" (str timeout)
+                                         "mail.smtps.connectiontimeout" (str timeout)})
+                                      (when-let [timeout (:smtp-writetimeout env)]
+                                        {"mail.smtp.writetimeout" (str timeout)
+                                         "mail.smtps.writetimeout" (str timeout)})
+                                      (when-let [timeout (:smtp-timeout env)]
+                                        {"mail.smtp.timeout" (str timeout)
+                                         "mail.smtps.timeout" (str timeout)}))
+                               email)
           nil
           (catch Throwable e ; e.g. email address does not exist
             (log/warn e "failed sending email:" (pr-str email))
@@ -137,7 +148,7 @@
       (outbox/attempt-succeeded! (:outbox/id email)))))
 
 (mount/defstate email-poller
-  :start (scheduler/start! try-send-emails! (Duration/standardSeconds 10))
+  :start (scheduler/start! "email-poller" try-send-emails! (Duration/standardSeconds 10))
   :stop (scheduler/stop! email-poller))
 
 (comment

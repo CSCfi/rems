@@ -83,14 +83,16 @@
 
     (log/infof "Pushing entitlements to %s %s: %s %s" (getx config :id) (getx config :permission-server-url) entitlement config)
 
-    (case action
-      :add
-      (ega/post-create-or-update-permissions (merge common-fields
-                                                    (entitlement->update entitlement)))
+    (let [response (case action
+                     :add
+                     (ega/post-create-or-update-permissions (merge common-fields
+                                                                   (entitlement->update entitlement)))
 
-      :remove
-      (ega/delete-permissions (merge common-fields
-                                     {:dataset-ids [(:resid entitlement)]})))))
+                     :remove
+                     (ega/delete-permissions (merge common-fields
+                                                    {:dataset-ids [(:resid entitlement)]})))]
+      (log/infof "Pushed entitlements to %s %s: %s %s -> %s" (getx config :id) (getx config :permission-server-url) entitlement config (:status response))
+      response)))
 
 (defn generate-api-key-with-access-token
   "Generates an API-Key with `access-token` and saves it to the user's secrets.
