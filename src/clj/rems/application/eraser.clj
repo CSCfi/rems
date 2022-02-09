@@ -51,13 +51,14 @@
 
 (mount/defstate expired-application-poller
   :start (when (:application-expiration env)
-           (scheduler/start! remove-expired-applications! (.toStandardDuration (time/days 1))))
+           (scheduler/start! "expired-application-poller" remove-expired-applications! (.toStandardDuration (time/days 1))))
   :stop (when expired-application-poller
           (scheduler/stop! expired-application-poller)))
 
 (comment
   (mount/defstate expired-application-poller-test
-    :start (scheduler/start! (fn [] (with-redefs [env {:application-expiration {:application.state/draft "P90D"}}]
+    :start (scheduler/start! "expired-application-poller-test"
+                             (fn [] (with-redefs [env {:application-expiration {:application.state/draft "P90D"}}]
                                       (remove-expired-applications!))) (.toStandardDuration (time/seconds 10)))
     :stop (scheduler/stop! expired-application-poller-test))
   (mount/start #{#'expired-application-poller-test})
