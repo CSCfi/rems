@@ -29,7 +29,7 @@
           status (:status response)]
 
       (if (= 200 status)
-        (log/infof "Sent event notification for event %s -> %s" (select-keys body [:event/id :application/id :event/type :event/time]) status )
+        (log/infof "Sent event notification for event %s -> %s" (select-keys body [:event/id :application/id :event/type :event/time]) status)
         (do
           (log/error "Event notification response status" status)
           (str "failed: " status))))
