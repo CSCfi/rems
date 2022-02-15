@@ -41,6 +41,7 @@
   :start
   (http/start (merge {:handler handler/handler
                       :send-server-version? false
+                      :port (:port env)
                       :configurator jetty-configurator}
                      (when-not (:port env)
                        {:http? false})
