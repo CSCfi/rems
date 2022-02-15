@@ -289,7 +289,7 @@
                   [(:name (meta f))
                    (f old-userid new-userid simulate?)]))]
     (remove-old-user old-userid simulate?)
-    (rems.db.applications/reload-cache!)
+    ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
 
 (comment

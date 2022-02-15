@@ -18,6 +18,7 @@ Changes since v2.24
 - Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
 - Pollers have been made more robust, including timeouts for email sending (#2841)
 - SSL certificate can now be configured and SSL enabled. HTTP port can be disabled. (#2844)
+- `rename-user` will not bother reloading the application cache anymore (since it is usually run in a separate process from the server).
 
 ## v2.24 "Heikkiläntie" 2022-01-17
 
