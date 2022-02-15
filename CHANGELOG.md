@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.24
+Changes since v2.25
+
+## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**
 
