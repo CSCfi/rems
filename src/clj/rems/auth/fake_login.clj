@@ -23,8 +23,7 @@
   "/fake-logout")
 
 (defn- fake-login [session username]
-  (let [users (get-fake-login-users)
-        id-data (-> (get users username) oidc/rename-userid-attributes)
+  (let [id-data (-> (get-fake-login-users) (get username))
         userid (oidc/find-or-create-user! id-data)]
     (oidc/save-user-mappings! id-data userid)
     (-> (redirect "/redirect")
