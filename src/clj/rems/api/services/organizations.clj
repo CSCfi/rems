@@ -17,8 +17,6 @@
       (if (or (nil? userid) can-see-all?)
         org
         (dissoc org
-                :organization/last-modified
-                :organization/modifier
                 :organization/review-emails
                 :organization/owners
                 :enabled
@@ -50,8 +48,8 @@
   (->> (get-organizations {:userid userid})
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
-(defn add-organization! [userid org]
-  (if-let [id (organizations/add-organization! userid org)]
+(defn add-organization! [org]
+  (if-let [id (organizations/add-organization! org)]
     {:success true
      :organization/id id}
     {:success false
@@ -59,8 +57,7 @@
                :organization/id (:organization/id org)}]}))
 
 (defn edit-organization! [userid org]
-  (organizations/update-organization! userid
-                                      (:organization/id org)
+  (organizations/update-organization! (:organization/id org)
                                       (fn [db-organization]
                                         (let [organization-owners (set (map :userid (:organization/owners db-organization)))
                                               organization-owner? (contains? organization-owners userid)]
@@ -72,14 +69,14 @@
   {:success true
    :organization/id (:organization/id org)})
 
-(defn set-organization-enabled! [userid {:organization/keys [id] :keys [enabled]}]
-  (organizations/update-organization! userid id (fn [organization] (assoc organization :enabled enabled)))
+(defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
+  (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
   {:success true})
 
-(defn set-organization-archived! [userid {:organization/keys [id] :keys [archived]}]
+(defn set-organization-archived! [{:organization/keys [id] :keys [archived]}]
   (or (dependencies/change-archive-status-error archived  {:organization/id id})
       (do
-        (organizations/update-organization! userid id (fn [organization] (assoc organization :archived archived)))
+        (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
         {:success true})))
 
 (defn get-available-owners [] (users/get-users))

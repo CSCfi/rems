@@ -90,9 +90,12 @@
                            (log/error "POST failed" e)
                            {:status "exception"}))
               status (:status response)]
-          (when-not (= 200 status)
-            (log/warnf "Entitlement post failed: %s", response)
-            (str "failed: " status)))))))
+
+          (if (= 200 status)
+            (log/infof "Posted entitlements to %s: %s -> %s" target payload status)
+            (do
+              (log/warnf "Entitlement post failed: %s", response)
+              (str "failed: " status))))))))
 
 ;; TODO argh adding these everywhere sucks
 ;; TODO consider using schema coercions
@@ -113,7 +116,7 @@
       (outbox/attempt-succeeded! (:outbox/id entry)))))
 
 (mount/defstate entitlement-poller
-  :start (scheduler/start! process-outbox! (.toStandardDuration (time/seconds 10)))
+  :start (scheduler/start! "entitlement-poller" process-outbox! (.toStandardDuration (time/seconds 10)))
   :stop (scheduler/stop! entitlement-poller))
 
 (defn- add-to-outbox! [action type entitlements config]

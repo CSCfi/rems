@@ -10,8 +10,6 @@
 
 (s/defschema ResourceDb
   {:id s/Int
-   :owneruserid s/Str
-   :modifieruserid s/Str
    :organization schema-base/OrganizationId
    :resid s/Str
    :enabled s/Bool
@@ -46,7 +44,7 @@
 (defn ext-id-exists? [ext-id]
   (some? (db/get-resource {:resid ext-id})))
 
-(defn create-resource! [resource user-id]
+(defn create-resource! [resource]
   (let [missing-codes (clojure.set/difference (set (map :id (get-in resource [:resource/duo :duo/codes])))
                                               (set (map :id (duo/get-duo-codes))))]
     (when (seq missing-codes)
@@ -56,8 +54,6 @@
                                             (select-keys code [:id :restrictions]))}})
         id (:id (db/create-resource! {:resid (:resid resource)
                                       :organization (get-in resource [:organization :organization/id])
-                                      :owneruserid user-id
-                                      :modifieruserid user-id
                                       :resourcedata (json/generate-string data)}))]
     (doseq [licid (:licenses resource)]
       (db/create-resource-license! {:resid id
@@ -75,8 +71,6 @@
       (db/update-resource! {:id (:id resource)
                             :resid (:resid amended)
                             :organization (get-in amended [:organization :organization/id])
-                            :owneruserid (:owneruserid amended)
-                            :modifieruserid (:modifieruserid amended)
                             :enabled (:enabled amended)
                             :archived (:archived amended)
                             :resourcedata (json/generate-string data)}))))

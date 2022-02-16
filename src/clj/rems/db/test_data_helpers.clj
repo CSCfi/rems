@@ -62,8 +62,7 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization! actor
-                                                {:organization/id (or id "default")
+        result (organizations/add-organization! {:organization/id (or id "default")
                                                  :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
                                                  :organization/short-name (or short-name {:fi "Oletus" :en "Default" :sv "Standard"})
                                                  :organization/owners (or owners
@@ -89,8 +88,7 @@
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
-                                                                      :attachment-id attachment-id})}
-                                           actor))]
+                                                                      :attachment-id attachment-id})}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -121,8 +119,7 @@
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (form/create-form! actor
-                                    {:organization (or organization (ensure-default-organization!))
+                 (form/create-form! {:organization (or organization (ensure-default-organization!))
                                      :form/internal-name (or internal-name "FORM")
                                      :form/external-title (or external-title
                                                               (into {}
@@ -140,8 +137,7 @@
                  (resource/create-resource! (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
                                                     :organization (or organization (ensure-default-organization!))
                                                     :licenses (or license-ids [])}
-                                                   duo-data)
-                                            actor))]
+                                                   duo-data)))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -150,15 +146,13 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (workflow/create-workflow!
-                  {:userid actor
-                   :organization (or organization (ensure-default-organization!))
+                  {:organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)
                    :forms forms
-                   :handlers
-                   (or handlers
-                       (do (create-user! (get +fake-user-data+ "developer"))
-                           ["developer"]))}))]
+                   :handlers (or handlers
+                                 (do (create-user! (get +fake-user-data+ "developer"))
+                                     ["developer"]))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

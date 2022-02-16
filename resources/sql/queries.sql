@@ -55,13 +55,11 @@ WHERE 1=1
 ;
 
 -- :name set-catalogue-item-enabled! :!
--- TODO set modifieruserid?
 UPDATE catalogue_item
 SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-catalogue-item-archived! :!
--- TODO set modifieruserid?
 UPDATE catalogue_item
 SET archived = :archived
 WHERE id = :id;
@@ -100,8 +98,6 @@ VALUES (:form, :resid, :wfid, :organization,
 -- :name get-resources :? :*
 SELECT
   id,
-  owneruserid,
-  modifieruserid,
   organization,
   resid,
   enabled,
@@ -112,8 +108,6 @@ FROM resource;
 -- :name get-resource :? :1
 SELECT
   id,
-  owneruserid,
-  modifieruserid,
   organization,
   resid,
   enabled,
@@ -132,22 +126,20 @@ WHERE 1=1
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, organization, ownerUserId, modifieruserid, resourcedata)
-VALUES (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb);
+(resid, organization, resourcedata)
+VALUES (:resid, :organization, :resourcedata::jsonb);
 
 -- :name update-resource! :!
 UPDATE resource
-SET (resid, organization, ownerUserId, modifieruserid, resourcedata) = (:resid, :organization, :owneruserid, :modifieruserid, :resourcedata::jsonb)
+SET (resid, organization, resourcedata) = (:resid, :organization, :resourcedata::jsonb)
 WHERE id = :id;
 
 -- :name set-resource-enabled! :!
--- TODO set modifieruserid?
 UPDATE resource
 SET enabled = :enabled
 WHERE id = :id;
 
 -- :name set-resource-archived! :!
--- TODO set modifieruserid?
 UPDATE resource
 SET archived = :archived
 WHERE id = :id;
@@ -180,9 +172,7 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived,
-  owneruserid,
-  modifieruserid
+  archived
 FROM form_template;
 
 -- :name get-form-template :? :1
@@ -192,28 +182,23 @@ SELECT
   formdata::TEXT,
   fields::TEXT,
   enabled,
-  archived,
-  owneruserid,
-  modifieruserid
+  archived
 FROM form_template
 WHERE id = :id;
 
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(organization, modifierUserId, ownerUserId, fields, formdata)
+(organization, fields, formdata)
 VALUES
 (:organization,
- :user,
- :user,
  :fields::jsonb,
  :formdata::jsonb
 );
 
 -- :name edit-form-template! :!
 UPDATE form_template
-SET (organization, modifierUserId, fields, formdata) =
+SET (organization, fields, formdata) =
 (:organization,
- :user,
  :fields::jsonb,
  :formdata::jsonb)
 WHERE
@@ -221,24 +206,20 @@ id = :id;
 
 -- :name update-form-template! :!
 UPDATE form_template
-SET (organization, modifierUserId, ownerUserId, fields, formdata) =
+SET (organization, fields, formdata) =
 (:organization,
- :modifier,
- :owner,
  :fields::jsonb,
  :formdata::jsonb)
 WHERE
 id = :id;
 
 -- :name set-form-template-enabled! :!
--- TODO set modifieruserid?
 UPDATE form_template
 SET enabled = :enabled
 WHERE
 id = :id;
 
 -- :name set-form-template-archived! :!
--- TODO set modifieruserid?
 UPDATE form_template
 SET archived = :archived
 WHERE
@@ -314,29 +295,29 @@ ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement
 
 -- :name save-attachment! :insert
 INSERT INTO attachment
-(appId, modifierUserId, filename, type, data)
+(appId, userid, filename, type, data)
 VALUES
 (:application, :user, :filename, :type, :data);
 
 -- :name update-attachment! :!
 UPDATE attachment
-SET (appId, modifierUserId, filename, type) = (:application, :user, :filename, :type)
+SET (appId, userId, filename, type) = (:application, :user, :filename, :type)
 WHERE id = :id;
 
 -- :name get-attachment :? :1
-SELECT id, appid, filename, modifierUserId, type, data FROM attachment
+SELECT id, appid, filename, userId, type, data FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments :? :*
-SELECT id, appid, filename, modifierUserId, type
+SELECT id, appid, filename, userId, type
 FROM attachment;
 
 -- :name get-attachment-metadata :? :1
-SELECT id, appid, filename, modifierUserId, type FROM attachment
+SELECT id, appid, filename, userId, type FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments-for-application :? :*
-SELECT id, filename, type, modifierUserId FROM attachment
+SELECT id, filename, type, userId FROM attachment
 WHERE appid = :application-id;
 
 -- :name delete-application-attachments! :!
@@ -345,9 +326,9 @@ WHERE appid = :application;
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, organization, type)
+(organization, type)
 VALUES
-(:owneruserid, :modifieruserid, :organization, :type::license_type)
+(:organization, :type::license_type)
 
 -- :name set-license-enabled! :!
 UPDATE license
@@ -361,12 +342,12 @@ WHERE id = :id;
 
 -- :name update-license! :!
 UPDATE license
-SET (ownerUserId, modifierUserId, organization, type, enabled, archived) = (:owneruserid, :modifieruserid, :organization, :type::license_type, :enabled, :archived)
+SET (organization, type, enabled, archived) = (:organization, :type::license_type, :enabled, :archived)
 WHERE id = :id;
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
-(modifierUserId, filename, type, data, start)
+(userId, filename, type, data, start)
 VALUES
 (:user, :filename, :type, :data, :start);
 
@@ -387,11 +368,9 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(organization, ownerUserId, modifierUserId, title, workflowBody)
+(organization, title, workflowBody)
 VALUES
 (:organization,
- :owneruserid,
- :modifieruserid,
  :title,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
@@ -441,7 +420,7 @@ WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
+  wf.id, wf.organization, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 /*~ (when (:catid params) */
@@ -458,7 +437,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
+  wf.id, wf.organization, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 
@@ -741,19 +720,19 @@ WHERE 1=1
 ORDER BY time ASC;
 
 -- :name get-organizations :*
-SELECT id, modifierUserId, modified, data::text as data FROM organization;
+SELECT id, data::text as data FROM organization;
 
 -- :name get-organization-by-id :? :1
-SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
+SELECT id, data::text as data FROM organization WHERE id = :id;
 
 -- :name add-organization! :insert
-INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb)
+INSERT INTO organization(id, data) VALUES (:id, :data::jsonb)
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
 
 -- :name set-organization! :!
 UPDATE organization
-SET data = :data::jsonb, modified = :time, modifierUserId = :user
+SET data = :data::jsonb
 WHERE id = :id;
 
 -- :name add-invitation! :insert

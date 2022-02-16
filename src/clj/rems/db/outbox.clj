@@ -39,11 +39,6 @@
     (:id (db/put-to-outbox! {:outboxdata (json/generate-string
                                           (validate-outbox-data amended))}))))
 
-(defn update! [data]
-  (db/update-outbox! {:id (getx data :outbox/id)
-                      :outboxdata (json/generate-string (dissoc data :outbox/id))}))
-
-
 (def ^:private coerce-outboxdata
   (coerce/coercer! OutboxData (fn [schema]
                                 (if (= schema Duration)
@@ -169,7 +164,8 @@
 
 (defn attempt-failed! [entry error]
   (let [entry (next-attempt entry (time/now) error)]
-    (update! entry)
+    (db/update-outbox! {:id (getx entry :outbox/id)
+                        :outboxdata (json/generate-string (dissoc entry :outbox/id))})
     entry))
 
 (defn attempt-succeeded! [id]

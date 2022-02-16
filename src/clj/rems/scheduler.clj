@@ -4,7 +4,7 @@
   (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit ExecutorService]
            [org.joda.time Duration]))
 
-(defn ^ExecutorService start! [f ^Duration interval]
+(defn ^ExecutorService start! [name f ^Duration interval]
   (let [interval-millis (.getMillis interval)
         task (fn []
                (try
@@ -14,8 +14,13 @@
                    (log/info e "Scheduler shutting down"))
                  (catch Throwable t ; prevents suppressing subsequent executions
                    (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
-                                                                 (pprint data)))))))]
-    (doto (ScheduledThreadPoolExecutor. 1)
+                                                                 (pprint data)))))))
+        factory (proxy [java.util.concurrent.ThreadFactory] []
+                  (newThread [r]
+                    (let [thread (.newThread (java.util.concurrent.Executors/defaultThreadFactory) r)]
+                      (.setName thread (str name "-" (.getName thread)))
+                      thread)))]
+    (doto (ScheduledThreadPoolExecutor. 1 factory)
       (.scheduleWithFixedDelay task interval-millis interval-millis TimeUnit/MILLISECONDS))))
 
 (defn stop! [^ExecutorService scheduler]

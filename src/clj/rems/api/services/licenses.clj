@@ -11,11 +11,9 @@
             [clojure.java.io])
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
-(defn create-license! [{:keys [licensetype organization localizations]} user-id]
+(defn create-license! [{:keys [licensetype organization localizations]}]
   (util/check-allowed-organization! organization)
-  (let [license (db/create-license! {:owneruserid user-id
-                                     :modifieruserid user-id
-                                     :organization (:organization/id organization)
+  (let [license (db/create-license! {:organization (:organization/id organization)
                                      :type licensetype})
         licid (:id license)]
     (doseq [[langcode localization] localizations]

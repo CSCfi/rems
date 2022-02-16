@@ -30,13 +30,26 @@
   [["-p" "--port PORT" "Port number"
     :parse-fn #(Integer/parseInt %)]])
 
+(defn- jetty-configurator [server]
+  (let [pool (.getThreadPool server)]
+    (.setName pool "jetty-handlers")
+    server))
+
 (mount/defstate
   ^{:on-reload :noop}
   http-server
   :start
-  (http/start {:handler handler/handler
-               :send-server-version? false
-               :port (:port env)})
+  (http/start (merge {:handler handler/handler
+                      :send-server-version? false
+                      :port (:port env)
+                      :configurator jetty-configurator}
+                     (when-not (:port env)
+                       {:http? false})
+                     (when (:ssl-port env)
+                       {:ssl? true
+                        :ssl-port (:ssl-port env)
+                        :keystore (:ssl-keystore env)
+                        :key-password (:ssl-keystore-password env)})))
   :stop
   (when http-server (http/stop http-server)))
 

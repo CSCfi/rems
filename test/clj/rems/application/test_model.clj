@@ -224,8 +224,6 @@
        :workflow {:type "workflow/dynamic"
                   :handlers [(get-user "handler")]}
        :licenses nil
-       :owneruserid "owner"
-       :modifieruserid "owner"
        :enabled true
        :archived false}})
 

@@ -1308,7 +1308,7 @@
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
-        (organizations/set-organization-enabled! "owner" {:enabled false :organization/id (btu/context-get :organization-id)})
+        (organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-get :organization-id)})
         (forms/set-form-enabled! {:id (btu/context-get :form) :enabled false})
         (resources/set-resource-enabled! {:id (btu/context-get :resource) :enabled false})
         (workflows/set-workflow-enabled! {:id (btu/context-get :workflow) :enabled false}))
@@ -1352,7 +1352,7 @@
    context object. Stores form field in stack with `id`, that can
    optionally be passed in `opts`. Form field can also be created into
    the front of stack using `:insert-first` in `opts`.
-   
+
    Useful for keeping track of created form fields in form tests."
   [kw & [opts]]
   (let [fields (or (btu/context-get :create-form-field/fields) [])
@@ -1365,7 +1365,7 @@
   "Utility function that returns keyword of form `:fields-0-attr`.
    When given only keyword `attr`, uses current last index of context
    form fields. Otherwise `idx` is used to create selector.
-   
+
    Useful for automatically creating contextually correct fields selector
    in form tests, where a lot of fields need to be filled."
   ([attr]
@@ -2342,9 +2342,7 @@
               "Name (SV)" "Review mail SV"
               "Name (EN)" "Review mail EN"
               "Email" "review.email@example.com"
-              "Active" true
-              "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
-              "Modifier" "Owner (owner@example.com)"}
+              "Active" true}
              (slurp-fields :organization))))
 
     (testing "edit after creation"
@@ -2376,9 +2374,7 @@
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
-                "Active" true
-                "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
-                "Modifier" "Owner (owner@example.com)"}
+                "Active" true}
                (slurp-fields :organization)))))
 
     (testing "use after creation"
@@ -2424,9 +2420,7 @@
                 "Name (SV)" "Review mail SV"
                 "Name (EN)" "Review mail EN"
                 "Email" "review.email@example.com"
-                "Active" true
-                "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
-                "Modifier" "Owner (owner@example.com)"}
+                "Active" true}
                (slurp-fields :organization))))
 
       (testing "edit as organization owner"
@@ -2457,9 +2451,7 @@
                   "Name (SV)" "Review mail SV"
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
-                  "Active" true
-                  "Last modified" (get-organization-last-modified (btu/context-get :organization-id))
-                  "Modifier" "Organization Owner 2 (organization-owner2@example.com)"}
+                  "Active" true}
                  (slurp-fields :organization))))))))
 
 (deftest test-small-navbar

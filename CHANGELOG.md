@@ -6,7 +6,21 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.24
+Changes since v2.25
+
+## v2.25 "Meripuistotie" 2022-02-15
+
+**NB: This release contains migrations!**
+
+### Breaking changes
+- The columns owneruserid and modifieruserid have been removed as the audit_log effectively serves the same purpose. They were not consistently used. For the attachments the column has been renamed to userid. This is a breaking change for the API as some of these were exposed, but likely not used or useful. (#2823)
+
+### Additions
+- Bona fide pusher script for pushing bona fide status to Elixir. (#2513)
+- Validate GA4GH claims by the public key from trusted issuer jku (instead of OIDC configuration). Configure `:ga4gh-visa-trusted-issuers` if needed. (#2798)
+- Pollers have been made more robust, including timeouts for email sending (#2841)
+- SSL certificate can now be configured and SSL enabled. HTTP port can be disabled. (#2844)
+- `rename-user` will not bother reloading the application cache anymore (since it is usually run in a separate process from the server).
 
 ## v2.24 "Heikkiläntie" 2022-01-17
 

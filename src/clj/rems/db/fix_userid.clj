@@ -153,26 +153,7 @@
   (fix-entitlement "alice" "frank" false))
 
 ;; nothing to fix in external_application_id
-
-(defn fix-form-template [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.form/get-form-templates nil)
-         :let [new (cond-> old
-                     (= old-userid (:form/owner old))
-                     (assoc :form/owner new-userid)
-
-                     (= old-userid (:form/modifier old))
-                     (assoc :form/modifier new-userid))]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-form-template old params)
-       (when-not simulate?
-         (apply rems.db.form/update-form-template! params))
-       {:old old :params params}))))
-
-(comment
-  (fix-form-template "owner" "frank" false))
+;; nothing to fix in form_template
 
 (defn fix-invitation [old-userid new-userid simulate?]
   (doall
@@ -196,25 +177,17 @@
 
 
 ;; nothing to fix in license
-;; NB: the owneruserid and modifieruserid are not actually used
-
 ;; nothing to fix in license_attachment
-;; NB: the modifieruserid is not actually used
-
 ;; nothing to fix in license_localization
 
 (defn fix-organization [old-userid new-userid simulate?]
   (doall
    (for [old (rems.db.organizations/get-organizations-raw)
-         :let [modifier (if (= old-userid (get-in old [:organization/modifier :userid]))
-                          new-userid
-                          (get-in old [:organization/modifier :userid]))
-               new (update old :organization/owners (partial mapv #(if (= old-userid (:userid %))
+         :let [new (update old :organization/owners (partial mapv #(if (= old-userid (:userid %))
                                                                      {:userid new-userid}
                                                                      %)))]
-         :when (or (not= new old)
-                   (not= modifier (get-in old [:organization/modifier :userid])))
-         :let [params [modifier new]]]
+         :when (not= new old)
+         :let [params [new]]]
      (do
        (apply prn #'fix-organization old params)
        (when-not simulate?
@@ -228,26 +201,7 @@
 ;; NB: this is a table that should contain rows only momentarily
 
 
-(defn fix-resource [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.resource/get-resources nil)
-         :let [new (cond-> old
-                     (= old-userid (:owneruserid old))
-                     (assoc :owneruserid new-userid)
-
-                     (= old-userid (:modifieruserid old))
-                     (assoc :modifieruserid new-userid))]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-resource old params)
-       (when-not simulate?
-         (apply rems.db.resource/update-resource! params))
-       {:old old :params params}))))
-
-(comment
-  (fix-resource "alice" "frank" false))
-
+;; nothing to fix in resource
 ;; nothing to fix in resource_licenses
 
 
@@ -296,7 +250,6 @@
   (fix-user "alice" "frank" false))
 
 
-;; NB: the owneruserid and modifieruserid are not actually used
 (defn fix-workflow [old-userid new-userid simulate?]
   (doall
    (for [old (rems.db.workflow/get-workflows nil)
@@ -329,16 +282,14 @@
                          #'fix-audit-log
                          #'fix-blacklist-event
                          #'fix-entitlement
-                         #'fix-form-template
                          #'fix-invitation
                          #'fix-organization
-                         #'fix-resource
                          #'fix-roles
                          #'fix-workflow]]
                   [(:name (meta f))
                    (f old-userid new-userid simulate?)]))]
     (remove-old-user old-userid simulate?)
-    (rems.db.applications/reload-cache!)
+    ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
 
 (comment

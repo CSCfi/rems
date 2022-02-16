@@ -1,21 +1,14 @@
 (ns ^:integration rems.api.test-organizations
   (:require [clojure.test :refer :all]
-            [medley.core :refer [find-first update-existing]]
+            [medley.core :refer [find-first]]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.testing-util :refer [fixed-time-fixture]]
-            [ring.mock.request :refer :all])
-  (:import [org.joda.time DateTime DateTimeZone DateTimeUtils]))
+            [ring.mock.request :refer :all]))
 
-(def test-time1 (DateTime. 10000 DateTimeZone/UTC))
-(def test-time2 (DateTime. 20000 DateTimeZone/UTC))
-(def test-time3 (DateTime. 30000 DateTimeZone/UTC))
 
-(use-fixtures
-  :each
-  api-fixture
-  (fixed-time-fixture test-time1))
+
+(use-fixtures :each api-fixture)
 
 (deftest organizations-api-test
   (let [api-key "42"
@@ -23,14 +16,12 @@
         owner "owner"
         org-owner1 "organization-owner1"
         org-owner2 "organization-owner2"
-        get-org (fn [userid id] (-> (api-call :get (str "/api/organizations/" id)
-                                              nil
-                                              api-key userid)
-                                    (update-existing :organization/last-modified parse-date)))
-        get-orgs (fn [userid] (->> (api-call :get (str "/api/organizations")
-                                             nil
-                                             api-key userid)
-                                   (map #(update-existing % :organization/last-modified parse-date))))]
+        get-org (fn [userid id] (api-call :get (str "/api/organizations/" id)
+                                          nil
+                                          api-key userid))
+        get-orgs (fn [userid] (api-call :get (str "/api/organizations")
+                                        nil
+                                        api-key userid))]
     (api-key/add-api-key! api-key)
     (test-helpers/create-user! {:eppn user})
     (test-helpers/create-user! {:eppn owner :commonName "Owner" :mail "owner@example.com"} :owner)
@@ -67,8 +58,6 @@
                                       :en "Organizations API Test ORG"}
                   :organization/short-name {:fi "ORG" :en "ORG"}
                   :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}]
-                  :organization/last-modified test-time1
-                  :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization.test.org"
                                                 :name {:fi "Organisaatiot API Test ORG Katselmoijat"
                                                        :en "Organizations API Test ORG Reviewers"}}]
@@ -95,7 +84,6 @@
 
     (testing "edit organization"
       (testing "as owner"
-        (DateTimeUtils/setCurrentMillisFixed (.getMillis test-time2))
         (let [data (api-call :put "/api/organizations/edit"
                              {:organization/id "organizations-api-test-org"
                               :organization/name {:fi "Organisaatiot API Test ORG 2"
@@ -113,8 +101,6 @@
                   :organization/short-name {:fi "ORG2" :en "ORG2"}
                   :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
                                         {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2"}]
-                  :organization/last-modified test-time2
-                  :organization/modifier {:userid owner :email "owner@example.com" :name "Owner"}
                   :organization/review-emails [{:email "test@organization2.test.org"
                                                 :name {:fi "Organisaatiot 2 API Test ORG Katselmoijat"
                                                        :en "Organizations 2 API Test ORG Reviewers"}}]
@@ -124,7 +110,6 @@
                  (get-org owner "organizations-api-test-org")))))
 
       (testing "as organization-owner"
-        (DateTimeUtils/setCurrentMillisFixed (.getMillis test-time3))
         (let [data (api-call :put "/api/organizations/edit"
                              {:organization/id "organizations-api-test-org"
                               :organization/name {:fi "Organisaatiot API Test ORG 3"
@@ -142,8 +127,6 @@
                   :organization/short-name {:fi "ORG3" :en "ORG3"}
                   :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
                                         {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2"}] ; owners is not changed
-                  :organization/last-modified test-time3
-                  :organization/modifier {:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
                   :organization/review-emails [{:email "test@organization3.test.org"
                                                 :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
                                                        :en "Organizations 3 API Test ORG Reviewers"}}]

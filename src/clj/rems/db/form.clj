@@ -39,8 +39,6 @@
       (->> (map-keys {:id :form/id
                       :form/internal-name :form/internal-name
                       :form/external-title :form/external-title
-                      :owneruserid :form/owner
-                      :modifieruserid :form/modifier
                       :organization :organization
                       :fields :form/fields
                       :enabled :enabled
@@ -128,19 +126,17 @@
       validate-formdata
       json/generate-string))
 
-(defn save-form-template! [user-id form]
+(defn save-form-template! [form]
   (:id (db/save-form-template! {:organization (:organization/id (:organization form))
                                 :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
                                                                :form/external-title (:form/external-title form)})
-                                :user user-id
                                 :fields (serialize-fields form)})))
 
-(defn edit-form-template! [user-id form]
+(defn edit-form-template! [form]
   (db/edit-form-template! {:id (:form/id form)
                            :organization (:organization/id (:organization form))
                            :formdata (serialize-formdata {:form/internal-name (or (:form/internal-name form) (:form/title form))
                                                           :form/external-title (:form/external-title form)})
-                           :user user-id
                            :fields (serialize-fields form)}))
 
 (defn update-form-template!
@@ -150,6 +146,4 @@
                                   :organization (:organization/id (:organization form))
                                   :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
                                                                  :form/external-title (:form/external-title form)})
-                                  :owner (:form/owner form)
-                                  :modifier (:form/modifier form)
                                   :fields (serialize-fields form)})))

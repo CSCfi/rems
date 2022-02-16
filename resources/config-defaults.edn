@@ -4,7 +4,12 @@
 ;; See docs/configuration.md for more info.
 
 {;; HTTP server port.
- :port 3000
+ :port 3000 ; can be set to nil if only SSL is used
+
+ ;; SSL configuration, if SSL is not terminated before
+ :ssl-port nil ; no SSL by default
+ :ssl-keystore nil ; Java keystore file
+ :ssl-keystore-password nil ; (optional) password of key file
 
  ;; Url for this REMS installation. Should end with a /.
  ;; Used for generating links in emails, in OpenId authentication (:oidc),
@@ -75,6 +80,10 @@
  ;; Sending email.
  :smtp-host nil
  :smtp-port 25
+ :smtp-connectiontimeout 5000 ; milliseconds waiting for connection
+ :smtp-timeout 10000 ; milliseconds waiting for processing
+ :smtp-writetimeout 10000 ; milliseconds waiting for writes
+ :smtp-debug false ; print detailed debug
  :mail-from nil
  :email-retry-period "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 
@@ -320,6 +329,10 @@
  ;; Format: path to file containing key in JWK (Json Web Key) format
  :ga4gh-visa-private-key nil
  :ga4gh-visa-public-key nil
+
+ ;; set of trusted issuers and jku values for claims
+ ;; e.g. [{:iss "https://ega.ebi.ac.uk:8443/ega-openid-connect-server/" :jku "https://ega.ebi.ac.uk:8443/ega-openid-connect-server/jwk"}]
+ :ga4gh-visa-trusted-issuers []
 
  ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
  :catalogue-is-public false

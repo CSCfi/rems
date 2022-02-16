@@ -31,3 +31,7 @@ The body of the HTTP PUT request will be a JSON object that contains:
 - `"event/application"`: the entire application, with this event applied, in the same format as the `/api/applications/:id/raw` endpoint returns (see Swagger docs)
 
 Other keys may also be present depending on the event type.
+
+## Examples
+
+See [Bona fide pusher for an example use case](../resources/addons/bona-fide-pusher/README.md)
