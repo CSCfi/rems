@@ -75,7 +75,8 @@
          :event/type (s/enum :application.event/draft-saved)
          :application/field-values [{:form schema-base/FormId
                                      :field schema-base/FieldId
-                                     :value schema-base/FieldValue}]))
+                                     :value schema-base/FieldValue}]
+         (s/optional-key :application/duo-codes) [schema-base/DuoCode]))
 (s/defschema ExternalIdAssignedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/external-id-assigned)

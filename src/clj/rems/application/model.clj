@@ -12,7 +12,7 @@
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
-            [rems.ext.duo :refer [enrich-duo-codes]]))
+            [rems.ext.duo :as duo]))
 
 ;;;; Application
 
@@ -60,7 +60,9 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc ::draft-answers (:application/field-values event))))
+      (assoc ::draft-answers (:application/field-values event))
+      (assoc-some-in [:application/duo :duo/codes] (when (:enable-duo rems.config/env)
+                                                     (:application/duo-codes event)))))
 
 (defmethod application-base-view :application.event/licenses-accepted
   [application event]
@@ -464,7 +466,7 @@
                      :catalogue-item/enabled (:enabled item)
                      :catalogue-item/expired (:expired item)
                      :catalogue-item/archived (:archived item)}
-                    (assoc-some-in [:resource/duo :duo/codes] (seq (enrich-duo-codes duo-codes)))))))
+                    (assoc-some-in [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes)))))))
        (sort-by :catalogue-item/id)
        vec))
 
