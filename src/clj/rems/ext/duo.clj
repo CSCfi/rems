@@ -6,9 +6,11 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.pprint]
-            [clojure.set :refer [difference]]
-            [clojure.test :refer [deftest is]]
-            [medley.core :refer [update-existing]]
+            [clojure.set :refer [difference subset?]]
+            [clojure.test :refer [deftest is testing]]
+            [clj-time.core :as time]
+            [clj-time.format :as time-format]
+            [medley.core :refer [find-first update-existing]]
             [rems.common.util :refer [index-by]]
             [rems.config]
             [rems.ext.mondo :as mondo]
@@ -185,6 +187,62 @@
                                                        {:id "DUO:0000027"
                                                         :restrictions [{:type :project
                                                                         :values ["CSC/REMS"]}]}]}})))))
+
+(defn- get-restrictions [duo kw]
+  (->> duo
+       :restrictions
+       (find-first #(= kw (:type %)))
+       :values))
+
+(defn- same-day? [a b]
+  (and (= (time/year a) (time/year b))
+       (= (time/month a) (time/month b))
+       (= (time/day a) (time/day b))))
+
+(defn check-duo-code
+  "Validate that DUO code `b` matches DUO code `a`.
+   
+   Matching is done first by comparing `:id` and then, if applicable, by comparing
+   DUO code restriction values."
+  [a b]
+  (and (= (:id a) (:id b))
+       (case (:id a)
+         ;; "This data use permission indicates that use is allowed provided it is related to the specified disease."
+         "DUO:0000007" (when-let [required-codes (seq (get-restrictions a :mondo))]
+                         (if-let [unmatched-codes (seq (difference (set (map :id (get-restrictions b :mondo)))
+                                                                   (set (map :id required-codes))))]
+                           (->> required-codes
+                                (mapcat (comp mondo/get-mondo-parents :id))
+                                set
+                                (subset? (set unmatched-codes)))
+                           true))
+         ;; "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."
+         "DUO:0000024" (let [not-before-dt (some-> a (get-restrictions :date) first :value time-format/parse)
+                             dt (some-> b (get-restrictions :date) first :value time-format/parse)]
+                         (or (same-day? dt not-before-dt)
+                             (-> dt (time/after? not-before-dt))))
+         (if (seq (:restrictions a))
+           :duo/needs-validation
+           true))))
+
+(deftest test-check-duo-code
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (is (check-duo-code {:id "id"} {:id "id"}))
+    (is (not (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "123"}]}]}
+                             {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2021-10-29"}]}]})) "DUO codes do not match")
+    (is (= :duo/needs-validation (check-duo-code {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}
+                                                 {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]})) "Free text restriction must be manually validated")
+    (testing "DUO:0000007 :mondo"
+      (let [form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]
+        (is (not (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0017123"}]}]})) "MONDO:0008823 is parent of MONDO:0017123")
+        (is (not (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0017126"}]}]})) "Mondo code must match or be a parent of required Mondo code")
+        (is (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}) "Mondo codes match")
+        (is (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}) "MONDO:0015168 is parent of MONDO:0008823")))
+    (testing "DUO:0000024 :date"
+      (let [form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}]
+        (is (not (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-07"}]}]})) "Provided date is before required date")
+        (is (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}))
+        (is (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2023-02-08"}]}]}))))))
 
 (comment
   ;; Here is code to load the latest DUO release
