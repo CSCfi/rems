@@ -257,7 +257,11 @@
    :application/permissions Permissions
    :application/attachments [ApplicationAttachment]
    ;; TODO :application/end instead?
-   (s/optional-key :entitlement/end) (s/maybe DateTime)})
+   (s/optional-key :entitlement/end) (s/maybe DateTime)
+   (s/optional-key :application/duo) {(s/optional-key :duo/codes) [schema-base/DuoCode]
+                                      :duo/matches [{:resource/id s/Int
+                                                     :resource/duos [(merge schema-base/DuoCodeFull
+                                                                            {:duo/valid? (s/cond-pre s/Bool s/Keyword)})]}]}})
 
 (s/defschema ApplicationRaw
   (-> Application

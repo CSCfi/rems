@@ -470,6 +470,40 @@
        (sort-by :catalogue-item/id)
        vec))
 
+(defn- enrich-application-duo-matches [application]
+  (if-not (get rems.config/env :enable-duo)
+    application
+    (let [application-duos (-> application :application/duo :duo/codes)]
+      (-> application
+          (assoc-in [:application/duo :duo/matches]
+                    (for [resource (:application/resources application)
+                          :let [resource-duos (-> resource :resource/duo :duo/codes)]
+                          :when (seq resource-duos)]
+                      {:resource/id (:resource/id resource)
+                       :resource/duos (for [duo resource-duos]
+                                        (assoc duo :duo/valid? (->> application-duos
+                                                                    (find-first #(= (:id duo) (:id %)))
+                                                                    (duo/check-duo-code duo))))}))))))
+
+(deftest test-enrich-application-duo-matches
+  (is (= {} (enrich-application-duo-matches {})))
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (is (= {:application/duo {:duo/matches []}} (enrich-application-duo-matches {})))
+    (is (= {:application/duo {:duo/codes [{:id "123"}]
+                              :duo/matches []}}
+           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"}]}})))
+    (is (= {:application/duo {:duo/codes [{:id "123"} {:id "456"}]
+                              :duo/matches [{:resource/id "1" :resource/duos [{:id "123" :duo/valid? true}
+                                                                              {:id "234" :duo/valid? false}]}
+                                            {:resource/id "2" :resource/duos [{:id "345" :duo/valid? false}]}]}
+            :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
+                                    {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
+                                    {:resource/id "3"}]}
+           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"} {:id "456"}]}
+                                          :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
+                                                                  {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
+                                                                  {:resource/id "3"}]})))))
+
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
                            (map :license/id)
@@ -636,6 +670,7 @@
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
+      enrich-application-duo-matches ; uses enriched resources
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
