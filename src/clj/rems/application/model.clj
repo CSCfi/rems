@@ -471,7 +471,7 @@
        vec))
 
 (defn- enrich-application-duo-matches [application]
-  (if-not (get rems.config/env :enable-duo)
+  (if-not (:enable-duo rems.config/env)
     application
     (let [application-duos (-> application :application/duo :duo/codes)]
       (-> application
@@ -500,9 +500,9 @@
                                     {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
                                     {:resource/id "3"}]}
            (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"} {:id "456"}]}
-                                          :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
-                                                                  {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
-                                                                  {:resource/id "3"}]})))))
+                                            :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
+                                                                    {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
+                                                                    {:resource/id "3"}]})))))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
