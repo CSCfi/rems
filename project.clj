@@ -20,6 +20,7 @@
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.11.2"]
+                 [com.stuartsierra/dependency "1.0.0"]
                  [com.rpl/specter "1.1.3"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.2"]

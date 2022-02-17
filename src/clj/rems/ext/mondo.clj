@@ -9,6 +9,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [medley.core :refer [find-first update-existing index-by]]
+            [com.stuartsierra.dependency :as dep]
             [rems.config]
             [rems.github :as github]))
 
@@ -41,11 +42,16 @@
                    :content
                    (find-first (comp #{:label} :tag))
                    :content
-                   (str/join ""))]
+                   (str/join ""))
+        parents (->> x
+                     :content
+                     (filter (comp #{:subClassOf} :tag))
+                     (keep (comp :rdf/resource :attrs)))]
     (assert (not (str/blank? id)))
     (assert (not (str/blank? label)) label)
     {:id id
-     :label label}))
+     :label label
+     :parents parents}))
 
 (defn- compressed-format
   "Takes `coll` of internal use Mondo codes and compresses
@@ -53,8 +59,10 @@
   [coll]
   (let [skip-prefix (count "http://purl.obolibrary.org/obo/MONDO_")]
     (->> coll
-         (mapv (fn [x] (update-existing x :id #(subs % skip-prefix))))
-         (mapv (juxt :id :label))
+         (mapv (fn [x] (-> x
+                           (update-existing :id #(subs % skip-prefix))
+                           (update-existing :parents (partial mapv #(subs % skip-prefix))))))
+         (mapv (juxt :id :label :parents))
          (sort-by :id))))
 
 (def ^:private uninteresting-tags
@@ -85,15 +93,26 @@
 
 (def ^:private supported-mondo-release-tag "the version of Mondo we support so far" "v2021-10-01")
 
-(defn- load-codes
-  "Load and index Mondo codes."
-  []
-  (->> (slurp (io/resource "mondo.edn"))
-       edn/read-string
-       (mapv (fn [[id label]] {:id (str "MONDO:" id) :label label}))
-       (index-by :id)))
-
 (def ^:private code-by-id (atom nil))
+(def ^:private codes-dag (atom nil))
+
+(defn- load-codes!
+  "Load and index Mondo codes, and generate directed acyclic graph
+   for querying Mondo code hierarchy."
+  []
+  (let [codes (->> (slurp (io/resource "mondo.edn"))
+                   edn/read-string
+                   (mapv (fn [[id label parents]]
+                           {:id (str "MONDO:" id)
+                            :label label
+                            :parents (mapv (partial str "MONDO:") parents)})))]
+    (reset! code-by-id (->> codes
+                            (mapv #(dissoc % :parents))
+                            (index-by :id)))
+    (reset! codes-dag (->> codes
+                           (reduce (fn [g {:keys [id parents]}]
+                                     (reduce #(dep/depend %1 id %2) g parents))
+                                   (dep/graph))))))
 
 (defn- get-codes
   "Return codes or a code by `id` with fallback to a default value for unknown codes.
@@ -105,7 +124,7 @@
     (if (:enable-duo rems.config/env)
       (do
         (when (nil? @code-by-id)
-          (reset! code-by-id (load-codes)))
+          (load-codes!))
         (if (nil? id)
           (vals @code-by-id)
           (get @code-by-id id unknown-value)))
@@ -121,6 +140,19 @@
   []
   (->> (get-codes)
        (sort-by :id)))
+
+(defn get-mondo-parents
+  [code]
+  (if (:enable-duo rems.config/env)
+    (do
+      (when (nil? @codes-dag)
+        (load-codes!))
+      (dep/transitive-dependencies @codes-dag code))
+
+    (do
+      (when (seq @codes-dag)
+        (reset! codes-dag nil))
+      #{})))
 
 (defn- search-match [code ^String search-text]
   (let [text (str (:id code) " " (:label code))]
