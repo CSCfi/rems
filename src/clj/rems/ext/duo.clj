@@ -56,7 +56,7 @@
 
 (def simple-codes
   "Codes that can be added to a resource without any additional questions."
-  #{"DUO:0000004" "DUO:0000006" "DUO:0000011" "DUO:0000015" "DUO:0000016" "DUO:0000018" "DUO:0000019" "DUO:0000021" "DUO:0000029" "DUO:0000042" "DUO:0000043" "DUO:0000044" "DUO:0000045" "DUO:0000046"})
+  #{"DUO:0000004" "DUO:0000011" "DUO:0000015" "DUO:0000016" "DUO:0000018" "DUO:0000019" "DUO:0000021" "DUO:0000029" "DUO:0000043" "DUO:0000044" "DUO:0000045" "DUO:0000046"})
 
 (def complex-codes
   "Codes that require specific handling or an additional question."
@@ -70,13 +70,11 @@
    "DUO:0000027" {:restrictions [{:type :project}]}
    "DUO:0000028" {:restrictions [{:type :institute}]}})
 
-(def abstract-codes #{"DUO:0000001" "DUO:0000017"}) ; not concrete types can't be used as tag
-
-(defn- enrich-duo-code
-  "Adds convenience attributes to DUO codes."
-  [duo]
-  (merge duo
-         (get complex-codes (:id duo))))
+;; http://purl.obolibrary.org/obo/DUO_0000001 data use permission
+;; http://purl.obolibrary.org/obo/DUO_0000006 health or medical or biomedical research
+;; http://purl.obolibrary.org/obo/DUO_0000017 data use modifier
+;; http://purl.obolibrary.org/obo/DUO_0000042 general research use
+(def abstract-codes #{"DUO:0000001" "DUO:0000006" "DUO:0000017" "DUO:0000042"}) ; not concrete types can't be used as tag
 
 (defn load-codes []
   (when (:enable-duo rems.config/env)
