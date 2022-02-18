@@ -1970,16 +1970,10 @@
         ext2 "duo-resource-2"
         res1 (test-helpers/create-resource! {:resource-ext-id ext1
                                              :resource/duo {:duo/codes [{:id "DUO:0000043"}
-                                                                        {:id "DUO:0000024"
-                                                                         :restrictions [{:type :date
-                                                                                         :values [{:value "2022-02-16"}]}]}]}})
+                                                                        {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
         res2 (test-helpers/create-resource! {:resource-ext-id ext2
-                                             :resource/duo {:duo/codes [{:id "DUO:0000027"
-                                                                         :restrictions [{:type :project
-                                                                                         :values [{:value "csc rems"}]}]}
-                                                                        {:id "DUO:0000007"
-                                                                         :restrictions [{:type :mondo
-                                                                                         :values [{:id "MONDO:0008823"}]}]}]}})
+                                             :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
+                                                                        {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]}})
         cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
         cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
         app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
@@ -1989,25 +1983,19 @@
                            {:type :application.command/save-draft
                             :application-id app-id
                             :field-values []
-                            :duo-codes [{:id "DUO:0000024"
-                                         :restrictions [{:type :date
-                                                         :values [{:value "2022-02-16"}]}]}
-                                        {:id "DUO:0000027"
-                                         :restrictions [{:type :project
-                                                         :values [{:value "project id"}]}]}
-                                        {:id "DUO:0000007"
-                                         :restrictions [{:type :mondo
-                                                         :values [{:id "MONDO:0015168"}]}]}]})))
-      (is (= [{:resource/id res1 :resource/duos [{:id "DUO:0000043" :duo/valid? false}
-                                                 {:id "DUO:0000024" :duo/valid? true}]}
-              {:resource/id res2 :resource/duos [{:id "DUO:0000027" :duo/valid? "duo/needs-validation"}
-                                                 {:id "DUO:0000007" :duo/valid? true}]}]
-             (->> (get-application-for-user app-id applicant-id)
-                  :application/duo
-                  :duo/matches
-                  (map (fn [resource]
-                         (-> resource
-                             (update :resource/duos (partial map #(select-keys % [:id :duo/valid?]))))))))))))
+                            :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
+                                        {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                        {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}]})))
+      (is (= {:duo/codes [{:id "DUO:0000024" :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]}
+                          {:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
+                          {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0015168"}]}]}]
+              :duo/matches [{:id "DUO:0000043" :resource/id res1 :duo/valid? false}
+                            {:id "DUO:0000024" :resource/id res1 :duo/valid? true}
+                            {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
+                            {:id "DUO:0000007" :resource/id res2 :duo/valid? true}]
+              :duo/valid? false}
+             (-> (get-application-for-user app-id applicant-id)
+                 :application/duo))))))
 
 (deftest test-application-raw
   (let [api-key "42"
@@ -2142,8 +2130,7 @@
                                     :application/id app-id
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}
-                                                               {:form form-id :field "att" :value (str att-id)}]}]
-              :application/duo {:duo/matches []}}
+                                                               {:form form-id :field "att" :value (str att-id)}]}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
                  ;; event ids are unpredictable

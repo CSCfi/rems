@@ -7,7 +7,7 @@
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [conj-vec getx assoc-some-in]]
+            [rems.common.util :refer [assoc-some-in build-index conj-vec getx]]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -470,39 +470,73 @@
        (sort-by :catalogue-item/id)
        vec))
 
+(defn- get-duo-valid-status [matches]
+  (let [statuses (map :duo/valid? matches)]
+    (cond
+      (some false? statuses) false
+      (some #{:duo/needs-validation} statuses) :duo/needs-validation
+      :else true)))
+
 (defn- enrich-application-duo-matches [application]
   (if-not (:enable-duo rems.config/env)
     application
-    (let [application-duos (-> application :application/duo :duo/codes)]
+    (let [application-duos (build-index {:keys [:id]} (-> application :application/duo :duo/codes))
+          matches (->> application
+                       :application/resources
+                       (filter (comp seq :duo/codes :resource/duo))
+                       (mapcat (fn [resource]
+                                 (for [duo (-> resource :resource/duo :duo/codes)]
+                                   {:id (:id duo)
+                                    :resource/id (:resource/id resource)
+                                    :duo/valid? (duo/check-duo-code duo (get application-duos (:id duo)))}))))]
       (-> application
-          (assoc-in [:application/duo :duo/matches]
-                    (for [resource (:application/resources application)
-                          :let [resource-duos (-> resource :resource/duo :duo/codes)]
-                          :when (seq resource-duos)]
-                      {:resource/id (:resource/id resource)
-                       :resource/duos (for [duo resource-duos]
-                                        (assoc duo :duo/valid? (->> application-duos
-                                                                    (find-first #(= (:id duo) (:id %)))
-                                                                    (duo/check-duo-code duo))))}))))))
+          (assoc-some-in [:application/duo :duo/matches] (seq matches))
+          (assoc-some-in [:application/duo :duo/valid?] (some-> (seq matches)
+                                                                get-duo-valid-status))))))
 
 (deftest test-enrich-application-duo-matches
   (is (= {} (enrich-application-duo-matches {})))
   (with-redefs [rems.config/env {:enable-duo true}]
-    (is (= {:application/duo {:duo/matches []}} (enrich-application-duo-matches {})))
-    (is (= {:application/duo {:duo/codes [{:id "123"}]
-                              :duo/matches []}}
-           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"}]}})))
-    (is (= {:application/duo {:duo/codes [{:id "123"} {:id "456"}]
-                              :duo/matches [{:resource/id "1" :resource/duos [{:id "123" :duo/valid? true}
-                                                                              {:id "234" :duo/valid? false}]}
-                                            {:resource/id "2" :resource/duos [{:id "345" :duo/valid? false}]}]}
-            :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
-                                    {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
-                                    {:resource/id "3"}]}
-           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"} {:id "456"}]}
-                                            :application/resources [{:resource/id "1" :resource/duo {:duo/codes [{:id "123"} {:id "234"}]}}
-                                                                    {:resource/id "2" :resource/duo {:duo/codes [{:id "345"}]}}
-                                                                    {:resource/id "3"}]})))))
+    (is (= {} (enrich-application-duo-matches {})))
+    (is (= {:application/duo {:duo/codes [{:id "123"}]}} (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "123"}]}})))
+    (is (= {:application/duo {:duo/matches [{:id "123" :resource/id 1 :duo/valid? false}]
+                              :duo/valid? false}
+            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "123"}]}}]}
+           (enrich-application-duo-matches {:application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "123"}]}}]})))
+    (is (= {:application/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000023"}]
+                              :duo/matches [{:id "DUO:0000021" :resource/id 1 :duo/valid? true}
+                                            {:id "DUO:0000023" :resource/id 1 :duo/valid? true}]
+                              :duo/valid? true}
+            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000023"}]}}]}
+           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000023"}]}
+                                            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000021"} {:id "DUO:0000023"}]}}]})))
+    (is (= {:application/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Southern Finland"}]}]}
+                                          {:id "DUO:0000029"}]
+                              :duo/matches [{:id "DUO:0000022" :resource/id 1 :duo/valid? :duo/needs-validation}
+                                            {:id "DUO:0000029" :resource/id 1 :duo/valid? true}]
+                              :duo/valid? :duo/needs-validation}
+            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Finland"}]}]}
+                                                                               {:id "DUO:0000029"}]}}]}
+           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Southern Finland"}]}]}
+                                                                          {:id "DUO:0000029"}]}
+                                            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Finland"}]}]}
+                                                                                                               {:id "DUO:0000029"}]}}]}))
+        "Should be manually validated due to free-text DUO code restriction")
+    (is (= {:application/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Southern Finland"}]}]}
+                                          {:id "DUO:0000029"}]
+                              :duo/matches [{:id "DUO:0000022" :resource/id 1 :duo/valid? :duo/needs-validation}
+                                            {:id "DUO:0000029" :resource/id 1 :duo/valid? true}
+                                            {:id "DUO:0000046" :resource/id 2 :duo/valid? false}]
+                              :duo/valid? false}
+            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Finland"}]}]}
+                                                                               {:id "DUO:0000029"}]}}
+                                    {:resource/id 2 :resource/duo {:duo/codes [{:id "DUO:0000046"}]}}]}
+           (enrich-application-duo-matches {:application/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Southern Finland"}]}]}
+                                                                          {:id "DUO:0000029"}]}
+                                            :application/resources [{:resource/id 1 :resource/duo {:duo/codes [{:id "DUO:0000022" :restrictions [{:type :location :values [{:value "Finland"}]}]}
+                                                                                                               {:id "DUO:0000029"}]}}
+                                                                    {:resource/id 2 :resource/duo {:duo/codes [{:id "DUO:0000046"}]}}]}))
+        "DUO:0000046 is required by resource but missing in the application")))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
