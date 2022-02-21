@@ -470,7 +470,7 @@
        (sort-by :catalogue-item/id)
        vec))
 
-(defn- get-duo-valid-status [matches]
+(defn- duo-match-status [matches]
   (let [statuses (map :duo/valid? matches)]
     (cond
       (some false? statuses) false
@@ -480,19 +480,17 @@
 (defn- enrich-application-duo-matches [application]
   (if-not (:enable-duo rems.config/env)
     application
-    (let [application-duos (build-index {:keys [:id]} (-> application :application/duo :duo/codes))
+    (let [duos (->> application :application/duo :duo/codes (build-index {:keys [:id]}))
           matches (->> application
                        :application/resources
-                       (filter (comp seq :duo/codes :resource/duo))
                        (mapcat (fn [resource]
                                  (for [duo (-> resource :resource/duo :duo/codes)]
                                    {:id (:id duo)
                                     :resource/id (:resource/id resource)
-                                    :duo/valid? (duo/check-duo-code duo (get application-duos (:id duo)))}))))]
+                                    :duo/valid? (duo/check-duo-code duo (get duos (:id duo)))}))))]
       (-> application
           (assoc-some-in [:application/duo :duo/matches] (seq matches))
-          (assoc-some-in [:application/duo :duo/valid?] (some-> (seq matches)
-                                                                get-duo-valid-status))))))
+          (assoc-some-in [:application/duo :duo/valid?] (some-> (seq matches) duo-match-status))))))
 
 (deftest test-enrich-application-duo-matches
   (is (= {} (enrich-application-duo-matches {})))

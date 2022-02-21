@@ -208,13 +208,14 @@
   (and (= (:id a) (:id b))
        (case (:id a)
          ;; "This data use permission indicates that use is allowed provided it is related to the specified disease."
-         "DUO:0000007" (when-let [required-codes (seq (get-restrictions a :mondo))]
-                         (if-let [unmatched-codes (seq (difference (set (map :id (get-restrictions b :mondo)))
-                                                                   (set (map :id required-codes))))]
+         "DUO:0000007" (let [required-codes (get-restrictions a :mondo)
+                             unmatched-codes (difference (set (map :id (get-restrictions b :mondo)))
+                                                         (set (map :id required-codes)))]
+                         (if (every? seq [required-codes unmatched-codes])
                            (->> required-codes
                                 (mapcat (comp mondo/get-mondo-parents :id))
                                 set
-                                (subset? (set unmatched-codes)))
+                                (subset? unmatched-codes))
                            true))
          ;; "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."
          "DUO:0000024" (let [not-before-dt (some-> a (get-restrictions :date) first :value time-format/parse)
