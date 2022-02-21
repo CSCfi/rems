@@ -1968,34 +1968,66 @@
         wfid (test-helpers/create-workflow! {:handlers [handler-id]})
         ext1 "duo-resource-1"
         ext2 "duo-resource-2"
-        res1 (test-helpers/create-resource! {:resource-ext-id ext1
-                                             :resource/duo {:duo/codes [{:id "DUO:0000043"}
-                                                                        {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
-        res2 (test-helpers/create-resource! {:resource-ext-id ext2
-                                             :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
-                                                                        {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]}})
-        cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
-        cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
-        app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+        ext3 "duo-resource-3"]
     (testing "applicant fills duo codes"
-      (is (= {:success true}
-             (send-command applicant-id
-                           {:type :application.command/save-draft
-                            :application-id app-id
-                            :field-values []
-                            :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
-                                        {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
-                                        {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}]})))
-      (is (= {:duo/codes [{:id "DUO:0000024" :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]}
-                          {:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
-                          {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0015168"}]}]}]
-              :duo/matches [{:id "DUO:0000043" :resource/id res1 :duo/valid? false}
-                            {:id "DUO:0000024" :resource/id res1 :duo/valid? true}
-                            {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
-                            {:id "DUO:0000007" :resource/id res2 :duo/valid? true}]
-              :duo/valid? false}
-             (-> (get-application-for-user app-id applicant-id)
-                 :application/duo))))))
+      (let [res1 (test-helpers/create-resource! {:resource-ext-id ext1
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
+            res2 (test-helpers/create-resource! {:resource-ext-id ext2
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
+                                                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]}})
+            cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
+            cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
+            app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+        (testing "save partially filled duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
+                              {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0015168"}]}]}]
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid? false}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid? true}]
+                  :duo/valid? false}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))
+        (testing "save all required duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000024" :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]}
+                              {:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
+                              {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0015168"}]}]}]
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid? true}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid? true}]
+                  :duo/valid? "duo/needs-validation"}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))))
+    (testing "applicant fills fully valid duo codes"
+      (let [res (test-helpers/create-resource! {:resource-ext-id ext3
+                                                :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]}})
+            cat (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res})
+            app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat]})]
+        (is (= {:success true}
+               (send-command applicant-id
+                             {:type :application.command/save-draft
+                              :application-id app-id
+                              :field-values []
+                              :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}]})))
+        (is (= {:duo/codes [{:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0015168"}]}]}]
+                :duo/matches [{:id "DUO:0000007" :resource/id res :duo/valid? true}]
+                :duo/valid? true}
+               (-> (get-application-for-user app-id applicant-id)
+                   :application/duo)))))))
 
 (deftest test-application-raw
   (let [api-key "42"
