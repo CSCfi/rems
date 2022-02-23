@@ -45,13 +45,19 @@ Some pointers for common tasks:
 
 # Running REMS with Docker
 
-### Option 1: Run REMS from dockerhub
+### Option 1.0: Run REMS from dockerhub
 
     docker-compose up -d db
     docker-compose run --rm -e CMD="migrate;test-data" app
     docker-compose up -d app
+    
+## Option 1.1: Run REMS from local docker build
 
-### Option 1.1: Use config file simple-config.edn instead of environment variables
+Before doing the above 1.0, you can run this command to have the latest image available locally.
+
+    docker build -t cscfi/rems .
+
+### Option 1.2: Use config file simple-config.edn instead of environment variables
 
     docker-compose -f docker-compose-config.yml up -d db
     docker-compose -f docker-compose-config.yml run --rm -e CMD="migrate;test-data" app
