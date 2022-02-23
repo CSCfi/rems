@@ -45,25 +45,29 @@ Some pointers for common tasks:
 
 # Running REMS with Docker
 
-### Option 1.0: Run REMS from dockerhub
+We provide example docker-compose files for you to have a look at. 
+
+Generally the database must be started, migrated and populated first.
+
+### Option 1: Run REMS from Docker Hub
+
+This tries to fetch the latest REMS image from Docker Hub. This uses the default `docker-compose.yml` file.
 
     docker-compose up -d db
     docker-compose run --rm -e CMD="migrate;test-data" app
     docker-compose up -d app
     
-## Option 1.1: Run REMS from local docker build
+### Option 2: Use config file simple-config.edn instead of environment variables
 
-Before doing the above 1.0, you can run this command to have the latest image available locally.
-
-    docker build -t cscfi/rems .
-
-### Option 1.2: Use config file simple-config.edn instead of environment variables
+The other build file `docker-compose-config.yml` shows how to configure an external config file named `simple-config.edn`.
 
     docker-compose -f docker-compose-config.yml up -d db
     docker-compose -f docker-compose-config.yml run --rm -e CMD="migrate;test-data" app
     docker-compose -f docker-compose-config.yml up -d app
 
-### Option 2: Build REMS image locally
+### Option 3: Build REMS image locally
+
+The third build file `docker-compose-build-yml` shows how to build the REMS image with [Leiningen](https://leiningen.org/) and `docker-compose`.
 
     lein uberjar
     docker-compose -f docker-compose-build.yml build
