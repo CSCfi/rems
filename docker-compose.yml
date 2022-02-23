@@ -5,7 +5,7 @@ version: '2'
 services:
 
   app:
-    image: cscfi/rems
+    image: cscfi/rems:latest
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
