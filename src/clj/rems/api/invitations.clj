@@ -57,7 +57,7 @@
       (ok (invitation/create-invitation! (assoc command :userid (getx-user-id)))))
 
     (POST "/accept-invitation" []
-      :summary "Acecpt an invitation. The invitation token will be spent."
+      :summary "Accept an invitation. The invitation token will be spent."
       :roles #{:logged-in}
       :query-params [{token :- (describe s/Str "secret token of the invitation") false}]
       :return AcceptInvitationResponse
