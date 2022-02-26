@@ -66,6 +66,11 @@
  ;; Example:
  ;;   :oidc-additional-authorization-parameters "&acr_values=foo&ui_locales=sv"
  :oidc-additional-authorization-parameters nil
+
+ ;; List of attributes to try in order for a name, the first one will be used
+ :oidc-name-attributes [:name :unique_name :family_name]
+ ;; List of attributes to try in order for an email address, the first one will be used
+ :oidc-email-attributes [:email]
  ;; List of additional attributes to read from OIDC claims. Each attribute can have keys:
  ;;   :attribute (mandatory) - the name of the attribute as in the OIDC claim, a string
  ;;   :name (optional) - a map with languages as keys and the localized name for the attribute as values

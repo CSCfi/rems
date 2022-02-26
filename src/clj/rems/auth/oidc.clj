@@ -82,8 +82,9 @@
   (let [identity-base {:eppn (get-userid id-data)
                        ;; need to maintain a fallback list of name attributes since identity
                        ;; providers differ in what they give us
-                       :commonName (some id-data [:name :unique_name :family_name])
-                       :mail (:email id-data)}
+                       :commonName (some id-data (:oidc-name-attributes env))
+                       :mail (some id-data (:oidc-email-attributes env))}
+        ;; TODO this could support :rename
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))]
     (merge identity-base extra-attributes)))
 
