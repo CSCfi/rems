@@ -5,7 +5,7 @@ version: '2'
 services:
 
   app:
-    image: cscfi/rems
+    image: cscfi/rems:latest
     mem_reservation: 200m
     mem_limit: 2000m
     ports:
