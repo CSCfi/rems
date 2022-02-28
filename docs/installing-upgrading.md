@@ -59,7 +59,7 @@ This tries to fetch the latest REMS image from Docker Hub. This uses the default
     
 ### Option 2: Use config file simple-config.edn instead of environment variables
 
-The other build file `docker-compose-config.yml` shows how to configure an external config file named `simple-config.edn`.
+The other build file `docker-compose-config.yml` shows how to configure an external config file named `simple-config.edn`. The file is provided through a volume mounted to the correct place in the container. Don't forget to map all the files you refer to in the config (like `theme.edn`) with similar volumes. Alternatively, you could build your own image on top of our base image, so that it includes the files inside. We prefer to have one image that is same in all environments and use mappings to provide the varying data (config).
 
     docker-compose -f docker-compose-config.yml up -d db
     docker-compose -f docker-compose-config.yml run --rm -e CMD="migrate;test-data" app
