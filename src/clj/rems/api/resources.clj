@@ -7,7 +7,6 @@
             [rems.ext.duo :as duo]
             [rems.ext.mondo :as mondo]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -55,7 +54,7 @@
       (ok (duo/get-duo-codes)))
 
     (GET "/mondo-codes" []
-      :summary "Get Mondo codes"
+      :summary "Get Mondo codes, maximum 100 results"
       :roles +admin-read-roles+
       :return [schema-base/MondoCodeFull]
       (ok (mondo/get-mondo-codes)))
