@@ -232,7 +232,7 @@
                                  (-> dt (time/after? not-before-dt))))
              (if (seq (:restrictions dataset-code))
                :duo/needs-validation
-               true)))
+               :duo/valid)))
       duo-valid-state))
 
 (deftest test-check-duo-code
