@@ -131,14 +131,15 @@
 
   Loads the codes to the cache or empties it depending on if `:enable-duo` is set."
   [& [id]]
-  (let [unknown-value {:id id
+  (let [id (strip-mondo-prefix id)
+        unknown-value {:id id
                        :label "unknown code"}]
     (if (:enable-duo rems.config/env)
       (do
         (ensure-codes-are-loaded)
         (if (nil? id)
           (vals @code-by-id)
-          (get @code-by-id (strip-mondo-prefix id) unknown-value)))
+          (get @code-by-id id unknown-value)))
       (do
         (reset! code-by-id nil)
         (if (nil? id)
