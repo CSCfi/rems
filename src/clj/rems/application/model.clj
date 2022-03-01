@@ -471,11 +471,11 @@
        vec))
 
 (defn- duo-match-status [matches]
-  (let [statuses (map :duo/valid? matches)]
+  (let [statuses (map :duo/valid matches)]
     (cond
-      (some false? statuses) false
+      (some #{:duo/not-valid} statuses) :duo/not-valid
       (some #{:duo/needs-validation} statuses) :duo/needs-validation
-      :else true)))
+      :else :duo/valid)))
 
 (defn- enrich-application-duo-matches [application]
   (if-not (:enable-duo rems.config/env)
@@ -488,10 +488,10 @@
                                        :let [app-duo (get duos (:id res-duo))]]
                                    {:id (:id res-duo)
                                     :resource/id (:resource/id resource)
-                                    :duo/valid? (duo/check-duo-code res-duo app-duo)}))))]
+                                    :duo/valid (duo/check-duo-code res-duo app-duo)}))))]
       (-> application
           (assoc-some-in [:application/duo :duo/matches] (seq matches))
-          (assoc-some-in [:application/duo :duo/valid?] (some-> (seq matches) duo-match-status))))))
+          (assoc-some-in [:application/duo :duo/valid] (some-> (seq matches) duo-match-status))))))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses

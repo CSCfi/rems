@@ -1990,10 +1990,10 @@
                                             {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"}]}]}]})))
           (is (= {:duo/codes [{:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
                               {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0045024"}]}]}]
-                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid? false}
-                                {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
-                                {:id "DUO:0000007" :resource/id res2 :duo/valid? false}] ; dataset tagged with MONDO:0005105 - melanoma
-                  :duo/valid? false}
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid "duo/not-valid"}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid "duo/needs-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid "duo/not-valid"}] ; dataset tagged with MONDO:0005105 - melanoma
+                  :duo/valid "duo/not-valid"}
                  (-> (get-application-for-user app-id applicant-id)
                      :application/duo))))
         (testing "save fully valid duo codes"
@@ -2008,10 +2008,10 @@
           (is (= {:duo/codes [{:id "DUO:0000024" :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]}
                               {:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
                               {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0006486"}]}]}]
-                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid? true}
-                                {:id "DUO:0000027" :resource/id res2 :duo/valid? "duo/needs-validation"}
-                                {:id "DUO:0000007" :resource/id res2 :duo/valid? true}]
-                  :duo/valid? "duo/needs-validation"}
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid "duo/valid"}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid "duo/needs-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid "duo/valid"}]
+                  :duo/valid "duo/needs-validation"}
                  (-> (get-application-for-user app-id applicant-id)
                      :application/duo))))))))
 

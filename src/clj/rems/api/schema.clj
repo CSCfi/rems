@@ -261,8 +261,8 @@
    (s/optional-key :application/duo) {(s/optional-key :duo/codes) [schema-base/DuoCode]
                                       :duo/matches [{:id s/Str
                                                      :resource/id s/Int
-                                                     :duo/valid? (s/cond-pre s/Bool s/Keyword)}]
-                                      :duo/valid? (s/cond-pre s/Bool s/Keyword)}})
+                                                     :duo/valid s/Keyword}]
+                                      (s/optional-key :duo/valid) s/Keyword}})
 
 (s/defschema ApplicationRaw
   (-> Application
