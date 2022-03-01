@@ -200,29 +200,30 @@
        (= (time/day a) (time/day b))))
 
 (defn check-duo-code
-  "Validate that DUO code `b` matches DUO code `a`.
+  "Validate that `query-code` is compatible with `dataset-code`.
    
-   Matching is done first by comparing `:id` and then, if applicable, by comparing
+   Matching is done first by comparing `:id` and then, if applicable, by checking
    DUO code restriction values."
-  [a b]
-  (and (= (:id a) (:id b))
-       (case (:id a)
+  [dataset-code query-code]
+  (and (= (:id dataset-code) (:id query-code))
+       (case (:id dataset-code)
          ;; "This data use permission indicates that use is allowed provided it is related to the specified disease."
-         "DUO:0000007" (let [required-codes (get-restrictions a :mondo)
-                             unmatched-codes (difference (set (map :id (get-restrictions b :mondo)))
-                                                         (set (map :id required-codes)))]
-                         (if (every? seq [required-codes unmatched-codes])
-                           (->> required-codes
+         "DUO:0000007" (let [required-codes (get-restrictions dataset-code :mondo)
+                             provided-codes (get-restrictions query-code :mondo)
+                             unmatched-codes (difference (set (map :id required-codes))
+                                                         (set (map :id provided-codes)))]
+                         (if (seq unmatched-codes)
+                           (->> provided-codes
                                 (mapcat (comp mondo/get-mondo-parents :id))
                                 set
                                 (subset? unmatched-codes))
-                           true))
+                           (every? seq [required-codes provided-codes])))
          ;; "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."
-         "DUO:0000024" (let [not-before-dt (some-> a (get-restrictions :date) first :value time-format/parse)
-                             dt (some-> b (get-restrictions :date) first :value time-format/parse)]
+         "DUO:0000024" (let [not-before-dt (some-> dataset-code (get-restrictions :date) first :value time-format/parse)
+                             dt (some-> query-code (get-restrictions :date) first :value time-format/parse)]
                          (or (same-day? dt not-before-dt)
                              (-> dt (time/after? not-before-dt))))
-         (if (seq (:restrictions a))
+         (if (seq (:restrictions dataset-code))
            :duo/needs-validation
            true))))
 
@@ -234,16 +235,24 @@
     (is (= :duo/needs-validation (check-duo-code {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}
                                                  {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]})) "Free text restriction must be manually validated")
     (testing "DUO:0000007 :mondo"
-      (let [form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}]
-        (is (not (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0017123"}]}]})) "MONDO:0008823 is parent of MONDO:0017123")
-        (is (not (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0017126"}]}]})) "Mondo code must match or be a parent of required Mondo code")
-        (is (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0008823"}]}]}) "Mondo codes match")
-        (is (check-duo-code form-duo {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0015168"}]}]}) "MONDO:0015168 is parent of MONDO:0008823")))
+      ;; MONDO:0045024 - cancer or benign tumor
+      ;; - MONDO:0005105 - melanoma
+      ;;   - MONDO:0006486 - uveal melanoma
+      ;; MONDO:0005015 - diabetes mellitus
+      (let [query-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}]}]}]
+        (is (not (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]} query-code))
+            "dataset labeled with MONDO:0006486 - 'uveal melanoma' is not compatible with MONDO:0005105 - 'melanoma'")
+        (is (not (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005015"}]}]} query-code))
+            "dataset labeled with MONDO:0005015 - 'diabetes mellitus' is not compatible with MONDO:0005105 - 'melanoma'")
+        (is (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}]}]} query-code)
+            "equal MONDO codes")
+        (is (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"}]}]} query-code)
+            "dataset labeled with MONDO:0045024 - 'cancer or benign tumor' is compatible with MONDO:0005105 - 'melanoma'")))
     (testing "DUO:0000024 :date"
-      (let [form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}]
-        (is (not (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-07"}]}]})) "Provided date is before required date")
-        (is (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}))
-        (is (check-duo-code form-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2023-02-08"}]}]}))))))
+      (let [dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}]
+        (is (not (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-07"}]}]})) "Provided date is before required date")
+        (is (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}))
+        (is (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2023-02-08"}]}]}))))))
 
 (comment
   ;; Here is code to load the latest DUO release
