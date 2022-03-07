@@ -12,6 +12,7 @@ Remove items that aren't applicable, check items that are done.
 - [ ] API is backwards compatible or completely new
 - [ ] Events are backwards compatible _or_ have migrations
 - [ ] Config is backwards compatible
+- [ ] Feature appears correctly in PDF print
 
 ## Documentation
 - [ ] Update changelog if necessary
