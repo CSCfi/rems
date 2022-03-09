@@ -10,10 +10,10 @@
 (def ^:private validate-user-mapping
   (s/validator UserMappings))
 
-(defn get-user-mapping [attribute value]
-  (->> (db/get-user-mapping {:ext-id-attribute (name attribute)
-                             :ext-id-value value})
-       (some :userid)))
+(defn get-user-mappings [attribute value]
+  (->> (db/get-user-mappings {:ext-id-attribute (name attribute)
+                              :ext-id-value value})
+       not-empty))
 
 (defn create-user-mapping! [user-mapping]
   (-> user-mapping
