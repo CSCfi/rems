@@ -16,6 +16,7 @@
             [rems.db.roles :as roles]
             [rems.db.test-data-users :refer :all]
             [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]))
 
@@ -47,9 +48,13 @@
                                    :url {:en "www.com" :fi "www.fi" :sv "www.se"}
                                    :empty {}}))))
 
-(defn create-user! [user-attributes & roles]
-  (let [user (:eppn user-attributes)]
+(defn create-user! [user-attributes-and-mappings & roles]
+  (let [mappings (:mappings user-attributes-and-mappings)
+        user-attributes (dissoc user-attributes-and-mappings :mappings)
+        user (:eppn user-attributes)]
     (users/add-user-raw! user user-attributes)
+    (doseq [[k v] mappings]
+      (user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
     (doseq [role roles]
       (roles/add-role! user role))
     user))
