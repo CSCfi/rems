@@ -52,7 +52,7 @@
    "organization-owner2" {:sub "organization-owner2" :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:sub "owner" :email "owner@example.com" :name "Owner"}
    "reporter" {:sub "reporter" :email "reporter@example.com" :name "Reporter"}
-   "alice-elixir" {:old_sub "alice" :sub "alice-elixir" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "elixir-alice" {:old_sub "alice" :sub "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
    "new-user" {:sub "new-user" :email "new-user@example.com" :name "New User"}})
 
 (def +demo-users+
