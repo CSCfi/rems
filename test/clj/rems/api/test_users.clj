@@ -157,3 +157,49 @@
                  (set (api-call :get "/api/users/active" nil
                                 +test-api-key+ "owner")))))))))
 
+
+(deftest user-name-test
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-name-attributes ["name" "name2"])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "bob" {:sub "bob" :name2 "Bob Applicant" :email "bob@example.com"}
+                            "malice" {:sub "malice" :email "malice@example.com"}} ; no name
+      (testing "log in alice"
+        (let [cookie (login-with-cookies "alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")))))
+
+      (testing "log in bob"
+        (let [cookie (login-with-cookies "bob")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
+                 (users/get-user "bob")))))
+
+      (testing "log in malice"
+        (let [cookie (login-with-cookies "malice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "malice" :name nil :email "malice@example.com"}
+                 (users/get-user "malice"))))))))
+
+(deftest user-email-test
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "bob" {:sub "bob" :name "Bob Applicant" :email2 "bob@example.com"}
+                            "malice" {:sub "malice" :name "Malice Nomail"}} ; no email
+      (testing "log in alice"
+        (let [cookie (login-with-cookies "alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")))))
+
+      (testing "log in bob"
+        (let [cookie (login-with-cookies "bob")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
+                 (users/get-user "bob")))))
+
+      (testing "log in malice"
+        (let [cookie (login-with-cookies "malice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "malice" :name "Malice Nomail" :email nil}
+                 (users/get-user "malice"))))))))
