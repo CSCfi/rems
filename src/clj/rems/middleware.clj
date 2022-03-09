@@ -210,6 +210,12 @@
          :when identity]
      (users/format-user identity))))
 
+(defn get-session
+  "Returns the session associated with a cookie. Useful for testing."
+  [cookie]
+  (let [[_k v] (str/split cookie #"=")] ; ring-session=...
+    (.read-session session-store v)))
+
 (defn wrap-cache-control
   "In case a Cache-Control header is missing, add a default of no-store"
   [handler]

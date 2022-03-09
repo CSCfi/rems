@@ -8,6 +8,7 @@
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.handler :refer [handler]]
+            [rems.middleware :as middleware]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -146,10 +147,16 @@
                    {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
                  (set (api-call :get "/api/users/active" nil
                                 +test-api-key+ "owner"))))
-          (is (= "alice" (user-mappings/get-user-mapping "elixirId" "elixir-alice"))))))
+          (is (= [{:userid "alice"
+                   :extidvalue "elixir-alice"
+                   :extidattribute "elixirId"}]
+                 (user-mappings/get-user-mappings "elixirId" "elixir-alice"))))))
+
     (with-fake-login-users {"elixir-alice" {:sub "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
       (testing "log in elixir-alice with user mapping"
-        (is (= "alice" (user-mappings/get-user-mapping "elixirId" "elixir-alice")))
+        (is (= [{:userid "alice"
+                 :extidvalue "elixir-alice"
+                 :extidattribute "elixirId"}] (user-mappings/get-user-mappings "elixirId" "elixir-alice")))
         (let [cookie (login-with-cookies "elixir-alice")]
           (assert-can-make-a-request! cookie)
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
@@ -167,19 +174,22 @@
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                 (users/get-user "alice")))))
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
-                 (users/get-user "bob")))))
+                 (users/get-user "bob")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
         (let [cookie (login-with-cookies "malice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "malice" :name nil :email "malice@example.com"}
-                 (users/get-user "malice"))))))))
+                 (users/get-user "malice")
+                 (users/format-user (:identity (middleware/get-session cookie))))))))))
 
 (deftest user-email-test
   (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
@@ -190,16 +200,19 @@
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                 (users/get-user "alice")))))
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
-                 (users/get-user "bob")))))
+                 (users/get-user "bob")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
         (let [cookie (login-with-cookies "malice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "malice" :name "Malice Nomail" :email nil}
-                 (users/get-user "malice"))))))))
+                 (users/get-user "malice")
+                 (users/format-user (:identity (middleware/get-session cookie))))))))))
