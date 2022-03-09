@@ -137,7 +137,10 @@
           (assert-can-make-a-request! cookie)
           (is (= [{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}]
                  (api-call :get "/api/users/active" nil
-                           +test-api-key+ "owner")))))
+                           +test-api-key+ "owner")))
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in elixir-alice and create user mapping"
         (is (nil? (user-mappings/get-user-mappings "elixirId" "elixir-alice")) "user mapping should not exist")
@@ -150,7 +153,11 @@
           (is (= [{:userid "alice"
                    :extidvalue "elixir-alice"
                    :extidattribute "elixirId"}]
-                 (user-mappings/get-user-mappings "elixirId" "elixir-alice"))))))
+                 (user-mappings/get-user-mappings "elixirId" "elixir-alice")))
+          (is (= {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie))))
+              "Attributes should be updated when logging in"))))
 
     (with-fake-login-users {"elixir-alice" {:sub "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
       (testing "log in elixir-alice with user mapping"
