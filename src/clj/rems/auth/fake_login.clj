@@ -12,10 +12,6 @@
     :test +fake-idp-data+
     :demo +demo-idp-data+))
 
-(defn get-researcher-status [id-data]
-  (or (oidc/get-researcher-status id-data)
-      (select-keys id-data [:researcher-status-by])))
-
 (defn login-url []
   "/fake-login")
 
@@ -24,14 +20,12 @@
 
 (defn- fake-login [session username]
   (let [id-data (-> (get-fake-login-users) (get username))
-        userid (oidc/find-or-create-user! id-data)]
-    (oidc/save-user-mappings! id-data userid)
+        user-info (select-keys id-data [:researcher-status-by])
+        user (oidc/find-or-create-user! id-data user-info)]
     (-> (redirect "/redirect")
         (assoc :session session)
         (assoc-in [:session :access-token] (str "access-token-" username))
-        (assoc-in [:session :identity] (merge (oidc/get-user-attributes id-data)
-                                              {:eppn userid}
-                                              (get-researcher-status id-data))))))
+        (assoc-in [:session :identity] user))))
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]
