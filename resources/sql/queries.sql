@@ -784,15 +784,20 @@ WHERE id = :id;
 DELETE FROM category
 WHERE id = :id;
 
--- :name get-user-mapping :1
-SELECT userId
+-- :name get-user-mappings :*
+SELECT extIdAttribute, extIdValue, userId
 FROM user_mappings
-WHERE extIdAttribute = :ext-id-attribute
-AND extIdValue = :ext-id-value;
+WHERE 1 = 1
+/*~ (when (:ext-id-attribute params) */
+AND extIdAttribute = :ext-id-attribute
+/*~ ) ~*/
+/*~ (when (:ext-id-value params) */
+AND extIdValue = :ext-id-value
+/*~ ) ~*/
+;
 
 -- :name create-user-mapping! :insert
 INSERT INTO user_mappings (userId, extIdAttribute, extIdValue)
 VALUES (:userid, :ext-id-attribute, :ext-id-value)
 ON CONFLICT (userId, extIdAttribute, extIdValue)
 DO NOTHING;
-
