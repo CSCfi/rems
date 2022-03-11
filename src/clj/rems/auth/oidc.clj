@@ -90,8 +90,10 @@
     user))
 
 (defn get-researcher-status [user-info]
-  (when-let [by (ga4gh/passport->researcher-status-by user-info)]
-    {:researcher-status-by by}))
+  (if (:researcher-status-by user-info)
+    (select-keys user-info [:researcher-status-by])
+    (when-let [by (ga4gh/passport->researcher-status-by user-info)]
+      {:researcher-status-by by})))
 
 (defn get-user-attributes [userid id-data user-info]
   ;; TODO all attributes could support :rename
