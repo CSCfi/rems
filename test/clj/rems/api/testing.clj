@@ -49,7 +49,7 @@
   [response]
   (when (= 500 (:status response))
     (when-let [body (:body response)]
-      (let [body (json/parse-string (slurp body))]
+      (let [body (if (string? body) body (json/parse-string (slurp body)))]
         (assert (and (not (:schema body))
                      (not (:errors body)))
                 (let [errors (:errors body)]
@@ -71,6 +71,16 @@
                            (if (string? body)
                              body
                              (slurp body)))}))
+  response)
+
+(defn assert-response-is-redirect [response]
+  (assert response)
+  (assert (= 302 (:status response))
+          {:status (:status response)
+           :body (when-let [body (:body response)]
+                   (if (string? body)
+                     body
+                     (slurp body)))})
   response)
 
 (defn assert-response-is-server-error? [response]
@@ -172,12 +182,14 @@
 ;;; Fake login without API key
 
 (defn- strip-cookie-attributes [cookie]
-  (re-find #"[^;]*" cookie))
+  (when cookie
+    (re-find #"[^;]*" cookie)))
 
 (defn login-with-cookies [username]
-  (let [login-headers (-> (request :get "/fake-login" {:username username})
-                          handler
-                          :headers)
+  (let [login (-> (request :get "/fake-login" {:username username})
+                  handler)
+        _ (assert-response-is-redirect login)
+        login-headers (:headers login)
         cookie (-> (get login-headers "Set-Cookie")
                    first
                    strip-cookie-attributes)]
