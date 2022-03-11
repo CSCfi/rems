@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
-            [medley.core :refer [find-first map-vals]]
+            [medley.core :refer [find-first]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings :as user-mappings]
             [rems.db.users :as users]
@@ -82,7 +82,7 @@
                              (let [mappings (user-mappings/get-user-mappings attribute value)]
                                (:userid (first mappings))))] ; should be at most one by kv search
     (or (some user-mapping-match userid-attrs)
-       (find-first users/user-exists? (map second userid-attrs)))))
+        (find-first users/user-exists? (map second userid-attrs)))))
 
 (defn- upsert-user! [user]
   (let [userid (:eppn user)]
