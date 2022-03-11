@@ -20,3 +20,13 @@
       validate-user-mapping
       db/create-user-mapping!))
 
+(defn find-userid
+  "Figures out the `userid` of a user reference.
+
+  If a user mapping is found, the corresponding `:userid` is returned.
+  Else the string is assumed to be a `userid`."
+  [userid-or-ext-id]
+  (let [mappings (db/get-user-mappings {:ext-id-value userid-or-ext-id})  ]
+    (assert (< (count mappings) 2) (str "Multiple users found with identity " (pr-str mappings)))
+    (or (some :userid mappings)
+        userid-or-ext-id)))
