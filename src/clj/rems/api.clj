@@ -184,7 +184,7 @@
     (context "/api" []
       ;; :middleware [slow-middleware]
       :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
-                      {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
+                      {x-rems-user-id :- (describe s/Str "user (optional for UI, required for API). This can be a REMS internal or an external user identity attribute (specified in config.edn).") nil}]
 
       public/translations-api
       public/theme-api
