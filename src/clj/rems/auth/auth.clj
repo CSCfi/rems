@@ -8,13 +8,15 @@
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
             [ring.util.response :refer [redirect]]))
 
 (defn get-api-key [request]
   (get-in request [:headers "x-rems-api-key"]))
 
 (defn get-api-user [request]
-  (get-in request [:headers "x-rems-user-id"]))
+  (when-some [userid (get-in request [:headers "x-rems-user-id"])]
+    (user-mappings/find-userid userid)))
 
 (defn- api-key-backend []
   (reify
