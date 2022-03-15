@@ -40,9 +40,9 @@
                   caches-fixture]))
 
 (defn authenticate [request api-key user-id]
-  (-> request
-      (assoc-in [:headers "x-rems-api-key"] api-key)
-      (assoc-in [:headers "x-rems-user-id"] user-id)))
+  (cond-> request
+    api-key (assoc-in [:headers "x-rems-api-key"] api-key)
+    user-id (assoc-in [:headers "x-rems-user-id"] user-id)))
 
 (defn assert-schema-errors
   "Try more advanced parsing for nicer schema errors."
