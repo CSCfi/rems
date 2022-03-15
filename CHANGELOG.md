@@ -14,6 +14,7 @@ Changes since v2.25
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
+- API-Keys are cached for a minute for a slight performance improvement. (#2785)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 
