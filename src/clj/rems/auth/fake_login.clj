@@ -20,10 +20,10 @@
       (get username)))
 
 (defn get-fake-user-info [username]
-  (->(case (:fake-authentication-data env)
-       :test test-data-users/+fake-user-info+
-       :demo test-data-users/+demo-user-info+)
-     (get username)))
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-user-info+
+        :demo test-data-users/+demo-user-info+)
+      (get username)))
 
 (defn login-url []
   "/fake-login")
