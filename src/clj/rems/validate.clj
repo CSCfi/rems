@@ -51,6 +51,10 @@
         (log/warn "Unrecognized organization in catalogue item:" (pr-str item))))))
 
 (defn validate []
+  (log/info "Validating configuration")
+  (when (:oidc-userid-attribute env)
+    (throw (ex-info "Please migrate to :oidc-userid-attributes" (select-keys env [:oidc-userid-attribute]))))
+
   (log/info "Validating data")
   (try
     (validate-forms)
