@@ -33,10 +33,15 @@
 
 (defn- wrap-uses-valid-api-key [handler]
   (fn [request]
-    (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request)
-                                                                 (get-api-user request)
-                                                                 (:request-method request)
-                                                                 (:uri request))))))
+
+    (handler (assoc request :uses-valid-api-key?
+                    (if-some [api-key (get-api-key request)] ; don't try to check without
+
+                      (api-key/valid? api-key
+                                      (get-api-user request)
+                                      (:request-method request)
+                                      (:uri request))
+                      false)))))
 
 (defn wrap-auth [handler]
   (wrap-uses-valid-api-key
