@@ -95,9 +95,11 @@
     (when-let [by (ga4gh/passport->researcher-status-by user-info)]
       {:researcher-status-by by})))
 
-(defn get-user-attributes [userid id-data user-info]
+(defn- get-user-attributes [id-data user-info]
   ;; TODO all attributes could support :rename
-  (let [identity-base {:eppn userid
+  (let [userid (or (find-user id-data) (get-new-userid id-data))
+        _ (assert userid)
+        identity-base {:eppn userid
                        :commonName (some (comp id-data keyword) (:oidc-name-attributes env))
                        :mail (some (comp id-data keyword) (:oidc-email-attributes env))}
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
@@ -105,10 +107,8 @@
     (merge identity-base extra-attributes user-info-attributes)))
 
 (defn find-or-create-user! [id-data user-info]
-  (let [userid (or (find-user id-data) (get-new-userid id-data))
-        _ (assert userid)
-        user (upsert-user! (get-user-attributes userid id-data user-info))]
-    (save-user-mappings! id-data userid)
+  (let [user (upsert-user! (get-user-attributes id-data user-info))]
+    (save-user-mappings! id-data (:eppn user))
     user))
 
 (defn oidc-callback [request]
