@@ -61,7 +61,8 @@
   NB: both datasets are therefore identical and that is different than usual,
   but that shouldn't matter in practice"
   [users & body]
-  `(with-redefs [rems.auth.fake-login/get-fake-id-data (fn [username#] (get ~users username#))
+  `(with-redefs [rems.auth.fake-login/get-fake-users (constantly (keys ~users))
+                 rems.auth.fake-login/get-fake-id-data (fn [username#] (get ~users username#))
                  rems.auth.fake-login/get-fake-user-info (fn [username#] (get ~users username#))]
      ~@body))
 
