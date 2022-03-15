@@ -27,7 +27,7 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-userid-attributes` – which id-token attributes to use as the
   REMS userid. A sequence of multiple attributes, which are searched in order and the first non-empty one
   used. The format is such that each attribute is a map where the `:attribute` specifies which token attribute
-  is used, and (optionally) `:rename` specifies to which attribute it is stored im the REMS user details
+  is used, and (optionally) `:rename` specifies to which attribute it is stored in the REMS user details
   (returned in API, stored in DB).
 
   E.g. `:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"} {:attribute "sub2"}]`
