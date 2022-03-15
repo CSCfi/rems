@@ -55,7 +55,13 @@
                                         (applications/get-all-application-roles ~user))]
      ~@body))
 
-(defmacro with-fake-login-users [users & body]
-  `(with-redefs [rems.auth.fake-login/get-fake-login-users (constantly ~users)]
+(defmacro with-fake-login-users
+  "Runs the body with the given `users` as id-data and user-info for fake login.
+
+  NB: both datasets are therefore identical and that is different than usual,
+  but that shouldn't matter in practice"
+  [users & body]
+  `(with-redefs [rems.auth.fake-login/get-fake-id-data (fn [username#] (get ~users username#))
+                 rems.auth.fake-login/get-fake-user-info (fn [username#] (get ~users username#))]
      ~@body))
 

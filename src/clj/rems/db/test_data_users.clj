@@ -40,9 +40,9 @@
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
 
-(def +fake-idp-data+
+(def +fake-id-data+
   {"developer" {:sub "developer" :email "developer@example.com" :name "Developer" :nickname "The Dev"}
-   "alice" {:sub "alice" :email "alice@example.com" :name "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "alice" {:sub "alice" :email "alice@example.com" :name "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland"}
    "malice" {:sub "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:sub "handler" :email "handler@example.com" :name "Hannah Handler"}
    "carl" {:sub "carl" :email "carl@example.com" :name "Carl Reviewer"}
@@ -52,8 +52,12 @@
    "organization-owner2" {:sub "organization-owner2" :email "organization-owner2@example.com" :name "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:sub "owner" :email "owner@example.com" :name "Owner"}
    "reporter" {:sub "reporter" :email "reporter@example.com" :name "Reporter"}
-   "elixir-alice" {:old_sub "alice" :sub "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
+   "elixir-alice" {:old_sub "alice" :sub "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland"}
    "new-user" {:sub "new-user" :email "new-user@example.com" :name "New User"}})
+
+(def +fake-user-info+
+  {"alice" {:researcher-status-by "so"}
+   "elixir-alice" {:researcher-status-by "so"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -77,7 +81,7 @@
    "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :mail "RDorganizationowner2.test@test_example.org" :commonName "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
-(def +demo-idp-data+
+(def +demo-id-data+
   {"RDapplicant1@funet.fi" {:sub "RDapplicant1@funet.fi" :email "RDapplicant1.test@test_example.org" :name "RDapplicant1 REMSDEMO1" :organizations [{:organization/id "default"}]}
    "RDapplicant2@funet.fi" {:sub "RDapplicant2@funet.fi" :email "RDapplicant2.test@test_example.org" :name "RDapplicant2 REMSDEMO"}
    "RDapprover1@funet.fi" {:sub "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
@@ -87,6 +91,9 @@
    "RDorganizationowner1@funet.fi" {:sub "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "RDorganizationowner2@funet.fi" {:sub "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
    "RDdomainreporter@funet.fi" {:sub "RDdomainreporter@funet.fi" :email "RDdomainreporter.test@test_example.org" :name "RDdomainreporter REMSDEMO"}})
+
+(def +demo-user-info+
+  {})
 
 (def +oidc-users+
   {:applicant1 "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF"

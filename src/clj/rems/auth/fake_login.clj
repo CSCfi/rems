@@ -4,13 +4,26 @@
             [rems.layout :as layout]
             [rems.auth.oidc :as oidc]
             [rems.config :refer [env]]
-            [rems.db.test-data-users :refer [+fake-idp-data+ +demo-idp-data+]]
+            [rems.db.test-data-users :as test-data-users]
             [ring.util.response :refer [redirect]]))
 
-(defn get-fake-login-users []
-  (case (:fake-authentication-data env)
-    :test +fake-idp-data+
-    :demo +demo-idp-data+))
+(defn get-fake-users []
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-id-data+
+        :demo test-data-users/+demo-id-data+)
+      keys))
+
+(defn get-fake-id-data [username]
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-id-data+
+        :demo test-data-users/+demo-id-data+)
+      (get username)))
+
+(defn get-fake-user-info [username]
+  (->(case (:fake-authentication-data env)
+       :test test-data-users/+fake-user-info+
+       :demo test-data-users/+demo-user-info+)
+     (get username)))
 
 (defn login-url []
   "/fake-login")
@@ -19,8 +32,8 @@
   "/fake-logout")
 
 (defn- fake-login [session username]
-  (let [id-data (-> (get-fake-login-users) (get username))
-        user-info (select-keys id-data [:researcher-status-by])
+  (let [id-data (get-fake-id-data username)
+        user-info (get-fake-user-info username)
         user (oidc/find-or-create-user! id-data user-info)]
     (-> (redirect "/redirect")
         (assoc :session session)
@@ -44,9 +57,9 @@
                                    [:div.col-md-8
                                     [:h1.text-center "Development Login"]
                                     [:div.users.d-flex.flex-wrap.justify-content-stretch.align-items-start
-                                     (->> (keys (get-fake-login-users))
-                                          (sort)
-                                          (distinct)
+                                     (->> (get-fake-users)
+                                          sort
+                                          distinct
                                           (map user-selection))]]]]})))
 
 
