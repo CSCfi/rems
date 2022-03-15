@@ -663,7 +663,8 @@
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (or (application-not-found-error application cmd)
+  (or (invalid-user-error (:actor cmd) injections)
+      (application-not-found-error application cmd)
       (let [result (-> cmd
                        (command-handler application injections)
                        (finalize-events cmd))]

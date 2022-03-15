@@ -82,6 +82,7 @@
     (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
 
 (deftest test-delete-application-and-reload-cache!!
+  (test-helpers/create-user! {:eppn "applicant"})
   (let [app-id (test-helpers/create-application! {:actor "applicant"})]
     (is (applications/get-application app-id))
     (applications/delete-application-and-reload-cache! app-id)

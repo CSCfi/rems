@@ -283,11 +283,25 @@
                                 :comment "this is a remark"}))))))
 
     (testing "send command without user"
+      (is (= "unauthorized"
+             (send-command nil {:type :application.command/approve
+                                :application-id application-id
+                                :comment ""}))
+          "shouldn't be able to send command")
+
       (is (= {:success false
-              :errors [{:type "forbidden"}]}
+              :errors [{:userid "" :type "t.form.validation/invalid-user"}]}
              (send-command "" {:type :application.command/approve
                                :application-id application-id
                                :comment ""}))
+          "shouldn't be able to send command"))
+
+    (testing "send command with nonexistent user"
+      (is (= {:success false
+              :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+             (send-command "does-not-exist" {:type :application.command/approve
+                                             :application-id application-id
+                                             :comment ""}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
@@ -511,7 +525,13 @@
     (testing "creating"
       (is (some? application-id))
       (let [created (get-application-for-user application-id user-id)]
-        (is (= "application.state/draft" (get created :application/state)))))
+        (is (= "application.state/draft" (get created :application/state))))
+
+      (testing "fails with invalid user"
+        (is (= {:success false
+                :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+               (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                         "42" "does-not-exist")))))
 
     (testing "seeing draft is forbidden"
       (testing "as unrelated user"
@@ -524,10 +544,16 @@
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-command "bob" {:type :application.command/save-draft
-                                  :application-id application-id
-                                  :field-values []}))))
+             (send-command "frank" {:type :application.command/save-draft
+                                    :application-id application-id
+                                    :field-values []}))))
     (testing "submitting"
+      (testing "fails with invalid user"
+        (is (= {:success false
+                :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+               (send-command "does-not-exist" {:type :application.command/submit
+                                               :application-id application-id}))))
+
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id application-id})))
@@ -683,6 +709,9 @@
         applicant "alice"
         handler "developer"
         app-id (test-helpers/create-application! {:actor applicant})]
+    (test-helpers/create-user! {:eppn "member1"})
+    (test-helpers/create-user! {:eppn "reviewer1"})
+    (test-helpers/create-user! {:eppn "decider1"})
     (testing "invite member for draft as applicant"
       (is (= {:success true}
              (send-command applicant {:type :application.command/invite-member
