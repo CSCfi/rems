@@ -89,12 +89,6 @@
     (users/add-user-raw! userid user)
     user))
 
-(defn get-researcher-status [user-info]
-  (if (:researcher-status-by user-info)
-    (select-keys user-info [:researcher-status-by])
-    (when-let [by (ga4gh/passport->researcher-status-by user-info)]
-      {:researcher-status-by by})))
-
 (defn- get-user-attributes [id-data user-info]
   ;; TODO all attributes could support :rename
   (let [userid (or (find-user id-data) (get-new-userid id-data))
@@ -103,7 +97,7 @@
                        :commonName (some (comp id-data keyword) (:oidc-name-attributes env))
                        :mail (some (comp id-data keyword) (:oidc-email-attributes env))}
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
-        user-info-attributes (get-researcher-status user-info)]
+        user-info-attributes (select-keys user-info [:researcher-status-by])]
     (merge identity-base extra-attributes user-info-attributes)))
 
 (defn find-or-create-user! [id-data user-info]
@@ -143,7 +137,8 @@
         user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
                     (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
                         :body
-                        json/parse-string))
+                        json/parse-string
+                        ga4gh/passport->researcher-status-by))
         user (find-or-create-user! id-data user-info)]
     (when (:log-authentication-details env)
       (log/info "logged in" id-data user-info user))
