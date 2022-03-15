@@ -24,10 +24,21 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-client-id`
 * `:oidc-client-secret`
 * `:oidc-scopes` - which scopes to request, defaults to `"openid profile email"`
-* `:oidc-userid-attribute` – which id-token attribute to use as the
-  REMS userid. Can be a single attribute, or a sequence of multiple
-  attributes, which are searched in order and the first non-empty one
-  used. Defaults to `"sub"`.
+* `:oidc-userid-attributes` – which id-token attributes to use as the
+  REMS userid. A sequence of multiple attributes, which are searched in order and the first non-empty one
+  used. The format is such that each attribute is a map where the `:attribute` specifies which token attribute
+  is used, and (optionally) `:rename` specifies to which attribute it is stored in the REMS user details
+  (returned in API, stored in DB).
+
+  E.g. `:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"} {:attribute "sub2"}]`
+
+  Default is to use the attribute called `"sub"`.
+* `:oidc-name-attributes` – which id-token attributes can be used as the name of the user, first will be used
+  Like in the default:
+  `:oidc-name-attributes ["name" "unique_name" "family_name"]`
+* `:oidc-email-attributes` – which id-token attributes can be used as the email address of the user, first will be used
+  Like in the default:
+  `:oidc-email-attributes ["email"]`
 * `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`

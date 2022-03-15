@@ -63,8 +63,6 @@
   [handler]
   (fn [request]
     (binding [context/*user* (keywordize-keys (:identity request))]
-      (when context/*user*
-        (users/add-user-raw! (get-user-id) context/*user*))
       (with-mdc {:user (:eppn context/*user*)}
         (handler request)))))
 
@@ -211,6 +209,12 @@
          :let [identity (:identity session)]
          :when identity]
      (users/format-user identity))))
+
+(defn get-session
+  "Returns the session associated with a cookie. Useful for testing."
+  [cookie]
+  (let [[_k v] (str/split cookie #"=")] ; ring-session=...
+    (.read-session session-store v)))
 
 (defn wrap-cache-control
   "In case a Cache-Control header is missing, add a default of no-store"

@@ -1,11 +1,29 @@
 (ns rems.auth.fake-login
-  (:require [clojure.string :as str]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [hiccup.util :refer [url]]
             [rems.layout :as layout]
-            [rems.db.core :as db]
-            [rems.db.users :as users]
+            [rems.auth.oidc :as oidc]
+            [rems.config :refer [env]]
+            [rems.db.test-data-users :as test-data-users]
             [ring.util.response :refer [redirect]]))
+
+(defn get-fake-users []
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-id-data+
+        :demo test-data-users/+demo-id-data+)
+      keys))
+
+(defn get-fake-id-data [username]
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-id-data+
+        :demo test-data-users/+demo-id-data+)
+      (get username)))
+
+(defn get-fake-user-info [username]
+  (-> (case (:fake-authentication-data env)
+        :test test-data-users/+fake-user-info+
+        :demo test-data-users/+demo-user-info+)
+      (get username)))
 
 (defn login-url []
   "/fake-login")
@@ -14,10 +32,13 @@
   "/fake-logout")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/redirect")
-         :session (assoc session
-                         :identity (users/get-raw-user-attributes username)
-                         :access-token (str "access-token-" username)))) ; fake access token
+  (let [id-data (get-fake-id-data username)
+        user-info (get-fake-user-info username)
+        user (oidc/find-or-create-user! id-data user-info)]
+    (-> (redirect "/redirect")
+        (assoc :session session)
+        (assoc-in [:session :access-token] (str "access-token-" username))
+        (assoc-in [:session :identity] user))))
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]
@@ -36,11 +57,9 @@
                                    [:div.col-md-8
                                     [:h1.text-center "Development Login"]
                                     [:div.users.d-flex.flex-wrap.justify-content-stretch.align-items-start
-                                     (->> (map :userid (db/get-users))
-                                          (remove #(str/starts-with? % "perftester"))
-                                          (remove #(str/ends-with? % "-bot"))
-                                          (sort)
-                                          (distinct)
+                                     (->> (get-fake-users)
+                                          sort
+                                          distinct
                                           (map user-selection))]]]]})))
 
 

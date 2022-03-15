@@ -3,7 +3,10 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
+            [medley.core :refer [find-first]]
             [rems.config :refer [env oidc-configuration]]
+            [rems.db.user-mappings :as user-mappings]
+            [rems.db.users :as users]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
@@ -23,25 +26,84 @@
 (defn logout-url []
   "/oidc-logout")
 
-(defn- get-userid [id-data]
-  (let [attr (getx env :oidc-userid-attribute)
-        attrs (if (string? attr)
-                [attr]
-                attr)]
-    (some #(get id-data (keyword %)) attrs)))
+(defn- get-userid-attributes [id-data]
+  (for [{:keys [attribute rename]} (getx env :oidc-userid-attributes)
+        :let [value (get id-data (keyword attribute))]
+        :when value]
+    [(keyword (or rename attribute)) value]))
 
-(deftest test-get-userid
-  (with-redefs [env {:oidc-userid-attribute "atr"}]
-    (is (nil? (get-userid {:sub "123"})))
-    (is (= "456" (get-userid {:sub "123" :atr "456"}))))
-  (with-redefs [env {:oidc-userid-attribute ["atr"]}]
-    (is (nil? (get-userid {:sub "123"})))
-    (is (= "456" (get-userid {:sub "123" :atr "456"}))))
-  (with-redefs [env {:oidc-userid-attribute ["atr" "sub" "fallback"]}]
-    (is (= "123" (get-userid {:sub "123"})))
-    (is (= "456" (get-userid {:sub "123" :atr "456"})))
-    (is (= "456" (get-userid {:sub "123" :atr "456" :fallback "78"})))
-    (is (= "78" (get-userid {:fallback "78"})))))
+(deftest test-get-userid-attributes
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
+                                              {:attribute "old_sub"}]}]
+    (is (= [] (get-userid-attributes nil)))
+    (is (= [[:elixirId "elixir-alice"]
+            [:old_sub "alice"]]
+           (get-userid-attributes {:old_sub "alice"
+                                   :sub "elixir-alice"
+                                   :name "Alice Applicant"})))))
+
+(defn- get-new-userid
+  "Returns a new userid for a user based on the given `id-data` identity data.
+
+  The userid will actually be the first valid attribute value from the identity data."
+  [id-data]
+  (first (keep second (get-userid-attributes id-data))))
+
+(deftest test-get-new-userid
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}]}]
+    (is (nil? (get-new-userid {:sub "123"})))
+    (is (= "456" (get-new-userid {:sub "123" :atr "456"}))))
+
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}
+                                              {:attribute "sub"}
+                                              {:attribute "fallback"}]}]
+    (is (= "123" (get-new-userid {:sub "123"})))
+    (is (= "456" (get-new-userid {:sub "123" :atr "456"})))
+    (is (= "456" (get-new-userid {:sub "123" :atr "456" :fallback "78"})))
+    (is (= "78" (get-new-userid {:fallback "78"}))))
+
+  (with-redefs [env {:oidc-userid-attributes [{:attribute "atr" :rename "elixirId"}
+                                              {:attribute "sub"}]}]
+    (is (= "elixir-alice" (get-new-userid {:atr "elixir-alice" :sub "123"})))
+    (is (= "123" (get-new-userid {:elixirId "elixir-alice" :sub "123"}))
+        "user data should use names before rename")))
+
+(defn save-user-mappings! [id-data userid]
+  (let [attrs (get-userid-attributes id-data)]
+    (doseq [[attr value] attrs
+            :when (not= value userid)]
+      (user-mappings/create-user-mapping! {:userid userid
+                                           :ext-id-attribute (name attr)
+                                           :ext-id-value value}))))
+
+(defn- find-user [id-data]
+  (let [userid-attrs (get-userid-attributes id-data)
+        user-mapping-match (fn [[attribute value]]
+                             (let [mappings (user-mappings/get-user-mappings attribute value)]
+                               (:userid (first mappings))))] ; should be at most one by kv search
+    (or (some user-mapping-match userid-attrs)
+        (find-first users/user-exists? (map second userid-attrs)))))
+
+(defn- upsert-user! [user]
+  (let [userid (:eppn user)]
+    (users/add-user-raw! userid user)
+    user))
+
+(defn- get-user-attributes [id-data user-info]
+  ;; TODO all attributes could support :rename
+  (let [userid (or (find-user id-data) (get-new-userid id-data))
+        _ (assert userid)
+        identity-base {:eppn userid
+                       :commonName (some (comp id-data keyword) (:oidc-name-attributes env))
+                       :mail (some (comp id-data keyword) (:oidc-email-attributes env))}
+        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
+        user-info-attributes (select-keys user-info [:researcher-status-by])]
+    (merge identity-base extra-attributes user-info-attributes)))
+
+(defn find-or-create-user! [id-data user-info]
+  (let [user (upsert-user! (get-user-attributes id-data user-info))]
+    (save-user-mappings! id-data (:eppn user))
+    user))
 
 (defn oidc-callback [request]
   (let [response (-> (http/post (:token_endpoint oidc-configuration)
@@ -72,26 +134,18 @@
         ;; locale – could be used to set preferred lang on first login
         ;; email – non-unique (!) email
         id-data (jwt/validate id-token issuer audience now)
-        identity-base {:eppn (get-userid id-data)
-                       ;; need to maintain a fallback list of name attributes since identity
-                       ;; providers differ in what they give us
-                       :commonName (some id-data [:name :unique_name :family_name])
-                       :mail (:email id-data)}
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
-
         user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
-                    (-> (http/get url
-                                  {:headers {"Authorization" (str "Bearer " access-token)}})
+                    (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
                         :body
-                        json/parse-string))
-        researcher-status-attributes (when-let [by (ga4gh/passport->researcher-status-by user-info)]
-                                       {:researcher-status-by by})]
+                        json/parse-string
+                        ga4gh/passport->researcher-status-by))
+        user (find-or-create-user! id-data user-info)]
     (when (:log-authentication-details env)
-      (log/info "logged in" id-data user-info))
+      (log/info "logged in" id-data user-info user))
     (-> (redirect "/redirect")
         (assoc :session (:session request))
         (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] (merge identity-base extra-attributes researcher-status-attributes)))))
+        (assoc-in [:session :identity] user))))
 
 (defn- oidc-revoke [token]
   (when token
@@ -116,3 +170,4 @@
       (oidc-revoke (:access-token session))
       (assoc (redirect "/") :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))
+

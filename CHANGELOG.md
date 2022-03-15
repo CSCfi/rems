@@ -8,6 +8,13 @@ have notable changes.
 
 Changes since v2.25
 
+### Breaking changes
+- User attributes are not saved on every request, only when logging in. (#2829)
+- The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
+
+### Additions
+- You can configure the OIDC attributes for name and email (see configuration.md)
+
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**

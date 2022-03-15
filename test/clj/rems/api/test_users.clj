@@ -1,18 +1,26 @@
 (ns ^:integration rems.api.test-users
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.testing-util :refer [with-fake-login-users]]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
             [rems.handler :refer [handler]]
+            [rems.middleware :as middleware]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :each ;; active-api-test needs a fresh session store
   api-fixture
   owners-fixture)
+
+(defn- assert-can-make-a-request! [cookie]
+  (-> (request :get "/api/keepalive")
+      (header "Cookie" cookie)
+      handler
+      assert-response-is-ok))
 
 (deftest users-api-test
   (let [new-user {:userid "david"
@@ -118,3 +126,100 @@
                {:userid "frank" :name "Frank Roleless" :email "frank@example.com" :organizations [{:organization/id "frank"}]}}
              (set (api-call :get "/api/users/active" nil
                             +test-api-key+ "owner")))))))
+
+(deftest user-mapping-test
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
+                                                                                {:attribute "old_sub"}])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+      (testing "log in alice"
+        (let [cookie (login-with-cookies "alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= [{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}]
+                 (api-call :get "/api/users/active" nil
+                           +test-api-key+ "owner")))
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
+
+      (testing "log in elixir-alice and create user mapping"
+        (is (nil? (user-mappings/get-user-mappings "elixirId" "elixir-alice")) "user mapping should not exist")
+        (let [cookie (login-with-cookies "elixir-alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner"))))
+          (is (= [{:userid "alice"
+                   :extidvalue "elixir-alice"
+                   :extidattribute "elixirId"}]
+                 (user-mappings/get-user-mappings "elixirId" "elixir-alice")))
+          (is (= {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie))))
+              "Attributes should be updated when logging in"))))
+
+    (with-fake-login-users {"elixir-alice" {:sub "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+      (testing "log in elixir-alice with user mapping"
+        (is (= [{:userid "alice"
+                 :extidvalue "elixir-alice"
+                 :extidattribute "elixirId"}] (user-mappings/get-user-mappings "elixirId" "elixir-alice")))
+        (let [cookie (login-with-cookies "elixir-alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner")))))))))
+
+
+(deftest user-name-test
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-name-attributes ["name" "name2"])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "bob" {:sub "bob" :name2 "Bob Applicant" :email "bob@example.com"}
+                            "malice" {:sub "malice" :email "malice@example.com"}} ; no name
+      (testing "log in alice"
+        (let [cookie (login-with-cookies "alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
+
+      (testing "log in bob"
+        (let [cookie (login-with-cookies "bob")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
+                 (users/get-user "bob")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
+
+      (testing "log in malice"
+        (let [cookie (login-with-cookies "malice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "malice" :name nil :email "malice@example.com"}
+                 (users/get-user "malice")
+                 (users/format-user (:identity (middleware/get-session cookie))))))))))
+
+(deftest user-email-test
+  (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
+    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                            "bob" {:sub "bob" :name "Bob Applicant" :email2 "bob@example.com"}
+                            "malice" {:sub "malice" :name "Malice Nomail"}} ; no email
+      (testing "log in alice"
+        (let [cookie (login-with-cookies "alice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                 (users/get-user "alice")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
+
+      (testing "log in bob"
+        (let [cookie (login-with-cookies "bob")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
+                 (users/get-user "bob")
+                 (users/format-user (:identity (middleware/get-session cookie)))))))
+
+      (testing "log in malice"
+        (let [cookie (login-with-cookies "malice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "malice" :name "Malice Nomail" :email nil}
+                 (users/get-user "malice")
+                 (users/format-user (:identity (middleware/get-session cookie))))))))))

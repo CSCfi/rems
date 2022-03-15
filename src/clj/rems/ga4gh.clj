@@ -114,7 +114,8 @@
                      (if (issuer-whitelisted? iss jku)
                        (do (when (:log-authentication-details env)
                              (log/debug "Validating visa" (pr-str visa) opened-visa))
-                           (try (visa->researcher-status-by (jwt/validate-visa visa (Instant/now)))
+                           (try (when-let [by (visa->researcher-status-by (jwt/validate-visa visa (Instant/now)))]
+                                  {:researcher-status-by by})
                                 (catch Throwable t
                                   (log/warn "Invalid visa" t))))
                        (do (log/warn ":ga4gh-visa-trusted-issuers does not contain " {:iss iss :jku jku})

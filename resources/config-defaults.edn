@@ -43,6 +43,10 @@
  ;; Show link to an alternative login service
  :alternative-login-url nil
 
+ ;; What login data is used when :authentication :fake configuration is enabled.
+ ;; Supported options: :test, :demo
+ :fake-authentication-data :test
+
  ;; For :oidc authentication
  ;; DEPRECATED, prefer :oidc-metadata-url instead
  :oidc-domain nil
@@ -53,14 +57,20 @@
  :oidc-client-secret nil
  ;; Which scopes to pass to the authorization endpoint
  :oidc-scopes "openid profile email"
- ;; Which id-token attribute to use as the rems userid. Can be either
- ;; single attribute or ["multiple" "attributes"] that are searched in
+ ;; Which id-token attribute to use as the rems userid. Must be a
+ ;; list of attributes [{:attribute "multiple"} {:attribute "attributes"}] that are searched in
  ;; order and the first non-empty one used.
- :oidc-userid-attribute "sub"
+ ;; Attribute can be renamed using :rename keyword: {:attribute "sub" :rename "elixirId"}
+ :oidc-userid-attributes [{:attribute "sub"}]
  ;; Additional query parameters to add to the OIDC authorization_endpoint url when logging in
  ;; Example:
  ;;   :oidc-additional-authorization-parameters "&acr_values=foo&ui_locales=sv"
  :oidc-additional-authorization-parameters nil
+
+ ;; List of attributes to try in order for a name, the first one will be used
+ :oidc-name-attributes ["name" "unique_name" "family_name"]
+ ;; List of attributes to try in order for an email address, the first one will be used
+ :oidc-email-attributes ["email"]
  ;; List of additional attributes to read from OIDC claims. Each attribute can have keys:
  ;;   :attribute (mandatory) - the name of the attribute as in the OIDC claim, a string
  ;;   :name (optional) - a map with languages as keys and the localized name for the attribute as values
