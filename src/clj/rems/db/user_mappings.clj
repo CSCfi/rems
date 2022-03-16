@@ -21,6 +21,10 @@
       validate-user-mapping
       db/create-user-mapping!))
 
+
+(defn delete-user-mapping! [userid]
+  (db/delete-user-mapping! {:userid userid}))
+
 (defn find-userid
   "Figures out the `userid` of a user reference.
 
@@ -32,3 +36,4 @@
       (assert (< (count mappings) 2) (str "Multiple users found with identity " (pr-str mappings)))
       (or (some :userid mappings)
           userid-or-ext-id))))
+

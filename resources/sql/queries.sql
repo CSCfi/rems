@@ -801,3 +801,7 @@ INSERT INTO user_mappings (userId, extIdAttribute, extIdValue)
 VALUES (:userid, :ext-id-attribute, :ext-id-value)
 ON CONFLICT (userId, extIdAttribute, extIdValue)
 DO NOTHING;
+
+-- :name delete-user-mapping! :!
+DELETE FROM user_mappings
+WHERE userId = :userid;
