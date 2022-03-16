@@ -289,8 +289,7 @@
                                 :comment ""}))
           "shouldn't be able to send command")
 
-      (is (= {:success false
-              :errors [{:userid "" :type "t.form.validation/invalid-user"}]}
+      (is (= "unauthorized"
              (send-command "" {:type :application.command/approve
                                :application-id application-id
                                :comment ""}))
