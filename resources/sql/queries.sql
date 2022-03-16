@@ -788,6 +788,9 @@ WHERE id = :id;
 SELECT extIdAttribute, extIdValue, userId
 FROM user_mappings
 WHERE 1 = 1
+/*~ (when (:userid params) */
+AND userId = :userid
+/*~ ) ~*/
 /*~ (when (:ext-id-attribute params) */
 AND extIdAttribute = :ext-id-attribute
 /*~ ) ~*/
