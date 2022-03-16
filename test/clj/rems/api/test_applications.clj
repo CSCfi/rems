@@ -312,7 +312,7 @@
                                     :comment ""}))
           "user should be forbidden to send command"))
 
-    (testing "assing external id"
+    (testing "assign external id"
       (is (= {:success true} (send-command handler-id
                                            {:type :application.command/assign-external-id
                                             :application-id application-id
