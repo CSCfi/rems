@@ -4,7 +4,7 @@ version: 2.1
 # TODO: use docker executor and setup_remote_docker for these builds.
 defaults: &defaults
   machine:
-    image: ubuntu-1604:201903-01
+    image: ubuntu-2004:202201-02
   working_directory: ~/repo
   environment:
     LEIN_ROOT: "true"
