@@ -661,11 +661,22 @@
   (when (and (:application-id cmd) (not application))
     {:errors [{:type :application-not-found}]}))
 
+(defn- find-users [cmd injections]
+  ;; actor is handled already in middleware
+  (case (:type cmd)
+    :application.command/add-member (update-in cmd [:member :userid] (getx injections :find-userid))
+    :application.command/remove-member (update-in cmd [:member :userid] (getx injections :find-userid))
+    :application.command/change-applicant (update-in cmd [:member :userid] (getx injections :find-userid))
+    :application.command/request-review (update cmd :reviewers #(mapv (getx injections :find-userid) %))
+    :application.command/request-decision (update cmd :deciders #(mapv (getx injections :find-userid) %))
+    cmd))
+
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
   (or (invalid-user-error (:actor cmd) injections)
       (application-not-found-error application cmd)
       (let [result (-> cmd
+                       (find-users injections)
                        (command-handler application injections)
                        (finalize-events cmd))]
         (or (when (:errors result) result) ;; prefer more specific errors

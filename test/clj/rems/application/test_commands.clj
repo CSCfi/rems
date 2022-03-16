@@ -149,7 +149,8 @@
                                  :application/external-id new-external-id})
    :copy-attachment! (fn [_new-app-id attachment-id]
                        (+ attachment-id 100))
-   :valid-user? dummy-valid-user?})
+   :valid-user? dummy-valid-user?
+   :find-userid identity})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -1054,7 +1055,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{handler-user-id "deity" "deity3"}}]
+        injections {:valid-user? #{handler-user-id "deity" "deity3"}
+                    :find-userid identity}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
@@ -1215,6 +1217,7 @@
 (deftest test-invite-member
   (let [application (apply-events nil [dummy-created-event])
         injections {:valid-user? #{"somebody" applicant-user-id handler-user-id"member1"}
+                    :find-userid identity
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can invite members"
       (is (= {:event/type :application.event/member-invited
@@ -1269,6 +1272,7 @@
 (deftest test-invite-reviewer-decider
   (let [application (apply-events nil [dummy-created-event])
         injections {:valid-user? #{"somebody" applicant-user-id handler-user-id"member1"}
+                    :find-userid identity
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can't invite reviewer for draft"
       (is (= {:errors [{:type :forbidden}]}
@@ -1350,7 +1354,8 @@
                                          :application/id app-id
                                          :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                          :invitation/token "very-secure"}])
-          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}}]
+          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}
+                      :find-userid identity}]
 
       (testing "can join draft"
         (is (= {:event/type :application.event/member-joined
@@ -1539,7 +1544,8 @@
                                     :event/actor handler-user-id
                                     :application/id app-id
                                     :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}}]
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}
+                    :find-userid identity}]
     (testing "applicant can remove members"
       (is (= {:event/type :application.event/member-removed
               :event/time test-time
@@ -1608,7 +1614,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{applicant-user-id handler-user-id}}]
+        injections {:valid-user? #{applicant-user-id handler-user-id}
+                    :find-userid identity}]
     (testing "uninvite member by applicant"
       (is (= {:event/type :application.event/member-uninvited
               :event/time test-time
@@ -1710,7 +1717,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{handler-user-id reviewer reviewer2 reviewer3}}]
+        injections {:valid-user? #{handler-user-id reviewer reviewer2 reviewer3}
+                    :find-userid identity}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
@@ -1848,6 +1856,7 @@
         wrong-user-attachment-id 1236
         unknown-attachment-id 1237
         injections {:valid-user? #{applicant-user-id handler-user-id reviewer}
+                    :find-userid identity
                     :get-attachment-metadata
                     {valid-attachment-id {:application/id (:application/id application)
                                           :attachment/id valid-attachment-id
@@ -2071,7 +2080,8 @@
                  :type :application.command/save-draft
                  :field-values []
                  :actor "applicant"}
-        injections {:valid-user? #{"applicant"}}]
+        injections {:valid-user? #{"applicant"}
+                    :find-userid identity}]
     (testing "executes command when user is authorized"
       (is (not (:errors (commands/handle-command command application injections)))))
     (testing "fails when command fails validation"

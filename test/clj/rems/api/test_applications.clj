@@ -163,9 +163,12 @@
 
 (deftest test-application-commands
   (let [user-id "alice"
-        handler-id "developer"
+        handler-id "handler"
+        handler-alt-id "handler-alt-id"
         reviewer-id "carl"
+        reviewer-alt-id "carl-alt-id"
         decider-id "elsa"
+        decider-alt-id "elsa-alt-id"
         license-id1 (test-helpers/create-license! {})
         license-id2 (test-helpers/create-license! {})
         license-id3 (test-helpers/create-license! {})
@@ -361,7 +364,34 @@
                   request-event (get-in application [:application/events eventcount])
                   review-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
-                     (:application/request-id review-event)))))))
+                     (:application/request-id review-event)))))
+
+          (testing "requesting review with alternate id"
+            (is (= {:success true} (send-command handler-alt-id
+                                                 {:type :application.command/request-review
+                                                  :application-id application-id
+                                                  :reviewers [reviewer-alt-id]
+                                                  :comment "What say you again?"}))))
+          (testing "reviewer can now review with alternate-id"
+            (is (= {:success true} (send-command reviewer-alt-id
+                                                 {:type :application.command/review
+                                                  :application-id application-id
+                                                  :comment "Yeah, I still dunno"}))))
+          (testing "review was linked to request"
+            (let [application (get-application-for-user application-id handler-id)
+                  request-event (get-in application [:application/events eventcount])
+                  review-event (get-in application [:application/events (inc eventcount)])]
+              (is (= (:application/request-id request-event)
+                     (:application/request-id review-event)))))
+
+          (testing "non-existent user"
+            (is (= {:success false
+                    :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+                   (send-command handler-id
+                                 {:type :application.command/request-review
+                                  :application-id application-id
+                                  :reviewers ["does-not-exist"]
+                                  :comment "What say you?"}))))))
 
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
@@ -403,11 +433,11 @@
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
           (is (= #{license-id1 license-id2} (license-ids-for-application application)))))
 
-      (testing "request-decision"
+      (testing "request-decision with alternate id"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/request-decision
                                               :application-id application-id
-                                              :deciders [decider-id]
+                                              :deciders [decider-alt-id]
                                               :comment ""}))))
       (testing "decide"
         (is (= {:success true} (send-command decider-id
@@ -445,6 +475,8 @@
                     "application.event/returned"
                     "application.event/resources-changed"
                     "application.event/submitted"
+                    "application.event/review-requested"
+                    "application.event/reviewed"
                     "application.event/review-requested"
                     "application.event/reviewed"
                     "application.event/licenses-added"
@@ -793,7 +825,7 @@
       (is (= {:success true}
              (send-command handler {:type :application.command/add-member
                                     :application-id app-id
-                                    :member {:userid "carl"}})))
+                                    :member {:userid "carl-alt-id"}})))
       (is (= {:success true}
              (send-command handler {:type :application.command/add-member
                                     :application-id app-id
@@ -802,7 +834,7 @@
       (is (= {:success true}
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
-                                    :member {:userid "carl"}})))
+                                    :member {:userid "carl-alt-id"}})))
       (let [application (get-application-for-user app-id applicant)]
         (is (= "carl" (get-in application [:application/applicant :userid])))
         (is (= #{"alice" "malice"} (->> application :application/members (map :userid) set)))
@@ -823,6 +855,12 @@
              (send-command "carl" {:type :application.command/change-applicant
                                    :application-id app-id
                                    :member {:userid "malice"}}))))
+
+    (testing "member can be removed with alternate id"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/remove-member
+                                    :application-id app-id
+                                    :member {:userid "malice-alt-id"}}))))
     (testing "can't promote non-member to applicant"
       (is (= {:success false :errors [{:type "user-not-member" :user {:userid "elsa"}}]}
              (send-command handler {:type :application.command/change-applicant
