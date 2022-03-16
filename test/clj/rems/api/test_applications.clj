@@ -287,13 +287,13 @@
              (send-command nil {:type :application.command/approve
                                 :application-id application-id
                                 :comment ""}))
-          "shouldn't be able to send command")
+          "shouldn't be able to send command with nil user")
 
       (is (= "unauthorized"
              (send-command "" {:type :application.command/approve
                                :application-id application-id
                                :comment ""}))
-          "shouldn't be able to send command"))
+          "shouldn't be able to send command with blank user"))
 
     (testing "send command with nonexistent user"
       (is (= {:success false
@@ -301,7 +301,7 @@
              (send-command "does-not-exist" {:type :application.command/approve
                                              :application-id application-id
                                              :comment ""}))
-          "user should be forbidden to send command"))
+          "with a valid api-key a non-existent user is invalid"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
