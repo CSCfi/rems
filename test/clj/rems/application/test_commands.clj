@@ -1216,7 +1216,7 @@
 
 (deftest test-invite-member
   (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id"member1"}
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
                     :find-userid identity
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can invite members"
@@ -1271,7 +1271,7 @@
 
 (deftest test-invite-reviewer-decider
   (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id"member1"}
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
                     :find-userid identity
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can't invite reviewer for draft"
