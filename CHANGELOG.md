@@ -15,6 +15,9 @@ Changes since v2.25
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
 
+### Fixes
+- Hide applicant column and zoom to avoid previous applications to become too wide (#2855)
+
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**
