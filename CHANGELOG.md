@@ -15,6 +15,9 @@ Changes since v2.25
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
 
+### Fixes
+- Duplicated forms have been removed. Previously, if a workflow form was the same as a catalogue item form, that form would be duplicated. (#2853)
+
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**
