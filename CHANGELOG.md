@@ -14,6 +14,7 @@ Changes since v2.25
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
+- Resources can be filtered in the API by `resid` (#2852)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 

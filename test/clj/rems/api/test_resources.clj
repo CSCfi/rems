@@ -265,7 +265,22 @@
             app-ids (set (map :id data))]
         (is (contains? app-ids enabled-id))
         (is (not (contains? app-ids disabled-id)))
-        (is (contains? app-ids archived-id))))))
+        (is (contains? app-ids archived-id))))
+    (testing "can filter by resid"
+      (let [other-enabled-id (:id (create-resource! {:resid "special"
+                                                     :organization {:organization/id "organization1"}
+                                                     :licenses []}
+                                                    +test-api-key+ user-id))
+            _ (:id (create-resource! {:resid "irrelevant"
+                                      :organization {:organization/id "organization1"}
+                                      :licenses []}
+                                     +test-api-key+ user-id))
+            data (-> (request :get "/api/resources?resid=special")
+                     (authenticate +test-api-key+ user-id)
+                     handler
+                     read-ok-body)
+            app-ids (set (map :id data))]
+        (is (= #{other-enabled-id} app-ids))))))
 
 (deftest resources-api-security-test
   (testing "without authentication"

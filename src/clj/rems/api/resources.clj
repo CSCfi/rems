@@ -43,10 +43,12 @@
       :summary "Get resources"
       :roles +admin-read-roles+
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
-                     {archived :- (describe s/Bool "whether to include archived resources") false}]
+                     {archived :- (describe s/Bool "whether to include archived resources") false}
+                     {resid :- (describe s/Str "optionally filter by resid (external resource identifier)") nil}]
       :return Resources
       (ok (resource/get-resources (merge (when-not disabled {:enabled true})
-                                         (when-not archived {:archived false})))))
+                                         (when-not archived {:archived false})
+                                         (when resid {:resid resid})))))
 
     (GET "/duo-codes" []
       :summary "Get DUO codes"

@@ -103,7 +103,12 @@ SELECT
   enabled,
   archived,
   resourcedata::TEXT
-FROM resource;
+FROM resource
+WHERE 1=1
+/*~ (when (:resid params) */
+  AND resid = :resid
+/*~ ) ~*/
+;
 
 -- :name get-resource :? :1
 SELECT
