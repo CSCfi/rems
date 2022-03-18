@@ -26,7 +26,9 @@ You can also authenticate by setting these two headers:
 - `x-rems-api-key` -- an API key
 - `x-rems-user-id` -- the user id of a user to impersonate
 
-API keys can be defined and modified using the `api-key` command line option to REMS. Here are some examples:
+API keys can be defined and modified using the `api-key` command line option to REMS. NB: API-Keys are cached for a minute.
+
+Here are some examples:
 
 ```sh
 # Get all API keys:
