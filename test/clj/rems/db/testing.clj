@@ -1,19 +1,16 @@
 (ns rems.db.testing
-  (:require [clj-time.core :as time]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.test :refer :all]
-            [clojure.tools.logging :as log]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.application.search]
             [rems.config :refer [env]]
-            [rems.db.api-key :as api-key]
             [rems.db.applications]
             [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
-            [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.user-mappings :as user-mappings]
             [rems.locales])
   (:import [org.joda.time Duration ReadableInstant]))
 
@@ -45,7 +42,8 @@
     (mount/start #'rems.db.applications/all-applications-cache)
     (f)
     (finally
-      (category/reset-cache!))))
+      (category/reset-cache!)
+      (user-mappings/reset-cache!))))
 
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
