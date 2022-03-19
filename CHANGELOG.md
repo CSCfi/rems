@@ -16,6 +16,9 @@ Changes since v2.25
 - You can configure the OIDC attributes for name and email (see configuration.md)
 - API-Keys are cached for a minute for a slight performance improvement. (#2785)
 
+### Fixes
+- An owner that is also an organization owner can now properly edit organization ownerships. (#2850)
+
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**

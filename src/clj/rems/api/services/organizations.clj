@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some find-first remove-keys]]
             [rems.api.services.dependencies :as dependencies]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.organizations :as organizations]
@@ -60,9 +61,10 @@
   (organizations/update-organization! (:organization/id org)
                                       (fn [db-organization]
                                         (let [organization-owners (set (map :userid (:organization/owners db-organization)))
-                                              organization-owner? (contains? organization-owners userid)]
+                                              organization-owner? (contains? organization-owners userid)
+                                              owner? (contains? context/*roles* :owner)]
                                           (merge db-organization
-                                                 (remove-keys (if organization-owner?
+                                                 (remove-keys (if (and organization-owner? (not owner?))
                                                                 #{:organization/id :organization/owners} ; org owner can't update owners
                                                                 #{:organization/id})
                                                               org)))))
