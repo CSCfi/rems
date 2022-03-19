@@ -29,7 +29,9 @@ You can also authenticate by setting these two headers:
 NB: For the user id it can be an internal REMS id or an external id configured in `config.edn` through `oidc-userid-attributes`.
 If the user can't be found, an error will be returned.
 
-API keys can be defined and modified using the `api-key` command line option to REMS. Here are some examples:
+API keys can be defined and modified using the `api-key` command line option to REMS. NB: API-Keys are cached for a minute.
+
+Here are some examples:
 
 ```sh
 # Get all API keys:

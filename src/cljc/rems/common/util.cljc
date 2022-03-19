@@ -554,3 +554,15 @@
   (is (= [] (replace-key [] :a :b)))
   (is (= {:b 1} (replace-key {:a 1} :a :b)))
   (is (= {:a 1} (replace-key {:a 1} :b :c))))
+
+(defn update-present
+  "Like clojure.core/update, but does nothing if the key `k` does not exist in `m`."
+  [m k f & args]
+  (if (find m k)
+    (apply update m k f args)
+    m))
+
+(deftest test-update-present
+  (is (= {:a 1} (update-present {:a 1} :b (constantly true))))
+  (is (= {:a 1 :b true} (update-present {:a 1 :b 2} :b (constantly true))))
+  (is (= {:a 1 :b true} (update-present {:a 1 :b nil} :b (constantly true)))))

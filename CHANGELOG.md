@@ -21,6 +21,7 @@ NB: The login has changed to allow more configurable user identity and other att
 
 ### Fixes
 - API-key validity is not checked unless it is actually sent. (#2785)
+- API-Keys are cached for a minute for a slight performance improvement. (#2785)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 

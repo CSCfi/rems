@@ -1,19 +1,30 @@
 (ns rems.db.api-key
-  (:require [clojure.test :refer :all]
+  (:require [clojure.core.memoize :as memo]
+            [clojure.test :refer :all]
+            [rems.common.util :refer [index-by update-present]]
             [rems.db.core :as db]
-            [rems.json :as json]
-            [rems.util :refer [update-present]]))
+            [rems.json :as json]))
 
 (defn- format-api-key [key]
   (-> key
       (update-present :users json/parse-string)
       (update-present :paths json/parse-string)))
 
+(defn- load-api-keys []
+  (->> (db/get-api-keys {})
+       (mapv format-api-key)
+       (index-by [:apikey])))
+
+;; API-Keys are cached for a while (60s).
+;; Whenever changed or removed through code, they are reloaded immediately.
+;; There won't be a difference in the timing, if an API-Key itself exists or not.
+(def ^:private api-key-memo (memo/ttl load-api-keys :ttl/threshold 60000))
+
 (defn get-api-key [key]
-  (format-api-key (db/get-api-key {:apikey key})))
+  (get (api-key-memo) key))
 
 (defn get-api-keys []
-  (mapv format-api-key (db/get-api-keys {})))
+  (vals (api-key-memo)))
 
 (defn- method= [method pattern]
   (or (= pattern "any")
@@ -58,11 +69,13 @@
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :users (when users (json/generate-string users))
-                       :paths (when paths (json/generate-string paths))}))
+                       :paths (when paths (json/generate-string paths))})
+  (memo/memo-clear! api-key-memo))
 
 (defn update-api-key! [key & [opts]]
   (add-api-key! key (merge (get-api-key key)
                            opts)))
 
 (defn delete-api-key! [key]
-  (db/delete-api-key! {:apikey key}))
+  (db/delete-api-key! {:apikey key})
+  (memo/memo-clear! api-key-memo))
