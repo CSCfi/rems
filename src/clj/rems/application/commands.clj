@@ -662,11 +662,15 @@
 (defn- find-users [cmd injections]
   ;; actor is handled already in middleware
   (case (:type cmd)
-    :application.command/add-member (update-in cmd [:member :userid] (getx injections :find-userid))
-    :application.command/remove-member (update-in cmd [:member :userid] (getx injections :find-userid))
-    :application.command/change-applicant (update-in cmd [:member :userid] (getx injections :find-userid))
-    :application.command/request-review (update cmd :reviewers #(mapv (getx injections :find-userid) %))
-    :application.command/request-decision (update cmd :deciders #(mapv (getx injections :find-userid) %))
+    (:application.command/add-member :application.command/remove-member :application.command/change-applicant)
+    (update-in cmd [:member :userid] (getx injections :find-userid))
+
+    :application.command/request-review
+    (update cmd :reviewers #(mapv (getx injections :find-userid) %))
+
+    :application.command/request-decision
+    (update cmd :deciders #(mapv (getx injections :find-userid) %))
+
     cmd))
 
 (defn handle-command [cmd application injections]
