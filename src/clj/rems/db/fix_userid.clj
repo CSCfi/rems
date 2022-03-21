@@ -13,6 +13,7 @@
             [rems.db.organizations]
             [rems.db.resource]
             [rems.db.roles]
+            [rems.db.user-mappings]
             [rems.db.user-secrets]
             [rems.db.user-settings]
             [rems.db.users]
@@ -230,13 +231,18 @@
   (when (rems.db.users/user-exists? old-userid) ; referential constraints will force this to exist at least
     (let [old-user (rems.db.users/get-user old-userid)
           old-settings (rems.db.user-settings/get-user-settings old-userid)
-          old-secrets (rems.db.user-secrets/get-user-secrets old-userid)]
-      (apply prn #'fix-user old-user old-settings old-secrets)
+          old-secrets (rems.db.user-secrets/get-user-secrets old-userid)
+          old-mappings (rems.db.user-mappings/get-user-mappings {:userid old-userid})]
+      (apply prn #'fix-user old-user old-settings old-secrets old-mappings)
       (when-not simulate?
         (rems.db.users/add-user! (assoc old-user :userid new-userid))
         (rems.db.user-secrets/update-user-secrets! new-userid old-secrets)
-        (rems.db.user-settings/update-user-settings! new-userid old-settings))
-      {:old {:user old-user :settings old-settings :secrets old-secrets}
+        (rems.db.user-settings/update-user-settings! new-userid old-settings)
+        (rems.db.user-mappings/delete-user-mapping! old-userid)
+        (doseq [old-mapping old-mappings
+                :when (not= (:ext-id-value old-mapping) new-userid)] ; not saved in login either
+          (rems.db.user-mappings/create-user-mapping! (assoc old-mapping :userid new-userid))))
+      {:old {:user old-user :settings old-settings :secrets old-secrets :mappings old-mappings}
        :params [new-userid]})))
 
 (defn remove-old-user [old-userid simulate?]
@@ -294,4 +300,5 @@
 
 (comment
   (fix-all "owner" "elsa" false)
-  (fix-all "alice" "frank" false))
+  (fix-all "alice" "frank" false)
+  (fix-all "elixir-alice" "alice" false))
