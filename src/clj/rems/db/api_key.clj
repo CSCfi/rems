@@ -1,14 +1,15 @@
 (ns rems.db.api-key
   (:require [clojure.core.memoize :as memo]
             [clojure.test :refer :all]
-            [rems.common.util :refer [index-by update-present]]
+            [medley.core :refer [update-existing]]
+            [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.json :as json]))
 
 (defn- format-api-key [key]
   (-> key
-      (update-present :users json/parse-string)
-      (update-present :paths json/parse-string)))
+      (update-existing :users json/parse-string)
+      (update-existing :paths json/parse-string)))
 
 (defn- load-api-keys []
   (->> (db/get-api-keys {})

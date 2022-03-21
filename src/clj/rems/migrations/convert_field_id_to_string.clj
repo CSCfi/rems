@@ -1,8 +1,6 @@
 (ns rems.migrations.convert-field-id-to-string
   (:require [hugsql.core :as hugsql]
-            [medley.core :refer [map-keys]]
-            [rems.json :as json]
-            [rems.util :refer [update-present]]))
+            [rems.json :as json]))
 
 ;; Converts the field/id from int to string
 
