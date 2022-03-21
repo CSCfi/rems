@@ -97,6 +97,7 @@
 (deftest catalogue-items-edit-test
   (let [owner "owner"
         user "alice"
+        _ (test-helpers/create-user! {:eppn "alice"})
         changed-organization1 (test-helpers/create-organization! {:organization/id "changed-organization1" :organization/owners [{:userid "organization-owner1"}]})
         changed-organization2 (test-helpers/create-organization! {:organization/id "changed-organization2" :organization/owners [{:userid "organization-owner1"}]})
         form-id (test-helpers/create-form! {:organization {:organization/id "organization1"}})

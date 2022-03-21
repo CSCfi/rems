@@ -93,8 +93,7 @@
                                                                   (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
    :get-attachment-metadata attachments/get-attachment-metadata
-   :get-catalogue-item-licenses get-catalogue-item-licenses
-   :valid-user? users/user-exists?})
+   :get-catalogue-item-licenses get-catalogue-item-licenses})
 
 (defn get-application-internal
   "Returns the full application state without any user permission

@@ -52,12 +52,12 @@
   (api-key/add-api-key! "42")
   (test-helpers/create-user! {:eppn +command-user+ :commonName "Owner" :mail "owner@example.com"} :owner)
   (test-helpers/create-user! {:eppn +fetch-user+} :reporter)
-  (test-helpers/create-user! {:eppn "user1" :email ""})
+  (test-helpers/create-user! {:eppn "user1" :email "" :mappings {"alt-id" "user1-alt-id"}})
   (test-helpers/create-user! {:eppn "user2" :email ""})
   (test-helpers/create-user! {:eppn "user3" :email ""})
-  (let [res-id-1 (test-helpers/create-resource! {:resource-ext-id "A"})
+  (let [_ (test-helpers/create-resource! {:resource-ext-id "A"})
         res-id-2 (test-helpers/create-resource! {:resource-ext-id "B"})
-        res-id-3 (test-helpers/create-resource! {:resource-ext-id "C"})
+        _ (test-helpers/create-resource! {:resource-ext-id "C"})
 
         cat-id (test-helpers/create-catalogue-item! {:resource-id res-id-2})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
@@ -71,7 +71,7 @@
       (add! {:blacklist/user {:userid "user1"}
              :blacklist/resource {:resource/ext-id "A"}
              :comment "bad"})
-      (add! {:blacklist/user {:userid "user1"}
+      (add! {:blacklist/user {:userid "user1-alt-id"}
              :blacklist/resource {:resource/ext-id "B"}
              :comment "quite bad"})
       (add! {:blacklist/user {:userid "user2"}
@@ -101,6 +101,13 @@
       (is (= [{:resource/ext-id "A" :userid "user1"}
               {:resource/ext-id "B" :userid "user1"}]
              (simplify (fetch {:user "user1"}))))
+      (is (= []
+             (simplify (fetch {:user "user1-alt-id-does-not-exist"})))
+          "alternate identity of user1, no mapping exists")
+      (is (= [{:resource/ext-id "A" :userid "user1"}
+              {:resource/ext-id "B" :userid "user1"}]
+             (simplify (fetch {:user "user1-alt-id"})))
+          "alternate identity of user1, from a mapping")
       (is (= [{:resource/ext-id "B" :userid "user1"}
               {:resource/ext-id "B" :userid "user2"}]
              (simplify (fetch {:resource "B"}))))

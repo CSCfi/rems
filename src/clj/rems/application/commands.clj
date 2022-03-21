@@ -1,10 +1,8 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL transform]]
             [medley.core :refer [assoc-some]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
@@ -661,10 +659,26 @@
   (when (and (:application-id cmd) (not application))
     {:errors [{:type :application-not-found}]}))
 
+(defn- find-users [cmd injections]
+  ;; actor is handled already in middleware
+  (case (:type cmd)
+    (:application.command/add-member :application.command/remove-member :application.command/change-applicant)
+    (update-in cmd [:member :userid] (getx injections :find-userid))
+
+    :application.command/request-review
+    (update cmd :reviewers #(mapv (getx injections :find-userid) %))
+
+    :application.command/request-decision
+    (update cmd :deciders #(mapv (getx injections :find-userid) %))
+
+    cmd))
+
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (or (application-not-found-error application cmd)
+  (or (invalid-user-error (:actor cmd) injections)
+      (application-not-found-error application cmd)
       (let [result (-> cmd
+                       (find-users injections)
                        (command-handler application injections)
                        (finalize-events cmd))]
         (or (when (:errors result) result) ;; prefer more specific errors

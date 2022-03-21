@@ -8,12 +8,19 @@ have notable changes.
 
 Changes since v2.25
 
+NB: The login has changed to allow more configurable user identity and other attributes. Consider this a big change worth some manual testing to see that everything works.
+
 ### Breaking changes
+- The actor of the command API (for applications) is now always validated. Previously, there was a chance that a non-existent user could be sent (used mostly by our internal tests). (#2771, #2824, #2772, #2821)
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
+- User in the API can be an internal REMS id or any of the `:oidc-userid-attributes` (provided that the user has logged in once and we have stored the identity. (#2821 #2772)
+
+### Fixes
+- API-key validity is not checked unless it is actually sent. (#2785)
 - API-Keys are cached for a minute for a slight performance improvement. (#2785)
 
 ## v2.25 "Meripuistotie" 2022-02-15
