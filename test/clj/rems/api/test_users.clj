@@ -132,6 +132,8 @@
                                                                                 {:attribute "old_sub"}])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                             "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+      (is (nil? (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
+
       (testing "log in alice"
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
@@ -140,27 +142,32 @@
                            +test-api-key+ "owner")))
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                  (users/get-user "alice")
-                 (users/format-user (:identity (middleware/get-session cookie)))))))
+                 (users/format-user (:identity (middleware/get-session cookie)))))
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner")))
+              "alice shows as active")))
 
       (testing "log in elixir-alice and create user mapping"
         (is (nil? (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
         (let [cookie (login-with-cookies "elixir-alice")]
           (assert-can-make-a-request! cookie)
-          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-                 (set (api-call :get "/api/users/active" nil
-                                +test-api-key+ "owner"))))
           (is (= [{:userid "alice"
                    :ext-id-value "elixir-alice"
                    :ext-id-attribute "elixirId"}]
-                 (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-avlue "elixir-alice"})))
+                 (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
           (is (= {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}
                  (users/get-user "alice")
                  (users/format-user (:identity (middleware/get-session cookie))))
-              "Attributes should be updated when logging in"))))
+              "Attributes should be updated when logging in")
+          (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                   {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
+                 (set (api-call :get "/api/users/active" nil
+                                +test-api-key+ "owner")))
+              "both alices show as active"))))
 
     (with-fake-login-users {"elixir-alice" {:sub "elixir-alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-      (testing "log in elixir-alice with user mapping"
+      (testing "log in elixir-alice with user mapping, no old_sub"
         (is (= [{:userid "alice"
                  :ext-id-value "elixir-alice"
                  :ext-id-attribute "elixirId"}]
@@ -170,7 +177,67 @@
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                    {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
                  (set (api-call :get "/api/users/active" nil
-                                +test-api-key+ "owner")))))))))
+                                +test-api-key+ "owner")))
+              "both alices show as active"))))
+
+    (testing "mappings create, get, delete"
+      (user-mappings/create-user-mapping! {:userid "alice"
+                                           :ext-id-value "alice-alt-id"
+                                           :ext-id-attribute "alt-id"})
+      (user-mappings/create-user-mapping! {:userid "alice"
+                                           :ext-id-value "alice-alt-id"
+                                           :ext-id-attribute "alt-id2"})
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+
+      (user-mappings/delete-user-mapping! "unrelated") ; should not affect tested data
+
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+
+      (user-mappings/delete-user-mapping! "alice")
+
+      (is (= nil (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
 
 
 (deftest user-name-test

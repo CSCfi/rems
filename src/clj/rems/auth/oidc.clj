@@ -30,14 +30,14 @@
   (for [{:keys [attribute rename]} (getx env :oidc-userid-attributes)
         :let [value (get id-data (keyword attribute))]
         :when value]
-    [(keyword (or rename attribute)) value]))
+    [(or rename attribute) value]))
 
 (deftest test-get-userid-attributes
   (with-redefs [env {:oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
                                               {:attribute "old_sub"}]}]
     (is (= [] (get-userid-attributes nil)))
-    (is (= [[:elixirId "elixir-alice"]
-            [:old_sub "alice"]]
+    (is (= [["elixirId" "elixir-alice"]
+            ["old_sub" "alice"]]
            (get-userid-attributes {:old_sub "alice"
                                    :sub "elixir-alice"
                                    :name "Alice Applicant"})))))

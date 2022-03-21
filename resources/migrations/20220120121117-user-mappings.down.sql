@@ -1,2 +1,1 @@
-DROP TABLE IF EXISTS user_mappings CASCADE;
-
+DROP TABLE IF EXISTS user_mappings;

@@ -9,10 +9,10 @@
             [clj-time.jdbc] ;; convert db timestamps to joda-time objects
             [clojure.java.jdbc]
             [clojure.set :refer [superset?]]
+            [clojure.string :as str]
             [conman.core :as conman]
             [mount.core :refer [defstate] :as mount]
-            [rems.config :refer [env]]
-            [clojure.string :as str]))
+            [rems.config :refer [env]]))
 
 ;; See docs/architecture/010-transactions.md
 (defn- hikaricp-settings []
