@@ -89,12 +89,37 @@
                               :organization/name {:fi "Organisaatiot API Test ORG 2"
                                                   :en "Organizations API Test ORG 2"}
                               :organization/short-name {:fi "ORG2" :en "ORG2"}
-                              :organization/owners [{:userid org-owner1} {:userid org-owner2}]
+                              :organization/owners [{:userid org-owner1} {:userid org-owner2} {:userid owner}]
                               :organization/review-emails [{:email "test@organization2.test.org"
                                                             :name {:fi "Organisaatiot 2 API Test ORG Katselmoijat"
                                                                    :en "Organizations 2 API Test ORG Reviewers"}}]}
                              api-key owner)]
           (is (= "organizations-api-test-org" (:organization/id data)))
+          (is (= {:organization/id "organizations-api-test-org"
+                  :organization/name {:fi "Organisaatiot API Test ORG 2"
+                                      :en "Organizations API Test ORG 2"}
+                  :organization/short-name {:fi "ORG2" :en "ORG2"}
+                  :organization/owners [{:userid org-owner1 :email "organization-owner1@example.com" :name "Organization Owner 1"}
+                                        {:userid org-owner2 :email "organization-owner2@example.com" :name "Organization Owner 2"}
+                                        {:userid owner :email "owner@example.com" :name "Owner"}]
+                  :organization/review-emails [{:email "test@organization2.test.org"
+                                                :name {:fi "Organisaatiot 2 API Test ORG Katselmoijat"
+                                                       :en "Organizations 2 API Test ORG Reviewers"}}]
+                  :enabled true
+                  :archived false}
+                 (find-first (comp #{"organizations-api-test-org"} :organization/id) (get-orgs owner))
+                 (get-org owner "organizations-api-test-org"))))
+        (testing "that is also an organization owner can edit"
+          (api-call :put "/api/organizations/edit"
+                    {:organization/id "organizations-api-test-org"
+                     :organization/name {:fi "Organisaatiot API Test ORG 2"
+                                         :en "Organizations API Test ORG 2"}
+                     :organization/short-name {:fi "ORG2" :en "ORG2"}
+                     :organization/owners [{:userid org-owner1} {:userid org-owner2}]
+                     :organization/review-emails [{:email "test@organization2.test.org"
+                                                   :name {:fi "Organisaatiot 2 API Test ORG Katselmoijat"
+                                                          :en "Organizations 2 API Test ORG Reviewers"}}]}
+                    api-key owner)
           (is (= {:organization/id "organizations-api-test-org"
                   :organization/name {:fi "Organisaatiot API Test ORG 2"
                                       :en "Organizations API Test ORG 2"}

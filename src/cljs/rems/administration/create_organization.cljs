@@ -179,7 +179,8 @@
 (defn- organization-owners-field []
   (let [form @(rf/subscribe [::form])
         all-owners @(rf/subscribe [::available-owners])
-        selected-owners (set (map :userid (get-in form [:organization/owners])))]
+        selected-owners (set (map :userid (get-in form [:organization/owners])))
+        roles @(rf/subscribe [:roles])]
     [:div.form-group
      [:label.administration-field-label
       {:for owners-dropdown-id}
@@ -191,7 +192,8 @@
        :item-label :display
        :item-selected? #(contains? selected-owners (% :userid))
        :multi? true
-       :disabled? (some #{:organization-owner} @(rf/subscribe [:roles]))
+       :disabled? (and (some #{:organization-owner} roles)
+                       (not (some #{:owner} roles)))
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
