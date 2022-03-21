@@ -15,8 +15,9 @@
   (get-in request [:headers "x-rems-api-key"]))
 
 (defn get-api-user [request]
-  (when-some [userid (get-in request [:headers "x-rems-user-id"])]
-    (user-mappings/find-userid userid)))
+  (-> request
+      (get-in [:headers "x-rems-user-id"])
+      user-mappings/find-userid))
 
 (defn- api-key-backend []
   (reify

@@ -36,7 +36,7 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (blacklist/get-blacklist {:userid (when user (user-mappings/find-userid user))
+      (ok (blacklist/get-blacklist {:userid (user-mappings/find-userid user)
                                     :resource/ext-id resource})))
 
     (GET "/users" []
