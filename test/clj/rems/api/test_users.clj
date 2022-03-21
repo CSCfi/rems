@@ -178,7 +178,66 @@
                    {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
                  (set (api-call :get "/api/users/active" nil
                                 +test-api-key+ "owner")))
-              "both alices show as active"))))))
+              "both alices show as active"))))
+
+    (testing "mappings create, get, delete"
+      (user-mappings/create-user-mapping! {:userid "alice"
+                                           :ext-id-value "alice-alt-id"
+                                           :ext-id-attribute "alt-id"})
+      (user-mappings/create-user-mapping! {:userid "alice"
+                                           :ext-id-value "alice-alt-id"
+                                           :ext-id-attribute "alt-id2"})
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+
+      (user-mappings/delete-user-mapping! "unrelated") ; should not affect tested data
+
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [{:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id"}
+              {:userid "alice"
+               :ext-id-value "alice-alt-id"
+               :ext-id-attribute "alt-id2"}]
+             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+
+      (user-mappings/delete-user-mapping! "alice")
+
+      (is (= nil (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
 
 
 (deftest user-name-test

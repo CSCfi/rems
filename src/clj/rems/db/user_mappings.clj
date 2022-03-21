@@ -58,7 +58,7 @@
   (swap! user-mappings-by-value
          (fn [mappings]
            (->> mappings
-                vals
+                (mapcat val)
                 (remove #(= userid (:userid %)))
                 (group-by :ext-id-value)))))
 
