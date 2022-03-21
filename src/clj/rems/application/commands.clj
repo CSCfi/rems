@@ -1,10 +1,8 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL transform]]
             [medley.core :refer [assoc-some]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
