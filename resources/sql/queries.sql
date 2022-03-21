@@ -788,6 +788,9 @@ WHERE id = :id;
 SELECT extIdAttribute, extIdValue, userId
 FROM user_mappings
 WHERE 1 = 1
+/*~ (when (:userid params) */
+AND userId = :userid
+/*~ ) ~*/
 /*~ (when (:ext-id-attribute params) */
 AND extIdAttribute = :ext-id-attribute
 /*~ ) ~*/
@@ -801,3 +804,7 @@ INSERT INTO user_mappings (userId, extIdAttribute, extIdValue)
 VALUES (:userid, :ext-id-attribute, :ext-id-value)
 ON CONFLICT (userId, extIdAttribute, extIdValue)
 DO NOTHING;
+
+-- :name delete-user-mapping! :!
+DELETE FROM user_mappings
+WHERE userId = :userid;

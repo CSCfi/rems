@@ -106,6 +106,7 @@
 
 (deftest test-health-api
   ;; create at least one event
+  (test-helpers/create-user! {:eppn "alice"})
   (test-helpers/create-application! {:actor "alice"})
   (let [body (-> (request :get "/api/health")
                  handler

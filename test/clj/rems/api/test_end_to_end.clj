@@ -153,7 +153,7 @@
                    (api-call :post "/api/workflows/create" {:organization {:organization/id "e2e"}
                                                             :title "e2e workflow"
                                                             :type :workflow/default
-                                                            :forms [{:form/id wf-form-id}]
+                                                            :forms [{:form/id wf-form-id} {:form/id form-id}]
                                                             :handlers [handler-id]}
                              api-key owner-id)))
 

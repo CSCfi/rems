@@ -8,8 +8,9 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [getx-user-id]]
+            [rems.util :refer [getx-in getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
@@ -25,13 +26,6 @@
          :blacklist/added-by schema-base/UserWithAttributes
          :blacklist/added-at DateTime))
 
-(defn- format-blacklist-entry [entry]
-  {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}
-   :blacklist/user (users/get-user (:userid entry))
-   :blacklist/added-at (:event/time entry)
-   :blacklist/comment (:event/comment entry)
-   :blacklist/added-by (users/get-user (:event/actor entry))})
-
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
@@ -42,10 +36,8 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (->> (blacklist/get-blacklist {:userid user
-                                     :resource/ext-id resource})
-           (mapv format-blacklist-entry)
-           (ok)))
+      (ok (blacklist/get-blacklist {:userid (user-mappings/find-userid user)
+                                    :resource/ext-id resource})))
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
@@ -60,11 +52,13 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/add-user-to-blacklist! (getx-user-id) command)
-      (doseq [cmd (rejecter-bot/reject-all-applications-by (get-in command [:blacklist/user :userid]))]
-        (let [result (command/command! cmd)]
-          (when (:errors result)
-            (log/error "Failure when running rejecter bot commands:" {:cmd cmd :result result}))))
+      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+            command (assoc-in command [:blacklist/user :userid] userid)]
+        (blacklist/add-user-to-blacklist! (getx-user-id) command)
+        (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
+          (let [result (command/command! cmd)]
+            (when (:errors result)
+              (log/error "Failure when running rejecter bot commands:" {:cmd cmd :result result})))))
 
       (ok {:success true}))
 
@@ -73,5 +67,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/remove-user-from-blacklist! (getx-user-id) command)
-      (ok {:success true}))))
+      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+            command (assoc-in command [:blacklist/user :userid] userid)]
+        (blacklist/remove-user-from-blacklist! (getx-user-id) command)
+        (ok {:success true})))))

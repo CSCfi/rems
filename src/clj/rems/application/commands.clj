@@ -1,10 +1,8 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL transform]]
-            [medley.core :refer [assoc-some]]
+            [medley.core :refer [assoc-some distinct-by]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
@@ -299,13 +297,14 @@
                       :event/attachments (when-let [att (:attachments cmd)]
                                            (vec att))))))
 
-(defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+(defn- build-forms-list [workflow catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
        (mapv :formid)
        (remove nil?)
-       (distinct)
-       (mapv (fn [form-id] {:form/id form-id}))))
+       (mapv (fn [form-id] {:form/id form-id}))
+       (concat (get-in workflow [:workflow :forms])) ; NB: workflow forms end up first
+       (distinct-by :form/id)))
 
 (defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
@@ -348,8 +347,7 @@
                  :application/external-id (:application/external-id ids)
                  :application/resources (build-resources-list catalogue-item-ids injections)
                  :application/licenses (build-licenses-list catalogue-item-ids injections)
-                 :application/forms (concat (get-in workflow [:workflow :forms])
-                                            (build-forms-list catalogue-item-ids injections))
+                 :application/forms (build-forms-list workflow catalogue-item-ids injections)
                  :workflow/id workflow-id
                  :workflow/type workflow-type}})))
 
@@ -494,8 +492,7 @@
         (changes-original-workflow application cat-ids (:actor cmd) injections)
         (add-comment-and-attachments cmd injections
                                      {:event/type :application.event/resources-changed
-                                      :application/forms (concat (get-in workflow [:workflow :forms])
-                                                                 (build-forms-list cat-ids injections))
+                                      :application/forms (build-forms-list workflow cat-ids injections)
                                       :application/resources (build-resources-list cat-ids injections)
                                       :application/licenses (build-licenses-list cat-ids injections)}))))
 
@@ -661,10 +658,26 @@
   (when (and (:application-id cmd) (not application))
     {:errors [{:type :application-not-found}]}))
 
+(defn- find-users [cmd injections]
+  ;; actor is handled already in middleware
+  (case (:type cmd)
+    (:application.command/add-member :application.command/remove-member :application.command/change-applicant)
+    (update-in cmd [:member :userid] (getx injections :find-userid))
+
+    :application.command/request-review
+    (update cmd :reviewers #(mapv (getx injections :find-userid) %))
+
+    :application.command/request-decision
+    (update cmd :deciders #(mapv (getx injections :find-userid) %))
+
+    cmd))
+
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (or (application-not-found-error application cmd)
+  (or (invalid-user-error (:actor cmd) injections)
+      (application-not-found-error application cmd)
       (let [result (-> cmd
+                       (find-users injections)
                        (command-handler application injections)
                        (finalize-events cmd))]
         (or (when (:errors result) result) ;; prefer more specific errors

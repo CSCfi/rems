@@ -30,10 +30,10 @@
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer" :nickname "The Dev"}
    "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant" :organizations [{:organization/id "default"}] :nickname "In Wonderland" :researcher-status-by "so"}
-   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
-   "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
-   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
-   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value" :mappings {"alt-id" "malice-alt-id"}}
+   "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler" :mappings {"alt-id" "handler-alt-id"}}
+   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer" :mappings {"alt-id" "carl-alt-id"}}
+   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless" :mappings {"alt-id" "elsa-alt-id"}}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1"}
    "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}

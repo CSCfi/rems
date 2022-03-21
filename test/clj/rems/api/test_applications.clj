@@ -163,9 +163,12 @@
 
 (deftest test-application-commands
   (let [user-id "alice"
-        handler-id "developer"
+        handler-id "handler"
+        handler-alt-id "handler-alt-id"
         reviewer-id "carl"
+        reviewer-alt-id "carl-alt-id"
         decider-id "elsa"
+        decider-alt-id "elsa-alt-id"
         license-id1 (test-helpers/create-license! {})
         license-id2 (test-helpers/create-license! {})
         license-id3 (test-helpers/create-license! {})
@@ -283,12 +286,25 @@
                                 :comment "this is a remark"}))))))
 
     (testing "send command without user"
-      (is (= {:success false
-              :errors [{:type "forbidden"}]}
+      (is (= "unauthorized"
+             (send-command nil {:type :application.command/approve
+                                :application-id application-id
+                                :comment ""}))
+          "shouldn't be able to send command with nil user")
+
+      (is (= "unauthorized"
              (send-command "" {:type :application.command/approve
                                :application-id application-id
                                :comment ""}))
-          "user should be forbidden to send command"))
+          "shouldn't be able to send command with blank user"))
+
+    (testing "send command with nonexistent user"
+      (is (= {:success false
+              :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+             (send-command "does-not-exist" {:type :application.command/approve
+                                             :application-id application-id
+                                             :comment ""}))
+          "with a valid api-key a non-existent user is invalid"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
@@ -298,7 +314,7 @@
                                     :comment ""}))
           "user should be forbidden to send command"))
 
-    (testing "assing external id"
+    (testing "assign external id"
       (is (= {:success true} (send-command handler-id
                                            {:type :application.command/assign-external-id
                                             :application-id application-id
@@ -348,7 +364,34 @@
                   request-event (get-in application [:application/events eventcount])
                   review-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
-                     (:application/request-id review-event)))))))
+                     (:application/request-id review-event)))))
+
+          (testing "requesting review with alternate id"
+            (is (= {:success true} (send-command handler-alt-id
+                                                 {:type :application.command/request-review
+                                                  :application-id application-id
+                                                  :reviewers [reviewer-alt-id]
+                                                  :comment "What say you again?"}))))
+          (testing "reviewer can now review with alternate-id"
+            (is (= {:success true} (send-command reviewer-alt-id
+                                                 {:type :application.command/review
+                                                  :application-id application-id
+                                                  :comment "Yeah, I still dunno"}))))
+          (testing "review was linked to request"
+            (let [application (get-application-for-user application-id handler-id)
+                  request-event (get-in application [:application/events eventcount])
+                  review-event (get-in application [:application/events (inc eventcount)])]
+              (is (= (:application/request-id request-event)
+                     (:application/request-id review-event)))))
+
+          (testing "non-existent user"
+            (is (= {:success false
+                    :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+                   (send-command handler-id
+                                 {:type :application.command/request-review
+                                  :application-id application-id
+                                  :reviewers ["does-not-exist"]
+                                  :comment "What say you?"}))))))
 
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
@@ -390,11 +433,11 @@
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
           (is (= #{license-id1 license-id2} (license-ids-for-application application)))))
 
-      (testing "request-decision"
+      (testing "request-decision with alternate id"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/request-decision
                                               :application-id application-id
-                                              :deciders [decider-id]
+                                              :deciders [decider-alt-id]
                                               :comment ""}))))
       (testing "decide"
         (is (= {:success true} (send-command decider-id
@@ -432,6 +475,8 @@
                     "application.event/returned"
                     "application.event/resources-changed"
                     "application.event/submitted"
+                    "application.event/review-requested"
+                    "application.event/reviewed"
                     "application.event/review-requested"
                     "application.event/reviewed"
                     "application.event/licenses-added"
@@ -511,7 +556,13 @@
     (testing "creating"
       (is (some? application-id))
       (let [created (get-application-for-user application-id user-id)]
-        (is (= "application.state/draft" (get created :application/state)))))
+        (is (= "application.state/draft" (get created :application/state))))
+
+      (testing "fails with invalid user"
+        (is (= {:success false
+                :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+               (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
+                         "42" "does-not-exist")))))
 
     (testing "seeing draft is forbidden"
       (testing "as unrelated user"
@@ -524,10 +575,16 @@
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-command "bob" {:type :application.command/save-draft
-                                  :application-id application-id
-                                  :field-values []}))))
+             (send-command "frank" {:type :application.command/save-draft
+                                    :application-id application-id
+                                    :field-values []}))))
     (testing "submitting"
+      (testing "fails with invalid user"
+        (is (= {:success false
+                :errors [{:userid "does-not-exist" :type "t.form.validation/invalid-user"}]}
+               (send-command "does-not-exist" {:type :application.command/submit
+                                               :application-id application-id}))))
+
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id application-id})))
@@ -683,6 +740,9 @@
         applicant "alice"
         handler "developer"
         app-id (test-helpers/create-application! {:actor applicant})]
+    (test-helpers/create-user! {:eppn "member1"})
+    (test-helpers/create-user! {:eppn "reviewer1"})
+    (test-helpers/create-user! {:eppn "decider1"})
     (testing "invite member for draft as applicant"
       (is (= {:success true}
              (send-command applicant {:type :application.command/invite-member
@@ -765,7 +825,7 @@
       (is (= {:success true}
              (send-command handler {:type :application.command/add-member
                                     :application-id app-id
-                                    :member {:userid "carl"}})))
+                                    :member {:userid "carl-alt-id"}})))
       (is (= {:success true}
              (send-command handler {:type :application.command/add-member
                                     :application-id app-id
@@ -774,7 +834,7 @@
       (is (= {:success true}
              (send-command handler {:type :application.command/change-applicant
                                     :application-id app-id
-                                    :member {:userid "carl"}})))
+                                    :member {:userid "carl-alt-id"}})))
       (let [application (get-application-for-user app-id applicant)]
         (is (= "carl" (get-in application [:application/applicant :userid])))
         (is (= #{"alice" "malice"} (->> application :application/members (map :userid) set)))
@@ -795,6 +855,12 @@
              (send-command "carl" {:type :application.command/change-applicant
                                    :application-id app-id
                                    :member {:userid "malice"}}))))
+
+    (testing "member can be removed with alternate id"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/remove-member
+                                    :application-id app-id
+                                    :member {:userid "malice-alt-id"}}))))
     (testing "can't promote non-member to applicant"
       (is (= {:success false :errors [{:type "user-not-member" :user {:userid "elsa"}}]}
              (send-command handler {:type :application.command/change-applicant
