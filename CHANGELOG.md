@@ -26,6 +26,9 @@ NB: The login has changed to allow more configurable user identity and other att
 ### Fixes
 - Hide applicant column and zoom to avoid previous applications to become too wide (#2855)
 
+### Fixes
+- Duplicated forms have been removed. Previously, if a workflow form was the same as a catalogue item form, that form would be duplicated. (#2853)
+
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**

@@ -1,6 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [assoc-some]]
+            [medley.core :refer [assoc-some distinct-by]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.form-validation :as form-validation]
@@ -297,13 +297,14 @@
                       :event/attachments (when-let [att (:attachments cmd)]
                                            (vec att))))))
 
-(defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+(defn- build-forms-list [workflow catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
        (mapv :formid)
        (remove nil?)
-       (distinct)
-       (mapv (fn [form-id] {:form/id form-id}))))
+       (mapv (fn [form-id] {:form/id form-id}))
+       (concat (get-in workflow [:workflow :forms])) ; NB: workflow forms end up first
+       (distinct-by :form/id)))
 
 (defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
@@ -346,8 +347,7 @@
                  :application/external-id (:application/external-id ids)
                  :application/resources (build-resources-list catalogue-item-ids injections)
                  :application/licenses (build-licenses-list catalogue-item-ids injections)
-                 :application/forms (concat (get-in workflow [:workflow :forms])
-                                            (build-forms-list catalogue-item-ids injections))
+                 :application/forms (build-forms-list workflow catalogue-item-ids injections)
                  :workflow/id workflow-id
                  :workflow/type workflow-type}})))
 
@@ -492,8 +492,7 @@
         (changes-original-workflow application cat-ids (:actor cmd) injections)
         (add-comment-and-attachments cmd injections
                                      {:event/type :application.event/resources-changed
-                                      :application/forms (concat (get-in workflow [:workflow :forms])
-                                                                 (build-forms-list cat-ids injections))
+                                      :application/forms (build-forms-list workflow cat-ids injections)
                                       :application/resources (build-resources-list cat-ids injections)
                                       :application/licenses (build-licenses-list cat-ids injections)}))))
 

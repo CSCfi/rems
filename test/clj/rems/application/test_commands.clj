@@ -59,7 +59,7 @@
                        :handlers [{:userid handler-user-id
                                    :name "user"
                                    :email "user@example.com"}]
-                       :forms [{:form/id 3} {:form/id 4}]}}}
+                       :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
         id))
 (defn- dummy-get-form-template [id]
   (getx {1 {:form/id 1
@@ -311,7 +311,7 @@
                             :catalogue-item-ids [1 3]}
                        injections))))
 
-  (testing "workflow form, multiple catalogue items with different forms"
+  (testing "workflow form, multiple catalogue items with different forms, workflow has duplicated catalogue item form"
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id
             :event/time (DateTime. 1000)
@@ -320,7 +320,8 @@
             :application/resources [{:catalogue-item/id 4 :resource/ext-id "res4"}
                                     {:catalogue-item/id 5 :resource/ext-id "res5"}]
             :application/licenses []
-            :application/forms [{:form/id 3} {:form/id 4} {:form/id 1} {:form/id 2}]
+            ;; NB: form/id 1 is also a workflow form
+            :application/forms [{:form/id 1} {:form/id 3} {:form/id 4} {:form/id 2}] ; wf forms first, then catalogue item forms
             :workflow/id 2
             :workflow/type :workflow/default}
            (ok-command nil {:type :application.command/create
