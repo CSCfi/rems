@@ -79,7 +79,7 @@
 (defn- find-user [id-data]
   (let [userid-attrs (get-userid-attributes id-data)
         user-mapping-match (fn [[attribute value]]
-                             (let [mappings (user-mappings/get-user-mappings attribute value)]
+                             (let [mappings (user-mappings/get-user-mappings {:ext-id-attribute attribute :ext-id-value value})]
                                (:userid (first mappings))))] ; should be at most one by kv search
     (or (some user-mapping-match userid-attrs)
         (find-first users/user-exists? (map second userid-attrs)))))

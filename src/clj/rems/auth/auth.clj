@@ -8,13 +8,16 @@
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
             [ring.util.response :refer [redirect]]))
 
 (defn get-api-key [request]
   (get-in request [:headers "x-rems-api-key"]))
 
 (defn get-api-user [request]
-  (get-in request [:headers "x-rems-user-id"]))
+  (-> request
+      (get-in [:headers "x-rems-user-id"])
+      user-mappings/find-userid))
 
 (defn- api-key-backend []
   (reify
@@ -33,10 +36,15 @@
 
 (defn- wrap-uses-valid-api-key [handler]
   (fn [request]
-    (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request)
-                                                                 (get-api-user request)
-                                                                 (:request-method request)
-                                                                 (:uri request))))))
+
+    (handler (assoc request :uses-valid-api-key?
+                    (if-some [api-key (get-api-key request)] ; don't try to check without
+
+                      (api-key/valid? api-key
+                                      (get-api-user request)
+                                      (:request-method request)
+                                      (:uri request))
+                      false)))))
 
 (defn wrap-auth [handler]
   (wrap-uses-valid-api-key

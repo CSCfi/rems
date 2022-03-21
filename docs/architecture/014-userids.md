@@ -205,6 +205,10 @@ We can also use Lucene to implement user searching.
 
 [Issue #2774](https://github.com/CSCfi/rems/issues/2774)
 
+## Push / post etc. outbound APIs
+
+See issue https://github.com/CSCfi/rems/issues/2888.
+
 ## Notes
 
 2022-01-24 We discussed whether we should store or show more attributes of the users. For example, should the handler see the identities of the user. The old attributes are always replaced when the user comes again so changing IdP also may change the email (or other attributes), which could confuse the handler. We decided not to do anything about this yet, since this is existing behavior. Also storing old attributes might mean that we store and show a user's old email or name and there is no way to change them if the authentication method is removed.

@@ -6,8 +6,7 @@
   For development purposes with Figwheel the styles are rendered to
   `target/resources/public/css/:language/screen.css` whenever this ns is evaluated
   so that Figwheel can autoreload them."
-  (:require [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [garden.color :as c]
@@ -79,6 +78,8 @@
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom "none"}])
+   (stylesheet/at-media {:max-width (:lg bootstrap-media-breakpoints)}
+                        [:.md-z80 {:zoom "80%"}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}

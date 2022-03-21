@@ -129,6 +129,8 @@
 (defn- dummy-get-config []
   {})
 
+(def ^:private dummy-valid-user? #{applicant-user-id handler-user-id "somebody" "somebody2" "member1" "member2"})
+
 (def allocated-new-ids? (atom false))
 (def ^:private injections
   {:blacklisted? (constantly false)
@@ -146,7 +148,9 @@
                                 {:application/id new-app-id
                                  :application/external-id new-external-id})
    :copy-attachment! (fn [_new-app-id attachment-id]
-                       (+ attachment-id 100))})
+                       (+ attachment-id 100))
+   :valid-user? dummy-valid-user?
+   :find-userid identity})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -163,27 +167,23 @@
     (assoc :application-id app-id)))
 
 (defn- fail-command
-  ([application cmd]
-   (fail-command application cmd nil))
-  ([application cmd injections]
-   (let [cmd (set-command-defaults cmd)
-         result (commands/handle-command cmd application injections)]
-     (assert-ex (:errors result) {:cmd cmd :result result})
-     result)))
+  [application cmd injections]
+  (let [cmd (set-command-defaults cmd)
+        result (commands/handle-command cmd application injections)]
+    (assert-ex (:errors result) {:cmd cmd :result result})
+    result))
 
 (defn- ok-command
-  ([application cmd]
-   (ok-command application cmd nil))
-  ([application cmd injections]
-   (let [cmd (set-command-defaults cmd)
-         result (commands/handle-command cmd application injections)]
-     (assert-ex (not (:errors result)) {:cmd cmd :result result})
-     (let [events (:events result)]
-       (events/validate-events events)
-       ;; most tests expect only one event, so this avoids having to wrap the expectation to a list
-       (if (= 1 (count events))
-         (first events)
-         events)))))
+  [application cmd injections]
+  (let [cmd (set-command-defaults cmd)
+        result (commands/handle-command cmd application injections)]
+    (assert-ex (not (:errors result)) {:cmd cmd :result result})
+    (let [events (:events result)]
+      (events/validate-events events)
+      ;; most tests expect only one event, so this avoids having to wrap the expectation to a list
+      (if (= 1 (count events))
+        (first events)
+        events))))
 
 (defn- apply-command
   ([application cmd]
@@ -253,6 +253,13 @@
                             :actor applicant-user-id
                             :catalogue-item-ids [6]}
                        injections))))
+
+  (testing "error: invalid actor"
+    (is (= {:errors [{:userid "does-not-exist", :type :t.form.validation/invalid-user}]}
+           (fail-command nil {:type :application.command/create
+                              :actor "does-not-exist"
+                              :catalogue-item-ids [1]}
+                         injections))))
 
   (testing "error: zero catalogue items"
     (is (= {:errors [{:type :must-not-be-empty
@@ -353,7 +360,8 @@
                          {:type :application.command/save-draft
                           :actor applicant-user-id
                           :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}))))
+                                         {:form 1 :field "2" :value "bar"}]}
+                         injections))))
     (testing "saves a draft"
       (is (= {:event/type :application.event/draft-saved
               :event/time test-time
@@ -365,14 +373,16 @@
                          {:type :application.command/save-draft
                           :actor applicant-user-id
                           :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}))))
+                                         {:form 1 :field "2" :value "bar"}]}
+                         injections))))
 
     (testing "does not save a draft when validations fail"
       (is (= {:errors [{:field-id "1", :type :t.form.validation/invalid-value :form-id 1}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}))))
+                            :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
+                           injections))))
 
     (testing "validation of conditional fields"
       (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
@@ -382,14 +392,16 @@
                              {:type :application.command/save-draft
                               :actor applicant-user-id
                               :field-values [{:form 7 :field "7" :value "y"}
-                                             {:form 7 :field "8" :value "invalid_email"}]}))
+                                             {:form 7 :field "8" :value "invalid_email"}]}
+                             injections))
             "visible field should not accept invalid values")
         (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
                               :field-values [{:form 7 :field "7" :value "n"}
-                                             {:form 7 :field "8" :value "invalid_email"}]}))
+                                             {:form 7 :field "8" :value "invalid_email"}]}
+                             injections))
             "invisible should not accept invalid values")
         (is (= {:event/type :application.event/draft-saved
                 :event/time test-time
@@ -401,7 +413,8 @@
                            {:type :application.command/save-draft
                             :actor applicant-user-id
                             :field-values [{:form 7 :field "7" :value "y"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+                                           {:form 7 :field "8" :value "valid@example.com"}]}
+                           injections))
             "answers to visible fields should get stored")
         (is (= {:event/type :application.event/draft-saved
                 :event/time test-time
@@ -412,21 +425,24 @@
                            {:type :application.command/save-draft
                             :actor applicant-user-id
                             :field-values [{:form 7 :field "7" :value "n"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}))
+                                           {:form 7 :field "8" :value "valid@example.com"}]}
+                           injections))
             "answers to invisible fields should get dropped")))
 
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
-                            :actor "non-applicant"
+                            :actor "somebody"
                             :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]})
+                                           {:form 1 :field "2" :value "bar"}]}
+                           injections)
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
                             :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}))))
+                                           {:form 1 :field "2" :value "bar"}]}
+                           injections))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -437,7 +453,8 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values [{:form 1 :field "1" :value "bar"}]})))))
+                              :field-values [{:form 1 :field "1" :value "bar"}]}
+                             injections)))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -457,7 +474,8 @@
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "bar"}]})))))))
+                            :field-values [{:form 1 :field "1" :value "bar"}]}
+                           injections)))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
@@ -469,7 +487,8 @@
            (ok-command application
                        {:type :application.command/accept-licenses
                         :actor applicant-user-id
-                        :accepted-licenses [1 2]})))))
+                        :accepted-licenses [1 2]}
+                       injections)))))
 
 (deftest test-add-licenses
   (let [application (apply-events nil [dummy-created-event
@@ -487,13 +506,15 @@
                        {:type :application.command/add-licenses
                         :actor handler-user-id
                         :comment "comment"
-                        :licenses [1 2]})))
+                        :licenses [1 2]}
+                       injections)))
     (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
            (fail-command application
                          {:type :application.command/add-licenses
                           :actor handler-user-id
                           :comment "comment"
-                          :licenses []})))))
+                          :licenses []}
+                         injections)))))
 
 (deftest test-change-resources
   (let [cat-1 1
@@ -519,6 +540,7 @@
                                              :event/actor handler-user-id
                                              :application/comment "This is good"
                                              :application/id app-id}])
+        ;; TODO: we could remove this and use the common injections for all tests in this file, same for other local injections
         injections {:get-workflow {wf-1 {:workflow {:forms [{:form/id form-3}]}}
                                    wf-2 {}}
                     :get-catalogue-item
@@ -530,7 +552,8 @@
                     {cat-1 [{:id license-1}]
                      cat-2-other-license [{:id license-2}]
                      cat-3-other-workflow [{:id license-1}]
-                     cat-4-other-form [{:id license-1}]}}]
+                     cat-4-other-form [{:id license-1}]}
+                    :valid-user? (:valid-user? injections)}]
 
     (testing "applicant can add resources to a draft application"
       (is (= {:event/type :application.event/resources-changed
@@ -702,10 +725,12 @@
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
-                            :catalogue-item-ids []}))))))
+                            :catalogue-item-ids []}
+                           injections))))))
 
 (deftest test-submit
-  (let [injections {:get-form-template dummy-get-form-template}
+  (let [injections {:valid-user? #{applicant-user-id "non-applicant"}
+                    :get-form-template dummy-get-form-template}
         created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
@@ -841,7 +866,8 @@
           returned-event (ok-command application
                                      {:type :application.command/return
                                       :actor handler-user-id
-                                      :comment "ret"})
+                                      :comment "ret"}
+                                     injections)
           submit-command {:type :application.command/submit
                           :actor applicant-user-id}]
       (is (= {:event/type :application.event/returned
@@ -856,14 +882,14 @@
                   :event/time test-time
                   :event/actor applicant-user-id
                   :application/id app-id}
-                 (ok-command returned submit-command)))
+                 (ok-command returned submit-command injections)))
           (testing "succeeds even when catalogue item is disabled"
             (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
               (is (= {:event/type :application.event/submitted
                       :event/time test-time
                       :event/actor applicant-user-id
                       :application/id app-id}
-                     (ok-command disabled submit-command))))))))))
+                     (ok-command disabled submit-command injections))))))))))
 
 
 (deftest test-assign-external-id
@@ -882,13 +908,15 @@
              (ok-command application
                          {:type :application.command/assign-external-id
                           :actor handler-user-id
-                          :external-id "ext123"}))))
+                          :external-id "ext123"}
+                         injections))))
     (testing "applicant can't assign id"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/assign-external-id
                             :actor applicant-user-id
-                            :external-id "ext123"}))))))
+                            :external-id "ext123"}
+                           injections))))))
 
 (deftest test-approve-or-reject
   (let [application (apply-events nil
@@ -906,7 +934,8 @@
              (ok-command application
                          {:type :application.command/approve
                           :actor handler-user-id
-                          :comment "fine"}))))
+                          :comment "fine"}
+                         injections))))
     (testing "approved with end-date"
       (is (= {:event/type :application.event/approved
               :event/time test-time
@@ -920,7 +949,8 @@
                              {:type :application.command/approve
                               :actor handler-user-id
                               :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
-                              :comment "fine"}))))))
+                              :comment "fine"}
+                             injections))))))
     (testing "rejected successfully"
       (is (= {:event/type :application.event/rejected
               :application/comment "bad"
@@ -930,13 +960,15 @@
              (ok-command application
                          {:type :application.command/reject
                           :actor handler-user-id
-                          :comment "bad"}))))
+                          :comment "bad"}
+                         injections))))
     (testing "throws with past entitlement end-date"
       (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
              (fail-command application
                            {:type :application.command/approve
                             :actor handler-user-id
-                            :entitlement-end (DateTime. 1234)}))))))
+                            :entitlement-end (DateTime. 1234)}
+                           injections))))))
 
 (deftest test-close
   (let [application (apply-events nil
@@ -959,7 +991,8 @@
              (ok-command application
                          {:type :application.command/close
                           :actor handler-user-id
-                          :comment "outdated"})))))
+                          :comment "outdated"}
+                         injections)))))
   (let [application (apply-events nil
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
@@ -980,7 +1013,8 @@
              (ok-command application
                          {:type :application.command/close
                           :actor applicant-user-id
-                          :comment "outdated"}))))
+                          :comment "outdated"}
+                         injections))))
     (testing "handler can close returned application"
       (is (= {:event/type :application.event/closed
               :event/time test-time
@@ -990,7 +1024,8 @@
              (ok-command application
                          {:type :application.command/close
                           :actor handler-user-id
-                          :comment "outdated"}))))))
+                          :comment "outdated"}
+                         injections))))))
 
 (deftest test-revoke
   (let [application (apply-events nil [dummy-created-event
@@ -1021,7 +1056,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{"deity"}}]
+        injections {:valid-user? #{handler-user-id "deity" "deity3"}
+                    :find-userid identity}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
@@ -1068,7 +1104,7 @@
         (is (= {:errors [{:type :forbidden}]}
                (fail-command requested
                              {:type :application.command/decide
-                              :actor "deity2"
+                              :actor "deity3"
                               :decision :approved
                               :comment ""}
                              injections))))
@@ -1140,8 +1176,7 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id
-                                    :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"member1" "member2" "somebody" applicant-user-id}}]
+                                    :application/member {:userid "somebody"}}])]
     (testing "handler can add members"
       (is (= {:event/type :application.event/member-added
               :event/time test-time
@@ -1166,11 +1201,11 @@
                             :member {:userid "member2"}}
                            injections))))
     (testing "only valid users can be added"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "does-not-exist"}]}
              (fail-command application
                            {:type :application.command/add-member
                             :actor handler-user-id
-                            :member {:userid "member3"}}
+                            :member {:userid "does-not-exist"}}
                            injections))))
     (testing "added members can see the application"
       (is (-> (apply-commands application
@@ -1182,7 +1217,8 @@
 
 (deftest test-invite-member
   (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id}
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
+                    :find-userid identity
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can invite members"
       (is (= {:event/type :application.event/member-invited
@@ -1236,7 +1272,9 @@
 
 (deftest test-invite-reviewer-decider
   (let [application (apply-events nil [dummy-created-event])
-        injections {:secure-token (constantly "very-secure")}]
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
+                    :find-userid identity
+                    :secure-token (constantly "very-secure")}]
     (testing "applicant can't invite reviewer for draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
@@ -1317,7 +1355,8 @@
                                          :application/id app-id
                                          :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                          :invitation/token "very-secure"}])
-          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}}]
+          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}
+                      :find-userid identity}]
 
       (testing "can join draft"
         (is (= {:event/type :application.event/member-joined
@@ -1506,7 +1545,8 @@
                                     :event/actor handler-user-id
                                     :application/id app-id
                                     :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}}]
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}
+                    :find-userid identity}]
     (testing "applicant can remove members"
       (is (= {:event/type :application.event/member-removed
               :event/time test-time
@@ -1575,7 +1615,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {}]
+        injections {:valid-user? #{applicant-user-id handler-user-id}
+                    :find-userid identity}]
     (testing "uninvite member by applicant"
       (is (= {:event/type :application.event/member-uninvited
               :event/time test-time
@@ -1632,35 +1673,40 @@
                          {:type :application.command/change-applicant
                           :actor handler-user-id
                           :member {:userid "member1"}
-                          :comment ""}))))
+                          :comment ""}
+                         injections))))
     (testing "applicant can't promote"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/change-applicant
                             :actor applicant-user-id
                             :member {:userid "member1"}
-                            :comment ""}))))
+                            :comment ""}
+                           injections))))
     (testing "member can't promote themself"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/change-applicant
                             :actor "member1"
                             :member {:userid "member1"}
-                            :comment ""}))))
+                            :comment ""}
+                           injections))))
     (testing "handler can't promote non-member"
       (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
              (fail-command application
                            {:type :application.command/change-applicant
                             :actor handler-user-id
                             :member {:userid "unknown"}
-                            :comment ""}))))
+                            :comment ""}
+                           injections))))
     (testing "handler can't promote current applicant"
       (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
              (fail-command application
                            {:type :application.command/change-applicant
                             :actor handler-user-id
                             :member {:userid applicant-user-id}
-                            :comment ""}))))))
+                            :comment ""}
+                           injections))))))
 
 (deftest test-review
   (let [reviewer "reviewer"
@@ -1672,7 +1718,8 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{reviewer reviewer2 reviewer3}}]
+        injections {:valid-user? #{handler-user-id reviewer reviewer2 reviewer3}
+                    :find-userid identity}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
@@ -1688,7 +1735,7 @@
                             :actor handler-user-id
                             :reviewers []
                             :comment ""}
-                           {}))))
+                           injections))))
     (testing "reviewers must be a valid users"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"}
                        {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
@@ -1809,7 +1856,8 @@
         wrong-application-attachment-id 1235
         wrong-user-attachment-id 1236
         unknown-attachment-id 1237
-        injections {:valid-user? #{reviewer}
+        injections {:valid-user? #{applicant-user-id handler-user-id reviewer}
+                    :find-userid identity
                     :get-attachment-metadata
                     {valid-attachment-id {:application/id (:application/id application)
                                           :attachment/id valid-attachment-id
@@ -1828,7 +1876,7 @@
                                :attachments [{:attachment/id valid-attachment-id}]
                                :public false}
                               injections)
-            application (apply-events application [event])]
+            _application (apply-events application [event])]
         (is (= {:event/type :application.event/remarked
                 :event/time test-time
                 :event/actor handler-user-id
@@ -2032,9 +2080,11 @@
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []
-                 :actor "applicant"}]
+                 :actor "applicant"}
+        injections {:valid-user? #{"applicant"}
+                    :find-userid identity}]
     (testing "executes command when user is authorized"
-      (is (not (:errors (commands/handle-command command application {})))))
+      (is (not (:errors (commands/handle-command command application injections)))))
     (testing "fails when command fails validation"
       (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (commands/handle-command (assoc command :time 3) application {}))))
@@ -2042,5 +2092,5 @@
       ;; the permission checks should happen before executing the command handler
       ;; and only depend on the roles and permissions
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
-            result (commands/handle-command command application {})]
+            result (commands/handle-command command application injections)]
         (is (= {:errors [{:type :forbidden}]} result))))))
