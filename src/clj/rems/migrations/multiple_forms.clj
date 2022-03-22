@@ -1,8 +1,7 @@
 (ns rems.migrations.multiple-forms
   (:require [hugsql.core :as hugsql]
-            [medley.core :refer [map-keys]]
             [rems.json :as json]
-            [rems.util :refer [getx update-present]]))
+            [rems.util :refer [getx]]))
 
 (hugsql/def-db-fns-from-string
   "

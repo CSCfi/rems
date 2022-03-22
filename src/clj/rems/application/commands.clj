@@ -1,12 +1,12 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [assoc-some distinct-by]]
+            [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
+            [rems.util :refer [assert-ex getx getx-in try-catch-ex]]
             [schema-refined.core :as r]
             [schema.core :as s]
             [clj-time.core :as time])
@@ -651,8 +651,8 @@
       (update :event/actor #(or % (:actor cmd)))))
 
 (defn- finalize-events [result cmd]
-  (update-present result :events (fn [events]
-                                   (mapv #(add-common-event-fields-from-command % cmd) events))))
+  (update-existing result :events (fn [events]
+                                    (mapv #(add-common-event-fields-from-command % cmd) events))))
 
 (defn- application-not-found-error [application cmd]
   (when (and (:application-id cmd) (not application))

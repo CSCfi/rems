@@ -1,12 +1,11 @@
 (ns rems.middleware
-  (:require [buddy.auth :refer [authenticated?]]
-            [buddy.auth.accessrules :refer [restrict]]
-            [clojure.pprint :refer [pprint]]
+  (:require [clojure.pprint :refer [pprint]]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
+            [medley.core :refer [update-existing]]
             [mount.core :as mount]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
@@ -21,13 +20,12 @@
             [rems.logging :refer [with-mdc]]
             [rems.middleware.dev :refer [wrap-dev]]
             [rems.multipart]
-            [rems.util :refer [get-user-id getx-user-id update-present]]
+            [rems.util :refer [getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
-            [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer [unauthorized]]
-            [ring.util.response :refer [redirect header]])
+            [ring.util.response :refer [header]])
   (:import [javax.servlet ServletContext]
            [rems.auth ForbiddenException UnauthorizedException]))
 
@@ -196,7 +194,7 @@
   (fn [request]
     (-> request
         handler
-        (update :headers update-present "Location" unrelativize-url))))
+        (update :headers update-existing "Location" unrelativize-url))))
 
 (mount/defstate session-store
   :start (ttl-memory-store (* 60 30)))

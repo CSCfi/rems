@@ -1,8 +1,8 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
             [compojure.api.sweet :refer :all]
+            [medley.core :refer [update-existing]]
             [rems.api.schema :as schema]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.command :as command]
@@ -12,7 +12,6 @@
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.auth :as auth]
-            [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -23,8 +22,7 @@
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
-            [rems.util :refer [getx-user-id update-present]]
-            [ring.swagger.upload :as upload]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import java.io.ByteArrayInputStream))
@@ -78,7 +76,7 @@
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
-  (update-present cmd :decision keyword))
+  (update-existing cmd :decision keyword))
 
 (defn parse-command [request command-type]
   (-> request
