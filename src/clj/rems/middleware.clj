@@ -104,6 +104,15 @@
   (fn [req]
     (try
       (handler req)
+      (catch clojure.lang.ExceptionInfo e
+        ;; redirect user to an error page
+        (let [data (ex-data e)
+              url (str "/error?key="
+                       (name (:key data))
+                       (apply str (for [arg (:args data)]
+                                    (str "&args[]=" (name arg)))))]
+          (log/error e "Internal error" (with-out-str (some-> data pprint)))
+          (redirect url)))
       (catch Throwable t
         (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
                                                       (pprint data))))
