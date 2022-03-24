@@ -112,9 +112,9 @@
           ;; redirect browser to an error page
           (let [data (ex-data e)
                 url (str "/error?key="
-                         (name (:key data))
+                         (:key data)
                          (apply str (for [arg (:args data)]
-                                      (str "&args[]=" (name arg)))))]
+                                      (str "&args[]=" arg))))]
             (log/error e "Error" (with-out-str (some-> data pprint)))
             (redirect url))))
       (catch Throwable t

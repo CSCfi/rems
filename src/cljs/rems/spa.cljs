@@ -558,8 +558,27 @@
 (secretary/defroute "/forbidden" []
   (rf/dispatch [:set-active-page :forbidden]))
 
+;; XXX: could use schema?
+(defn- fix-error
+  "Fixes the error value transforming strings into keywords etc."
+  [error]
+  (cond (map? error)
+        (into {} (for [[k v] error]
+                   [(keyword k) (fix-error v)]))
+
+        (coll? error)
+        (mapv fix-error error)
+
+        (not (string? error))
+        error
+
+        (str/starts-with? error ":t")
+        (apply keyword (str/split (subs error 1) "/"))
+
+        :else error))
+
 (secretary/defroute "/error" {params :query-params}
-  (rf/dispatch [:set-error params])
+  (rf/dispatch [:set-error (fix-error params)])
   (rf/dispatch [:set-active-page :error]))
 
 (secretary/defroute "/redirect" []
