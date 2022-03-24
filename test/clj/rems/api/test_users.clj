@@ -260,11 +260,8 @@
                  (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
-        (let [cookie (login-with-cookies "malice")]
-          (assert-can-make-a-request! cookie)
-          (is (= {:userid "malice" :name nil :email "malice@example.com"}
-                 (users/get-user "malice")
-                 (users/format-user (:identity (middleware/get-session cookie))))))))))
+        (is (thrown? AssertionError (login-with-cookies "malice"))
+            "name should be required")))))
 
 (deftest test-user-email
   (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
