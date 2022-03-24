@@ -73,7 +73,7 @@
     (doseq [[attr value] attrs
             :when (not= value userid)]
       (user-mappings/create-user-mapping! {:userid userid
-                                           :ext-id-attribute (name attr)
+                                           :ext-id-attribute attr
                                            :ext-id-value value}))))
 
 (defn- find-user [id-data]

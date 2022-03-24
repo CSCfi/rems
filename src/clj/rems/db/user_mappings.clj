@@ -14,7 +14,7 @@
 
 (defn- format-user-mapping [mapping]
   {:userid (:userid mapping)
-   :ext-id-attribute (keyword (:extidattribute mapping))
+   :ext-id-attribute (:extidattribute mapping)
    :ext-id-value (:extidvalue mapping)})
 
 (defn- load-user-mappings []
