@@ -27,6 +27,8 @@ jobs:
   deps:
     executor: clojure
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       # Download and cache dependencies
       - restore_cache:
