@@ -1931,6 +1931,20 @@
                                            (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                                            handler)))))))
 
+(deftest test-applications-api-duplicate-user
+  (let [_ (test-helpers/create-user! {:eppn "duplicated" :name "Dupli Cated" :email "duplicated@example.com" :mappings {"identity1" "dupe" "identity2" "dupe"}})
+        _ (test-helpers/create-user! {:eppn "johnsmith" :name "John Smith" :email "john.smith@example.com" :mappings {"identity1" "johnsmith" "identity2" "smith"}})
+        _ (test-helpers/create-user! {:eppn "jillsmith" :name "Jill Smith" :email "jill.smith@example.com" :mappings {"identity1" "jillsmith" "identity2" "smith"}})]
+
+    (testing "duplicate mappings but only for one userid"
+      (is (api-call :get "/api/my-applications" nil "42" "dupe")))
+
+    (testing "duplicate mappings with multiple userids"
+      (is (= {:status 302
+              :headers {"Location" "/error?key=t.form.validation.invalid-user"}
+              :body ""}
+             (api-response :get "/api/my-applications" nil "42" "smith"))))))
+
 (deftest test-application-listing
   (let [app-id (test-helpers/create-application! {:actor "alice"})]
 

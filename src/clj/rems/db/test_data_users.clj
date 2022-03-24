@@ -25,7 +25,9 @@
    :reporter "reporter"
    :reviewer "carl"
    :roleless1 "elsa"
-   :roleless2 "frank"})
+   :roleless2 "frank"
+   :johnsmith "johnsmith"
+   :jillsmith "jillsmith"})
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer" :nickname "The Dev"}
@@ -38,7 +40,9 @@
    "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1"}
    "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
-   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
+   "johnsmith" {:eppn "johnsmith" :commonName "John Smith" :mail "john.smith@example.com" :mappings {"identity1" "johnsmith" "identity2" "smith"}}
+   "jillsmith" {:eppn "jillsmith" :commonName "Jill Smith" :mail "jill.smith@example.com" :mappings {"identity1" "jillsmith" "identity2" "smith"}}})
 
 (def +fake-id-data+
   {"developer" {:sub "developer" :email "developer@example.com" :name "Developer" :nickname "The Dev"}
@@ -53,6 +57,8 @@
    "owner" {:sub "owner" :email "owner@example.com" :name "Owner"}
    "reporter" {:sub "reporter" :email "reporter@example.com" :name "Reporter"}
    "elixir-alice" {:old_sub "alice" :sub "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland"}
+   "johnsmith" {:sub "johnsmith" :name "John Smith" :email "john.smith@example.com" :mappings {"identity1" "johnsmith" "identity2" "smith"}}
+   "jillsmith" {:sub "jillsmith" :name "Jill Smith" :email "jill.smith@example.com" :mappings {"identity1" "jillsmith" "identity2" "smith"}}
    "user-has-no-name" {:sub "user-has-no-name" :email "new-user@example.com"}
    "user-has-no-email" {:sub "user-has-no-email" :name "User-Has No-Email"}
    "user-has-nothing" {:sub "user-has-nothing"}
