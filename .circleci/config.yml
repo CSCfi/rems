@@ -14,10 +14,10 @@ defaults: &defaults
 executors:
   clojure:
     docker:
-      - image: circleci/clojure:openjdk-17-lein-2.9.7-buster-node-browsers
+      - image: cimg/clojure:1.10.3-browsers
   db:
     docker:
-      - image: circleci/clojure:openjdk-17-lein-2.9.7-buster-node-browsers
+      - image: cimg/clojure:1.10.3-browsers
       - image: postgres:13
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
