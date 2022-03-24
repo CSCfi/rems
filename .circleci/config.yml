@@ -11,6 +11,9 @@ defaults: &defaults
     # Customize the JVM maximum heap limit
     JVM_OPTS: -Xmx3200m
 
+orbs:
+  browser-tools: circleci/browser-tools@1.2.4
+
 executors:
   clojure:
     docker:
