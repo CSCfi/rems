@@ -30,8 +30,6 @@ jobs:
   deps:
     executor: clojure
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
       - checkout
       # Download and cache dependencies
       - restore_cache:
@@ -54,6 +52,8 @@ jobs:
   unit-test:
     executor: clojure
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
@@ -75,6 +75,8 @@ jobs:
   integration-test:
     executor: db
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
@@ -85,6 +87,8 @@ jobs:
   browser-test:
     executor: db
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}
