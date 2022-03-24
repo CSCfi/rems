@@ -1,13 +1,13 @@
 (ns rems.api.testing
   "Shared code for API testing"
-  (:require [cheshire.core :refer [parse-stream]]
-            [clj-time.format :as time-format]
+  (:require [clj-time.format :as time-format]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
+            [rems.locales]
             [rems.middleware]
             [rems.standalone]
             [ring.mock.request :refer :all]
@@ -185,14 +185,18 @@
   (when cookie
     (re-find #"[^;]*" cookie)))
 
+(defn- get-cookie [response]
+  (-> response
+      :headers
+      (get "Set-Cookie")
+      first
+      strip-cookie-attributes))
+
 (defn login-with-cookies [username]
-  (let [login (-> (request :get "/fake-login" {:username username})
-                  handler)
-        _ (assert-response-is-redirect login)
-        login-headers (:headers login)
-        cookie (-> (get login-headers "Set-Cookie")
-                   first
-                   strip-cookie-attributes)]
+  (let [cookie (-> (request :get "/fake-login" {:username username})
+                   handler
+                   assert-response-is-redirect
+                   get-cookie)]
     (assert cookie)
     cookie))
 
