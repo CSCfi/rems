@@ -78,7 +78,7 @@
 (deftest test-generate-api-key
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))]
-    (test-helpers/create-user! {:eppn user-id :commonName "Test User"})
+    (test-helpers/create-user! {:eppn user-id :commonName "Test User" :mail "test.user@example.com"})
 
     (testing "without authentication"
       (let [{:keys [body] :as response} (-> (request :post "/api/user-settings/generate-ega-api-key")
@@ -106,7 +106,7 @@
                  read-body-and-status))))
 
     (testing "success"
-      (with-fake-login-users {user-id {:sub user-id :name "Test User"}}
+      (with-fake-login-users {user-id {:sub user-id :name "Test User" :email "test.user@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server
@@ -134,12 +134,12 @@
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))
         handler-id (str (UUID/randomUUID))]
-    (test-helpers/create-user! {:eppn user-id :commonName "Test User"})
-    (test-helpers/create-user! {:eppn handler-id :commonName "Handler"})
+    (test-helpers/create-user! {:eppn user-id :commonName "Test User" :mail "test.user@example.com"})
+    (test-helpers/create-user! {:eppn handler-id :commonName "Handler" :mail "handler@example.com"})
     (test-helpers/create-workflow! {:handlers [handler-id]})
 
     (testing "setup api-key to delete"
-      (with-fake-login-users {handler-id {:sub handler-id :name "Handler"}}
+      (with-fake-login-users {handler-id {:sub handler-id :name "Handler" :email "handler@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server
@@ -184,7 +184,7 @@
                  read-body-and-status))))
 
     (testing "success"
-      (with-fake-login-users {handler-id {:sub handler-id :name "Handler"}}
+      (with-fake-login-users {handler-id {:sub handler-id :name "Handler" :email "handler@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
           (fn []
             (run-with-ega-server

@@ -283,8 +283,5 @@
                  (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
-        (let [cookie (login-with-cookies "malice")]
-          (assert-can-make-a-request! cookie)
-          (is (= {:userid "malice" :name "Malice Nomail" :email nil}
-                 (users/get-user "malice")
-                 (users/format-user (:identity (middleware/get-session cookie))))))))))
+        (is (thrown? AssertionError (login-with-cookies "malice"))
+            "email should be required")))))

@@ -12,13 +12,14 @@
 (use-fixtures :once api-fixture)
 
 (deftest test-user-does-not-exist
-  (let [id-data {:sub "does-not-exist" :name "Does Not Exist"}
+  (let [id-data {:sub "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}
         user-info {:unrelated 42}]
 
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
                                                                   {:attribute "old_sub"}]
                                          :log-authentication-details false
+                                         :public-url "http://special:3000/"
                                          :oidc-client-id "special.client-id"
                                          :oidc-client-secret "special.client-secret")
                   rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
@@ -29,7 +30,7 @@
                                          (is (= {:basic-auth ["special.client-id" "special.client-secret"]
                                                  :form-params {:grant_type "authorization_code"
                                                                :code "special-case-code"
-                                                               :redirect_uri "http://localhost:3000/oidc-callback"}
+                                                               :redirect_uri "http://special:3000/oidc-callback"}
                                                  :save-request? false
                                                  :debug-body false}
                                                 request))
@@ -58,18 +59,19 @@
                     :body ""
                     :session
                     {:access-token "special.access-token"
-                     :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail nil}}}
+                     :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
                    response)
                 "created and allowed in")))))))
 
 (deftest test-user-has-no-name
-  (let [id-data {:sub "does-not-exist"}
+  (let [id-data {:sub "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}
         user-info {:unrelated 42}]
 
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
                                                                   {:attribute "old_sub"}]
                                          :log-authentication-details false
+                                         :public-url "http://special:3000/"
                                          :oidc-client-id "special.client-id"
                                          :oidc-client-secret "special.client-secret")
                   rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
@@ -80,7 +82,7 @@
                                          (is (= {:basic-auth ["special.client-id" "special.client-secret"]
                                                  :form-params {:grant_type "authorization_code"
                                                                :code "special-case-code"
-                                                               :redirect_uri "http://localhost:3000/oidc-callback"}
+                                                               :redirect_uri "http://special:3000/oidc-callback"}
                                                  :save-request? false
                                                  :debug-body false}
                                                 request))
@@ -109,6 +111,6 @@
                     :body ""
                     :session
                     {:access-token "special.access-token"
-                     :identity {:eppn "does-not-exist" :commonName nil :mail nil}}}
+                     :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
                    response)
                 "created and allowed in")))))))
