@@ -73,7 +73,7 @@
     (let [mappings (get-user-mappings {:ext-id-value userid-or-ext-id})]
       (when (> (count (group-by :userid mappings)) 1)
         (throw (ex-info (str "Multiple mappings found with value " (pr-str userid-or-ext-id))
-                        {:key :t.form.validation.invalid-user
+                        {:key :t.form.validation/invalid-user
                          :value userid-or-ext-id
                          :mappings mappings})))
       (or (some :userid mappings)

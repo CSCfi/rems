@@ -105,10 +105,10 @@
 (defn- validate-user! [user]
   ;; userid already checked
   (when-let [errors (seq (remove nil?
-                                 [(when (str/blank? (:commonName user)) :t.login.errors.name)
-                                  (when (str/blank? (:mail user)) :t.login.errors.email)]))]
+                                 [(when (str/blank? (:commonName user)) :t.login.errors/name)
+                                  (when (str/blank? (:mail user)) :t.login.errors/email)]))]
     (throw (ex-info "Invalid user"
-                    {:key :t.login.errors.invalid-user
+                    {:key :t.login.errors/invalid-user
                      :args errors
                      :user user}))))
 
