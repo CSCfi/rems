@@ -53,6 +53,9 @@
    "owner" {:sub "owner" :email "owner@example.com" :name "Owner"}
    "reporter" {:sub "reporter" :email "reporter@example.com" :name "Reporter"}
    "elixir-alice" {:old_sub "alice" :sub "elixir-alice" :email "alice@elixir-europe.org" :name "Alice Applicant (Elixir)" :organizations [{:organization/id "default"}] :nickname "In Wonderland"}
+   "user-has-no-name" {:sub "user-has-no-name" :email "new-user@example.com"}
+   "user-has-no-email" {:sub "user-has-no-email" :name "User-Has No-Email"}
+   "user-has-nothing" {:sub "user-has-nothing"}
    "new-user" {:sub "new-user" :email "new-user@example.com" :name "New User"}})
 
 (def +fake-user-info+
