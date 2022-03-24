@@ -117,4 +117,4 @@ window.rems = {
    returns a response map with the error page as the body
    and the status specified by the status key"
   [error-details]
-  (render (error-content error-details) error-details))
+  (render nil (assoc error-details :app-content (error-content error-details))))
