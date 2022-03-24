@@ -1940,9 +1940,9 @@
       (is (api-call :get "/api/my-applications" nil "42" "dupe")))
 
     (testing "duplicate mappings with multiple userids"
-      (is (= {:status 302
-              :headers {"Location" "/error?key=t.form.validation.invalid-user"}
-              :body ""}
+      (is (= {:status 400
+              :headers {}
+              :body "Multiple mappings found with value \"smith\""}
              (api-response :get "/api/my-applications" nil "42" "smith"))))))
 
 (deftest test-application-listing
