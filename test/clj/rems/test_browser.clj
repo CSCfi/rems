@@ -860,7 +860,7 @@
         (is (= {"Organization" "The Default Organization"
                 "Title" (btu/context-get :workflow-title)
                 "Type" "Master workflow"
-                "Handlers" "Invited Person Name"
+                "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
                 "Forms" ""}
                (slurp-fields :workflow)))))))
