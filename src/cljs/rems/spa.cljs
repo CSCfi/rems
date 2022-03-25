@@ -559,15 +559,15 @@
   (rf/dispatch [:set-active-page :forbidden]))
 
 ;; XXX: could use schema?
-(defn- fix-error
-  "Fixes the error value transforming strings into keywords etc."
+(defn- fix-error-from-query-params
+  "Fixes the error value we receive from query parameters by transforming the strings into keywords etc."
   [error]
   (cond (map? error)
         (into {} (for [[k v] error]
-                   [(keyword k) (fix-error v)]))
+                   [(keyword k) (fix-error-from-query-params v)]))
 
         (coll? error)
-        (mapv fix-error error)
+        (mapv fix-error-from-query-params error)
 
         (not (string? error))
         error
@@ -578,7 +578,7 @@
         :else error))
 
 (secretary/defroute "/error" {params :query-params}
-  (rf/dispatch [:set-error (fix-error params)])
+  (rf/dispatch [:set-error (fix-error-from-query-params params)])
   (rf/dispatch [:set-active-page :error]))
 
 (secretary/defroute "/redirect" []
