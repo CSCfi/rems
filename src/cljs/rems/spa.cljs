@@ -5,6 +5,7 @@
             [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
+            [reagent.dom :as rd]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
             [rems.accept-invitation :as accept-invitation]
@@ -583,7 +584,7 @@
 
 (defn mount-components []
   (rf/clear-subscription-cache!)
-  (r/render [page] (.getElementById js/document "app")))
+  (rd/render [page] (.getElementById js/document "app")))
 
 (defn init! []
   (version-info)
