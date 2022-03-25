@@ -461,6 +461,9 @@
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
           :alternative-text ""
+          :errors {:invalid-user "Kirjautuminen epäonnistui puuttuvan tiedon takia (%1). Tarkista tietosi tunnistautumispalvelustasi."
+                   :email "Sähköposti"
+                   :name "Nimi"}
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]]
@@ -522,4 +525,5 @@
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :forbidden-page {:forbidden "Kielletty"
-                   :you-are-forbidden "Sivun käyttö on kielletty."}}}
+                   :you-are-forbidden "Sivun käyttö on kielletty."}
+  :error-page {:title "Ongelma"}}}

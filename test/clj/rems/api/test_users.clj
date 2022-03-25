@@ -12,7 +12,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :each ;; active-api-test needs a fresh session store
+  :each ;; test-active-api needs a fresh session store
   api-fixture
   owners-fixture)
 
@@ -22,7 +22,7 @@
       handler
       assert-response-is-ok))
 
-(deftest users-api-test
+(deftest test-users-api
   (let [new-user {:userid "david"
                   :email "d@av.id"
                   :name "David Newuser"}
@@ -68,7 +68,7 @@
               :nickname "Orger"
               :organizations [{:organization/id "abc"}]} (users/get-user userid))))))
 
-(deftest users-api-security-test
+(deftest test-users-api-security
   (testing "without authentication"
     (testing "create"
       (let [response (-> (request :post (str "/api/users/create"))
@@ -101,7 +101,7 @@
         handler
         assert-response-is-ok)))
 
-(deftest active-api-test
+(deftest test-active-api
   (test-data/create-test-users-and-roles!)
   (testing "no users yet"
     (is (= []
@@ -127,7 +127,7 @@
              (set (api-call :get "/api/users/active" nil
                             +test-api-key+ "owner")))))))
 
-(deftest user-mapping-test
+(deftest test-user-mapping
   (with-redefs [rems.config/env (assoc rems.config/env :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
                                                                                 {:attribute "old_sub"}])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
@@ -240,7 +240,7 @@
       (is (= nil (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
 
 
-(deftest user-name-test
+(deftest test-user-name
   (with-redefs [rems.config/env (assoc rems.config/env :oidc-name-attributes ["name" "name2"])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                             "bob" {:sub "bob" :name2 "Bob Applicant" :email "bob@example.com"}
@@ -260,13 +260,10 @@
                  (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
-        (let [cookie (login-with-cookies "malice")]
-          (assert-can-make-a-request! cookie)
-          (is (= {:userid "malice" :name nil :email "malice@example.com"}
-                 (users/get-user "malice")
-                 (users/format-user (:identity (middleware/get-session cookie))))))))))
+        (is (thrown? AssertionError (login-with-cookies "malice"))
+            "name should be required")))))
 
-(deftest user-email-test
+(deftest test-user-email
   (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                             "bob" {:sub "bob" :name "Bob Applicant" :email2 "bob@example.com"}
@@ -286,8 +283,5 @@
                  (users/format-user (:identity (middleware/get-session cookie)))))))
 
       (testing "log in malice"
-        (let [cookie (login-with-cookies "malice")]
-          (assert-can-make-a-request! cookie)
-          (is (= {:userid "malice" :name "Malice Nomail" :email nil}
-                 (users/get-user "malice")
-                 (users/format-user (:identity (middleware/get-session cookie))))))))))
+        (is (thrown? AssertionError (login-with-cookies "malice"))
+            "email should be required")))))

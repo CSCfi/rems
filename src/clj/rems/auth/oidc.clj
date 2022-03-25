@@ -1,5 +1,6 @@
 (ns rems.auth.oidc
   (:require [clj-http.client :as http]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
@@ -73,7 +74,7 @@
     (doseq [[attr value] attrs
             :when (not= value userid)]
       (user-mappings/create-user-mapping! {:userid userid
-                                           :ext-id-attribute (name attr)
+                                           :ext-id-attribute attr
                                            :ext-id-value value}))))
 
 (defn- find-user [id-data]
@@ -92,7 +93,7 @@
 (defn- get-user-attributes [id-data user-info]
   ;; TODO all attributes could support :rename
   (let [userid (or (find-user id-data) (get-new-userid id-data))
-        _ (assert userid)
+        _ (assert userid (when (:log-authentication-details env) {:id-data id-data :user-info user-info}))
         identity-base {:eppn userid
                        :commonName (some (comp id-data keyword) (:oidc-name-attributes env))
                        :mail (some (comp id-data keyword) (:oidc-email-attributes env))}
@@ -100,8 +101,21 @@
         user-info-attributes (select-keys user-info [:researcher-status-by])]
     (merge identity-base extra-attributes user-info-attributes)))
 
+;; XXX: consider joining with rems.db.users/invalid-user?
+(defn- validate-user! [user]
+  ;; userid already checked
+  (when-let [errors (seq (remove nil?
+                                 [(when (str/blank? (:commonName user)) :t.login.errors/name)
+                                  (when (str/blank? (:mail user)) :t.login.errors/email)]))]
+    (throw (ex-info "Invalid user"
+                    {:key :t.login.errors/invalid-user
+                     :args errors
+                     :user user}))))
+
 (defn find-or-create-user! [id-data user-info]
-  (let [user (upsert-user! (get-user-attributes id-data user-info))]
+  (let [user (get-user-attributes id-data user-info)
+        _ (validate-user! user)
+        user (upsert-user! user)]
     (save-user-mappings! id-data (:eppn user))
     user))
 

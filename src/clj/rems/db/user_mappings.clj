@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [rems.common.util :refer [conj-vec]]
             [rems.db.core :as db]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import rems.InvalidRequestException))
 
 (s/defschema UserMappings
   {:userid s/Str
@@ -14,7 +15,7 @@
 
 (defn- format-user-mapping [mapping]
   {:userid (:userid mapping)
-   :ext-id-attribute (keyword (:extidattribute mapping))
+   :ext-id-attribute (:extidattribute mapping)
    :ext-id-value (:extidvalue mapping)})
 
 (defn- load-user-mappings []
@@ -70,7 +71,11 @@
   [userid-or-ext-id]
   (when-not (str/blank? userid-or-ext-id)
     (let [mappings (get-user-mappings {:ext-id-value userid-or-ext-id})]
-      (assert (< (count mappings) 2) (str "Multiple users found with identity " (pr-str mappings)))
+      (when (> (count (group-by :userid mappings)) 1)
+        (throw (ex-info (str "Multiple mappings found with value " (pr-str userid-or-ext-id))
+                        {:key :t.form.validation/invalid-user
+                         :value userid-or-ext-id
+                         :mappings mappings})))
       (or (some :userid mappings)
           userid-or-ext-id))))
 

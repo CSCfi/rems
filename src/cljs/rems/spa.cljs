@@ -1,5 +1,6 @@
 (ns rems.spa
   (:require [accountant.core :as accountant]
+            [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [promesa.core :as p]
@@ -53,7 +54,7 @@
             [rems.new-application :refer [new-application-page]]
             [rems.common.roles :as roles]
             [rems.profile :refer [profile-page missing-email-warning]]
-            [rems.text :refer [text]]
+            [rems.text :refer [text text-format]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [navigate! fetch replace-url! set-location!]]
             [secretary.core :as secretary])
@@ -98,6 +99,11 @@
  (fn [db _]
    (:theme db)))
 
+(rf/reg-sub
+ :error
+ (fn [db _]
+   (:error db)))
+
 (rf/reg-event-db
  :initialize-db
  (fn [_ _]
@@ -111,6 +117,11 @@
  :set-active-page
  (fn [db [_ page]]
    (assoc db :page page)))
+
+(rf/reg-event-db
+ :set-error
+ (fn [db [_ error]]
+   (assoc db :error error)))
 
 (rf/reg-event-db
  :set-path
@@ -238,6 +249,20 @@
    [flash-message/component :top]
    [:p (text :t.forbidden-page/you-are-forbidden)]])
 
+(defn error-page
+  "Generic error page"
+  []
+  (let [error @(rf/subscribe [:error])]
+    [:div
+     [document-title (text :t.error-page/title)]
+     [flash-message/component :top]
+     (let [args (:args error)]
+       [:p (text-format
+            (:key error)
+            (if (string? args)
+              (text args)
+              (str/join ", " (map text args))))])]))
+
 (defn not-found-page []
   [:div
    [document-title (text :t.not-found-page/not-found)]
@@ -284,6 +309,7 @@
    :rems.administration/workflows workflows-page
    :unauthorized unauthorized-page
    :forbidden forbidden-page
+   :error error-page
    :not-found not-found-page})
 
 (defn- dev-reload-button
@@ -531,6 +557,29 @@
 
 (secretary/defroute "/forbidden" []
   (rf/dispatch [:set-active-page :forbidden]))
+
+;; XXX: could use schema?
+(defn- fix-error-from-query-params
+  "Fixes the error value we receive from query parameters by transforming the strings into keywords etc."
+  [error]
+  (cond (map? error)
+        (into {} (for [[k v] error]
+                   [(keyword k) (fix-error-from-query-params v)]))
+
+        (coll? error)
+        (mapv fix-error-from-query-params error)
+
+        (not (string? error))
+        error
+
+        (str/starts-with? error ":t")
+        (apply keyword (str/split (subs error 1) "/"))
+
+        :else error))
+
+(secretary/defroute "/error" {params :query-params}
+  (rf/dispatch [:set-error (fix-error-from-query-params params)])
+  (rf/dispatch [:set-active-page :error]))
 
 (secretary/defroute "/redirect" []
   ;; user is logged in so redirect to a more specific page

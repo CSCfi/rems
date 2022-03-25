@@ -25,7 +25,7 @@
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.http-response :refer [unauthorized]]
-            [ring.util.response :refer [header]])
+            [ring.util.response :refer [bad-request redirect header]])
   (:import [javax.servlet ServletContext]
            [rems.auth ForbiddenException UnauthorizedException]))
 
@@ -104,6 +104,19 @@
   (fn [req]
     (try
       (handler req)
+      (catch clojure.lang.ExceptionInfo e
+        (if (auth/get-api-key req) ; not our web app
+          ;; straight error
+          (bad-request (.getMessage e))
+
+          ;; redirect browser to an error page
+          (let [data (ex-data e)
+                url (str "/error?key="
+                         (:key data)
+                         (apply str (for [arg (:args data)]
+                                      (str "&args[]=" arg))))]
+            (log/error e "Error" (with-out-str (some-> data pprint)))
+            (redirect url))))
       (catch Throwable t
         (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
                                                       (pprint data))))

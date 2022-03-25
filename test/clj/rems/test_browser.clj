@@ -763,7 +763,7 @@
                                                                     [(btu/context-get :catalogue-id)]
                                                                     "test-invite-decider"))
     (test-helpers/submit-application (btu/context-get :application-id) "alice")
-    (test-helpers/create-user! {:eppn "new-decider" :commonName "New Decider"}))
+    (test-helpers/create-user! {:eppn "new-decider" :commonName "New Decider" :mail "new-decider@example.com"}))
   (btu/with-postmortem
     (testing "handler invites decider"
       (login-as "developer")
@@ -791,7 +791,7 @@
                invitation))
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
-      (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider"}}
+      (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
@@ -834,7 +834,7 @@
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-get :workflow-title) :handlers []}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
                                                                             :workflow-id (btu/context-get :workflow-id)}))
-    (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name"})
+    (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name" :mail "invited-person-id@example.com"})
     (with-user "owner"
       (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
                                                                                 :name "Dorothy Vaughan"
@@ -848,7 +848,7 @@
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
-      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name"}}
+      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}}
         (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
@@ -860,7 +860,7 @@
         (is (= {"Organization" "The Default Organization"
                 "Title" (btu/context-get :workflow-title)
                 "Type" "Master workflow"
-                "Handlers" "Invited Person Name"
+                "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
                 "Forms" ""}
                (slurp-fields :workflow)))))))
@@ -2293,10 +2293,16 @@
   (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id organization-id}))))
 
 (deftest test-organizations
-  (test-helpers/create-user! {:eppn "organization-owner1" :commonName "Organization Owner 1"
-                              :mail "organization-owner1@example.com" :organizations [{:organization/id "Default"}]} :owner)
-  (test-helpers/create-user! {:eppn "organization-owner2" :commonName "Organization Owner 2"
-                              :mail "organization-owner2@example.com" :organizations [{:organization/id "Default"}]} :owner)
+  (test-helpers/create-user! {:eppn "organization-owner1"
+                              :commonName "Organization Owner 1"
+                              :mail "organization-owner1@example.com"
+                              :organizations [{:organization/id "Default"}]}
+                             :owner)
+  (test-helpers/create-user! {:eppn "organization-owner2"
+                              :commonName "Organization Owner 2"
+                              :mail "organization-owner2@example.com"
+                              :organizations [{:organization/id "Default"}]}
+                             :owner)
 
   (btu/with-postmortem
     (login-as "owner")

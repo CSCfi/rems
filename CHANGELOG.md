@@ -14,6 +14,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - The actor of the command API (for applications) is now always validated. Previously, there was a chance that a non-existent user could be sent (used mostly by our internal tests). (#2771, #2824, #2772, #2821)
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
+- Users are required a name and email from the IdP to be allowed in. (#2889)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
@@ -23,8 +24,6 @@ NB: The login has changed to allow more configurable user identity and other att
 - API-key validity is not checked unless it is actually sent. (#2785)
 - API-Keys are cached for a minute for a slight performance improvement. (#2785)
 - Resources can be filtered in the API by `resid` (#2852)
-
-### Fixes
 - Hide applicant column and zoom to avoid previous applications to become too wide (#2855)
 - Duplicated forms have been removed. Previously, if a workflow form was the same as a catalogue item form, that form would be duplicated. (#2853)
 - An owner that is also an organization owner can now properly edit organization ownerships. (#2850)
