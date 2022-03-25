@@ -9,108 +9,73 @@
             [rems.json :as json]
             [rems.testing-util :refer [with-fake-login-users]]))
 
-(use-fixtures :once api-fixture)
+(defn- with-special-setup [params f]
+  (let [id-data (:id-data params)
+        user-info {:unrelated 42}]
+
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
+                                                                  {:attribute "old_sub"}]
+                                         :log-authentication-details false
+                                         :public-url "http://special:3000/"
+                                         :oidc-client-id "special.client-id"
+                                         :oidc-client-secret "special.client-secret")
+                  rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
+                                                  :issuer "https://special.case/issuer"
+                                                  :userinfo_endpoint "https://special.case/user-info"}
+                  clj-http.client/post (fn [url request] ; fetch id-token
+                                         (is (= "https://special.case/token" url))
+                                         (is (= {:basic-auth ["special.client-id" "special.client-secret"]
+                                                 :form-params {:grant_type "authorization_code"
+                                                               :code "special-case-code"
+                                                               :redirect_uri "http://special:3000/oidc-callback"}
+                                                 :save-request? false
+                                                 :debug-body false}
+                                                request))
+                                         {:body (json/generate-string {:access_token "special.access-token"
+                                                                       :id_token "special.id-token"})})
+                  rems.jwt/validate (fn [id-token issuer audience _now] ; id token validation
+                                      (is (= "special.id-token" id-token))
+                                      (is (= "https://special.case/issuer" issuer))
+                                      (is (= "special.client-id" audience))
+                                      id-data)
+                  clj-http.client/get (fn [url request] ; user-info
+                                        (is (= "https://special.case/user-info" url))
+                                        (is (= {:headers {"Authorization" "Bearer special.access-token"}}
+                                               request))
+                                        {:body (json/generate-string user-info)})
+                  rems.ga4gh/passport->researcher-status-by (fn [id-token]
+                                                              (is (= user-info id-token))
+                                                              id-token)]
+      (with-fake-login-users {} (f)))))
+
+(use-fixtures
+  :once
+  api-fixture)
 
 (deftest test-user-does-not-exist
-  (let [id-data {:sub "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}
-        user-info {:unrelated 42}]
+  (with-special-setup {:id-data {:sub "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}}
+    (fn []
+      (let [request {:params {:code "special-case-code"}}
+            response (oidc/oidc-callback request)]
+        (is (= {:status 302
+                :headers {"Location" "/redirect"}
+                :body ""
+                :session
+                {:access-token "special.access-token"
+                 :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
+               response)
+            "created and allowed in")))))
 
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
-                                                                  {:attribute "old_sub"}]
-                                         :log-authentication-details false
-                                         :public-url "http://special:3000/"
-                                         :oidc-client-id "special.client-id"
-                                         :oidc-client-secret "special.client-secret")
-                  rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
-                                                  :issuer "https://special.case/issuer"
-                                                  :userinfo_endpoint "https://special.case/user-info"}
-                  clj-http.client/post (fn [url request] ; fetch id-token
-                                         (is (= "https://special.case/token" url))
-                                         (is (= {:basic-auth ["special.client-id" "special.client-secret"]
-                                                 :form-params {:grant_type "authorization_code"
-                                                               :code "special-case-code"
-                                                               :redirect_uri "http://special:3000/oidc-callback"}
-                                                 :save-request? false
-                                                 :debug-body false}
-                                                request))
-                                         {:body (json/generate-string {:access_token "special.access-token"
-                                                                       :id_token "special.id-token"})})
-                  rems.jwt/validate (fn [id-token issuer audience _now] ; id token validation
-                                      (is (= "special.id-token" id-token))
-                                      (is (= "https://special.case/issuer" issuer))
-                                      (is (= "special.client-id" audience))
-                                      id-data)
-                  clj-http.client/get (fn [url request] ; user-info
-                                        (is (= "https://special.case/user-info" url))
-                                        (is (= {:headers {"Authorization" "Bearer special.access-token"}}
-                                               request))
-                                        {:body (json/generate-string user-info)})
-                  rems.ga4gh/passport->researcher-status-by (fn [id-token]
-                                                              (is (= user-info id-token))
-                                                              id-token)]
-      (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                              "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-        (testing "try to log in does-not-exist"
-          (let [request {:params {:code "special-case-code"}}
-                response (oidc/oidc-callback request)]
-            (is (= {:status 302
-                    :headers {"Location" "/redirect"}
-                    :body ""
-                    :session
-                    {:access-token "special.access-token"
-                     :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
-                   response)
-                "created and allowed in")))))))
-
-(deftest test-user-has-no-name
-  (let [id-data {:sub "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}
-        user-info {:unrelated 42}]
-
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
-                                                                  {:attribute "old_sub"}]
-                                         :log-authentication-details false
-                                         :public-url "http://special:3000/"
-                                         :oidc-client-id "special.client-id"
-                                         :oidc-client-secret "special.client-secret")
-                  rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
-                                                  :issuer "https://special.case/issuer"
-                                                  :userinfo_endpoint "https://special.case/user-info"}
-                  clj-http.client/post (fn [url request] ; fetch id-token
-                                         (is (= "https://special.case/token" url))
-                                         (is (= {:basic-auth ["special.client-id" "special.client-secret"]
-                                                 :form-params {:grant_type "authorization_code"
-                                                               :code "special-case-code"
-                                                               :redirect_uri "http://special:3000/oidc-callback"}
-                                                 :save-request? false
-                                                 :debug-body false}
-                                                request))
-                                         {:body (json/generate-string {:access_token "special.access-token"
-                                                                       :id_token "special.id-token"})})
-                  rems.jwt/validate (fn [id-token issuer audience _now] ; id token validation
-                                      (is (= "special.id-token" id-token))
-                                      (is (= "https://special.case/issuer" issuer))
-                                      (is (= "special.client-id" audience))
-                                      id-data)
-                  clj-http.client/get (fn [url request] ; user-info
-                                        (is (= "https://special.case/user-info" url))
-                                        (is (= {:headers {"Authorization" "Bearer special.access-token"}}
-                                               request))
-                                        {:body (json/generate-string user-info)})
-                  rems.ga4gh/passport->researcher-status-by (fn [id-token]
-                                                              (is (= user-info id-token))
-                                                              id-token)]
-      (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                              "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-        (testing "try to log in does-not-exist"
-          (let [request {:params {:code "special-case-code"}}
-                response (oidc/oidc-callback request)]
-            (is (= {:status 302
-                    :headers {"Location" "/redirect"}
-                    :body ""
-                    :session
-                    {:access-token "special.access-token"
-                     :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
-                   response)
-                "created and allowed in")))))))
+(deftest test-user-has-no-details
+  (with-special-setup {:id-data {:sub "has-no-details"}}
+    (fn []
+      (try
+        (oidc/oidc-callback {:params {:code "special-case-code"}})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= {:key :t.login.errors/invalid-user
+                  :args [:t.login.errors/name :t.login.errors/email]
+                  :user {:eppn "has-no-details"
+                         :commonName nil
+                         :mail nil}}
+                 (ex-data e))))))))
