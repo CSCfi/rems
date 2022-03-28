@@ -2,7 +2,7 @@
 name: Question
 about: Ask a question from the team
 title: ''
-labels: Investigate
+labels: 'Needs Triage'
 assignees: ''
 
 ---
