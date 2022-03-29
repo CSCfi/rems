@@ -103,10 +103,6 @@
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
                    :display-order "Display order"
-                   :duo {:codes "DUO codes"
-                         :code "DUO code"
-                         :description "Description"
-                         :about-duo-code "More info"}
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-category "Edit category"
@@ -137,7 +133,6 @@
                    :more-info "More info URL (optional)"
                    :name "Name"
                    :no-categories "No categories"
-                   :no-duo-codes "No DUO codes"
                    :no-form "No form"
                    :no-licenses "No licenses"
                    :optional "(optional)"
@@ -185,6 +180,7 @@
                  ;; TODO: Once the terms have stabilized, convert db and the
                  ;;   code to match the term in UI.
                  :description "Title"
+                 :duos {:validation {:missing-duo-codes "Data Use Ontology codes are specified in resources but missing from application:"}}
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
@@ -344,8 +340,7 @@
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
-                    :resid-placeholder "urn:test:fi:some-uuid"
-                    :duos {:select-duo-codes "DUO codes"}}
+                    :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
@@ -356,15 +351,20 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
-  :duo {:restriction {:mondo "Disease (Mondo)"
-                      :topic "Allowed research type"
-                      :collaboration "Primary study investigator(s)"
-                      :location "Geographic region"
+  :duo {:fields {:more-info "Additional info for applicant (optional)"}
+        :no-duo-codes "No Data Use Ontology codes"
+        :restriction {:collaboration "Primary study investigator(s)"
                       :date "Publication moratorium until (date)"
+                      :institute "Approved institution"
+                      :location "Geographic region"
+                      :mondo "Disease (Mondo)"
                       :months "Approved for (months)"
-                      :users "Approved user(s)"
                       :project "Approved project"
-                      :institute "Approved institution"}}
+                      :topic "Allowed research type"
+                      :users "Approved user(s)"}
+        :title "Data Use Ontology"
+        :validation {:mondo-not-valid "Provided Mondo codes are not compatible:"
+                     :needs-validation "Data Use Ontology restriction needs to be reviewed manually:"}}
   ;; Format parameters for all emails (unless otherwise noted):
   ;; %1 - name of recipient
   ;; %2 - name of event actor
