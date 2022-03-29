@@ -128,7 +128,6 @@
                    :internal-name "Sisäinen nimi"
                    :license "Lisenssi"
                    :license-field "Lisenssi \"%1\""
-                   :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :manage-categories "Hallinnoi kategorioita"
                    :more-info "Lisätietoja-URL (valinnainen)"

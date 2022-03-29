@@ -131,7 +131,6 @@
                    :license "License"
                    ;; %1 - license name
                    :license-field "License \"%1\""
-                   :license-name "License name"
                    :licenses "Licenses"
                    :manage-categories "Manage categories"
                    :more-info "More info URL (optional)"

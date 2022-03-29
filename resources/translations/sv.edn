@@ -128,7 +128,6 @@
                    :internal-name "Inre namn"
                    :license "Licens"
                    :license-field "Licens \"%1\""
-                   :license-name "Licensens namn"
                    :licenses "Licenser"
                    :manage-categories "Administrera kategorier"
                    :more-info "Webbadress för tilläggsinformation (valfritt)"
