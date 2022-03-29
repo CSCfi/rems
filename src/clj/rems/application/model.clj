@@ -2,17 +2,17 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [find-first map-vals update-existing]]
+            [medley.core :refer [find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [conj-vec getx assoc-some-in]]
+            [rems.common.util :refer [assoc-some-in conj-vec getx]]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
-            [rems.ext.duo :refer [enrich-duo-codes]]))
+            [rems.ext.duo :as duo]))
 
 ;;;; Application
 
@@ -60,7 +60,9 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc ::draft-answers (:application/field-values event))))
+      (assoc ::draft-answers (:application/field-values event))
+      (assoc-some-in [:application/duo :duo/codes] (when (:enable-duo rems.config/env)
+                                                     (:application/duo-codes event)))))
 
 (defmethod application-base-view :application.event/licenses-accepted
   [application event]
@@ -464,9 +466,39 @@
                      :catalogue-item/enabled (:enabled item)
                      :catalogue-item/expired (:expired item)
                      :catalogue-item/archived (:archived item)}
-                    (assoc-some-in [:resource/duo :duo/codes] (seq (enrich-duo-codes duo-codes)))))))
+                    (assoc-some-in [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes)))))))
        (sort-by :catalogue-item/id)
        vec))
+
+(defn- validate-duo-match [dataset-code query-code resource]
+  (let [valid (duo/check-duo-code dataset-code query-code)]
+    {:valid valid
+     :errors (case valid
+               :duo/not-compatible (case (:id dataset-code)
+                                     "DUO:0000007" [{:type :t.duo.validation/mondo-not-valid
+                                                     :duo/restrictions (duo/get-restrictions dataset-code :mondo)
+                                                     :catalogue-item/title (:catalogue-item/title resource)}]
+                                     nil)
+               :duo/needs-manual-validation [{:type :t.duo.validation/needs-validation
+                                              :catalogue-item/title (:catalogue-item/title resource)
+                                              :duo/restrictions (:restrictions dataset-code)}]
+               nil)}))
+
+(defn- enrich-application-duo-matches [application]
+  (if-not (:enable-duo rems.config/env)
+    application
+    (let [duos (->> application :application/duo :duo/codes)
+          matches (flatten
+                   (for [resource (:application/resources application)]
+                     (for [res-duo (-> resource :resource/duo :duo/codes)
+                           :let [app-duo (find-first #(= (:id res-duo) (:id %)) duos)]]
+                       {:duo/id (:id res-duo)
+                        :duo/shorthand (:shorthand res-duo)
+                        :duo/label (:label res-duo)
+                        :resource/id (:resource/id resource)
+                        :duo/validation (validate-duo-match res-duo app-duo resource)})))]
+      (-> application
+          (assoc-in [:application/duo :duo/matches] matches)))))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
@@ -634,6 +666,8 @@
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
+      enrich-application-duo-matches ; uses enriched resources
+      (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))

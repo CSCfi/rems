@@ -6,10 +6,12 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.pprint]
-            [clojure.set :refer [difference]]
-            [clojure.test :refer [deftest is]]
-            [medley.core :refer [update-existing]]
-            [rems.common.util :refer [index-by]]
+            [clojure.set :refer [difference intersection subset?]]
+            [clojure.test :refer [deftest is testing]]
+            [clj-time.core :as time]
+            [clj-time.format :as time-format]
+            [medley.core :refer [find-first update-existing]]
+            [rems.common.util :refer [index-by build-index]]
             [rems.config]
             [rems.ext.mondo :as mondo]
             [rems.github :as github]
@@ -185,6 +187,85 @@
                                                        {:id "DUO:0000027"
                                                         :restrictions [{:type :project
                                                                         :values ["CSC/REMS"]}]}]}})))))
+
+(defn get-restrictions [duo kw]
+  (->> duo
+       :restrictions
+       (find-first #(= kw (:type %)))
+       :values))
+
+(defn- duo-valid-state
+  [valid]
+  (case valid
+    true :duo/compatible
+    false :duo/not-compatible
+    valid))
+
+(defn check-duo-code
+  "Validate that `query-code` is compatible with `dataset-code`.
+   
+   Matching is done first by comparing `:id` and then, if applicable, by checking
+   DUO code restriction values."
+  [dataset-code query-code]
+  (if-not (= (:id dataset-code) (:id query-code))
+    :duo/not-found
+    (duo-valid-state
+     (case (:id dataset-code)
+       ;; "This data use permission indicates that use is allowed provided it is related to the specified disease."
+       "DUO:0000007" (let [required-codes (set (map :id (get-restrictions dataset-code :mondo)))
+                           provided-codes (set (map :id (get-restrictions query-code :mondo)))
+                           unmatched-codes (difference required-codes provided-codes)]
+                       (if (seq (intersection required-codes provided-codes))
+                         :duo/compatible ; one matching Mondo is enough for DUO compatibility
+                         (-> (mapcat mondo/get-mondo-parents provided-codes)
+                             set
+                             (intersection unmatched-codes)
+                             (as-> matching-ancestors
+                                   (some? (seq matching-ancestors))))))
+       ;; "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."
+       "DUO:0000024" (let [not-before-dt (some-> dataset-code (get-restrictions :date) first :value time-format/parse)
+                           dt (some-> query-code (get-restrictions :date) first :value time-format/parse)]
+                       (or (time/equal? dt not-before-dt)
+                           (-> dt (time/after? not-before-dt))))
+
+       (if (seq (:restrictions dataset-code))
+         :duo/needs-manual-validation
+         :duo/compatible)))))
+
+(deftest test-check-duo-code
+  (with-redefs [rems.config/env {:enable-duo true}]
+    (is (= :duo/compatible (check-duo-code {:id "id"} {:id "id"})))
+    (is (= :duo/not-found (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "123"}]}]}
+                                          {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2021-10-29"}]}]}))
+        "DUO codes do not match")
+    (is (= :duo/needs-manual-validation (check-duo-code {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "CSC/REMS"}]}]}
+                                                        {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}))
+        "Free text restriction must be manually validated")
+    (testing "DUO:0000007 :mondo"
+      ;; MONDO:0045024 - cancer or benign tumor
+      ;; - MONDO:0005105 - melanoma
+      ;;   - MONDO:0006486 - uveal melanoma
+      ;; MONDO:0005015 - diabetes mellitus
+      (let [query-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}
+                                                                                {:id "MONDO:0100253"}]}]}]
+        (is (= :duo/not-compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values []}]} query-code))
+            "dataset labeled with DS must have defined at least one mondo code restriction")
+        (is (= :duo/not-compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]} query-code))
+            "dataset labeled with MONDO:0006486 - 'uveal melanoma' is not compatible with MONDO:0005105 - 'melanoma'")
+        (is (= :duo/compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}
+                                                                                                        {:id "MONDO:0006486"}]}]} query-code))
+            "dataset labeled with multiple mondo codes is compatible if query code contains at least one of those")
+        (is (= :duo/compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"}]}]} query-code))
+            "dataset labeled with MONDO:0045024 - 'cancer or benign tumor' is compatible with MONDO:0005105 - 'melanoma' because it is ancestor")
+        (is (= :duo/compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"}
+                                                                                                        {:id "MONDO:0006486"}]}]} query-code))
+            "dataset labeled with multiple mondo codes is compatible if query code contains at least one of those because it is ancestor")))
+    (testing "DUO:0000024 :date"
+      (let [dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]}]
+        (is (= :duo/not-compatible (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-07"}]}]}))
+            "Provided date is before required date")
+        (is (= :duo/compatible (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-08"}]}]})))
+        (is (= :duo/compatible (check-duo-code dataset-duo {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2023-02-08"}]}]})))))))
 
 (comment
   ;; Here is code to load the latest DUO release

@@ -2042,6 +2042,59 @@
       (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
 
+(deftest test-duo-codes
+  (let [applicant-id "alice"
+        handler-id "developer"
+        wfid (test-helpers/create-workflow! {:handlers [handler-id]})
+        ext1 "duo-resource-1"
+        ext2 "duo-resource-2"]
+    (testing "applicant fills duo codes"
+      ;; MONDO:0045024 - cancer or benign tumor
+      ;; - MONDO:0005105 - melanoma
+      ;;   - MONDO:0006486 - uveal melanoma
+      (let [res1 (test-helpers/create-resource! {:resource-ext-id ext1
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
+            res2 (test-helpers/create-resource! {:resource-ext-id ext2
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
+                                                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}]}]}]}})
+            cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
+            cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
+            app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+        (testing "save partially valid duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
+                              {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0045024"}]}]}]
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid "duo/not-compatible"}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid "duo/needs-manual-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid "duo/not-compatible"}] ; dataset tagged with MONDO:0005105 - melanoma
+                  :duo/valid "duo/not-compatible"}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))
+        (testing "save fully valid duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000024" :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]}
+                              {:id "DUO:0000027" :restrictions [{:type "project" :values [{:value "project id"}]}]}
+                              {:id "DUO:0000007" :restrictions [{:type "mondo" :values [{:id "MONDO:0006486"}]}]}]
+                  :duo/matches [{:id "DUO:0000024" :resource/id res1 :duo/valid "duo/compatible"}
+                                {:id "DUO:0000027" :resource/id res2 :duo/valid "duo/needs-manual-validation"}
+                                {:id "DUO:0000007" :resource/id res2 :duo/valid "duo/compatible"}]
+                  :duo/valid "duo/needs-manual-validation"}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))))))
+
 (deftest test-application-raw
   (let [api-key "42"
         applicant "alice"
