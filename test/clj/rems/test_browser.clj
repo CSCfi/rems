@@ -2504,7 +2504,7 @@
     (doseq [cat categories]
       (select-option "Subcategories" cat))))
 
-(defn navigate-to-categories []
+(defn go-to-categories []
   (go-to-admin "Catalogue items")
   (is (btu/eventually-visible? :catalogue))
   (btu/scroll-and-click {:fn/text "Manage categories"})
@@ -2517,7 +2517,7 @@
 (deftest test-categories
   (btu/with-postmortem
     (login-as "owner")
-    (navigate-to-categories)
+    (go-to-categories)
 
     (testing "create new category"
       (btu/scroll-and-click :create-category)
@@ -2619,7 +2619,7 @@
 
     (testing "delete category"
       (testing "should contain created categories before delete"
-        (navigate-to-categories)
+        (go-to-categories)
         (is (btu/eventually-visible? :categories))
         (is (= #{"Edited title (EN)" "E2E Ancestor category (EN)"}
                (->> (set (slurp-categories-by-title))
