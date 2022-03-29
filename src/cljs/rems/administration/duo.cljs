@@ -15,7 +15,7 @@
         values (:values opts)]
     (case restriction-type
       :mondo [:div.container-fluid.pt-2.px-0
-              [:label (text (duo-restriction-label restriction-type))]
+              [:label (text (get duo-restriction-label restriction-type))]
               (into [:div.solid-group]
                     (for [mondo values]
                       ^{:key mondo}
@@ -23,7 +23,7 @@
                        [:pre.mb-0 (:id mondo)] (:label mondo)]))]
 
       [inline-info-field
-       (text (duo-restriction-label restriction-type)) (:value (first values))])))
+       (text (get duo-restriction-label restriction-type)) (:value (first values))])))
 
 (defn duo-valid-icon [valid]
   (case valid
@@ -35,7 +35,7 @@
 (defn- duo-error [error]
   (case (:type error)
     :t.duo.validation/mondo-not-valid
-    (let [label (text (duo-restriction-label :mondo))]
+    (let [label (text (get duo-restriction-label :mondo))]
       [:div.alert.alert-danger
        [:p (text (:type error))]
        [:ul
@@ -51,7 +51,7 @@
       [:li (str (text :t.applications/resource) ": " (localized (:catalogue-item/title error)))]
       (doall
        (for [restriction (:duo/restrictions error)
-             :let [label (text (duo-restriction-label (:type restriction)))]]
+             :let [label (text (get duo-restriction-label (:type restriction)))]]
          (for [{:keys [value]} (:values restriction)]
            ^{:key (random-uuid)}
            [:li (str label ": " value)])))]]
@@ -114,7 +114,7 @@
   (let [duo-id (:duo/id opts)
         context (:context opts)
         restriction (:duo/restriction opts)
-        restriction-label (text (duo-restriction-label (:type restriction)))]
+        restriction-label (text (get duo-restriction-label (:type restriction)))]
     (case (:type restriction)
       :mondo
       (let [update-path [duo-id :restrictions :mondo]
