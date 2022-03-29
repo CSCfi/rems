@@ -51,7 +51,7 @@
       (throw (InvalidRequestException. (str "Invalid DUO codes: " (pr-str missing-codes))))))
   (let [data (when-let [duo (:resource/duo resource)]
                {:resource/duo {:duo/codes (for [code (:duo/codes duo)]
-                                            (select-keys code [:id :restrictions]))}})
+                                            (select-keys code [:id :restrictions :more-info]))}})
         id (:id (db/create-resource! {:resid (:resid resource)
                                       :organization (get-in resource [:organization :organization/id])
                                       :resourcedata (json/generate-string data)}))]
@@ -67,7 +67,7 @@
                           :id)
           data (when-let [duo (:resource/duo amended)]
                  {:resource/duo {:duo/codes (for [code (:duo/codes duo)]
-                                              (select-keys code [:id :restrictions]))}})]
+                                              (select-keys code [:id :restrictions :more-info]))}})]
       (db/update-resource! {:id (:id resource)
                             :resid (:resid amended)
                             :organization (get-in amended [:organization :organization/id])
