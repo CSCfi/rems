@@ -341,7 +341,7 @@
                    :license-text "License text"
                    :license-type "License type"
                    :link-to-license "License link"
-                   :title "License name"}
+                   :title "Title"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"

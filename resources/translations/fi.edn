@@ -316,7 +316,7 @@
                    :license-text "Lisenssin teksti"
                    :license-type "Lisenssin tyyppi"
                    :link-to-license "Lisenssilinkki"
-                   :title "Lisenssin nimi"}
+                   :title "Nimi"}
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"

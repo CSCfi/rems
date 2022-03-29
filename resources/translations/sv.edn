@@ -316,7 +316,7 @@
                    :license-text "Licenstext"
                    :license-type "Typ av licens"
                    :link-to-license "Länk till licens"
-                   :title "Licensens namn"}
+                   :title "Namn"}
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"
