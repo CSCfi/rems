@@ -176,10 +176,10 @@
 
 (defn- strip-trailing-zeroes
   [s]
-  (let [without-decimal-zeroes (clojure.string/replace s #"\.[0]*$" "")
-        without-trailing-zeroes (clojure.string/replace s #"[0]+$" "")]
+  (let [without-decimal-zeroes (str/replace s #"\.[0]*$" "")
+        without-trailing-zeroes (str/replace s #"[0]+$" "")]
     (if (and (= without-decimal-zeroes s)
-             (clojure.string/includes? s "."))
+             (str/includes? s "."))
       without-trailing-zeroes
       without-decimal-zeroes)))
 
@@ -215,7 +215,7 @@
     (-> id
         (str/replace #"\s" "")
         (str/replace #"[^A-Za-z0-9\-_]" "_")
-        (str/replace-first #"^[0-9]" (partial str "id_")))))
+        (str/replace-first #"^[0-9]" #(str "id_" %)))))
 
 (deftest test-escape-element-id
   (testing "should replace element special characters with underscore"
