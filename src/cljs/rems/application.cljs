@@ -973,7 +973,7 @@
      {:id "duo-codes"
       :title (text :t.duo/title)
       :always (if (empty? duo-matches)
-                [:p (text :t.applications.duos/no-duo-codes)]
+                [:p (text :t.duo/no-duo-codes)]
                 [:div.form-items.form-group
                  (when-let [missing-duos (seq (unmatched-duos duo-matches))]
                    [:div.alert.alert-danger
