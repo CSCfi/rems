@@ -840,7 +840,7 @@
   [collapsible/component
    {:id "previous-applications"
     :title (text :t.form/previous-applications)
-    :collapse [:div.md-z80
+    :collapse [:div.lg-z75
                [application-list/component {:applications ::previous-applications-except-current
                                             :hidden-columns #{:created :handlers :todo :last-activity :applicant}
                                             :default-sort-column :submitted
