@@ -715,28 +715,29 @@
                                                                         :organization {:organization/id "hus"}
                                                                         :actor owner
                                                                         :license-ids [license2 extra-license attachment-license]})
-        duo-resource (when (:enable-duo rems.config/env)
-                       (create-resource! {:resource-ext-id "All DUO codes with restrictions"
-                                          :organization {:organization/id "nbn"}
-                                          :actor owner
-                                          :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                        :values [{:id "MONDO:0000015"}]}]}
-                                                                     {:id "DUO:0000012" :restrictions [{:type :topic
-                                                                                                        :values [{:value "my research type"}]}]}
-                                                                     {:id "DUO:0000020" :restrictions [{:type :collaboration
-                                                                                                        :values [{:value "developers"}]}]}
-                                                                     {:id "DUO:0000022" :restrictions [{:type :location
-                                                                                                        :values [{:value "egentliga finland"}]}]}
-                                                                     {:id "DUO:0000024" :restrictions [{:type :date
-                                                                                                        :values [{:value "2021-10-29"}]}]}
-                                                                     {:id "DUO:0000025" :restrictions [{:type :months
-                                                                                                        :values [{:value "120"}]}]}
-                                                                     {:id "DUO:0000026" :restrictions [{:type :users
-                                                                                                        :values [{:value "alice"}]}]}
-                                                                     {:id "DUO:0000027" :restrictions [{:type :project
-                                                                                                        :values [{:value "rems"}]}]}
-                                                                     {:id "DUO:0000028" :restrictions [{:type :institute
-                                                                                                        :values [{:value "csc"}]}]}]}}))
+        duo-resource-1 (when (:enable-duo rems.config/env)
+                         (create-resource! {:resource-ext-id "Melanoma research 1"
+                                            :organization {:organization/id "nbn"}
+                                            :actor owner
+                                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                          :values [{:id "MONDO:0000928"}]}]}
+                                                                       {:id "DUO:0000015"}
+                                                                       {:id "DUO:0000019"}
+                                                                       {:id "DUO:0000027"
+                                                                        :restrictions [{:type :project
+                                                                                        :values [{:value "project name here"}]}]
+                                                                        :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
+        duo-resource-2 (when (:enable-duo rems.config/env)
+                         (create-resource! {:resource-ext-id "Melanoma research 2"
+                                            :organization {:organization/id "nbn"}
+                                            :actor owner
+                                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                          :values [{:id "MONDO:0001893"}]}]}
+                                                                       {:id "DUO:0000019"}
+                                                                       {:id "DUO:0000027"
+                                                                        :restrictions [{:type :project
+                                                                                        :values [{:value "project name here"}]}]
+                                                                        :more-info {:en "This DUO code is optional but recommended"}}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
@@ -997,24 +998,43 @@
             handler (users :approver2)
             reviewer (users :reviewer)
             cat-id (create-catalogue-item! {:actor owner
-                                            :title {:en "Default workflow with DUO codes"
-                                                    :fi "Testityövuo DUO koodeilla"
-                                                    :sv "Standard arbetsflöde med DUO koder"}
-                                            :infourl {:en "http://www.google.com"
-                                                      :fi "http://www.google.fi"
-                                                      :sv "http://www.google.se"}
-                                            :resource-id duo-resource
+                                            :title {:en "Apply for melanoma research 1"
+                                                    :fi "Hae melanooma-tutkimusta 1"
+                                                    :sv "Ansöka om melanomforskning 1"}
+                                            :resource-id duo-resource-1
                                             :form-id form
                                             :organization {:organization/id "nbn"}
                                             :workflow-id (:default workflows)
                                             :categories [special-category]})
-            app-id (create-draft! applicant [cat-id] "application with DUO codes")]
-        (create-draft! applicant [cat-id] "draft application with DUO codes")
-        (command! {:type :application.command/submit
+            cat-id-2 (create-catalogue-item! {:actor owner
+                                              :title {:en "Apply for melanoma research 2"
+                                                      :fi "Hae melanooma-tutkimusta 2"
+                                                      :sv "Ansöka om melanomforskning 2"}
+                                              :resource-id duo-resource-2
+                                              :form-id form
+                                              :organization {:organization/id "nbn"}
+                                              :workflow-id (:default workflows)
+                                              :categories [special-category]})
+            app-id (create-draft! applicant [cat-id-2] "draft application with DUO codes")
+            app-id-2 (create-draft! applicant [cat-id] "application with DUO codes")]
+        (command! {:type :application.command/save-draft
                    :application-id app-id
+                   :actor applicant
+                   :field-values []
+                   :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
+        (command! {:type :application.command/save-draft
+                   :application-id app-id-2
+                   :actor applicant
+                   :field-values []
+                   :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
+                               {:id "DUO:0000015"}
+                               {:id "DUO:0000019"}
+                               {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
+        (command! {:type :application.command/submit
+                   :application-id app-id-2
                    :actor applicant})
         (command! {:type :application.command/request-review
-                   :application-id app-id
+                   :application-id app-id-2
                    :actor handler
                    :reviewers [reviewer]
                    :comment "please have a look"})))))
