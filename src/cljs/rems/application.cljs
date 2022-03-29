@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [goog.string]
             [re-frame.core :as rf]
+            [medley.core :refer [find-first update-existing]]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
@@ -23,7 +24,7 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
-            [rems.administration.duo :refer [resource-duo-view-compact]]
+            [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
@@ -31,6 +32,8 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by parse-int]]
+            [rems.common.duo :refer [duo-validation-summary unmatched-duos]]
+            [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.focus :as focus]
@@ -94,7 +97,6 @@
                      (format-validation-error type (get-in fields-index [form-id field-id]))
                      (text type))])))]))
 
-
 ;;;; State
 
 (rf/reg-sub ::application-id (fn [db _] (::application-id db)))
@@ -107,7 +109,9 @@
    {:db (-> db
             (assoc ::application-id (parse-int id))
             (dissoc ::application ::edit-application))
-    :dispatch [::fetch-application id true]}))
+    :dispatch-n (if (-> db :config :enable-duo)
+                  [[::fetch-application id true] [::duo-codes]]
+                  [[::fetch-application id true]])}))
 
 (rf/reg-event-fx
  ::fetch-application
@@ -125,8 +129,18 @@
                             {:form (:form/id form)
                              :field (:field/id field)
                              :value (:field/value field)})
-                          (build-index {:keys [:form :field] :value-fn :value}))]
-    (assoc db ::edit-application {:field-values field-values
+                          (build-index {:keys [:form :field] :value-fn :value}))
+        duo-codes (->> (for [duo (-> application :application/duo :duo/codes)]
+                         (update-existing duo
+                                          :restrictions
+                                          (partial build-index {:keys [:type]
+                                                                :value-fn (fn [{:keys [type values]}]
+                                                                            (case type
+                                                                              :mondo values
+                                                                              (-> values first :value)))})))
+                       (build-index {:keys [:id]}))]
+    (assoc db ::edit-application {:duo-codes duo-codes
+                                  :field-values field-values
                                   :show-diff {}
                                   :validation-errors nil
                                   :attachment-status {}})))
@@ -161,16 +175,27 @@
         ;; validation errors can be too long for :actions location
         (flash-message/show-default-error! :top description [format-validation-errors application (:errors response)])))))
 
-(defn- save-application! [description application field-values on-success]
+(defn- duo-codes-to-api [duo-codes]
+  (for [duo duo-codes]
+    {:id (:id duo)
+     :restrictions (for [restriction (:restrictions duo)
+                         :let [type (first restriction)
+                               values (second restriction)]]
+                     {:type type
+                      :values (case type
+                                :mondo (map #(select-keys % [:id]) values)
+                                [{:value values}])})}))
+
+(defn- save-application! [description application {:keys [field-values duo-codes]} on-success]
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
-                   :field-values (field-values-to-api application field-values)}
+                   :field-values field-values
+                   :duo-codes duo-codes}
           :handler (handle-validation-errors
                     description
                     application
                     on-success)
           :error-handler (flash-message/default-error-handler :actions description)}))
-
 
 (rf/reg-event-fx
  ::save-application
@@ -179,7 +204,9 @@
          edit-application (::edit-application db)]
      (save-application! description
                         application
-                        (:field-values edit-application)
+                        {:field-values (field-values-to-api application
+                                                            (:field-values edit-application))
+                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
                         #(do
                            (rf/dispatch [::fetch-application (:application/id application)])
                            (if on-success
@@ -187,29 +214,26 @@
                              (flash-message/show-default-success! :actions description)))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [description application field-values]
-  (save-application! description
-                     application
-                     field-values
-                     (fn []
-                       (post! "/api/applications/submit"
-                              {:params {:application-id (:application/id application)}
-                               :handler (handle-validation-errors
-                                         description
-                                         application
-                                         #(do
-                                            (flash-message/show-default-success! :actions description)
-                                            (rf/dispatch [::fetch-application (:application/id application)])))
-                               :error-handler (flash-message/default-error-handler :actions description)}))))
-
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
-     (submit-application! description
-                          application
-                          (:field-values edit-application)))
+     (save-application! description
+                        application
+                        {:field-values (field-values-to-api application
+                                                            (:field-values edit-application))
+                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+                        (fn []
+                          (post! "/api/applications/submit"
+                                 {:params {:application-id (:application/id application)}
+                                  :handler (handle-validation-errors
+                                            description
+                                            application
+                                            #(do
+                                               (flash-message/show-default-success! :actions description)
+                                               (rf/dispatch [::fetch-application (:application/id application)])))
+                                  :error-handler (flash-message/default-error-handler :actions description)}))))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (rf/reg-event-fx
@@ -299,7 +323,20 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
+(rf/reg-event-db
+ ::set-duo-codes
+ (fn [db [_ duos]]
+   (let [existing-codes (-> db ::edit-application :duo-codes)
+         duos (for [duo duos]
+                (update duo :restrictions #(build-index {:keys [:type] :value-fn :values} %)))]
+     (-> db
+         (assoc-in [::edit-application :duo-codes]
+                   (->> duos
+                        (map #(get existing-codes (:id %) %))
+                        (build-index {:keys [:id]})))))))
+
 (fetcher/reg-fetcher ::previous-applications "/api/applications")
+(fetcher/reg-fetcher ::duo-codes "/api/resources/duo-codes")
 
 (rf/reg-sub
  ::previous-applications-except-current
@@ -406,8 +443,9 @@
                    :text (text :t.form/copy-as-new)
                    :on-click #(rf/dispatch [::copy-as-new-application])}])
 
-(defn- application-fields [application edit-application]
-  (let [field-values (:field-values edit-application)
+(defn- application-fields [application]
+  (let [edit-application @(rf/subscribe [::edit-application])
+        field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:form-id :field-id] (:validation-errors edit-application))
         attachments (index-by [:attachment/id] (:application/attachments application))
@@ -795,23 +833,33 @@
                       forms)}])))
 
 (defn- render-resource [resource language]
-  ^{:key (:catalogue-item/id resource)}
   (let [config @(rf/subscribe [:rems.config/config])
-        duo-codes (get-in resource [:resource/duo :duo/codes])]
+        duos (get-in resource [:resource/duo :duo/codes])
+        resource-header [:p
+                         (localized (:catalogue-item/title resource))
+                         (when-let [url (catalogue-item-more-info-url resource language config)]
+                           [:<>
+                            " – "
+                            [:a {:href url :target :_blank}
+                             (text :t.catalogue/more-info) " " [external-link]]])]]
     [:div.application-resource
-     {:class (when (:enable-duo config) "solid-group")}
-     [:h3.resource-label
-      (localized (:catalogue-item/title resource))
-      (when-let [url (catalogue-item-more-info-url resource language config)]
-        [:<>
-         " – "
-         [:a {:href url :target :_blank}
-          (text :t.catalogue/more-info) " " [external-link]]])]
-     (when (and (:enable-duo config)
-                (seq duo-codes))
-       (into [:div.resource-duo-codes]
-             (for [code duo-codes]
-               [resource-duo-view-compact code (:catalogue-item/id resource)])))]))
+     (if-not (and (:enable-duo config) (seq duos))
+       resource-header
+       [collapsible/expander
+        {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
+         :title resource-header
+         :content [collapsible/component
+                   {:id (str "resource-" (:resource/id resource) "-duos")
+                    :class "mt-3"
+                    :title (text :t.duo/title)
+                    :always [:div
+                             (for [duo duos]
+                               ^{:key (:id duo)}
+                               [duo-info-field {:id (str "resource-" (:resource/id resource) "-duo-" (:id duo) "-collapsible")
+                                                :compact? true
+                                                :duo duo
+                                                :duo/more-infos (when (:more-info duo)
+                                                                  (list (select-keys duo [:more-info])))}])]}]}])]))
 
 (defn- applied-resources [application userid language]
   (let [application-id (:application/id application)
@@ -826,6 +874,7 @@
                [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
+                       ^{:key (:catalogue-item/id resource)}
                        [render-resource resource language]))]
       :footer [:div
                [:div.commands
@@ -846,7 +895,103 @@
                                             :default-sort-column :submitted
                                             :default-sort-order :desc}]]}])
 
-(defn- render-application [{:keys [application edit-application config userid highlight-request-id language]}]
+(rf/reg-sub ::duo-form
+            :<- [::edit-application]
+            (fn [edit-application] (:duo-codes edit-application)))
+(rf/reg-event-db ::set-duo-form-code
+                 (fn [db [_ keys value]] (assoc-in db (concat [::edit-application :duo-codes] keys) value)))
+
+(defn- find-duo-more-info [duo]
+  (flatten
+   (for [resource (:application/resources @(rf/subscribe [::application]))]
+     (for [res-duo (filter :more-info (-> resource :resource/duo :duo/codes))
+           :when (= (:id res-duo) (:id duo))]
+       (merge (select-keys res-duo [:more-info])
+              (select-keys resource [:resource/id :catalogue-item/title]))))))
+
+(def ^:private duo-context
+  {:get-form ::duo-form
+   :update-form ::set-duo-form-code})
+
+(defn- edit-application-duo-codes []
+  (let [application-duo-matches (-> @(rf/subscribe [::application]) :application/duo :duo/matches)
+        selected-duos (vals @(rf/subscribe [::duo-form]))]
+    [collapsible/component
+     {:id "duo-codes"
+      :title (text :t.duo/title)
+      :always [:div.form-items.form-group
+               (when-let [missing-duos (seq (unmatched-duos application-duo-matches))]
+                 [:div.alert.alert-warning
+                  [:p (text :t.applications.duos.validation/missing-duo-codes)]
+                  (into [:ul]
+                        (for [duo missing-duos]
+                          ^{:key (:duo/id duo)}
+                          [:li (str (:duo/shorthand duo) " - " (localized (:duo/label duo)))]))])
+               [:div.mb-3
+                [dropdown/dropdown
+                 {:id "duos-dropdown"
+                  :items @(rf/subscribe [::duo-codes])
+                  :item-key :id
+                  :item-label (fn [{:keys [id shorthand label]}]
+                                (if-not (str/blank? shorthand)
+                                  (str shorthand " – " (localized label))
+                                  (str id " – " (localized label))))
+                  :item-selected? (fn [duo] (some #(= (:id duo) (:id %)) selected-duos))
+                  :multi? true
+                  :on-change #(rf/dispatch [::set-duo-codes %])}]]
+               (doall
+                (for [edit-duo (sort-by :id selected-duos)
+                      :let [duo-matches (->> application-duo-matches
+                                             (filter (fn [match] (= (:id edit-duo) (:duo/id match)))))]]
+                  ^{:key (:id edit-duo)}
+                  [:div.form-field
+                   [duo-field edit-duo {:context duo-context
+                                        :duo/statuses (map (comp :valid :duo/validation) duo-matches)
+                                        :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
+                                        :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
+
+(defn- group-duos-by-matches [matches duos]
+  (->> matches
+       (remove #(= :duo/not-found (-> % :duo/validation :valid)))
+       (build-index {:keys [:duo/id] :collect-fn identity})
+       (map (fn [[duo-id matches]]
+              {:duo (find-first #(= duo-id (:id %)) duos)
+               :matches matches
+               :valid (duo-validation-summary (map #(-> % :duo/validation :valid) matches))}))))
+
+(defn- duo-status-sort-order [status]
+  (case status
+    :duo/not-compatible 0
+    :duo/needs-manual-validation 1
+    :duo/compatible 2
+    3))
+
+(defn- application-duo-codes []
+  (let [duo-matches (-> @(rf/subscribe [::application]) :application/duo :duo/matches)
+        duo-codes (-> @(rf/subscribe [::application]) :application/duo :duo/codes)]
+    [collapsible/component
+     {:id "duo-codes"
+      :title (text :t.duo/title)
+      :always (if (empty? duo-matches)
+                [:p (text :t.applications.duos/no-duo-codes)]
+                [:div.form-items.form-group
+                 (when-let [missing-duos (seq (unmatched-duos duo-matches))]
+                   [:div.alert.alert-danger
+                    [:p (text :t.applications.duos.validation/missing-duo-codes)]
+                    [:ul
+                     (for [duo missing-duos]
+                       ^{:key (str "missing-duo-" (:duo/id duo))}
+                       [:li (str (:duo/shorthand duo) " - " (localized (:duo/label duo)))])]])
+                 (doall
+                  (for [{:keys [duo matches]} (->> (group-duos-by-matches duo-matches duo-codes)
+                                                   (sort-by (comp duo-status-sort-order :valid)))]
+                    ^{:key (:id duo)}
+                    [duo-info-field {:id (str "duo-info-field-" (:id duo))
+                                     :duo duo
+                                     :duo/matches matches
+                                     :duo/more-infos (find-duo-more-info duo)}]))])}]))
+
+(defn- render-application [{:keys [application config userid highlight-request-id language]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
@@ -855,11 +1000,15 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
+     (when (:enable-duo config)
+       (if (= userid (-> application :application/applicant :userid))
+         [:div.mt-3 [edit-application-duo-codes]]
+         [:div.mt-3 [application-duo-codes]]))
      [:div.mt-3 [applied-resources application userid language]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
-     [:div.mt-3 [application-fields application edit-application]]]
+     [:div.mt-3 [application-fields application]]]
     [:div.col-lg-4.spaced-vertically-3
      [:div#actions
       [flash-message/component :actions]
@@ -873,7 +1022,6 @@
         application @(rf/subscribe [::application])
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
-        edit-application @(rf/subscribe [::edit-application])
         highlight-request-id @(rf/subscribe [::highlight-request-id])
         userid (:userid @(rf/subscribe [:user]))
         language @(rf/subscribe [:language])]
@@ -889,7 +1037,6 @@
        [spinner/big])
      (when application
        [render-application {:application application
-                            :edit-application edit-application
                             :config config
                             :userid userid
                             :highlight-request-id highlight-request-id

@@ -1,6 +1,7 @@
 (ns rems.dropdown
   (:require [cljsjs.react-select]
             [clojure.string :as str]
+            [medley.core :refer [assoc-some]]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
@@ -61,31 +62,32 @@
   `:on-change` called each time the value changes, one or seq
   `:loading?` should dropdown show \"loading\" (e.g. when loading data asynchronously)?
   `:on-load-options` function called with :query-string and :on-data keys when dropdown should load new data"
-  [{:keys [id class item-key item-label hide-selected? item-disabled? disabled? multi? clearable? placeholder on-change loading? on-load-options]
+  [{:keys [id class items item-key item-label hide-selected? item-disabled? disabled? multi? clearable? placeholder on-change loading? on-load-options]
     :or {item-key identity
          item-label identity
          hide-selected? multi?
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
-  [:> js/Select.Async {:className (str/trimr (str "dropdown-container " class))
-                       :classNamePrefix "dropdown-select-async"
-                       :getOptionLabel #(item-label (js->clj % :keywordize-keys true))
-                       :getOptionValue #(item-key (js->clj % :keywordize-keys true))
-                       :inputId id
-                       :isMulti multi?
-                       :isClearable clearable?
-                       :isDisabled disabled?
-                       :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
-                       :maxMenuHeight 200
-                       :noOptionsMessage #(text :t.dropdown/no-results)
-                       :hideSelectedOptions hide-selected?
-                       :onChange #(let [items (js->clj % :keywordize-keys true)]
-                                    (on-change (if (array? items) (array-seq items) items)))
-                       :placeholder (or placeholder (text :t.dropdown/placeholder))
-                       :loadOptions (fn [query-string callback]
-                                      (on-load-options {:query-string query-string
-                                                        :on-data #(callback (clj->js %))}))
-                       :loading loading?}])
+  [:> js/Select.Async (-> {:className (str/trimr (str "dropdown-container " class))
+                           :classNamePrefix "dropdown-select-async"
+                           :getOptionLabel #(item-label (js->clj % :keywordize-keys true))
+                           :getOptionValue #(item-key (js->clj % :keywordize-keys true))
+                           :inputId id
+                           :isMulti multi?
+                           :isClearable clearable?
+                           :isDisabled disabled?
+                           :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
+                           :maxMenuHeight 200
+                           :noOptionsMessage #(text :t.dropdown/no-results)
+                           :hideSelectedOptions hide-selected?
+                           :onChange #(let [items (js->clj % :keywordize-keys true)]
+                                        (on-change (if (array? items) (array-seq items) items)))
+                           :placeholder (or placeholder (text :t.dropdown/placeholder))
+                           :loadOptions (fn [query-string callback]
+                                          (on-load-options {:query-string query-string
+                                                            :on-data #(callback (clj->js %))}))
+                           :loading loading?}
+                          (assoc-some :value (when (seq items) (into-array items))))])
 
 (defn guide
   []

@@ -5,7 +5,7 @@
             [goog.string :refer [format]]
             [promesa.core :as p]
             [re-frame.core :as rf]
-            [clojure.test :refer [deftest are testing]]))
+            [clojure.test :refer [deftest are is testing]]))
 
 ;; TODO move to cljc
 (defn getx
@@ -134,18 +134,15 @@
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
   [s]
-  (when s
-    (let [splitted (-> s
-                       (str/replace link-regex #(str "\t" %1 "\t"))
-                       (str/split "\t"))
-          link? (fn [s] (re-matches link-regex s))
-          text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
-                                s
-                                (str "http://" s)))]
-      (map #(if (link? %)
-              [:a {:target :_blank :href (text-to-url %)} %]
-              %)
-           splitted))))
+  (for [substring (some-> s
+                          (str/replace link-regex #(str "\t" %1 "\t"))
+                          (str/split "\t"))
+        :let [url (when (re-matches link-regex substring)
+                    (if-not (str/starts-with? substring "http")
+                      (str "http://" substring) substring))]]
+    (if url
+      ^{:key (random-uuid)} [:a {:target :_blank :href url} substring]
+      substring)))
 
 (defn focus-input-field [id]
   (fn [event]
@@ -212,3 +209,18 @@
       nil nil
       nil {}
       nil [])))
+
+(defn escape-element-id [id]
+  (when (string? id)
+    (-> id
+        (str/replace #"\s" "")
+        (str/replace #"[^A-Za-z0-9\-_]" "_")
+        (str/replace-first #"^[0-9]" (partial str "id_")))))
+
+(deftest test-escape-element-id
+  (testing "should replace element special characters with underscore"
+    (is (nil? (escape-element-id nil)))
+    (is (= "elementid-123" (escape-element-id "element id-123 ")))
+    (is (= "element_id_123" (escape-element-id "element.id#123")))
+    (is (= "id_123-element" (escape-element-id " 123-element")))))
+
