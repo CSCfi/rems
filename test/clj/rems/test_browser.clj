@@ -141,6 +141,11 @@
            [k v])
          (into {}))))
 
+(defn slurp-rows
+  "Like `slurp-table` but assumes a header row needs to be skipped."
+  [& selectors]
+  (rest (apply slurp-table selectors)))
+
 (defn find-rows [table-selectors child-selector]
   (for [row (btu/query-all (vec (concat table-selectors [{:css "tr"}])))
         :when (seq (btu/children row child-selector))]
@@ -1033,7 +1038,7 @@
                    "type" "link"
                    "active" true
                    "commands" "ViewDisableArchive"}}
-                (slurp-table :licenses)))
+                (slurp-rows :licenses)))
       (click-row-action [:licenses]
                         {:fn/text (str (btu/context-get :license-name) " EN")}
                         (select-button-by-label "View"))
@@ -1086,7 +1091,7 @@
              (btu/get-element-text [:licenses {:class :license-title}])))
       (go-to-admin "Resources")
       (is (some #(= (btu/context-get :resid) (get % "title"))
-                (slurp-table :resources))))))
+                (slurp-rows :resources))))))
 
 
 (defn create-form []
@@ -1117,7 +1122,7 @@
              (slurp-fields :form)))
       (go-to-admin "Forms")
       (is (some #(= (btu/context-get :form-name) (get % "internal-name"))
-                (slurp-table :forms))))))
+                (slurp-rows :forms))))))
 
 (defn create-workflow []
   (testing "create workflow"
@@ -1146,7 +1151,7 @@
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
       (is (some #(= (btu/context-get :workflow-name) (get % "title"))
-                (slurp-table :workflows))))))
+                (slurp-rows :workflows))))))
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
@@ -1197,7 +1202,7 @@
                                 "No form")
                      "name" (btu/context-get :catalogue-item-name)}
                     (select-keys % ["resource" "workflow" "form" "name"]))
-                (slurp-table :catalogue))))))
+                (slurp-rows :catalogue))))))
 
 (defn enable-catalogue-item [item-name]
   (go-to-admin "Catalogue items")
@@ -2191,7 +2196,7 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :blacklist))
-      (is (= [{}] (slurp-table :blacklist)))
+      (is (= [] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
       (btu/screenshot "test-blacklist-1.png")
@@ -2200,36 +2205,34 @@
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
     (testing "check entry on resource page"
       (is (btu/eventually-visible? :blacklist))
-      (is (= [{} ;; TODO remove the header row in slurp-table
-              {"resource" "blacklist-test"
+      (is (= [{"resource" "blacklist-test"
                "user" "Bruce Baddie"
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
                "comment" "This is a test."
                "commands" "Remove"}]
-             (mapv #(dissoc % "added-at") (slurp-table :blacklist)))))
+             (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "check entry on blacklist page"
       (go-to-admin "Blacklist")
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Blacklist"}))
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :blacklist))
-      (is (= [{}
-              {"resource" "blacklist-test"
+      (is (= [{"resource" "blacklist-test"
                "user" "Bruce Baddie"
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
                "comment" "This is a test."
                "commands" "Remove"}]
-             (mapv #(dissoc % "added-at") (slurp-table :blacklist)))))
+             (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "remove entry"
       (click-row-action [:blacklist] {:fn/text "baddie"}
                         (select-button-by-label "Remove"))
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (btu/eventually-visible? :blacklist))
-      (is (= [{}] (slurp-table :blacklist))))))
+      (is (= [] (slurp-rows :blacklist))))))
 
 (deftest test-report
   (btu/with-postmortem
@@ -2401,7 +2404,7 @@
 
       (testing "list shows created organization"
         (is (btu/eventually-visible? :organizations))
-        (let [orgs (slurp-table :organizations)]
+        (let [orgs (slurp-rows :organizations)]
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-get :organization-name) " EN")
                        "active" true
@@ -2511,7 +2514,7 @@
   (is (btu/eventually-visible? :categories)))
 
 (defn slurp-categories-by-title []
-  (->> (map #(get % "title") (slurp-table :categories))
+  (->> (map #(get % "title") (slurp-rows :categories))
        (filter some?)))
 
 (deftest test-categories
