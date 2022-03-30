@@ -1,5 +1,6 @@
 (ns rems.dropdown
-  (:require [cljsjs.react-select]
+  (:require [reagent.core :as r]
+            [cljsjs.react-select]
             [clojure.string :as str]
             [medley.core :refer [assoc-some]]
             [rems.guide-util :refer [component-info example]]
@@ -133,4 +134,37 @@
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
                          :hide-selected? false
-                         :on-change on-change}])]))
+                         :on-change on-change}])
+     (component-info async-dropdown)
+     (example "async dropdown menu, single choice, empty"
+              (let [loading? (r/atom false)]
+                [async-dropdown {:item-key :id
+                                 :item-label :name
+                                 :loading? @loading?
+                                 :on-change on-change
+                                 :on-load-options (fn [{:keys [_ on-data]}]
+                                                    (reset! loading? true)
+                                                    (js/setTimeout #(on-data items) 500))}]))
+     (example "async dropdown menu, multi-choice, empty"
+              (let [loading? (r/atom false)]
+                [async-dropdown {:item-key :id
+                                 :item-label :name
+                                 :loading? @loading?
+                                 :multi? true
+                                 :on-change on-change
+                                 :on-load-options (fn [{:keys [_ on-data]}]
+                                                    (reset! loading? true)
+                                                    (js/setTimeout #(on-data items) 500))}]))
+     (example "async dropdown menu, multi-choice, several values selected"
+              (let [loading? (r/atom false)]
+                [async-dropdown {:item-key :id
+                                 :item-label :name
+                                 :items (take 2 items)
+                                 :loading? @loading?
+                                 :multi? true
+                                 :on-change (fn [items]
+                                              (reset! loading? false)
+                                              (on-change items))
+                                 :on-load-options (fn [{:keys [_ on-data]}]
+                                                    (reset! loading? true)
+                                                    (js/setTimeout #(on-data items) 500))}]))]))
