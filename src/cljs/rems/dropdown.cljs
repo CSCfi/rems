@@ -61,9 +61,8 @@
   `:clearable?` should there be a clear selection button?
   `:placeholder` text to show when nothing is selected, defaults to (text :t.dropdown/placeholder)
   `:on-change` called each time the value changes, one or seq
-  `:loading?` should dropdown show \"loading\" (e.g. when loading data asynchronously)?
   `:on-load-options` function called with :query-string and :on-data keys when dropdown should load new data"
-  [{:keys [id class items item-key item-label hide-selected? item-disabled? disabled? multi? clearable? placeholder on-change loading? on-load-options]
+  [{:keys [id class items item-key item-label hide-selected? item-disabled? disabled? multi? clearable? placeholder on-change on-load-options]
     :or {item-key identity
          item-label identity
          hide-selected? multi?
@@ -86,8 +85,7 @@
                            :placeholder (or placeholder (text :t.dropdown/placeholder))
                            :loadOptions (fn [query-string callback]
                                           (on-load-options {:query-string query-string
-                                                            :on-data #(callback (clj->js %))}))
-                           :loading loading?}
+                                                            :on-data #(callback (clj->js %))}))}
                           (assoc-some :value (when (seq items) (into-array items))))])
 
 (defn guide
@@ -137,34 +135,23 @@
                          :on-change on-change}])
      (component-info async-dropdown)
      (example "async dropdown menu, single choice, empty"
-              (let [loading? (r/atom false)]
-                [async-dropdown {:item-key :id
-                                 :item-label :name
-                                 :loading? @loading?
-                                 :on-change on-change
-                                 :on-load-options (fn [{:keys [_ on-data]}]
-                                                    (reset! loading? true)
-                                                    (js/setTimeout #(on-data items) 500))}]))
+              [async-dropdown {:item-key :id
+                               :item-label :name
+                               :on-change on-change
+                               :on-load-options (fn [{:keys [_ on-data]}]
+                                                  (js/setTimeout #(on-data items) 500))}])
      (example "async dropdown menu, multi-choice, empty"
-              (let [loading? (r/atom false)]
-                [async-dropdown {:item-key :id
-                                 :item-label :name
-                                 :loading? @loading?
-                                 :multi? true
-                                 :on-change on-change
-                                 :on-load-options (fn [{:keys [_ on-data]}]
-                                                    (reset! loading? true)
-                                                    (js/setTimeout #(on-data items) 500))}]))
+              [async-dropdown {:item-key :id
+                               :item-label :name
+                               :multi? true
+                               :on-change on-change
+                               :on-load-options (fn [{:keys [_ on-data]}]
+                                                  (js/setTimeout #(on-data items) 500))}])
      (example "async dropdown menu, multi-choice, several values selected"
-              (let [loading? (r/atom false)]
-                [async-dropdown {:item-key :id
-                                 :item-label :name
-                                 :items (take 2 items)
-                                 :loading? @loading?
-                                 :multi? true
-                                 :on-change (fn [items]
-                                              (reset! loading? false)
-                                              (on-change items))
-                                 :on-load-options (fn [{:keys [_ on-data]}]
-                                                    (reset! loading? true)
-                                                    (js/setTimeout #(on-data items) 500))}]))]))
+              [async-dropdown {:item-key :id
+                               :item-label :name
+                               :items (take 2 items)
+                               :multi? true
+                               :on-change (on-change items)
+                               :on-load-options (fn [{:keys [_ on-data]}]
+                                                  (js/setTimeout #(on-data items) 500))}])]))

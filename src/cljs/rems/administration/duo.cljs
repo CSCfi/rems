@@ -131,7 +131,6 @@
            :on-load-options (-> (fn [{:keys [query-string on-data]}]
                                   (rf/dispatch [::mondo-codes {:search-text query-string} {:on-data on-data}]))
                                 (debounce 500))
-           :loading? @(rf/subscribe [::mondo-codes :fetching?])
            :placeholder (text :t.search/search)}]])
 
       :date
