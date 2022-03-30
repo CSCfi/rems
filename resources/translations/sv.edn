@@ -325,7 +325,8 @@
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
-             :placeholder "Välj..."}
+             :placeholder "Välj..."
+             :loading "Läser in..."}
   :duo {:fields {:more-info "Ytterligare info till sökande (frivillig)"}
         :no-duo-codes "Inga DUO-koder"
         :restriction {:collaboration "Forskningsgruppledare"

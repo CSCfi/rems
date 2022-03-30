@@ -350,7 +350,8 @@
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
                     :title "Title"}
   :dropdown {:no-results "No results"
-             :placeholder "Select..."}
+             :placeholder "Select..."
+             :loading "Loading..."}
   :duo {:fields {:more-info "Additional info for applicant (optional)"}
         :no-duo-codes "No Data Use Ontology codes"
         :restriction {:collaboration "Primary study investigator(s)"

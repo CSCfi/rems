@@ -85,7 +85,8 @@
                            :placeholder (or placeholder (text :t.dropdown/placeholder))
                            :loadOptions (fn [query-string callback]
                                           (on-load-options {:query-string query-string
-                                                            :on-data #(callback (clj->js %))}))}
+                                                            :on-data #(callback (clj->js %))}))
+                           :loadingMessage #(text :t.dropdown/loading)}
                           (assoc-some :value (when (seq items) (into-array items))))])
 
 (defn guide

@@ -325,7 +325,8 @@
                     :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
-             :placeholder "Valitse..."}
+             :placeholder "Valitse..."
+             :loading "Ladataan..."}
   :duo {:fields {:more-info "Lisätietoa hakijalle (valinnainen)"}
         :no-duo-codes "Ei DUO-koodeja"
         :restriction {:collaboration "Tutkimusryhmän johtaja(t)"
