@@ -27,7 +27,7 @@
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
+            [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -845,7 +845,7 @@
     [:div.application-resource
      (if-not (and (:enable-duo config) (seq duos))
        resource-header
-       [collapsible/expander
+       [expander
         {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
          :title resource-header
          :content [collapsible/component

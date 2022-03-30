@@ -2,7 +2,7 @@
   (:require [goog.functions :refer [debounce]]
             [re-frame.core :as rf]
             [rems.administration.components :refer [date-field inline-info-field input-field textarea-autosize text-field]]
-            [rems.collapsible :as collapsible]
+            [rems.atoms :as atoms]
             [rems.common.duo :refer [duo-restriction-label duo-validation-summary]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
@@ -80,7 +80,7 @@
         statuses (map (comp :valid :duo/validation) matches)
         collapsible-id (escape-element-id (:id opts))]
     [:div.form-item {:class (if (:compcat? opts) "mb-2" "my-2")}
-     [collapsible/expander
+     [atoms/expander
       {:id collapsible-id
        :title [(if (:compact? opts) :p :h3) {:class "mb-0"}
                [duo-valid-icon (duo-validation-summary statuses)]

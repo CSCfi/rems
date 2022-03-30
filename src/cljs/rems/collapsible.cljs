@@ -1,8 +1,6 @@
 (ns rems.collapsible
-  (:require [reagent.core :as r]
-            [rems.text :refer [text]]
-            [rems.guide-util :refer [component-info example]]
-            [rems.util :refer [escape-element-id focus-when-collapse-opened]]))
+  (:require [rems.text :refer [text]]
+            [rems.guide-util :refer [component-info example]]))
 
 (defn- show [id callback]
   (let [element (js/$ (str "#" id))]
@@ -136,34 +134,6 @@
   "A helper for opening a collapsible/component or collapsible/minimal"
   [id]
   (show (str id "-collapse") nil))
-
-(defn expander
-  "Displays an expandable block of content with animated chevron.
-   
-   Pass a map of options with the following keys:
-   * `id` unique id for expanded content
-   * `content` content which is displayed in expanded state
-   * `expanded?` initial expanded state
-   * `title` content which is always displayed together with animated chevron"
-  [{:keys [id content expanded? title] :or {expanded? false}}]
-  (let [expanded (r/atom expanded?)
-        id (escape-element-id id)]
-    (fn []
-      [:<>
-       [:button.info-button.btn.d-flex.align-items-center.px-0 ; .btn adds unnecessary horizontal padding
-        {:data-toggle "collapse"
-         :href (str "#" id)
-         :aria-expanded (if @expanded "true" "false")
-         :aria-controls id
-         :on-click #(swap! expanded not)
-         :style {:white-space "normal"}} ; .btn uses "nowrap" which overflows the page with long input
-        [:span.mr-2.fa.fa-chevron-down.animate-transform
-         {:class (when @expanded "rotate-180")}]
-        title]
-       [:div.collapse {:id id
-                       :ref focus-when-collapse-opened
-                       :tab-index "-1"}
-        content]])))
 
 (defn guide
   []
