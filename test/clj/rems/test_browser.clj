@@ -1176,13 +1176,15 @@
       (is (some #(= (btu/context-get :workflow-name) (get % "title"))
                 (slurp-rows :workflows))))))
 
+(defn create-category []
+  (test-helpers/create-category! {:actor "owner"
+                                  :category/title {:en "E2E create-catalogue-item category (EN)"
+                                                   :fi "E2E create-catalogue-item category (FI)"
+                                                   :sv "E2E create-catalogue-item category (SV)"}}))
+
 (defn create-catalogue-item []
   (testing "create catalogue item"
     (btu/with-postmortem
-      (test-helpers/create-category! {:actor "owner"
-                                      :category/title {:en "E2E create-catalogue-item category (EN)"
-                                                       :fi "E2E create-catalogue-item category (FI)"
-                                                       :sv "E2E create-catalogue-item category (SV)"}})
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
@@ -1253,6 +1255,7 @@
       (create-resource)
       (create-form)
       (create-workflow)
+      (create-category)
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
       (go-to-catalogue)
