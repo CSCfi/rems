@@ -995,6 +995,33 @@
 
     (user-settings/delete-user-settings! "alice"))) ; clear language settings
 
+(defn create-organization []
+  (go-to-admin "Organizations")
+  (testing "create"
+    (btu/scroll-and-click :create-organization)
+    (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
+    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
+    (is (btu/eventually-visible? :id))
+    (btu/fill-human :id (btu/context-get :organization-id))
+    (btu/fill-human :short-name-en "SNEN")
+    (btu/fill-human :short-name-fi "SNFI")
+    (btu/fill-human :short-name-sv "SNSV")
+    (btu/fill-human :name-en (str (btu/context-get :organization-name) " EN"))
+    (btu/fill-human :name-fi (str (btu/context-get :organization-name) " FI"))
+    (btu/fill-human :name-sv (str (btu/context-get :organization-name) " SV"))
+    (select-option* "Owners" "Organization owner 1")
+    (btu/scroll-and-click :add-review-email)
+    (btu/scroll-and-click :add-review-email)
+
+    (is (btu/eventually-visible? :review-emails-1-name-en))
+    (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
+    (btu/fill-human :review-emails-1-name-fi "Review mail FI")
+    (btu/fill-human :review-emails-1-name-sv "Review mail SV")
+    (btu/fill-human :review-emails-1-email "review.email@example.com")
+    (btu/scroll-and-click {:css ".remove"}) ; remove first
+    (btu/scroll-and-click :save)
+    (is (btu/eventually-visible? {:css ".alert-success"}))
+    (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))))
 
 (defn create-license []
   (testing "create license"
@@ -1160,7 +1187,7 @@
       (btu/scroll-and-click :create-catalogue-item)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
       (btu/wait-page-loaded)
-      (select-option "Organization" "nbn")
+      (select-option "Organization" (btu/context-get :organization-name))
       (fill-form-field "Title" (btu/context-get :catalogue-item-name) {:index 1})
       (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
       (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
@@ -1175,7 +1202,7 @@
       (btu/wait-page-loaded)
       (btu/screenshot "created-catalogue-item.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "NBN"
+      (is (= {"Organization" (str (btu/context-get :organization-name) " EN")
               "Title (EN)" (btu/context-get :catalogue-item-name)
               "Title (FI)" (str (btu/context-get :catalogue-item-name) " FI")
               "Title (SV)" (str (btu/context-get :catalogue-item-name) " SV")
@@ -1221,6 +1248,7 @@
                           :form-name (str "Browser Test Form " (btu/get-seed))
                           :workflow-name (str "Browser Test Workflow " (btu/get-seed))
                           :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed)))
+      (create-organization)
       (create-license)
       (create-resource)
       (create-form)
@@ -2305,33 +2333,8 @@
 
   (btu/with-postmortem
     (login-as "owner")
-    (go-to-admin "Organizations")
 
-    (testing "create"
-      (btu/scroll-and-click :create-organization)
-      (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
-      (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
-      (is (btu/eventually-visible? :id))
-      (btu/fill-human :id (btu/context-get :organization-id))
-      (btu/fill-human :short-name-en "SNEN")
-      (btu/fill-human :short-name-fi "SNFI")
-      (btu/fill-human :short-name-sv "SNSV")
-      (btu/fill-human :name-en (str (btu/context-get :organization-name) " EN"))
-      (btu/fill-human :name-fi (str (btu/context-get :organization-name) " FI"))
-      (btu/fill-human :name-sv (str (btu/context-get :organization-name) " SV"))
-      (select-option* "Owners" "Organization owner 1")
-      (btu/scroll-and-click :add-review-email)
-      (btu/scroll-and-click :add-review-email)
-
-      (is (btu/eventually-visible? :review-emails-1-name-en))
-      (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
-      (btu/fill-human :review-emails-1-name-fi "Review mail FI")
-      (btu/fill-human :review-emails-1-name-sv "Review mail SV")
-      (btu/fill-human :review-emails-1-email "review.email@example.com")
-      (btu/scroll-and-click {:css ".remove"}) ; remove first
-      (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:css ".alert-success"}))
-      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
+    (create-organization)
 
     (testing "view after creation"
       (is (btu/eventually-visible? :organization))
