@@ -928,6 +928,7 @@
                           ^{:key (:duo/id duo)}
                           [:li (str (:duo/shorthand duo) " - " (localized (:duo/label duo)))]))])
                [:div.mb-3
+                [:label.administration-field-label {:for "duos-dropdown"} (text :t.duo/title)]
                 [dropdown/dropdown
                  {:id "duos-dropdown"
                   :items @(rf/subscribe [::duo-codes])
