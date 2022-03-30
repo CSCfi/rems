@@ -997,8 +997,8 @@
       (change-language :en)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue"})))
 
-    (user-settings/delete-user-settings! "alice") ; clear language settings
-    (is true))) ; avoid no assertions warning
+    (user-settings/delete-user-settings! "alice"))) ; clear language settings
+
 
 (defn create-license []
   (testing "create license"
@@ -2490,8 +2490,7 @@
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
-    (user-settings/delete-user-settings! "alice") ; clear language settings
-    (is true)))  ; avoid no assertions warning
+    (user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn fill-category-fields [{:keys [title description display-order categories]}]
   (btu/fill-human :title-en (str title " (EN)"))
