@@ -243,4 +243,10 @@
                                   :attachment/filename "my-attachment.pdf"}])
        (example "attachment-link, long filename"
                 [attachment-link {:attachment/id 123
-                                  :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])])))
+                                  :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])
+       (component-info expander)
+       (example "expander"
+                [expander {:id "guide-expander-id"
+                           :title "Expander block with animated chevron"
+                           :expanded? false
+                           :content [:p "Expanded content"]}])])))
