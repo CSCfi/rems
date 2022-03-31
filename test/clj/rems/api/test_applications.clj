@@ -2084,7 +2084,7 @@
                                  :duo/id "DUO:0000024"
                                  :duo/label {:en "publication moratorium"}
                                  :duo/shorthand "MOR"
-                                 :duo/validation {:errors [] :valid "duo/not-found"}}
+                                 :duo/validation {:errors [] :validity "duo/not-found"}}
                                 {:resource/id res2
                                  :duo/id "DUO:0000027"
                                  :duo/label {:en "project specific restriction"}
@@ -2093,7 +2093,7 @@
                                                             :catalogue-item/title {}
                                                             :duo/restrictions [{:type "project"
                                                                                 :values [{:value "csc rems"}]}]}]
-                                                  :valid "duo/needs-manual-validation"}}
+                                                  :validity "duo/needs-manual-validation"}}
                                 {:resource/id res2
                                  :duo/id "DUO:0000007"
                                  :duo/label {:en "disease specific research"}
@@ -2102,7 +2102,7 @@
                                                             :catalogue-item/title {}
                                                             :duo/restrictions [{:id "MONDO:0005105"
                                                                                 :label "melanoma"}]}]
-                                                  :valid "duo/not-compatible"}}]}
+                                                  :validity "duo/not-compatible"}}]}
                  (-> (get-application-for-user app-id applicant-id)
                      :application/duo))))
         (testing "save fully valid duo codes"
@@ -2134,7 +2134,7 @@
                                  :duo/id "DUO:0000024"
                                  :duo/label {:en "publication moratorium"}
                                  :duo/shorthand "MOR"
-                                 :duo/validation {:errors [] :valid "duo/compatible"}}
+                                 :duo/validation {:errors [] :validity "duo/compatible"}}
                                 {:resource/id res2
                                  :duo/id "DUO:0000027"
                                  :duo/label {:en "project specific restriction"}
@@ -2143,12 +2143,12 @@
                                                             :catalogue-item/title {}
                                                             :duo/restrictions [{:type "project"
                                                                                 :values [{:value "csc rems"}]}]}]
-                                                  :valid "duo/needs-manual-validation"}}
+                                                  :validity "duo/needs-manual-validation"}}
                                 {:resource/id res2
                                  :duo/id "DUO:0000007"
                                  :duo/label {:en "disease specific research"}
                                  :duo/shorthand "DS"
-                                 :duo/validation {:errors [] :valid "duo/compatible"}}]}
+                                 :duo/validation {:errors [] :validity "duo/compatible"}}]}
                  (-> (get-application-for-user app-id applicant-id)
                      :application/duo))))))))
 

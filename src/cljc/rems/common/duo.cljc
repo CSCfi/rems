@@ -20,6 +20,6 @@
 
 (defn unmatched-duos [duo-matches]
   (->> duo-matches
-       (filter (comp #{:duo/not-found} :valid :duo/validation))
+       (filter (comp #{:duo/not-found} :validity :duo/validation))
        (distinct-by :duo/id)))
 

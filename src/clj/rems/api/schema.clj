@@ -263,10 +263,9 @@
                                                      :duo/shorthand s/Str
                                                      :duo/label {s/Keyword s/Any}
                                                      :resource/id s/Int
-                                                     :duo/validation {:valid s/Keyword
+                                                     :duo/validation {:validity s/Keyword
                                                                       (s/optional-key :errors) [{:type s/Keyword
-                                                                                                 s/Keyword s/Any}]}}]
-                                      (s/optional-key :duo/valid) s/Keyword}})
+                                                                                                 s/Keyword s/Any}]}}]}})
 
 (s/defschema ApplicationRaw
   (-> Application

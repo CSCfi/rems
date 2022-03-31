@@ -76,7 +76,7 @@
   [& [opts]]
   (let [duo (:duo opts)
         matches (:duo/matches opts)
-        statuses (map (comp :valid :duo/validation) matches)
+        statuses (map (comp :validity :duo/validation) matches)
         collapsible-id (escape-element-id (:id opts))]
     [:div.form-item {:class (if (:compact? opts) "mb-2" "my-2")}
      [atoms/expander

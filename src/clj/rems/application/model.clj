@@ -471,9 +471,9 @@
        vec))
 
 (defn- validate-duo-match [dataset-code query-code resource]
-  (let [valid (duo/check-duo-code dataset-code query-code)]
-    {:valid valid
-     :errors (case valid
+  (let [validity (duo/check-duo-code dataset-code query-code)]
+    {:validity validity
+     :errors (case validity
                :duo/not-compatible (case (:id dataset-code)
                                      "DUO:0000007" [{:type :t.duo.validation/mondo-not-valid
                                                      :duo/restrictions (duo/get-restrictions dataset-code :mondo)
