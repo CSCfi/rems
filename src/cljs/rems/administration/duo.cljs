@@ -40,9 +40,10 @@
        [:p (text (:type error))]
        [:ul
         [:li (text-format :t.label (text :t.applications/resource) (localized (:catalogue-item/title error)))]
-        (for [mondo (:duo/restrictions error)]
-          ^{:key (:id mondo)}
-          [:li (text-format :t.label-long label (:id mondo) (:label mondo))])]])
+        (doall
+         (for [mondo (:duo/restrictions error)]
+           ^{:key (:id mondo)}
+           [:li (text-format :t.label-long label (:id mondo) (:label mondo))]))]])
 
     :t.duo.validation/needs-validation
     [:div.alert.alert-warning
