@@ -327,7 +327,7 @@
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."
              :loading "Läser in..."}
-  :duo {:fields {:more-info "Ytterligare info till sökande (frivillig)"}
+  :duo {:fields {:more-info "Tilläggsinformation till sökande (frivillig)"}
         :no-duo-codes "Inga DUO-koder"
         :restriction {:collaboration "Forskningsgruppledare"
                       :date "Publikationsmoratorium (datum)"

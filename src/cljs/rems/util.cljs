@@ -213,14 +213,14 @@
 (defn escape-element-id [id]
   (when (string? id)
     (-> id
-        (str/replace #"\s" "")
-        (str/replace #"[^A-Za-z0-9\-_]" "_")
+        (str/replace #"[^A-Za-z0-9\-\s]" "_")
         (str/replace-first #"^[0-9]" #(str "id_" %)))))
 
 (deftest test-escape-element-id
   (testing "should replace element special characters with underscore"
     (is (nil? (escape-element-id nil)))
-    (is (= "elementid-123" (escape-element-id "element id-123 ")))
+    (is (= "element_id-123_" (escape-element-id "element id-123 ")))
     (is (= "element_id_123" (escape-element-id "element.id#123")))
-    (is (= "id_123-element" (escape-element-id " 123-element")))))
+    (is (= "id_123-element" (escape-element-id "123-element")))
+    (is (= "_123-element" (escape-element-id " 123-element")))))
 
