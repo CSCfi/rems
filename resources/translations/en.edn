@@ -501,6 +501,9 @@
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
+  :label "%1: %2"
+  :label-dash "%1 – %2"
+  :label-long "%1: %2 – %3"
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
   :login {:alternative "Other login options"

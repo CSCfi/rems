@@ -10,7 +10,7 @@
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text get-localized-title localized]]
+            [rems.text :refer [text text-format get-localized-title localized]]
             [rems.util :refer [navigate! post! trim-when-string]]
             [rems.common.util :refer [assoc-some-in build-index]]))
 
@@ -131,10 +131,7 @@
       {:id "duos-dropdown"
        :items @(rf/subscribe [::duo-codes])
        :item-key :id
-       :item-label (fn [{:keys [id label shorthand]}]
-                     (if-not (str/blank? shorthand)
-                       (str shorthand " – " (localized label))
-                       (str id " – " (localized label))))
+       :item-label #(text-format :t.label-dash (:shorthand %) (localized (:label %)))
        :item-selected? #(some? (get selected-duos (:id %)))
        :multi? true
        :on-change #(rf/dispatch [::set-duo-codes %])}]

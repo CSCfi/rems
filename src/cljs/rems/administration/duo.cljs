@@ -7,7 +7,7 @@
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
-            [rems.text :refer [localized text]]
+            [rems.text :refer [localized text text-format]]
             [rems.util :refer [escape-element-id linkify]]))
 
 (defn duo-restriction-info-field [& [opts]]
@@ -39,31 +39,29 @@
       [:div.alert.alert-danger
        [:p (text (:type error))]
        [:ul
-        [:li (str (text :t.applications/resource) ": " (localized (:catalogue-item/title error)))]
+        [:li (text-format :t.label (text :t.applications/resource) (localized (:catalogue-item/title error)))]
         (for [mondo (:duo/restrictions error)]
           ^{:key (:id mondo)}
-          [:li (str label ": " (:id mondo) " - " (:label mondo))])]])
+          [:li (text-format :t.label-long label (:id mondo) (:label mondo))])]])
 
     :t.duo.validation/needs-validation
     [:div.alert.alert-warning
      [:p (text (:type error))]
      [:ul
-      [:li (str (text :t.applications/resource) ": " (localized (:catalogue-item/title error)))]
+      [:li (text-format :t.label (text :t.applications/resource) (localized (:catalogue-item/title error)))]
       (doall
        (for [restriction (:duo/restrictions error)
              :let [label (text (get duo-restriction-label (:type restriction)))]]
          (for [{:keys [value]} (:values restriction)]
            ^{:key (random-uuid)}
-           [:li (str label ": " value)])))]]
+           [:li (text-format :t.label label value)])))]]
 
     nil))
 
 (defn- duo-more-info [info]
   [:div.solid-group
    (when-some [title (:catalogue-item/title info)]
-     [:p
-      (str (text :t.applications/resource) ": ")
-      [:span.font-weight-bold (localized title)]])
+     [:p (text-format :t.label (text :t.applications/resource) (localized title))])
    [:p (linkify (localized (:more-info info)))]])
 
 (defn duo-info-field
@@ -84,7 +82,7 @@
       {:id collapsible-id
        :title [(if (:compact? opts) :p :h3) {:class "mb-0"}
                [duo-valid-icon (duo-validation-summary statuses)]
-               (str (:shorthand duo) " – " (localized (:label duo)))]
+               (text-format :t.label-dash (:shorthand duo) (localized (:label duo)))]
        :content [:div.mt-2.solid-group
                  [:pre (:id duo)]
                  (if (empty? (:duo/more-infos opts))
@@ -124,7 +122,7 @@
          [dropdown/async-dropdown
           {:id "mondos-dropdown"
            :item-key :id
-           :item-label #(str (:id %) " – " (:label %))
+           :item-label #(text-format :t.label-dash (:id %) (:label %))
            :multi? true
            :items mondos
            :on-change #(rf/dispatch [(:update-form context) update-path %])
@@ -159,7 +157,7 @@
   [:<>
    [:h3
     [duo-valid-icon (duo-validation-summary (:duo/statuses opts))]
-    (str (:shorthand duo) " – " (localized (:label duo)))]
+    (text-format :t.label-dash (:shorthand duo) (localized (:label duo)))]
    [:pre (:id duo)]
    [:p (localized (:description duo))]
    (if (:create-field? opts)
