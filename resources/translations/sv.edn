@@ -458,6 +458,9 @@
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"
                :remove "Ta bort"}
+  :label "%1: %2"
+  :label-dash "%1 – %2"
+  :label-long "%1: %2 – %3"
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
   :login {:alternative "Andra alternativ för inloggning"

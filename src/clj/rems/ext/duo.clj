@@ -244,7 +244,7 @@
         (is (= :duo/not-compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values []}]} query-code))
             "dataset labeled with DS must have defined at least one mondo code restriction")
         (is (= :duo/not-compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]} query-code))
-            "dataset labeled with MONDO:0006486 - 'uveal melanoma' is not compatible with MONDO:0005105 - 'melanoma'")
+            "dataset labeled with MONDO:0006486 - 'uveal melanoma' requires a more specific code than MONDO:0005105 - 'melanoma' so it is not compatible")
         (is (= :duo/compatible (check-duo-code {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}
                                                                                                         {:id "MONDO:0006486"}]}]} query-code))
             "dataset labeled with multiple mondo codes is compatible if query code contains at least one of those")
