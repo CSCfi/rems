@@ -716,7 +716,7 @@
                                                                         :actor owner
                                                                         :license-ids [license2 extra-license attachment-license]})
         duo-resource-1 (when (:enable-duo rems.config/env)
-                         (create-resource! {:resource-ext-id "Melanoma research 1"
+                         (create-resource! {:resource-ext-id "Eyelid melanoma samples"
                                             :organization {:organization/id "nbn"}
                                             :actor owner
                                             :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
@@ -728,7 +728,7 @@
                                                                                         :values [{:value "project name here"}]}]
                                                                         :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
         duo-resource-2 (when (:enable-duo rems.config/env)
-                         (create-resource! {:resource-ext-id "Melanoma research 2"
+                         (create-resource! {:resource-ext-id "Spinal cord melanoma samples"
                                             :organization {:organization/id "nbn"}
                                             :actor owner
                                             :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
@@ -998,18 +998,18 @@
             handler (users :approver2)
             reviewer (users :reviewer)
             cat-id (create-catalogue-item! {:actor owner
-                                            :title {:en "Apply for melanoma research 1"
-                                                    :fi "Hae melanooma-tutkimusta 1"
-                                                    :sv "Ansöka om melanomforskning 1"}
+                                            :title {:en "Apply for eyelid melanoma dataset (EN)"
+                                                    :fi "Apply for eyelid melanoma dataset (FI)"
+                                                    :sv "Apply for eyelid melanoma dataset (SV)"}
                                             :resource-id duo-resource-1
                                             :form-id form
                                             :organization {:organization/id "nbn"}
                                             :workflow-id (:default workflows)
                                             :categories [special-category]})
             cat-id-2 (create-catalogue-item! {:actor owner
-                                              :title {:en "Apply for melanoma research 2"
-                                                      :fi "Hae melanooma-tutkimusta 2"
-                                                      :sv "Ansöka om melanomforskning 2"}
+                                              :title {:en "Apply for spinal cord melanoma dataset (EN)"
+                                                      :fi "Apply for spinal cord melanoma dataset (FI)"
+                                                      :sv "Apply for spinal cord melanoma dataset (SV)"}
                                               :resource-id duo-resource-2
                                               :form-id form
                                               :organization {:organization/id "nbn"}
