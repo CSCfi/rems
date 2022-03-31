@@ -946,18 +946,18 @@
                   ^{:key (:id edit-duo)}
                   [:div.form-field
                    [duo-field edit-duo {:context duo-context
-                                        :duo/statuses (map (comp :valid :duo/validation) duo-matches)
+                                        :duo/statuses (map (comp :validity :duo/validation) duo-matches)
                                         :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
                                         :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
 
 (defn- group-duos-by-matches [matches duos]
   (->> matches
-       (remove #(= :duo/not-found (-> % :duo/validation :valid)))
+       (remove #(= :duo/not-found (-> % :duo/validation :validity)))
        (build-index {:keys [:duo/id] :collect-fn identity})
        (map (fn [[duo-id matches]]
               {:duo (find-first #(= duo-id (:id %)) duos)
                :matches matches
-               :valid (duo-validation-summary (map #(-> % :duo/validation :valid) matches))}))))
+               :validity (duo-validation-summary (map #(-> % :duo/validation :validity) matches))}))))
 
 (defn- duo-status-sort-order [status]
   (case status
@@ -984,7 +984,7 @@
                        [:li (str (:duo/shorthand duo) " - " (localized (:duo/label duo)))])]])
                  (doall
                   (for [{:keys [duo matches]} (->> (group-duos-by-matches duo-matches duo-codes)
-                                                   (sort-by (comp duo-status-sort-order :valid)))]
+                                                   (sort-by (comp duo-status-sort-order :validity)))]
                     ^{:key (:id duo)}
                     [duo-info-field {:id (str "duo-info-field-" (:id duo))
                                      :duo duo
