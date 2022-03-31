@@ -118,11 +118,6 @@
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))
 
-
-(def ^:private duo-context
-  {:get-form ::duo-form
-   :update-form ::update-duo})
-
 (defn- resource-duos-field []
   (let [selected-duos @(rf/subscribe [::duo-form])]
     [:div.form-group
@@ -140,7 +135,8 @@
         (doall
          (for [duo (sort-by :id (vals selected-duos))]
            ^{:key (:id duo)}
-           [duo-field duo {:context duo-context
+           [duo-field duo {:context {:get-form ::duo-form
+                                     :update-form ::update-duo}
                            :create-field? true}]))])]))
 
 (defn- save-resource-button [form]

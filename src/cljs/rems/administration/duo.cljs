@@ -16,11 +16,11 @@
     (case restriction-type
       :mondo [:div.container-fluid.pt-2.px-0
               [:label (text (get duo-restriction-label restriction-type))]
-              (into [:div.solid-group]
-                    (for [mondo values]
-                      ^{:key mondo}
-                      [inline-info-field
-                       [:pre.mb-0 (:id mondo)] (:label mondo)]))]
+              [:div.solid-group
+               (for [mondo values]
+                 ^{:key mondo}
+                 [inline-info-field
+                  [:pre.mb-0 (:id mondo)] (:label mondo)])]]
 
       [inline-info-field
        (text (get duo-restriction-label restriction-type)) (:value (first values))])))
