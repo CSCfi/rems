@@ -79,14 +79,14 @@
         matches (:duo/matches opts)
         statuses (map (comp :valid :duo/validation) matches)
         collapsible-id (escape-element-id (:id opts))]
-    [:div.form-item {:class (if (:compcat? opts) "mb-2" "my-2")}
+    [:div.form-item {:class (if (:compact? opts) "mb-2" "my-2")}
      [atoms/expander
       {:id collapsible-id
        :title [(if (:compact? opts) :p :h3) {:class "mb-0"}
                [duo-valid-icon (duo-validation-summary statuses)]
                (str (:shorthand duo) " – " (localized (:label duo)))]
        :content [:div.mt-2.solid-group
-                 [:pre (get duo :id "unknown code")]
+                 [:pre (:id duo)]
                  (if (empty? (:duo/more-infos opts))
                    [:p (localized (:description duo))]
                    [:div.mb-2
@@ -160,7 +160,7 @@
    [:h3
     [duo-valid-icon (duo-validation-summary (:duo/statuses opts))]
     (str (:shorthand duo) " – " (localized (:label duo)))]
-   [:pre (get duo :id "unknown code")]
+   [:pre (:id duo)]
    [:p (localized (:description duo))]
    (if (:create-field? opts)
      [textarea-autosize (:context opts)
