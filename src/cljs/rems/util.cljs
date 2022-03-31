@@ -134,15 +134,18 @@
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
   [s]
-  (for [substring (some-> s
-                          (str/replace link-regex #(str "\t" %1 "\t"))
-                          (str/split "\t"))
-        :let [url (when (re-matches link-regex substring)
-                    (if-not (str/starts-with? substring "http")
-                      (str "http://" substring) substring))]]
-    (if url
-      ^{:key (random-uuid)} [:a {:target :_blank :href url} substring]
-      substring)))
+  (when s
+    (let [splitted (-> s
+                       (str/replace link-regex #(str "\t" %1 "\t"))
+                       (str/split "\t"))
+          link? (fn [s] (re-matches link-regex s))
+          text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
+                                s
+                                (str "http://" s)))]
+      (map #(if (link? %)
+              [:a {:target :_blank :href (text-to-url %)} %]
+              %)
+           splitted))))
 
 (defn focus-input-field [id]
   (fn [event]
