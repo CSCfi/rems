@@ -902,12 +902,11 @@
                  (fn [db [_ keys value]] (assoc-in db (concat [::edit-application :duo-codes] keys) value)))
 
 (defn- find-duo-more-info [duo]
-  (flatten
-   (for [resource (:application/resources @(rf/subscribe [::application]))]
-     (for [res-duo (filter :more-info (-> resource :resource/duo :duo/codes))
-           :when (= (:id res-duo) (:id duo))]
-       (merge (select-keys res-duo [:more-info])
-              (select-keys resource [:resource/id :catalogue-item/title]))))))
+  (for [resource (:application/resources @(rf/subscribe [::application]))
+        res-duo (filter :more-info (-> resource :resource/duo :duo/codes))
+        :when (= (:id res-duo) (:id duo))]
+    (merge (select-keys res-duo [:more-info])
+           (select-keys resource [:resource/id :catalogue-item/title]))))
 
 (def ^:private duo-context
   {:get-form ::duo-form

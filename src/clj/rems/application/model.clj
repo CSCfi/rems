@@ -488,15 +488,14 @@
   (if-not (:enable-duo rems.config/env)
     application
     (let [duos (->> application :application/duo :duo/codes)
-          matches (flatten
-                   (for [resource (:application/resources application)]
-                     (for [res-duo (-> resource :resource/duo :duo/codes)
-                           :let [app-duo (find-first #(= (:id res-duo) (:id %)) duos)]]
-                       {:duo/id (:id res-duo)
-                        :duo/shorthand (:shorthand res-duo)
-                        :duo/label (:label res-duo)
-                        :resource/id (:resource/id resource)
-                        :duo/validation (validate-duo-match res-duo app-duo resource)})))]
+          matches (for [resource (:application/resources application)
+                        res-duo (-> resource :resource/duo :duo/codes)
+                        :let [app-duo (find-first #(= (:id res-duo) (:id %)) duos)]]
+                    {:duo/id (:id res-duo)
+                     :duo/shorthand (:shorthand res-duo)
+                     :duo/label (:label res-duo)
+                     :resource/id (:resource/id resource)
+                     :duo/validation (validate-duo-match res-duo app-duo resource)})]
       (-> application
           (assoc-in [:application/duo :duo/matches] matches)))))
 
