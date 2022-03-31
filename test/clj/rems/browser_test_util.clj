@@ -323,6 +323,7 @@
 (def clear-el (wrap-etaoin et/clear-el))
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
 (def accept-alert (wrap-etaoin et/accept-alert))
+(def reload (wrap-etaoin et/reload))
 ;; TODO add more of etaoin here
 
 

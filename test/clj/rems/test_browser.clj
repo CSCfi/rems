@@ -2637,7 +2637,62 @@
       (is (btu/eventually-visible? :categories))
       (is (= #{"Edited title (EN)"}
              (->> (set (slurp-categories-by-title))
-                  (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))
+                  (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))))
 
+(deftest test-catalogue-tree
+  (btu/context-assoc! :category-name (str "Catalogue tree test parent category " (btu/get-seed) " (EN)"))
+  (btu/context-assoc! :category-id (test-helpers/create-category! {:actor "owner"
+                                                                   :category/title {:en (btu/context-get :category-name)
+                                                                                    :fi (str "Catalogue tree test parent category " (btu/get-seed) " (FI)")
+                                                                                    :sv (str "Catalogue tree test parent category " (btu/get-seed) " (SV)")}}))
+  (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
+                                                           :form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
+                                                                          :field/optional false
+                                                                          :field/type :description}]}))
+  (btu/context-assoc! :catalogue-item-name (str "Catalogue tree test item " (btu/get-seed) " (EN)"))
+  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:actor "owner"
+                                                                          :enabled false
+                                                                          :form-id (btu/context-get :form-id)
+                                                                          :title {:en (btu/context-get :catalogue-item-name)
+                                                                                  :fi (str "Catalogue tree test item " (btu/get-seed) " (FI)")
+                                                                                  :sv (str "Catalogue tree test item " (btu/get-seed) " (SV)")}
+                                                                          :categories [{:category/id (btu/context-get :category-id)}]}))
+
+  (btu/with-postmortem
+    (login-as "alice")
     (testing "catalogue tree"
-      (go-to-catalogue))))
+      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                     (slurp-rows :catalogue-tree)))
+          "can't see item yet")
+
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+
+      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                     (slurp-rows :catalogue-tree)))
+          "still can't see item because it's not enabled")
+
+      (binding [context/*user* {:eppn "owner"}
+                context/*roles* #{:owner}]
+        (catalogue/set-catalogue-item-enabled! {:id (btu/context-get :catalogue-id) :enabled true}))
+
+      ;; must reload to see
+      (btu/reload)
+      (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
+      (btu/wait-page-loaded)
+
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+
+      (is (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                (slurp-rows :catalogue-tree))
+          "can open the category and see the item")
+
+      (click-row-action [:catalogue-tree] {:fn/text (btu/context-get :catalogue-item-name)} {:css ".add-to-cart"})
+
+      (is (= [{"title" (btu/context-get :catalogue-item-name) "commands" "Remove from cartApply"}]
+             (slurp-table {:css ".rems-table.cart"})))
+
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+
+      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                     (slurp-rows :catalogue-tree)))
+          "can't see item anymore because it's hidden again"))))
