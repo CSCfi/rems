@@ -126,7 +126,7 @@
       {:id "duos-dropdown"
        :items @(rf/subscribe [::duo-codes])
        :item-key :id
-       :item-label #(text-format :t.label-dash (:shorthand %) (localized (:label %)))
+       :item-label #(text-format :t.label/dash (:shorthand %) (localized (:label %)))
        :item-selected? #(some? (get selected-duos (:id %)))
        :multi? true
        :on-change #(rf/dispatch [::set-duo-codes %])}]
