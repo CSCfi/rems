@@ -1001,7 +1001,8 @@
      [application-state application config highlight-request-id]
      [:div.mt-3 [applicants-info application]]
      (when (:enable-duo config)
-       (if (= userid (-> application :application/applicant :userid))
+       (if (or (= userid (-> application :application/applicant :userid))
+               (some #{:member} @(rf/subscribe [:roles])))
          [:div.mt-3 [edit-application-duo-codes]]
          [:div.mt-3 [application-duo-codes]]))
      [:div.mt-3 [applied-resources application userid language]]
