@@ -123,6 +123,11 @@
    ;; of the given row.
    ;; Defaults to `:children`.
    (s/optional-key :children) s/Any
+   ;; An optional function (row -> boolean) for filtering
+   ;; rows from the tree after it has been flattened.
+   ;; Return true for the rows you want to be included.
+   ;; Defaults to no filtering.
+   (s/optional-key :row-filter) s/Any
    ;; When filtering, should the parent nodes of a matching node
    ;; always be shown, or only the matching row?
    (s/optional-key :show-matching-parents?) s/Bool
@@ -197,6 +202,11 @@
              #(compare %1 %2))
            rows))
 
+(defn- extra-row-filtering [extra-filter rows]
+  (if extra-filter
+    (filter extra-filter rows)
+    rows))
+
 (rf/reg-sub
  ::flattened-rows
  (fn [db [_ tree]]
@@ -210,6 +220,7 @@
                                               (contains? expanded-rows row-key))]
                             (apply-row-defaults tree (assoc row :expanded? expanded?))))
          initial-rows (->> rows
+                           (extra-row-filtering (:row-filter tree))
                            (mapv apply-defaults)
                            (sort-rows sorting))]
 
@@ -226,6 +237,7 @@
                    child-parents (conj-vec (:parents row) (:key row))
                    new-rows (->> row
                                  :children
+                                 (extra-row-filtering (:row-filter tree))
                                  (mapv #(assoc %
                                                :depth child-depth
                                                :parents child-parents))
