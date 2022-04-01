@@ -50,12 +50,10 @@
      [:p (text (:type error))]
      [:ul
       [:li (text-format :t.label/default (text :t.applications/resource) (localized (:catalogue-item/title error)))]
-      (doall
-       (for [restriction (:duo/restrictions error)
-             :let [label (text (get duo-restriction-label (:type restriction)))]]
-         (for [{:keys [value]} (:values restriction)]
-           ^{:key (random-uuid)}
-           [:li (text-format :t.label/default label value)])))]]
+      (into [:<>] (for [restriction (:duo/restrictions error)
+                        :let [label (text (get duo-restriction-label (:type restriction)))]
+                        value (:values restriction)]
+                    [:li (text-format :t.label/default label (:value value))]))]]
 
     nil))
 
@@ -94,18 +92,15 @@
                       [fields/info-collapse
                        {:info-id (str collapsible-id "-more-infos")
                         :aria-label-text (localized (:description duo))
-                        :content (into [:div]
-                                       (for [info more-infos]
-                                         ^{:key (:resource/id info)}
-                                         [duo-more-info info]))}])])
+                        :content (into [:<>] (for [info more-infos]
+                                               [duo-more-info info]))}])])
                  (for [restriction (:restrictions duo)
                        :when (seq (:values restriction))]
                    ^{:key (:type restriction)}
                    [:<>
                     [duo-restriction-info-field restriction]
-                    (for [error (mapcat (comp :errors :duo/validation) matches)]
-                      ^{:key (random-uuid)}
-                      [duo-error error])])]}]]))
+                    (into [:<>] (for [error (mapcat (comp :errors :duo/validation) matches)]
+                                  [duo-error error]))])]}]]))
 
 (fetcher/reg-fetcher ::mondo-codes "/api/resources/search-mondo-codes")
 
@@ -174,7 +169,6 @@
                              :context (:context opts)
                              :duo/restriction {:type (key restriction)
                                                :values (val restriction)}}])
-   (for [error (:duo/errors opts)]
-     ^{:key (random-uuid)}
-     [duo-error error])])
+   (into [:<>] (for [error (:duo/errors opts)]
+                 [duo-error error]))])
 

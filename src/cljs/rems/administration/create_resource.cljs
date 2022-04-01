@@ -55,14 +55,20 @@
         (assoc-some-in [:more-info :en] (when (string? (:more-info duo))
                                           (not-empty (str/trim (:more-info duo))))))))
 
+(defn valid-restriction? [restriction]
+  (when-let [values (seq (:values restriction))]
+    (case (:type restriction)
+      :mondo true
+      (->> values
+           (map :value)
+           (every? seq)))))
+
 (defn- valid-request? [request]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:resid request)))
-       (every? true? (for [restriction (mapcat :restrictions (-> request :resource/duo :duo/codes))]
-                       (case (:type restriction)
-                         :mondo (some? (not-empty (:values restriction)))
-                         (some->> (not-empty (:values restriction))
-                                  (every? (comp not-empty :value))))))))
+       (->> (get-in request [:resource/duo :duo/codes])
+            (mapcat :restrictions)
+            (every? valid-restriction?))))
 
 (defn build-request [form]
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}

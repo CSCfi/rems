@@ -65,13 +65,6 @@
          (mapv (juxt :id :label :parents))
          (sort-by :id))))
 
-(defn- external-format
-  "Takes Mondo `code` and maps it into a format
-   useful for usage outside internal storage."
-  [code]
-  (-> code
-      (update-existing :id (partial str "MONDO:"))))
-
 (def ^:private uninteresting-tags
   "The OWL file contains a lot of model that we are not interested in."
   #{:AnnotationProperty
@@ -122,8 +115,10 @@
                                        (reduce #(dep/depend %1 id %2) g parents))
                                      (dep/graph)))))))
 
-(defn- strip-mondo-prefix
-  [id]
+(defn- add-mondo-prefix [id]
+  (str "MONDO:" id))
+
+(defn- strip-mondo-prefix [id]
   (str/replace id #"^MONDO:" ""))
 
 (defn- get-codes
@@ -150,7 +145,7 @@
   []
   (->> (get-codes)
        (sort-by :id)
-       (map external-format)))
+       (map #(update-existing % :id add-mondo-prefix))))
 
 (defn get-mondo-parents
   [code]
@@ -180,7 +175,7 @@
       (filterv #(search-match % search-text) codes))
     (take 100 codes)
     (sort-by :id codes)
-    (map external-format codes)))
+    (map #(update-existing % :id add-mondo-prefix) codes)))
 
 (defn join-mondo-code [duo-code]
   (update-existing duo-code
@@ -193,8 +188,7 @@
                                           (fn [values]
                                             (mapv (fn [value]
                                                     (if-some [id (:id value)]
-                                                      (-> (get-codes id)
-                                                          external-format)
+                                                      (update-existing (get-codes id) :id add-mondo-prefix)
                                                       value))
                                                   values)))
                          restriction)))))

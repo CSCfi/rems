@@ -53,13 +53,13 @@
    {:id "duos"
     :title (text :t.duo/title)
     :always (if-let [duos (seq (-> resource :resource/duo :duo/codes))]
-              (into [:<>]
-                    (for [duo duos]
-                      ^{:key (:id duo)}
-                      [duo-info-field {:id (str "resource-duo-" (:id duo))
-                                       :duo duo
-                                       :duo/more-infos (when (:more-info duo)
-                                                         (list (select-keys duo [:more-info])))}]))
+              (for [duo duos]
+                ^{:key (:id duo)}
+                [duo-info-field {:id (str "resource-duo-" (:id duo))
+                                 :duo duo
+                                 :duo/more-infos (when (:more-info duo)
+                                                   (list (merge (select-keys duo [:more-info])
+                                                                {:resource/id (:id resource)})))}])
               [:p (text :t.duo/no-duo-codes)])}])
 
 (defn resource-view [resource language]

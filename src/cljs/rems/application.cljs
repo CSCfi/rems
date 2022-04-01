@@ -122,6 +122,16 @@
                                 (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
+(defn- index-duo-restrictions [restrictions]
+  (->> restrictions
+       (build-index {:keys [:type]
+                     :value-fn (fn [restriction]
+                                 (case (:type restriction)
+                                   :mondo (:values restriction)
+                                   (->> (:values restriction)
+                                        first
+                                        :value)))})))
+
 (defn- initialize-edit-application [db]
   (let [application (get-in db [::application :data])
         field-values (->> (for [form (:application/forms application)
@@ -130,14 +140,8 @@
                              :field (:field/id field)
                              :value (:field/value field)})
                           (build-index {:keys [:form :field] :value-fn :value}))
-        duo-codes (->> (for [duo (-> application :application/duo :duo/codes)]
-                         (update-existing duo
-                                          :restrictions
-                                          (partial build-index {:keys [:type]
-                                                                :value-fn (fn [{:keys [type values]}]
-                                                                            (case type
-                                                                              :mondo values
-                                                                              (-> values first :value)))})))
+        duo-codes (->> (get-in application [:application/duo :duo/codes])
+                       (map #(update-existing % :restrictions index-duo-restrictions))
                        (build-index {:keys [:id]}))]
     (assoc db ::edit-application {:duo-codes duo-codes
                                   :field-values field-values
@@ -179,12 +183,11 @@
   (for [duo duo-codes]
     {:id (:id duo)
      :restrictions (for [restriction (:restrictions duo)
-                         :let [type (first restriction)
-                               values (second restriction)]]
-                     {:type type
-                      :values (case type
+                         :let [values (val restriction)]]
+                     {:type (key restriction)
+                      :values (case (key restriction)
                                 :mondo (map #(select-keys % [:id]) values)
-                                [{:value values}])})}))
+                                (if (some? values) [{:value values}] []))})}))
 
 (defn- save-application! [description application {:keys [field-values duo-codes]} on-success]
   (post! "/api/applications/save-draft"
