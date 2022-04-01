@@ -2356,9 +2356,6 @@
                     slurp
                     str/split-lines)))))))
 
-(defn- get-organization-last-modified [organization-id]
-  (text/localize-time (:organization/last-modified (organizations/get-organization-raw {:organization/id organization-id}))))
-
 (deftest test-organizations
   (test-helpers/create-user! {:eppn "organization-owner1"
                               :commonName "Organization Owner 1"
