@@ -2645,18 +2645,11 @@
 
 (deftest test-catalogue-tree
   (btu/context-assoc! :category-name (str "Catalogue tree test parent category " (btu/get-seed) " (EN)"))
-  (btu/context-assoc! :category-id (test-helpers/create-category! {:actor "owner"
-                                                                   :category/title {:en (btu/context-getx :category-name)
+  (btu/context-assoc! :category-id (test-helpers/create-category! {:category/title {:en (btu/context-getx :category-name)
                                                                                     :fi (str "Catalogue tree test parent category " (btu/get-seed) " (FI)")
                                                                                     :sv (str "Catalogue tree test parent category " (btu/get-seed) " (SV)")}}))
-  (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
-                                                           :form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
-                                                                          :field/optional false
-                                                                          :field/type :description}]}))
   (btu/context-assoc! :catalogue-item-name (str "Catalogue tree test item " (btu/get-seed) " (EN)"))
-  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:actor "owner"
-                                                                          :enabled false
-                                                                          :form-id (btu/context-getx :form-id)
+  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:enabled false
                                                                           :title {:en (btu/context-getx :catalogue-item-name)
                                                                                   :fi (str "Catalogue tree test item " (btu/get-seed) " (FI)")
                                                                                   :sv (str "Catalogue tree test item " (btu/get-seed) " (SV)")}
