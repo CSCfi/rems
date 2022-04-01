@@ -2665,11 +2665,15 @@
   (btu/with-postmortem
     (login-as "alice")
     (testing "catalogue tree"
+      (btu/screenshot "before-opening.png")
+
       (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
       (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
+
+      (btu/screenshot "after-opening.png")
 
       (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
@@ -2684,7 +2688,11 @@
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
       (btu/wait-page-loaded)
 
+      (btu/screenshot "after-reloading.png")
+
       (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
+
+      (btu/screenshot "after-opening-again.png")
 
       (is (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                 (slurp-rows :catalogue-tree))
@@ -2692,10 +2700,14 @@
 
       (click-row-action [:catalogue-tree] {:fn/text (btu/context-getx :catalogue-item-name)} {:css ".add-to-cart"})
 
+      (btu/screenshot "after-adding-to-cart.png")
+
       (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cartApply"}]
              (slurp-table {:css ".rems-table.cart"})))
 
       (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
+
+      (btu/screenshot "after-closing.png")
 
       (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
