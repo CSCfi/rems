@@ -1296,7 +1296,7 @@
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
       (go-to-catalogue)
-      (is (not (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)}))))
+      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-get :catalogue-item-name)}]))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-get :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"
