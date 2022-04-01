@@ -155,7 +155,7 @@
       (->> code
            strip-mondo-prefix
            (dep/transitive-dependencies @codes-dag)
-           (map (partial str "MONDO:"))
+           (map add-mondo-prefix)
            set))
     (do
       (reset! codes-dag nil)
