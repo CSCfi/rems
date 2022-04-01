@@ -2667,17 +2667,13 @@
     (testing "catalogue tree"
       (btu/screenshot "before-opening.png")
 
-      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
-                     (slurp-rows :catalogue-tree)))
+      (is (nil? (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                      (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
-
-      (btu/screenshot "after-opening.png")
-
-      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
-                     (slurp-rows :catalogue-tree)))
-          "still can't see item because it's not enabled")
+      (is (nil? (some #{{"name bg-depth-0" (str (btu/context-getx :category-name) "\nCategory description")}}
+                      (slurp-rows :catalogue-tree)))
+          "can't see category either because it's empty")
 
       (binding [context/*user* {:eppn "owner"}
                 context/*roles* #{:owner}]
@@ -2690,7 +2686,7 @@
 
       (btu/screenshot "after-reloading.png")
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
+      (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
       (btu/screenshot "after-opening-again.png")
 
@@ -2705,10 +2701,10 @@
       (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cartApply"}]
              (slurp-table {:css ".rems-table.cart"})))
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
+      (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
       (btu/screenshot "after-closing.png")
 
-      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
-                     (slurp-rows :catalogue-tree)))
+      (is (nil? (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+                      (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
