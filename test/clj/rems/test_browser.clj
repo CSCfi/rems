@@ -2156,6 +2156,8 @@
                          :headers {"x-rems-api-key" "42"
                                    "x-rems-user-id" "handler"}})))))
 
+    ;; TODO: the UI looks odd without catalogue item names, would be better to include them
+    ;; TODO: "More info" is shown for this item too
     (testing "create catalogue item and application"
       (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
       (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
