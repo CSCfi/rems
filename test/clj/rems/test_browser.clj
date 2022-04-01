@@ -1019,8 +1019,6 @@
   (go-to-admin "Organizations")
   (testing "create"
     (btu/scroll-and-click :create-organization)
-    (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
-    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
     (is (btu/eventually-visible? :id))
     (btu/fill-human :id (btu/context-getx :organization-id))
     (btu/fill-human :short-name-en "SNEN")
@@ -1286,7 +1284,9 @@
                           :form-name (str "Browser Test Form " (btu/get-seed))
                           :workflow-name (str "Browser Test Workflow " (btu/get-seed))
                           :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed))
-                          :category-name (str "test-create-catalogue-item category " (btu/get-seed)))
+                          :category-name (str "test-create-catalogue-item category " (btu/get-seed))
+                          :organization-id (str "test-create-catalogue-item org id " (btu/get-seed))
+                          :organization-name (str "test-create-catalogue-item org name " (btu/get-seed)))
       (create-organization)
       (create-license)
       (create-resource)
@@ -2373,6 +2373,8 @@
   (btu/with-postmortem
     (login-as "owner")
 
+    (btu/context-assoc! :organization-id (str "test-organizations org id " (btu/get-seed))
+                        :organization-name (str "test-organizations org name " (btu/get-seed)))
     (create-organization)
 
     (testing "view after creation"
