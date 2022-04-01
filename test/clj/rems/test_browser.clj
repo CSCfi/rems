@@ -169,7 +169,7 @@
 
 (comment
   (find-rows [:licenses]
-             {:fn/text (str (btu/context-get :license-name) " EN")}))
+             {:fn/text (str (btu/context-getx :license-name) " EN")}))
 
 (defn fill-form-field
   "Fills a form field named by `label` with `text`.
@@ -339,7 +339,7 @@
 
       (btu/context-assoc! :application-id (get-application-id))
 
-      (let [application (get-application-from-api (btu/context-get :application-id) "alice")
+      (let [application (get-application-from-api (btu/context-getx :application-id) "alice")
             form-id (get-in application [:application/forms 0 :form/id])
             description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
             description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
@@ -497,24 +497,24 @@
           (is (= "d" (btu/value-of (keyword (str table-field-id "-row1-col2"))))))
 
         (testing "fetch application from API"
-          (let [application (get-application-from-api (btu/context-get :application-id))]
+          (let [application (get-application-from-api (btu/context-getx :application-id))]
             (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application)))
 
             (testing "see application on applications page"
               (go-to-applications)
               (btu/gather-axe-results)
 
-              (is (= {:id (btu/context-get :application-id)
+              (is (= {:id (btu/context-getx :application-id)
                       :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
                       :description "Test name"}
-                     (get-application-summary (btu/context-get :application-id)))))
+                     (get-application-summary (btu/context-getx :application-id)))))
 
             (testing "attachments"
-              (is (= [{:attachment/id (first (btu/context-get :attachment-ids))
+              (is (= [{:attachment/id (first (btu/context-getx :attachment-ids))
                        :attachment/filename "test.txt"
                        :attachment/type "text/plain"}
-                      {:attachment/id (second (btu/context-get :attachment-ids))
+                      {:attachment/id (second (btu/context-getx :attachment-ids))
                        :attachment/filename "test-fi.txt"
                        :attachment/type "text/plain"}]
                      (:application/attachments application))))
@@ -531,7 +531,7 @@
                       ["header" ""]
                       ["date" "2050-01-02"]
                       ["email" "user@example.com"]
-                      ["attachment" (str/join "," (btu/context-get :attachment-ids))]
+                      ["attachment" (str/join "," (btu/context-getx :attachment-ids))]
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
@@ -549,7 +549,7 @@
                         (:field/value field)]))))
             (testing "after navigating to the application view again"
               (btu/scroll-and-click [{:css "table.my-applications"}
-                                     {:tag :tr :data-row (btu/context-get :application-id)}
+                                     {:tag :tr :data-row (btu/context-getx :application-id)}
                                      {:css ".btn-primary"}])
               (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
               (btu/wait-page-loaded)
@@ -562,13 +562,13 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-getx :catalogue-id)]
                                                                     "test-applicant-member-invite-action")))
   (btu/with-postmortem
     (login-as "alice")
-    (go-to-application (btu/context-get :application-id))
+    (go-to-application (btu/context-getx :application-id))
 
     (testing "invite member"
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
@@ -584,7 +584,7 @@
       (is (= {"Name" "John Smith"
               "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info)))
-      (is (string? (-> (btu/context-get :application-id)
+      (is (string? (-> (btu/context-getx :application-id)
                        applications/get-application-internal
                        :application/invitation-tokens
                        keys
@@ -592,7 +592,7 @@
       (is (= {:event/actor "alice"
               :application/member {:name "John Smith"
                                    :email "john.smith@generic.name"}}
-             (-> (btu/context-get :application-id)
+             (-> (btu/context-getx :application-id)
                  applications/get-application-internal
                  :application/invitation-tokens
                  vals
@@ -609,7 +609,7 @@
       (btu/wait-invisible :actions-invite0-operations-remove)
       (btu/wait-invisible :invite0-info)
 
-      (is (empty? (-> (btu/context-get :application-id)
+      (is (empty? (-> (btu/context-getx :application-id)
                       applications/get-application-internal
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
@@ -621,32 +621,32 @@
                                                                             :field/optional false
                                                                             :field/type :description}]}))
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:handlers ["handler"]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
-                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
+                                                                            :workflow-id (btu/context-getx :workflow-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-getx :catalogue-id)]
                                                                     "test-applicant-member-remove-action"))
     (test-helpers/command! {:type :application.command/submit
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :actor "alice"})
     (test-helpers/create-user! {:eppn "ionna" :commonName "Ionna Insprucker" :mail "ionna@ins.mail"})
     (test-helpers/create-user! {:eppn "jade" :commonName "Jade Jenner" :mail "jade80@mail.name"})
     (test-helpers/create-user! {:eppn "kayla" :commonName "Kayla Kale" :mail "kale@is.good"})
     (test-helpers/command! {:type :application.command/add-member
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :member {:userid "ionna"}
                             :actor "handler"})
     (test-helpers/command! {:type :application.command/add-member
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :member {:userid "jade"}
                             :actor "handler"})
     (test-helpers/command! {:type :application.command/add-member
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :member {:userid "kayla"}
                             :actor "handler"}))
   (btu/with-postmortem
     (login-as "alice")
-    (go-to-application (btu/context-get :application-id))
+    (go-to-application (btu/context-getx :application-id))
 
     (testing "remove second member jade"
       (is (not (btu/visible? :actions-member1-operations-remove)))
@@ -660,7 +660,7 @@
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
-             (-> (btu/context-get :application-id)
+             (-> (btu/context-getx :application-id)
                  applications/get-application-internal
                  :application/members)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}))
@@ -679,24 +679,24 @@
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:title {:en "First catalogue item"
                                                                                     :fi "First catalogue item"
                                                                                     :sv "First catalogue item"}
-                                                                            :form-id (btu/context-get :form-id)
-                                                                            :workflow-id (btu/context-get :workflow-id)}))
+                                                                            :form-id (btu/context-getx :form-id)
+                                                                            :workflow-id (btu/context-getx :workflow-id)}))
     (btu/context-assoc! :catalogue-id2 (test-helpers/create-catalogue-item! {:title {:en "Second catalogue item (disabled)"
                                                                                      :fi "Second catalogue item (disabled)"
                                                                                      :sv "Second catalogue item (disabled)"}
-                                                                             :form-id (btu/context-get :form-id)
-                                                                             :workflow-id (btu/context-get :workflow-id)}))
+                                                                             :form-id (btu/context-getx :form-id)
+                                                                             :workflow-id (btu/context-getx :workflow-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id) (btu/context-get :catalogue-id2)]
+                                                                    [(btu/context-getx :catalogue-id) (btu/context-getx :catalogue-id2)]
                                                                     "test-handling"))
     (test-helpers/command! {:type :application.command/submit
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :actor "alice"})
 
     (testing "disabling the 2nd item"
       (binding [context/*user* {:eppn "owner"}
                 context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-get :catalogue-id2) :enabled false}))))
+        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
 
   (btu/with-postmortem
     (login-as "developer")
@@ -704,7 +704,7 @@
       (is (btu/eventually-visible? :todo-applications)))
     (testing "handler should see description of application"
       (is (btu/eventually-visible? {:class :application-description :fn/text "test-handling"})))
-    (let [app-button {:tag :a :href (str "/application/" (btu/context-get :application-id))}]
+    (let [app-button {:tag :a :href (str "/application/" (btu/context-getx :application-id))}]
       (testing "handler should see view button for application"
         (is (btu/eventually-visible? app-button)))
       (btu/scroll-and-click app-button))
@@ -765,11 +765,11 @@
 
     (testing "event via api"
       ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
-      (is (= {:application/id (btu/context-get :application-id)
+      (is (= {:application/id (btu/context-getx :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
               :event/actor "developer"}
-             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+             (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
@@ -779,16 +779,16 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-getx :catalogue-id)]
                                                                     "test-invite-decider"))
-    (test-helpers/submit-application (btu/context-get :application-id) "alice")
+    (test-helpers/submit-application (btu/context-getx :application-id) "alice")
     (test-helpers/create-user! {:eppn "new-decider" :commonName "New Decider" :mail "new-decider@example.com"}))
   (btu/with-postmortem
     (testing "handler invites decider"
       (login-as "developer")
-      (go-to-application (btu/context-get :application-id))
+      (go-to-application (btu/context-getx :application-id))
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
 
       (btu/scroll-and-click :request-decision-dropdown)
@@ -802,7 +802,7 @@
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (logout))
     (testing "get invite token"
-      (let [[token invitation] (-> (btu/context-get :application-id)
+      (let [[token invitation] (-> (btu/context-getx :application-id)
                                    applications/get-application-internal
                                    :application/invitation-tokens
                                    first)]
@@ -813,7 +813,7 @@
         (btu/context-assoc! :token token)))
     (testing "accept invitation"
       (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
-        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-get :token)))
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
         (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
@@ -823,7 +823,7 @@
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
-             (-> (btu/context-get :application-id)
+             (-> (btu/context-getx :application-id)
                  applications/get-application-internal
                  :application/events
                  last
@@ -840,7 +840,7 @@
               :application/comment "ok"
               :event/actor "new-decider"
               :event/type :application.event/decided}
-             (-> (btu/context-get :application-id)
+             (-> (btu/context-getx :application-id)
                  applications/get-application-internal
                  :application/events
                  last
@@ -852,34 +852,34 @@
                                                                             :field/optional false
                                                                             :field/type :description}]}))
     (btu/context-assoc! :workflow-title (str "test-invite-handler " (btu/get-seed)))
-    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-get :workflow-title) :handlers []}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
-                                                                            :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-getx :workflow-title) :handlers []}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
+                                                                            :workflow-id (btu/context-getx :workflow-id)}))
     (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name" :mail "invited-person-id@example.com"})
     (with-user "owner"
       (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
                                                                                 :name "Dorothy Vaughan"
                                                                                 :email "dorothy.vaughan@nasa.gov"
-                                                                                :workflow-id (btu/context-get :workflow-id)}) :invitation/id))))
+                                                                                :workflow-id (btu/context-getx :workflow-id)}) :invitation/id))))
   (btu/with-postmortem
     (testing "get invitation token"
-      (let [invitation (-> (btu/context-get :invitation-id) invitations/get-invitation-full)
+      (let [invitation (-> (btu/context-getx :invitation-id) invitations/get-invitation-full)
             token (:invitation/token invitation)]
         (is (string? token))
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
       (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}}
-        (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-get :token)))
+        (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
         (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
         (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
-        (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-get :workflow-title)}]))
+        (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-getx :workflow-title)}]))
         (is (= {"Organization" "The Default Organization"
-                "Title" (btu/context-get :workflow-title)
+                "Title" (btu/context-getx :workflow-title)
                 "Type" "Master workflow"
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
@@ -896,19 +896,19 @@
                                                                                     :field/type :text
                                                                                     :field/privacy :private}]}))
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)
-                                                                            :workflow-id (btu/context-get :workflow-id)}))
-    (btu/context-assoc! :catalogue-id-2 (test-helpers/create-catalogue-item! {:form-id (btu/context-get :private-form-id)
-                                                                              :workflow-id (btu/context-get :workflow-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
+                                                                            :workflow-id (btu/context-getx :workflow-id)}))
+    (btu/context-assoc! :catalogue-id-2 (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :private-form-id)
+                                                                              :workflow-id (btu/context-getx :workflow-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)
-                                                                     (btu/context-get :catalogue-id-2)]
+                                                                    [(btu/context-getx :catalogue-id)
+                                                                     (btu/context-getx :catalogue-id-2)]
                                                                     "test-invite-reviewer"))
-    (test-helpers/submit-application (btu/context-get :application-id) "alice"))
+    (test-helpers/submit-application (btu/context-getx :application-id) "alice"))
   (btu/with-postmortem
     (testing "handler invites reviewer"
       (login-as "developer")
-      (go-to-application (btu/context-get :application-id))
+      (go-to-application (btu/context-getx :application-id))
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
 
       (btu/scroll-and-click :request-review-dropdown)
@@ -928,7 +928,7 @@
       (logout))
     (testing "reviewer should see applicant non-private form answers"
       (login-as "carl")
-      (go-to-application (btu/context-get :application-id))
+      (go-to-application (btu/context-getx :application-id))
       (is (= (count (btu/query-all {:css ".fields"}))
              1))
       (is (= {"description" "test-invite-reviewer"}
@@ -939,16 +939,16 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-getx :catalogue-id)]
                                                                     "test-approve-with-end-date"))
     (test-helpers/command! {:type :application.command/submit
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :actor "alice"}))
   (btu/with-postmortem
     (login-as "developer")
-    (btu/go (str (btu/get-server-url) "application/" (btu/context-get :application-id)))
+    (btu/go (str (btu/get-server-url) "application/" (btu/context-getx :application-id)))
     (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-approve-with-end-date"}))
     (testing "approve"
       (btu/scroll-and-click :approve-reject-action-button)
@@ -960,12 +960,12 @@
     (testing "event visible in eventlog"
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application. Access rights end 2100-05-06"})))
     (testing "event via api"
-      (is (= {:application/id (btu/context-get :application-id)
+      (is (= {:application/id (btu/context-getx :application-id)
               :event/type "application.event/approved"
               :application/comment "this is a comment"
               :entitlement/end "2100-05-06T23:59:59.000Z"
               :event/actor "developer"}
-             (-> (get-application-from-api (btu/context-get :application-id) "developer")
+             (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
@@ -1022,13 +1022,13 @@
     (btu/context-assoc! :organization-id (str "Organization id " (btu/get-seed)))
     (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
     (is (btu/eventually-visible? :id))
-    (btu/fill-human :id (btu/context-get :organization-id))
+    (btu/fill-human :id (btu/context-getx :organization-id))
     (btu/fill-human :short-name-en "SNEN")
     (btu/fill-human :short-name-fi "SNFI")
     (btu/fill-human :short-name-sv "SNSV")
-    (btu/fill-human :name-en (str (btu/context-get :organization-name) " EN"))
-    (btu/fill-human :name-fi (str (btu/context-get :organization-name) " FI"))
-    (btu/fill-human :name-sv (str (btu/context-get :organization-name) " SV"))
+    (btu/fill-human :name-en (str (btu/context-getx :organization-name) " EN"))
+    (btu/fill-human :name-fi (str (btu/context-getx :organization-name) " FI"))
+    (btu/fill-human :name-sv (str (btu/context-getx :organization-name) " SV"))
     (select-option* "Owners" "Organization owner 1")
     (btu/scroll-and-click :add-review-email)
     (btu/scroll-and-click :add-review-email)
@@ -1052,11 +1052,11 @@
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
-      (fill-form-field "License name" (str (btu/context-get :license-name) " EN") {:index 1})
+      (fill-form-field "License name" (str (btu/context-getx :license-name) " EN") {:index 1})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-      (fill-form-field "License name" (str (btu/context-get :license-name) " FI") {:index 2})
+      (fill-form-field "License name" (str (btu/context-getx :license-name) " FI") {:index 2})
       (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-      (fill-form-field "License name" (str (btu/context-get :license-name) " SV") {:index 3})
+      (fill-form-field "License name" (str (btu/context-getx :license-name) " SV") {:index 3})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
       (btu/screenshot "about-to-create-license.png")
       (btu/scroll-and-click :save)
@@ -1065,9 +1065,9 @@
       (btu/screenshot "created-license.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title (EN)" (str (btu/context-get :license-name) " EN")
-              "Title (FI)" (str (btu/context-get :license-name) " FI")
-              "Title (SV)" (str (btu/context-get :license-name) " SV")
+              "Title (EN)" (str (btu/context-getx :license-name) " EN")
+              "Title (FI)" (str (btu/context-getx :license-name) " FI")
+              "Title (SV)" (str (btu/context-getx :license-name) " SV")
               "Type" "link"
               "External link (EN)" "https://www.csc.fi/home"
               "External link (FI)" "https://www.csc.fi/etusivu"
@@ -1077,19 +1077,19 @@
       (go-to-admin "Licenses")
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Licenses"}))
       (is (some #{{"organization" "NBN"
-                   "title" (str (btu/context-get :license-name) " EN")
+                   "title" (str (btu/context-getx :license-name) " EN")
                    "type" "link"
                    "active" true
                    "commands" "ViewDisableArchive"}}
                 (slurp-rows :licenses)))
       (click-row-action [:licenses]
-                        {:fn/text (str (btu/context-get :license-name) " EN")}
+                        {:fn/text (str (btu/context-getx :license-name) " EN")}
                         (select-button-by-label "View"))
       (is (btu/eventually-visible? :license))
       (is (= {"Organization" "NBN"
-              "Title (EN)" (str (btu/context-get :license-name) " EN")
-              "Title (FI)" (str (btu/context-get :license-name) " FI")
-              "Title (SV)" (str (btu/context-get :license-name) " SV")
+              "Title (EN)" (str (btu/context-getx :license-name) " EN")
+              "Title (FI)" (str (btu/context-getx :license-name) " FI")
+              "Title (SV)" (str (btu/context-getx :license-name) " SV")
               "Type" "link"
               "External link (EN)" "https://www.csc.fi/home"
               "External link (FI)" "https://www.csc.fi/etusivu"
@@ -1116,8 +1116,8 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create resource"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Resource identifier" (btu/context-get :resid))
-      (select-option "License" (str (btu/context-get :license-name) " EN"))
+      (fill-form-field "Resource identifier" (btu/context-getx :resid))
+      (select-option "License" (str (btu/context-getx :license-name) " EN"))
       ;; (select-duo-code "DUO:0000026")
       ;; (fill-form-field "Approved user(s)" "developers developers developers")
       (btu/screenshot "about-to-create-resource.png")
@@ -1127,13 +1127,13 @@
       (btu/screenshot "created-resource.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Resource" (btu/context-get :resid)
+              "Resource" (btu/context-getx :resid)
               "Active" true}
              (slurp-fields :resource)))
-      (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
+      (is (= (str "License \"" (btu/context-getx :license-name) " EN\"")
              (btu/get-element-text [:licenses {:class :license-title}])))
       (go-to-admin "Resources")
-      (is (some #(= (btu/context-get :resid) (get % "title"))
+      (is (some #(= (btu/context-getx :resid) (get % "title"))
                 (slurp-rows :resources))))))
 
 
@@ -1145,10 +1145,10 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Name" (btu/context-get :form-name))
-      (fill-form-field "EN" (str (btu/context-get :form-name) " EN"))
-      (fill-form-field "FI" (str (btu/context-get :form-name) " FI"))
-      (fill-form-field "SV" (str (btu/context-get :form-name) " SV"))
+      (fill-form-field "Name" (btu/context-getx :form-name))
+      (fill-form-field "EN" (str (btu/context-getx :form-name) " EN"))
+      (fill-form-field "FI" (str (btu/context-getx :form-name) " FI"))
+      (fill-form-field "SV" (str (btu/context-getx :form-name) " SV"))
       ;; TODO: create fields
       (btu/screenshot "about-to-create-form.png")
       (btu/scroll-and-click :save)
@@ -1157,14 +1157,14 @@
       (btu/screenshot "created-form.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Name" (btu/context-get :form-name)
-              "Title (EN)" (str (btu/context-get :form-name) " EN")
-              "Title (FI)" (str (btu/context-get :form-name) " FI")
-              "Title (SV)" (str (btu/context-get :form-name) " SV")
+              "Name" (btu/context-getx :form-name)
+              "Title (EN)" (str (btu/context-getx :form-name) " EN")
+              "Title (FI)" (str (btu/context-getx :form-name) " FI")
+              "Title (SV)" (str (btu/context-getx :form-name) " SV")
               "Active" true}
              (slurp-fields :form)))
       (go-to-admin "Forms")
-      (is (some #(= (btu/context-get :form-name) (get % "internal-name"))
+      (is (some #(= (btu/context-getx :form-name) (get % "internal-name"))
                 (slurp-rows :forms))))))
 
 (defn create-workflow []
@@ -1175,7 +1175,7 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Title" (btu/context-get :workflow-name))
+      (fill-form-field "Title" (btu/context-getx :workflow-name))
       ;; Default workflow is already checked
       (select-option "Handlers" "handler")
       ;; No form
@@ -1186,14 +1186,14 @@
       (btu/screenshot "created-workflow.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title" (btu/context-get :workflow-name)
+              "Title" (btu/context-getx :workflow-name)
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
               "Forms" ""
               "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
-      (is (some #(= (btu/context-get :workflow-name) (get % "title"))
+      (is (some #(= (btu/context-getx :workflow-name) (get % "title"))
                 (slurp-rows :workflows))))))
 
 (defn create-category []
@@ -1201,16 +1201,16 @@
   (testing "create new category"
     (btu/scroll-and-click :create-category)
     (is (btu/eventually-visible? :create-category))
-    (fill-category-fields {:title (btu/context-get :category-name)
+    (fill-category-fields {:title (btu/context-getx :category-name)
                            :description "Description"
                            :display-order 1})
     (btu/scroll-and-click :save)
 
     (testing "after create"
       (is (btu/eventually-visible? :category))
-      (is (= {"Title (EN)" (btu/context-get :category-name)
-              "Title (FI)" (str (btu/context-get :category-name) " (FI)")
-              "Title (SV)" (str (btu/context-get :category-name) " (SV)")
+      (is (= {"Title (EN)" (btu/context-getx :category-name)
+              "Title (FI)" (str (btu/context-getx :category-name) " (FI)")
+              "Title (SV)" (str (btu/context-getx :category-name) " (SV)")
               "Description (EN)" "Description (EN)"
               "Description (FI)" "Description (FI)"
               "Description (SV)" "Description (SV)"
@@ -1225,43 +1225,43 @@
       (btu/scroll-and-click :create-catalogue-item)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
       (btu/wait-page-loaded)
-      (select-option "Organization" (btu/context-get :organization-name))
-      (fill-form-field "Title" (btu/context-get :catalogue-item-name) {:index 1})
-      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " FI") {:index 2})
-      (fill-form-field "Title" (str (btu/context-get :catalogue-item-name) " SV") {:index 3})
-      (select-option "Workflow" (btu/context-get :workflow-name))
-      (select-option "Resource" (btu/context-get :resid))
-      (when-let [form-name (btu/context-get :form-name)]
+      (select-option "Organization" (btu/context-getx :organization-name))
+      (fill-form-field "Title" (btu/context-getx :catalogue-item-name) {:index 1})
+      (fill-form-field "Title" (str (btu/context-getx :catalogue-item-name) " FI") {:index 2})
+      (fill-form-field "Title" (str (btu/context-getx :catalogue-item-name) " SV") {:index 3})
+      (select-option "Workflow" (btu/context-getx :workflow-name))
+      (select-option "Resource" (btu/context-getx :resid))
+      (when-let [form-name (btu/context-getx :form-name)]
         (select-option "Form" form-name))
-      (select-option "Categories" (btu/context-get :category-name))
+      (select-option "Categories" (btu/context-getx :category-name))
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
       (btu/wait-page-loaded)
       (btu/screenshot "created-catalogue-item.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" (str (btu/context-get :organization-name) " EN")
-              "Title (EN)" (btu/context-get :catalogue-item-name)
-              "Title (FI)" (str (btu/context-get :catalogue-item-name) " FI")
-              "Title (SV)" (str (btu/context-get :catalogue-item-name) " SV")
+      (is (= {"Organization" (str (btu/context-getx :organization-name) " EN")
+              "Title (EN)" (btu/context-getx :catalogue-item-name)
+              "Title (FI)" (str (btu/context-getx :catalogue-item-name) " FI")
+              "Title (SV)" (str (btu/context-getx :catalogue-item-name) " SV")
               "More info (EN)" ""
               "More info (FI)" ""
               "More info (SV)" ""
-              "Workflow" (btu/context-get :workflow-name)
-              "Resource" (btu/context-get :resid)
-              "Form" (or (btu/context-get :form-name)
+              "Workflow" (btu/context-getx :workflow-name)
+              "Resource" (btu/context-getx :resid)
+              "Form" (or (btu/context-getx :form-name)
                          "")
-              "Categories" (btu/context-get :category-name)
+              "Categories" (btu/context-getx :category-name)
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
                      "Start")))
       (go-to-admin "Catalogue items")
-      (is (some #(= {"workflow" (btu/context-get :workflow-name)
-                     "resource" (btu/context-get :resid)
-                     "form" (or (btu/context-get :form-name)
+      (is (some #(= {"workflow" (btu/context-getx :workflow-name)
+                     "resource" (btu/context-getx :resid)
+                     "form" (or (btu/context-getx :form-name)
                                 "No form")
-                     "name" (btu/context-get :catalogue-item-name)}
+                     "name" (btu/context-getx :catalogue-item-name)}
                     (select-keys % ["resource" "workflow" "form" "name"]))
                 (slurp-rows :catalogue))))))
 
@@ -1296,14 +1296,14 @@
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
       (go-to-catalogue)
-      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-get :catalogue-item-name)}]))))
+      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-getx :catalogue-item-name)}]))))
     (testing "enable catalogue item"
-      (enable-catalogue-item (btu/context-get :catalogue-item-name)))
+      (enable-catalogue-item (btu/context-getx :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"
       (logout)
       (login-as "alice")
       (go-to-catalogue)
-      (is (btu/visible? {:fn/text (btu/context-get :catalogue-item-name)})))
+      (is (btu/visible? {:fn/text (btu/context-getx :catalogue-item-name)})))
     (testing "catalogue item with no form"
       (logout)
       (login-as "owner")
@@ -1315,36 +1315,36 @@
   (btu/with-postmortem
     (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
     (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
-    (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-get :organization-id)
+    (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-getx :organization-id)
                                                                           :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
-                                                                          :organization/name {:en (str (btu/context-get :organization-name) " en")
-                                                                                              :fi (str (btu/context-get :organization-name) " fi")
-                                                                                              :sv (str (btu/context-get :organization-name) " sv")}}))
+                                                                          :organization/name {:en (str (btu/context-getx :organization-name) " en")
+                                                                                              :fi (str (btu/context-getx :organization-name) " fi")
+                                                                                              :sv (str (btu/context-getx :organization-name) " sv")}}))
     (btu/context-assoc! :workflow (test-helpers/create-workflow! {:title "test-edit-catalogue-item workflow"
                                                                   :type :workflow/default
-                                                                  :organization {:organization/id (btu/context-get :organization-id)}
+                                                                  :organization {:organization/id (btu/context-getx :organization-id)}
                                                                   :handlers ["handler"]}))
     (btu/context-assoc! :resource (test-helpers/create-resource! {:resource-ext-id "test-edit-catalogue-item resource"
-                                                                  :organization {:organization/id (btu/context-get :organization-id)}}))
+                                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
     (btu/context-assoc! :form (test-helpers/create-form! {:form/internal-name "test-edit-catalogue-item form"
                                                           :form/external-title {:en "Test Edit Catalogue Item Form EN"
                                                                                 :fi "Test Edit Catalogue Item Form FI"
                                                                                 :sv "Test Edit Catalogue Item Form SV"}
                                                           :form/fields []
-                                                          :form/organization {:organization/id (btu/context-get :organization-id)}}))
+                                                          :form/organization {:organization/id (btu/context-getx :organization-id)}}))
     (btu/context-assoc! :catalogue-item (test-helpers/create-catalogue-item! {:title {:en "test-edit-catalogue-item EN"
                                                                                       :fi "test-edit-catalogue-item FI"
                                                                                       :sv "test-edit-catalogue-item SV"}
-                                                                              :resource-id (btu/context-get :resource)
-                                                                              :form-id (btu/context-get :form)
-                                                                              :workflow-id (btu/context-get :workflow)
-                                                                              :organization {:organization/id (btu/context-get :organization-id)}}))
+                                                                              :resource-id (btu/context-getx :resource)
+                                                                              :form-id (btu/context-getx :form)
+                                                                              :workflow-id (btu/context-getx :workflow)
+                                                                              :organization {:organization/id (btu/context-getx :organization-id)}}))
     (login-as "owner")
-    (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
+    (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
     (btu/wait-page-loaded)
     (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
     (btu/screenshot "test-edit-catalogue-item-1.png")
-    (is (= {"Organization" (str (btu/context-get :organization-name) " en")
+    (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -1361,7 +1361,7 @@
     (btu/scroll-and-click :save)
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
     (btu/wait-page-loaded)
-    (is (= {"Organization" (str (btu/context-get :organization-name) " en")
+    (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
@@ -1377,12 +1377,12 @@
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
-        (organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-get :organization-id)})
-        (forms/set-form-enabled! {:id (btu/context-get :form) :enabled false})
-        (resources/set-resource-enabled! {:id (btu/context-get :resource) :enabled false})
-        (workflows/set-workflow-enabled! {:id (btu/context-get :workflow) :enabled false}))
+        (organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-getx :organization-id)})
+        (forms/set-form-enabled! {:id (btu/context-getx :form) :enabled false})
+        (resources/set-resource-enabled! {:id (btu/context-getx :resource) :enabled false})
+        (workflows/set-workflow-enabled! {:id (btu/context-getx :workflow) :enabled false}))
       (testing "editing"
-        (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-get :catalogue-item)))
+        (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
         (is (= {"Organization" "Select..." ; unable to select a disabled org again
@@ -1401,7 +1401,7 @@
         (btu/scroll-and-click :cancel)
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? {:id :title :fn/has-text "test-edit-catalogue-item EN"}))
-        (is (= {"Organization" (str (btu/context-get :organization-name) " en")
+        (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
                 "Title (SV)" "test-edit-catalogue-item SV"
@@ -1424,7 +1424,7 @@
 
    Useful for keeping track of created form fields in form tests."
   [kw & [opts]]
-  (let [fields (or (btu/context-get :create-form-field/fields) [])
+  (let [fields (or (btu/context-getx :create-form-field/fields) [])
         id (:id opts (str "fld" (inc (count fields))))]
     (if (:insert-first opts)
       (btu/context-assoc! :create-form-field/fields (into [{kw id}] fields))
@@ -1438,7 +1438,7 @@
    Useful for automatically creating contextually correct fields selector
    in form tests, where a lot of fields need to be filled."
   ([attr]
-   (let [fields (btu/context-get :create-form-field/fields)
+   (let [fields (btu/context-getx :create-form-field/fields)
          idx (dec (count fields))]
      (keyword (str "fields-" idx "-" (name attr)))))
   ([idx attr]
@@ -1453,7 +1453,7 @@
   "Utility function that finds created form field with given `kw`
   and returns the associated id."
   [kw]
-  (some->> (or (btu/context-get :create-form-field/fields) [])
+  (some->> (or (btu/context-getx :create-form-field/fields) [])
            (map #(get % kw))
            (find-first some?)))
 
@@ -2117,7 +2117,7 @@
                              :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
                              :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}}
               :form/errors nil
-              :form/id (btu/context-get :form-id)
+              :form/id (btu/context-getx :form-id)
 
               :form/internal-name "Conditional field test"
               :form/fields [{:field/title {:fi "Option (FI)" :en "Option (EN)" :sv "Option (SV)"}
@@ -2151,7 +2151,7 @@
               :archived false
               :enabled true}
              (:body
-              (http/get (str (btu/get-server-url) "/api/forms/" (btu/context-get :form-id))
+              (http/get (str (btu/get-server-url) "/api/forms/" (btu/context-getx :form-id))
                         {:as :json
                          :headers {"x-rems-api-key" "42"
                                    "x-rems-user-id" "handler"}})))))
@@ -2159,14 +2159,14 @@
     ;; TODO: the UI looks odd without catalogue item names, would be better to include them
     ;; TODO: "More info" is shown for this item too
     (testing "create catalogue item and application"
-      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
       (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
-                                                                             :catalogue-item-ids [(btu/context-get :catalogue-id)]})))
+                                                                             :catalogue-item-ids [(btu/context-getx :catalogue-id)]})))
 
     (testing "fill in application"
       (logout)
       (login-as "alice")
-      (go-to-application (btu/context-get :application-id))
+      (go-to-application (btu/context-getx :application-id))
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
       (is (btu/field-visible? "Option (EN)"))
       (is (btu/field-visible? "Multiselect (EN)"))
@@ -2202,7 +2202,7 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
-      (fill-form-field "Title" (btu/context-get :workflow-title))
+      (fill-form-field "Title" (btu/context-getx :workflow-title))
       (btu/scroll-and-click :type-decider)
       (btu/wait-page-loaded)
       (select-option "Handlers" "handler")
@@ -2216,7 +2216,7 @@
       (btu/screenshot "test-workflow-create-edit-2.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
-              "Title" (btu/context-get :workflow-title)
+              "Title" (btu/context-getx :workflow-title)
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
@@ -2241,7 +2241,7 @@
       (btu/screenshot "test-workflow-create-edit-5.png")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "The Default Organization"
-              "Title" (str (btu/context-get :workflow-title) " v2")
+              "Title" (str (btu/context-getx :workflow-title) " v2")
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"
@@ -2304,28 +2304,28 @@
   (btu/with-postmortem
     (testing "set up form and submit an application using it"
       (btu/context-assoc! :form-title (str "Reporting Test Form " (btu/get-seed)))
-      (btu/context-assoc! :form-id (test-helpers/create-form! {:form/internal-name (btu/context-get :form-title)
-                                                               :form/external-title {:en (str (btu/context-get :form-title) " EN")
-                                                                                     :fi (str (btu/context-get :form-title) " FI")
-                                                                                     :sv (str (btu/context-get :form-title) " SV")}
+      (btu/context-assoc! :form-id (test-helpers/create-form! {:form/internal-name (btu/context-getx :form-title)
+                                                               :form/external-title {:en (str (btu/context-getx :form-title) " EN")
+                                                                                     :fi (str (btu/context-getx :form-title) " FI")
+                                                                                     :sv (str (btu/context-getx :form-title) " SV")}
                                                                :form/fields [{:field/id "desc"
                                                                               :field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                               :field/optional false
                                                                               :field/type :description}]}))
       (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:handlers ["handler"]}))
-      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id) :workflow-id (btu/context-get :workflow-id)}))
+      (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id) :workflow-id (btu/context-getx :workflow-id)}))
 
       (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                      [(btu/context-get :catalogue-id)]
+                                                                      [(btu/context-getx :catalogue-id)]
                                                                       (str "test-reporting " (btu/get-seed))))
       (test-helpers/command! {:type :application.command/save-draft
-                              :application-id (btu/context-get :application-id)
-                              :field-values [{:form (btu/context-get :form-id)
+                              :application-id (btu/context-getx :application-id)
+                              :field-values [{:form (btu/context-getx :form-id)
                                               :field "desc"
                                               :value "Tämä on monimutkainen arvo skandein varusteltuna!"}]
                               :actor "alice"})
       (test-helpers/command! {:type :application.command/submit
-                              :application-id (btu/context-get :application-id)
+                              :application-id (btu/context-getx :application-id)
                               :actor "alice"})
 
       (btu/delete-downloaded-files! #"applications_.*\.csv")) ; make sure no report exists
@@ -2336,12 +2336,12 @@
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :label :fn/text "Form"}))
-      (select-option* "Form" (btu/context-get :form-title))
+      (select-option* "Form" (btu/context-getx :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
     (testing "check report CSV"
-      (let [application (get-application-from-api (btu/context-get :application-id))
+      (let [application (get-application-from-api (btu/context-getx :application-id))
             q (fn [s] (str "\"" s "\""))]
         (is (= ["\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"description\""
                 (str/join ","
@@ -2377,13 +2377,13 @@
 
     (testing "view after creation"
       (is (btu/eventually-visible? :organization))
-      (is (= {"Id" (btu/context-get :organization-id)
+      (is (= {"Id" (btu/context-getx :organization-id)
               "Short name (FI)" "SNFI"
               "Short name (EN)" "SNEN"
               "Short name (SV)" "SNSV"
-              "Title (EN)" (str (btu/context-get :organization-name) " EN")
-              "Title (FI)" (str (btu/context-get :organization-name) " FI")
-              "Title (SV)" (str (btu/context-get :organization-name) " SV")
+              "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+              "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+              "Title (SV)" (str (btu/context-getx :organization-name) " SV")
               "Owners" "Organization Owner 1 (organization-owner1@example.com)"
               "Name (FI)" "Review mail FI"
               "Name (SV)" "Review mail SV"
@@ -2409,13 +2409,13 @@
 
       (testing "view after editing"
         (is (btu/eventually-visible? :organization))
-        (is (= {"Id" (btu/context-get :organization-id)
+        (is (= {"Id" (btu/context-getx :organization-id)
                 "Short name (FI)" "SNFI2"
                 "Short name (EN)" "SNEN2"
                 "Short name (SV)" "SNSV2"
-                "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+                "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+                "Title (SV)" (str (btu/context-getx :organization-name) " SV")
                 "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                 "Name (FI)" "Review mail FI"
                 "Name (SV)" "Review mail SV"
@@ -2430,8 +2430,8 @@
       (btu/scroll-and-click :create-resource)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :organization))
-      (btu/fill-human :resid (str "resource for " (btu/context-get :organization-name)))
-      (select-option* "Organization" (btu/context-get :organization-name))
+      (btu/fill-human :resid (str "resource for " (btu/context-getx :organization-name)))
+      (select-option* "Organization" (btu/context-getx :organization-name))
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"})))
 
@@ -2444,24 +2444,24 @@
         (is (btu/eventually-visible? :organizations))
         (let [orgs (slurp-rows :organizations)]
           (is (some #{{"short-name" "SNEN2"
-                       "name" (str (btu/context-get :organization-name) " EN")
+                       "name" (str (btu/context-getx :organization-name) " EN")
                        "active" true
                        "commands" "ViewDisableArchive"}}
                     orgs))))
 
       (testing "view from list"
         (click-row-action [:organizations]
-                          {:fn/text (str (btu/context-get :organization-name) " EN")}
+                          {:fn/text (str (btu/context-getx :organization-name) " EN")}
                           (select-button-by-label "View"))
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :organization))
-        (is (= {"Id" (btu/context-get :organization-id)
+        (is (= {"Id" (btu/context-getx :organization-id)
                 "Short name (FI)" "SNFI2"
                 "Short name (EN)" "SNEN2"
                 "Short name (SV)" "SNSV2"
-                "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+                "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+                "Title (SV)" (str (btu/context-getx :organization-name) " SV")
                 "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                 "Name (FI)" "Review mail FI"
                 "Name (SV)" "Review mail SV"
@@ -2486,13 +2486,13 @@
 
         (testing "view after editing"
           (is (btu/eventually-visible? :organization))
-          (is (= {"Id" (btu/context-get :organization-id)
+          (is (= {"Id" (btu/context-getx :organization-id)
                   "Short name (FI)" "SNFI"
                   "Short name (EN)" "SNEN"
                   "Short name (SV)" "SNSV"
-                  "Title (EN)" (str (btu/context-get :organization-name) " EN")
-                  "Title (FI)" (str (btu/context-get :organization-name) " FI")
-                  "Title (SV)" (str (btu/context-get :organization-name) " SV")
+                  "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+                  "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+                  "Title (SV)" (str (btu/context-getx :organization-name) " SV")
                   "Owners" "Organization Owner 1 (organization-owner1@example.com)\nOrganization Owner 2 (organization-owner2@example.com)"
                   "Name (FI)" "Review mail FI"
                   "Name (SV)" "Review mail SV"
@@ -2506,12 +2506,12 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-get :form-id)}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
-                                                                    [(btu/context-get :catalogue-id)]
+                                                                    [(btu/context-getx :catalogue-id)]
                                                                     "test-small-navbar"))
     (test-helpers/command! {:type :application.command/submit
-                            :application-id (btu/context-get :application-id)
+                            :application-id (btu/context-getx :application-id)
                             :actor "alice"}))
   (btu/with-postmortem
     (login-as "alice")
@@ -2547,19 +2547,19 @@
       (btu/scroll-and-click :back)
       (is (btu/eventually-visible? :categories))
       (click-row-action [:categories]
-                        {:fn/text (btu/context-get :category-name)}
+                        {:fn/text (btu/context-getx :category-name)}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
-      (btu/fill-human :title-en (str (btu/context-get :category-name) " Edited"))
+      (btu/fill-human :title-en (str (btu/context-getx :category-name) " Edited"))
       (btu/scroll-and-click :save)
 
       (testing "after edit"
         (is (btu/eventually-visible? :category))
-        (is (= {"Title (EN)" (str (btu/context-get :category-name) " Edited")
-                "Title (FI)" (str (btu/context-get :category-name) " (FI)")
-                "Title (SV)" (str (btu/context-get :category-name) " (SV)")
+        (is (= {"Title (EN)" (str (btu/context-getx :category-name) " Edited")
+                "Title (FI)" (str (btu/context-getx :category-name) " (FI)")
+                "Title (SV)" (str (btu/context-getx :category-name) " (SV)")
                 "Description (EN)" "Description (EN)"
                 "Description (FI)" "Description (FI)"
                 "Description (SV)" "Description (SV)"
@@ -2573,37 +2573,37 @@
       (testing "create ancestor category"
         (btu/scroll-and-click :create-category)
         (is (btu/eventually-visible? :create-category))
-        (fill-category-fields {:title (str (btu/context-get :category-name) " Ancestor")
+        (fill-category-fields {:title (str (btu/context-getx :category-name) " Ancestor")
                                :description "Description"
                                :display-order 2
-                               :categories [(str (btu/context-get :category-name) " Edited")]})
+                               :categories [(str (btu/context-getx :category-name) " Edited")]})
         (btu/scroll-and-click :save)
 
         (testing "after create"
           (is (btu/eventually-visible? :category))
-          (is (= {"Title (EN)" (str (btu/context-get :category-name) " Ancestor")
-                  "Title (FI)" (str (btu/context-get :category-name) " Ancestor (FI)")
-                  "Title (SV)" (str (btu/context-get :category-name) " Ancestor (SV)")
+          (is (= {"Title (EN)" (str (btu/context-getx :category-name) " Ancestor")
+                  "Title (FI)" (str (btu/context-getx :category-name) " Ancestor (FI)")
+                  "Title (SV)" (str (btu/context-getx :category-name) " Ancestor (SV)")
                   "Description (EN)" "Description (EN)"
                   "Description (FI)" "Description (FI)"
                   "Description (SV)" "Description (SV)"
                   "Display order" "2"
-                  "Subcategories" (str (btu/context-get :category-name) " Edited")}
+                  "Subcategories" (str (btu/context-getx :category-name) " Edited")}
                  (slurp-fields :category)))))
 
       (btu/scroll-and-click :back)
       (is (btu/eventually-visible? :categories))
       (click-row-action [:categories]
-                        {:fn/text (str (btu/context-get :category-name) " Edited")}
+                        {:fn/text (str (btu/context-getx :category-name) " Edited")}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :categories-dropdown)
-      (select-option "Subcategories" (str (btu/context-get :category-name) " Ancestor"))
+      (select-option "Subcategories" (str (btu/context-getx :category-name) " Ancestor"))
       (btu/scroll-and-click :save)
       (btu/wait-visible {:css "#flash-message-top"})
       (is (= ["Save: Failed"
               "Cannot set category as subcategory, because it would create a loop"
-              (str "Category: " (btu/context-get :category-name) " Ancestor")]
+              (str "Category: " (btu/context-getx :category-name) " Ancestor")]
              (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
                  (str/split-lines))))
 
@@ -2617,7 +2617,7 @@
 
         (is (= ["Delete: Failed"
                 "It is in use by:"
-                (str "Category: " (btu/context-get :category-name) " Ancestor")]
+                (str "Category: " (btu/context-getx :category-name) " Ancestor")]
                (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
                    (str/split-lines))))))
 
@@ -2625,26 +2625,26 @@
       (testing "should contain created categories before delete"
         (go-to-categories)
         (is (btu/eventually-visible? :categories))
-        (is (= #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")}
+        (is (= #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")}
                (->> (set (slurp-categories-by-title))
-                    (intersection #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")})))))
+                    (intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))
 
       (click-row-action [:categories]
-                        {:fn/text (str (btu/context-get :category-name) " Ancestor")}
+                        {:fn/text (str (btu/context-getx :category-name) " Ancestor")}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :delete)
       (btu/wait-has-alert)
       (btu/accept-alert)
 
       (is (btu/eventually-visible? :categories))
-      (is (= #{(str (btu/context-get :category-name) " Edited")}
+      (is (= #{(str (btu/context-getx :category-name) " Edited")}
              (->> (set (slurp-categories-by-title))
-                  (intersection #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")})))))))
+                  (intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))))
 
 (deftest test-catalogue-tree
   (btu/context-assoc! :category-name (str "Catalogue tree test parent category " (btu/get-seed) " (EN)"))
   (btu/context-assoc! :category-id (test-helpers/create-category! {:actor "owner"
-                                                                   :category/title {:en (btu/context-get :category-name)
+                                                                   :category/title {:en (btu/context-getx :category-name)
                                                                                     :fi (str "Catalogue tree test parent category " (btu/get-seed) " (FI)")
                                                                                     :sv (str "Catalogue tree test parent category " (btu/get-seed) " (SV)")}}))
   (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
@@ -2654,47 +2654,47 @@
   (btu/context-assoc! :catalogue-item-name (str "Catalogue tree test item " (btu/get-seed) " (EN)"))
   (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:actor "owner"
                                                                           :enabled false
-                                                                          :form-id (btu/context-get :form-id)
-                                                                          :title {:en (btu/context-get :catalogue-item-name)
+                                                                          :form-id (btu/context-getx :form-id)
+                                                                          :title {:en (btu/context-getx :catalogue-item-name)
                                                                                   :fi (str "Catalogue tree test item " (btu/get-seed) " (FI)")
                                                                                   :sv (str "Catalogue tree test item " (btu/get-seed) " (SV)")}
-                                                                          :categories [{:category/id (btu/context-get :category-id)}]}))
+                                                                          :categories [{:category/id (btu/context-getx :category-id)}]}))
 
   (btu/with-postmortem
     (login-as "alice")
     (testing "catalogue tree"
-      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
 
-      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
           "still can't see item because it's not enabled")
 
       (binding [context/*user* {:eppn "owner"}
                 context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-get :catalogue-id) :enabled true}))
+        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
 
       ;; must reload to see
       (btu/reload)
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
       (btu/wait-page-loaded)
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
 
-      (is (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
 
-      (click-row-action [:catalogue-tree] {:fn/text (btu/context-get :catalogue-item-name)} {:css ".add-to-cart"})
+      (click-row-action [:catalogue-tree] {:fn/text (btu/context-getx :catalogue-item-name)} {:css ".add-to-cart"})
 
-      (is (= [{"title" (btu/context-get :catalogue-item-name) "commands" "Remove from cartApply"}]
+      (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cartApply"}]
              (slurp-table {:css ".rems-table.cart"})))
 
-      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-get :category-name)}])
+      (btu/scroll-and-click [{:css ".name.bg-depth-0" :fn/text (btu/context-getx :category-name)}])
 
-      (is (not (some #{{"name bg-depth-1" (btu/context-get :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (not (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
                      (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))

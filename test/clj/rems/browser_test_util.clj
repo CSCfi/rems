@@ -10,7 +10,7 @@
             [etaoin.api :as et]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
-            [rems.common.util :refer [conj-vec]]
+            [rems.common.util :refer [conj-vec getx]]
             [rems.config]
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
@@ -35,6 +35,7 @@
 (defn get-server-url [] (:url @test-context))
 (defn get-seed [] (:seed @test-context))
 (defn context-get [k] (get @test-context k))
+(defn context-getx [k] (getx @test-context k))
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
 (defn context-update! [& args] (swap! test-context #(apply update % args)))
 
