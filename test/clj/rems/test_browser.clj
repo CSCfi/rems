@@ -1197,10 +1197,26 @@
                 (slurp-rows :workflows))))))
 
 (defn create-category []
-  (test-helpers/create-category! {:actor "owner"
-                                  :category/title {:en "E2E create-catalogue-item category (EN)"
-                                                   :fi "E2E create-catalogue-item category (FI)"
-                                                   :sv "E2E create-catalogue-item category (SV)"}}))
+  (go-to-categories)
+  (testing "create new category"
+    (btu/scroll-and-click :create-category)
+    (is (btu/eventually-visible? :create-category))
+    (fill-category-fields {:title (btu/context-get :category-name)
+                           :description "Description"
+                           :display-order 1})
+    (btu/scroll-and-click :save)
+
+    (testing "after create"
+      (is (btu/eventually-visible? :category))
+      (is (= {"Title (EN)" (btu/context-get :category-name)
+              "Title (FI)" (str (btu/context-get :category-name) " (FI)")
+              "Title (SV)" (str (btu/context-get :category-name) " (SV)")
+              "Description (EN)" "Description (EN)"
+              "Description (FI)" "Description (FI)"
+              "Description (SV)" "Description (SV)"
+              "Display order" "1"
+              "Subcategories" ""}
+             (slurp-fields :category))))))
 
 (defn create-catalogue-item []
   (testing "create catalogue item"
@@ -1217,7 +1233,7 @@
       (select-option "Resource" (btu/context-get :resid))
       (when-let [form-name (btu/context-get :form-name)]
         (select-option "Form" form-name))
-      (select-option "Categories" "E2E create-catalogue-item category (EN)")
+      (select-option "Categories" (btu/context-get :category-name))
       (btu/screenshot "about-to-create-catalogue-item.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
@@ -1235,7 +1251,7 @@
               "Resource" (btu/context-get :resid)
               "Form" (or (btu/context-get :form-name)
                          "")
-              "Categories" "E2E create-catalogue-item category (EN)"
+              "Categories" (btu/context-get :category-name)
               "Active" false
               "End" ""}
              (dissoc (slurp-fields :catalogue-item)
@@ -1269,7 +1285,8 @@
                           :resid (str "browser.testing.resource/" (btu/get-seed))
                           :form-name (str "Browser Test Form " (btu/get-seed))
                           :workflow-name (str "Browser Test Workflow " (btu/get-seed))
-                          :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed)))
+                          :catalogue-item-name (str "Browser Test Catalogue Item " (btu/get-seed))
+                          :category-name (str "test-create-catalogue-item category " (btu/get-seed)))
       (create-organization)
       (create-license)
       (create-resource)
@@ -2523,43 +2540,27 @@
     (login-as "owner")
     (go-to-categories)
 
-    (testing "create new category"
-      (btu/scroll-and-click :create-category)
-      (is (btu/eventually-visible? :create-category))
-      (fill-category-fields {:title "E2E Test category"
-                             :description "Description"
-                             :display-order 1})
-      (btu/scroll-and-click :save)
+    (btu/context-assoc! :category-name (str "test-categories category " (btu/get-seed)))
 
-      (testing "after create"
-        (is (btu/eventually-visible? :category))
-        (is (= {"Title (EN)" "E2E Test category (EN)"
-                "Title (FI)" "E2E Test category (FI)"
-                "Title (SV)" "E2E Test category (SV)"
-                "Description (EN)" "Description (EN)"
-                "Description (FI)" "Description (FI)"
-                "Description (SV)" "Description (SV)"
-                "Display order" "1"
-                "Subcategories" ""}
-               (slurp-fields :category)))))
+    (create-category)
 
     (testing "edit category"
       (btu/scroll-and-click :back)
       (is (btu/eventually-visible? :categories))
       (click-row-action [:categories]
-                        {:fn/text "E2E Test category (EN)"}
+                        {:fn/text (btu/context-get :category-name)}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
-      (btu/fill-human :title-en "Edited title (EN)")
+      (btu/fill-human :title-en (str (btu/context-get :category-name) " Edited"))
       (btu/scroll-and-click :save)
 
       (testing "after edit"
         (is (btu/eventually-visible? :category))
-        (is (= {"Title (EN)" "Edited title (EN)"
-                "Title (FI)" "E2E Test category (FI)"
-                "Title (SV)" "E2E Test category (SV)"
+        (is (= {"Title (EN)" (str (btu/context-get :category-name) " Edited")
+                "Title (FI)" (str (btu/context-get :category-name) " (FI)")
+                "Title (SV)" (str (btu/context-get :category-name) " (SV)")
                 "Description (EN)" "Description (EN)"
                 "Description (FI)" "Description (FI)"
                 "Description (SV)" "Description (SV)"
@@ -2573,37 +2574,37 @@
       (testing "create ancestor category"
         (btu/scroll-and-click :create-category)
         (is (btu/eventually-visible? :create-category))
-        (fill-category-fields {:title "E2E Ancestor category"
+        (fill-category-fields {:title (str (btu/context-get :category-name) " Ancestor")
                                :description "Description"
                                :display-order 2
-                               :categories ["Edited title (EN)"]})
+                               :categories [(str (btu/context-get :category-name) " Edited")]})
         (btu/scroll-and-click :save)
 
         (testing "after create"
           (is (btu/eventually-visible? :category))
-          (is (= {"Title (EN)" "E2E Ancestor category (EN)"
-                  "Title (FI)" "E2E Ancestor category (FI)"
-                  "Title (SV)" "E2E Ancestor category (SV)"
+          (is (= {"Title (EN)" (str (btu/context-get :category-name) " Ancestor")
+                  "Title (FI)" (str (btu/context-get :category-name) " Ancestor (FI)")
+                  "Title (SV)" (str (btu/context-get :category-name) " Ancestor (SV)")
                   "Description (EN)" "Description (EN)"
                   "Description (FI)" "Description (FI)"
                   "Description (SV)" "Description (SV)"
                   "Display order" "2"
-                  "Subcategories" "Edited title (EN)"}
+                  "Subcategories" (str (btu/context-get :category-name) " Edited")}
                  (slurp-fields :category)))))
 
       (btu/scroll-and-click :back)
       (is (btu/eventually-visible? :categories))
       (click-row-action [:categories]
-                        {:fn/text "Edited title (EN)"}
+                        {:fn/text (str (btu/context-get :category-name) " Edited")}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :edit)
       (btu/wait-visible :categories-dropdown)
-      (select-option "Subcategories" "E2E Ancestor category (EN)")
+      (select-option "Subcategories" (str (btu/context-get :category-name) " Ancestor"))
       (btu/scroll-and-click :save)
       (btu/wait-visible {:css "#flash-message-top"})
       (is (= ["Save: Failed"
               "Cannot set category as subcategory, because it would create a loop"
-              "Category: E2E Ancestor category (EN)"]
+              (str "Category: " (btu/context-get :category-name) " Ancestor")]
              (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
                  (str/split-lines))))
 
@@ -2617,7 +2618,7 @@
 
         (is (= ["Delete: Failed"
                 "It is in use by:"
-                "Category: E2E Ancestor category (EN)"]
+                (str "Category: " (btu/context-get :category-name) " Ancestor")]
                (-> (btu/get-element-text-el (btu/query {:css "#flash-message-top"}))
                    (str/split-lines))))))
 
@@ -2625,19 +2626,21 @@
       (testing "should contain created categories before delete"
         (go-to-categories)
         (is (btu/eventually-visible? :categories))
-        (is (= #{"Edited title (EN)" "E2E Ancestor category (EN)"}
+        (is (= #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")}
                (->> (set (slurp-categories-by-title))
-                    (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))
+                    (intersection #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")})))))
+
       (click-row-action [:categories]
-                        {:fn/text "E2E Ancestor category (EN)"}
+                        {:fn/text (str (btu/context-get :category-name) " Ancestor")}
                         (select-button-by-label "View"))
       (btu/scroll-and-click :delete)
       (btu/wait-has-alert)
       (btu/accept-alert)
+
       (is (btu/eventually-visible? :categories))
-      (is (= #{"Edited title (EN)"}
+      (is (= #{(str (btu/context-get :category-name) " Edited")}
              (->> (set (slurp-categories-by-title))
-                  (intersection #{"Edited title (EN)" "E2E Ancestor category (EN)"})))))))
+                  (intersection #{(str (btu/context-get :category-name) " Edited") (str (btu/context-get :category-name) " Ancestor")})))))))
 
 (deftest test-catalogue-tree
   (btu/context-assoc! :category-name (str "Catalogue tree test parent category " (btu/get-seed) " (EN)"))
