@@ -101,6 +101,12 @@
   (btu/wait-page-loaded)
   (btu/screenshot (str "administration-page-" (str/replace link-text " " "-") ".png")))
 
+(defn go-to-categories []
+  (go-to-admin "Catalogue items")
+  (is (btu/eventually-visible? :catalogue))
+  (btu/scroll-and-click {:fn/text "Manage categories"})
+  (is (btu/eventually-visible? :categories)))
+
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -229,6 +235,20 @@
   (let [id (btu/get-element-attr [{:tag :label :fn/has-text label}]
                                  :for)]
     (btu/fill {:id id} (str option "\n"))))
+
+(defn fill-category-fields [{:keys [title description display-order categories]}]
+  (btu/fill-human :title-en title)
+  (btu/fill-human :title-fi (str title " (FI)"))
+  (btu/fill-human :title-sv (str title " (SV)"))
+  (when description
+    (btu/fill-human :description-en (str description " (EN)"))
+    (btu/fill-human :description-fi (str description " (FI)"))
+    (btu/fill-human :description-sv (str description " (SV)")))
+  (when display-order
+    (btu/fill-human :display-order (str display-order)))
+  (when (seq categories)
+    (doseq [cat categories]
+      (select-option "Subcategories" cat))))
 
 (defn accept-licenses []
   (btu/scroll-and-click :accept-licenses-button)
@@ -2493,26 +2513,6 @@
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
     (user-settings/delete-user-settings! "alice"))) ; clear language settings
-
-(defn fill-category-fields [{:keys [title description display-order categories]}]
-  (btu/fill-human :title-en (str title " (EN)"))
-  (btu/fill-human :title-fi (str title " (FI)"))
-  (btu/fill-human :title-sv (str title " (SV)"))
-  (when description
-    (btu/fill-human :description-en (str description " (EN)"))
-    (btu/fill-human :description-fi (str description " (FI)"))
-    (btu/fill-human :description-sv (str description " (SV)")))
-  (when display-order
-    (btu/fill-human :display-order (str display-order)))
-  (when (seq categories)
-    (doseq [cat categories]
-      (select-option "Subcategories" cat))))
-
-(defn go-to-categories []
-  (go-to-admin "Catalogue items")
-  (is (btu/eventually-visible? :catalogue))
-  (btu/scroll-and-click {:fn/text "Manage categories"})
-  (is (btu/eventually-visible? :categories)))
 
 (defn slurp-categories-by-title []
   (->> (map #(get % "title") (slurp-rows :categories))
