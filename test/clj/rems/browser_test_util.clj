@@ -83,7 +83,7 @@
 (defn- enable-downloads! [driver]
   (et/execute {:driver driver
                :method :post
-               :path [:session (:session @driver) "chromium/send_command"]
+               :path [:session (:session driver) "chromium/send_command"]
                :data {:cmd "Page.setDownloadBehavior"
                       :params {:behavior "allow"
                                :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
