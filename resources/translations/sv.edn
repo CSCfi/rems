@@ -124,7 +124,6 @@
                    :internal-name "Inre namn"
                    :license "Licens"
                    :license-field "Licens \"%1\""
-                   :license-name "Licensens namn"
                    :licenses "Licenser"
                    :manage-categories "Administrera kategorier"
                    :more-info "Webbadress för tilläggsinformation (valfritt)"
@@ -312,7 +311,7 @@
                    :license-text "Licenstext"
                    :license-type "Typ av licens"
                    :link-to-license "Länk till licens"
-                   :title "Licensens namn"}
+                   :title "Namn"}
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}

@@ -214,7 +214,7 @@
                 [license-organization-field]
                 [license-type-radio-group]
                 (for [language languages] ; TODO only show when there is license type selected
-                  [:div {:key language} ; TODO use .dashed-group in these
+                  [:div.mb-3 {:key language} ; TODO use .dashed-group in these
                    [language-heading language] ; TODO check if should do in label or some other grouping
                    [license-title-field language]
                    [license-link-field language]

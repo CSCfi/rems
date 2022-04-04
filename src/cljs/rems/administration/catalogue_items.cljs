@@ -149,7 +149,7 @@
                          :columns [{:key :organization
                                     :title (text :t.administration/organization)}
                                    {:key :name
-                                    :title (text :t.catalogue/header)}
+                                    :title (text :t.administration/title)}
                                    {:key :resource
                                     :title (text :t.administration/resource)}
                                    {:key :form

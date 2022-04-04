@@ -124,7 +124,6 @@
                    :internal-name "Sisäinen nimi"
                    :license "Lisenssi"
                    :license-field "Lisenssi \"%1\""
-                   :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :manage-categories "Hallinnoi kategorioita"
                    :more-info "Lisätietoja-URL (valinnainen)"
@@ -312,7 +311,7 @@
                    :license-text "Lisenssin teksti"
                    :license-type "Lisenssin tyyppi"
                    :link-to-license "Lisenssilinkki"
-                   :title "Lisenssin nimi"}
+                   :title "Nimi"}
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
