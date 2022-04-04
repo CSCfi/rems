@@ -100,7 +100,8 @@
   (assoc CommandBase
          :field-values [{:form schema-base/FormId
                          :field schema-base/FieldId
-                         :value schema-base/FieldValue}]))
+                         :value schema-base/FieldValue}]
+         (s/optional-key :duo-codes) [schema-base/DuoCode]))
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand
@@ -376,8 +377,9 @@
                              :when (:field/visible field)]
                          {:form (:form/id form) :field (:field/id field) :value (:field/value field)})]
     (or (validation-errors-for-draft forms)
-        (ok {:event/type               :application.event/draft-saved
-             :application/field-values visible-values}))))
+        (ok (-> {:event/type               :application.event/draft-saved
+                 :application/field-values visible-values}
+                (assoc-some :application/duo-codes (:duo-codes cmd)))))))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]

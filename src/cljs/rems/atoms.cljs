@@ -3,7 +3,8 @@
             [komponentit.autosize :as autosize]
             [reagent.core :as reagent]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text localized]]))
+            [rems.text :refer [text localized]]
+            [rems.util :refer [escape-element-id focus-when-collapse-opened]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"
@@ -173,6 +174,34 @@
   [:div {:class "navbar-brand logo-menu"}
    [:div.img]])
 
+(defn expander
+  "Displays an expandable block of content with animated chevron.
+   
+   Pass a map of options with the following keys:
+   * `id` unique id for expanded content
+   * `content` content which is displayed in expanded state
+   * `expanded?` initial expanded state
+   * `title` content which is always displayed together with animated chevron"
+  [{:keys [expanded?] :or {expanded? false}}]
+  (let [expanded (reagent/atom expanded?)]
+    (fn [{:keys [id content title]}]
+      (let [id (escape-element-id id)]
+        [:<>
+         [:button.info-button.btn.d-flex.align-items-center.px-0 ; .btn adds unnecessary horizontal padding
+          {:data-toggle "collapse"
+           :href (str "#" id)
+           :aria-expanded (if @expanded "true" "false")
+           :aria-controls id
+           :on-click #(swap! expanded not)
+           :style {:white-space "normal"}} ; .btn uses "nowrap" which overflows the page with long input
+          [:span.mr-2.fa.fa-chevron-down.animate-transform
+           {:class (when @expanded "rotate-180")}]
+          title]
+         [:div.collapse {:id id
+                         :ref focus-when-collapse-opened
+                         :tab-index "-1"}
+          content]]))))
+
 (defn guide []
   (let [state (reagent/atom false)
         on-change #(swap! state not)]
@@ -214,4 +243,10 @@
                                   :attachment/filename "my-attachment.pdf"}])
        (example "attachment-link, long filename"
                 [attachment-link {:attachment/id 123
-                                  :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])])))
+                                  :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])
+       (component-info expander)
+       (example "expander"
+                [expander {:id "guide-expander-id"
+                           :title "Expander block with animated chevron"
+                           :expanded? false
+                           :content [:p "Expanded content"]}])])))

@@ -101,10 +101,6 @@
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
                    :display-archived "Visa arkiverade"
                    :display-order "Visningsordning"
-                   :duo {:codes "DUO koder"
-                         :code "DUO kod"
-                         :description "Rubrik"
-                         :about-duo-code "Info om"}
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-category "Ändra kategori"
@@ -128,13 +124,11 @@
                    :internal-name "Inre namn"
                    :license "Licens"
                    :license-field "Licens \"%1\""
-                   :license-name "Licensens namn"
                    :licenses "Licenser"
                    :manage-categories "Administrera kategorier"
                    :more-info "Webbadress för tilläggsinformation (valfritt)"
                    :name "Namn"
                    :no-categories "Inga kategorier"
-                   :no-duo-codes "Inga DUO koder"
                    :no-form "Ingen blankett"
                    :no-licenses "Inga licenser"
                    :optional "(valfritt)"
@@ -179,6 +173,7 @@
                  :copied-to "Kopierat till ansökan"
                  :created "Skapad"
                  :description "Rubrik"
+                 :duos {:validation {:missing-duo-codes "DUO koder anges i resurser, men de saknas från ansökan:"}}
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
@@ -316,11 +311,10 @@
                    :license-text "Licenstext"
                    :license-type "Typ av licens"
                    :link-to-license "Länk till licens"
-                   :title "Licensens namn"}
+                   :title "Namn"}
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
-                    :resid-placeholder "urn:test:fi:some-uuid"
-                    :duos {:select-duo-codes "DUO koder"}}
+                    :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
@@ -330,16 +324,22 @@
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
-             :placeholder "Välj..."}
-  :duo {:restriction {:mondo "Sjukdom (Mondo)"
-                      :topic "Typ av forskning"
-                      :collaboration "Forskningsgruppledare"
-                      :location "Geografiska regionen"
+             :placeholder "Välj..."
+             :loading "Läser in..."}
+  :duo {:fields {:more-info "Tilläggsinformation till sökande (frivillig)"}
+        :no-duo-codes "Inga DUO-koder"
+        :restriction {:collaboration "Forskningsgruppledare"
                       :date "Publikationsmoratorium (datum)"
+                      :institute "Godkänd institution"
+                      :location "Geografiska regionen"
+                      :mondo "Sjukdom (Mondo)"
                       :months "Giltig i (månader)"
-                      :users "Godkända användare"
                       :project "Godkänt projekt"
-                      :institute "Godkänd institution"}}
+                      :topic "Typ av forskning"
+                      :users "Godkända användare"}
+        :title "Data Use Ontology (DUO)"
+        :validation {:mondo-not-valid "Angivna Mondo koder är inte kompatibla:"
+                     :needs-validation "DUO begränsningen kunde inte valideras automatiskt:"}}
   :email {:applicant-changed {:subject-to-member "Sökande för ansökan %3 bytte"
                               :message-to-member "%1,\n\nSökande för ansökan %3 har bytts ut till %4 av %2.\n\nDu kan granska ansökningen här: %6." ; TODO check
                               :subject-to-handler "(%3) Sökande bytte"
@@ -457,6 +457,9 @@
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"
                :remove "Ta bort"}
+  :label {:default "%1: %2"
+          :dash "%1 – %2"
+          :long "%1: %2 – %3"}
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
   :login {:alternative "Andra alternativ för inloggning"

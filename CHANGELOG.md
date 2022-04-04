@@ -28,6 +28,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - Duplicated forms have been removed. Previously, if a workflow form was the same as a catalogue item form, that form would be duplicated. (#2853)
 - An owner that is also an organization owner can now properly edit organization ownerships. (#2850)
 - An owner could sometimes see a disabled catalogue item in the catalogue tree. (#2800)
+- The column names in the tables and the field names in create/edit pages of the administration now match.
 
 ## v2.25 "Meripuistotie" 2022-02-15
 

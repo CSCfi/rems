@@ -96,7 +96,7 @@
                          :columns [{:key :organization
                                     :title (text :t.administration/organization)}
                                    {:key :title
-                                    :title (text :t.administration/workflow)}
+                                    :title (text :t.administration/title)}
                                    {:key :active
                                     :title (text :t.administration/active)
                                     :filterable? false}

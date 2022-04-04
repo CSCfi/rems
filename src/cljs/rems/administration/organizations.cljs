@@ -100,7 +100,7 @@
                              :columns [{:key :short-name
                                         :title (text :t.administration/short-name)}
                                        {:key :name
-                                        :title (text :t.administration/organization)}
+                                        :title (text :t.administration/title)}
                                        {:key :active
                                         :title (text :t.administration/active)
                                         :filterable? false}

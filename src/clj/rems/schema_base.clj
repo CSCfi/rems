@@ -91,7 +91,8 @@
    (s/optional-key :restrictions) [{:type s/Keyword
                                     (s/optional-key :values) [(s/conditional :value {:value s/Str}
                                                                              :label MondoCodeFull
-                                                                             :id MondoCode)]}]})
+                                                                             :id MondoCode)]}]
+   (s/optional-key :more-info) LocalizedString})
 
 (s/defschema DuoCodeFull
   (merge DuoCode
