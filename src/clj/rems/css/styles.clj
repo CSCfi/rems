@@ -29,7 +29,8 @@
 (def bootstrap-media-breakpoints {:xs (u/px 576)
                                   :sm (u/px 768)
                                   :md (u/px 992)
-                                  :lg (u/px 1200)})
+                                  :lg (u/px 1200)
+                                  :xl (u/px 1600)})
 
 
 ;; Fonts of the app
@@ -78,8 +79,8 @@
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom "none"}])
-   (stylesheet/at-media {:max-width (:lg bootstrap-media-breakpoints)}
-                        [:.md-z80 {:zoom "80%"}])
+   (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
+                        [:.lg-z75 {:zoom "75%"}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
@@ -843,6 +844,12 @@
     [:.example-search {:background-color "#eef"
                        :padding "0.2rem"
                        :border-radius "0.25rem"}]]
+
+   ;; special case for previous applications
+   [:#previous-applications-except-current [:.resource {:overflow :hidden
+                                                        :text-overflow :ellipsis
+                                                        :white-space :nowrap
+                                                        :max-width "10em"}]]
 
    ;; !important is needed here, otherwise these attributes are overridden
    ;; by more specific styles by react-select.
