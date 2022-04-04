@@ -2648,6 +2648,11 @@
   (btu/context-assoc! :category-id (test-helpers/create-category! {:category/title {:en (btu/context-getx :category-name)
                                                                                     :fi (str "Catalogue tree test parent category " (btu/get-seed) " (FI)")
                                                                                     :sv (str "Catalogue tree test parent category " (btu/get-seed) " (SV)")}}))
+  (btu/context-assoc! :root-category-name (str "Catalogue tree test root category " (btu/get-seed) " (EN)"))
+  (btu/context-assoc! :root-category-id (test-helpers/create-category! {:category/title {:en (btu/context-getx :root-category-name)
+                                                                                         :fi (str "Catalogue tree test root category " (btu/get-seed) " (FI)")
+                                                                                         :sv (str "Catalogue tree test root category " (btu/get-seed) " (SV)")}
+                                                                        :category/children [{:category/id (btu/context-getx :category-id)}]}))
   (btu/context-assoc! :catalogue-item-name (str "Catalogue tree test item " (btu/get-seed) " (EN)"))
   (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:enabled false
                                                                           :title {:en (btu/context-getx :catalogue-item-name)
@@ -2660,13 +2665,17 @@
     (testing "catalogue tree"
       (btu/screenshot "before-opening.png")
 
-      (is (nil? (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
-      (is (nil? (some #{{"name bg-depth-0" (str (btu/context-getx :category-name) "\nCategory description")}}
+      (is (nil? (some #{{"name bg-depth-1" (str (btu/context-getx :category-name) "\nCategory description")}}
                       (slurp-rows :catalogue-tree)))
           "can't see category either because it's empty")
+
+      (is (nil? (some #{{"name bg-depth-0" (str (btu/context-getx :root-category-name) "\nCategory description")}}
+                      (slurp-rows :catalogue-tree)))
+          "can't see root category either because it's empty")
 
       (binding [context/*user* {:eppn "owner"}
                 context/*roles* #{:owner}]
@@ -2679,11 +2688,15 @@
 
       (btu/screenshot "after-reloading.png")
 
+      (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :root-category-name)}])
+
+      (btu/screenshot "after-opening-root-category.png")
+
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
-      (btu/screenshot "after-opening-again.png")
+      (btu/screenshot "after-opening-category.png")
 
-      (is (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
 
@@ -2698,6 +2711,6 @@
 
       (btu/screenshot "after-closing.png")
 
-      (is (nil? (some #{{"name bg-depth-1" (btu/context-getx :catalogue-item-name) "commands bg-depth-1" "More infoAdd to cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More infoRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
