@@ -815,15 +815,20 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:css ".alert-success"})))
     (testing "check decision event"
-      (is (= {:application/decision :approved
-              :application/comment "ok"
-              :event/actor "new-decider"
-              :event/type :application.event/decided}
-             (-> (btu/context-get :application-id)
-                 applications/get-application-internal
-                 :application/events
-                 last
-                 (select-keys [:application/decision :application/comment :event/actor :event/type])))))))
+      ;; checking has sometimes failed
+      ;; (decider-joined was last instead of decision)
+      ;; so let's try for a while
+      (let [application-id (btu/context-get :application-id)]
+        (btu/wait-predicate #(= {:application/decision :approved
+                                 :application/comment "ok"
+                                 :event/actor "new-decider"
+                                 :event/type :application.event/decided}
+                                (-> application-id
+                                    applications/get-application-internal
+                                    :application/events
+                                    last
+                                    (select-keys [:application/decision :application/comment :event/actor :event/type])))
+                            {:interval 1})))))
 
 (deftest test-invite-handler
   (testing "create test data"
@@ -2103,9 +2108,9 @@
       (testing "toggle text field visibility"
         (is (not (btu/field-visible? "Text (EN)")))
         (select-option "Option (EN)" "Yes")
-        (is (btu/field-visible? "Text (EN)"))
+        (is (btu/eventually-visible? {:fn/has-text "Text (EN)"}))
         (select-option "Option (EN)" "No")
-        (is (not (btu/field-visible? "Text (EN)"))))
+        (is (btu/eventually-invisible? {:fn/has-text "Text (EN)"})))
 
       (testing "toggle email field visibility"
         (is (not (btu/field-visible? "Email (EN)")))
