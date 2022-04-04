@@ -898,6 +898,12 @@
     [".collapse:not(.show)" {:display :block}]
     [:.collapse-toggle.collapse {:display :none}])
 
+   ;; animation utilities
+   [:.animate-transform {:-webkit-transition "transform 0.2s ease-in-out"
+                         :-o-transition "transform 0.2s ease-in-out"
+                         :transition "transform 0.2s ease-in-out"}]
+   [:.rotate-180 {:transform "rotate(180deg)"}]
+
    ;; These must be last as the parsing fails when the first non-standard element is met
    (form-placeholder-styles)))
 

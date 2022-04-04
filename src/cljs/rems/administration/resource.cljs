@@ -4,7 +4,7 @@
             [rems.administration.blacklist :as blacklist]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
-            [rems.administration.duo :refer [duos-view]]
+            [rems.administration.duo :refer [duo-info-field]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
@@ -48,6 +48,20 @@
              [blacklist/blacklist]
              [blacklist/add-user-form {:resource/ext-id (:resid @(rf/subscribe [::resource]))}]]}])
 
+(defn resource-duos [resource]
+  [collapsible/component
+   {:id "duos"
+    :title (text :t.duo/title)
+    :always (if-let [duos (seq (-> resource :resource/duo :duo/codes))]
+              (for [duo duos]
+                ^{:key (:id duo)}
+                [duo-info-field {:id (str "resource-duo-" (:id duo))
+                                 :duo duo
+                                 :duo/more-infos (when (:more-info duo)
+                                                   (list (merge (select-keys duo [:more-info])
+                                                                {:resource/id (:id resource)})))}])
+              [:p (text :t.duo/no-duo-codes)])}])
+
 (defn resource-view [resource language]
   (let [config @(rf/subscribe [:rems.config/config])]
     [:div.spaced-vertically-3
@@ -60,7 +74,7 @@
                 [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
      [licenses-view (:licenses resource) language]
      (when (:enable-duo config)
-       [duos-view (get-in resource [:resource/duo :duo/codes])])
+       [resource-duos resource])
      [resource-blacklist]
      (let [id (:id resource)]
        [:div.col.commands

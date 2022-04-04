@@ -2042,6 +2042,116 @@
       (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
 
+(deftest test-duo-codes
+  (let [applicant-id "alice"
+        handler-id "developer"
+        wfid (test-helpers/create-workflow! {:handlers [handler-id]})
+        ext1 "duo-resource-1"
+        ext2 "duo-resource-2"]
+    (testing "applicant fills duo codes"
+      ;; MONDO:0045024 - cancer or benign tumor
+      ;; - MONDO:0005105 - melanoma
+      ;;   - MONDO:0006486 - uveal melanoma
+      (let [res1 (test-helpers/create-resource! {:resource-ext-id ext1
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
+            res2 (test-helpers/create-resource! {:resource-ext-id ext2
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
+                                                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}]}]}]}})
+            cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
+            cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
+            app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+        (testing "save partially valid duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"
+                                                                                                      :label "cancer or benign tumor"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000027"
+                               :restrictions [{:type "project" :values [{:value "project id"}]}]
+                               :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                               :label {:en "project specific restriction"}
+                               :shorthand "PS"}
+                              {:id "DUO:0000007"
+                               :restrictions [{:type "mondo" :values [{:id "MONDO:0045024"
+                                                                       :label "cancer or benign tumor"}]}]
+                               :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
+                               :label {:en "disease specific research"}
+                               :shorthand "DS"}]
+                  :duo/matches [{:resource/id res1
+                                 :duo/id "DUO:0000024"
+                                 :duo/label {:en "publication moratorium"}
+                                 :duo/shorthand "MOR"
+                                 :duo/validation {:errors [] :validity "duo/not-found"}}
+                                {:resource/id res2
+                                 :duo/id "DUO:0000027"
+                                 :duo/label {:en "project specific restriction"}
+                                 :duo/shorthand "PS"
+                                 :duo/validation {:errors [{:type "t.duo.validation/needs-validation"
+                                                            :catalogue-item/title {}
+                                                            :duo/restrictions [{:type "project"
+                                                                                :values [{:value "csc rems"}]}]}]
+                                                  :validity "duo/needs-manual-validation"}}
+                                {:resource/id res2
+                                 :duo/id "DUO:0000007"
+                                 :duo/label {:en "disease specific research"}
+                                 :duo/shorthand "DS"
+                                 :duo/validation {:errors [{:type "t.duo.validation/mondo-not-valid"
+                                                            :catalogue-item/title {}
+                                                            :duo/restrictions [{:id "MONDO:0005105"
+                                                                                :label "melanoma"}]}]
+                                                  :validity "duo/not-compatible"}}]}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))
+        (testing "save fully valid duo codes"
+          (is (= {:success true}
+                 (send-command applicant-id
+                               {:type :application.command/save-draft
+                                :application-id app-id
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                            {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]}]})))
+          (is (= {:duo/codes [{:id "DUO:0000024"
+                               :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]
+                               :description {:en "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."}
+                               :label {:en "publication moratorium"}
+                               :shorthand "MOR"}
+                              {:id "DUO:0000027"
+                               :restrictions [{:type "project" :values [{:value "project id"}]}]
+                               :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
+                               :label {:en "project specific restriction"}
+                               :shorthand "PS"}
+                              {:id "DUO:0000007"
+                               :restrictions [{:type "mondo" :values [{:id "MONDO:0006486"
+                                                                       :label "uveal melanoma"}]}]
+                               :description {:en "This data use permission indicates that use is allowed provided it is related to the specified disease."}
+                               :label {:en "disease specific research"}
+                               :shorthand "DS"}]
+                  :duo/matches [{:resource/id res1
+                                 :duo/id "DUO:0000024"
+                                 :duo/label {:en "publication moratorium"}
+                                 :duo/shorthand "MOR"
+                                 :duo/validation {:errors [] :validity "duo/compatible"}}
+                                {:resource/id res2
+                                 :duo/id "DUO:0000027"
+                                 :duo/label {:en "project specific restriction"}
+                                 :duo/shorthand "PS"
+                                 :duo/validation {:errors [{:type "t.duo.validation/needs-validation"
+                                                            :catalogue-item/title {}
+                                                            :duo/restrictions [{:type "project"
+                                                                                :values [{:value "csc rems"}]}]}]
+                                                  :validity "duo/needs-manual-validation"}}
+                                {:resource/id res2
+                                 :duo/id "DUO:0000007"
+                                 :duo/label {:en "disease specific research"}
+                                 :duo/shorthand "DS"
+                                 :duo/validation {:errors [] :validity "duo/compatible"}}]}
+                 (-> (get-application-for-user app-id applicant-id)
+                     :application/duo))))))))
+
 (deftest test-application-raw
   (let [api-key "42"
         applicant "alice"
@@ -2175,7 +2285,8 @@
                                     :application/id app-id
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}
-                                                               {:form form-id :field "att" :value (str att-id)}]}]}
+                                                               {:form form-id :field "att" :value (str att-id)}]}]
+              :application/duo {:duo/matches []}}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
                  ;; event ids are unpredictable
