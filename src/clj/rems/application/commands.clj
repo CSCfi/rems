@@ -252,15 +252,15 @@
   (when-not (application-util/is-handler? application actor)
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
-(defn- validation-errors-for-draft [forms]
-  (let [errors (for [form forms
-                     error (form-validation/validate-fields-for-draft (:form/fields form))]
-                 (assoc error :form-id (:form/id form)))]
-    (when (seq errors)
-      {:errors errors})))
+(defn- form-validation-warnings [forms]
+  (let [warnings (for [form forms
+                       warning (form-validation/validate-fields-for-draft (:form/fields form))]
+                   (assoc warning :form-id (:form/id form)))]
+    (when (seq warnings)
+      {:warnings warnings})))
 
-(defn- validation-error [application]
-  (let [errors (for [form (:application/forms application)
+(defn- form-validation-errors [forms]
+  (let [errors (for [form forms
                      error (form-validation/validate-fields-for-submit (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
@@ -376,10 +376,10 @@
                              field (:form/fields form)
                              :when (:field/visible field)]
                          {:form (:form/id form) :field (:field/id field) :value (:field/value field)})]
-    (or (validation-errors-for-draft forms)
-        (ok (-> {:event/type               :application.event/draft-saved
-                 :application/field-values visible-values}
-                (assoc-some :application/duo-codes (:duo-codes cmd)))))))
+    (ok-with-data (form-validation-warnings forms)
+                  (list (-> {:event/type :application.event/draft-saved
+                             :application/field-values visible-values}
+                            (assoc-some :application/duo-codes (:duo-codes cmd)))))))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
@@ -390,7 +390,7 @@
   [cmd application _injections]
   (or (merge-with concat
                   (licenses-not-accepted-error application (:actor cmd))
-                  (validation-error application))
+                  (form-validation-errors (:application/forms application)))
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler :application.command/approve
