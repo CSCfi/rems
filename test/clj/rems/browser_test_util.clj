@@ -145,9 +145,10 @@
     (catch clojure.lang.ExceptionInfo e
       ;; could need a restart
       (let [data (ex-data e)]
-        (log/warn e "Unexpected problem" data)
         (if (= "invalid session id" (get-in data [:response :value :error]))
-          (fixture-init-driver f)
+          (do
+            (log/warn e "Unexpected problem, need to restart driver" data)
+            (fixture-init-driver f))
           (throw e))))))
 
 (defn smoke-test [f]
