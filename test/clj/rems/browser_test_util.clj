@@ -141,12 +141,14 @@
   [f]
   (try
     (refresh-driver!)
+    (f)
     (catch clojure.lang.ExceptionInfo e
       ;; could need a restart
-      (if (= "invalid session id" (get-in (ex-data e) [:response :value :error]))
-        (fixture-init-driver f)
-        (throw e))))
-  (f))
+      (let [data (ex-data e)]
+        (log/warn e "Unexpected problem" data)
+        (if (= "invalid session id" (get-in data [:response :value :error]))
+          (fixture-init-driver f)
+          (throw e))))))
 
 (defn smoke-test [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
