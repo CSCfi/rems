@@ -815,20 +815,16 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:css ".alert-success"})))
     (testing "check decision event"
-      ;; checking has sometimes failed
-      ;; (decider-joined was last instead of decision)
-      ;; so let's try for a while
-      (let [application-id (btu/context-get :application-id)]
-        (btu/wait-predicate #(= {:application/decision :approved
-                                 :application/comment "ok"
-                                 :event/actor "new-decider"
-                                 :event/type :application.event/decided}
-                                (-> application-id
-                                    applications/get-application-internal
-                                    :application/events
-                                    last
-                                    (select-keys [:application/decision :application/comment :event/actor :event/type])))
-                            {:interval 1})))))
+      ;; checking has sometimes failed because
+      ;; the comment was typoed so let's not compare it
+      (is (= {:application/decision :approved
+              :event/actor "new-decider"
+              :event/type :application.event/decided}
+             (-> (btu/context-get :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:application/decision :event/actor :event/type])))))))
 
 (deftest test-invite-handler
   (testing "create test data"
