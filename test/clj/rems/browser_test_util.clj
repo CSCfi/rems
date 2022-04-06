@@ -140,8 +140,17 @@
 (defn fixture-refresh-driver
   "Executes a test running with a re-used but clean and refreshed driver."
   [f]
-  (refresh-driver!)
-  (f))
+  (try
+    (refresh-driver!)
+    (f)
+    (catch clojure.lang.ExceptionInfo e
+      ;; could need a restart
+      (let [data (ex-data e)]
+        (if (= "invalid session id" (get-in data [:response :value :error]))
+          (do
+            (log/warn e "Unexpected problem, need to restart driver" data)
+            (fixture-init-driver f))
+          (throw e))))))
 
 (defn smoke-test [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
