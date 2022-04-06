@@ -495,7 +495,8 @@
                       :options-required "At least one option is required."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."
-                      :unsupported "Field \"%1\" is not supported."}}
+                      :unsupported "Field \"%1\" is not supported."}
+         :warnings "Validation failed"}
   :header {:title "REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"

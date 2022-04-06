@@ -147,6 +147,7 @@
                                   :field-values field-values
                                   :show-diff {}
                                   :validation-errors nil
+                                  :validation-warnings nil
                                   :attachment-status {}})))
 
 (rf/reg-event-db
@@ -157,9 +158,11 @@
        (or initial-fetch? full-reload?) (initialize-edit-application)))))
 
 (rf/reg-event-db
- ::set-validation-errors
- (fn [db [_ errors]]
-   (assoc-in db [::edit-application :validation-errors] errors)))
+ ::set-validations
+ (fn [db [_ errors warnings]]
+   (-> db
+       (assoc-in [::edit-application :validation-errors] errors)
+       (assoc-in [::edit-application :validation-warnings] warnings))))
 
 (defn- field-values-to-api [application field-values]
   (for [form (:application/forms application)
@@ -169,15 +172,21 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validation-errors [description application on-success]
+(defn- handle-validations [description application on-success]
   (fn [response]
-    (if (:success response)
-      (on-success)
-      (do
-        (let [validation-errors (filter :field-id (:errors response))]
-          (rf/dispatch [::set-validation-errors validation-errors]))
+    (let [errors (filter :field-id (:errors response))
+          warnings (filter :field-id (:warnings response))]
+      (rf/dispatch [::set-validations errors warnings])
+      (if-not (:success response)
         ;; validation errors can be too long for :actions location
-        (flash-message/show-default-error! :top description [format-validation-errors application (:errors response)])))))
+        (flash-message/show-default-error! :top description [format-validation-errors application (:errors response)])
+        (do
+          (if (seq warnings)
+            (flash-message/show-default-warning! :top-validation-warnings
+                                                 description
+                                                 [format-validation-errors application (:warnings response)])
+            (flash-message/clear-message! :top-validation-warnings))
+          (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
   (for [duo duo-codes]
@@ -189,12 +198,12 @@
                                 :mondo (map #(select-keys % [:id]) values)
                                 (if (some? values) [{:value values}] []))})}))
 
-(defn- save-application! [description application {:keys [field-values duo-codes]} on-success]
+(defn- save-application! [description application edit-application on-success]
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
-                   :field-values field-values
-                   :duo-codes duo-codes}
-          :handler (handle-validation-errors
+                   :field-values (field-values-to-api application (:field-values edit-application))
+                   :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+          :handler (handle-validations
                     description
                     application
                     on-success)
@@ -207,15 +216,15 @@
          edit-application (::edit-application db)]
      (save-application! description
                         application
-                        {:field-values (field-values-to-api application
-                                                            (:field-values edit-application))
-                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+                        edit-application
                         #(do
                            (rf/dispatch [::fetch-application (:application/id application)])
                            (if on-success
                              (on-success)
                              (flash-message/show-default-success! :actions description)))))
-   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
+   {:db (-> db
+            (assoc-in [::edit-application :validation-errors] nil)
+            (assoc-in [::edit-application :validation-warnings] nil))}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -224,20 +233,20 @@
          edit-application (::edit-application db)]
      (save-application! description
                         application
-                        {:field-values (field-values-to-api application
-                                                            (:field-values edit-application))
-                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+                        edit-application
                         (fn []
                           (post! "/api/applications/submit"
                                  {:params {:application-id (:application/id application)}
-                                  :handler (handle-validation-errors
+                                  :handler (handle-validations
                                             description
                                             application
                                             #(do
                                                (flash-message/show-default-success! :actions description)
                                                (rf/dispatch [::fetch-application (:application/id application)])))
                                   :error-handler (flash-message/default-error-handler :actions description)}))))
-   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
+   {:db (-> db
+            (assoc-in [::edit-application :validation-errors] nil)
+            (assoc-in [::edit-application :validation-warnings] nil))}))
 
 (rf/reg-event-fx
  ::copy-as-new-application
@@ -1035,7 +1044,9 @@
                           (when-not (str/blank? (:application/description application))
                             (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
-     [flash-message/component :top]
+     [:<>
+      [flash-message/component :top]
+      [flash-message/component :top-validation-warnings]]
      (when loading?
        [spinner/big])
      (when application
