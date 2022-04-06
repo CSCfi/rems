@@ -193,7 +193,8 @@
                                (create-form! {:organization organization}))
                        :organization (or organization (ensure-default-organization!))
                        :wfid (or workflow-id (create-workflow! {:organization organization}))
-                       :localizations (or localizations {})}
+                       :localizations (or localizations {})
+                       :enabled (:enabled command true)}
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))

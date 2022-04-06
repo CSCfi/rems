@@ -24,9 +24,10 @@ NB: The login has changed to allow more configurable user identity and other att
 - API-key validity is not checked unless it is actually sent. (#2785)
 - API-Keys are cached for a minute for a slight performance improvement. (#2785)
 - Resources can be filtered in the API by `resid` (#2852)
-- Hide applicant column and zoom to avoid previous applications to become too wide (#2855)
+- Hide applicant column and reduce font size to avoid previous applications to become too wide (#2855)
 - Duplicated forms have been removed. Previously, if a workflow form was the same as a catalogue item form, that form would be duplicated. (#2853)
 - An owner that is also an organization owner can now properly edit organization ownerships. (#2850)
+- An owner could sometimes see a disabled catalogue item in the catalogue tree. (#2800)
 - The column names in the tables and the field names in create/edit pages of the administration now match.
 
 ## v2.25 "Meripuistotie" 2022-02-15

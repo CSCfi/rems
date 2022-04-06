@@ -10,7 +10,7 @@
 
 ;; TODO this bypasses the db layer
 ;; TODO move catalogue item localizations into the catalogueitemdata
-(defn create-catalogue-item! [{:keys [localizations organization categories] :as command}]
+(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start])

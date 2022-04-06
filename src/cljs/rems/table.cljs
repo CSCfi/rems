@@ -15,7 +15,9 @@
     Likewise, changing sorting only recalculates the last two subscriptions.
 
   (The users of this component don't need to know about these intermediate
-  subscriptions and all other performance optimizations.)"
+  subscriptions and all other performance optimizations.)
+
+  See `rems.tree/tree` for a similar tree component."
   (:require [clojure.string :as str]
             [reagent.core :as reagent]
             [re-frame.core :as rf]
