@@ -1,91 +1,82 @@
 (ns rems.flash-message
-  (:require [clojure.test :refer [deftest is testing]]
-            [re-frame.core :as rf]
+  (:require [clojure.test :refer [deftest is]]
             [reagent.core :as reagent]
+            [re-frame.core :as rf]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
             [rems.focus :as focus]
             [rems.text :refer [text text-format]]))
 
-(rf/reg-sub ::message (fn [db _]
-                        (-> (::message db)
-                            (assoc ::message-id (::message-id db)))))
-
-(rf/reg-event-fx
- ::reset
- (fn [{:keys [db]} _]
-   {:db (dissoc db ::message)}))
-
-(defn- current-time-millis []
-  (.getTime (js/Date.)))
-
-(defn- expired? [message]
-  (let [expires (get message :expires 0)]
-    (< expires (current-time-millis))))
-
 (defn- location-to-id [location]
-  (str "flash-message-"
-       (cond
-         (keyword? location) (name location)
-         (vector? location) (str (name (first location))
-                                 "-"
-                                 (second location))
-         :else (assert false {:location location}))))
+  (let [_ (assert (keyword? location))]
+    (str "flash-message-" (name location))))
 
 (deftest test-location-to-id
-  (is (= "flash-message-top" (location-to-id :top)))
-  (is (= "flash-message-attachment-10" (location-to-id [:attachment 10]))))
+  (is (= "flash-message-top" (location-to-id :top))))
 
-(rf/reg-event-fx
- ::show-flash-message
- (fn [{:keys [db]} [_ message]]
-   (focus/focus-element-async (str "#" (location-to-id (:location message))))
-   ;; TODO: flash the message with CSS
-   {:db (-> db
-            (assoc ::message (assoc message :expires (+ 500 (current-time-millis))))
-            (update ::message-id inc))}))
+(rf/reg-sub ::message
+            (fn [db [_ location]]
+              (get-in db [::message location])))
+(rf/reg-event-fx ::reset
+                 (fn [{:keys [db]} [_ location]]
+                   {:db (if (some? location)
+                          (update db ::message #(dissoc % location))
+                          (dissoc db ::message))}))
+(rf/reg-event-fx ::show-flash-message
+                 (fn [{:keys [db]} [_ message opts]]
+                   (focus/focus-element-async (str "#" (location-to-id (:location message))))
+                   (when-some [timeout (:timeout opts)]
+                     (js/setTimeout #(rf/dispatch [::reset (:location message)]) timeout))
+                   ;; TODO: flash the message with CSS
+                   {:db (update db ::message #(assoc % (:location message) message))}))
 
-(defn show-success! [location content]
-  (rf/dispatch [::show-flash-message {:status :success
-                                      :location location
-                                      :content content
-                                      :page @(rf/subscribe [:page])}]))
+(defn clear-message! [location]
+  (rf/dispatch [::reset location]))
 
-(defn show-error! [location content]
-  (rf/dispatch [::show-flash-message {:status :danger
-                                      :location location
-                                      :content content
-                                      :page @(rf/subscribe [:page])}]))
+(defn show-success! [location content & [opts]]
+  (let [message {:status :success
+                 :location location
+                 :content content}]
+    (rf/dispatch [::show-flash-message message opts])))
+
+(defn show-default-success! [location description]
+  (show-success! location
+                 [:div#status-success.flash-message-title description ": " [text :t.form/success]]))
+
+(defn show-error! [location content & [opts]]
+  (let [message {:status :danger
+                 :location location
+                 :content content}]
+    (rf/dispatch [::show-flash-message message opts])))
+
+(defn show-default-error! [location description & more]
+  (show-error! location (into [:<> [:div#status-failed.flash-message-title
+                                    description ": " [text :t.form/failed]]]
+                              more)))
+
+(defn show-warning! [location content & [opts]]
+  (let [message {:status :warning
+                 :location location
+                 :content content}]
+    (rf/dispatch [::show-flash-message message opts])))
+
+(defn show-default-warning! [location description & more]
+  (show-warning! location (into [:<> [:div#status-warning.flash-message-title
+                                      description ": " [text :t.form/warnings]]]
+                                more)))
 
 (defn component [location]
   (reagent/create-class
    {:display-name "rems.flash-message/component"
 
     :component-will-unmount
-    (fn [_this]
-      (let [message @(rf/subscribe [::message])]
-        (when (expired? message)
-          (rf/dispatch [::reset]))))
+    (fn [_this] (rf/dispatch [::reset location]))
 
     :reagent-render
-    (fn []
-      (let [message @(rf/subscribe [::message])]
-        (when (= location (:location message))
-          ^{:key (::message-id message)} ; re-render to trigger CSS animations
-          [atoms/flash-message {:id (location-to-id (:location message))
-                                :status (:status message)
-                                :content (:content message)}])))}))
-
-;;; Helpers for typical messages
-
-(defn show-default-success! [location description]
-  (show-success! location [:div#status-success.flash-message-title
-                           description ": " [text :t.form/success]]))
-
-(defn show-default-error! [location description & more]
-  (show-error! location (into [:<> [:div#status-failed.flash-message-title
-                                    description ": " [text :t.form/failed]]]
-                              more)))
+    (fn [] (when-some [message @(rf/subscribe [::message location])]
+             [atoms/flash-message {:id (location-to-id location)
+                                   :status (:status message)
+                                   :content (:content message)}]))}))
 
 (defn format-errors [errors]
   ;; TODO: copied as-is from status-modal; consider refactoring
