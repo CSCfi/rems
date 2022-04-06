@@ -1,15 +1,141 @@
 (ns rems.tree
-  ;; TODO ns documentation
+  "Sortable and filterable table component.
+
+  The implementation uses a non-conventional re-frame solution
+  in order to support multiple components on the same page and
+  to make filtering the table performant.
+
+  The tree data structure is flattened to a list of rows with depths
+  and `:parents` - `:children` relationships.
+
+  - The `tree` parameter is passed as a parameter to dynamic subscriptions,
+    so that we can have multiple table components on the same page.
+  - The rows are processed in stages by chaining subscriptions:
+      (:rows tree) -> [::flattened-rows tree] -> [::filtered-rows table] -> [::displayed-rows tree]
+    This way only the last subscription, which does the filtering,
+    needs to be recalculated when the user types the search parameters.
+    Likewise, changing filtering only recalculates the last two subscriptions.
+
+  (The users of this component don't need to know about these intermediate
+  subscriptions and all other performance optimizations.)
+
+  See `rems.table/table` for a similar table component."
   (:require [clojure.string :as str]
             [goog.functions :refer [debounce]]
-            [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [sort-symbol]]
             [rems.common.util :refer [conj-vec index-by]]
             [rems.guide-util :refer [component-info example namespace-info]]
-            [rems.search :as search]))
+            [rems.search :as search]
+            [schema.core :as s]))
 
-;; TODO implement schema for the parameters
+(s/defschema ColumnKey
+  s/Keyword)
+
+(s/defschema Row
+  {;; Unique key for the row.
+   :key s/Any
+   ;; Unique key (within this trees's rows) for React.
+   :react-key s/Str
+   ;; The children of this row (it's a tree after all).
+   :children [s/Any]
+   ;; Depth of this row (the tree is flattened to rows).
+   :depth s/Int
+   ;; Value of the row.
+   :value s/Any
+
+   ;; Data to show in the current row, organized by column.
+   :columns-by-key {ColumnKey {;; Column key (keyword)
+                               :key s/Keyword
+                               ;; Value used in HTML.
+                               :display-value s/Any
+                               ;; Value used for sorting.
+                               :sort-value s/Any
+                               ;; Value used for filtering.
+                               ;; The default is derived from display-value.
+                               :filter-value s/Str
+                               ;; <td> element in hiccup format for rendering in the UI.
+                               :td (s/maybe [(s/one s/Keyword ":td hiccup element") s/Any])}}
+   ;; The keys of the parents of this row (populated automatically).
+   (s/optional-key :parents) [s/Any]
+   ;; Whether to hide or show this row (populated automatically).
+   (s/optional-key ::display-row?) s/Bool
+   ;; Whether this element is opened and visible (populated automatically).
+   :expanded? s/Bool})
+
+(s/defschema Rows
+  [Row])
+
+(s/defschema Subscription
+  [(s/one s/Keyword "query-id")
+   s/Any])
+
+;; NB: The tree is flattened to a table of rows.
+(s/defschema Tree
+  {;; Unique ID for this tree, preferably a namespaced keyword.
+   ;; Used not only as a HTML element ID, but also for separating
+   ;; the internal state of different trees in the re-frame db.
+   :id s/Keyword
+   ;; The columns of the table, in the order that they should be shown.
+   ;; Optional function (Row -> key value) for the React key value
+   ;; The default is from :key.
+   (s/optional-key :row-key) s/Any
+   :columns [{;; Reference to a column in `rems.tree/Row` of `:rows`.
+              :key ColumnKey
+              ;; Title to show at the top of the column.
+              (s/optional-key :title) s/Str
+              ;; Optional function (row -> value) to calculate the value to show
+              ;; Defaults to the (presumable keyword) value of the `:key` prop.
+              (s/optional-key :value) s/Any
+              ;; Optional function (row -> display value) returning the value used for in HTML.
+              ;; The default is derived from :value.
+              (s/optional-key :display-value) s/Any
+              ;; Optional function (row -> sort value) returning the value used for sorting.
+              ;; The default is derived from :display-value.
+              (s/optional-key :sort-value) s/Any
+              ;; Optional function (row -> filter value) returning the value used for filtering.
+              ;; The default is derived from :display-value
+              (s/optional-key :filter-value) s/Str
+              ;; How many columns does this particular column fill?
+              ;; Optional function (row -> span). Defaults to 1.
+              (s/optional-key :col-span) s/Any
+              ;; Optional function (row -> content) to calculate the content to show
+              ;; inside the cell's <td> element. Sometimes it is preferable to override
+              ;; the whole td with `:td`.
+              (s/optional-key :content) s/Any
+              ;; Optional function (row -> <td>) to calculate the
+              ;; <td> element in hiccup format for rendering in the UI.
+              ;; Defining this function will override the previous display related functions.
+              ;; The default is derived from :display-value.
+              (s/optional-key :td) s/Any
+              ;; Whether this column can be sorted.
+              ;; Defaults to true.
+              (s/optional-key :sortable?) s/Bool
+              ;; Whether this column is used in filtering.
+              ;; Defaults to true.
+              (s/optional-key :filterable?) s/Bool}]
+   ;; The query vector for a re-frame subscription which returns
+   ;; the data to show in this table. The subscription must return
+   ;; data which confirms to the `rems.tree/Rows` schema.
+   ;; Only the top-level of the tree should be returned by the subscription. (see `:children`)
+   :rows Subscription
+   ;; A function (row -> child rows) which returns the children
+   ;; of the given row.
+   ;; Defaults to `:children`.
+   (s/optional-key :children) s/Any
+   ;; An optional function (row -> boolean) for filtering
+   ;; rows from the tree after it has been flattened.
+   ;; Return true for the rows you want to be included.
+   ;; Defaults to no filtering.
+   (s/optional-key :row-filter) s/Any
+   ;; When filtering, should the parent nodes of a matching node
+   ;; always be shown, or only the matching row?
+   (s/optional-key :show-matching-parents?) s/Bool
+   ;; Optional function (value -> class) to give specific classes to rows (tr elements)
+   (s/optional-key :tr-class) s/Any
+   ;; Default sorting column and order.
+   (s/optional-key :default-sort-column) (s/maybe ColumnKey)
+   (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))})
 
 (defn apply-row-defaults [tree row]
   (let [children ((:children tree :children) row)
@@ -40,34 +166,34 @@
                                                              (if (string? value)
                                                                (str/lower-case value)
                                                                value))]
-                                            (merge {:sort-value sort-value
-                                                    :display-value display-value
-                                                    :filter-value filter-value
-                                                    :td (when-let [content (if (:content column)
-                                                                             ((:content column) row)
-                                                                             [:div display-value])]
-                                                          (if-let [td-fn (:td column)]
-                                                            (td-fn row)
+                                            {:key (:key column)
+                                             :sort-value sort-value
+                                             :display-value display-value
+                                             :filter-value filter-value
+                                             :td (when-let [content (if (:content column)
+                                                                      ((:content column) row)
+                                                                      [:div display-value])]
+                                                   (if-let [td-fn (:td column)]
+                                                     (td-fn row)
 
-                                                            [:td {:class [(name (:key column))
-                                                                          (str "bg-depth-" (:depth row 0))]
-                                                                  :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
-                                                             [:div.d-flex.flex-row.w-100.align-items-baseline
-                                                              {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
-                                                                       (when (:expanded? row) "expanded")]}
+                                                     [:td {:class [(name (:key column))
+                                                                   (str "bg-depth-" (:depth row 0))]
+                                                           :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
+                                                      [:div.d-flex.flex-row.w-100.align-items-baseline
+                                                       {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
+                                                                (when (:expanded? row) "expanded")]}
 
-                                                              (when first-column?
-                                                                (when (seq children)
-                                                                  (if (:expanded? row)
-                                                                    [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
-                                                                    [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
+                                                       (when first-column?
+                                                         (when (seq children)
+                                                           (if (:expanded? row)
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
 
-                                                              content]]))}
-                                                   (dissoc column :td :col-span :sort-value :filter-value)))))
+                                                       content]]))})))
                            (index-by [:key]))}
 
      ;; copied over
-     (select-keys row [:id :key :sort-value :display-value :filter-value :td :tr-class :parents :expanded?]))))
+     (select-keys row [:key :tr-class :parents :expanded?]))))
 
 (defn sort-rows [sorting rows]
   (sort-by #(get-in % [:columns-by-key (:sort-column sorting) :sort-value])
@@ -75,6 +201,11 @@
              :desc #(compare %2 %1)
              #(compare %1 %2))
            rows))
+
+(defn- extra-row-filtering [extra-filter rows]
+  (if extra-filter
+    (filter extra-filter rows)
+    rows))
 
 (rf/reg-sub
  ::flattened-rows
@@ -89,6 +220,7 @@
                                               (contains? expanded-rows row-key))]
                             (apply-row-defaults tree (assoc row :expanded? expanded?))))
          initial-rows (->> rows
+                           (extra-row-filtering (:row-filter tree))
                            (mapv apply-defaults)
                            (sort-rows sorting))]
 
@@ -105,6 +237,7 @@
                    child-parents (conj-vec (:parents row) (:key row))
                    new-rows (->> row
                                  :children
+                                 (extra-row-filtering (:row-filter tree))
                                  (mapv #(assoc %
                                                :depth child-depth
                                                :parents child-parents))
@@ -164,7 +297,7 @@
 
   See `rems.tree/Tree` for the `tree` parameter schema." ; TODO schema
   [tree]
-  ;; (s/validate Tree tree)
+  (s/validate Tree tree)
   (let [filtering @(rf/subscribe [::filtering tree])
         on-search (debounce (fn [value]
                               (rf/dispatch [::set-filtering tree (assoc filtering :filters value)]))
@@ -210,10 +343,10 @@
 
 (rf/reg-sub
  ::displayed-rows
- (fn [db [_ tree]]
+ (fn [_db [_ tree]]
    (let [rows @(rf/subscribe [::filtered-rows tree])
          rows (filter ::display-row? rows)]
-     rows)))
+     (s/validate Rows rows))))
 
 (defn- set-toggle [set key]
   (let [set (or set #{})]
@@ -244,14 +377,12 @@
  (fn [db [_ tree rows]]
    (let [expanded-rows (set (map :key rows))
          new-db (assoc-in db [::expanded-rows (:id tree)] expanded-rows)]
-     (when-let [on-select (:on-select tree)]
-       (on-select expanded-rows))
      new-db)))
 
 
 (defn- tree-header [tree]
   (let [sorting @(rf/subscribe [::sorting tree])]
-    (into [:tr #_(when (:selectable? tree) [selection-toggle-all tree])]
+    (into [:tr]
           (for [column (:columns tree)]
             [:th
              (when (sortable? column)
@@ -290,8 +421,6 @@
 
 
 ;;; guide
-
-(def example-selected-rows (reagent/atom nil))
 
 (defn guide []
   [:div
@@ -358,7 +487,6 @@
                    :rows [::example-tree-rows]
                    :default-sort-column :title}])
 
-   ;; TODO implement selection if needed
    (example "sortable and filterable tree"
             [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
             (let [example2 {:id ::example2

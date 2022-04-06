@@ -34,19 +34,6 @@
         (filter :enabled)
         (remove :expired))))
 
-(rf/reg-sub
- ::catalogue-tree
- (fn [_ _]
-   (rf/subscribe [::full-catalogue-tree]))
- (fn [catalogue _]
-   (->> catalogue
-        (filter #(if (:category/id %)
-                   true ; always pass categories
-                   (:enabled %)))
-        (remove #(if (:category/id %)
-                   false ; always pass categories
-                   (:expired %))))))
-
 (defn- filter-drafts-only [applications]
   (filter form-fields-editable? applications))
 
@@ -149,7 +136,12 @@
                               :sortable? false
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
-                   :rows [::catalogue-tree]
+                   :rows [::full-catalogue-tree]
+                   :row-filter (fn [row]
+                                 (if (:category/id row)
+                                   true ; always pass categories
+                                   (and (:enabled row)
+                                        (not (:expired row)))))
                    :default-sort-column :name}]
     [:div
      [tree/search catalogue]
