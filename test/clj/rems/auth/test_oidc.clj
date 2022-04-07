@@ -86,7 +86,7 @@
       (let [request {}
             response (oidc/oidc-callback request)]
         (is (= {:status 302
-                :headers {"Location" "/error?key=t.login.errors/unknown"}
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
                 :body ""}
                response)
             "can't log in with missing code parameter in callback"))
@@ -94,7 +94,7 @@
       (let [request {:params {:code ""}}
             response (oidc/oidc-callback request)]
         (is (= {:status 302
-                :headers {"Location" "/error?key=t.login.errors/unknown"}
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
                 :body ""}
                response)
             "can't log in with blank code parameter in callback")))))
@@ -105,7 +105,7 @@
       (let [request {:params {:error "failed"}}
             response (oidc/oidc-callback request)]
         (is (= {:status 302
-                :headers {"Location" "/error?key=t.login.errors/unknown"}
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
                 :body ""}
                response)
             "can't log in when an error happens")))))
