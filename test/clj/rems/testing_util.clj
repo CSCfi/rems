@@ -63,6 +63,10 @@
   [users & body]
   `(with-redefs [rems.auth.fake-login/get-fake-users (constantly (keys ~users))
                  rems.auth.fake-login/get-fake-id-data (fn [username#] (get ~users username#))
-                 rems.auth.fake-login/get-fake-user-info (fn [username#] (get ~users username#))]
+                 rems.auth.fake-login/get-fake-user-info (fn [username#] (get ~users username#))
+                 rems.auth.fake-login/get-fake-user-descriptions (constantly [{:group "Test Users"
+                                                                               :users ~(vec (for [[k v] users]
+                                                                                              {:userid k
+                                                                                               :description (pr-str v)}))}])]
      ~@body))
 

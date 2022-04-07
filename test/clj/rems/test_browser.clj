@@ -53,6 +53,8 @@
   (btu/screenshot "landing-page.png")
   (btu/scroll-and-click {:css ".login-btn"})
   (btu/screenshot "login-page.png")
+  (when (btu/visible? :show-special-users) ; sometimes the user is in the hidden part
+    (btu/scroll-and-click :show-special-users))
   (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
   ;; NB. it's better to use wait-visible instead of
   ;; eventually-visible? in utils like this because we want the line
