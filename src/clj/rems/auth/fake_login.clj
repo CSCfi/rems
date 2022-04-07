@@ -71,6 +71,9 @@
                                       [:div
                                        [:h2.mx-3 group]
 
+                                       ;; XXX: this could be refactored so that
+                                       ;; this isn't a special case but an attribute of
+                                       ;; the group data
                                        (when (= "Special Users" group)
                                          [:div.ml-3
                                           [:p "Special users with special cases. Not for daily use!"]
