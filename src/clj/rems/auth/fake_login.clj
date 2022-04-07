@@ -52,7 +52,8 @@
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]
     [:div.user.m-3 {:onclick (str "window.location.href='" url "';")}
-     [:a.btn.btn-primary {:href url :style "width: 12rem;"} username]]))
+     [:a.btn.btn-primary {:href url :style "width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"}
+      username]]))
 
 (defn- fake-login-screen [{session :session :as req}]
   (if-let [username (-> req :params :username)]
