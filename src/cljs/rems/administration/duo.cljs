@@ -4,11 +4,12 @@
             [rems.administration.components :refer [date-field inline-info-field input-field textarea-autosize text-field]]
             [rems.atoms :as atoms]
             [rems.common.duo :refer [duo-restriction-label duo-validation-summary]]
+            [rems.common.util :refer [escape-element-id]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [escape-element-id linkify]]))
+            [rems.util :refer [linkify]]))
 
 (defn duo-restriction-info-field [& [opts]]
   (let [restriction-type (:type opts)

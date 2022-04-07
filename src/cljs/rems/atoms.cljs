@@ -2,9 +2,10 @@
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
             [reagent.core :as reagent]
+            [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text localized]]
-            [rems.util :refer [escape-element-id focus-when-collapse-opened]]))
+            [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"
