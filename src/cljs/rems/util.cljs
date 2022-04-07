@@ -5,7 +5,7 @@
             [goog.string :refer [format]]
             [promesa.core :as p]
             [re-frame.core :as rf]
-            [clojure.test :refer [deftest are is testing]]))
+            [clojure.test :refer [deftest are testing]]))
 
 ;; TODO move to cljc
 (defn getx
@@ -212,19 +212,3 @@
       nil nil
       nil {}
       nil [])))
-
-;; https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id
-(defn escape-element-id [id]
-  (when (string? id)
-    (-> id
-        (str/replace #"[^A-Za-z0-9\-\_]" "_") ; "only ASCII letters, digits, '_', and '-' should be used,"
-        (str/replace-first #"^[^A-Za-z]" #(str "id_" %))))) ; "and the value for an id attribute should start with a letter"
-
-(deftest test-escape-element-id
-  (testing "should replace element special characters with underscore"
-    (is (nil? (escape-element-id nil)))
-    (is (= "element_id-123_" (escape-element-id "element id-123 ")))
-    (is (= "element_id_123" (escape-element-id "element.id#123")))
-    (is (= "id_123-element" (escape-element-id "123-element")))
-    (is (= "id__123-element" (escape-element-id " 123-element")))))
-
