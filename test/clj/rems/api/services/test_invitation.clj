@@ -37,11 +37,11 @@
 
         (testing "with invalid workflow"
           (is (= {:success false
-                  :errors [{:type :t.accept-invitation.errors/invalid-workflow :workflow-id 42}]}
+                  :errors [{:type :t.accept-invitation.errors/invalid-workflow :workflow-id 100042}]}
                  (invitation/create-invitation! {:userid "owner"
                                                  :name "Dorothy Vaughan"
                                                  :email "dorothy.vaughan@nasa.gov"
-                                                 :workflow-id 42}))))
+                                                 :workflow-id 100042}))))
 
         (testing "success"
           (let [sent-email (atom nil)]

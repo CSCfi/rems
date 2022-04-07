@@ -79,3 +79,33 @@
                          :commonName nil
                          :mail nil}}
                  (ex-data e))))))))
+
+(deftest test-no-code
+  (with-special-setup {:id-data {:sub "user" :name "User" :email "user@example.com"}}
+    (fn []
+      (let [request {}
+            response (oidc/oidc-callback request)]
+        (is (= {:status 302
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
+                :body ""}
+               response)
+            "can't log in with missing code parameter in callback"))
+
+      (let [request {:params {:code ""}}
+            response (oidc/oidc-callback request)]
+        (is (= {:status 302
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
+                :body ""}
+               response)
+            "can't log in with blank code parameter in callback")))))
+
+(deftest test-error
+  (with-special-setup {:id-data {:sub "user" :name "User" :email "user@example.com"}}
+    (fn []
+      (let [request {:params {:error "failed"}}
+            response (oidc/oidc-callback request)]
+        (is (= {:status 302
+                :headers {"Location" "/error?key=:t.login.errors/unknown"}
+                :body ""}
+               response)
+            "can't log in when an error happens")))))

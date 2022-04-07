@@ -466,7 +466,8 @@
           :alternative-text ""
           :errors {:invalid-user "Kirjautuminen epäonnistui puuttuvan tiedon takia (%1). Tarkista tietosi tunnistautumispalvelustasi."
                    :email "Sähköposti"
-                   :name "Nimi"}
+                   :name "Nimi"
+                   :unknown "Kirjautuminen epäonnistui. Tarkista tietosi tunnistautumispalvelustasi."}
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]]
