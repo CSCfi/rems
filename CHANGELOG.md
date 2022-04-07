@@ -19,6 +19,7 @@ NB: The login has changed to allow more configurable user identity and other att
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
 - User in the API can be an internal REMS id or any of the `:oidc-userid-attributes` (provided that the user has logged in once and we have stored the identity. (#2821 #2772)
+- Errors are now handled in `oidc-callback` by redirecting to an error page. (#2856)
 
 ### Fixes
 - API-key validity is not checked unless it is actually sent. (#2785)
