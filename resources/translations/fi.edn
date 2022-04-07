@@ -34,6 +34,7 @@
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"
                      :validation-errors "Tarkasta seuraavat virheet:"
+                     :validation-warnings "Tarkasta vielä seuraavat virheet ennen lähetystä:"
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
@@ -452,8 +453,7 @@
                       :options-required "Vähintään yksi vaihtoehto vaaditaan."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."
-                      :unsupported "Field \"%1\" is not supported."}
-         :warnings "Automaattitarkistus epäonnistui"}
+                      :unsupported "Field \"%1\" is not supported."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Siirrä alas"
                :move-up "Siirrä ylös"

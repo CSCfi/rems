@@ -50,8 +50,8 @@
     (rf/dispatch [::show-flash-message message opts])))
 
 (defn show-default-error! [location description & more]
-  (show-error! location (into [:<> [:div#status-failed.flash-message-title
-                                    description ": " [text :t.form/failed]]]
+  (show-error! location (into [:<>
+                               [:div#status-failed.flash-message-title description ": " [text :t.form/failed]]]
                               more)))
 
 (defn show-warning! [location content & [opts]]
@@ -61,8 +61,8 @@
     (rf/dispatch [::show-flash-message message opts])))
 
 (defn show-default-warning! [location description & more]
-  (show-warning! location (into [:<> [:div#status-warning.flash-message-title
-                                      description ": " [text :t.form/warnings]]]
+  (show-warning! location (into [:<>
+                                 [:div#status-warning.flash-message-title description ": " [text :t.form/success]]]
                                 more)))
 
 (defn component [location]
