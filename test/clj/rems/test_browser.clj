@@ -271,7 +271,7 @@
    (mapv btu/get-element-text-el (btu/query-all selector))))
 
 (defn get-validation-summary []
-  (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top ul li"})))
+  (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top-validation ul li"})))
 
 (defn get-error-summary []
   (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-actions > *"})))
@@ -456,7 +456,7 @@
         (testing "add invalid value for field, try to save"
           (fill-form-field "Email field" "user")
           (btu/scroll-and-click :save)
-          (is (btu/eventually-visible? :status-failed))
+          (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."]
                  (get-validation-summary)))
           (is (= "Invalid email address."
