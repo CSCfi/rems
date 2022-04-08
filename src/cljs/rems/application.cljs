@@ -242,7 +242,6 @@
                                         description
                                         application
                                         (fn []
-                                          (flash-message/show-default-success! :actions description)
                                           (rf/dispatch [::fetch-application (:application/id application)])))
                               :error-handler (flash-message/default-error-handler :actions description)})))))
    {:db (-> db
