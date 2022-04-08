@@ -83,8 +83,20 @@
  :oidc-extra-attributes []
 
  ;; Sending email.
+ ;;
+ ;; Either you specify `:smtp-host` and `:smtp-port` like here:
  :smtp-host nil
  :smtp-port 25
+ ;;
+ ;; Or you can specify a map under `:smtp` with host, port, authentication details etc.
+ ;;
+ ;; Example:
+ ;; :smtp {:host "https://..." :pass "..." :port 587 :ssl true}
+ ;;
+ ;; For the full set of available keys see https://github.com/drewr/postal#smtp
+ :smtp nil
+
+ ;; Other email parameters (in addition to the above):
  :smtp-connectiontimeout 5000 ; milliseconds waiting for connection
  :smtp-timeout 10000 ; milliseconds waiting for processing
  :smtp-writetimeout 10000 ; milliseconds waiting for writes
