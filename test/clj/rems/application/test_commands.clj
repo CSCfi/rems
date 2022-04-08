@@ -185,6 +185,16 @@
         (first events)
         events))))
 
+(defn- ok-command-with-warnings
+  [application cmd injections]
+  (let [cmd (set-command-defaults cmd)
+        result (commands/handle-command cmd application injections)]
+    (assert-ex (not (:errors result)) {:cmd cmd :result result})
+    (let [events (:events result)]
+      (events/validate-events events)
+      {:warnings (:warnings result)
+       :events events})))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
@@ -376,32 +386,51 @@
                                          {:form 1 :field "2" :value "bar"}]}
                          injections))))
 
-    (testing "does not save a draft when validations fail"
-      (is (= {:errors [{:field-id "1", :type :t.form.validation/invalid-value :form-id 1}]}
-             (fail-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
-                           injections))))
+    (testing "saves a draft even when validations fail"
+      (is (= {:warnings [{:field-id "1" :form-id 1 :type :t.form.validation/invalid-value}]
+              :events [{:event/type :application.event/draft-saved
+                        :event/time test-time
+                        :event/actor applicant-user-id
+                        :application/id app-id
+                        :application/field-values [{:form 1 :field "1" :value "nonexistent_option"}]}]}
+             (ok-command-with-warnings
+              application
+              {:type :application.command/save-draft
+               :actor applicant-user-id
+               :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
+              injections))))
 
     (testing "validation of conditional fields"
       (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
             application (apply-events nil [created])]
-        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
-               (fail-command application
-                             {:type :application.command/save-draft
-                              :actor applicant-user-id
-                              :field-values [{:form 7 :field "7" :value "y"}
-                                             {:form 7 :field "8" :value "invalid_email"}]}
-                             injections))
+        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+                :events [{:event/type :application.event/draft-saved
+                          :event/time test-time
+                          :event/actor applicant-user-id
+                          :application/id app-id
+                          :application/field-values [{:form 7 :field "7" :value "y"}
+                                                     {:form 7 :field "8" :value "invalid_email"}]}]}
+               (ok-command-with-warnings
+                application
+                {:type :application.command/save-draft
+                 :actor applicant-user-id
+                 :field-values [{:form 7 :field "7" :value "y"}
+                                {:form 7 :field "8" :value "invalid_email"}]}
+                injections))
             "visible field should not accept invalid values")
-        (is (= {:errors [{:form-id 7 :field-id "8" :type :t.form.validation/invalid-email}]}
-               (fail-command application
-                             {:type :application.command/save-draft
-                              :actor applicant-user-id
-                              :field-values [{:form 7 :field "7" :value "n"}
-                                             {:form 7 :field "8" :value "invalid_email"}]}
-                             injections))
+        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+                :events [{:event/type :application.event/draft-saved
+                          :event/time test-time
+                          :event/actor applicant-user-id
+                          :application/id app-id
+                          :application/field-values [{:form 7 :field "7" :value "n"}]}]} ; invisible field value is not stored
+               (ok-command-with-warnings
+                application
+                {:type :application.command/save-draft
+                 :actor applicant-user-id
+                 :field-values [{:form 7 :field "7" :value "n"}
+                                {:form 7 :field "8" :value "invalid_email"}]}
+                injections))
             "invisible should not accept invalid values")
         (is (= {:event/type :application.event/draft-saved
                 :event/time test-time
