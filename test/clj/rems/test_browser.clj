@@ -2525,6 +2525,7 @@
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (is (btu/eventually-visible? :small-navbar))
+    (btu/gather-axe-results)
     (btu/screenshot "small-navbar.png")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
@@ -2702,6 +2703,8 @@
       (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
+
+      (btu/gather-axe-results)
 
       (click-row-action [:catalogue-tree] {:fn/text (btu/context-getx :catalogue-item-name)} {:css ".add-to-cart"})
 

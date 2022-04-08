@@ -58,29 +58,29 @@
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text])))))
 
-(defn navbar-items [e identity]
+(defn navbar-items [e attrs identity]
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
         catalogue-is-public (:catalogue-is-public config)]
-    [e (into [:div.navbar-nav.mr-auto
-              (when-not (:user identity)
-                [nav-link "/" (text :t.navigation/home) :exact])
-              (when (or (roles/is-logged-in? roles) catalogue-is-public)
-                [nav-link "/catalogue" (text :t.navigation/catalogue)])
-              (when (roles/show-applications? roles)
-                [nav-link "/applications" (text :t.navigation/applications)])
-              (when (roles/show-reviews? roles)
-                [nav-link "/actions" (text :t.navigation/actions)])
-              (when (roles/show-admin-pages? roles)
-                [nav-link "/administration" (text :t.navigation/administration)])]
-             (navbar-extra-pages))
+    [e attrs (into [:div.navbar-nav.mr-auto
+                    (when-not (:user identity)
+                      [nav-link "/" (text :t.navigation/home) :exact])
+                    (when (or (roles/is-logged-in? roles) catalogue-is-public)
+                      [nav-link "/catalogue" (text :t.navigation/catalogue)])
+                    (when (roles/show-applications? roles)
+                      [nav-link "/applications" (text :t.navigation/applications)])
+                    (when (roles/show-reviews? roles)
+                      [nav-link "/actions" (text :t.navigation/actions)])
+                    (when (roles/show-admin-pages? roles)
+                      [nav-link "/administration" (text :t.navigation/administration)])]
+                   (navbar-extra-pages))
      [language-switcher]]))
 
 (defn navbar-normal [identity]
   (let [theme @(rf/subscribe [:theme])
         lang @(rf/subscribe [:language])]
-    [:nav.navbar-flex
+    [:nav.navbar-flex {:aria-label (text :t.navigation/navigation)}
      [:div.navbar.navbar-expand-sm.flex-fill
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
@@ -88,11 +88,11 @@
       (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
                 (:navbar-logo-name theme))
         [atoms/logo-navigation])
-      [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 identity]]
+      [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 {} identity]]
      [:div.navbar [user-widget (:user identity)]]]))
 
 (defn navbar-small [user]
-  [navbar-items :div#small-navbar.collapse.navbar-collapse.hidden-md-up user])
+  [navbar-items :nav#small-navbar.collapse.navbar-collapse.hidden-md-up {:aria-label (text :t.navigation/navigation-small)} user])
 
 (defn skip-navigation []
   [:a.skip-navigation
