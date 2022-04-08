@@ -14,6 +14,12 @@
 (deftest test-location-to-id
   (is (= "flash-message-top" (location-to-id :top))))
 
+(defn- current-time-millis []
+  (.getTime (js/Date.)))
+
+(defn- expired? [message]
+  (< (:expires message 0) (current-time-millis)))
+
 (rf/reg-sub ::message
             (fn [db [_ location]]
               (get-in db [::message location])))
@@ -28,7 +34,9 @@
                    (when-some [timeout (:timeout opts)]
                      (js/setTimeout #(rf/dispatch [::reset (:location message)]) timeout))
                    ;; TODO: flash the message with CSS
-                   {:db (update db ::message #(assoc % (:location message) message))}))
+                   {:db (assoc-in db
+                                  [::message (:location message)]
+                                  (assoc message :expires (+ 500 (current-time-millis))))}))
 
 (defn clear-message! [location]
   (rf/dispatch [::reset location]))
@@ -73,7 +81,11 @@
    {:display-name "rems.flash-message/component"
 
     :component-will-unmount
-    (fn [_this] (rf/dispatch [::reset location]))
+    (fn [_this]
+      ;; XX: this expiration check keeps component rendered after page transition,
+      ;; for example navigation
+      (when (expired? @(rf/subscribe [::message location]))
+        (rf/dispatch [::reset location])))
 
     :reagent-render
     (fn [] (when-some [message @(rf/subscribe [::message location])]
