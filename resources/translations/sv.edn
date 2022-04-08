@@ -467,7 +467,8 @@
           :alternative-text ""
           :errors {:invalid-user "Inloggningen misslyckades på grund av saknad information (%1). Kontrollera din identifieringstjänst."
                    :email "E-postaddress"
-                   :name "Namn"}
+                   :name "Namn"
+                   :unknown "Inloggningen misslyckades. Kontrollera din identifieringstjänst."}
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här kan du ansöka om rättigheter till olika demo-resurser. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]]

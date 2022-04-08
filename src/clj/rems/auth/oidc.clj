@@ -120,46 +120,57 @@
     user))
 
 (defn oidc-callback [request]
-  (let [response (-> (http/post (:token_endpoint oidc-configuration)
-                                ;; NOTE Some IdPs don't support client id and secret in form params,
-                                ;;      and require us to use HTTP basic auth
-                                {:basic-auth [(str (getx env :oidc-client-id))
-                                              (getx env :oidc-client-secret)]
-                                 :form-params {:grant_type "authorization_code"
-                                               :code (get-in request [:params :code])
-                                               :redirect_uri (str (getx env :public-url) "oidc-callback")}
-                                 ;; Setting these will cause the exceptions raised by http/post to contain
-                                 ;; the request body, useful for debugging failures.
-                                 :save-request? (getx env :log-authentication-details)
-                                 :debug-body (getx env :log-authentication-details)})
-                     ;; FIXME Complains about Invalid cookie header in logs
-                     ;; TODO Unhandled responses for token endpoint:
-                     ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
-                     (:body)
-                     (json/parse-string))
-        access-token (:access_token response)
-        id-token (:id_token response)
-        issuer (:issuer oidc-configuration)
-        audience (getx env :oidc-client-id)
-        now (Instant/now)
-        ;; id-data has keys:
-        ;; sub – unique ID
-        ;; name - non-unique name
-        ;; locale – could be used to set preferred lang on first login
-        ;; email – non-unique (!) email
-        id-data (jwt/validate id-token issuer audience now)
-        user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
-                    (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
-                        :body
-                        json/parse-string
-                        ga4gh/passport->researcher-status-by))
-        user (find-or-create-user! id-data user-info)]
-    (when (:log-authentication-details env)
-      (log/info "logged in" id-data user-info user))
-    (-> (redirect "/redirect")
-        (assoc :session (:session request))
-        (assoc-in [:session :access-token] access-token)
-        (assoc-in [:session :identity] user))))
+  (let [error (get-in request [:params :error])
+        code (get-in request [:params :code])]
+    (cond error
+          (do (log/warn "Login error in oidc-callback" (pr-str error))
+              (redirect "/error?key=:t.login.errors/unknown"))
+
+          (str/blank? code)
+          (do (log/warn "Missing code in oidc-callback" (pr-str code))
+              (redirect "/error?key=:t.login.errors/unknown"))
+
+          :else
+          (let [response (-> (http/post (:token_endpoint oidc-configuration)
+                                        ;; NOTE Some IdPs don't support client id and secret in form params,
+                                        ;;      and require us to use HTTP basic auth
+                                        {:basic-auth [(str (getx env :oidc-client-id))
+                                                      (getx env :oidc-client-secret)]
+                                         :form-params {:grant_type "authorization_code"
+                                                       :code code
+                                                       :redirect_uri (str (getx env :public-url) "oidc-callback")}
+                                         ;; Setting these will cause the exceptions raised by http/post to contain
+                                         ;; the request body, useful for debugging failures.
+                                         :save-request? (getx env :log-authentication-details)
+                                         :debug-body (getx env :log-authentication-details)})
+                             ;; FIXME Complains about Invalid cookie header in logs
+                             ;; TODO Unhandled responses for token endpoint:
+                             ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
+                             (:body)
+                             (json/parse-string))
+                access-token (:access_token response)
+                id-token (:id_token response)
+                issuer (:issuer oidc-configuration)
+                audience (getx env :oidc-client-id)
+                now (Instant/now)
+                ;; id-data has keys:
+                ;; sub – unique ID
+                ;; name - non-unique name
+                ;; locale – could be used to set preferred lang on first login
+                ;; email – non-unique (!) email
+                id-data (jwt/validate id-token issuer audience now)
+                user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
+                            (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
+                                :body
+                                json/parse-string
+                                ga4gh/passport->researcher-status-by))
+                user (find-or-create-user! id-data user-info)]
+            (when (:log-authentication-details env)
+              (log/info "logged in" id-data user-info user))
+            (-> (redirect "/redirect")
+                (assoc :session (:session request))
+                (assoc-in [:session :access-token] access-token)
+                (assoc-in [:session :identity] user))))))
 
 (defn- oidc-revoke [token]
   (when token

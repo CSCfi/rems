@@ -68,6 +68,49 @@
   {"alice" {:researcher-status-by "so"}
    "elixir-alice" {:researcher-status-by "so"}})
 
+(def +user-descriptions+
+  [{:group "Applicants"
+    :users [{:userid "alice"
+             :description "Alice is a very active user, an applicant, with multiple applications already drafted and even submitted for processing."}
+            {:userid "elsa"
+             :description "Elsa is a normal user, an applicant, who didn't do anything yet."}
+            {:userid "frank"
+             :description "Frank is a normal user, an applicant, who didn't do anything yet."}]}
+
+   {:group "Experts"
+    :users [{:userid "handler"
+             :description "Handler is the user who is responsible for processing applications after they have been sent. They have the permissions given to them by the owner. The REMS model is such that handlers, in general, have a lot of power and flexibility in the handling process."}
+            {:userid "owner"
+             :description "Owner is the user who owns all the resources and manages them in the administration. They can create the catalogue of resources, workflows, forms etc. They can also delegate this power to other users and set who handles which applications, but aren't necessarily the person who does this work themselves."}
+            {:userid "carl"
+             :description "Carl is an expert, who is sometimes asked to review applications, thus taking a small part in the handling process."}
+            {:userid "reporter"
+             :description "Reporter is an administrative users, who is only interested in counting beans and applications, having no part in the actual handling."}]}
+
+   {:group "Special Users"
+    :users [{:userid "elixir-alice"
+             :description "Alternate identity of Alice, which they can also use to log in and see the same applications."}
+            {:userid "malice"
+             :description "A scammer who tries to fool everyone to think they are actually Alice."}
+            {:userid "developer"
+             :description "Another handler, that has a lot of permissions."}
+            {:userid "organization-owner1"
+             :description "An owner of many organizations, who can manage only their items."}
+            {:userid "organization-owner2"
+             :description "An owner of many organizations, who can manage only their items."}
+            {:userid "johnsmith"
+             :description "John and his wife Jill share an external identity (\"smith\"), so they will have difficulty using the API with it."}
+            {:userid "jillsmith"
+             :description "Jill and her wife John share an external identity (\"smith\"), so they will have difficulty using the API with it."}
+            {:userid "user-has-no-name"
+             :description "A user who unfortunately has no name defined in the Identity Provider data."}
+            {:userid "user-has-no-email"
+             :description "A user who unfortunately has no email defined in the Identity Provider data."}
+            {:userid "user-has-nothing"
+             :description "A user who unfortunately has no name or email defined in the Identity Provider data."}
+            {:userid "new-user"
+             :description "A user who isn't found in REMS yet. At login they will be created."}]}])
+
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
    :applicant2 "RDapplicant2@funet.fi"
