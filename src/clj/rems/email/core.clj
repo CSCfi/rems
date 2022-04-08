@@ -96,8 +96,9 @@
   (is (string? (validate-address "test@test_example.com"))))
 
 (defn send-email! [email-spec]
-  (let [host (:smtp-host env)
-        port (:smtp-port env)
+  (let [smtp (merge {:host (:smtp-host env)
+                     :port (:smtp-port env)}
+                    (:smtp env)) ; can override host and port
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
@@ -115,15 +116,15 @@
           (log/warn "failed address validation:" to-error)
           (str "failed address validation: " to-error))
 
-        (not (and host port))
+        (not (and (:host smtp) (:port smtp)))
         (do
           (log/info "no smtp server configured, only pretending to send email")
           nil)
 
         :else
         (try
-          (postal/send-message (merge {:host host :port port
-                                       :debug (true? (:smtp-debug env))}
+          (postal/send-message (merge smtp
+                                      {:debug (true? (:smtp-debug env))}
                                       (when-let [timeout (:smtp-connectiontimeout env)]
                                         {"mail.smtp.connectiontimeout" (str timeout)
                                          "mail.smtps.connectiontimeout" (str timeout)})
