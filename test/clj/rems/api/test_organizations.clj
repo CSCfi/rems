@@ -23,10 +23,10 @@
                                         nil
                                         api-key userid))]
     (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn user})
-    (test-helpers/create-user! {:eppn owner :commonName "Owner" :mail "owner@example.com"} :owner)
-    (test-helpers/create-user! {:eppn org-owner1 :commonName "Organization Owner 1" :mail "organization-owner1@example.com"})
-    (test-helpers/create-user! {:eppn org-owner2 :commonName "Organization Owner 2" :mail "organization-owner2@example.com"})
+    (test-helpers/create-user! {:userid user})
+    (test-helpers/create-user! {:userid owner :name "Owner" :email "owner@example.com"} :owner)
+    (test-helpers/create-user! {:userid org-owner1 :name "Organization Owner 1" :email "organization-owner1@example.com"})
+    (test-helpers/create-user! {:userid org-owner2 :name "Organization Owner 2" :email "organization-owner2@example.com"})
 
     (testing "fetch nonexistent"
       (let [resp (api-response :get "/api/organizations/9999999999999999"
@@ -162,7 +162,7 @@
 
 (deftest organization-api-status-test
   (api-key/add-api-key! "42")
-  (test-helpers/create-user! {:eppn "owner" :commonName "Owner" :mail "owner@example.com"} :owner)
+  (test-helpers/create-user! {:userid "owner" :name "Owner" :email "owner@example.com"} :owner)
   (api-call :post "/api/organizations/create"
             {:organization/id "organizations-api-test-org"
              :organization/name {:fi "Organisaatiot API Test ORG"
@@ -199,8 +199,8 @@
 
 (deftest organizations-api-security-test
   (api-key/add-api-key! "42")
-  (test-helpers/create-user! {:eppn "alice"})
-  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:userid "alice"})
+  (test-helpers/create-user! {:userid "owner"} :owner)
   (testing "without authentication"
     (testing "list"
       (let [response (api-response :get "/api/organizations")]
@@ -299,8 +299,8 @@
         owner "owner"
         org-owner1 "organization-owner1"]
     (api-key/add-api-key! api-key)
-    (test-helpers/create-user! {:eppn owner} :owner)
-    (test-helpers/create-user! {:eppn org-owner1})
+    (test-helpers/create-user! {:userid owner} :owner)
+    (test-helpers/create-user! {:userid org-owner1})
     (testing "trying to create a duplicate fails" ; separate test because it will leave the transaction in an errored state
       (let [_response1 (api-call :post "/api/organizations/create"
                                  {:organization/id "duplicate-organizations-api-test-org"

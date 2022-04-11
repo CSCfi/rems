@@ -14,7 +14,7 @@
         (select-keys [:enabled :archived]))))
 
 (deftest organization-enabled-archived-test
-  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:userid "owner"} :owner)
   (with-user "owner"
     (let [org-id1 (test-helpers/create-organization! {:organization/id "test-org-1"})
           org-id2 (test-helpers/create-organization! {:organization/id "test-org-2"})]

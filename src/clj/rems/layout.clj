@@ -89,8 +89,7 @@ window.rems = {
     (include-js (cache-bust "/js/app.js"))
     [:script {:type "text/javascript"}
      (format "rems.app.setIdentity(%s);"
-             (json/generate-string {:user (when context/*user*
-                                            (users/format-user context/*user*))
+             (json/generate-string {:user context/*user*
                                     :roles context/*roles*}))])))
 
 (defn- error-content

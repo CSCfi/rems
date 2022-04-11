@@ -6,43 +6,45 @@
             [rems.db.user-settings :as user-settings]
             [rems.json :as json]))
 
-;; TODO the user db still stores shibboleth-like
-;; attributes (:eppn, :commonName), refactor to store formatted or
-;; oidc-like user attributes.
-
+;; TODO: remove format/unformat, there should be no need
+;; - attributes are the same in db
+;; - attributes are not secret
+;; - only the ones defined in config are originally saved
 (defn format-user [u]
-  (merge {:userid (:eppn u)
-          :name (or (:commonName u)
-                    (:displayName u))
-          :email (:mail u)}
+  (merge {:userid (:userid u) ; NB: currently we expect to return the keys always
+          :name (:name u)
+          :email (:email u)}
          (select-keys u [:organizations :notification-email :researcher-status-by])
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (defn- unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"
   [u]
-  (merge {:eppn (:userid u)
-          :commonName (:name u)
-          :mail (:email u)}
+  (merge {:userid (:userid u) ; NB: currently we expect to return the keys always
+          :name (:name u)
+          :email (:email u)}
          (select-keys u [:organizations :researcher-status-by])
          (select-keys u (map (comp keyword :attribute) (:oidc-extra-attributes env)))))
 
 (deftest test-format-unformat
+  (is (= {:userid nil :name nil :email nil} (format-user nil))
+      "current, perhaps nonsenical expectation")
+  (is (= {:userid nil :name nil :email nil} (unformat-user nil))
+      "current, perhaps nonsenical expectation")
   (let [api-user {:userid "foo" :name "bar" :email "a@b"}
-        db-user {:eppn "foo" :commonName "bar" :mail "a@b"}]
-    (is (= api-user (format-user db-user)))
-    (is (= db-user (unformat-user api-user)))
+        db-user {:userid "foo" :name "bar" :email "a@b"}]
+    (is (= api-user (format-user (assoc db-user :extra-stuff "should-not-see"))))
+    (is (= db-user (unformat-user (assoc api-user :extra-stuff "should-not-see"))))
     (is (= api-user (format-user (unformat-user api-user)))))
   (let [api-user {:userid "foo" :name "bar" :email "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}
-        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}]
+        db-user {:userid "foo" :name "bar" :email "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}]
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user))))))
 
-(defn- invalid-user? [u]
-  (let [user (format-user u)]
-    (or (str/blank? (:userid user))
-        (str/blank? (:name user)))))
+(defn- invalid-user? [user]
+  (or (str/blank? (:userid user))
+      (str/blank? (:name user))))
 
 (defn add-user-raw!
   "Create or update a user given a userid and a map of raw user attributes."
@@ -70,7 +72,7 @@
 
 (defn- merge-user-settings [raw-attributes]
   (merge raw-attributes
-         (user-attributes-from-settings (:eppn raw-attributes))))
+         (user-attributes-from-settings (:userid raw-attributes))))
 
 (defn user-exists? [userid]
   (some? (get-raw-user-attributes userid)))

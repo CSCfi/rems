@@ -63,7 +63,7 @@
                 :body ""
                 :session
                 {:access-token "special.access-token"
-                 :identity {:eppn "does-not-exist" :commonName "Does Not Exist" :mail "does-not-exist@example.com"}}}
+                 :identity {:userid "does-not-exist" :name "Does Not Exist" :email "does-not-exist@example.com"}}}
                response)
             "created and allowed in")))))
 
@@ -75,9 +75,9 @@
         (catch clojure.lang.ExceptionInfo e
           (is (= {:key :t.login.errors/invalid-user
                   :args [:t.login.errors/name :t.login.errors/email]
-                  :user {:eppn "has-no-details"
-                         :commonName nil
-                         :mail nil}}
+                  :user {:userid "has-no-details"
+                         :name nil
+                         :email nil}}
                  (ex-data e))))))))
 
 (deftest test-no-code

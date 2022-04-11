@@ -21,7 +21,7 @@
 (deftest user-settings-api-test
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))]
-    (test-helpers/create-user! {:eppn user-id})
+    (test-helpers/create-user! {:userid user-id})
 
     (testing "default user settings without authentification"
       (is (= {:status 401
@@ -78,7 +78,7 @@
 (deftest test-generate-api-key
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))]
-    (test-helpers/create-user! {:eppn user-id :commonName "Test User" :mail "test.user@example.com"})
+    (test-helpers/create-user! {:userid user-id :name "Test User" :email "test.user@example.com"})
 
     (testing "without authentication"
       (let [{:keys [body] :as response} (-> (request :post "/api/user-settings/generate-ega-api-key")
@@ -134,8 +134,8 @@
   (test-data/create-test-api-key!)
   (let [user-id (str (UUID/randomUUID))
         handler-id (str (UUID/randomUUID))]
-    (test-helpers/create-user! {:eppn user-id :commonName "Test User" :mail "test.user@example.com"})
-    (test-helpers/create-user! {:eppn handler-id :commonName "Handler" :mail "handler@example.com"})
+    (test-helpers/create-user! {:userid user-id :name "Test User" :email "test.user@example.com"})
+    (test-helpers/create-user! {:userid handler-id :name "Handler" :email "handler@example.com"})
     (test-helpers/create-workflow! {:handlers [handler-id]})
 
     (testing "setup api-key to delete"

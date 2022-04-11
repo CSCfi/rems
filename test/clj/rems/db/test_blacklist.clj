@@ -11,9 +11,9 @@
   rollback-db-fixture)
 
 (deftest test-blacklist-event-storage
-  (test-helpers/create-user! {:eppn "user1"})
-  (test-helpers/create-user! {:eppn "user2"})
-  (test-helpers/create-user! {:eppn "handler"})
+  (test-helpers/create-user! {:userid "user1"})
+  (test-helpers/create-user! {:userid "user2"})
+  (test-helpers/create-user! {:userid "handler"})
   (test-helpers/create-resource! {:resource-ext-id "urn.fi/123"})
   (test-helpers/create-resource! {:resource-ext-id "urn.fi/124"})
 
@@ -78,7 +78,7 @@
                  :event/time (time/now)
                  :resource/ext-id resource-ext-id
                  :userid user-id}]
-    (test-helpers/create-user! {:eppn user-id})
+    (test-helpers/create-user! {:userid user-id})
     (test-helpers/create-resource! {:resource-ext-id resource-ext-id})
 
     (testing "user and resource both exist"

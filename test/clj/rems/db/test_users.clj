@@ -10,13 +10,13 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-users
-  ;; TODO: enforce that userid and eppn must be same?
-  (users/add-user-raw! "user1" {:eppn "whatever"
-                                :commonName "What Ever"
+  ;; TODO: enforce that userid must be same?
+  (users/add-user-raw! "user1" {:userid "whatever"
+                                :name "What Ever"
                                 :some-attr "some value"})
-  (users/add-user-raw! "user-with-org" {:eppn "user-with-org"
-                                        :commonName "User Org"
-                                        :mail "user@org"
+  (users/add-user-raw! "user-with-org" {:userid "user-with-org"
+                                        :name "User Org"
+                                        :email "user@org"
                                         ;;:notification-email "user@alt"
                                         :organizations [{:organization/id "org"}]})
 
@@ -44,13 +44,13 @@
         "default is returned for notification-email"))
 
   (testing "get-raw-user-attributes"
-    (is (= {:eppn "whatever"
-            :commonName "What Ever"
+    (is (= {:userid "whatever"
+            :name "What Ever"
             :some-attr "some value"}
            (#'users/get-raw-user-attributes "user1")))
-    (is (= {:eppn "user-with-org"
-            :commonName "User Org"
-            :mail "user@org"
+    (is (= {:userid "user-with-org"
+            :name "User Org"
+            :email "user@org"
             :organizations [{:organization/id "org"}]}
            (#'users/get-raw-user-attributes "user-with-org"))))
 
@@ -88,8 +88,8 @@
               :organizations [#:organization{:id "org"}]}} (set (users/get-deciders)))))
 
   (testing "update user with add-user-raw!"
-    (users/add-user-raw! "user1" {:eppn "user1"
-                                  :commonName "new name"})
+    (users/add-user-raw! "user1" {:userid "user1"
+                                  :name "new name"})
     (is (= {:userid "user1"
             :name "new name"
             :email nil}

@@ -13,10 +13,10 @@
 (use-fixtures :each rollback-db-fixture)
 
 (defn- create-users []
-  (test-helpers/create-user! {:eppn "user1" :commonName "User 1" :mail "user1@example.com"})
-  (test-helpers/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"})
-  (test-helpers/create-user! {:eppn "user3" :commonName "User 3" :mail "user3@example.com"})
-  (test-helpers/create-user! {:eppn "owner" :commonName "owner" :mail "owner@example.com"} :owner))
+  (test-helpers/create-user! {:userid "user1" :name "User 1" :email "user1@example.com"})
+  (test-helpers/create-user! {:userid "user2" :name "User 2" :email "user2@example.com"})
+  (test-helpers/create-user! {:userid "user3" :name "User 3" :email "user3@example.com"})
+  (test-helpers/create-user! {:userid "owner" :name "owner" :email "owner@example.com"} :owner))
 
 (deftest test-create-workflow
   (create-users)

@@ -110,9 +110,9 @@
                                                              :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})]
-    (test-helpers/create-user! {:eppn applicant :mail "b@o.b" :commonName "Bob"})
-    (test-helpers/create-user! {:eppn member :mail "e.l@s.a" :commonName "Elsa"})
-    (test-helpers/create-user! {:eppn admin :mail "o.w@n.er" :commonName "Owner"})
+    (test-helpers/create-user! {:userid applicant :email "b@o.b" :name "Bob"})
+    (test-helpers/create-user! {:userid member :email "e.l@s.a" :name "Elsa"})
+    (test-helpers/create-user! {:userid admin :email "o.w@n.er" :name "Owner"})
 
     (entitlements/process-outbox!) ;; empty outbox from pending posts
 

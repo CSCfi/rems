@@ -577,9 +577,9 @@
                        (for [n (range-1 user-count)]
                          (fn []
                            (let [user-id (str "perftester" n)]
-                             (users/add-user-raw! user-id {:eppn user-id
-                                                           :mail (str user-id "@example.com")
-                                                           :commonName (str "Performance Tester " n)})
+                             (users/add-user-raw! user-id {:userid user-id
+                                                           :email (str user-id "@example.com")
+                                                           :name (str "Performance Tester " n)})
                              user-id)))))]
     (in-parallel
      (for [n (range-1 application-count)]

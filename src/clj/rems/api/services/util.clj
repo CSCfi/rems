@@ -25,7 +25,7 @@
         org-carl {:organization/id "organization owned by bob" :organization/owners [{:userid "carl"}]}
         org-bob-carl {:organization/id "organization owned by bob and carl" :organization/owners [{:userid "bob"} {:userid "carl"}]}]
     (testing "for owner, all organizations are permitted"
-      (binding [context/*user* {:eppn "owner"}
+      (binding [context/*user* {:userid "owner"}
                 context/*roles* #{:owner}]
         (is (may-edit-organization? org-empty))
         (is (may-edit-organization? org-nobody))
@@ -34,7 +34,7 @@
         (is (may-edit-organization? org-bob-carl))))
 
     (testing "for owner who is also an organization owner, all organizations are permitted"
-      (binding [context/*user* {:eppn "bob"}
+      (binding [context/*user* {:userid "bob"}
                 context/*roles* #{:owner}]
         (is (may-edit-organization? org-empty))
         (is (may-edit-organization? org-nobody))
@@ -43,7 +43,7 @@
         (is (may-edit-organization? org-bob-carl))))
 
     (testing "for organization owner, only own organizations are permitted"
-      (binding [context/*user* {:eppn "bob"}
+      (binding [context/*user* {:userid "bob"}
                 context/*roles* #{}]
         (is (not (may-edit-organization? org-empty)))
         (is (not (may-edit-organization? org-nobody)))
@@ -52,7 +52,7 @@
         (is (may-edit-organization? org-bob-carl)))
 
       (testing ", even if they are a handler"
-        (binding [context/*user* {:eppn "bob"}
+        (binding [context/*user* {:userid "bob"}
                   context/*roles* #{:handler}]
           (is (not (may-edit-organization? org-empty)))
           (is (not (may-edit-organization? org-nobody)))
@@ -61,7 +61,7 @@
           (is (may-edit-organization? org-bob-carl)))))
 
     (testing "for other user, no organizations are permitted"
-      (binding [context/*user* {:eppn "alice"}
+      (binding [context/*user* {:userid "alice"}
                 context/*roles* #{}]
         (is (not (may-edit-organization? org-empty)))
         (is (not (may-edit-organization? org-nobody)))

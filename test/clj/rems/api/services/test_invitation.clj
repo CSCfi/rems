@@ -19,8 +19,8 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-crud-invitation
-  (test-helpers/create-user! {:eppn "owner" :commonName "owner" :mail "owner@example.com"} :owner)
-  (test-helpers/create-user! {:eppn "new-handler" :commonName "New Handler" :mail "new-handler@example.com"})
+  (test-helpers/create-user! {:userid "owner" :name "owner" :email "owner@example.com"} :owner)
+  (test-helpers/create-user! {:userid "new-handler" :name "New Handler" :email "new-handler@example.com"})
   (let [workflow-id (test-helpers/create-workflow! {})]
     (with-user "owner"
       (testing "before creating invitations"

@@ -61,7 +61,7 @@
   [handler]
   (fn [request]
     (binding [context/*user* (keywordize-keys (:identity request))]
-      (with-mdc {:user (:eppn context/*user*)}
+      (with-mdc {:user (:userid context/*user*)}
         (handler request)))))
 
 (defn wrap-context [handler]
@@ -219,7 +219,7 @@
    (for [session (vals (.em_map session-store))
          :let [identity (:identity session)]
          :when identity]
-     (users/format-user identity))))
+     identity)))
 
 (defn get-session
   "Returns the session associated with a cookie. Useful for testing."

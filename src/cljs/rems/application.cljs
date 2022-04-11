@@ -1259,7 +1259,7 @@
             [render-application
              {:application {:application/id 17
                             :application/state :application.state/approved
-                            :application/applicant {:userid "eppn"
+                            :application/applicant {:userid "userid"
                                                     :email "email@example.com"
                                                     :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
