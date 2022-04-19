@@ -33,6 +33,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - An owner could sometimes see a disabled catalogue item in the catalogue tree. (#2800)
 - The column names in the tables and the field names in create/edit pages of the administration now match.
 - Improve the accessibility of the small navbar. (#2907)
+- Load config overrides from system properties and env (#2917)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 
