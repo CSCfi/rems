@@ -1,0 +1,3 @@
+{:ns rems.migrations.un-haka
+ :up-fn migrate-up
+ :down-fn migrate-down}
