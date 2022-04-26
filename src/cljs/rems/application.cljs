@@ -75,27 +75,33 @@
                [:li (get-member-name (:blacklist/user entry))
                 ": " (localized (:catalogue-item/title resource))]))])))
 
-(defn- format-validation-error [type field]
-  [:a {:href "#" :on-click (case (:field/type field)
-                             ;; workaround for tables: there's no single input to focus
-                             :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
-                             ;; default
-                             (focus-input-field (fields/field-name field)))}
-   (text-format type (localized (:field/title field)))])
+(defn- format-validations [{:keys [fields label validations]}]
+  [:div label
+   (into [:ul]
+         (for [{:keys [type form-id field-id]} validations]
+           [:li (if-some [field (get-in fields [form-id field-id])]
+                  [:a {:href "#"
+                       :on-click (case (:field/type field)
+                                   ;; workaround for tables: there's no single input to focus
+                                   :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
+                                   (focus-input-field (fields/field-name field)))}
+                   (text-format type (localized (:field/title field)))]
+                  (text type))]))])
 
-(defn- format-validation-errors
-  [application errors]
+(defn- validations [{:keys [application warnings errors]}]
   (let [fields-index (index-by [:form/id :field/id]
                                (for [form (:application/forms application)
                                      field (:form/fields form)]
                                  (assoc field :form/id (:form/id form))))]
-    [:div (text :t.actions.errors/validation-errors)
-     (into [:ul]
-           (concat
-            (for [{:keys [type form-id field-id]} errors]
-              [:li (if (and form-id field-id)
-                     (format-validation-error type (get-in fields-index [form-id field-id]))
-                     (text type))])))]))
+    [:<>
+     (when (seq errors)
+       [format-validations {:fields fields-index
+                            :label (text :t.actions.errors/validation-errors)
+                            :validations errors}])
+     (when (seq warnings)
+       [format-validations {:fields fields-index
+                            :label (text :t.actions.errors/validation-warnings)
+                            :validations warnings}])]))
 
 ;;;; State
 
@@ -146,7 +152,7 @@
     (assoc db ::edit-application {:duo-codes duo-codes
                                   :field-values field-values
                                   :show-diff {}
-                                  :validation-errors nil
+                                  :validation nil
                                   :attachment-status {}})))
 
 (rf/reg-event-db
@@ -157,9 +163,11 @@
        (or initial-fetch? full-reload?) (initialize-edit-application)))))
 
 (rf/reg-event-db
- ::set-validation-errors
- (fn [db [_ errors]]
-   (assoc-in db [::edit-application :validation-errors] errors)))
+ ::set-validations
+ (fn [db [_ errors warnings]]
+   (-> db
+       (assoc-in [::edit-application :validation :errors] errors)
+       (assoc-in [::edit-application :validation :warnings] warnings))))
 
 (defn- field-values-to-api [application field-values]
   (for [form (:application/forms application)
@@ -169,15 +177,23 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validation-errors [description application on-success]
-  (fn [response]
-    (if (:success response)
-      (on-success)
+(defn- handle-validations! [description application & [on-success]]
+  (fn [{:keys [errors warnings success] :as _response}]
+    (flash-message/clear-message! :top-validation)
+    (rf/dispatch [::set-validations errors warnings])
+    (if-not success
+      (flash-message/show-default-error! :top-validation
+                                         description
+                                         [validations {:application application
+                                                       :errors errors}])
       (do
-        (let [validation-errors (filter :field-id (:errors response))]
-          (rf/dispatch [::set-validation-errors validation-errors]))
-        ;; validation errors can be too long for :actions location
-        (flash-message/show-default-error! :top description [format-validation-errors application (:errors response)])))))
+        (if (seq warnings)
+          (flash-message/show-default-warning! :top-validation
+                                               description
+                                               [validations {:application application
+                                                             :warnings warnings}])
+          (flash-message/show-default-success! :top-validation description))
+        (when on-success (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
   (for [duo duo-codes]
@@ -189,15 +205,12 @@
                                 :mondo (map #(select-keys % [:id]) values)
                                 (if (some? values) [{:value values}] []))})}))
 
-(defn- save-application! [description application {:keys [field-values duo-codes]} on-success]
+(defn- save-draft! [description application edit-application handler]
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
-                   :field-values field-values
-                   :duo-codes duo-codes}
-          :handler (handle-validation-errors
-                    description
-                    application
-                    on-success)
+                   :field-values (field-values-to-api application (:field-values edit-application))
+                   :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+          :handler handler
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
@@ -205,39 +218,38 @@
  (fn [{:keys [db]} [_ description on-success]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
-     (save-application! description
-                        application
-                        {:field-values (field-values-to-api application
-                                                            (:field-values edit-application))
-                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
-                        #(do
-                           (rf/dispatch [::fetch-application (:application/id application)])
-                           (if on-success
-                             (on-success)
-                             (flash-message/show-default-success! :actions description)))))
-   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
+     (save-draft! description
+                  application
+                  edit-application
+                  (fn [response]
+                    (rf/dispatch [::fetch-application (:application/id application)])
+                    (apply (handle-validations! description application on-success) [response]))))
+   {:db (-> db
+            (assoc-in [::edit-application :validation :errors] nil)
+            (assoc-in [::edit-application :validation :warnings] nil))}))
 
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (:data (::application db))
          edit-application (::edit-application db)]
-     (save-application! description
-                        application
-                        {:field-values (field-values-to-api application
-                                                            (:field-values edit-application))
-                         :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
-                        (fn []
-                          (post! "/api/applications/submit"
-                                 {:params {:application-id (:application/id application)}
-                                  :handler (handle-validation-errors
-                                            description
-                                            application
-                                            #(do
-                                               (flash-message/show-default-success! :actions description)
-                                               (rf/dispatch [::fetch-application (:application/id application)])))
-                                  :error-handler (flash-message/default-error-handler :actions description)}))))
-   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
+     (save-draft! description
+                  application
+                  edit-application
+                  (fn [response] ; because warnings are treated as errors in submit, skip validation handling here
+                    (if-not (:success response)
+                      (apply (handle-validations! description application) [response])
+                      (post! "/api/applications/submit"
+                             {:params {:application-id (:application/id application)}
+                              :handler (handle-validations!
+                                        description
+                                        application
+                                        (fn []
+                                          (rf/dispatch [::fetch-application (:application/id application)])))
+                              :error-handler (flash-message/default-error-handler :actions description)})))))
+   {:db (-> db
+            (assoc-in [::edit-application :validation :errors] nil)
+            (assoc-in [::edit-application :validation :warnings] nil))}))
 
 (rf/reg-event-fx
  ::copy-as-new-application
@@ -281,8 +293,7 @@
                          ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
-                         (rf/dispatch [::save-application description
-                                       #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
+                         (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
                                (cond (= 413 (:status response))
@@ -450,7 +461,9 @@
   (let [edit-application @(rf/subscribe [::edit-application])
         field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
-        field-validations (index-by [:form-id :field-id] (:validation-errors edit-application))
+        validations (:validation edit-application)
+        field-validations (index-by [:form-id :field-id]
+                                    (some seq [(:errors validations) (:warnings validations)]))
         attachments (index-by [:attachment/id] (:application/attachments application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)
@@ -1035,7 +1048,9 @@
                           (when-not (str/blank? (:application/description application))
                             (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
-     [flash-message/component :top]
+     [:<>
+      [flash-message/component :top]
+      [flash-message/component :top-validation]]
      (when loading?
        [spinner/big])
      (when application
@@ -1236,7 +1251,7 @@
                                                     :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
               :edit-application {:field-values {1 {"fld1" "abc"}}
                                  :show-diff {}
-                                 :validation-errors nil
+                                 :validation {:errors nil :warnings nil}
                                  :accepted-licenses {"applicant" #{5}}}
               :userid "applicant"}])
    (example "application, applied"

@@ -34,6 +34,7 @@
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"
                      :validation-errors "Tarkasta seuraavat virheet:"
+                     :validation-warnings "Tarkasta vielä seuraavat ennen lähetystä:"
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."

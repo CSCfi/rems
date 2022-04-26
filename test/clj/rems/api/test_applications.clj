@@ -955,12 +955,31 @@
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
-    (testing "can't set value of text field to JSON"
-      (is (= {:success false
-              :errors [{:form-id form-id :field-id "req1" :type "t.form.validation/invalid-value"}]}
+    (testing "validation for set value of text field to JSON"
+      (is (= {:success true
+              :warnings [{:form-id form-id :field-id "req1" :type "t.form.validation/invalid-value"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "req1" :value [[{:column "foo" :value "bar"}]]}]}))))
+    (testing "column name validation for table fields"
+      (is (= {:success true
+              :warnings [{:type "t.form.validation/invalid-value" :form-id form-id2 :field-id "table"}]}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "table"
+                                                    :value [[{:column "col1" :value "1"}
+                                                             {:column "col2" :value "2"}]
+                                                            [{:column "col1" :value "foo"}
+                                                             {:column "colx" :value "bar"}]]}]}))))
+    (testing "cannot submit with validation errors"
+      (is (= {:success false
+              :errors [{:field-id "table" :form-id form-id2 :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
     (testing "can set value of table field to JSON"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
@@ -980,32 +999,16 @@
                {:column "col2" :value "bar"}]]
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 1 :form/fields 2 :field/value]))))
-    (testing "column name validation for table fields"
-      (is (= {:success false
-              :errors [{:type "t.form.validation/invalid-value",
-                        :form-id form-id2,
-                        :field-id "table"}]}
+    (testing "save draft with non-existing value of option list"
+      (is (= {:success true
+              :warnings [{:field-id "optionlist" :form-id form-id2 :type "t.form.validation/invalid-value"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "opt1" :value "opt"}
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}
-                                                   {:form form-id2 :field "table"
-                                                    :value [[{:column "col1" :value "1"}
-                                                             {:column "col2" :value "2"}]
-                                                            [{:column "col1" :value "foo"}
-                                                             {:column "colx" :value "bar"}]]}]}))))
-    (testing "save-draft fails with non-existing value of option list"
-      (is (= {:success false
-              :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
-             (send-command user-id {:type           :application.command/save-draft
-                                    :application-id app-id
-                                    :field-values   [{:form form-id :field "opt1" :value "opt"}
-                                                     {:form form-id :field "req1" :value "req"}
-                                                     {:form form-id2 :field "opt2" :value "opt"}
-                                                     {:form form-id2 :field "req2" :value "req"}
-                                                     {:form form-id2 :field "optionlist" :value "foobar"}]}))))
+                                                   {:form form-id2 :field "optionlist" :value "foobar"}]}))))
 
     (testing "set existing value of option list"
       (is (= {:success true}
@@ -1387,10 +1390,10 @@
                          handler)]
         (is (response-is-forbidden? response))))
     (testing "invalid value for attachment field"
-      (is (= {:success false
-              :errors [{:form-id form-id
-                        :field-id "attach"
-                        :type "t.form.validation/invalid-value"}]}
+      (is (= {:success true
+              :warnings [{:form-id form-id
+                          :field-id "attach"
+                          :type "t.form.validation/invalid-value"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "attach" :value "1,a"}]}))))

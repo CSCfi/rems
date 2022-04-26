@@ -90,7 +90,8 @@
 
 (s/defschema SuccessResponse
   {:success s/Bool
-   (s/optional-key :errors) [s/Any]})
+   (s/optional-key :errors) [s/Any]
+   (s/optional-key :warnings) [s/Any]})
 
 (s/defschema V2Resource
   {:resource/id s/Int
