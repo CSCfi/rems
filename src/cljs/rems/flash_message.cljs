@@ -82,16 +82,17 @@
 
     :component-will-unmount
     (fn [_this]
-      ;; XX: this expiration check keeps component rendered after page transition,
+      ;; XXX: this expiration check keeps component rendered after page transition,
       ;; for example navigation
       (when (expired? @(rf/subscribe [::message location]))
         (rf/dispatch [::reset location])))
 
     :reagent-render
-    (fn [] (when-some [message @(rf/subscribe [::message location])]
-             [atoms/flash-message {:id (location-to-id location)
-                                   :status (:status message)
-                                   :content (:content message)}]))}))
+    (fn []
+      (when-some [message @(rf/subscribe [::message location])]
+        [atoms/flash-message {:id (location-to-id location)
+                              :status (:status message)
+                              :content (:content message)}]))}))
 
 (defn format-errors [errors]
   ;; TODO: copied as-is from status-modal; consider refactoring

@@ -36,7 +36,7 @@
                      ;; %1 - organization name
                      :organization-does-not-exist "Organization \"%1\" does not exist"
                      :validation-errors "Check the following errors:"
-                     :validation-warnings "Check the following errors before submit:"
+                     :validation-warnings "Check the following before submit:"
                      :entitlement-end-not-in-future "The expiration date for access rights must be in the future."}
             :export-entitlements "Export entitlements as CSV"
             :generate-ega-api-key-in-profile "Generate one at the Profile page."

@@ -75,30 +75,33 @@
                [:li (get-member-name (:blacklist/user entry))
                 ": " (localized (:catalogue-item/title resource))]))])))
 
-(defn- format-validation [type field]
-  [:a {:href "#" :on-click (case (:field/type field)
-                             ;; workaround for tables: there's no single input to focus
-                             :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
-                             ;; default
-                             (focus-input-field (fields/field-name field)))}
-   (text-format type (localized (:field/title field)))])
+(defn- format-validations [{:keys [fields label validations]}]
+  [:div label
+   (into [:ul]
+         (for [{:keys [type form-id field-id]} validations]
+           [:li (if-some [field (get-in fields [form-id field-id])]
+                  [:a {:href "#"
+                       :on-click (case (:field/type field)
+                                   ;; workaround for tables: there's no single input to focus
+                                   :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
+                                   (focus-input-field (fields/field-name field)))}
+                   (text-format type (localized (:field/title field)))]
+                  (text type))]))])
 
-(defn- format-validations
-  [{:keys [application errors warnings]}]
+(defn- validations [{:keys [application warnings errors]}]
   (let [fields-index (index-by [:form/id :field/id]
                                (for [form (:application/forms application)
                                      field (:form/fields form)]
-                                 (assoc field :form/id (:form/id form))))
-        validations (or (seq errors) warnings)]
-    [:div (if (seq errors)
-            (text :t.actions.errors/validation-errors)
-            (text :t.actions.errors/validation-warnings))
-     (into [:ul]
-           (concat
-            (for [{:keys [type form-id field-id]} validations]
-              [:li (if (and form-id field-id)
-                     (format-validation type (get-in fields-index [form-id field-id]))
-                     (text type))])))]))
+                                 (assoc field :form/id (:form/id form))))]
+    [:<>
+     (when (seq errors)
+       [format-validations {:fields fields-index
+                            :label (text :t.actions.errors/validation-errors)
+                            :validations errors}])
+     (when (seq warnings)
+       [format-validations {:fields fields-index
+                            :label (text :t.actions.errors/validation-warnings)
+                            :validations warnings}])]))
 
 ;;;; State
 
@@ -181,14 +184,14 @@
     (if-not success
       (flash-message/show-default-error! :top-validation
                                          description
-                                         [format-validations {:application application
-                                                              :errors errors}])
+                                         [validations {:application application
+                                                       :errors errors}])
       (do
         (if (seq warnings)
           (flash-message/show-default-warning! :top-validation
                                                description
-                                               [format-validations {:application application
-                                                                    :warnings warnings}])
+                                               [validations {:application application
+                                                             :warnings warnings}])
           (flash-message/show-default-success! :top-validation description))
         (when on-success (on-success))))))
 
@@ -459,8 +462,8 @@
         field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         validations (:validation edit-application)
-        field-validations (index-by [:form-id :field-id] (or (seq (:errors validations))
-                                                             (:warnings validations)))
+        field-validations (index-by [:form-id :field-id]
+                                    (some seq [(:errors validations) (:warnings validations)]))
         attachments (index-by [:attachment/id] (:application/attachments application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)
