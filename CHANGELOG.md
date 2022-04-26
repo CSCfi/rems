@@ -21,6 +21,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - User in the API can be an internal REMS id or any of the `:oidc-userid-attributes` (provided that the user has logged in once and we have stored the identity. (#2821 #2772)
 - Fake login page has been improved to include descriptions of the different users. (#2896)
 - Errors are now handled in `oidc-callback` by redirecting to an error page. (#2856)
+- Mail settings can be configured with the `:smtp` config including authentication. (#2895)
 
 ### Fixes
 - API-key validity is not checked unless it is actually sent. (#2785)
@@ -31,6 +32,8 @@ NB: The login has changed to allow more configurable user identity and other att
 - An owner that is also an organization owner can now properly edit organization ownerships. (#2850)
 - An owner could sometimes see a disabled catalogue item in the catalogue tree. (#2800)
 - The column names in the tables and the field names in create/edit pages of the administration now match.
+- Improve the accessibility of the small navbar. (#2907)
+- Load config overrides from system properties and env (#2917)
 - Application draft can now be saved even if there are validation warnings. (#2766)
 
 ## v2.25 "Meripuistotie" 2022-02-15

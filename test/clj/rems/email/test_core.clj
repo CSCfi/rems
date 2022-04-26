@@ -102,3 +102,26 @@
           (is (= ["auto-generated"] (vec (.getHeader message "Auto-Submitted")))))
         (finally
           (.stop server))))))
+
+(deftest test-smtp-configuration
+  (let [port 3025
+        server (GreenMail. (ServerSetup. port nil ServerSetup/PROTOCOL_SMTP))]
+    (.setUser server "test@example.com" "user" "password")
+
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :smtp {:host "localhost"
+                                                :port port
+                                                :user "user"
+                                                :pass "password"}
+                                         :mail-from "test@example.com")]
+      (try
+        (.start server)
+        (send-email! {:to "target@example.com"
+                      :subject "Test subject"
+                      :body "Test email body."})
+        (let [messages (.getReceivedMessages server)
+              message (first messages)]
+          (is (= 1 (count messages)))
+          (is (= "Test subject" (.getSubject message))))
+        (finally
+          (.stop server))))))

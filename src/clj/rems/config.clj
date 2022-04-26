@@ -82,7 +82,9 @@
                                       ;; If the "rems.config" system property is not defined, the :file parameter will
                                       ;; fall back to using the "conf" system property (hard-coded in cprop).
                                       ;; If neither system property is defined, the :file parameter is silently ignored.
-                                      :file (System/getProperty "rems.config"))
+                                      :file (System/getProperty "rems.config")
+                                      :merge [(source/from-system-props) ; load all properties and env (otherwise we can only override keys present already)
+                                              (source/from-env)])
                          (load-external-theme)
                          (load-keys)
                          (parse-config)

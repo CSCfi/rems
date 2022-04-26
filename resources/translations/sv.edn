@@ -486,6 +486,8 @@
                :change-language "Byt språk till %1"
                :home "Ingångssida"
                :logout "Logga ut"
+               :navigation "Navigering"
+               :navigation-small "Navigeringsmeny"
                :profile "Profil" ; TODO check
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"

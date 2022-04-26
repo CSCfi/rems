@@ -821,6 +821,7 @@
         (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
         (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
         (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
         (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
@@ -879,6 +880,7 @@
         (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
         (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
         (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
         (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
         (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-getx :workflow-title)}]))
         (is (= {"Organization" "The Default Organization"
@@ -2525,6 +2527,7 @@
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (is (btu/eventually-visible? :small-navbar))
+    (btu/gather-axe-results)
     (btu/screenshot "small-navbar.png")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
@@ -2702,6 +2705,8 @@
       (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
+
+      (btu/gather-axe-results)
 
       (click-row-action [:catalogue-tree] {:fn/text (btu/context-getx :catalogue-item-name)} {:css ".add-to-cart"})
 
