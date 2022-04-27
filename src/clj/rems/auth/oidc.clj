@@ -174,25 +174,37 @@
 
 (defn- oidc-revoke [token]
   (when token
-    (when-let [endpoint (:revocation_endpoint oidc-configuration)]
-      (let [response (http/post endpoint
-                                {:basic-auth [(getx env :oidc-client-id)
-                                              (getx env :oidc-client-secret)]
-                                 :form-params {:token token}
-                                 :throw-exceptions false})]
-        (when-not (= 200 (:status response))
-          (log/error "received HTTP status" (:status response) "from" endpoint))))))
+    (let [endpoint (:revocation_endpoint oidc-configuration)]
+      (when (:log-authentication-details env)
+        (log/info "revoking token" endpoint))
 
-; TODO Logout. Federated or not?
-; TODO Silent login when we have a new session, but user has logged in to auth provider
+      (when endpoint
+        (let [response (http/post endpoint
+                                  {:basic-auth [(getx env :oidc-client-id)
+                                                (getx env :oidc-client-secret)]
+                                   :form-params {:token token}
+                                   :throw-exceptions false})]
+          (when (:log-authentication-details env)
+            (log/info "performed revocation" (:status response)))
+
+          (when-not (= 200 (:status response))
+            (log/error "received HTTP status" (:status response) "from" endpoint)))))))
 
 (defroutes routes
   (GET "/oidc-login" _req (redirect (login-url)))
   (GET "/oidc-logout" req
-    (let [session (get req :session)]
+    (let [session (get req :session)
+          redirect-url (:oidc-logout-redirect-url env)]
       (when (:log-authentication-details env)
         (log/info "logging out" (:identity session)))
-      (oidc-revoke (:access-token session))
-      (assoc (redirect "/") :session (dissoc session :identity :access-token))))
+
+      (when (:oidc-perform-revoke-in-logout env)
+        (oidc-revoke (:access-token session)))
+
+      (when (:log-authentication-details env)
+        (log/info "redirecting to" redirect-url))
+
+      (assoc (redirect redirect-url)
+             :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))
 
