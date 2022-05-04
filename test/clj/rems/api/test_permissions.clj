@@ -50,7 +50,8 @@
         wf-id (test-helpers/create-workflow! {:handlers ["handler"]})
         cat-id (test-helpers/create-catalogue-item! {:resource-id res-id :workflow-id wf-id})
         application (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor "alice"})]
-    (test-helpers/submit-application application "alice")
+    (test-helpers/submit-application {:application-id application
+                                      :actor "alice"})
     (test-helpers/command! {:type :application.command/approve
                             :application-id application
                             :actor "handler"}))

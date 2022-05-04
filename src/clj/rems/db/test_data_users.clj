@@ -2,17 +2,20 @@
   (:require [clojure.test :refer :all]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
-            [rems.application.rejecter-bot :as rejecter-bot]))
+            [rems.application.rejecter-bot :as rejecter-bot]
+            [rems.application.expirer-bot :as expirer-bot]))
 
 (def +bot-users+
   {:approver-bot approver-bot/bot-userid
    :bona-fide-bot bona-fide-bot/bot-userid
-   :rejecter-bot rejecter-bot/bot-userid})
+   :rejecter-bot rejecter-bot/bot-userid
+   :expirer-bot expirer-bot/bot-userid})
 
 (def +bot-user-data+
   {approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}
    bona-fide-bot/bot-userid {:eppn bona-fide-bot/bot-userid :commonName "Bona Fide Bot"}
-   rejecter-bot/bot-userid {:eppn rejecter-bot/bot-userid :commonName "Rejecter Bot"}})
+   rejecter-bot/bot-userid {:eppn rejecter-bot/bot-userid :commonName "Rejecter Bot"}
+   expirer-bot/bot-userid {:eppn expirer-bot/bot-userid :commonName "Expirer Bot"}})
 
 (def +fake-users+
   {:applicant1 "alice"

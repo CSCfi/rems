@@ -1569,7 +1569,8 @@
         (is (= {"applicant" #{:applicant}
                 "member" #{:member}
                 "handler" #{:handler}
-                "reporter1" #{:reporter}} (:application/user-roles enriched))))
+                "reporter1" #{:reporter}
+                "expirer-bot" #{:expirer}} (:application/user-roles enriched))))
       (testing "reporter can't see draft application"
         (is (nil? (model/apply-user-permissions enriched "reporter1"))))
       (testing "handler can't see draft application"
