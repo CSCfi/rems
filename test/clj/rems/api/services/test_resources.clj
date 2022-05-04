@@ -15,7 +15,7 @@
         (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
-  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:userid "owner"} :owner)
   (with-user "owner"
     (let [_org (test-helpers/create-organization! {})
           lic-id (test-helpers/create-license! {})

@@ -54,7 +54,7 @@ UPDATE users SET userAttrs = :userattrs::jsonb WHERE userid = :userid;
   (migrate-up {:conn rems.db.core/*db*})
   (db/add-user! rems.db.core/*db*
                 {:user "alice"
-                 :userattrs (json/generate-string {:eppn "alice"
-                                                   :mail "alice@example.com"
-                                                   :commonName "Alice Applicant"
+                 :userattrs (json/generate-string {:userid "alice"
+                                                   :email "alice@example.com"
+                                                   :name "Alice Applicant"
                                                    :organization "default"})}))

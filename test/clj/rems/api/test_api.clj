@@ -31,8 +31,8 @@
 
 (deftest test-api-key-security
   (api-key/add-api-key! "42" {})
-  (test-helpers/create-user! {:eppn "alice"})
-  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:userid "alice"})
+  (test-helpers/create-user! {:userid "owner"} :owner)
   (testing ":api-key role"
     (testing "available for valid api key"
       (is (response-is-ok? (-> (request :post "/api/email/send-reminders")
@@ -106,7 +106,7 @@
 
 (deftest test-health-api
   ;; create at least one event
-  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:userid "alice"})
   (test-helpers/create-application! {:actor "alice"})
   (let [body (-> (request :get "/api/health")
                  handler
@@ -122,7 +122,7 @@
 
 (deftest data-exception-test
   (api-key/add-api-key! "42" {})
-  (test-helpers/create-user! {:eppn "owner"} :owner)
+  (test-helpers/create-user! {:userid "owner"} :owner)
   (testing "a broken license without an organization"
     (let [license-id (:id (db/create-license! {:organization "does-not-exist"
                                                :type "text"}))

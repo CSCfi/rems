@@ -78,7 +78,7 @@
 ;; TODO: This could be non-integration non-db test if the application was
 ;;       created from events.
 (deftest test-applications-to-csv
-  (test-helpers/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
+  (test-helpers/create-user! {:userid applicant :name "Alice Applicant" :email "alice@applicant.com"})
   (let [form-id (test-helpers/create-form!
                  {:form/fields [{:field/title {:en "Application title"
                                                :fi "Hakemuksen otsikko"

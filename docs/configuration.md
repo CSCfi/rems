@@ -20,6 +20,14 @@ Currently the only real authentication method is OpenId Connect (e.g. Auth0). Th
 The `:oidc` authentication method has the following configuration options:
 
 * `:oidc-metadata-url` - URL of the OAuth Server Metadata JSON document. See [RFC 8414](https://tools.ietf.org/html/rfc8414). Typically of the form `https://my.oidc.service/.well-known/openid-configuration`.
+  The metadata can contain:
+  - `authorization_endpoint` - where to do direct the user for the login
+  - `token_endpoint` - where to fetch the user's login token with the code
+  - `revocation_endpoint` - where to POST a request to revoke the login token
+  - `issuer` - issuer to check for validating a login token
+  - `jwks_uri` - where to find public key for validating a login token
+  - `userinfo_endpoint` - where to fetch user details (claims)
+
 * `:oidc-domain` – DEPRECATED, prefer `:oidc-metadata-url`. The openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
 * `:oidc-client-id`
 * `:oidc-client-secret`
@@ -42,6 +50,9 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
+* `:oidc-logout-redirect-url` - to which URL a user is redirected to after a successful logout? (defaults to "/")
+* `:oidc-perform-revoke-on-logout` - should REMS POST to the `revocation_endpoint` received from OIDC metadata? (defaults to true)
+
 
 #### User attributes
 

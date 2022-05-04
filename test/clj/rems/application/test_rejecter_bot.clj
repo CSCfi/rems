@@ -16,13 +16,13 @@
 
 (deftest test-run-rejecter-bot
   (binding [command/*fail-on-process-manager-errors* true]
-    (test-helpers/create-user! {:eppn rejecter-bot/bot-userid})
-    (test-helpers/create-user! {:eppn "handler"})
-    (test-helpers/create-user! {:eppn "user1"})
-    (test-helpers/create-user! {:eppn "user2"})
-    (test-helpers/create-user! {:eppn "baddie"})
-    (test-helpers/create-user! {:eppn "accomplice"})
-    (test-helpers/create-user! {:eppn "innocent"})
+    (test-helpers/create-user! {:userid rejecter-bot/bot-userid})
+    (test-helpers/create-user! {:userid "handler"})
+    (test-helpers/create-user! {:userid "user1"})
+    (test-helpers/create-user! {:userid "user2"})
+    (test-helpers/create-user! {:userid "baddie"})
+    (test-helpers/create-user! {:userid "accomplice"})
+    (test-helpers/create-user! {:userid "innocent"})
     (let [res1 (test-helpers/create-resource! {:resource-ext-id "res1"})
           res2 (test-helpers/create-resource! {:resource-ext-id "res2"})
           wf (test-helpers/create-workflow! {:type :workflow/default

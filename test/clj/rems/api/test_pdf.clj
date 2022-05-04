@@ -18,9 +18,9 @@
 
 (defn- create-test-data []
   (api-key/add-api-key! 42 {:comment "test data"})
-  (test-helpers/create-user! {:eppn "handler"})
-  (test-helpers/create-user! {:eppn "reporter"})
-  (test-helpers/create-user! {:eppn "applicant"})
+  (test-helpers/create-user! {:userid "handler"})
+  (test-helpers/create-user! {:userid "reporter"})
+  (test-helpers/create-user! {:userid "applicant"})
   (let [wfid (test-helpers/create-workflow! {:handlers ["handler"]})
         form (test-helpers/create-form! nil)
         res-id1 (test-helpers/create-resource! nil)

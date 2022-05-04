@@ -41,9 +41,9 @@
     (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
 
 (deftest test-pdf-private-form-fields
-  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
-  (test-helpers/create-user! {:eppn "carl" :commonName "Carl Reviewer" :mail "carl@example.com"})
-  (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
+  (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
+  (test-helpers/create-user! {:userid "carl" :name "Carl Reviewer" :email "carl@example.com"})
+  (test-helpers/create-user! {:userid "david" :name "David Decider" :email "david@example.com"})
   (let [resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"})
         resource-2 (test-helpers/create-resource! {:resource-ext-id "pdf-resource-2-ext"})
         wfid (test-helpers/create-workflow! {})
@@ -242,9 +242,9 @@
                      (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
 
 (deftest test-pdf-gold-standard
-  (test-helpers/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
-  (test-helpers/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
-  (test-helpers/create-user! {:eppn "david" :commonName "David Decider" :mail "david@example.com"})
+  (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
+  (test-helpers/create-user! {:userid "beth" :name "Beth Applicant" :email "beth@example.com"})
+  (test-helpers/create-user! {:userid "david" :name "David Decider" :email "david@example.com"})
   (let [lic1 (test-helpers/create-license! {:license/type :link
                                             :license/title {:en "Google license"
                                                             :fi "Google-lisenssi"}

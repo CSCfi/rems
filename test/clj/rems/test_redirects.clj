@@ -91,7 +91,7 @@
 
 (deftest test-attachment-download
   (api-key/add-api-key! "42" {})
-  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:userid "alice"})
   (with-redefs [attachment/get-application-attachment (fn [& args]
                                                         (is (= ["alice" 123] args))
                                                         dummy-attachment)]
@@ -119,7 +119,7 @@
 
 (deftest test-license-attachment-download
   (api-key/add-api-key! "42" {})
-  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:userid "alice"})
   (with-redefs [licenses/get-application-license-attachment (fn [& args]
                                                               (is (= ["alice" 1023 3 :en] args))
                                                               dummy-attachment)]

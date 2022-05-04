@@ -142,7 +142,7 @@
                            +test-api-key+ "owner")))
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                  (users/get-user "alice")
-                 (users/format-user (:identity (middleware/get-session cookie)))))
+                 (:identity (middleware/get-session cookie))))
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}}
                  (set (api-call :get "/api/users/active" nil
                                 +test-api-key+ "owner")))
@@ -158,7 +158,7 @@
                  (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
           (is (= {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}
                  (users/get-user "alice")
-                 (users/format-user (:identity (middleware/get-session cookie))))
+                 (:identity (middleware/get-session cookie)))
               "Attributes should be updated when logging in")
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                    {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
@@ -250,14 +250,14 @@
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                  (users/get-user "alice")
-                 (users/format-user (:identity (middleware/get-session cookie)))))))
+                 (:identity (middleware/get-session cookie))))))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
                  (users/get-user "bob")
-                 (users/format-user (:identity (middleware/get-session cookie)))))))
+                 (:identity (middleware/get-session cookie))))))
 
       (testing "log in malice"
         (is (thrown? AssertionError (login-with-cookies "malice"))
@@ -273,14 +273,14 @@
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                  (users/get-user "alice")
-                 (users/format-user (:identity (middleware/get-session cookie)))))))
+                 (:identity (middleware/get-session cookie))))))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
                  (users/get-user "bob")
-                 (users/format-user (:identity (middleware/get-session cookie)))))))
+                 (:identity (middleware/get-session cookie))))))
 
       (testing "log in malice"
         (is (thrown? AssertionError (login-with-cookies "malice"))

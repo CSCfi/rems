@@ -187,7 +187,7 @@
 
 (deftest workflows-edit-test
   (create-handlers!)
-  (test-helpers/create-user! {:eppn "tester"})
+  (test-helpers/create-user! {:userid "tester"})
   (let [user-id "owner"
         wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
                                              :title "workflow title"

@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.25
 
+**NB: This release contains migrations!**
+
 NB: The login has changed to allow more configurable user identity and other attributes. Consider this a big change worth some manual testing to see that everything works.
 
 ### Breaking changes
@@ -15,6 +17,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 - Users are required a name and email from the IdP to be allowed in. (#2889)
+- User attributes have been renamed internally. If you directly accessed the database, please note that `eppn -> userid`, `commonName -> name` and `mail -> email`. (#2377)
 - Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. (#2906)
 
 ### Additions
@@ -23,6 +26,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - Fake login page has been improved to include descriptions of the different users. (#2896)
 - Errors are now handled in `oidc-callback` by redirecting to an error page. (#2856)
 - Mail settings can be configured with the `:smtp` config including authentication. (#2895)
+- More configurable logout. You can now override the redirect with `:oidc-logout-redirect-url`, as well as unset `:oidc-perform-revoke-on-logout`. See `configuration.md`. (#2916)
 
 ### Fixes
 - API-key validity is not checked unless it is actually sent. (#2785)

@@ -11,16 +11,16 @@
 
 (deftest test-audit-log
   (api-key/add-api-key! "42" {})
-  (test-helpers/create-user! {:eppn "alice"})
-  (test-helpers/create-user! {:eppn "malice"})
-  (test-helpers/create-user! {:eppn "owner"} :owner)
-  (test-helpers/create-user! {:eppn "reporter"} :reporter)
+  (test-helpers/create-user! {:userid "alice"})
+  (test-helpers/create-user! {:userid "malice"})
+  (test-helpers/create-user! {:userid "owner"} :owner)
+  (test-helpers/create-user! {:userid "reporter"} :reporter)
   (let [time-a (atom nil)
         app-id (test-helpers/create-application! {:actor "alice"})]
 
-    (test-helpers/command! {:type           :application.command/submit
+    (test-helpers/command! {:type :application.command/submit
                             :application-id app-id
-                            :actor          "alice"})
+                            :actor "alice"})
 
     (testing "populate log"
       (testing "> unknown endpoint"

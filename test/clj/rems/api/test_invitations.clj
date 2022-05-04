@@ -59,7 +59,7 @@
             (is (= {:success true
                     :invitation/workflow {:workflow/id workflow-id}}
                    (api-call :post "/api/invitations/accept-invitation" {:token token} test-data/+test-api-key+ "katherine"))))
-          (test-helpers/create-user! {:eppn "katherine" :mail "katherine.johnson@nasa.gov" :commonName "Katherine Johnson"})
+          (test-helpers/create-user! {:userid "katherine" :email "katherine.johnson@nasa.gov" :name "Katherine Johnson"})
 
           (let [accepted-invitation (first (api-call :get "/api/invitations" nil test-data/+test-api-key+ "owner"))]
             (is (= {:invitation/name "Katherine Johnson"
@@ -83,7 +83,7 @@
              :organization/owners [{:userid "organization-owner2"}]
              :organization/review-emails []}
             "42" "owner")
-  (test-helpers/create-user! {:eppn "katherine" :mail "katherine.johnson@nasa.gov" :commonName "Katherine Johnson"})
+  (test-helpers/create-user! {:userid "katherine" :email "katherine.johnson@nasa.gov" :name "Katherine Johnson"})
   (let [workflow-id (test-helpers/create-workflow! {:organization {:organization/id "test-organization"}})
         invitation-id (:invitation/id (with-user "owner"
                                         (invitation/create-invitation! {:userid "owner"

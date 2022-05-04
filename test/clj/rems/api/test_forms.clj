@@ -751,7 +751,7 @@
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
-  (test-helpers/create-user! {:eppn "alice"})
+  (test-helpers/create-user! {:userid "alice"})
   (testing "without owner role"
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
