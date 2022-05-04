@@ -72,7 +72,7 @@
 
 (deftest test-expire-application
   (binding [command/*fail-on-process-manager-errors* true]
-    (test-helpers/create-user! {:eppn "alice"})
+    (test-helpers/create-user! {:userid "alice"})
     (let [now (time/now)
           draft (create-application! {:draft? true
                                       :date-time now
@@ -99,7 +99,7 @@
                     (map :message)))))
 
       (testing "does not delete applications when configuration is not valid"
-        (test-helpers/create-user! {:eppn expirer-bot/bot-userid})
+        (test-helpers/create-user! {:userid expirer-bot/bot-userid})
         (reset! log-messages [])
         (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
         (with-redefs [env {}
@@ -139,9 +139,9 @@
   (binding [command/*fail-on-process-manager-errors* true]
     (with-fixed-time (time/date-time 2022)
       (fn []
-        (test-helpers/create-user! {:eppn "alice"})
-        (test-helpers/create-user! {:eppn "member"})
-        (test-helpers/create-user! {:eppn expirer-bot/bot-userid})
+        (test-helpers/create-user! {:userid "alice"})
+        (test-helpers/create-user! {:userid "member"})
+        (test-helpers/create-user! {:userid expirer-bot/bot-userid})
         (let [now (time/now)
               draft-expires-in-6d (create-application! {:draft? true
                                                         :date-time (time/minus now (time/days 84))
