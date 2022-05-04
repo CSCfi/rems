@@ -25,6 +25,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - Fake login page has been improved to include descriptions of the different users. (#2896)
 - Errors are now handled in `oidc-callback` by redirecting to an error page. (#2856)
 - Mail settings can be configured with the `:smtp` config including authentication. (#2895)
+- More configurable logout. You can now override the redirect with `:oidc-logout-redirect-url`, as well as unset `:oidc-perform-revoke-on-logout`. See `configuration.md`. (#2916)
 
 ### Fixes
 - API-key validity is not checked unless it is actually sent. (#2785)

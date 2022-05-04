@@ -43,7 +43,9 @@ contained in it. If a
 [ResearcherStatus Visa](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#researcherstatus)
 is found in the passport, REMS sets the user attribute
 `researcher-status-by` to the `by` field of the visa (i.e. `"so"` or
-`"system"`).
+`"system"`). The claim should have an issuer and jku that is configured 
+in `:ga4gh-visa-trusted-issuers`, otherwise it will not be trusted. 
+See [`config-defaults.edn`](../resources/config-defaults.edn) for details.
 
 If an applicant has `researcher-status-by` with value `"so"` or
 `"system"`, REMS shows the handler a "Applicant researcher status"

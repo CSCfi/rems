@@ -82,6 +82,17 @@
  ;;                           {:attribute "employeeNumber"}]
  :oidc-extra-attributes []
 
+ ;; Normally, a logout will happen in a REMS internal URL,
+ ;; which performs:
+ ;; - the OIDC token revocation (override with `:oidc-perform-revoke-on-logout`),
+ ;; - REMS session termination, and
+ ;; - redirect to REMS homepage (override with `:oidc-logout-redirect-url`).
+ ;;
+ ;; To which URL a user is redirected to after a successful logout?
+ :oidc-logout-redirect-url "/"
+ ;; Should REMS POST to the revocation_endpoint received from OIDC metadata?
+ :oidc-perform-revoke-on-logout true
+
  ;; Sending email.
  ;;
  ;; Either you specify `:smtp-host` and `:smtp-port` like here:
