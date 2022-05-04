@@ -15,6 +15,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 - Users are required a name and email from the IdP to be allowed in. (#2889)
+- Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. (#2906)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)
