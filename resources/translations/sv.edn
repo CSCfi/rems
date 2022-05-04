@@ -190,6 +190,7 @@
                           :deleted "%1 raderade utkastet."
                           :draft-saved "%1 sparade ett utkast."
                           :external-id-assigned "%1 lade till externt id %2."
+                          :expiration-notifications-sent "E-postmeddelanden skickades p.g.a. en inaktiv ansökan."
                           :licenses-accepted "%1 accepterade licenserna."
                           :licenses-added "%1 lade till licenser."
                           :member-added "%1 lade till %2 som deltagare."
@@ -357,6 +358,8 @@
                                :message-to-applicant "%1,\n\nDin ansökan %3 har stängts.\n\nDu kan granska ansökningen här: %6"
                                :subject-to-handler "Ansökan (%3)har stängts"
                                :message-to-handler "%1,\n\n%2 har stängt ansökan %3 från %4.\n\nDu kan granska ansökningen här: %6"}
+          :application-expiration-notification {:subject-to-member "Din ej inlämnad ansökan %2 kommer att raderas snart"
+                                                :message-to-member "%1,\n\nDin ej inlämnad ansökan har varit inaktiv sedan %3 och kommer att raderas efter %4, om det inte ändras. \n\nDu kan granska ansökningen här: %5"}
           :application-returned {:subject-to-applicant "Din ansökan %3 kräver komplettering"
                                  :message-to-applicant "%1,\n\nDin ansökan %3 har skickats tillbaka för komplettering. Var god och komplettera den enligt anvisningarna.\n\nDu kan granska ansökningen här: %6"
                                  :subject-to-handler "(%3) Ansökan returnerad"

@@ -5,7 +5,7 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.user-settings :as user-settings]
-            [rems.text :refer [text text-format with-language]]
+            [rems.text :refer [localize-utc-date text text-format with-language]]
             [rems.util :as util]))
 
 ;;; Mapping events to emails
@@ -246,6 +246,28 @@
                                 :t.email.applicant-changed/subject-to-handler
                                 :t.email.applicant-changed/message-to-handler)))
 
+(defmethod event-to-emails :application.event/expiration-notifications-sent [event application]
+  (vec
+   (for [recipient (application-util/applicant-and-members application)]
+     (with-language (:language (user-settings/get-user-settings (:userid recipient)))
+       (fn []
+         {:to-user (:userid recipient)
+          :subject (text-format :t.email.application-expiration-notification/subject-to-member
+                                (application-util/get-member-name recipient)
+                                (format-application-for-email application)
+                                (localize-utc-date (:last-activity event))
+                                (localize-utc-date (:expires-on event))
+                                (link-to-application (:application/id application)))
+          :body (str
+                 (text-format :t.email.application-expiration-notification/message-to-member
+                              (application-util/get-member-name recipient)
+                              (format-application-for-email application)
+                              (localize-utc-date (:last-activity event))
+                              (localize-utc-date (:expires-on event))
+                              (link-to-application (:application/id application)))
+                 (text :t.email/regards)
+                 (text :t.email/footer))})))))
+
 ;; TODO member-joined?
 
 (defn handler-reminder-email [lang handler applications]
@@ -300,3 +322,4 @@
                              (invitation-link (:invitation/token invitation)))
                 (text :t.email/regards)
                 (text :t.email/footer))}))))
+

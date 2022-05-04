@@ -81,6 +81,11 @@
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/external-id-assigned)
          :application/external-id s/Str))
+(s/defschema ExpirationNotificationsSentEvent
+  (assoc schema-base/EventBase
+         :event/type (s/enum :application.event/expiration-notifications-sent)
+         :last-activity DateTime
+         :expires-on DateTime))
 (s/defschema LicensesAcceptedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/licenses-accepted)
@@ -180,6 +185,7 @@
    :application.event/deleted DeletedEvent
    :application.event/draft-saved DraftSavedEvent
    :application.event/external-id-assigned ExternalIdAssignedEvent
+   :application.event/expiration-notifications-sent ExpirationNotificationsSentEvent
    :application.event/licenses-accepted LicensesAcceptedEvent
    :application.event/licenses-added LicensesAddedEvent
    :application.event/member-added MemberAddedEvent

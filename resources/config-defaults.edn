@@ -327,12 +327,17 @@
  ;; nil = no limit
  :attachment-max-size 10000000
 
- ;; Should applications be deleted after a set period of time has passed?
- ;; Use map with key as required application state, and value as ISO-8601 duration:
- ;; {:application.state/draft "P90D" :application.state/closed "P7D"}
+ ;; Should applications be deleted after having been inactive for a set period of time?
+ ;; Use map with key as required application state, and value as a map:
+ ;;   {:application.state/draft {:delete-after "P90D" :reminder "P7D"}}
+ ;;   :delete-after - delete application after period of time since last activity
+ ;;   :reminder - (optional) send reminder about expiration to application members (as period of time before expiration)
  ;; nil = feature not enabled.
+ ;; NB: currently :application.state/draft is the only supported application state
+ ;; NB: expirer-bot user must be created before enabling application expiration. see docs/bots.md for more information
  ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
  :application-expiration nil
+
 
  ;; Experimental features
 

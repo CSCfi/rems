@@ -202,6 +202,7 @@
                           :draft-saved "%1 saved a draft."
                           ;; %2 - external id
                           :external-id-assigned "%1 assigned an external id %2."
+                          :expiration-notifications-sent "Expiration notification emails sent."
                           :licenses-accepted "%1 accepted the terms of use."
                           :licenses-added "%1 added terms of use."
                           ;; %2 - member name
@@ -389,6 +390,8 @@
                                :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can still view the application at %6"
                                :subject-to-handler "(%3) Application has been closed"
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application at %6"}
+          :application-expiration-notification {:subject-to-member "Your unsubmitted application %2 will be deleted soon"
+                                                :message-to-member "Dear %1,\n\nYour unsubmitted application has been inactive since %3 and it will be deleted after %4, if it is not edited.\n\nYou can view and edit the application at %5"}
           :application-returned {:subject-to-applicant "Your application %3 needs to be amended"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can view and edit the application at %6"
                                  :subject-to-handler "(%3) Application has been returned to applicant"
