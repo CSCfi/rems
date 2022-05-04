@@ -3,7 +3,6 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
-            [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users :as users]

@@ -740,9 +740,9 @@
         applicant "alice"
         handler "developer"
         app-id (test-helpers/create-application! {:actor applicant})]
-    (test-helpers/create-user! {:eppn "member1"})
-    (test-helpers/create-user! {:eppn "reviewer1"})
-    (test-helpers/create-user! {:eppn "decider1"})
+    (test-helpers/create-user! {:userid "member1"})
+    (test-helpers/create-user! {:userid "reviewer1"})
+    (test-helpers/create-user! {:userid "decider1"})
     (testing "invite member for draft as applicant"
       (is (= {:success true}
              (send-command applicant {:type :application.command/invite-member
@@ -1935,9 +1935,9 @@
                                            handler)))))))
 
 (deftest test-applications-api-duplicate-user
-  (let [_ (test-helpers/create-user! {:eppn "duplicated" :name "Dupli Cated" :email "duplicated@example.com" :mappings {"identity1" "dupe" "identity2" "dupe"}})
-        _ (test-helpers/create-user! {:eppn "johnsmith" :name "John Smith" :email "john.smith@example.com" :mappings {"identity1" "johnsmith" "identity2" "smith"}})
-        _ (test-helpers/create-user! {:eppn "jillsmith" :name "Jill Smith" :email "jill.smith@example.com" :mappings {"identity1" "jillsmith" "identity2" "smith"}})]
+  (let [_ (test-helpers/create-user! {:userid "duplicated" :name "Dupli Cated" :email "duplicated@example.com" :mappings {"identity1" "dupe" "identity2" "dupe"}})
+        _ (test-helpers/create-user! {:userid "johnsmith" :name "John Smith" :email "john.smith@example.com" :mappings {"identity1" "johnsmith" "identity2" "smith"}})
+        _ (test-helpers/create-user! {:userid "jillsmith" :name "Jill Smith" :email "jill.smith@example.com" :mappings {"identity1" "jillsmith" "identity2" "smith"}})]
 
     (testing "duplicate mappings but only for one userid"
       (is (api-call :get "/api/my-applications" nil "42" "dupe")))
@@ -1975,8 +1975,8 @@
         reviewer "reviewer"
         decider "decider"
         app-id (test-helpers/create-application! {:actor applicant})]
-    (test-helpers/create-user! {:eppn reviewer})
-    (test-helpers/create-user! {:eppn decider})
+    (test-helpers/create-user! {:userid reviewer})
+    (test-helpers/create-user! {:userid decider})
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos handler))

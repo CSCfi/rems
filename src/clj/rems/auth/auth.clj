@@ -27,7 +27,7 @@
     (-authenticate [_ request _]
       (when (:uses-valid-api-key? request)
         (when-let [uid (get-api-user request)]
-          (merge {:eppn uid}
+          (merge {:userid uid}
                  ;; we need the raw user attrs here to emulate other login methods
                  (users/get-raw-user-attributes uid)))))))
 

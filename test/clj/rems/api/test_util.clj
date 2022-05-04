@@ -27,7 +27,7 @@
 
       (testing "and user has it"
         (binding [context/*roles* #{:role1}
-                  context/*user* {:eppn "user1"}]
+                  context/*user* {:userid "user1"}]
           (is (= {:status 200
                   :headers {}
                   :body {:success true}}
@@ -36,7 +36,7 @@
 
       (testing "but user doesn't have it"
         (binding [context/*roles* #{}
-                  context/*user* {:eppn "user1"}]
+                  context/*user* {:userid "user1"}]
           (is (thrown? ForbiddenException
                        (route {:request-method :get
                                :uri "/foo"})))))
@@ -64,14 +64,14 @@
       (is (= "Summary text (roles: role1)"
              (get-in route [:info :public :summary])))
       (binding [context/*roles* #{:role1}
-                context/*user* {:eppn "user1"}]
+                context/*user* {:userid "user1"}]
         (is (= {:status 200
                 :headers {}
                 :body {:success true}}
                (route {:request-method :get
                        :uri "/foo"}))))
       (binding [context/*roles* #{}
-                context/*user* {:eppn "user1"}]
+                context/*user* {:userid "user1"}]
         (is (thrown? ForbiddenException
                      (route {:request-method :get
                              :uri "/foo"}))))))

@@ -631,9 +631,9 @@
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-getx :application-id)
                             :actor "alice"})
-    (test-helpers/create-user! {:eppn "ionna" :commonName "Ionna Insprucker" :mail "ionna@ins.mail"})
-    (test-helpers/create-user! {:eppn "jade" :commonName "Jade Jenner" :mail "jade80@mail.name"})
-    (test-helpers/create-user! {:eppn "kayla" :commonName "Kayla Kale" :mail "kale@is.good"})
+    (test-helpers/create-user! {:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"})
+    (test-helpers/create-user! {:userid "jade" :name "Jade Jenner" :email "jade80@mail.name"})
+    (test-helpers/create-user! {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"})
     (test-helpers/command! {:type :application.command/add-member
                             :application-id (btu/context-getx :application-id)
                             :member {:userid "ionna"}
@@ -696,7 +696,7 @@
                             :actor "alice"})
 
     (testing "disabling the 2nd item"
-      (binding [context/*user* {:eppn "owner"}
+      (binding [context/*user* {:userid "owner"}
                 context/*roles* #{:owner}]
         (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
 
@@ -786,7 +786,7 @@
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-invite-decider"))
     (test-helpers/submit-application (btu/context-getx :application-id) "alice")
-    (test-helpers/create-user! {:eppn "new-decider" :commonName "New Decider" :mail "new-decider@example.com"}))
+    (test-helpers/create-user! {:userid "new-decider" :name "New Decider" :email "new-decider@example.com"}))
   (btu/with-postmortem
     (testing "handler invites decider"
       (login-as "developer")
@@ -859,7 +859,7 @@
     (btu/context-assoc! :workflow-id (test-helpers/create-workflow! {:title (btu/context-getx :workflow-title) :handlers []}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
                                                                             :workflow-id (btu/context-getx :workflow-id)}))
-    (test-helpers/create-user! {:eppn "invited-person-id" :commonName "Invited Person Name" :mail "invited-person-id@example.com"})
+    (test-helpers/create-user! {:userid "invited-person-id" :name "Invited Person Name" :email "invited-person-id@example.com"})
     (with-user "owner"
       (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
                                                                                 :name "Dorothy Vaughan"
@@ -2364,14 +2364,14 @@
                     str/split-lines)))))))
 
 (deftest test-organizations
-  (test-helpers/create-user! {:eppn "organization-owner1"
-                              :commonName "Organization Owner 1"
-                              :mail "organization-owner1@example.com"
+  (test-helpers/create-user! {:userid "organization-owner1"
+                              :name "Organization Owner 1"
+                              :email "organization-owner1@example.com"
                               :organizations [{:organization/id "Default"}]}
                              :owner)
-  (test-helpers/create-user! {:eppn "organization-owner2"
-                              :commonName "Organization Owner 2"
-                              :mail "organization-owner2@example.com"
+  (test-helpers/create-user! {:userid "organization-owner2"
+                              :name "Organization Owner 2"
+                              :email "organization-owner2@example.com"
                               :organizations [{:organization/id "Default"}]}
                              :owner)
 
@@ -2683,7 +2683,7 @@
                       (slurp-rows :catalogue-tree)))
           "can't see root category either because it's empty")
 
-      (binding [context/*user* {:eppn "owner"}
+      (binding [context/*user* {:userid "owner"}
                 context/*roles* #{:owner}]
         (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
 

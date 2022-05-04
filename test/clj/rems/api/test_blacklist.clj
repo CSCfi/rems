@@ -50,11 +50,11 @@
 
 (deftest test-blacklist
   (api-key/add-api-key! "42")
-  (test-helpers/create-user! {:eppn +command-user+ :commonName "Owner" :mail "owner@example.com"} :owner)
-  (test-helpers/create-user! {:eppn +fetch-user+} :reporter)
-  (test-helpers/create-user! {:eppn "user1" :email "" :mappings {"alt-id" "user1-alt-id"}})
-  (test-helpers/create-user! {:eppn "user2" :email ""})
-  (test-helpers/create-user! {:eppn "user3" :email ""})
+  (test-helpers/create-user! {:userid +command-user+ :name "Owner" :email "owner@example.com"} :owner)
+  (test-helpers/create-user! {:userid +fetch-user+} :reporter)
+  (test-helpers/create-user! {:userid "user1" :mappings {"alt-id" "user1-alt-id"}})
+  (test-helpers/create-user! {:userid "user2"})
+  (test-helpers/create-user! {:userid "user3"})
   (let [_ (test-helpers/create-resource! {:resource-ext-id "A"})
         res-id-2 (test-helpers/create-resource! {:resource-ext-id "B"})
         _ (test-helpers/create-resource! {:resource-ext-id "C"})

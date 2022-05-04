@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.25
 
+**NB: This release contains migrations!**
+
 NB: The login has changed to allow more configurable user identity and other attributes. Consider this a big change worth some manual testing to see that everything works.
 
 ### Breaking changes
@@ -15,6 +17,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 - Users are required a name and email from the IdP to be allowed in. (#2889)
+- User attributes have been renamed internally. If you directly accessed the database, please note that `eppn -> userid`, `commonName -> name` and `mail -> email`. (#2377)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)

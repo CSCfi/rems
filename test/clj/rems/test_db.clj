@@ -32,8 +32,8 @@
           "should find same catalogue item by id"))))
 
 (deftest test-multi-applications
-  (test-helpers/create-user! {:eppn "test-user" :mail "test-user@test.com" :commonName "Test-user"})
-  (test-helpers/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
+  (test-helpers/create-user! {:userid "test-user" :email "test-user@test.com" :name "Test-user"})
+  (test-helpers/create-user! {:userid "handler" :email "handler@test.com" :name "Handler"})
   (let [applicant "test-user"
         wfid (test-helpers/create-workflow! {:handlers ["handler"]})
         res1 (test-helpers/create-resource! {:resource-ext-id "resid111"})
@@ -66,9 +66,9 @@
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-get-entitlements-for-export
-  (test-helpers/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
-  (test-helpers/create-user! {:eppn "jack" :mail "jack@test.com" :commonName "Jack"})
-  (test-helpers/create-user! {:eppn "jill" :mail "jill@test.com" :commonName "Jill"})
+  (test-helpers/create-user! {:userid "handler" :email "handler@test.com" :name "Handler"})
+  (test-helpers/create-user! {:userid "jack" :email "jack@test.com" :name "Jack"})
+  (test-helpers/create-user! {:userid "jill" :email "jill@test.com" :name "Jill"})
   (let [wf (test-helpers/create-workflow! {:handlers ["handler"]})
         form-id (test-helpers/create-form! {})
         res1 (test-helpers/create-resource! {:resource-ext-id "resource1"})

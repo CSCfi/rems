@@ -11,7 +11,7 @@
   (is (= nil (workflow/get-all-workflow-roles "anyone")))
 
   (testing "handler role"
-    (test-helpers/create-user! {:eppn "handler-user"})
+    (test-helpers/create-user! {:userid "handler-user"})
     (test-helpers/create-workflow! {:handlers ["handler-user"]})
     (is (= #{:handler} (workflow/get-all-workflow-roles "handler-user")))))
 

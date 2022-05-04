@@ -51,7 +51,7 @@
 (defn create-user! [user-attributes-and-mappings & roles]
   (let [mappings (:mappings user-attributes-and-mappings)
         user-attributes (dissoc user-attributes-and-mappings :mappings)
-        user (:eppn user-attributes)]
+        user (:userid user-attributes)]
     (users/add-user-raw! user user-attributes)
     (doseq [[k v] mappings]
       (user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))

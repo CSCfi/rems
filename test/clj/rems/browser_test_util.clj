@@ -174,7 +174,7 @@
   (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
   (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
   (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
-  (test-helpers/create-user! {:eppn "applicant" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! {:userid "applicant" :organizations [{:organization/id "default"}]})
   (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
   (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow

@@ -59,7 +59,7 @@
                                     :ssn "012345-0123"}]
 
           (testing "create owner & api key"
-            (test-helpers/create-user! {:eppn owner-id} :owner)
+            (test-helpers/create-user! {:userid owner-id} :owner)
             (api-key/add-api-key! api-key))
 
           (testing "create organization"
@@ -394,7 +394,7 @@
                              :name "rejecter"}]
 
     (testing "create owner & api key"
-      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (test-helpers/create-user! {:userid owner-id} :owner)
       (api-key/add-api-key! api-key))
 
     (testing "create users"
@@ -517,7 +517,7 @@
                              :name "rejecter"}]
 
     (testing "create owner & api key"
-      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (test-helpers/create-user! {:userid owner-id} :owner)
       (api-key/add-api-key! api-key))
 
     (testing "create users"
@@ -659,7 +659,7 @@
                         :name "bona fide bot"}]
 
     (testing "create owner & api key"
-      (test-helpers/create-user! {:eppn owner-id} :owner)
+      (test-helpers/create-user! {:userid owner-id} :owner)
       (api-key/add-api-key! api-key))
 
     (testing "create users"

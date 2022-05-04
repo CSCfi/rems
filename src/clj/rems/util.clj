@@ -32,13 +32,13 @@
   ([]
    (get-user-id context/*user*))
   ([user]
-   (:eppn user)))
+   (:userid user)))
 
 (defn getx-user-id
   ([]
    (getx-user-id context/*user*))
   ([user]
-   (getx user :eppn)))
+   (getx user :userid)))
 
 (defn secure-token
   []
