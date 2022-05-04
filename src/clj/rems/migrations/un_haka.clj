@@ -21,13 +21,12 @@ UPDATE users SET userAttrs = :userattrs::jsonb WHERE userid = :userid;
   {:userid userid
    :userattrs (map-keys #(swaps % %) userattrs)})
 
-(deftest test-migrate-user-organizations
+(deftest test-migrate-user
   (is (= {:userid "alice"
           :userattrs {:newthing 42}}
          (migrate-user {:userid "alice"
                         :userattrs {:something 42}}
-                       {:something :newthing}))
-      "adds organizations even if empty")
+                       {:something :newthing})))
   (is (= {:userid "alice"
           :userattrs {:something 42
                       :newthing ["foo"]}}
