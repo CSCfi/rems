@@ -205,7 +205,7 @@
                       {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a" :end +test-time-string+}]}}
                     (set (get-requests server))))))))
 
-      (testing "changing resources changes entitlements"
+      (testing "changing resources ends entitlements"
         (run-with-server
          {:status 200}
          (fn [server]
@@ -214,37 +214,58 @@
                                    :actor admin
                                    :catalogue-item-ids [item1 item3]
                                    :comment "Removed second resource, added third resource"})
-
            (entitlements/process-outbox!)
 
-           (testing "entitlements changed in db"
-             (is (= #{[applicant "resource1"] [applicant "resource3"]}
+           (testing "entitlements removed in db"
+             (is (= #{}
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
            (testing "entitlement changes POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    remove-paths (requests-for-paths server "/remove")]
-               (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end nil}]}}
+               (is (= #{}
                       (set add-paths)))
-               (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
-                      (set remove-paths))))))))
+               (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}
+                        {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
+                      (set remove-paths)))))))))
 
-      (testing "closed application should end entitlements"
+    (testing "closed application should end entitlements"
+      (let [app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
         (run-with-server
          {:status 200}
          (fn [server]
+           (test-helpers/command! {:type :application.command/accept-licenses
+                                   :application-id app-id
+                                   :accepted-licenses [lic-id1 lic-id2]
+                                   :actor applicant})
+           (test-helpers/command! {:type :application.command/submit
+                                   :application-id app-id
+                                   :actor applicant})
+           (test-helpers/command! {:type :application.command/approve
+                                   :application-id app-id
+                                   :actor admin
+                                   :comment ""})
+           (entitlements/process-outbox!)
+
+           (testing "entitlements added in db"
+             (is (= #{["bob" "resource1"] ["bob" "resource2"]}
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :active-at (time/now)}))))))
+           (testing "entitlements POSTed to callback"
+             (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end nil}]}
+                      {:path "/add" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end nil}]}}
+                    (set (take-last 2 (get-requests server))))))
+
            (test-helpers/command! {:type :application.command/close
                                    :application-id app-id
                                    :actor admin
                                    :comment "Finished"})
-
            (entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
              (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
            (testing "ended entitlements POSTed to callback"
              (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}
-                      {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
-                    (set (get-requests server)))))))))
+                      {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}}
+                    (set (take-last 2 (get-requests server))))))))))
 
     (testing "approve with end time"
       (let [end (time/date-time 2100 01 01)
