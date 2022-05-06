@@ -335,9 +335,19 @@
                                             :catalogue-item-ids [cat-item-id2]}))))
 
     (testing "submitting again"
-      (is (= {:success true} (send-command user-id
-                                           {:type :application.command/submit
-                                            :application-id application-id}))))
+      (testing "fails because licenses are not accepted due to changing resources"
+        (is (= {:errors [{:type "t.actions.errors/licenses-not-accepted"}], :success false}
+               (send-command user-id
+                             {:type :application.command/submit
+                              :application-id application-id}))))
+      (testing "accepting licenses and submitting"
+        (is (= {:success true} (send-command user-id
+                                             {:type :application.command/accept-licenses
+                                              :application-id application-id
+                                              :accepted-licenses [license-id1 license-id2]})))
+        (is (= {:success true} (send-command user-id
+                                             {:type :application.command/submit
+                                              :application-id application-id})))))
 
     (testing "send commands with authorized user"
       (testing "even handler cannot review without request"
@@ -474,6 +484,7 @@
                     "application.event/external-id-assigned"
                     "application.event/returned"
                     "application.event/resources-changed"
+                    "application.event/licenses-accepted"
                     "application.event/submitted"
                     "application.event/review-requested"
                     "application.event/reviewed"
@@ -497,6 +508,7 @@
                     "application.event/external-id-assigned"
                     "application.event/returned"
                     "application.event/resources-changed"
+                    "application.event/licenses-accepted"
                     "application.event/submitted"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
