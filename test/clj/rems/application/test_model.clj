@@ -765,7 +765,8 @@
                                                                        {:catalogue-item/id 40
                                                                         :resource/ext-id "urn:31"}])
                                        :application/licenses (conj (:application/licenses submitted-application)
-                                                                   {:license/id 34})})]
+                                                                   {:license/id 34})
+                                       :application/accepted-licenses {}})]
       (is (= expected-application (recreate expected-application)))))
   (testing "for approved application"
     (let [new-event {:event/type :application.event/resources-changed
@@ -792,7 +793,8 @@
                                        :application/licenses [{:license/id 30}
                                                               {:license/id 31}
                                                               {:license/id 32}
-                                                              {:license/id 34}]})]
+                                                              {:license/id 34}]
+                                       :application/accepted-licenses {}})]
       (is (= expected-application (recreate expected-application))))))
 
 (deftest test-application-view-licenses-accepted

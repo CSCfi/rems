@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [assoc-some find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
@@ -222,7 +222,8 @@
       (assoc :application/forms (vec (:application/forms event)))
       (assoc :application/resources (vec (:application/resources event)))
       (assoc :application/licenses (map #(select-keys % [:license/id])
-                                        (:application/licenses event)))))
+                                        (:application/licenses event)))
+      (assoc-some :application/accepted-licenses {})))
 
 (defmethod application-base-view :application.event/closed
   [application _event]
