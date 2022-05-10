@@ -13,15 +13,13 @@
 (rf/reg-event-fx
  ::enter-new-application-page
  (fn [{:keys [db]} [_ catalogue-item-ids]]
-   (let [description [text :t.applications/application]]
-     (post! "/api/applications/create"
-            {:params {:catalogue-item-ids catalogue-item-ids}
-             :handler (flash-message/default-success-handler
-                       :top description
-                       (fn [response]
-                         (remove-catalogue-items-from-cart! catalogue-item-ids)
-                         (replace-url! (str "/application/" (:application-id response)))))
-             :error-handler (flash-message/default-error-handler :top description)}))
+   (post! "/api/applications/create"
+          {:params {:catalogue-item-ids catalogue-item-ids}
+           :handler (fn [response]
+                      (remove-catalogue-items-from-cart! catalogue-item-ids)
+                      (replace-url! (str "/application/" (:application-id response))))
+           :error-handler (flash-message/default-error-handler
+                           :top [text :t.applications/application])})
    {}))
 
 (defn new-application-page []

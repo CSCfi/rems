@@ -40,6 +40,7 @@ NB: The login has changed to allow more configurable user identity and other att
 - Improve the accessibility of the small navbar. (#2907)
 - Load config overrides from system properties and env (#2917)
 - Application draft can now be saved even if there are validation warnings. (#2766)
+- New application page no longer displays "Application: Success" message. (#2838)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 
