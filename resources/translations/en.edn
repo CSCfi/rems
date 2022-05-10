@@ -202,7 +202,7 @@
                           :draft-saved "%1 saved a draft."
                           ;; %2 - external id
                           :external-id-assigned "%1 assigned an external id %2."
-                          :expiration-notifications-sent "Expiration notification emails sent."
+                          :expiration-notifications-sent "%1 sent expiration notification email."
                           :licenses-accepted "%1 accepted the terms of use."
                           :licenses-added "%1 added terms of use."
                           ;; %2 - member name

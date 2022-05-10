@@ -67,8 +67,11 @@ Unlike other bots, the Expirer bot is designed to be triggered by an external
 event, such as a periodically ran process. The bot is supplied an application
 and it returns appropriate command description, if applicable. Responsibility
 of the command execution is left to the caller. A scheduler is implemented in
-REMS, enabled by config option `:expiration` to periodically call the Expirer
-bot.
+REMS, enabled by config option `:application-expiration` to periodically call
+the Expirer bot. Expirer Bot observes applications' last activity and decides
+if application should be deleted or notification emails sent. If the activity
+timestamp is updated, users may potentially receive new notification email in
+the future.
 
 Depending on the application state and config, the Expirer bot can return one
 of two commands:

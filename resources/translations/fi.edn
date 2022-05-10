@@ -190,7 +190,7 @@
                           :deleted "%1 poisti luonnoksen."
                           :draft-saved "%1 tallensi luonnoksen."
                           :external-id-assigned "%1 lisäsi tunnisteen %2."
-                          :expiration-notifications-sent "Sähköpostimuistutukset lähetetty vanhentuvasta hakemuksesta."
+                          :expiration-notifications-sent "%1 lähetti sähköpostimuistutuksen vanhentuvasta hakemuksesta."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
                           :licenses-added "%1 lisäsi käyttöehtoja."
                           :member-added "%1 lisäsi käyttäjän %2 hakemuksen jäseneksi."
@@ -359,7 +359,7 @@
                                :subject-to-handler "(%3) Hakemus on suljettu"
                                :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
           :application-expiration-notification {:subject-to-member "Lähettämätön hakemuksesi %2 poistetaan pian"
-                                                :message-to-member "Hyvä %1,\n\nLähettämätön hakemuksesi on ollut epäaktiivisena %3 lähtien ja se poistetaan %4 jälkeen, jos sitä ei muokata. \n\nVoit tarkastella ja muokata hakemusta osoitteessa %5"}
+                                                :message-to-member "Hyvä %1,\n\nLähettämätön hakemuksesi on ollut passiivisena %3 lähtien ja se poistetaan %4 jälkeen, jos sitä ei muokata. \n\nVoit tarkastella ja muokata hakemusta osoitteessa %5"}
           :application-returned {:subject-to-applicant "Hakemuksesi %3 vaatii täydentämistä"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella ja muokata hakemusta osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on palautettu"

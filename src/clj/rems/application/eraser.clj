@@ -16,8 +16,8 @@
     (doseq [application (applications/get-all-unrestricted-applications)]
       (when-some [cmd (expirer-bot/run-expirer-bot application)]
         (command/command! cmd)))
-    (log/warn (str "Cannot process applications, because user " expirer-bot/bot-userid " does not exist")
-              #'process-applications!))
+    (log/warnf "Cannot process applications, because user %s does not exist"
+               expirer-bot/bot-userid))
   (applications/reload-cache!)
   (log/info :finish #'process-applications!))
 
@@ -30,15 +30,17 @@
           (scheduler/stop! expired-application-poller)))
 
 (comment
-  (mount/defstate expired-application-poller-test
-    :start (scheduler/start! "expired-application-poller-test"
-                             (fn [] (with-redefs [env {:application-expiration
-                                                       {:application.state/draft
-                                                        {:delete-after "P90D"
-                                                         :reminder-before "P7D"}}}]
-                                      (process-applications!)))
-                             (.toStandardDuration (time/seconds 10)))
-    :stop (scheduler/stop! expired-application-poller-test))
+  (let [config {:application.state/draft {:delete-after "P1D"
+                                          :reminder-before "P1D"}}]
+    (mount/defstate expired-application-poller-test
+      :start (scheduler/start! "expired-application-poller-test"
+                               (fn [] (with-redefs [env (assoc env
+                                                               :application-expiration
+                                                               config)]
+                                        (process-applications!)))
+                               (.toStandardDuration (time/seconds 10)))
+      :stop (scheduler/stop! expired-application-poller-test)))
+
   (mount/start #{#'expired-application-poller-test})
   (mount/stop #{#'expired-application-poller-test}))
 

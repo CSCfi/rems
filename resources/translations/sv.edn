@@ -190,7 +190,7 @@
                           :deleted "%1 raderade utkastet."
                           :draft-saved "%1 sparade ett utkast."
                           :external-id-assigned "%1 lade till externt id %2."
-                          :expiration-notifications-sent "E-postmeddelanden skickades p.g.a. en inaktiv ansökan."
+                          :expiration-notifications-sent "%1 skickade e-post p.g.a. inaktiv ansökan."
                           :licenses-accepted "%1 accepterade licenserna."
                           :licenses-added "%1 lade till licenser."
                           :member-added "%1 lade till %2 som deltagare."

@@ -650,11 +650,16 @@
   [cmd application injections]
   (ok {:event/type :application.event/deleted}))
 
+(defn- invalid-expiration-error [cmd]
+  (when (time/before? (:expires-on cmd) (:last-activity cmd))
+    {:error [{:type :invalid-expiration}]}))
+
 (defmethod command-handler :application.command/send-expiration-notifications
   [cmd _application _injections]
-  (ok {:event/type :application.event/expiration-notifications-sent
-       :last-activity (:last-activity cmd)
-       :expires-on (:expires-on cmd)}))
+  (or (invalid-expiration-error cmd)
+      (ok {:event/type :application.event/expiration-notifications-sent
+           :last-activity (:last-activity cmd)
+           :expires-on (:expires-on cmd)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event
