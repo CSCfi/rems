@@ -20,7 +20,7 @@ NB: New feature, reminder email for application expiration uses new email templa
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 - Users are required a name and email from the IdP to be allowed in. (#2889)
 - User attributes have been renamed internally. If you directly accessed the database, please note that `eppn -> userid`, `commonName -> name` and `mail -> email`. (#2377)
-- Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. (#2906)
+- Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. Please read `docs/bots.md` section on Expirer bot. (#2906)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)

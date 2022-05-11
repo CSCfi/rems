@@ -3,7 +3,6 @@
   allowed to execute them. Workflows for production use can be derived from
   the master workflow by restricting the possible commands (permissions)."
   (:require [rems.application.commands :as commands]
-            [rems.application.expirer-bot :as expirer-bot]
             [rems.permissions :as permissions]))
 
 (def whitelist
@@ -127,7 +126,6 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/give-role-to-users :expirer [expirer-bot/bot-userid])
       (permissions/update-role-permissions created-permissions)))
 
 (defmethod application-permissions-view :application.event/member-added

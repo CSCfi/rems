@@ -10,6 +10,7 @@
             [rems.locales]
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
+            [rems.db.roles :as roles]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings :as user-settings]
@@ -99,6 +100,7 @@
                       (map :message)))))
 
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
+        (roles/add-role! expirer-bot/bot-userid :expirer)
 
         (testing "does not delete applications when configuration is not valid"
           (reset! log-messages [])
@@ -139,6 +141,7 @@
         (test-helpers/create-user! {:userid "alice"})
         (test-helpers/create-user! {:userid "member"})
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
+        (roles/add-role! expirer-bot/bot-userid :expirer)
         (let [now (time/now)
               draft-expires-in-6d (create-application! {:draft? true
                                                         :date-time (time/minus now (time/days 84))

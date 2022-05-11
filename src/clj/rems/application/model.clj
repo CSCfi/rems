@@ -621,7 +621,8 @@
 
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
-      (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
+      (permissions/give-role-to-users :reporter (get-users-with-role :reporter))
+      (permissions/give-role-to-users :expirer (get-users-with-role :expirer))))
 
 (defn add-answers [application current-answers previous-answers]
   (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers) application))

@@ -78,6 +78,9 @@ of two commands:
 - `application.command/delete` deletes application immediately, and
 - `application.command/send-expiration-notifications` sends emails to members
 
+NB: `:expirer` role must be granted to Expirer bot. This can be done via CLI,
+using the command `grant-role`.
+
 NB: currently only draft application removal is supported by REMS.
 
 Example of creating the bot user with the API.
