@@ -87,6 +87,10 @@
   (assert-schema-errors response)
   (assert (= 500 (:status response))))
 
+(defn assert-response-is-not-found [response]
+  (assert-schema-errors response)
+  (assert (= 404 (:status response))))
+
 (defn response-is-ok? [response]
   (assert-schema-errors response)
   (= 200 (:status response)))

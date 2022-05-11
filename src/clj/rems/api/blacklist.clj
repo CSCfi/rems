@@ -4,9 +4,10 @@
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
-            [rems.api.util] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
+            [rems.db.resource :as resource]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.schema-base :as schema-base]
@@ -25,6 +26,11 @@
          :blacklist/comment s/Str
          :blacklist/added-by schema-base/UserWithAttributes
          :blacklist/added-at DateTime))
+
+(defn user-or-resource-not-found-error [command]
+  (when-not (and (users/user-exists? (get-in command [:blacklist/user :userid]))
+                 (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id])))
+    (not-found-json-response)))
 
 (def blacklist-api
   (context "/blacklist" []
@@ -54,13 +60,14 @@
       :return schema/SuccessResponse
       (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
-        (blacklist/add-user-to-blacklist! (getx-user-id) command)
-        (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
-          (let [result (command/command! cmd)]
-            (when (:errors result)
-              (log/error "Failure when running rejecter bot commands:" {:cmd cmd :result result})))))
-
-      (ok {:success true}))
+        (or (user-or-resource-not-found-error command)
+            (do (blacklist/add-user-to-blacklist! (getx-user-id) command)
+                (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
+                  (let [result (command/command! cmd)]
+                    (when (:errors result)
+                      (log/error "Failure when running rejecter bot commands:"
+                                 {:cmd cmd :result result}))))
+                (ok {:success true})))))
 
     (POST "/remove" []
       :summary "Remove a blacklist entry"
@@ -69,5 +76,6 @@
       :return schema/SuccessResponse
       (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
-        (blacklist/remove-user-from-blacklist! (getx-user-id) command)
-        (ok {:success true})))))
+        (or (user-or-resource-not-found-error command)
+            (do (blacklist/remove-user-from-blacklist! (getx-user-id) command)
+                (ok {:success true})))))))
