@@ -39,16 +39,18 @@
       (authenticate "42" +command-user+)
       (json-body command)
       handler))
-(def ^:private add-assert-ok! (comp assert-response-is-ok add!))
-(def ^:private add-assert-not-found! (comp assert-response-is-not-found add!))
+(def ^:private assert-add-ok! (comp assert-response-is-ok add!))
+(def ^:private assert-add-unprocessable-entity! (comp assert-response-is-unprocessable-entity
+                                                      add!))
 
 (defn- remove! [command]
   (-> (request :post "/api/blacklist/remove")
       (authenticate "42" +command-user+)
       (json-body command)
       handler))
-(def ^:private remove-assert-ok! (comp assert-response-is-ok remove!))
-(def ^:private remove-assert-not-found! (comp assert-response-is-not-found remove!))
+(def ^:private assert-remove-ok! (comp assert-response-is-ok remove!))
+(def ^:private assert-remove-unprocessable-entity! (comp assert-response-is-unprocessable-entity
+                                                         remove!))
 
 (deftest test-blacklist
   (api-key/add-api-key! "42")
@@ -70,13 +72,13 @@
       (is (= []
              (:application/blacklist (get-app)))))
     (testing "add three entries"
-      (add-assert-ok! {:blacklist/user {:userid "user1"}
+      (assert-add-ok! {:blacklist/user {:userid "user1"}
                        :blacklist/resource {:resource/ext-id "A"}
                        :comment "bad"})
-      (add-assert-ok! {:blacklist/user {:userid "user1-alt-id"}
+      (assert-add-ok! {:blacklist/user {:userid "user1-alt-id"}
                        :blacklist/resource {:resource/ext-id "B"}
                        :comment "quite bad"})
-      (add-assert-ok! {:blacklist/user {:userid "user2"}
+      (assert-add-ok! {:blacklist/user {:userid "user2"}
                        :blacklist/resource {:resource/ext-id "B"}
                        :comment "very bad"})
       (is (= [{:blacklist/resource {:resource/ext-id "A"}
@@ -116,7 +118,7 @@
       (is (= [{:resource/ext-id "B" :userid "user2"}]
              (simplify (fetch {:resource "B" :user "user2"})))))
     (testing "remove entry"
-      (remove-assert-ok! {:blacklist/user {:userid "user2"}
+      (assert-remove-ok! {:blacklist/user {:userid "user2"}
                           :blacklist/resource {:resource/ext-id "B"}
                           :comment "oops"})
       (is (= []
@@ -125,13 +127,13 @@
       (is (= []
              (:application/blacklist (get-app)))))
     (testing "add entry again"
-      (add-assert-ok! {:blacklist/user {:userid "user2"}
+      (assert-add-ok! {:blacklist/user {:userid "user2"}
                        :blacklist/resource {:resource/ext-id "B"}
                        :comment "again"})
       (is (= [{:resource/ext-id "B" :userid "user2"}]
              (simplify (fetch {:resource "B" :user "user2"})))))
     (testing "remove nonexistent entry"
-      (remove-assert-ok! {:blacklist/user {:userid "user3"}
+      (assert-remove-ok! {:blacklist/user {:userid "user3"}
                           :blacklist/resource {:resource/ext-id "C"}
                           :comment "undo"})
       (is (= [{:resource/ext-id "A" :userid "user1"}
@@ -143,19 +145,19 @@
         (is (= [{:resource/ext-id "A" :userid "user1"}
                 {:resource/ext-id "B" :userid "user1"}
                 {:resource/ext-id "B" :userid "user2"}] blacklist))
-        (add-assert-not-found! {:blacklist/user {:userid "definitely-not-found"}
-                                :blacklist/resource {:resource/ext-id "A"}
-                                :comment "not found"})
+        (assert-add-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
+                                           :blacklist/resource {:resource/ext-id "A"}
+                                           :comment "not found"})
         (is (= blacklist (simplify (fetch {}))))
-        (add-assert-not-found! {:blacklist/user {:userid "user1"}
-                                :blacklist/resource {:resource/ext-id "definitely-not-found"}
-                                :comment "not found"})
+        (assert-add-unprocessable-entity! {:blacklist/user {:userid "user1"}
+                                           :blacklist/resource {:resource/ext-id "definitely-not-found"}
+                                           :comment "not found"})
         (is (= blacklist (simplify (fetch {}))))
-        (remove-assert-not-found! {:blacklist/user {:userid "definitely-not-found"}
-                                   :blacklist/resource {:resource/ext-id "B"}
-                                   :comment "not found"})
+        (assert-remove-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
+                                              :blacklist/resource {:resource/ext-id "B"}
+                                              :comment "not found"})
         (is (= blacklist (simplify (fetch {}))))
-        (remove-assert-not-found! {:blacklist/user {:userid "user2"}
-                                   :blacklist/resource {:resource/ext-id "definitely-not-found"}
-                                   :comment "not found"})
+        (assert-remove-unprocessable-entity! {:blacklist/user {:userid "user2"}
+                                              :blacklist/resource {:resource/ext-id "definitely-not-found"}
+                                              :comment "not found"})
         (is (= blacklist (simplify (fetch {}))))))))

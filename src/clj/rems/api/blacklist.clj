@@ -4,7 +4,7 @@
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [unprocessable-entity-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.resource :as resource]
@@ -27,10 +27,13 @@
          :blacklist/added-by schema-base/UserWithAttributes
          :blacklist/added-at DateTime))
 
-(defn user-or-resource-not-found-error [command]
-  (when-not (and (users/user-exists? (get-in command [:blacklist/user :userid]))
-                 (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id])))
-    (not-found-json-response)))
+(defn- user-not-found-error [command]
+  (when-not (users/user-exists? (get-in command [:blacklist/user :userid]))
+    (unprocessable-entity-response "user not found")))
+
+(defn- resource-not-found-error [command]
+  (when-not (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
+    (unprocessable-entity-response "resource not found")))
 
 (def blacklist-api
   (context "/blacklist" []
@@ -60,7 +63,8 @@
       :return schema/SuccessResponse
       (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
-        (or (user-or-resource-not-found-error command)
+        (or (user-not-found-error command)
+            (resource-not-found-error command)
             (do (blacklist/add-user-to-blacklist! (getx-user-id) command)
                 (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
                   (let [result (command/command! cmd)]
@@ -76,6 +80,7 @@
       :return schema/SuccessResponse
       (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
-        (or (user-or-resource-not-found-error command)
+        (or (user-not-found-error command)
+            (resource-not-found-error command)
             (do (blacklist/remove-user-from-blacklist! (getx-user-id) command)
                 (ok {:success true})))))))

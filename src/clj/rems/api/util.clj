@@ -4,6 +4,7 @@
             [ring.util.http-response :as http-response]
             [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
             [rems.common.roles :refer [has-roles?]]
+            [rems.json :as json]
             [rems.util :refer [errorf get-user-id]]))
 
 (defn check-user []
@@ -43,3 +44,8 @@
 (defn not-found-text-response []
   (-> (http-response/not-found "not found")
       (http-response/content-type "text/plain")))
+
+(defn unprocessable-entity-response [& [message]]
+  (let [body (json/generate-string {:error (or message "unprocessable entity")})]
+    (-> (http-response/unprocessable-entity body)
+        (http-response/content-type "application/json"))))
