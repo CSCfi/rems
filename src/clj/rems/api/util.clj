@@ -45,7 +45,7 @@
   (-> (http-response/not-found "not found")
       (http-response/content-type "text/plain")))
 
-(defn unprocessable-entity-response [& [message]]
+(defn unprocessable-entity-json-response [& [message]]
   (let [body (json/generate-string {:error (or message "unprocessable entity")})]
     (-> (http-response/unprocessable-entity body)
         (http-response/content-type "application/json"))))

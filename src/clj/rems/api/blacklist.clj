@@ -4,7 +4,7 @@
             [rems.api.schema :as schema]
             [rems.api.services.command :as command]
             [rems.api.services.blacklist :as blacklist]
-            [rems.api.util :refer [unprocessable-entity-response]] ; required for route :roles
+            [rems.api.util :refer [unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.resource :as resource]
@@ -29,11 +29,11 @@
 
 (defn- user-not-found-error [command]
   (when-not (users/user-exists? (get-in command [:blacklist/user :userid]))
-    (unprocessable-entity-response "user not found")))
+    (unprocessable-entity-json-response "user not found")))
 
 (defn- resource-not-found-error [command]
   (when-not (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
-    (unprocessable-entity-response "resource not found")))
+    (unprocessable-entity-json-response "resource not found")))
 
 (def blacklist-api
   (context "/blacklist" []
