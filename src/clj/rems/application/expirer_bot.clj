@@ -14,7 +14,7 @@
   (let [last-event (last (:application/events application))]
     (if (= (:event/type last-event)
            :application.event/expiration-notifications-sent)
-      (:last-activity last-event)
+      (:last-activity last-event) ; because events update :application/last-activity timestamp
       (:application/last-activity application))))
 
 (defn- expiration-time [application]
@@ -24,12 +24,9 @@
     (-> (get-last-activity application)
         (time/plus (Period/parse delete-after)))))
 
-(defn- should-expire-application [application]
-  (some-> (expiration-time application)
-          (time/before? (time/now))))
-
 (defn- expire-application [application]
-  (when (should-expire-application application)
+  (when (some-> (expiration-time application)
+                (time/before? (time/now)))
     {:type :application.command/delete
      :time (time/now)
      :actor bot-userid
