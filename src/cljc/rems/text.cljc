@@ -133,6 +133,7 @@
    :application.event/deleted :t.applications.events/deleted
    :application.event/draft-saved :t.applications.events/draft-saved
    :application.event/external-id-assigned :t.applications.events/external-id-assigned
+   :application.event/expiration-notifications-sent :t.applications.events/expiration-notifications-sent
    :application.event/licenses-accepted :t.applications.events/licenses-accepted
    :application.event/licenses-added :t.applications.events/licenses-added
    :application.event/member-added :t.applications.events/member-added

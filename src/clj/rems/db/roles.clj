@@ -1,10 +1,9 @@
 (ns rems.db.roles
-  (:require [rems.common.util :refer [getx]]
-            [rems.db.core :as db]
+  (:require [rems.db.core :as db]
             [rems.util :refer [errorf]]))
 
 ;; The roles that are set for users in the database instead of setting them dynamically.
-(def ^:private +db-roles+ #{:owner :reporter :user-owner})
+(def ^:private +db-roles+ #{:owner :reporter :user-owner :expirer})
 
 (defn- role-from-db [{role-string :role}]
   (let [role (keyword role-string)]

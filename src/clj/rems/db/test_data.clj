@@ -37,7 +37,8 @@
 
 (defn create-bots! []
   (doseq [attr (vals +bot-user-data+)]
-    (create-user! attr)))
+    (create-user! attr))
+  (roles/add-role! (:expirer-bot +bot-users+) :expirer))
 
 (defn- create-archived-form! [actor]
   (with-user actor
@@ -472,7 +473,10 @@
                  :application-id app-id
                  :actor approver
                  :deciders [reviewer]
-                 :comment ""}))))
+                 :comment ""}))
+
+    (->> (time/minus (time/now) (time/days 84))
+         (create-draft! applicant [catid] "long forgotten draft"))))
 
 (defn- range-1
   "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."

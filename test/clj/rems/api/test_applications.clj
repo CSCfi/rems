@@ -2220,7 +2220,9 @@
                            "application.command/uninvite-member"
                            "application.command/delete"
                            "application.command/save-draft"
-                           "application.command/change-resources"]}
+                           "application.command/change-resources"]
+               :expirer ["application.command/send-expiration-notifications"
+                         "application.command/delete"]}
               :application/modified "2010-01-01T00:00:00.000Z"
               :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}
               :application/external-id "2010/1"

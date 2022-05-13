@@ -67,6 +67,8 @@
    :member #{:application.command/accept-licenses
              :application.command/copy-as-new}
    :reporter #{:see-everything}
+   :expirer #{:application.command/delete
+              :application.command/send-expiration-notifications}
    ;; member before accepting an invitation
    :everyone-else #{:application.command/accept-invitation}})
 

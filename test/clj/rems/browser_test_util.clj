@@ -259,7 +259,8 @@
     (test-helpers/create-workflow-licence! wfid text)
     (test-helpers/create-workflow-licence! decider-wf link)
     (test-helpers/create-workflow-licence! decider-wf text)
-    (test-helpers/submit-application app-id "applicant"))
+    (test-helpers/submit-application {:application-id app-id
+                                      :actor "applicant"}))
   (f))
 (defn test-dev-or-standalone-fixture
   "Depending on if we are trying to develop browser tests or

@@ -23,7 +23,8 @@
         res-id1 (test-helpers/create-resource! nil)
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :resource-id res-id1})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
-    (test-helpers/submit-application app-id "applicant")))
+    (test-helpers/submit-application {:application-id app-id
+                                      :actor "applicant"})))
 
 (deftest test-api-sql-timeouts
   (create-test-data)

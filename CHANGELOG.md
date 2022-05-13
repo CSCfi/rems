@@ -12,12 +12,15 @@ Changes since v2.25
 
 NB: The login has changed to allow more configurable user identity and other attributes. Consider this a big change worth some manual testing to see that everything works.
 
+NB: New feature, reminder email for application expiration uses new email template. If you enable the feature and you use customized email templates, please check `:t.email.application-expiration-notification/subject-to-member` and `:t.email.application-expiration-notification/message-to-member`.
+
 ### Breaking changes
 - The actor of the command API (for applications) is now always validated. Previously, there was a chance that a non-existent user could be sent (used mostly by our internal tests). (#2771, #2824, #2772, #2821)
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
 - Users are required a name and email from the IdP to be allowed in. (#2889)
 - User attributes have been renamed internally. If you directly accessed the database, please note that `eppn -> userid`, `commonName -> name` and `mail -> email`. (#2377)
+- Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. Please read `docs/bots.md` section on Expirer bot. (#2906)
 
 ### Additions
 - You can configure the OIDC attributes for name and email (see configuration.md)

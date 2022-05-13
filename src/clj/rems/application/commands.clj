@@ -102,6 +102,10 @@
                          :field schema-base/FieldId
                          :value schema-base/FieldValue}]
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
+(s/defschema SendExpirationNotificationsCommand
+  (assoc CommandBase
+         :last-activity DateTime
+         :expires-on DateTime))
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand
@@ -137,6 +141,7 @@
    :application.command/review ReviewCommand
    :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
+   :application.command/send-expiration-notifications SendExpirationNotificationsCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand})
 
@@ -644,6 +649,17 @@
 (defmethod command-handler :application.command/delete
   [cmd application injections]
   (ok {:event/type :application.event/deleted}))
+
+(defn- invalid-expiration-error [cmd]
+  (when (time/before? (:expires-on cmd) (:last-activity cmd))
+    {:error [{:type :invalid-expiration}]}))
+
+(defmethod command-handler :application.command/send-expiration-notifications
+  [cmd _application _injections]
+  (or (invalid-expiration-error cmd)
+      (ok {:event/type :application.event/expiration-notifications-sent
+           :last-activity (:last-activity cmd)
+           :expires-on (:expires-on cmd)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

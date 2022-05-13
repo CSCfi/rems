@@ -785,7 +785,8 @@
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-invite-decider"))
-    (test-helpers/submit-application (btu/context-getx :application-id) "alice")
+    (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                      :actor "alice"})
     (test-helpers/create-user! {:userid "new-decider" :name "New Decider" :email "new-decider@example.com"}))
   (btu/with-postmortem
     (testing "handler invites decider"
@@ -909,7 +910,8 @@
                                                                     [(btu/context-getx :catalogue-id)
                                                                      (btu/context-getx :catalogue-id-2)]
                                                                     "test-invite-reviewer"))
-    (test-helpers/submit-application (btu/context-getx :application-id) "alice"))
+    (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                      :actor "alice"}))
   (btu/with-postmortem
     (testing "handler invites reviewer"
       (login-as "developer")

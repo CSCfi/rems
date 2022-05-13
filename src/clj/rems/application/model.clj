@@ -257,6 +257,10 @@
   [application _event]
   application)
 
+(defmethod application-base-view :application.event/expiration-notifications-sent
+  [application _event]
+  application)
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -303,7 +307,9 @@
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
     {:role :handler :permission :application.command/approve}
-    {:role :handler :permission :application.command/reject}]))
+    {:role :handler :permission :application.command/reject}
+    {:role :expirer :permission :application.command/delete}
+    {:role :expirer :permission :application.command/send-expiration-notifications}]))
 
 (def decider-workflow
   (permissions/compile-rules
@@ -332,7 +338,9 @@
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
     {:role :decider :permission :application.command/approve}
-    {:role :decider :permission :application.command/reject}]))
+    {:role :decider :permission :application.command/reject}
+    {:role :expirer :permission :application.command/delete}
+    {:role :expirer :permission :application.command/send-expiration-notifications}]))
 
 (defn- application-permissions-for-workflow-view [application event]
   (let [whitelist (case (get-in application [:application/workflow :workflow/type])
@@ -613,7 +621,8 @@
 
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
-      (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
+      (permissions/give-role-to-users :reporter (get-users-with-role :reporter))
+      (permissions/give-role-to-users :expirer (get-users-with-role :expirer))))
 
 (defn add-answers [application current-answers previous-answers]
   (transform [:application/forms ALL] #(form/enrich-form-answers % current-answers previous-answers) application))
@@ -703,6 +712,7 @@
                         :application.event/deleted
                         :application.event/draft-saved
                         :application.event/external-id-assigned
+                        :application.event/expiration-notifications-sent
                         :application.event/licenses-accepted
                         :application.event/licenses-added
                         :application.event/member-added
