@@ -13,7 +13,7 @@
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
             [rems.db.test-data-users :refer :all]
-            [rems.testing-util :refer [with-fixed-time with-user]]
+            [rems.testing-util :refer [with-user]]
             [rems.config])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
