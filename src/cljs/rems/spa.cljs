@@ -601,7 +601,7 @@
 (defn hook-browser-navigation! []
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
-                 (fn [event]
+                 (fn [^js event]
                    (js/window.rems.hooks.navigate (.-token event))))
 
   (accountant/configure-navigation!
@@ -631,7 +631,7 @@
 
 ;;;; Initialize app
 
-(defn mount-components []
+(defn ^:dev/after-load mount-components []
   (rf/clear-subscription-cache!)
   (rd/render [page] (.getElementById js/document "app")))
 

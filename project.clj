@@ -84,13 +84,12 @@
   :java-source-paths ["src/java"]
   :javac-options ["-source" "8" "-target" "8"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ;; also run tests from src files
-  :resource-paths ["resources" "target/cljsbuild"]
+  :resource-paths ["resources" "target/shadow"]
   :target-path "target/%s/"
   :main rems.standalone
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljfmt "0.6.7"]
-            [lein-cljsbuild "1.1.8"]
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
@@ -101,33 +100,35 @@
 
   :clean-targets ["target"]
 
-  :figwheel {:http-server-root "public"
-             :server-logfile "log/figwheel_server.log"
-             :nrepl-port 7002
-             :css-dirs ["target/resources/public/css/en" "target/resources/public/css/fi" "target/resources/public/css/sv"]
-             :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
+  ;; :figwheel {:http-server-root "public"
+  ;;            :server-logfile "log/figwheel_server.log"
+  ;;            :nrepl-port 7002
+  ;;            :css-dirs ["target/resources/public/css/en" "target/resources/public/css/fi" "target/resources/public/css/sv"]
+  ;;            :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
-  :npm {:devDependencies [;; cljs testing
-                          [karma "3.1.1"]
-                          [karma-junit-reporter "2.0.1"]
-                          [karma-cljs-test "0.1.0"]
-                          [karma-chrome-launcher "2.2.0"]
-                          ;; printing to pdf
-                          [puppeteer "2.0.0"]]}
+  ;; :npm {:devDependencies [;; cljs testing
+  ;;                         [karma "3.1.1"]
+  ;;                         [karma-junit-reporter "2.0.1"]
+  ;;                         [karma-cljs-test "0.1.0"]
+  ;;                         [karma-chrome-launcher "2.2.0"]
+  ;;                         ;; printing to pdf
+  ;;                         [puppeteer "2.0.0"]]}
 
-  :doo {:build "test"
-        :paths {:karma "node_modules/karma/bin/karma"}
-        :alias {:default [:chrome-headless]}
-        :karma {:config {"plugins" ["karma-junit-reporter"]
-                         "reporters" ["progress" "junit"]
-                         "junitReporter" {"outputDir" "target/test-results"}}}}
+  ;; :doo {:build "test"
+  ;;       :paths {:karma "node_modules/karma/bin/karma"}
+  ;;       :alias {:default [:chrome-headless]}
+  ;;       :karma {:config {"plugins" ["karma-junit-reporter"]
+  ;;                        "reporters" ["progress" "junit"]
+  ;;                        "junitReporter" {"outputDir" "target/test-results"}}}}
 
-  :aliases {"kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
-            "browsertests" ["do" ["cljsbuild" "once"] ["kaocha" "browser"]]
-            "cljtests" ["do" ["cljsbuild" "once"] ["kaocha"]]
-            "cljtests-ci" ["do" ["cljsbuild" "once"] ["kaocha" "--reporter" "kaocha.report/documentation"]]
-            "alltests" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]
-            "test-ancient" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]} ; for lein ancient to work and run all tests
+  :aliases {"shadow-build" ["shell" "sh" "-c" "npm install && npx shadow-cljs compile app"]
+            "shadow-release" ["shell" "sh" "-c" "npm install && npx shadow-cljs release app"]
+            "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
+            "browsertests" ["do" "shadow-build" ["kaocha" "browser"]]
+            "cljtests" ["do" "shadow-build" ["kaocha"]]
+            "cljtests-ci" ["do" "shadow-build" ["kaocha" "--reporter" "kaocha.report/documentation"]]
+            "alltests" ["do" "shadow-build" ["kaocha"] #_["doo" "once"]]
+            "test-ancient" ["do" "shadow-build" ["kaocha"] #_["doo" "once"]]} ; for lein ancient to work and run all tests
 
   :profiles
   {:uberjar {:omit-source true
@@ -136,18 +137,18 @@
                           ["shell" "sh" "-c" "git rev-parse HEAD > target/uberjar/resources/git-revision.txt"]
                           "javac"
                           "compile"
-                          ["cljsbuild" "once" "min"]]
-             :cljsbuild {:builds {:min {:source-paths ["src/cljc" "src/cljs"]
-                                        :compiler {:output-dir "target/cljsbuild/public/js"
-                                                   :output-to "target/cljsbuild/public/js/app.js"
-                                                   :source-map "target/cljsbuild/public/js/app.js.map"
-                                                   :optimizations :advanced
-                                                   :pretty-print false
-                                                   :closure-warnings {:externs-validation :off
-                                                                      :non-standard-jsdoc :off}
-                                                   :warnings {:munged-namespace false} ;; for rems.actions.delete
-                                                   :infer-externs :true ;; for window.rems.hooks to work
-                                                   :externs ["react/externs/react.js"]}}}}
+                          "shadow-release"]
+             #_{:builds {:min {:source-paths ["src/cljc" "src/cljs"]
+                               :compiler {:output-dir "target/cljsbuild/public/js"
+                                          :output-to "target/cljsbuild/public/js/app.js"
+                                          :source-map "target/cljsbuild/public/js/app.js.map"
+                                          :optimizations :advanced
+                                          :pretty-print false
+                                          :closure-warnings {:externs-validation :off
+                                                             :non-standard-jsdoc :off}
+                                          :warnings {:munged-namespace false} ;; for rems.actions.delete
+                                          :infer-externs :true ;; for window.rems.hooks to work
+                                          :externs ["react/externs/react.js"]}}}}
              :aot :all
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
@@ -157,22 +158,19 @@
    :test [:project/dev :project/test :profiles/test]
 
    :project/dev {:dependencies [[binaryage/devtools "1.0.5"]
-                                [cider/piggieback "0.5.3"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.3"]
                                 [criterium "0.4.6"]
-                                [doo "0.1.11"]
+                                #_[doo "0.1.11"]
                                 [lambdaisland/kaocha "1.64.1010"]
                                 [lambdaisland/kaocha-junit-xml "0.0.76"]
                                 [etaoin "0.4.6"]
-                                [figwheel-sidecar "0.5.20" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "1.5.2"] ;; coupled to the reagent version
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.12"]
                                 [com.icegreen/greenmail "1.6.7"]]
 
                  :plugins [[lein-ancient "0.6.15"]
-                           [lein-doo "0.1.11"]
-                           [lein-figwheel "0.5.20"]]
+                           #_[lein-doo "0.1.11"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
@@ -180,24 +178,7 @@
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems
-                                :welcome (rems/repl-help)}
-
-                 :cljsbuild {:builds {:dev {:source-paths ["src/cljs" "src/cljc"]
-                                            :figwheel {:on-jsload "rems.spa/mount-components"}
-                                            :compiler {:main "rems.app"
-                                                       :asset-path "/js/out"
-                                                       :output-to "target/cljsbuild/public/js/app.js"
-                                                       :output-dir "target/cljsbuild/public/js/out"
-                                                       :source-map true
-                                                       :optimizations :none
-                                                       :pretty-print true
-                                                       :warnings {:munged-namespace false} ;; for rems.actions.delete
-                                                       :preloads [devtools.preload re-frisk.preload]}}
-                                      :test {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
-                                             :compiler {:output-to "target/cljsbuild/test/test.js"
-                                                        :output-dir "target/cljsbuild/test/out"
-                                                        :main rems.cljs-tests
-                                                        :optimizations :none}}}}}
+                                :welcome (rems/repl-help)}}
    :project/test {:jvm-opts ["-Drems.config=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
