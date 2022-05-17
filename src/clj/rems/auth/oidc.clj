@@ -105,8 +105,8 @@
 (defn- validate-user! [user]
   ;; userid already checked
   (when-let [errors (seq (remove nil?
-                                 [(when (str/blank? (:name user)) :t.login.errors/name)
-                                  (when (str/blank? (:email user)) :t.login.errors/email)]))]
+                                 [(when (and (:oidc-require-name env) (str/blank? (:name user))) :t.login.errors/name)
+                                  (when (and (:oidc-require-email env) (str/blank? (:email user))) :t.login.errors/email)]))]
     (throw (ex-info "Invalid user"
                     {:key :t.login.errors/invalid-user
                      :args errors

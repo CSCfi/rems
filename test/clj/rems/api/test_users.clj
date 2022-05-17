@@ -264,24 +264,37 @@
             "name should be required")))))
 
 (deftest test-user-email
-  (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
-    (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                            "bob" {:sub "bob" :name "Bob Applicant" :email2 "bob@example.com"}
-                            "malice" {:sub "malice" :name "Malice Nomail"}} ; no email
+  (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
+                          "bob" {:sub "bob" :name "Bob Applicant" :email2 "bob@example.com"}
+                          "malice" {:sub "malice" :name "Malice Nomail"}} ; no email
+    (with-redefs [rems.config/env (assoc rems.config/env :oidc-email-attributes ["email" "email2"])]
+      (testing "log in malice"
+        (let [cookie (login-with-cookies "malice")]
+          (assert-can-make-a-request! cookie)
+          (is (= {:userid "malice" :name "Malice Nomail" :email nil}
+                 (users/get-user "malice")
+                 (:identity (middleware/get-session cookie)))
+              "no email is ok without validation"))))
+
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :oidc-email-attributes ["email" "email2"]
+                                         :oidc-require-email true)]
       (testing "log in alice"
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                  (users/get-user "alice")
-                 (:identity (middleware/get-session cookie))))))
+                 (:identity (middleware/get-session cookie)))
+              "normal user is fine")))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
                  (users/get-user "bob")
-                 (:identity (middleware/get-session cookie))))))
+                 (:identity (middleware/get-session cookie)))
+              "secondary email attribute is used")))
 
-      (testing "log in malice"
+      (testing "log in malice with requirement"
         (is (thrown? AssertionError (login-with-cookies "malice"))
             "email should be required")))))

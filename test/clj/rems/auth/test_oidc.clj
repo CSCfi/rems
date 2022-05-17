@@ -11,15 +11,17 @@
 
 (defn- with-special-setup [params f]
   (let [id-data (:id-data params)
+        config (:config params)
         user-info {:unrelated 42}]
 
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
-                                                                  {:attribute "old_sub"}]
-                                         :log-authentication-details false
-                                         :public-url "http://special:3000/"
-                                         :oidc-client-id "special.client-id"
-                                         :oidc-client-secret "special.client-secret")
+    (with-redefs [rems.config/env (merge (assoc rems.config/env
+                                                :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
+                                                                         {:attribute "old_sub"}]
+                                                :log-authentication-details false
+                                                :public-url "http://special:3000/"
+                                                :oidc-client-id "special.client-id"
+                                                :oidc-client-secret "special.client-secret")
+                                         config)
                   rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
                                                   :issuer "https://special.case/issuer"
                                                   :userinfo_endpoint "https://special.case/user-info"}
@@ -68,17 +70,31 @@
             "created and allowed in")))))
 
 (deftest test-user-has-no-details
-  (with-special-setup {:id-data {:sub "has-no-details"}}
-    (fn []
-      (try
-        (oidc/oidc-callback {:params {:code "special-case-code"}})
-        (catch clojure.lang.ExceptionInfo e
-          (is (= {:key :t.login.errors/invalid-user
-                  :args [:t.login.errors/name :t.login.errors/email]
-                  :user {:userid "has-no-details"
-                         :name nil
-                         :email nil}}
-                 (ex-data e))))))))
+  (testing "default is to check the name only"
+    (with-special-setup {:id-data {:sub "has-no-details"}}
+      (fn []
+        (try
+          (oidc/oidc-callback {:params {:code "special-case-code"}})
+          (catch clojure.lang.ExceptionInfo e
+            (is (= {:key :t.login.errors/invalid-user
+                    :args [:t.login.errors/name]
+                    :user {:userid "has-no-details"
+                           :name nil
+                           :email nil}}
+                   (ex-data e))))))))
+  (testing "validation can be configured"
+    (with-special-setup {:id-data {:sub "has-no-details"}
+                         :config {:oidc-require-email true}}
+      (fn []
+        (try
+          (oidc/oidc-callback {:params {:code "special-case-code"}})
+          (catch clojure.lang.ExceptionInfo e
+            (is (= {:key :t.login.errors/invalid-user
+                    :args [:t.login.errors/name :t.login.errors/email]
+                    :user {:userid "has-no-details"
+                           :name nil
+                           :email nil}}
+                   (ex-data e)))))))))
 
 (deftest test-no-code
   (with-special-setup {:id-data {:sub "user" :name "User" :email "user@example.com"}}
