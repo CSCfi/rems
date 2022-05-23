@@ -47,11 +47,15 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-email-attributes` – which id-token attributes can be used as the email address of the user, first will be used
   Like in the default:
   `:oidc-email-attributes ["email"]`
-* `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
-* `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
+* `:oidc-extra-attributes` - extra attributes to read and store for users
+* `:oidc-require-name` - whether a non-empty name attribute is required (defaults to true)
+* `:oidc-require-email` - whether a non-empty email attribute is required (defaults to false)
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
+* `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-logout-redirect-url` - to which URL a user is redirected to after a successful logout? (defaults to "/")
 * `:oidc-perform-revoke-on-logout` - should REMS POST to the `revocation_endpoint` received from OIDC metadata? (defaults to true)
+
+See details and formats from [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
 
 
 #### User attributes

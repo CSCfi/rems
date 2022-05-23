@@ -81,6 +81,11 @@
  ;;                            :name {:en "Groups" :fi "Ryhmät"}}
  ;;                           {:attribute "employeeNumber"}]
  :oidc-extra-attributes []
+ ;; For OIDC, the userid attribute is always required.
+ ;; You can further specify if a name or email is required.
+ ;; The default is to require a name.
+ :oidc-require-name true
+ :oidc-require-email false
 
  ;; Normally, a logout will happen in a REMS internal URL,
  ;; which performs:
