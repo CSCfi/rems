@@ -221,25 +221,30 @@
                                           :expand-catalogue-data? true
                                           :empty false})))
 
-    (is (= {:roots [(assoc (get-category parent)
-                           :category/children [(assoc (get-category child) :category/items [item4])]
-                           :category/items [item7])
-                    item1
-                    item3]}
-           (catalogue/get-catalogue-tree {:archived false
-                                          :expand-catalogue-data? true
-                                          :empty false
-                                          :enabled true})))
+    (testing "showing only enabled"
+      (is (= {:roots [(assoc (get-category parent)
+                             :category/children [(assoc (get-category child) :category/items [item4
+                                                                                              ;; item 6 is not seen as it's not enabled
+                                                                                              ])]
+                             :category/items [item7])
+                      item1
+                      ;; item 2 is not seen as it's not enabled
+                      item3]}
+             (catalogue/get-catalogue-tree {:archived false
+                                            :expand-catalogue-data? true
+                                            :empty false
+                                            :enabled true}))))
 
-    (with-user "owner"
-      (catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
-      (catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
+    (testing "disabling more items"
+      (with-user "owner"
+        (catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
+        (catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
 
-    (is (= {:roots [(-> (get-category parent)
-                        (assoc :category/items [item7])
-                        (dissoc :category/children)) ; child does not have visible items
-                    item3]}
-           (catalogue/get-catalogue-tree {:archived false
-                                          :expand-catalogue-data? true
-                                          :empty false
-                                          :enabled true})))))
+      (is (= {:roots [(-> (get-category parent)
+                          (assoc :category/items [item7])
+                          (dissoc :category/children)) ; child does not have visible items anymore
+                      item3]}
+             (catalogue/get-catalogue-tree {:archived false
+                                            :expand-catalogue-data? true
+                                            :empty false
+                                            :enabled true}))))))
