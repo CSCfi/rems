@@ -44,7 +44,7 @@ NB: New feature, reminder email for application expiration uses new email templa
 - Application draft can now be saved even if there are validation warnings. (#2766)
 - New application page no longer displays "Application: Success" message. (#2838)
 - Blacklist API now returns HTTP 422 status if user or resource does not exist when adding or removing blacklist entry. (#2835)
-- Fix the catalogue tree nodes sometimes being empty when fetcing it from the API (#2931)
+- Fix the catalogue tree nodes sometimes being empty when fetching it from the API (#2931)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 
