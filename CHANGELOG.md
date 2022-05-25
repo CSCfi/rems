@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.25
+Changes since v2.26
+
+## v2.26 "Lauttasaarentie" 2022-05-25
 
 **NB: This release contains migrations!**
 
