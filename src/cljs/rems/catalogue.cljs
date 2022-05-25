@@ -17,8 +17,10 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
-    :dispatch-n [[::full-catalogue]
-                 [::full-catalogue-tree]
+    :dispatch-n [(when (:enable-catalogue-table (:config db))
+                   [::full-catalogue])
+                 (when (:enable-catalogue-tree (:config db))
+                   [::full-catalogue-tree])
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  [:rems.table/reset]]}))
 
