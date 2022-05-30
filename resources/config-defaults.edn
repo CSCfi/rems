@@ -387,4 +387,4 @@
  :enable-catalogue-tree false ; show catalogue page tree of items
  :catalogue-tree-show-matching-parents true ; should parent categories be shown if children match?
  
- :enable-cart true} ; allow bundling multiple items to application
+ :enable-cart true} ; show shopping cart and allow bundling multiple resources into one application

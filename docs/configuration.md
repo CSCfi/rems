@@ -164,10 +164,14 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
 ## Application expiration scheduler
 
-REMS can be configured to delete applications after a set period of time has passed. Expiration can be defined for application states with ISO-8601 duration formatting. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
+REMS can be configured to delete applications after a set period of time has passed since last activity. Expiration can be defined for application states with ISO-8601 duration formatting, and optionally email notification can be configured to be sent to applicant and members before deletion. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
 
 ```clojure
 {:application-expiration
- {:application.state/draft "P90D" ;; delete draft applications that are over 90 days old
-  :application.state/closed "P7D"}} ;; delete closed applications that are over 7 days old
+ {:application.state/draft {:delete-after "P90D" :reminder-before "P7D"} ; delete draft applications that are over 90 days old, and send reminder emails 7 days before deletion
+  :application.state/closed {:delete-after "P7D"}}} ; delete closed applications that are over 7 days old
 ```
+
+## Shopping cart
+
+REMS has a shopping cart feature which allows bundling multiple resources into single application. Shopping cart is enabled by default, and it can be enabled or disabled using the `:shopping-cart` key in your `config.edn`. See [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.

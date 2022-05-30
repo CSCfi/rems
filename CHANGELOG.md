@@ -9,7 +9,7 @@ have notable changes.
 Changes since v2.26
 
 ### Additions
-- Bundling resources to application can now be enabled or disabled in user interface with configuration option `:enable-cart`, which defaults to `true`. (#2720)
+- Shopping cart can now be enabled or disabled in user interface with configuration option `:enable-cart`, which defaults to `true`. (#2720)
 
 ## v2.26 "Lauttasaarentie" 2022-05-25
 
