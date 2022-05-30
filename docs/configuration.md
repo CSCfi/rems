@@ -174,4 +174,4 @@ REMS can be configured to delete applications after a set period of time has pas
 
 ## Shopping cart
 
-REMS has a shopping cart feature which allows bundling multiple resources into single application. Shopping cart is enabled by default, and it can be enabled or disabled using the `:shopping-cart` key in your `config.edn`. See [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
+REMS has a shopping cart feature which allows bundling multiple resources into single application. Shopping cart is enabled by default, and it can be enabled or disabled using the `:enable-cart` key in your `config.edn`. See [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
