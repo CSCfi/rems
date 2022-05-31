@@ -13,7 +13,7 @@
                 [reagent-utils "0.3.4"]
                 [venantius/accountant "0.2.5"]]
 
- :source-paths ["env/dev/clj" "src/cljs" "src/cljc" "src/clj"]
+ :source-paths ["env/dev/clj" "src/cljs" "src/cljc" "src/clj" "test/cljs"]
 
  :nrepl {:port 7002}
 
@@ -30,4 +30,7 @@
                                    ;;:pretty-print true
                                    ;;:pseudo-names true
                                    :warnings {:munged-namespace false} ;; for rems.actions.delete
-                                   }}}}
+                                   }}
+          :cljs-test {:target :karma
+                      :output-to "target/shadow/cljs-test.js"
+                      :ns-regexp "test-"}}}

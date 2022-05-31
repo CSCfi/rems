@@ -106,29 +106,15 @@
   ;;            :css-dirs ["target/resources/public/css/en" "target/resources/public/css/fi" "target/resources/public/css/sv"]
   ;;            :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
-  ;; :npm {:devDependencies [;; cljs testing
-  ;;                         [karma "3.1.1"]
-  ;;                         [karma-junit-reporter "2.0.1"]
-  ;;                         [karma-cljs-test "0.1.0"]
-  ;;                         [karma-chrome-launcher "2.2.0"]
-  ;;                         ;; printing to pdf
-  ;;                         [puppeteer "2.0.0"]]}
-
-  ;; :doo {:build "test"
-  ;;       :paths {:karma "node_modules/karma/bin/karma"}
-  ;;       :alias {:default [:chrome-headless]}
-  ;;       :karma {:config {"plugins" ["karma-junit-reporter"]
-  ;;                        "reporters" ["progress" "junit"]
-  ;;                        "junitReporter" {"outputDir" "target/test-results"}}}}
-
   :aliases {"shadow-build" ["shell" "sh" "-c" "npm install && npx shadow-cljs compile app"]
             "shadow-release" ["shell" "sh" "-c" "npm install && npx shadow-cljs release app"]
+            "shadow-test" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs compile cljs-test && ./node_modules/karma/bin/karma start"]
             "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
-            "browsertests" ["do" "shadow-build" ["kaocha" "browser"]]
-            "cljtests" ["do" "shadow-build" ["kaocha"]]
-            "cljtests-ci" ["do" "shadow-build" ["kaocha" "--reporter" "kaocha.report/documentation"]]
-            "alltests" ["do" "shadow-build" ["kaocha"] #_["doo" "once"]]
-            "test-ancient" ["do" "shadow-build" ["kaocha"] #_["doo" "once"]]} ; for lein ancient to work and run all tests
+            "browsertests" ["do" ["shadow-build"] ["kaocha" "browser"]]
+            "cljtests" ["do" ["shadow-build"] ["kaocha"]]
+            "cljtests-ci" ["do" ["shadow-build"] ["kaocha" "--reporter" "kaocha.report/documentation"]]
+            "alltests" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]
+            "test-ancient" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]} ; for lein ancient to work and run all tests
 
   :profiles
   {:uberjar {:omit-source true
@@ -138,17 +124,6 @@
                           "javac"
                           "compile"
                           "shadow-release"]
-             #_{:builds {:min {:source-paths ["src/cljc" "src/cljs"]
-                               :compiler {:output-dir "target/cljsbuild/public/js"
-                                          :output-to "target/cljsbuild/public/js/app.js"
-                                          :source-map "target/cljsbuild/public/js/app.js.map"
-                                          :optimizations :advanced
-                                          :pretty-print false
-                                          :closure-warnings {:externs-validation :off
-                                                             :non-standard-jsdoc :off}
-                                          :warnings {:munged-namespace false} ;; for rems.actions.delete
-                                          :infer-externs :true ;; for window.rems.hooks to work
-                                          :externs ["react/externs/react.js"]}}}}
              :aot :all
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
@@ -160,7 +135,6 @@
    :project/dev {:dependencies [[binaryage/devtools "1.0.5"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.3"]
                                 [criterium "0.4.6"]
-                                #_[doo "0.1.11"]
                                 [lambdaisland/kaocha "1.64.1010"]
                                 [lambdaisland/kaocha-junit-xml "0.0.76"]
                                 [etaoin "0.4.6"]
@@ -169,8 +143,7 @@
                                 [se.haleby/stub-http "0.2.12"]
                                 [com.icegreen/greenmail "1.6.7"]]
 
-                 :plugins [[lein-ancient "0.6.15"]
-                           #_[lein-doo "0.1.11"]]
+                 :plugins [[lein-ancient "0.6.15"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
