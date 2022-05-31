@@ -56,6 +56,7 @@
                  [org.clojure/tools.cli "1.0.206"]
                  [org.clojure/tools.logging "1.2.4"]
                  [org.postgresql/postgresql "42.3.3"]
+                 ;; TODO: see which ones can be removed
                  [org.webjars.bower/tether "1.4.4"]
                  [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
@@ -91,7 +92,6 @@
 
   :plugins [[lein-cljfmt "0.6.7"]
             [lein-cprop "1.0.3"]
-            [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]]
 
