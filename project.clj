@@ -124,7 +124,6 @@
                                 [lambdaisland/kaocha "1.64.1010"]
                                 [lambdaisland/kaocha-junit-xml "0.0.76"]
                                 [etaoin "0.4.6"]
-                                [re-frisk "1.5.2"] ;; coupled to the reagent version
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.12"]
                                 [com.icegreen/greenmail "1.6.7"]]
