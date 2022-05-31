@@ -27,8 +27,8 @@
 (defn workflow-handlers [application]
   (set (mapv :userid (get-in application [:application/workflow :workflow.dynamic/handlers]))))
 
-(defn is-handler? [application user]
-  (contains? (workflow-handlers application) user))
+(defn is-handler? [application userid]
+  (contains? (workflow-handlers application) userid))
 
 (defn- parse-int-maybe [x]
   (if (re-matches #"\d+" x)

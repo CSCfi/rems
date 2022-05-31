@@ -25,7 +25,7 @@
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
-            [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
+            [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
@@ -646,9 +646,35 @@
     (for [event (:application/events application)]
       (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
 
-(defn- application-state [application config highlight-request-id]
+(defn- render-state-fields [application config events]
+  [:<>
+   [info-field
+    (text :t.applications/application)
+    [:<>
+     [:span#application-id
+      (application-list/format-application-id config application)]
+     [application-copy-notice application]]
+    {:inline? true}]
+   [info-field
+    (text :t.applications/description)
+    (:application/description application)
+    {:inline? true}]
+   [info-field
+    (text :t.applications/state)
+    [:span#application-state
+     (localize-state (:application/state application))]
+    {:inline? true}]
+   [info-field
+    (text :t.applications/latest-activity)
+    (localize-time (:application/last-activity application))
+    {:inline? true}]
+   (when (seq events)
+     (into [:<>
+            [:h3 (text :t.form/events)]]
+           (render-events events)))])
+
+(defn- application-state [application config highlight-request-id userid]
   (let [state (:application/state application)
-        last-activity (:application/last-activity application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
                     (map #(assoc % :highlight
@@ -659,33 +685,18 @@
     [collapsible/component
      {:id "header"
       :title (text :t.applications/state)
-      :always (into [:div
-                     [:div.mb-3
-                      [phases state (get-application-phases state)]]
-                     [info-field
-                      (text :t.applications/application)
-                      [:<>
-                       [:span#application-id (application-list/format-application-id config application)]
-                       [application-copy-notice application]]
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/description)
-                      (:application/description application)
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/state)
-                      [:span#application-state (localize-state state)]
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/latest-activity)
-                      (localize-time last-activity)
-                      {:inline? true}]]
-                    (when (seq events-show-always)
-                      (into [[:h3 (text :t.form/events)]]
-                            (render-events events-show-always))))
-      :collapse (when (seq events-collapse)
-                  (into [:div]
-                        (render-events events-collapse)))}]))
+      :always [:div
+               [:div.mb-3
+                [phases state (get-application-phases state)]]
+               (when (is-handler? application userid)
+                 (->> events-show-always
+                      (render-state-fields application config)))]
+      :collapse (if (is-handler? application userid)
+                  (when (seq events-collapse)
+                    (into [:div]
+                          (render-events events-collapse)))
+                  (->> (concat events-show-always events-collapse)
+                       (render-state-fields application config)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -1014,7 +1025,7 @@
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config highlight-request-id]
+     [application-state application config highlight-request-id userid]
      [:div.mt-3 [applicants-info application]]
      (when (:enable-duo config)
        (if (= userid (-> application :application/applicant :userid))
