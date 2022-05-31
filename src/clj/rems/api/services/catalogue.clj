@@ -1,5 +1,6 @@
 (ns rems.api.services.catalogue
-  (:require [rems.api.services.dependencies :as dependencies]
+  (:require [medley.core :refer [assoc-some]]
+            [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -51,24 +52,24 @@
         has-category? (fn [item category]
                         (contains? (set (map :category/id (:categories item)))
                                    (:category/id category)))
-        categories-with-items (for [category (category/get-categories)
-                                    :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
-                                (assoc category :category/items matching-items))
-        categories-with-items (filter (fn [category]
-                                        (case (:empty query-params)
-                                          nil true ; not set, include all
-                                          false (or (seq (:category/children category))
-                                                    (seq (:category/items category)))
-                                          true (and (empty? (:category/children category))
-                                                    (empty? (:category/items category)))))
-                                      categories-with-items)
+        categories (for [category (category/get-categories)
+                         :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
+                     (assoc-some category :category/items matching-items))
+        include-category? (fn [category]
+                            (case (:empty query-params)
+                              nil true ; not set, include all
+                              false (or (seq (:category/children category))
+                                        (seq (:category/items category)))
+                              true (and (empty? (:category/children category))
+                                        (empty? (:category/items category)))))
         items-without-category (for [item catalogue-items
                                      :when (empty? (:categories item))]
                                  item)
         top-level-categories (build-dags {:id-fn :category/id
                                           :child-id-fn :category/id
-                                          :children-fn :category/children}
-                                         categories-with-items)]
+                                          :children-fn :category/children
+                                          :filter-fn include-category?}
+                                         categories)]
     {:roots (into (vec top-level-categories)
                   items-without-category)}))
 

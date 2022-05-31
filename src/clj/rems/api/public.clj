@@ -37,7 +37,8 @@
    (s/optional-key :enable-duo) s/Bool
    (s/optional-key :enable-catalogue-table) s/Bool
    (s/optional-key :enable-catalogue-tree) s/Bool
-   (s/optional-key :catalogue-tree-show-matching-parents) s/Bool})
+   (s/optional-key :catalogue-tree-show-matching-parents) s/Bool
+   (s/optional-key :enable-cart) s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -81,7 +82,8 @@
                             :attachment-max-size
                             :enable-catalogue-table
                             :enable-catalogue-tree
-                            :catalogue-tree-show-matching-parents])))
+                            :catalogue-tree-show-matching-parents
+                            :enable-cart])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"

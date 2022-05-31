@@ -79,7 +79,8 @@
         compatible-first-sort-fn #(if (compatible-item? % original-workflow-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (sort-by #(get-localized-title % language))
-                                       (sort-by compatible-first-sort-fn))]
+                                       (sort-by compatible-first-sort-fn))
+        config @(rf/subscribe [:rems.config/config])]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
      [[button-wrapper {:id "change-resources"
@@ -107,9 +108,10 @@
            :item-key :id
            :item-label #(get-localized-title % language)
            :item-selected? #(contains? (set selected-resources) (% :id))
-           :multi? true
-           :on-change on-set-resources}]]
-        (text :t.actions/bundling-intro)])]))
+           :multi? (:enable-cart config)
+           :on-change #(on-set-resources (flatten (list %)))}]] ; single resource or list
+        (when (:enable-cart config)
+          (text :t.actions/bundling-intro))])]))
 
 (defn change-resources-form [application can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])

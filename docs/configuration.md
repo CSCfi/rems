@@ -47,11 +47,15 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-email-attributes` – which id-token attributes can be used as the email address of the user, first will be used
   Like in the default:
   `:oidc-email-attributes ["email"]`
-* `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
-* `:oidc-extra-attributes` - extra attributes to read. Check [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for the syntax.
+* `:oidc-extra-attributes` - extra attributes to read and store for users
+* `:oidc-require-name` - whether a non-empty name attribute is required (defaults to true)
+* `:oidc-require-email` - whether a non-empty email attribute is required (defaults to false)
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
+* `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-logout-redirect-url` - to which URL a user is redirected to after a successful logout? (defaults to "/")
 * `:oidc-perform-revoke-on-logout` - should REMS POST to the `revocation_endpoint` received from OIDC metadata? (defaults to true)
+
+See details and formats from [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
 
 
 #### User attributes
@@ -160,10 +164,14 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
 ## Application expiration scheduler
 
-REMS can be configured to delete applications after a set period of time has passed. Expiration can be defined for application states with ISO-8601 duration formatting. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
+REMS can be configured to delete applications after a set period of time has passed since last activity. Expiration can be defined for application states with ISO-8601 duration formatting, and optionally email notification can be configured to be sent to applicant and members before deletion. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
 
 ```clojure
 {:application-expiration
- {:application.state/draft "P90D" ;; delete draft applications that are over 90 days old
-  :application.state/closed "P7D"}} ;; delete closed applications that are over 7 days old
+ {:application.state/draft {:delete-after "P90D" :reminder-before "P7D"} ; delete draft applications that are over 90 days old, and send reminder emails 7 days before deletion
+  :application.state/closed {:delete-after "P7D"}}} ; delete closed applications that are over 7 days old
 ```
+
+## Shopping cart
+
+REMS has a shopping cart feature which allows bundling multiple resources into single application. Shopping cart is enabled by default, and it can be enabled or disabled using the `:enable-cart` key in your `config.edn`. See [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.

@@ -291,19 +291,21 @@
   `:children-fn`     - gives the children of a tree node, single or seq value allowed
   `:set-children-fn` - sets the children of a tree node
   `:value-fn`        - the value of a tree node, defaults to `identity`
+  `:filter-fn`       - function called to check should the node be included, defaults to `(constantly true)`
 
   Results is nested map, e.g.
     (build-dags {:id-fn :a
                  :children-fn :c}
                  [{:a 1} {:a 2 :c [1]}])
       ==> {:a 2 :c [{:a 1}]}"
-  [{:keys [id-fn child-id-fn children-fn set-children-fn value-fn]
+  [{:keys [id-fn child-id-fn children-fn set-children-fn value-fn filter-fn]
     :or {child-id-fn identity
          set-children-fn (fn [node children]
                            (if (seq children)
-                             (assoc node children-fn (do (prn :kekkonen node) children))
-                             node))
-         value-fn identity}}
+                             (assoc node children-fn children)
+                             (dissoc node children-fn)))
+         value-fn identity
+         filter-fn (constantly true)}}
    coll]
   (let [children-set (set (for [x coll
                                 child (children-fn x)
@@ -313,9 +315,16 @@
         node-by-id (index-by [id-fn] coll)]
     (letfn [(expand-node [node]
               (set-children-fn (value-fn node)
-                               (mapv (comp value-fn expand-node node-by-id child-id-fn)
-                                     (children-fn node))))]
-      (mapv expand-node roots))))
+                               (->> node
+                                    children-fn
+                                    (map (comp node-by-id child-id-fn))
+                                    (remove nil?)
+                                    (filter filter-fn)
+                                    (mapv (comp value-fn expand-node)))))]
+      (->> roots
+           (map expand-node)
+           (filter filter-fn)
+           vec))))
 
 (deftest test-build-dags
   (is (= [{:id 3
@@ -340,13 +349,27 @@
                       {:id 2
                        :unrelated "z"
                        :children [{:id 1
-                                   :unrelated "x"}]}]}]
+                                   :unrelated "x"}]}]}
+          {:id 4}]
          (build-dags {:id-fn :id
                       :child-id-fn :id
                       :children-fn :children}
                      [{:id 1 :unrelated "x"}
                       {:id 2 :unrelated "z" :children [{:id 1}]}
-                      {:id 3 :children [{:id 1} {:id 2}]}])))
+                      {:id 3 :children [{:id 1} {:id 2}]}
+                      {:id 4 :children [{:id :not-found}]}])))
+
+  (testing "filtering"
+    (is (= [{:id 3
+             :children [{:id 1
+                         :unrelated "x"}]}]
+           (build-dags {:id-fn :id
+                        :children-fn :children
+                        :filter-fn (comp odd? :id)}
+                       [{:id 1 :unrelated "x"}
+                        {:id 2 :unrelated "z" :children [1]}
+                        {:id 3 :children [1 2]}
+                        {:id 4 :unrelated "y"}]))))
 
   (testing "cyclic data"
     (is (= [{:id 5 :unrelated "survives"}]

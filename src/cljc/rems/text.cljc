@@ -106,6 +106,11 @@
   #?(:clj (time-format/unparse (time-format/formatter "yyyy-MM-dd") time)
      :cljs (time-format/unparse (time-format/formatter "yyyy-MM-dd") (time-coerce/to-local-date time))))
 
+(defn format-utc-datetime
+  "For a given time instant, format it in UTC."
+  [time]
+  (time-format/unparse (time-format/formatters :date-time) time))
+
 (deftest test-localize-utc-date []
   (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 1 1))))
   (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 23 59))))

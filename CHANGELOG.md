@@ -6,7 +6,12 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.25
+Changes since v2.26
+
+### Additions
+- Shopping cart can now be enabled or disabled in user interface with configuration option `:enable-cart`, which defaults to `true`. (#2720)
+
+## v2.26 "Lauttasaarentie" 2022-05-25
 
 **NB: This release contains migrations!**
 
@@ -18,7 +23,7 @@ NB: New feature, reminder email for application expiration uses new email templa
 - The actor of the command API (for applications) is now always validated. Previously, there was a chance that a non-existent user could be sent (used mostly by our internal tests). (#2771, #2824, #2772, #2821)
 - User attributes are not saved on every request, only when logging in. (#2829)
 - The `:oidc-userid-attribute` config has been renamed to `:oidc-userid-attributes` and has new options to allow internally renaming an attribute from IdP to REMS db. (#2771, #2821)
-- Users are required a name and email from the IdP to be allowed in. (#2889)
+- Users are required a name, and optionally an email from the IdP to be allowed in. These can be configured, see `docs/configuration.md`. (#2889, #2929)
 - User attributes have been renamed internally. If you directly accessed the database, please note that `eppn -> userid`, `commonName -> name` and `mail -> email`. (#2377)
 - Application expiration notification can now be configured to send reminder email to applicant and members before expiration. This requires a change to the configuration option `:application-expiration`. Please read `docs/bots.md` section on Expirer bot. (#2906)
 
@@ -44,10 +49,14 @@ NB: New feature, reminder email for application expiration uses new email templa
 - Application draft can now be saved even if there are validation warnings. (#2766)
 - New application page no longer displays "Application: Success" message. (#2838)
 - Blacklist API now returns HTTP 422 status if user or resource does not exist when adding or removing blacklist entry. (#2835)
+- Add missing migration that slims down organization owners in the DB to just the id. (#2939)
+- Only fetch the catalogue tree (or table) if it is shown (or otherwise needed). (#2930)
+- Fix the catalogue tree nodes sometimes being empty when fetching it from the API (#2931)
 
 ## v2.25 "Meripuistotie" 2022-02-15
 
 **NB: This release contains migrations!**
+**NB: Trying to roll back by migrating down will likely not work as dropped column data can't be restored.**
 
 ### Breaking changes
 - The columns owneruserid and modifieruserid have been removed as the audit_log effectively serves the same purpose. They were not consistently used. For the attachments the column has been renamed to userid. This is a breaking change for the API as some of these were exposed, but likely not used or useful. (#2823)

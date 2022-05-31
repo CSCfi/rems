@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [form-fields-editable?]]
-            [rems.atoms :refer [external-link document-title document-title]]
+            [rems.atoms :as atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.fetcher :as fetcher]
@@ -11,14 +11,16 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.tree :as tree]
-            [rems.text :refer [text get-localized-title]]))
+            [rems.text :refer [text text-format get-localized-title]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
-    :dispatch-n [[::full-catalogue]
-                 [::full-catalogue-tree]
+    :dispatch-n [(when (:enable-catalogue-table (:config db))
+                   [::full-catalogue])
+                 (when (:enable-catalogue-tree (:config db))
+                   [::full-catalogue-tree])
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  [:rems.table/reset]]}))
 
@@ -54,6 +56,14 @@
                          (text :t.link/opens-in-new-window))}
        [external-link] " " (text :t.catalogue/more-info)])))
 
+(defn- apply-button [item language]
+  [atoms/link {:class "btn btn-primary apply-for-catalogue-item"
+               :aria-label (text-format :t.label/default
+                                        (text :t.cart/apply)
+                                        (get-localized-title item language))}
+   (str "/application?items=" (:id item))
+   (text :t.cart/apply)])
+
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
@@ -70,9 +80,11 @@
              :commands {:td [:td.commands
                              [catalogue-item-more-info item language config]
                              (when logged-in?
-                               (if (contains? cart-item-ids (:id item))
-                                 [cart/remove-from-cart-button item language]
-                                 [cart/add-to-cart-button item language]))]}})
+                               (if (:enable-cart config)
+                                 (if (contains? cart-item-ids (:id item))
+                                   [cart/remove-from-cart-button item language]
+                                   [cart/add-to-cart-button item language])
+                                 (apply-button item language)))]}})
           catalogue))))
 
 (defn draft-application-list []
@@ -130,9 +142,11 @@
                                           [:div.commands.w-100
                                            [catalogue-item-more-info % language config]
                                            (when logged-in?
-                                             (if (contains? cart-item-ids (:id %))
-                                               [cart/remove-from-cart-button % language]
-                                               [cart/add-to-cart-button % language]))])
+                                             (if (:enable-cart config)
+                                               (if (contains? cart-item-ids (:id %))
+                                                 [cart/remove-from-cart-button % language]
+                                                 [cart/add-to-cart-button % language])
+                                               (apply-button % language)))])
                               :sortable? false
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
@@ -161,7 +175,8 @@
         (when @(rf/subscribe [:logged-in])
           [:<>
            [draft-application-list]
-           [cart/cart-list-container]
+           (when (:enable-cart config)
+             [cart/cart-list-container])
            [:h2 (text :t.catalogue/apply-resources)]])
         (when (:enable-catalogue-tree config)
           [catalogue-tree])

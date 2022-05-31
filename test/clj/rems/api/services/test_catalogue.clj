@@ -6,6 +6,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.db.core :as db]
+            [rems.db.category :as category]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]])
@@ -183,3 +184,67 @@
       (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
       (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))
+
+(deftest test-get-catalogue-tree
+  (is (= {:roots []} (catalogue/get-catalogue-tree nil)))
+  (is (= {:roots []} (catalogue/get-catalogue-tree {:expand-catalogue-data? true})))
+
+  (let [get-item (fn [id]
+                   (-> (catalogue/get-localized-catalogue-item id)
+                       (dissoc :resource-name :form-name :workflow-name)))
+        get-category (fn [category]
+                       (-> (category/get-category (:category/id category))))
+        child {:category/id (test-helpers/create-category! {})}
+        parent {:category/id (test-helpers/create-category! {:category/children [child]})}
+        _empty {:category/id (test-helpers/create-category! {})} ; should not be seen
+        item1 (get-item (test-helpers/create-catalogue-item! {}))
+        item2 (get-item (test-helpers/create-catalogue-item! {:enabled false}))
+        item3 (get-item (test-helpers/create-catalogue-item! {:categories []}))
+        item4 (assoc (get-item (test-helpers/create-catalogue-item! {:categories [child]}))
+                     :categories [(get-category child)])
+        item5 (get-item (test-helpers/create-catalogue-item! {:categories [] :enabled false}))
+        item6 (assoc (get-item (test-helpers/create-catalogue-item! {:categories [child] :enabled false}))
+                     :categories [(get-category child)])
+        item7 (assoc (get-item (test-helpers/create-catalogue-item! {:categories [parent]}))
+                     :categories [(get-category parent)])
+        item8 (assoc (get-item (test-helpers/create-catalogue-item! {:categories [parent] :enabled false}))
+                     :categories [(get-category parent)])]
+
+    (is (= {:roots [(assoc (get-category parent)
+                           :category/children [(assoc (get-category child) :category/items [item4 item6])]
+                           :category/items [item7 item8])
+                    item1
+                    item2
+                    item3
+                    item5]}
+           (catalogue/get-catalogue-tree {:archived false
+                                          :expand-catalogue-data? true
+                                          :empty false})))
+
+    (testing "showing only enabled"
+      (is (= {:roots [(assoc (get-category parent)
+                             :category/children [(assoc (get-category child) :category/items [item4
+                                                                                              ;; item 6 is not seen as it's not enabled
+                                                                                              ])]
+                             :category/items [item7])
+                      item1
+                      ;; item 2 is not seen as it's not enabled
+                      item3]}
+             (catalogue/get-catalogue-tree {:archived false
+                                            :expand-catalogue-data? true
+                                            :empty false
+                                            :enabled true}))))
+
+    (testing "disabling more items"
+      (with-user "owner"
+        (catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
+        (catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
+
+      (is (= {:roots [(-> (get-category parent)
+                          (assoc :category/items [item7])
+                          (dissoc :category/children)) ; child does not have visible items anymore
+                      item3]}
+             (catalogue/get-catalogue-tree {:archived false
+                                            :expand-catalogue-data? true
+                                            :empty false
+                                            :enabled true}))))))
