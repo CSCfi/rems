@@ -7,11 +7,11 @@
                 [markdown-clj "1.10.9"]
                 [medley "1.3.0"]
                 [metosin/komponentit "0.3.11"]
-                [prismatic/schema-generators "0.1.5"]
                 [re-frame "1.2.0"]
                 [reagent "1.1.1"]
                 [reagent-utils "0.3.4"]
-                [venantius/accountant "0.2.5"]]
+                [venantius/accountant "0.2.5"]
+                [prismatic/schema "1.2.1"]]
 
  :source-paths ["env/dev/clj" "src/cljs" "src/cljc" "src/clj" "test/cljs"]
 
