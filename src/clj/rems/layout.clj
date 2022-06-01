@@ -1,9 +1,9 @@
 (ns rems.layout
-  (:require [hiccup.page :refer [html5 include-css include-js]]
+  (:require [clojure.string :as str]
+            [hiccup.page :refer [html5 include-css include-js]]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.users :as users]
             [rems.json :as json]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
@@ -17,19 +17,52 @@
                         ;; cache busting not strictly needed for dev mode, see rems.handler/dev-js-handler
                         (System/currentTimeMillis))))
 
+;; TODO: consider refactoring together with style utils
+(defn- resolve-image [path]
+  (when path
+    (if (str/starts-with? path "http")
+      path
+      (str (get-in env [:theme :img-path]) path))))
+
+(defn- theme-get [& attrs]
+  (when (seq attrs)
+    (if-some [v (get-in env [:theme (first attrs)])]
+      v
+      (recur (rest attrs)))))
+
+(defn- logo-preloads
+  "Preload important images so that the paint can happen earlier."
+  []
+  (for [href (->>
+              ;; localized logos or fallbacks
+              (let [lang-key (some-> (if (bound? #'context/*lang*)
+                                       context/*lang*
+                                       (env :default-language))
+                                     name)]
+                [(theme-get (keyword (str "logo-name-" lang-key)) :logo-name)
+                 (theme-get (keyword (str "logo-name-sm-" lang-key)) :logo-name-sm)
+                 (theme-get (keyword (str "navbar-logo-name-" lang-key)) :navbar-logo-name)])
+
+              distinct
+              (map resolve-image)
+              (remove nil?))]
+    [:link {:rel "preload" :as "image" :href href :type "image/png"}]))
+
 (defn- page-template
   [content & [app-content]]
   (html5 [:html {:lang "en"}
-          [:head
-           [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
-           [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-           [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:title (with-language (env :default-language)
-                     #(text :t.header/title))]
-           (include-css "/assets/bootstrap/css/bootstrap.min.css")
-           (include-css "/assets/font-awesome/css/all.css")
-           (include-css (cache-bust (css-filename (env :default-language))))]
+          (into [:head
+                 [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+                 [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+                 [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
+                 [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
+
+                 [:title (with-language (env :default-language)
+                           #(text :t.header/title))]
+                 (include-css "/assets/bootstrap/css/bootstrap.min.css")
+                 (include-css "/assets/font-awesome/css/all.css")
+                 (include-css (cache-bust (css-filename (env :default-language))))]
+                (logo-preloads))
           [:body
            [:div#app app-content]
            (include-js "/assets/font-awesome/js/fontawesome.js")
