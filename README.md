@@ -29,7 +29,7 @@ See the [release page](https://github.com/CSCfi/rems/releases) for the releases.
 
 ## Contributing
 
-- REMS is an open source project.
+- REMS is an open source project. We use the [MIT License](./LICENSE).
 - We welcome [issues through GitHub](https://github.com/CSCfi/rems/issues).
 - You can [contact the team on the discussion board](https://github.com/CSCfi/rems/discussions) or [via email](mailto:rems@csc.fi).
 - In case you would like to contribute to the development, perhaps you participate in Hacktoberfest, then please refer to the [contributing document](CONTRIBUTING.md). We'll guide you through to get your pull request reviewed and merged.
