@@ -64,7 +64,7 @@
                  [ring/ring-devel "1.9.5"]
                  [ring/ring-servlet "1.9.5"]]
 
-  :min-lein-version "2.0.0"
+  :min-lein-version "2.9.8"
 
   :source-paths ["src/clj" "src/cljc"]
   :java-source-paths ["src/java"]
