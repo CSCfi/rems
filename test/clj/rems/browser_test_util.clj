@@ -18,8 +18,9 @@
             [rems.db.test-data :as test-data]
             [rems.json :as json]
             [rems.standalone]
+            [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
-  (:import (java.net SocketException)))
+  (:import [java.net SocketException]))
 
 ;;; test setup
 
@@ -38,15 +39,6 @@
 (defn context-getx [k] (getx @test-context k))
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
 (defn context-update! [& args] (swap! test-context #(apply update % args)))
-
-(defn- delete-files! [dir]
-  (doseq [file (.listFiles dir)]
-    (io/delete-file file true)))
-
-(defn- ensure-empty-directory!
-  [dir]
-  (.mkdirs dir)
-  (delete-files! dir))
 
 (defn- ensure-empty-directories! []
   (ensure-empty-directory! (:reporting-dir @test-context))

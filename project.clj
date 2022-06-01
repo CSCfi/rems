@@ -38,8 +38,7 @@
                  [ns-tracker "0.4.0"]
                  [org.apache.lucene/lucene-core "9.1.0"]
                  [org.apache.lucene/lucene-queryparser "9.1.0"]
-                 [org.clojure/clojure "1.11.0"]
-                 [org.clojure/clojurescript "1.10.764" :exclusions [com.fasterxml.jackson.core/jackson-core]] ; later ones don't work with lein-cljsbuild 1.1.8
+                 [org.clojure/clojure "1.11.1"]
                  [org.clojure/core.cache "1.0.225"]
                  [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/data.csv "1.0.0"]

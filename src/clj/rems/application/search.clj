@@ -8,9 +8,9 @@
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
-            [rems.text :as text])
-  (:import [com.google.common.io MoreFiles RecursiveDeleteOption]
-           [org.apache.lucene.analysis Analyzer]
+            [rems.text :as text]
+            [rems.util :refer [delete-directory-contents-recursively]])
+  (:import [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode Term]
@@ -31,8 +31,8 @@
   :start (let [index-dir (.toPath (io/file (:search-index-path env)))]
            (locking index-lock
              ;; delete old index
-             (when (.exists (.toFile index-dir))
-               (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
+             (delete-directory-contents-recursively (.toFile index-dir))
+
              (let [directory (NIOFSDirectory. index-dir)]
                ;; create a new empty index by creating and closing an IndexWriter, otehrwise SearcherManager will fail
                (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))

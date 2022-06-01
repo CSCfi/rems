@@ -85,3 +85,28 @@
           (recur files))
         files))))
 
+
+(defn delete-directory-contents-recursively
+  "Deletes `dir` contents recursively, if the `dir` exists.
+
+  Does not follow symlinks in contents."
+  [dir]
+  (when (.exists dir)
+    (doseq [file (.listFiles dir)]
+      (when (and (.isDirectory file)
+                 (not (.isSymbolicLink file)))
+        (delete-directory-contents-recursively file))
+      (io/delete-file file true))))
+
+(defn delete-directory-recursively
+  "Deletes `dir` and its contents recursively, if the `dir` exists.
+
+  Does not follow symlinks in contents."
+  [dir]
+  (delete-directory-contents-recursively dir)
+  (io/delete-file dir true))
+
+(defn ensure-empty-directory!
+  [dir]
+  (.mkdirs dir)
+  (delete-directory-contents-recursively dir))
