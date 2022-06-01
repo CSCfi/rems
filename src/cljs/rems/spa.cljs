@@ -50,6 +50,7 @@
             [rems.focus :as focus]
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
+            [rems.hooks] ; for the empty hooks
             [rems.keepalive :as keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]

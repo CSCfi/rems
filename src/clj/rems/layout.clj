@@ -9,18 +9,6 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
-(defn initialize-hooks []
-  [:script {:type "text/javascript"}
-   "
-window.rems = {
-  hooks: {
-    get: function () {},
-    put: function () {},
-    navigate: function () {}
-  }
-};
-"])
-
 (defn- css-filename [language]
   (str "/css/" (name language) "/screen.css"))
 
@@ -56,7 +44,6 @@ window.rems = {
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (when (:accessibility-report env) (include-js "/assets/axe-core/axe.min.js"))
-           (initialize-hooks)
            (for [extra-script (get-in env [:extra-scripts :files])]
              (include-js extra-script))
            content]]))
