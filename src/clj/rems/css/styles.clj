@@ -45,24 +45,25 @@
   []
   (list
    (stylesheet/at-font-face {:font-family "'Lato'"
-                             :src "url('/font/Lato-Light.eot')"}
-                            {:src "url('/font/Lato-Light.eot') format('embedded-opentype'), url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff'), url('/font/Lato-Light.ttf') format('truetype')"
+                             :font-style "normal"
                              :font-weight 300
-                             :font-style "normal"})
+                             :font-display :swap
+                             :src "url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff')"})
    (stylesheet/at-font-face {:font-family "'Lato'"
-                             :src "url('/font/Lato-Regular.eot')"}
-                            {:src "url('/font/Lato-Regular.eot') format('embedded-opentype'), url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff'), url('/font/Lato-Regular.ttf') format('truetype')"
+                             :font-style "normal"
                              :font-weight 400
-                             :font-style "normal"})
+                             :font-display :swap
+                             :src "url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff')"})
    (stylesheet/at-font-face {:font-family "'Lato'"
-                             :src "url('/font/Lato-Bold.eot')"}
-                            {:src "url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype')"
+                             :font-style "normal"
                              :font-weight 700
-                             :font-style "normal"})
+                             :font-display :swap
+                             :src "url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff')"})
    (stylesheet/at-font-face {:font-family "'Roboto Slab'"
-                             :src "url('/font/Roboto-Slab.woff2') format('woff2')"
+                             :font-style "normal"
                              :font-weight 400
-                             :font-style "normal"})))
+                             :font-display :swap
+                             :src "url('/font/Roboto-Slab.woff2') format('woff2')"})))
 
 (defn- form-placeholder-styles []
   (list
