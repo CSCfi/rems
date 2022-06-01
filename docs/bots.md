@@ -1,10 +1,10 @@
 # Bots
 
 REMS has a number of features implemented as _bots_, automatic
-handlers that can be attached to a workflow.
+users, such as handlers that can be attached to a workflow.
 
 To use a bot, create a user with the corresponding user id, and add
-that user as a handler to a workflow. The 'email' attribute for the
+that user as a handler to a workflow, if necessary. The 'email' attribute for the
 user can be null, or the attribute can be left out completely. The
 name of the bot will be visible to the applicants in the event log
 as the person who approved or rejected their application so make it
