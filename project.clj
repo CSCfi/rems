@@ -94,6 +94,7 @@
   :aliases {"shadow-build" ["shell" "sh" "-c" "npm install && npx shadow-cljs compile app"]
             "shadow-release" ["shell" "sh" "-c" "npm install && npx shadow-cljs release app"]
             "shadow-test" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs compile cljs-test && ./node_modules/karma/bin/karma start"]
+            "shadow-watch" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs watch app"]
             "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["shadow-build"] ["kaocha" "browser"]]
             "cljtests" ["do" ["shadow-build"] ["kaocha"]]
