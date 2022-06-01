@@ -22,7 +22,8 @@
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.validate :as validate])
-  (:import [sun.misc Signal SignalHandler])
+  (:import [sun.misc Signal SignalHandler]
+           [org.eclipse.jetty.server.handler.gzip GzipHandler])
   (:refer-clojure :exclude [parse-opts])
   (:gen-class))
 
@@ -33,6 +34,17 @@
 (defn- jetty-configurator [server]
   (let [pool (.getThreadPool server)]
     (.setName pool "jetty-handlers")
+    (.setHandler server
+                 (doto (GzipHandler.)
+                   (.setIncludedMimeTypes (into-array ["text/css"
+                                                       "text/plain"
+                                                       "text/javascript"
+                                                       "application/javascript"
+                                                       "application/json"
+                                                       "image/svg+xml"]))
+                   (.setMinGzipSize 1024)
+                   (.setHandler (.getHandler server))))
+
     server))
 
 (mount/defstate
