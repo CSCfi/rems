@@ -19,7 +19,7 @@
  :nrepl {:port 7002}
 
  :builds {:app {:target :browser
-                :output-dir "target/shadow/public/js/"
+                :output-dir "target/shadow/public/js"
                 :asset-path "/js"
                 :modules {:app {:entries [rems.app]}}
                 :compiler-options {:optimizations :advanced}
