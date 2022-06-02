@@ -115,15 +115,6 @@
 (def ^:private resource-handler
   (route/resources "/" {:root "public"}))
 
-(defn- dev-js-handler
-  "In dev mode, serve compiled js files without caching. This is needed
-  because figwheel injects a reference to app.js without our
-  cache-busting query parameter."
-  []
-  (if (:dev env)
-    (route/resources "/js" {:root "public/js"})
-    never-match-route))
-
 (defn app-routes []
   (routes
    home-route
@@ -134,11 +125,10 @@
             entitlements/entitlements-routes))
    (auth/auth-routes)
    #'api-routes
-   (dev-js-handler)
    ;; TODO should we disable logging of resource requests?
    (wrap-cacheable
     (routes
-     styles/css-routes ; figwheel livereload does cache-busting for the css, so we don't need a dev-css-handler hack
+     styles/css-routes
      resource-handler
      (extra-script-routes (:extra-scripts env))
      (static-resources (:extra-static-resources env))

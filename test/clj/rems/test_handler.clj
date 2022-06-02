@@ -1,5 +1,6 @@
 (ns ^:integration rems.test-handler
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.api.testing :refer [api-fixture read-ok-body]]
             [rems.common.git :as git]
@@ -45,20 +46,21 @@
       (is (= "no-store" (get-in response [:headers "Cache-Control"])))))
   (testing "Cache-Control header for js file"
     (testing "in dev mode"
-      (let [response (-> (request :get "/js/test-caching.js")
+      (let [response (-> (request :get "/js/app.js")
                          handler)
             body (read-ok-body response)]
         (is (= 200 (:status response)))
-        (is (= "1;\n" body)) ; check that we didn't get e.g. the fallback HTML
-        (is (= "no-store" (get-in response [:headers "Cache-Control"])))))
+        (is (str/starts-with? body "var shadow")) ; check that we didn't get e.g. the fallback HTML
+        (is (= (str "max-age=" (* 60 60 23))
+               (get-in response [:headers "Cache-Control"])))))
     (testing "in prod mode"
       (with-redefs [env (assoc env :dev false)]
         (mount/stop #'rems.handler/handler)
         (mount/start #'rems.handler/handler)
-        (let [response (-> (request :get "/js/test-caching.js")
+        (let [response (-> (request :get "/js/app.js")
                            handler)
               body (read-ok-body response)]
           (is (= 200 (:status response)))
-          (is (= "1;\n" body))
+          (is (str/starts-with? body "var shadow"))
           (is (= (str "max-age=" (* 60 60 23))
                  (get-in response [:headers "Cache-Control"]))))))))
