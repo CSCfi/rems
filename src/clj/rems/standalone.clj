@@ -166,7 +166,7 @@
                        #'rems.locales/translations)
           (log/info "Creating test data")
           (test-data/create-test-data!)
-          ;; (test-data/create-performance-test-data!)
+          (test-data/create-performance-test-data!)
           (log/info "Test data created"))
 
         "demo-data"
