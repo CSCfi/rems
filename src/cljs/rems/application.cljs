@@ -1,5 +1,6 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
@@ -742,45 +743,62 @@
                  [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
+(defn- render-applicants [application]
+  (let [applicant (:application/applicant application)
+        members (:application/members application)
+        invited-members (:application/invited-members application)]
+    (into [:div
+           [flash-message/component :change-members]
+           [member-info {:element-id "applicant"
+                         :attributes applicant
+                         :application application
+                         :group? (or (seq members)
+                                     (seq invited-members))}]]
+          (concat
+           (for [[index member] (map-indexed vector (sort-by :name members))]
+             [member-info {:element-id (str "member" index)
+                           :attributes member
+                           :application application
+                           :group? true}])
+           (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
+             [member-info {:element-id (str "invite" index)
+                           :attributes invited-member
+                           :application application
+                           :group? true}])))))
+
+(defn- render-applicants-short [application]
+  (let [applicant (:application/applicant application)
+        members (:application/members application)
+        invited-members (:application/invited-members application)]
+    (into [:div]
+          (->> (union #{applicant} members invited-members)
+               (keep get-member-name)
+               sort
+               (str/join ", ")))))
+
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
-  [application]
+  [application userid]
   (let [application-id (:application/id application)
-        applicant (:application/applicant application)
-        members (:application/members application)
-        invited-members (:application/invited-members application)
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
-        can-invite? (contains? permissions :application.command/invite-member)]
+        can-invite? (contains? permissions :application.command/invite-member)
+        component {:id "applicants-info"
+                   :title (text :t.applicant-info/applicants)
+                   :footer [:div
+                            [:div.commands
+                             (when can-invite? [invite-member-action-button])
+                             (when can-add? [add-member-action-button])]
+                            [:div#member-action-forms
+                             [invite-member-form application-id (partial reload! application-id)]
+                             [add-member-form application-id (partial reload! application-id)]]]}]
     [collapsible/component
-     {:id "applicants-info"
-      :title (text :t.applicant-info/applicants)
-      :always
-      (into [:div
-             [flash-message/component :change-members]
-             [member-info {:element-id "applicant"
-                           :attributes applicant
-                           :application application
-                           :group? (or (seq members)
-                                       (seq invited-members))}]]
-            (concat
-             (for [[index member] (map-indexed vector (sort-by :name members))]
-               [member-info {:element-id (str "member" index)
-                             :attributes member
-                             :application application
-                             :group? true}])
-             (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
-               [member-info {:element-id (str "invite" index)
-                             :attributes invited-member
-                             :application application
-                             :group? true}])))
-      :footer [:div
-               [:div.commands
-                (when can-invite? [invite-member-action-button])
-                (when can-add? [add-member-action-button])]
-               [:div#member-action-forms
-                [invite-member-form application-id (partial reload! application-id)]
-                [add-member-form application-id (partial reload! application-id)]]]}]))
+     (if (is-handler? application userid)
+       (assoc component
+              :always (render-applicants application))
+       (assoc component
+              :collapse-hidden (render-applicants-short application)
+              :collapse (render-applicants application)))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group
@@ -1026,7 +1044,7 @@
    [:div.row
     [:div.col-lg-8
      [application-state application config highlight-request-id userid]
-     [:div.mt-3 [applicants-info application]]
+     [:div.mt-3 [applicants-info application userid]]
      (when (:enable-duo config)
        (if (= userid (-> application :application/applicant :userid))
          [:div.mt-3 [edit-application-duo-codes]]
