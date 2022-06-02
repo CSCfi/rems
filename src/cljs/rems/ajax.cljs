@@ -20,7 +20,7 @@
     (str/split str " ")))
 
 (defn save-roles [response]
-  (if-let [roles (-get-response-header response "x-rems-roles")]
+  (when-let [roles (-get-response-header response "x-rems-roles")]
     (set-roles! (split-words roles)))
   response)
 
