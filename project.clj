@@ -85,12 +85,6 @@
 
   :clean-targets ["target"]
 
-  ;; :figwheel {:http-server-root "public"
-  ;;            :server-logfile "log/figwheel_server.log"
-  ;;            :nrepl-port 7002
-  ;;            :css-dirs ["target/resources/public/css/en" "target/resources/public/css/fi" "target/resources/public/css/sv"]
-  ;;            :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
-
   :aliases {"shadow-build" ["shell" "sh" "-c" "npm install && npx shadow-cljs compile app"]
             "shadow-release" ["shell" "sh" "-c" "npm install && npx shadow-cljs release app"]
             "shadow-test" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs compile cljs-test && ./node_modules/karma/bin/karma start"]
