@@ -592,9 +592,6 @@
       (set-location! url))
     (rf/dispatch [:landing-page-redirect!])))
 
-;; (secretary/defroute "*" []
-;;   (rf/dispatch [:set-active-page :not-found]))
-
 ;;;; History
 ;; must be called after routes have been defined
 
