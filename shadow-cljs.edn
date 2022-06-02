@@ -23,7 +23,8 @@
                 :asset-path "/js"
                 :modules {:app {:entries [rems.app]}}
                 :compiler-options {:optimizations :advanced}
-                :devtools {:preloads [re-frisk.preload]}}
+                :devtools {:preloads [re-frisk.preload]
+                           :watch-dir "target/resources/public"}}
           :cljs-test {:target :karma
                       :output-to "target/shadow/cljs-test.js"
                       :ns-regexp "test-"}}}

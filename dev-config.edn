@@ -20,7 +20,6 @@
                          {:attribute "organizations"}]
  :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
- :render-css-file? true
  :extra-pages [{:id "about"
                 :translations {:fi {:title "Info"
                                     :filename "about-fi.md"}
