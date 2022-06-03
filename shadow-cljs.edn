@@ -22,7 +22,8 @@
                 :output-dir "target/shadow/public/js"
                 :asset-path "/js"
                 :modules {:app {:entries [rems.app]}}
-                :compiler-options {:optimizations :advanced}
+                :compiler-options {:optimizations :advanced
+                                   :source-map true}
                 :devtools {:preloads [re-frisk.preload]
                            :watch-dir "target/resources/public"}}
           :cljs-test {:target :karma
