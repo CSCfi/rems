@@ -91,8 +91,6 @@
             "shadow-watch" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs watch app"]
             "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["shadow-build"] ["kaocha" "browser"]]
-            "cljtests" ["do" ["shadow-build"] ["kaocha"]]
-            "cljtests-ci" ["do" ["shadow-build"] ["kaocha" "--reporter" "kaocha.report/documentation"]]
             "alltests" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]
             "test-ancient" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]} ; for lein ancient to work and run all tests
 
