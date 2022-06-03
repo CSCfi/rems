@@ -154,10 +154,10 @@
       (catch ForbiddenException e
         (on-forbidden-error req)))))
 
-;; When using figwheel in dev mode, the browser getches a gazillion js
-;; files from under /js/out. We filter them out to keep the log
-;; cleaner. This helps e.g. when debugging browser test failures.
-(def silence-logging-regex #"^/js/out/.*")
+;; When using devtools, the browser fetches source maps etc.
+;; We filter them out to keep the log cleaner.
+;; This helps e.g. when debugging browser test failures.
+(def silence-logging-regex #"^/js/cljs-runtime/.*")
 
 (defn wrap-logging
   [handler]

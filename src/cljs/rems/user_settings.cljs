@@ -38,10 +38,7 @@
          (:languages db))))
 
 (defn- update-css [language]
-  ;; TODO retain cache-busting set by figwheel or our layout.clj
   (let [localized-css (str "/css/" (name language) "/screen.css")]
-    ;; Figwheel replaces the linked stylesheet
-    ;; so we need to search dynamically
     (doseq [element (array-seq (.getElementsByTagName js/document "link"))]
       (when (str/includes? (.-href element) "screen.css")
         ;; preserve cache-busting query params if any

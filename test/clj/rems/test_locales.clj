@@ -7,8 +7,8 @@
             [clojure.tools.logging]
             [rems.common.util :refer [recursive-keys]]
             [rems.locales :as locales]
-            [rems.testing-util :refer [create-temp-dir delete-recursively]]
-            [rems.util :refer [getx-in]]
+            [rems.testing-util :refer [create-temp-dir]]
+            [rems.util :refer [getx-in delete-directory-recursively]]
             [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
 
@@ -103,7 +103,7 @@
               (pr-str translation))
         (is (= translation (:xx (locales/load-translations config))))
         (finally
-          (delete-recursively translations-dir)))))
+          (delete-directory-recursively translations-dir)))))
 
   (testing "loads translations only for listed languages"
     (is (= [:en] (keys (locales/load-translations {:languages [:en]

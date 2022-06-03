@@ -6,7 +6,9 @@ In order to get started with REMS, you need to have the following software insta
 
    - Docker
    - Java. Currently REMS should be working with Java versions 11 to 17
-   - leiningen. As of 2021-11-01, the project should work with lein version Leiningen 2.9.7 on Java 17 OpenJDK 64-Bit Server VM.
+   - Leiningen. As of 2022-06-01, the project should work with lein version Leiningen 2.9.8 on Java 17 OpenJDK 64-Bit Server VM.
+   - npm and npx
+
 ### Mac OS installation for Apple M1 Chip (Apple Silicon M1)
 
 1. Java Installation: install Java via Azul, make sure you download the version of [Java for MacOS for ARM architecture](https://www.azul.com/downloads/zulu-community/?os=macos&architecture=arm-64-bit&package=jdk).
@@ -43,25 +45,28 @@ lein run test-data
 
 ## Running the application
 
-To start the (clojure) backend:
+To start the (Clojure) backend:
 
 ```
 lein run
 ```
 
-To start the (clojurescript) frontend, run in another terminal:
+To start the (ClojureScript) frontend, run in another terminal:
 
 ```
-lein figwheel
+lein shadow-watch
 ```
 
-Point your browser to <http://localhost:3000>
+Normally we run the application in port 3000. Point your browser to <http://localhost:3000>.
+This supports live reload. Shadow-CLJS also exposes port 3100 for development.
+The API and the static files are all served from the port 3000.
+Shadow-CLJS has its own console in <http://localhost:9630>.
 
-You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`.
+### Editor setup
 
-You should start in the development profile i.e. set `Cider Lein Parameters` to `with-profile +dev repl :headless`
+You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`. Calva and Cursive have also been used successfully. And we regularly use Linux and Mac for development. YMMV.
 
-We have had success with other editors as well.
+In whatever editor you decide, you should start in the development profile, i.e., in Emacs set `Cider Lein Parameters` to `with-profile +dev repl :headless`.
 
 ## Building an uberjar
 
@@ -101,7 +106,7 @@ To run build the JS bundle and run browser tests (requires chromedriver in $PATH
 lein browsertests
 ```
 
-If browser tests fail, screenshots and DOM are written in the directory `browsertest-errors`.
+As the tests run, and especially if browser tests fail, screenshots and DOM are written in the directory `browsertest-errors`.
 
 For fixing or especially the development of the browser tests, you can run a windowed regular browser and see what the tests are doing.
 
@@ -116,21 +121,15 @@ HEADLESS=0 lein browsertests                                     # to see all br
 HEADLESS=0 lein kaocha --focus rems.test-browser/test-blacklist  # to see a specific browser test
 ```
 
-### Clojurescript tests
+### ClojureScript tests
 
-First make sure you have the npm depenencies with
-
-```
-lein deps
-```
-
-and then just run
+We have some tests for specifically ClojureScript code. A helper runs them with
 
 ```
-lein doo once
+lein shadow-test
 ```
 
-which will run the tests in a headless Chrome via Karma.
+They will run the tests in a headless Chrome via Karma and Shadow-CLJS.
 
 You may need to run `npm install karma karma-cljs-test karma-chrome-launcher` first to install the necessary tools and packages.
 
@@ -141,6 +140,7 @@ To conveniently run all the tests you can run the lein alias
 ```
 lein alltests
 ```
+
 ### Automated accessibility test report
 
 We use [axe](https://www.deque.com/axe/) for automated accessibility tests.
@@ -190,3 +190,5 @@ To run specific migration up:
 ```sh
 lein migratus up 20211105110533
 ```
+
+NB: The migrations can also be written in Clojure. Then you should replace the `.sql` files with a `.edn` file. See examples in the migrations-directory.

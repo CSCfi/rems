@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.26
 
+NB: This is the first release with a new build tool – Shadow-CLJS.
+
 ### Additions
 - Shopping cart can now be enabled or disabled in user interface with configuration option `:enable-cart`, which defaults to `true`. (#2720)
 

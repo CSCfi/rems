@@ -58,7 +58,7 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
    https://github.com/CSCfi/rems/releases/tag/v2.6
 
 10. From "Edit tag", change the name of the tag to the release title,
-   e.g., "Kalevalantie".
+   e.g., `v2.6 "Kalevalantie"`.
 
 11. Copy changes under the new release from CHANGELOG.md to "Description"
     field:
