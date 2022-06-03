@@ -535,8 +535,11 @@
   "A file path may contain local filesystem parts that we want to remove
   so that we can use the path to refer to e.g. project GitHub."
   [path]
-  (str/replace (subs path (str/index-of path "src"))
-               "\\" "/"))
+  (if-let [index (if path (str/index-of path "src") 0)]
+    (some-> path
+            (subs index)
+            (str/replace "\\" "/"))
+    path))
 
 (deftest normalize-file-path-test
   (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))

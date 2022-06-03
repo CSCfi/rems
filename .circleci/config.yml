@@ -12,15 +12,15 @@ defaults: &defaults
     JVM_OPTS: -Xmx3200m
 
 orbs:
-  browser-tools: circleci/browser-tools@1.2.4
+  browser-tools: circleci/browser-tools@1.3.0
 
 executors:
   clojure:
     docker:
-      - image: cimg/clojure:1.10.3-browsers
+      - image: cimg/clojure:1.11.1-browsers
   db:
     docker:
-      - image: cimg/clojure:1.10.3-browsers
+      - image: cimg/clojure:1.11.1-browsers
       - image: postgres:13
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
@@ -34,20 +34,17 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v3-dependencies-{{ checksum "project.clj" }}
+            - v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
             # fallback to using the latest cache if no exact match is found
             - v3-dependencies-
       - run: lein deps
-      - run: lein cljsbuild deps
+      - run: npm install
       # TODO using persist_to_workspace might be more robust than using cache
       - save_cache:
           paths:
             - ~/.m2
-            # node_modules won't pick up updates to sub dependencies
-            # unless the project.clj is changed. This might create differences
-            # between dev, CI and actual deployment.
             - node_modules
-          key: v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
 
   unit-test:
     executor: clojure
@@ -56,11 +53,11 @@ jobs:
       - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
-      - run: lein cljsbuild once
-      - run: lein doo chrome-headless test once
+      - run: lein shadow-build
+      - run: lein shadow-test
       - store_test_results:
           path: target/test-results
 
@@ -69,7 +66,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
       - run: lein cljfmt check
 
   integration-test:
@@ -79,7 +76,7 @@ jobs:
       - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
       - run: lein kaocha --reporter kaocha.report/documentation integration
       - store_test_results:
           path: target/test-results
@@ -91,8 +88,8 @@ jobs:
       - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
-      - run: lein cljsbuild once
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+      - run: lein shadow-build
       - run: lein kaocha --reporter kaocha.report/documentation browser
       - store_test_results:
           path: target/test-results
@@ -108,7 +105,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}
+          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
       - run: lein uberjar
       - store_artifacts:
           path: target/uberjar/rems.jar

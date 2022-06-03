@@ -376,7 +376,6 @@
  :catalogue-is-public false
 
  ;; Options used only for development
- :render-css-file? false
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
  :enable-ega false ; should the EGA features be shown in the UI

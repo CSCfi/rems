@@ -3,9 +3,9 @@
   accessing the application on a browser. The garden styles can also
   be manually compiled by calling the function `rems.css.styles/screen-css`.
 
-  For development purposes with Figwheel the styles are rendered to
+  For development purposes with live reload, the styles are rendered to
   `target/resources/public/css/:language/screen.css` whenever this ns is evaluated
-  so that Figwheel can autoreload them."
+  so that we can autoreload them."
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
@@ -919,14 +919,14 @@
 (defn screen-css []
   (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
 
-;; For development use and Figwheel updates render all configured CSS
-;; files so that Figwheel will notice this change and force our app
+;; For development use and live reload, render all configured CSS
+;; files so that the devtools will notice this change and force our app
 ;; to reload CSS files from the usual route.
-;; The files are not used for anything besides this signaling to Figwheel.
+;; The files are not used for anything besides this signaling.
 (mount/defstate
   rendered-css-files
   :start
-  (when (env :render-css-file?)
+  (when (env :dev)
     (doseq [language (env :languages)]
       (binding [context/*lang* language]
         (render-css-file language

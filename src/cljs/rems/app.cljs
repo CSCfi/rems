@@ -1,4 +1,4 @@
-(ns ^:figwheel-no-load rems.app
+(ns ^:dev/once rems.app
   (:require [rems.identity :refer [set-identity!]]
             [rems.spa :as spa]))
 

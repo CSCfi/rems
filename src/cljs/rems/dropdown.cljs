@@ -1,6 +1,6 @@
 (ns rems.dropdown
   (:require [reagent.core :as r]
-            [cljsjs.react-select]
+            ["react-select" :rename {Async AsyncSelect} :default Select]
             [clojure.string :as str]
             [medley.core :refer [assoc-some]]
             [rems.guide-util :refer [component-info example]]
@@ -29,22 +29,22 @@
          item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
-  [:> js/Select {:className (str/trimr (str "dropdown-container " class))
-                 :classNamePrefix "dropdown-select"
-                 :getOptionLabel #(item-label %)
-                 :getOptionValue #(item-key %)
-                 :inputId id
-                 :isMulti multi?
-                 :isClearable clearable?
-                 :isDisabled disabled?
-                 :isOptionDisabled #(item-disabled? %)
-                 :maxMenuHeight 200
-                 :noOptionsMessage #(text :t.dropdown/no-results)
-                 :hideSelectedOptions hide-selected?
-                 :options (into-array items)
-                 :value (into-array (filter item-selected? items))
-                 :onChange #(on-change (if (array? %) (array-seq %) %))
-                 :placeholder (or placeholder (text :t.dropdown/placeholder))}])
+  [:> Select {:className (str/trimr (str "dropdown-container " class))
+              :classNamePrefix "dropdown-select"
+              :getOptionLabel #(item-label %)
+              :getOptionValue #(item-key %)
+              :inputId id
+              :isMulti multi?
+              :isClearable clearable?
+              :isDisabled disabled?
+              :isOptionDisabled #(item-disabled? %)
+              :maxMenuHeight 200
+              :noOptionsMessage #(text :t.dropdown/no-results)
+              :hideSelectedOptions hide-selected?
+              :options (into-array items)
+              :value (into-array (filter item-selected? items))
+              :onChange #(on-change (if (array? %) (array-seq %) %))
+              :placeholder (or placeholder (text :t.dropdown/placeholder))}])
 
 (defn async-dropdown
   "Single- or multi-choice, searchable dropdown menu with support for asynchronous data loading.
@@ -68,26 +68,26 @@
          hide-selected? multi?
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
-  [:> js/Select.Async (-> {:className (str/trimr (str "dropdown-container " class))
-                           :classNamePrefix "dropdown-select-async"
-                           :getOptionLabel #(item-label (js->clj % :keywordize-keys true))
-                           :getOptionValue #(item-key (js->clj % :keywordize-keys true))
-                           :inputId id
-                           :isMulti multi?
-                           :isClearable clearable?
-                           :isDisabled disabled?
-                           :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
-                           :maxMenuHeight 200
-                           :noOptionsMessage #(text :t.dropdown/no-results)
-                           :hideSelectedOptions hide-selected?
-                           :onChange #(let [items (js->clj % :keywordize-keys true)]
-                                        (on-change (if (array? items) (array-seq items) items)))
-                           :placeholder (or placeholder (text :t.dropdown/placeholder))
-                           :loadOptions (fn [query-string callback]
-                                          (on-load-options {:query-string query-string
-                                                            :on-data #(callback (clj->js %))}))
-                           :loadingMessage #(text :t.dropdown/loading)}
-                          (assoc-some :value (when (seq items) (into-array items))))])
+  [:> AsyncSelect (-> {:className (str/trimr (str "dropdown-container " class))
+                       :classNamePrefix "dropdown-select-async"
+                       :getOptionLabel #(item-label (js->clj % :keywordize-keys true))
+                       :getOptionValue #(item-key (js->clj % :keywordize-keys true))
+                       :inputId id
+                       :isMulti multi?
+                       :isClearable clearable?
+                       :isDisabled disabled?
+                       :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
+                       :maxMenuHeight 200
+                       :noOptionsMessage #(text :t.dropdown/no-results)
+                       :hideSelectedOptions hide-selected?
+                       :onChange #(let [items (js->clj % :keywordize-keys true)]
+                                    (on-change (if (array? items) (array-seq items) items)))
+                       :placeholder (or placeholder (text :t.dropdown/placeholder))
+                       :loadOptions (fn [query-string callback]
+                                      (on-load-options {:query-string query-string
+                                                        :on-data #(callback (clj->js %))}))
+                       :loadingMessage #(text :t.dropdown/loading)}
+                      (assoc-some :value (when (seq items) (into-array items))))])
 
 (defn guide
   []
