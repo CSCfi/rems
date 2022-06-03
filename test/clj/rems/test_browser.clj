@@ -487,7 +487,9 @@
         (send-application)
         (btu/gather-axe-results)
 
-        (is (= "Applied" (btu/get-element-text :application-state)))
+        ;; state text is not visible, so check phase instead
+        (btu/has-class? [{:class "phases state-submitted"} :apply-phase]
+                        :completed)
 
         (testing "check a field answer"
           (is (= "Test name" (btu/get-element-text description-field-selector))))
@@ -579,6 +581,7 @@
       (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
+      (btu/scroll-and-click :applicants-info-collapse-more-link)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (btu/scroll-and-click :invite0-info-collapse-more-link)
       (is (btu/eventually-visible? :invite0-info-collapse))
@@ -652,6 +655,8 @@
 
     (testing "remove second member jade"
       (is (not (btu/visible? :actions-member1-operations-remove)))
+      (is (not (btu/visible? :member1-operations-remove-action-button)))
+      (btu/scroll-and-click :applicants-info-collapse-more-link)
       (btu/scroll-and-click :member1-operations-remove-action-button)
       (is (btu/eventually-visible? :actions-member1-operations-remove))
       (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
