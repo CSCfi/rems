@@ -23,6 +23,7 @@
                 :asset-path "/js"
                 :modules {:app {:entries [rems.app]}}
                 :compiler-options {:optimizations :advanced
+                                   :infer-externs :auto
                                    :source-map true}
                 :devtools {:preloads [re-frisk.preload]
                            :watch-dir "target/resources/public"}}
