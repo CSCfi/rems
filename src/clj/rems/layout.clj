@@ -54,6 +54,10 @@
           (into [:head
                  [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
                  [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+                 [:meta {:name "description" :content (with-language (env :default-language)
+                                                        #(text :t.meta/description))}]
+                 [:meta {:name "keywords" :content (with-language (env :default-language)
+                                                     #(text :t.meta/keywords))}]
                  [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
                  [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
 
