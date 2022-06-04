@@ -70,10 +70,6 @@
            (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
-           ;; XXX: diff-match-patch is an NPM module and not meant to be included with a script tag
-           [:script {:type "text/javascript"} "module = {};"]
-           (include-js "/assets/diff-match-patch/index.js")
-           [:script {:type "text/javascript"} "delete module;"]
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (when (:accessibility-report env) (include-js "/assets/axe-core/axe.min.js"))

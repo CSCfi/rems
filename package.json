@@ -3,6 +3,7 @@
     "react": "16.9.0",
     "react-dom": "16.9.0",
     "react-select": "2.4.4"
+    "diff-match-patch": "^1.0.5",
   },
   "devDependencies": {
     "karma": "^6.3.20",
