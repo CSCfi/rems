@@ -49,7 +49,6 @@
                  [org.webjars.bower/tether "1.4.4"]
                  [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
-                 [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/popper.js "1.16.1"]
                  [org.webjars/bootstrap "4.4.1-1"]
                  [org.webjars/font-awesome "6.1.0"]

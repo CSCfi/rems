@@ -66,7 +66,6 @@
           [:body
            [:div#app app-content]
            (include-js "/assets/font-awesome/js/fontawesome.js")
-           (include-js "/assets/better-dom/dist/better-dom.js")
            (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
