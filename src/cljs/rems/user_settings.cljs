@@ -80,16 +80,21 @@
 (rf/reg-event-fx
  :loaded-user-settings-fail
  (fn [{:keys [db]} [_ user-settings-error]]
-   (let [logged-in? (:user (:identity db))]
+   (let [logged-in? (get-in db [:identity :user])]
      (when-not logged-in?
        (when-not (= 401 (:status user-settings-error))
          {:dispatch (flash-message/show-default-error! :top (str "Fetch user settings"))})))))
 
-(defn fetch-user-settings! []
-  (fetch "/api/user-settings"
-         {:custom-error-handler? true
-          :handler #(rf/dispatch-sync [:loaded-user-settings %])
-          :error-handler #(rf/dispatch [:loaded-user-settings-fail %])}))
+(rf/reg-event-fx
+ ::fetch-user-settings
+ (fn [{:keys [db]} [_]]
+   ;; unless we are logged-in yet we shouldn't even try (or 401 error)
+   (when-let [_logged-in? (get-in db [:identity :user])]
+     (fetch "/api/user-settings"
+            {:custom-error-handler? true
+             :handler #(rf/dispatch-sync [:loaded-user-settings %])
+             :error-handler #(rf/dispatch [:loaded-user-settings-fail %])}))
+   {}))
 
 (rf/reg-event-fx
  ::save-user-language!
@@ -98,6 +103,6 @@
      (when user-id
        (put! "/api/user-settings"
              {:params {:language language}
-              :handler fetch-user-settings!
+              :handler #(rf/dispatch [::fetch-user-settings])
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
      {})))

@@ -57,7 +57,7 @@
             [rems.common.roles :as roles]
             [rems.profile :refer [profile-page missing-email-warning]]
             [rems.text :refer [text text-format]]
-            [rems.user-settings :refer [fetch-user-settings!]]
+            [rems.user-settings]
             [rems.util :refer [navigate! fetch replace-url! set-location!]]
             [secretary.core :as secretary])
   (:import goog.history.Html5History))
@@ -638,11 +638,11 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (keepalive/register-keepalive-listeners!)
+  (rf/dispatch [:rems.user-settings/fetch-user-settings])
   ;; see also: lazy-load-data! and dev-reload-button
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
-              (config/fetch-config!)
-              (fetch-user-settings!)])
+              (config/fetch-config!)])
       ;; all preceding code must use `rf/dispatch-sync` to avoid
       ;; the first render flashing with e.g. missing translations
       (p/finally (fn []
