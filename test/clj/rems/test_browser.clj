@@ -487,9 +487,8 @@
         (send-application)
         (btu/gather-axe-results)
 
-        ;; state text is not visible, so check phase instead
-        (btu/has-class? [{:class "phases state-submitted"} :apply-phase]
-                        :completed)
+        (btu/scroll-and-click :header-collapse-more-link) ; show application state details
+        (is (= "Applied" (btu/get-element-text :application-state)))
 
         (testing "check a field answer"
           (is (= "Test name" (btu/get-element-text description-field-selector))))
