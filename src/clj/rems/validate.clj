@@ -52,8 +52,13 @@
 
 (defn validate []
   (log/info "Validating configuration")
-  (when (:oidc-userid-attribute env)
-    (throw (ex-info "Please migrate to :oidc-userid-attributes" (select-keys env [:oidc-userid-attribute]))))
+  (when-let [old-attributes (some-> env :oidc-userid-attribute list flatten)]
+    (throw (ex-info "Please migrate to :oidc-userid-attributes"
+                    (doall
+                     {:from (select-keys env [:oidc-userid-attribute])
+                      :to {:oidc-userid-attributes (vec
+                                                    (for [attribute old-attributes]
+                                                      {:attribute attribute}))}}))))
 
   (log/info "Validating data")
   (try
