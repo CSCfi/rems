@@ -585,6 +585,7 @@
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (btu/scroll-and-click :invite0-info-collapse-more-link)
       (is (btu/eventually-visible? :invite0-info-collapse))
+      (btu/scroll-and-click :header-collapse-more-link) ; show events
 
       (is (= {"Name" "John Smith"
               "Email" "john.smith@generic.name"}
@@ -664,6 +665,7 @@
       (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
       (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
+      (btu/scroll-and-click :header-collapse-more-link) ; show events
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
