@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.26
+Changes since v2.27
+
+## v2.27 "Lauttasaaren silta" 2022-06-06
 
 NB: This is the first release with a new build tool – Shadow-CLJS.
 
