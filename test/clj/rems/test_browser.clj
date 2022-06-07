@@ -488,6 +488,7 @@
         (btu/gather-axe-results)
 
         (btu/scroll-and-click :header-collapse-more-link) ; show application state details
+        (is (btu/eventually-visible? :header-collapse))
         (is (= "Applied" (btu/get-element-text :application-state)))
 
         (testing "check a field answer"
@@ -581,10 +582,12 @@
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (btu/scroll-and-click :applicants-info-collapse-more-link)
+      (is (btu/eventually-visible? :applicants-info-collapse-more-link))
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (btu/scroll-and-click :invite0-info-collapse-more-link)
       (is (btu/eventually-visible? :invite0-info-collapse))
       (btu/scroll-and-click :header-collapse-more-link) ; show events
+      (is (btu/eventually-visible? :header-collapse))
 
       (is (= {"Name" "John Smith"
               "Email" "john.smith@generic.name"}
@@ -657,6 +660,7 @@
       (is (not (btu/visible? :actions-member1-operations-remove)))
       (is (not (btu/visible? :member1-operations-remove-action-button)))
       (btu/scroll-and-click :applicants-info-collapse-more-link)
+      (is (btu/eventually-visible? :applicants-info-collapse-more-link))
       (btu/scroll-and-click :member1-operations-remove-action-button)
       (is (btu/eventually-visible? :actions-member1-operations-remove))
       (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
@@ -665,6 +669,7 @@
       (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
       (btu/scroll-and-click :header-collapse-more-link) ; show events
+      (is (btu/eventually-visible? :header-collapse))
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
