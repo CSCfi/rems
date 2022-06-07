@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
-            [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [reagent.dom :as rd]
@@ -635,18 +634,13 @@
   (rf/clear-subscription-cache!)
   (rd/render [page] (.getElementById js/document "app")))
 
-(defn init! []
+(defn ^:export init []
   (version-info)
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (keepalive/register-keepalive-listeners!)
-  (rf/dispatch [:rems.user-settings/fetch-user-settings])
   ;; see also: lazy-load-data! and dev-reload-button
-  (-> (p/all [(fetch-translations!)
-              (fetch-theme!)
-              (config/fetch-config!)])
-      ;; all preceding code must use `rf/dispatch-sync` to avoid
-      ;; the first render flashing with e.g. missing translations
-      (p/finally (fn []
-                   (hook-browser-navigation!)
-                   (mount-components)))))
+  (hook-browser-navigation!))
+
+(defn ^:export mount []
+  (mount-components))

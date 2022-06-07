@@ -26,10 +26,11 @@
 
 ;;; handlers
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :set-identity
  (fn [db [_ identity]]
-   (assoc db :identity identity)))
+   {:db (assoc db :identity identity)
+    :dispatch [:rems.user-settings/fetch-user-settings]}))
 
 (rf/reg-event-db
  :set-roles

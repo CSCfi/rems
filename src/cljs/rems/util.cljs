@@ -3,7 +3,6 @@
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [goog.string :refer [format]]
-            [promesa.core :as p]
             [re-frame.core :as rf]
             [clojure.test :refer [deftest are testing]]))
 
@@ -79,22 +78,15 @@
   Has sensible defaults with error handler, JSON and keywords.
   You can use :custom-error-handler? to decide weather you would like use wrapper for the error handling.
 
-  Additionally calls event hooks.
-
-  Returns a promise, but it's okay to ignore it if you prefer using
-  the `:handler` and `:error-handler` callbacks instead."
+  Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
-  ;; TODO: change also put! and post! to return a promise?
-  (p/create
-   (fn [resolve reject]
-     (GET url (-> (merge {:response-format :transit}
-                         opts
-                         (if (:custom-error-handler? opts)
-                           {:error-handler (:error-handler opts)}
-                           {:error-handler (wrap-default-error-handler (:error-handler opts))}))
-                  (update :handler append-handler resolve)
-                  (update :error-handler append-handler reject))))))
+  (GET url (-> (merge {:response-format :transit
+                       :handler (fn [])}
+                      opts
+                      (if (:custom-error-handler? opts)
+                        {:error-handler (:error-handler opts)}
+                        {:error-handler (wrap-default-error-handler (:error-handler opts))})))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.

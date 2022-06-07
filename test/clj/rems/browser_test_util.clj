@@ -541,4 +541,4 @@
   (fn []
     (js-async "var args = arguments;
                var callback = args[args.length - 1];
-               window.rems.config.fetch_config_BANG_().then(callback);")))
+               window.rems.config.fetch_config_BANG_(callback);")))

@@ -21,6 +21,7 @@
                  [cprop "0.1.19"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
+                 [com.cognitect/transit-clj "1.0.329"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
                  [luminus-jetty "0.2.3"]

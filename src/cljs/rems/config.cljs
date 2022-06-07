@@ -19,9 +19,10 @@
  (fn [db _]
    (:config db)))
 
-(defn ^:export fetch-config! []
+(defn ^:export fetch-config! [& [callback]]
   (fetch "/api/config"
-         {:handler #(rf/dispatch-sync [::loaded-config %])
+         {:handler #(do (rf/dispatch-sync [::loaded-config %])
+                        (when callback (callback %)))
           :error-handler (flash-message/default-error-handler :top "Fetch config")}))
 
 (defn dev-environment? []
