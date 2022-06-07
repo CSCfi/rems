@@ -66,9 +66,10 @@
   (let [show? (r/atom open?)] ; track internal open/closed status
     (fn [{:keys [id open? on-open content-always content-hideable content-hidden content-footer top-less-button? bottom-less-button? class]}]
       (let [always? (not-empty content-always)
+            hidden (not-empty content-hidden)
             show-more [:div.collapse-toggle
                        [show-more-button
-                        (if always?
+                        (if (or always? hidden)
                           (text :t.collapse/show-more)
                           (text :t.collapse/show))
                         id open? (fn []
@@ -76,7 +77,7 @@
                                    (when on-open (on-open)))]]
             show-less [:div.collapse-toggle
                        [show-less-button
-                        (if always?
+                        (if (or always? hidden)
                           (text :t.collapse/show-less)
                           (text :t.collapse/hide))
                         id open? #(reset! show? false)]]]
@@ -85,7 +86,7 @@
          (when (seq content-hideable)
            [:div
             (when top-less-button? show-less)
-            (when-not @show? content-hidden)
+            (when-not @show? hidden)
             [:div.collapse {:id id
                             :class (when open? "show")
                             :tab-index "-1"}
@@ -110,6 +111,7 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
+  `:collapse-hidden` component that is displayed when collapse is toggled off. Defaults nil
   `:footer` component displayed always after collapsible area"
   [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div {:id id :class class}
@@ -139,6 +141,7 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
+  `:collapse-hidden` component that is displayed when collapse is toggled off. Defaults nil
   `:footer` component displayed always after collapsible area"
   [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
@@ -203,6 +206,11 @@
                         :always [:p "I am content that is always visible"]
                         :top-less-button? true
                         :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
+   (example "collapsible that has different content when toggled"
+            [component {:id "hello8"
+                        :title "Collapsed"
+                        :collapse-hidden [:p "I am content that is only visible when collapsed"]
+                        :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
    (component-info minimal)
    (example "minimal collapsible without title"
             [minimal {:id "minimal1"
@@ -218,4 +226,9 @@
                       :class "slow"
                       :title "Minimal expanded"
                       :always [:p "I am content that is always visible"]
+                      :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+   (example "minimal collapsible that has different content when toggled"
+            [minimal {:id "minimal4"
+                      :title "Minimal collapsed"
+                      :collapse-hidden [:p "I am content that is only visible when collapsed"]
                       :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])
