@@ -8,6 +8,16 @@ have notable changes.
 
 Changes since v2.27
 
+### Additions
+- The packaged fonts are now only in WOFF and WOFF2 formats, as is required for extensive support these days. (#2592)
+- Various improvements should improve performance:
+  - Gzip compression has been enabled for the server, so it is more feasible to use REMS as a standalone server without a reverse-proxy / load-balancer.
+  - Logo images are preloaded automatically as they are almost always required.
+  - Initial data is injected to the initial HTML instead of separate requests afterwards. (#2958)
+  - Some dependencies have been dropped resulting in a smaller bundle.
+- Default metadata for the HTML index has been added under description and keywords tags. These can be overridden using extra translations (`:t.meta/description`, `:t.meta/keywords`) (#2679)
+- Default `robots.txt` has been included that indexes everything but the `/api`. NB: the bots are not able to index most pages as they are behind the login. (#2680)
+
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
 NB: This is the first release with a new build tool – Shadow-CLJS.
