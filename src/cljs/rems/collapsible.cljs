@@ -209,6 +209,7 @@
    (example "collapsible that has different content when toggled"
             [component {:id "hello8"
                         :title "Collapsed"
+                        :always [:p "I am content that is always visible"]
                         :collapse-hidden [:p "I am content that is only visible when collapsed"]
                         :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
    (component-info minimal)
@@ -230,5 +231,6 @@
    (example "minimal collapsible that has different content when toggled"
             [minimal {:id "minimal4"
                       :title "Minimal collapsed"
+                      :always [:p "I am content that is always visible"]
                       :collapse-hidden [:p "I am content that is only visible when collapsed"]
                       :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])
