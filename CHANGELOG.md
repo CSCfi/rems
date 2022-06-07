@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.27
 
+### Additions
+- Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
+
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
 NB: This is the first release with a new build tool – Shadow-CLJS.
