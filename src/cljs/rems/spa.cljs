@@ -374,10 +374,12 @@
     [:div
      [nav/navigation-widget]
      (when (or (= page-id :home)
-               (and (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
+               (and lang
+                    (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
                     (not (:navbar-logo-name theme))))
        [logo])
-     [main-content page-id grab-focus?]
+     (when page-id
+       [main-content page-id grab-focus?])
      [footer]]))
 
 ;;;; Routes
