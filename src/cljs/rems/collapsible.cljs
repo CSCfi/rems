@@ -111,7 +111,7 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
-  `:collapse-hidden` component that is displayed when collapse is toggled off. Defaults nil
+  `:collapse-hidden` component that is displayed when content is collapsed. Defaults nil
   `:footer` component displayed always after collapsible area"
   [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div {:id id :class class}
@@ -141,7 +141,7 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
-  `:collapse-hidden` component that is displayed when collapse is toggled off. Defaults nil
+  `:collapse-hidden` component that is displayed when content is collapsed. Defaults nil
   `:footer` component displayed always after collapsible area"
   [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
