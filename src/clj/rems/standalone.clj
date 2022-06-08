@@ -61,7 +61,8 @@
                        {:ssl? true
                         :ssl-port (:ssl-port env)
                         :keystore (:ssl-keystore env)
-                        :key-password (:ssl-keystore-password env)})))
+                        :key-password (:ssl-keystore-password env)})
+                     (:jetty-extra-params env)))
   :stop
   (when http-server (http/stop http-server)))
 
