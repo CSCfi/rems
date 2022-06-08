@@ -17,6 +17,7 @@ Changes since v2.27
   - Some dependencies have been dropped resulting in a smaller bundle.
 - Default metadata for the HTML index has been added under description and keywords tags. These can be overridden using extra translations (`:t.meta/description`, `:t.meta/keywords`) (#2679)
 - Default `robots.txt` has been included that indexes everything but the `/api`. NB: the bots are not able to index most pages as they are behind the login. (#2680)
+- HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
 
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
