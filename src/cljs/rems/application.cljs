@@ -647,7 +647,7 @@
     (for [event (:application/events application)]
       (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
 
-(defn- render-state-fields [application config events]
+(defn- application-state-details [application config events]
   [:<>
    [info-field
     (text :t.applications/application)
@@ -691,13 +691,13 @@
                 [phases state (get-application-phases state)]]
                (when (is-handler? application userid)
                  (->> events-show-always
-                      (render-state-fields application config)))]
+                      (application-state-details application config)))]
       :collapse (if (is-handler? application userid)
                   (when (seq events-collapse)
                     (into [:div]
                           (render-events events-collapse)))
                   (->> (concat events-show-always events-collapse)
-                       (render-state-fields application config)))}]))
+                       (application-state-details application config)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -743,7 +743,7 @@
                  [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
-(defn- render-applicants [application]
+(defn- applicants-details [application]
   (let [applicant (:application/applicant application)
         members (:application/members application)
         invited-members (:application/invited-members application)]
@@ -766,7 +766,7 @@
                            :application application
                            :group? true}])))))
 
-(defn- render-applicants-short [application]
+(defn- applicants-short [application]
   (let [applicant (:application/applicant application)
         members (:application/members application)
         invited-members (:application/invited-members application)]
@@ -795,10 +795,10 @@
     [collapsible/component
      (if (is-handler? application userid)
        (assoc component
-              :always (render-applicants application))
+              :always (applicants-details application))
        (assoc component
-              :collapse-hidden (render-applicants-short application)
-              :collapse (render-applicants application)))]))
+              :collapse-hidden (applicants-short application)
+              :collapse (applicants-details application)))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group
