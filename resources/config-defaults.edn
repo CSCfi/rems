@@ -11,6 +11,10 @@
  :ssl-keystore nil ; Java keystore file
  :ssl-keystore-password nil ; (optional) password of key file
 
+ ;; Extra parameters to override HTTP server parameters
+ ;; A useful parameter could be `{:h2? true}` to enable HTTP/2 if you have SSL configured
+ :jetty-extra-params {}
+
  ;; Url for this REMS installation. Should end with a /.
  ;; Used for generating links in emails, in OpenId authentication (:oidc),
  ;; and in the `iss` and `source` of generated GA4GH visas (see /api/permissions).
