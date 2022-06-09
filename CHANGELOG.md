@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.27
 
 ### Additions
+- Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
 - The packaged fonts are now only in WOFF and WOFF2 formats, as is required for extensive support these days. (#2592)
 - Various improvements should improve performance:
   - Gzip compression has been enabled for the server, so it is more feasible to use REMS as a standalone server without a reverse-proxy / load-balancer.
