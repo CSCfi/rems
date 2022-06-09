@@ -1,5 +1,6 @@
 (ns rems.collapsible
-  (:require [rems.text :refer [text]]
+  (:require [reagent.core :as r]
+            [rems.text :refer [text]]
             [rems.guide-util :refer [component-info example]]))
 
 (defn- show [id callback]
@@ -14,11 +15,14 @@
   (when callback
     (callback)))
 
-(defn- hide [id]
+(defn- hide [id callback]
   (.collapse (js/$ (str "#" id)) "hide")
   (.. (js/$ (str "." id "-less"))
       (collapse "hide")
-      (one "hidden.bs.collapse" (fn [_] (. (js/$ (str "." id "-more")) collapse "show"))))
+      (one "hidden.bs.collapse" (fn [_]
+                                  (. (js/$ (str "." id "-more")) collapse "show")
+                                  (when callback
+                                    (callback)))))
   (.focus (js/$ (str "#" id "-more-link"))))
 
 (defn- header
@@ -37,13 +41,13 @@
    label])
 
 (defn- show-less-button
-  [label id expanded]
+  [label id expanded callback]
   [:a.collapse
    {:class (str (str id "-less ") (when expanded "show"))
     :href "#"
     :on-click (fn [event]
                 (.preventDefault event)
-                (hide id))}
+                (hide id callback))}
    label])
 
 (defn controls
@@ -56,34 +60,40 @@
   [id label-show label-hide open?]
   [:<>
    [show-more-button label-show id open? nil]
-   [show-less-button label-hide id open?]])
+   [show-less-button label-hide id open? nil]])
 
-(defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button? class]
-  (let [always? (not-empty content-always)
-        show-more [:div.collapse-toggle
-                   [show-more-button
-                    (if always?
-                      (text :t.collapse/show-more)
-                      (text :t.collapse/show))
-                    id open? on-open]]
-        show-less [:div.collapse-toggle
-                   [show-less-button
-                    (if always?
-                      (text :t.collapse/show-less)
-                      (text :t.collapse/hide))
-                    id open?]]]
-    [:div {:class class}
-     content-always
-     (when (seq content-hideable)
-       [:div
-        (when top-less-button? show-less)
-        [:div.collapse {:id id
-                        :class (when open? "show")
-                        :tab-index "-1"}
-         content-hideable]
-        show-more
-        (when-not (false? bottom-less-button?) show-less)])
-     content-footer]))
+(defn- block [{:keys [open?]}]
+  (let [show? (r/atom open?)] ; track internal open/closed status
+    (fn [{:keys [id open? on-open content-always content-hideable content-hidden content-footer top-less-button? bottom-less-button? class]}]
+      (let [always? (not-empty content-always)
+            hidden (not-empty content-hidden)
+            show-more [:div.collapse-toggle
+                       [show-more-button
+                        (if (or always? hidden)
+                          (text :t.collapse/show-more)
+                          (text :t.collapse/show))
+                        id open? (fn []
+                                   (reset! show? true)
+                                   (when on-open (on-open)))]]
+            show-less [:div.collapse-toggle
+                       [show-less-button
+                        (if (or always? hidden)
+                          (text :t.collapse/show-less)
+                          (text :t.collapse/hide))
+                        id open? #(reset! show? false)]]]
+        [:div {:class class}
+         content-always
+         (when (seq content-hideable)
+           [:div
+            (when top-less-button? show-less)
+            (when-not @show? hidden)
+            [:div.collapse {:id id
+                            :class (when open? "show")
+                            :tab-index "-1"}
+             content-hideable]
+            show-more
+            (when-not (false? bottom-less-button?) show-less)])
+         content-footer]))))
 
 (defn minimal
   "Displays a minimal collapsible block of content.
@@ -101,12 +111,21 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
+  `:collapse-hidden` component that is displayed when content is collapsed. Defaults nil
   `:footer` component displayed always after collapsible area"
-  [{:keys [id class open? on-open title title-class always collapse footer top-less-button? bottom-less-button?]}]
+  [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div {:id id :class class}
    (when title [header title title-class])
    (when (or always collapse footer)
-     [block (str id "-collapse") open? on-open always collapse footer top-less-button? bottom-less-button? nil])])
+     [block {:id (str id "-collapse")
+             :open? open?
+             :on-open on-open
+             :content-always always
+             :content-hideable collapse
+             :content-hidden collapse-hidden
+             :content-footer footer
+             :top-less-button? top-less-button?
+             :bottom-less-button? bottom-less-button?}])])
 
 (defn component
   "Displays a collapsible block of content.
@@ -122,13 +141,23 @@
   `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
+  `:collapse-hidden` component that is displayed when content is collapsed. Defaults nil
   `:footer` component displayed always after collapsible area"
-  [{:keys [id class open? on-open title title-class always collapse footer top-less-button? bottom-less-button?]}]
+  [{:keys [id class open? on-open title title-class always collapse collapse-hidden footer top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
                           :class class}
    (when title [header title title-class])
    (when (or always collapse footer)
-     [block (str id "-collapse") open? on-open always collapse footer top-less-button? bottom-less-button? "collapse-content"])])
+     [block {:id (str id "-collapse")
+             :open? open?
+             :on-open on-open
+             :content-always always
+             :content-hideable collapse
+             :content-hidden collapse-hidden
+             :content-footer footer
+             :top-less-button? top-less-button?
+             :bottom-less-button? bottom-less-button?
+             :class "collapse-content"}])])
 
 (defn open-component
   "A helper for opening a collapsible/component or collapsible/minimal"
@@ -177,6 +206,12 @@
                         :always [:p "I am content that is always visible"]
                         :top-less-button? true
                         :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
+   (example "collapsible that has different content when toggled"
+            [component {:id "hello8"
+                        :title "Collapsed"
+                        :always [:p "I am content that is always visible"]
+                        :collapse-hidden [:p "I am content that is only visible when collapsed"]
+                        :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
    (component-info minimal)
    (example "minimal collapsible without title"
             [minimal {:id "minimal1"
@@ -192,4 +227,10 @@
                       :class "slow"
                       :title "Minimal expanded"
                       :always [:p "I am content that is always visible"]
+                      :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+   (example "minimal collapsible that has different content when toggled"
+            [minimal {:id "minimal4"
+                      :title "Minimal collapsed"
+                      :always [:p "I am content that is always visible"]
+                      :collapse-hidden [:p "I am content that is only visible when collapsed"]
                       :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])

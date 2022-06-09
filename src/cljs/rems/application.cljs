@@ -1,5 +1,6 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
@@ -25,7 +26,7 @@
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
-            [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
+            [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
             [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
@@ -646,9 +647,35 @@
     (for [event (:application/events application)]
       (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
 
-(defn- application-state [application config highlight-request-id]
+(defn- application-state-details [application config events]
+  [:<>
+   [info-field
+    (text :t.applications/application)
+    [:<>
+     [:span#application-id
+      (application-list/format-application-id config application)]
+     [application-copy-notice application]]
+    {:inline? true}]
+   [info-field
+    (text :t.applications/description)
+    (:application/description application)
+    {:inline? true}]
+   [info-field
+    (text :t.applications/state)
+    [:span#application-state
+     (localize-state (:application/state application))]
+    {:inline? true}]
+   [info-field
+    (text :t.applications/latest-activity)
+    (localize-time (:application/last-activity application))
+    {:inline? true}]
+   (when (seq events)
+     (into [:<>
+            [:h3 (text :t.form/events)]]
+           (render-events events)))])
+
+(defn- application-state [application config highlight-request-id userid]
   (let [state (:application/state application)
-        last-activity (:application/last-activity application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
                     (map #(assoc % :highlight
@@ -659,33 +686,18 @@
     [collapsible/component
      {:id "header"
       :title (text :t.applications/state)
-      :always (into [:div
-                     [:div.mb-3
-                      [phases state (get-application-phases state)]]
-                     [info-field
-                      (text :t.applications/application)
-                      [:<>
-                       [:span#application-id (application-list/format-application-id config application)]
-                       [application-copy-notice application]]
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/description)
-                      (:application/description application)
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/state)
-                      [:span#application-state (localize-state state)]
-                      {:inline? true}]
-                     [info-field
-                      (text :t.applications/latest-activity)
-                      (localize-time last-activity)
-                      {:inline? true}]]
-                    (when (seq events-show-always)
-                      (into [[:h3 (text :t.form/events)]]
-                            (render-events events-show-always))))
-      :collapse (when (seq events-collapse)
-                  (into [:div]
-                        (render-events events-collapse)))}]))
+      :always [:div
+               [:div.mb-3
+                [phases state (get-application-phases state)]]
+               (when (is-handler? application userid)
+                 (->> events-show-always
+                      (application-state-details application config)))]
+      :collapse (if (is-handler? application userid)
+                  (when (seq events-collapse)
+                    (into [:div]
+                          (render-events events-collapse)))
+                  (->> (concat events-show-always events-collapse)
+                       (application-state-details application config)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -731,45 +743,62 @@
                  [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
+(defn- applicants-details [application]
+  (let [applicant (:application/applicant application)
+        members (:application/members application)
+        invited-members (:application/invited-members application)]
+    (into [:div
+           [flash-message/component :change-members]
+           [member-info {:element-id "applicant"
+                         :attributes applicant
+                         :application application
+                         :group? (or (seq members)
+                                     (seq invited-members))}]]
+          (concat
+           (for [[index member] (map-indexed vector (sort-by :name members))]
+             [member-info {:element-id (str "member" index)
+                           :attributes member
+                           :application application
+                           :group? true}])
+           (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
+             [member-info {:element-id (str "invite" index)
+                           :attributes invited-member
+                           :application application
+                           :group? true}])))))
+
+(defn- applicants-short [application]
+  (let [applicant (:application/applicant application)
+        members (:application/members application)
+        invited-members (:application/invited-members application)]
+    (into [:div]
+          (->> (union #{applicant} members invited-members)
+               (keep get-member-name)
+               sort
+               (str/join ", ")))))
+
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
-  [application]
+  [application userid]
   (let [application-id (:application/id application)
-        applicant (:application/applicant application)
-        members (:application/members application)
-        invited-members (:application/invited-members application)
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
-        can-invite? (contains? permissions :application.command/invite-member)]
+        can-invite? (contains? permissions :application.command/invite-member)
+        component {:id "applicants-info"
+                   :title (text :t.applicant-info/applicants)
+                   :footer [:div
+                            [:div.commands
+                             (when can-invite? [invite-member-action-button])
+                             (when can-add? [add-member-action-button])]
+                            [:div#member-action-forms
+                             [invite-member-form application-id (partial reload! application-id)]
+                             [add-member-form application-id (partial reload! application-id)]]]}]
     [collapsible/component
-     {:id "applicants-info"
-      :title (text :t.applicant-info/applicants)
-      :always
-      (into [:div
-             [flash-message/component :change-members]
-             [member-info {:element-id "applicant"
-                           :attributes applicant
-                           :application application
-                           :group? (or (seq members)
-                                       (seq invited-members))}]]
-            (concat
-             (for [[index member] (map-indexed vector (sort-by :name members))]
-               [member-info {:element-id (str "member" index)
-                             :attributes member
-                             :application application
-                             :group? true}])
-             (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
-               [member-info {:element-id (str "invite" index)
-                             :attributes invited-member
-                             :application application
-                             :group? true}])))
-      :footer [:div
-               [:div.commands
-                (when can-invite? [invite-member-action-button])
-                (when can-add? [add-member-action-button])]
-               [:div#member-action-forms
-                [invite-member-form application-id (partial reload! application-id)]
-                [add-member-form application-id (partial reload! application-id)]]]}]))
+     (if (is-handler? application userid)
+       (assoc component
+              :always (applicants-details application))
+       (assoc component
+              :collapse-hidden (applicants-short application)
+              :collapse (applicants-details application)))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group
@@ -1014,8 +1043,8 @@
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config highlight-request-id]
-     [:div.mt-3 [applicants-info application]]
+     [application-state application config highlight-request-id userid]
+     [:div.mt-3 [applicants-info application userid]]
      (when (:enable-duo config)
        (if (= userid (-> application :application/applicant :userid))
          [:div.mt-3 [edit-application-duo-codes]]
