@@ -18,7 +18,6 @@
 /target/
 /node_modules/
 /.rebel_readline_history
-/package-lock.json
 /browsertest-errors/
 /browsertest-downloads/
 /browsertest-accessibility-report/
