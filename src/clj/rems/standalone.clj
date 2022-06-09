@@ -41,6 +41,8 @@
                                                        "text/javascript"
                                                        "application/javascript"
                                                        "application/json"
+                                                       "application/transit+json"
+                                                       "image/x-icon"
                                                        "image/svg+xml"]))
                    (.setMinGzipSize 1024)
                    (.setHandler (.getHandler server))))
