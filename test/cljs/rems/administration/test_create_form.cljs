@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
-            [rems.identity :refer [set-roles!]]
             [rems.testing :refer [isolate-re-frame-state]]
             [rems.util :refer [getx-in]]))
 
@@ -15,7 +14,7 @@
 
 
 (deftest add-form-field-test
-  (set-roles! [:owner])
+  (rf/dispatch-sync [:set-roles [:owner]])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "adds fields"
       (reset-form)
@@ -45,7 +44,7 @@
           "after"))))
 
 (deftest remove-form-field-test
-  (set-roles! [:owner])
+  (rf/dispatch-sync [:set-roles [:owner]])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "removes fields"
       (reset-form)
@@ -82,7 +81,7 @@
           "after"))))
 
 (deftest move-form-field-up-test
-  (set-roles! [:owner])
+  (rf/dispatch-sync [:set-roles [:owner]])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields up"
       (reset-form)
@@ -124,7 +123,7 @@
             "after move 3")))))
 
 (deftest move-form-field-down-test
-  (set-roles! [:owner])
+  (rf/dispatch-sync [:set-roles [:owner]])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields down"
       (reset-form)

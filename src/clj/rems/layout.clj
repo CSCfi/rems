@@ -1,25 +1,15 @@
 (ns rems.layout
-  (:require [hiccup.page :refer [html5 include-css include-js]]
+  (:require [clojure.string :as str]
+            [hiccup.page :refer [html5 include-css include-js]]
+            [rems.api.services.public :as public]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.users :as users]
             [rems.json :as json]
+            [cognitect.transit]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
-
-(defn initialize-hooks []
-  [:script {:type "text/javascript"}
-   "
-window.rems = {
-  hooks: {
-    get: function () {},
-    put: function () {},
-    navigate: function () {}
-  }
-};
-"])
 
 (defn- css-filename [language]
   (str "/css/" (name language) "/screen.css"))
@@ -29,37 +19,78 @@ window.rems = {
                         ;; cache busting not strictly needed for dev mode, see rems.handler/dev-js-handler
                         (System/currentTimeMillis))))
 
+;; TODO: consider refactoring together with style utils
+(defn- resolve-image [path]
+  (when path
+    (if (str/starts-with? path "http")
+      path
+      (str (get-in env [:theme :img-path]) path))))
+
+(defn- theme-get [& attrs]
+  (when (seq attrs)
+    (if-some [v (get-in env [:theme (first attrs)])]
+      v
+      (recur (rest attrs)))))
+
+(defn- logo-preloads
+  "Preload important images so that the paint can happen earlier."
+  []
+  (for [href (->>
+              ;; localized logos or fallbacks
+              (let [lang-key (some-> (if (bound? #'context/*lang*)
+                                       context/*lang*
+                                       (env :default-language))
+                                     name)]
+                [(theme-get (keyword (str "logo-name-" lang-key)) :logo-name)
+                 (theme-get (keyword (str "logo-name-sm-" lang-key)) :logo-name-sm)
+                 (theme-get (keyword (str "navbar-logo-name-" lang-key)) :navbar-logo-name)])
+
+              distinct
+              (map resolve-image)
+              (remove nil?))]
+    [:link {:rel "preload" :as "image" :href href :type "image/png"}]))
+
+(defn- inline-value [setter value]
+  (let [os (java.io.ByteArrayOutputStream. 4096)
+        _ (cognitect.transit/write (cognitect.transit/writer os :json) value)
+        transit-value (.toString os "UTF-8")]
+    [:script {:type "text/javascript"}
+     (format "%s(%s);"
+             setter
+             (pr-str transit-value))]))
+
 (defn- page-template
   [content & [app-content]]
-  (html5 [:html {:lang "en"}
-          [:head
-           [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
-           [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-           [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:title (with-language (env :default-language)
-                     #(text :t.header/title))]
-           (include-css "/assets/bootstrap/css/bootstrap.min.css")
-           (include-css "/assets/font-awesome/css/all.css")
-           (include-css (cache-bust (css-filename (env :default-language))))]
-          [:body
-           [:div#app app-content]
-           (include-js "/assets/font-awesome/js/fontawesome.js")
-           (include-js "/assets/better-dom/dist/better-dom.js")
-           (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
-           (include-js "/assets/jquery/jquery.min.js")
-           (include-js "/assets/popper.js/dist/umd/popper.min.js")
-           ;; XXX: diff-match-patch is an NPM module and not meant to be included with a script tag
-           [:script {:type "text/javascript"} "module = {};"]
-           (include-js "/assets/diff-match-patch/index.js")
-           [:script {:type "text/javascript"} "delete module;"]
-           (include-js "/assets/tether/dist/js/tether.min.js")
-           (include-js "/assets/bootstrap/js/bootstrap.min.js")
-           (when (:accessibility-report env) (include-js "/assets/axe-core/axe.min.js"))
-           (initialize-hooks)
-           (for [extra-script (get-in env [:extra-scripts :files])]
-             (include-js extra-script))
-           content]]))
+  (let [lang (if (bound? #'context/*lang*)
+               context/*lang*
+               (env :default-language))]
+    (with-language lang
+      #(html5 [:html {:lang "en"}
+               (into [:head
+                      [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+                      [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+                      [:meta {:name "description" :content (text :t.meta/description)}]
+                      [:meta {:name "keywords" :content (text :t.meta/keywords)}]
+                      [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
+                      [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
+
+                      [:title (text :t.header/title)]
+                      (include-css "/assets/bootstrap/css/bootstrap.min.css")
+                      (include-css "/assets/font-awesome/css/all.css")
+                      (include-css (cache-bust (css-filename context/*lang*)))]
+                     (logo-preloads))
+               [:body
+                [:div#app app-content]
+                (include-js "/assets/font-awesome/js/fontawesome.js")
+                (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
+                (include-js "/assets/jquery/jquery.min.js")
+                (include-js "/assets/popper.js/dist/umd/popper.min.js")
+                (include-js "/assets/tether/dist/js/tether.min.js")
+                (include-js "/assets/bootstrap/js/bootstrap.min.js")
+                (when (:accessibility-report env) (include-js "/assets/axe-core/axe.min.js"))
+                (for [extra-script (get-in env [:extra-scripts :files])]
+                  (include-js extra-script))
+                content]]))))
 
 (defn render
   "renders HTML generated by Hiccup
@@ -84,13 +115,16 @@ window.rems = {
   (render
    (list
     [:script {:type "text/javascript"}
-     (format "var csrfToken = '%s';" (when (bound? #'*anti-forgery-token*)
-                                       *anti-forgery-token*))]
+     (format "var csrfToken = '%s';"
+             (when (bound? #'*anti-forgery-token*)
+               *anti-forgery-token*))]
     (include-js (cache-bust "/js/app.js"))
-    [:script {:type "text/javascript"}
-     (format "rems.app.setIdentity(%s);"
-             (json/generate-string {:user context/*user*
-                                    :roles context/*roles*}))])))
+    [:script {:type "text/javascript"} "rems.spa.init();"]
+    (inline-value "rems.app.setIdentity" {:user context/*user* :roles context/*roles*})
+    (inline-value "rems.app.setConfig" (public/get-config))
+    (inline-value "rems.app.setTranslations" (public/get-translations))
+    (inline-value "rems.app.setTheme" (public/get-theme))
+    [:script {:type "text/javascript"} "rems.spa.mount();"])))
 
 (defn- error-content
   [error-details]

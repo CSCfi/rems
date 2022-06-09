@@ -1,9 +1,10 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            ["diff-match-patch" :refer [diff_match_patch]]
             [re-frame.core :as rf]
             [rems.administration.items :as items]
-            [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol success-symbol textarea]]
+            [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.form :as common-form]
             [rems.common.util :refer [build-index getx]]
@@ -36,7 +37,7 @@
 
 
 (defn- diff [value previous-value]
-  (let [dmp (js/diff_match_patch.)
+  (let [dmp (diff_match_patch.)
         diff (.diff_main dmp
                          (str/trim (str previous-value))
                          (str/trim (str value)))]

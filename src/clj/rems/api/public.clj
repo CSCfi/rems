@@ -1,8 +1,7 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util] ; required for route :roles
-            [rems.config :refer [env]]
-            [rems.locales :as locales]
+            [rems.api.services.public :as public]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -47,7 +46,7 @@
     (GET "/" []
       :summary "Get translations"
       :return GetTranslationsResponse
-      (ok locales/translations))))
+      (ok (public/get-translations)))))
 
 (def theme-api
   (context "/theme" []
@@ -56,7 +55,7 @@
     (GET "/" []
       :summary "Get current layout theme"
       :return GetThemeResponse
-      (ok (:theme env)))))
+      (ok (public/get-theme)))))
 
 (def config-api
   (context "/config" []
@@ -65,37 +64,13 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (select-keys env [:alternative-login-url
-                            :application-id-column
-                            :authentication
-                            :catalogue-is-public
-                            :default-language
-                            :dev
-                            :entitlement-default-length-days
-                            :extra-pages
-                            :languages
-                            :oidc-extra-attributes
-                            :enable-assign-external-id-ui
-                            :enable-ega
-                            :enable-doi
-                            :enable-duo
-                            :attachment-max-size
-                            :enable-catalogue-table
-                            :enable-catalogue-tree
-                            :catalogue-tree-show-matching-parents
-                            :enable-cart])))
+      (ok (public/get-config)))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
       :roles #{:owner}
       :return s/Any
-      (ok (assoc env
-                 :authentication "HIDDEN"
-                 :database-url "HIDDEN"
-                 :test-database-url "HIDDEN"
-                 :oidc-client-secret "HIDDEN"
-                 :ga4gh-visa-private-key "HIDDEN"
-                 :ga4gh-visa-public-key "HIDDEN")))))
+      (ok (public/get-config-full)))))
 
 (def keepalive-api
   (context "/keepalive" []

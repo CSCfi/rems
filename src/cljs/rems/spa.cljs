@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
-            [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [reagent.dom :as rd]
@@ -50,13 +49,14 @@
             [rems.focus :as focus]
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
+            [rems.hooks] ; for the empty hooks
             [rems.keepalive :as keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.common.roles :as roles]
             [rems.profile :refer [profile-page missing-email-warning]]
             [rems.text :refer [text text-format]]
-            [rems.user-settings :refer [fetch-user-settings!]]
+            [rems.user-settings]
             [rems.util :refer [navigate! fetch replace-url! set-location!]]
             [secretary.core :as secretary])
   (:import goog.history.Html5History))
@@ -183,7 +183,7 @@
          (roles/show-admin-pages? roles) (navigate! "/administration")
          :else (navigate! "/catalogue"))
        {})
-     ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+     ;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
 
 (rf/reg-event-db
@@ -373,10 +373,12 @@
     [:div
      [nav/navigation-widget]
      (when (or (= page-id :home)
-               (and (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
+               (and lang
+                    (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
                     (not (:navbar-logo-name theme))))
        [logo])
-     [main-content page-id grab-focus?]
+     (when page-id
+       [main-content page-id grab-focus?])
      [footer]]))
 
 ;;;; Routes
@@ -632,18 +634,13 @@
   (rf/clear-subscription-cache!)
   (rd/render [page] (.getElementById js/document "app")))
 
-(defn init! []
+(defn ^:export init []
   (version-info)
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (keepalive/register-keepalive-listeners!)
   ;; see also: lazy-load-data! and dev-reload-button
-  (-> (p/all [(fetch-translations!)
-              (fetch-theme!)
-              (config/fetch-config!)
-              (fetch-user-settings!)])
-      ;; all preceding code must use `rf/dispatch-sync` to avoid
-      ;; the first render flashing with e.g. missing translations
-      (p/finally (fn []
-                   (hook-browser-navigation!)
-                   (mount-components)))))
+  (hook-browser-navigation!))
+
+(defn ^:export mount []
+  (mount-components))

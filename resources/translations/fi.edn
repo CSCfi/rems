@@ -536,4 +536,6 @@
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :forbidden-page {:forbidden "Kielletty"
                    :you-are-forbidden "Sivun käyttö on kielletty."}
-  :error-page {:title "Ongelma"}}}
+  :error-page {:title "Ongelma"}
+  :meta {:description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
+         :keywords "REMS, entitlement, access management, tool, access rights, resources, datasets"}}}
