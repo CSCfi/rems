@@ -120,10 +120,7 @@
                *anti-forgery-token*))]
     (include-js (cache-bust "/js/app.js"))
     [:script {:type "text/javascript"} "rems.spa.init();"]
-    [:script {:type "text/javascript"}
-     (format "rems.app.setIdentity(%s);"
-             (json/generate-string {:user context/*user*
-                                    :roles context/*roles*}))]
+    (inline-value "rems.app.setIdentity" {:user context/*user* :roles context/*roles*})
     (inline-value "rems.app.setConfig" (public/get-config))
     (inline-value "rems.app.setTranslations" (public/get-translations))
     (inline-value "rems.app.setTheme" (public/get-theme))

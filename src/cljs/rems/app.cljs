@@ -1,17 +1,19 @@
 (ns ^:dev/once rems.app
   (:require [cognitect.transit]
-            [rems.config]
-            [rems.identity :refer [set-identity!]]
             [re-frame.core :as rf]
+            [rems.config]
+            [rems.identity]
             [rems.spa]))
 
 (enable-console-print!)
 
-(defn ^:export setIdentity [user-and-roles]
-  (set-identity! user-and-roles))
-
 (defn- read-transit [value]
   (cognitect.transit/read (cognitect.transit/reader :json) value))
+
+(defn ^:export setIdentity [user-and-roles]
+  (let [{:keys [roles] :as user-and-roles} (read-transit user-and-roles)]
+    (rf/dispatch-sync [:set-identity user-and-roles])
+    (rf/dispatch-sync [:set-roles roles])))
 
 (defn ^:export setConfig [config]
   (rf/dispatch-sync [:rems.config/loaded-config (read-transit config)]))

@@ -183,7 +183,7 @@
          (roles/show-admin-pages? roles) (navigate! "/administration")
          :else (navigate! "/catalogue"))
        {})
-     ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+     ;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
 
 (rf/reg-event-db
