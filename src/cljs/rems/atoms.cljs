@@ -44,9 +44,6 @@
 (defn add-symbol []
   [:i.fa.fa-plus])
 
-(defn empty-symbol []
-  [:i.fa-stack])
-
 (defn collapse-symbol []
   [:i {:class "fas fa-compress-alt icon-link"
        :aria-label (text :t.collapse/hide)}])
@@ -54,6 +51,10 @@
 (defn expand-symbol []
   [:i {:class "fas fa-expand-alt icon-link"
        :aria-label (text :t.collapse/show)}])
+
+(defn make-empty-symbol [& [symbol]]
+  (let [symbol (or symbol (success-symbol))]
+    [:span {:style {:opacity 0}} symbol]))
 
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
