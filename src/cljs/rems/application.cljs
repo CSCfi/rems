@@ -28,7 +28,7 @@
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
+            [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -435,7 +435,7 @@
    [:div.mr-2 (when show-accepted-licenses?
                 (if (:accepted license)
                   (success-symbol)
-                  (empty-symbol)))]
+                  (make-empty-symbol (success-symbol))))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
