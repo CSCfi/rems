@@ -19,6 +19,22 @@
     (let [org-id1 (test-helpers/create-organization! {:organization/id "test-org-1"})
           org-id2 (test-helpers/create-organization! {:organization/id "test-org-2"})]
 
+      (testing "with invalid data"
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (organizations/add-organization! {:organization/id "invalid-org"
+                                                       :organization/short-name {:en "I" :fi "I" :sv "I"}
+                                                       :organization/name {:en "I" :fi "I" :sv "I"}
+                                                       :organization/invalid "should not work"}))
+            "can't include invalid fields")
+
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (organizations/edit-organization! "owner"
+                                                       {:organization/id "test-org-1"
+                                                        :organization/short-name {:en "I" :fi "I" :sv "I"}
+                                                        :organization/name {:en "I" :fi "I" :sv "I"}
+                                                        :organization/invalid "should not work"}))
+            "can't edit invalid fields in"))
+
       (testing "new organizations are enabled and not archived"
         (is (= {:enabled true
                 :archived false}
