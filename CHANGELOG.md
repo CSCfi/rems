@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.27
 
+**NB: This release contains migrations!**
+
 ### Additions
 - Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
 - The packaged fonts are now only in WOFF and WOFF2 formats, as is required for extensive support these days. (#2592)
@@ -19,6 +21,10 @@ Changes since v2.27
 - Default metadata for the HTML index has been added under description and keywords tags. These can be overridden using extra translations (`:t.meta/description`, `:t.meta/keywords`) (#2679)
 - Default `robots.txt` has been included that indexes everything but the `/api`. NB: the bots are not able to index most pages as they are behind the login. (#2680)
 - HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
+- Validate organization when adding or editing it. (#2964)
+
+### Fixes
+- Add missing migration to remove organization modifier and last modified from the data. (#2964)
 
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
