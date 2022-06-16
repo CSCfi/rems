@@ -5,10 +5,8 @@
             [rems.db.users :as users]
             [rems.schema-base :as schema-base]
             [schema.core :as s]
-            [schema.coerce :as coerce]
-            [clj-time.core :as time-core])
-  (:import [org.joda.time DateTime]
-           rems.DataException))
+            [schema.coerce :as coerce])
+  (:import rems.DataException))
 
 (s/defschema OrganizationRaw
   (merge schema-base/OrganizationOverview
@@ -18,7 +16,11 @@
           (s/optional-key :enabled) s/Bool
           (s/optional-key :archived) s/Bool}))
 
+(def ^:private validate-organization
+  (s/validator OrganizationRaw))
+
 (defn add-organization! [org]
+  (validate-organization org)
   (:id (db/add-organization! {:id (:organization/id org)
                               :data (json/generate-string (-> org
                                                               (assoc :enabled true
@@ -69,7 +71,8 @@
 
 (defn set-organization! [organization]
   (let [stripped-organization (-> organization
-                                  (update :organization/owners (partial mapv #(select-keys % [:userid]))))]
+                                  (update :organization/owners (partial mapv #(select-keys % [:userid])))
+                                  validate-organization)]
     (db/set-organization! {:id (:organization/id organization)
                            :data (json/generate-string stripped-organization)})))
 
