@@ -1,7 +1,7 @@
 (ns ^:integration rems.db.test-transactions
   (:require [clojure.test :refer :all]
             [conman.core :as conman]
-            [rems.application.commands :as commands]
+            [rems.config]
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.test-data-helpers :as test-helpers]
@@ -44,6 +44,25 @@
                        results)
                    (throw e))))))))
 
+(defn- sample-until-finished [f coll]
+  (loop [results []
+         coll coll]
+    (if (or (.isInterrupted (Thread/currentThread))
+            (empty? coll))
+      results
+      (recur (try
+               (conj results (f (first coll)))
+               (catch InterruptedException _
+                 (.interrupt (Thread/currentThread))
+                 results)
+               ;; XXX: HikariPool.getConnection wraps InterruptedException into SQLException
+               (catch SQLException e
+                 (if (instance? InterruptedException (.getCause e))
+                   (do (.interrupt (Thread/currentThread))
+                       results)
+                   (throw e))))
+             (rest coll)))))
+
 (defn- submit-all [^ExecutorService thread-pool tasks]
   (doall (for [task tasks]
            (.submit thread-pool ^Callable task))))
@@ -53,34 +72,31 @@
         applications-count 5
         writers-per-application 5
         concurrent-readers 5
+        writes-per-application 5
         user-id (create-dummy-user)
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "fld1"
+                                                           :field/title {:en "F" :fi "F" :sv "F"}
+                                                           :field/type :text
+                                                           :field/optional false}]})
+        cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
         app-ids (vec (for [_ (range applications-count)]
-                       (test-helpers/create-application! {:actor user-id})))
-        ;; Currently we only test that commands are not executed concurrently
-        ;; for a single application. To guarantee that, we could add an app version
-        ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
-        observed-app-version-marker "999"
-        old-handle-command commands/handle-command
-        mark-observed-app-version (fn [result application]
-                                    (if (and (not (:errors result))
-                                             (= :application.event/draft-saved (:event/type (first (:events result)))))
-                                      (assoc-in result [:events 0 :application/field-values] [{:form 1 :field observed-app-version-marker :value (str (count (:application/events application)))}])
-                                      result))
-        wrapped-handle-command (fn [cmd application injections]
-                                 (mark-observed-app-version (old-handle-command cmd application injections)
-                                                            application))]
-    (with-redefs [commands/handle-command wrapped-handle-command
-                  rems.config/env (assoc rems.config/env
+                       (test-helpers/create-application! {:actor user-id :catalogue-item-ids [cat-id]})))]
+
+    ;; Currently we only test that commands are not executed concurrently
+    ;; for a single application. To guarantee that, we could add an app version
+    ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
+
+    (with-redefs [rems.config/env (assoc rems.config/env
                                          :database-lock-timeout "4s"
                                          :database-idle-in-transaction-session-timeout "8s")]
-      (let [write-event (fn [app-id]
+      (let [write-event (fn [app-id x]
                           (try
                             (conman/with-transaction [db/*db* {:isolation :serializable}]
                               (test-helpers/command!
                                {:type :application.command/save-draft
                                 :application-id app-id
                                 :actor user-id
-                                :field-values []}))
+                                :field-values [{:form form-id :field "fld1" :value (str x)}]}))
                             (catch Exception e
                               (if (transaction-conflict? e)
                                 ::transaction-conflict
@@ -103,8 +119,10 @@
                                                                  (fn [] (read-all-events))))))
             writers (submit-all thread-pool (for [app-id app-ids
                                                   _ (range writers-per-application)]
-                                              (fn [] (sample-until-interrupted
-                                                      (fn [] (write-event app-id))))))]
+                                              (fn [] (sample-until-finished
+                                                      (fn [x] (write-event app-id x))
+                                                      (range 1 (inc writes-per-application))))))]
+        ;; TODO: we could finish right after all the writers have finished
         (Thread/sleep test-duration-millis)
         (doto thread-pool
           (.shutdownNow)
@@ -116,6 +134,7 @@
               all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
               final-events (events/get-all-events-since 0)
               final-events-by-app-id (group-by :application/id final-events)]
+
           (comment
             (prn 'writer-attempts (count writer-attempts))
             (prn 'writer-results (count writer-results))
@@ -133,40 +152,27 @@
                 "should have no transaction conflicts"))
 
           (testing "all events were written"
-            (is (= (+ (count app-ids) ; one application created event per application
-                      (count writer-results))
+            ;; count of events is two per application:
+            ;; - one application created event per application
+            ;; - one saved event per application (after compaction)
+            (is (= (* 2 (count app-ids))
                    (count final-events))))
 
           (testing "event IDs are observed in monotonically increasing order, within one application"
-            (doseq [observed app-events-reader-results]
-              (let [final-events (get final-events-by-app-id (::app-id observed))]
-                (is (= (->> final-events
-                            (take (count (::events observed)))
-                            (map :event/id))
-                       (->> (::events observed)
-                            (map :event/id)))))))
+            (doseq [observed app-events-reader-results
+                    :let [events (mapv :event/id (::events observed))]]
+              (is (apply < events))))
 
           (testing "event IDs are observed in monotonically increasing order, globally"
-            (doseq [observed all-events-reader-results]
-              (is (= (->> final-events
-                          (take (count (::events observed)))
-                          (map :event/id))
-                     (->> (::events observed)
-                          (map :event/id))))))
+            (doseq [observed all-events-reader-results
+                    :let [events (mapv :event/id (::events observed))]]
+              (is (apply < events))))
 
           (testing "commands are executed serially"
             (doseq [[id events] final-events-by-app-id]
               (testing id
-                (is (= (->> (range 1 (count events))
-                            (map str))
+                (is (= (str writes-per-application) ; the last save should have this value
                        (->> events
                             (filter #(= :application.event/draft-saved (:event/type %)))
-                            (map #(get-in % [:application/field-values 0 :value]))))))))
-
-          (testing "there are not gaps in event IDs"
-            ;; There might still be gaps in the IDs if the transaction is rolled back
-            ;; for an unrelated reason after the command is executed. To guarantee no gaps,
-            ;; the event IDs could be generated with `max(id) + 1`.
-            (is (every? (fn [[a b]] (= (inc a) b))
-                        (->> (map :event/id final-events)
-                             (partition 2 1))))))))))
+                            (map #(get-in % [:application/field-values 0 :value]))
+                            first)))))))))))
