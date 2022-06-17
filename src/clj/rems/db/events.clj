@@ -41,7 +41,7 @@
   (fix-event-from-db (db/get-latest-application-event {})))
 
 (defn add-event!
-  "Add event to database. Returns the event as it went into the db."
+  "Add `event` to database. Returns the event as it went into the db."
   [event]
   (fix-event-from-db (db/add-application-event! {:application (:application/id event)
                                                  :eventdata (event->json event)})))
@@ -51,9 +51,43 @@
   [event]
   (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
         _ (assert old-event)
-        event (-> old-event
-                  (merge event)
-                  (dissoc :event/id))]
-    (fix-event-from-db (db/update-application-event! {:id (:event/id old-event)
-                                                      :application (:application/id event)
-                                                      :eventdata (event->json event)}))))
+        event (merge old-event event)]
+    (db/update-application-event! {:id (:event/id old-event)
+                                   :application (:application/id event)
+                                   :eventdata (event->json (dissoc event :event/id))})
+    event))
+
+(defn replace-event!
+  "Replaces an event on top of an old one.
+
+  Differs from `add-event!` in that it replaces an old event.
+  Differs from `update-event!` in that the event id is a new one.
+
+  Returns the event as it went into the db."
+  [event]
+  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
+        _ (assert old-event)
+        event (merge old-event event)]
+    (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
+                                                       :application (:application/id event)
+                                                       :eventdata (event->json (dissoc event :event/id))}))))
+
+(defn add-event-with-compaction!
+  "Add `event` to database.
+
+  Consecutive `:draft-saved` events of `application` are compacted into one by replacing
+  the last event of `application` instead of creating a new one.
+
+  Returns the event as it went into the db."
+  [application event]
+  (let [last-event (-> application
+                       :application/events
+                       last)]
+    (if (and (= :application.event/draft-saved
+                (:event/type event)
+                (:event/type last-event))
+             (= (:application/id event)
+                (:application/id last-event)))
+      (replace-event! (merge event
+                             (select-keys last-event [:event/id])))
+      (add-event! event))))

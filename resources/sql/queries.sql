@@ -605,6 +605,12 @@ UPDATE application_event
 SET (appId, eventData) = (:application, :eventdata::jsonb)
 WHERE id = :id;
 
+-- :name replace-application-event! :returning-execute :1
+UPDATE application_event
+SET (id, appId, eventData) = (DEFAULT, :application, :eventdata::jsonb)
+WHERE id = :id
+RETURNING id, eventData::TEXT;
+
 -- :name delete-application-events! :!
 DELETE FROM application_event
 WHERE appId = :application;

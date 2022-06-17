@@ -84,7 +84,7 @@
               (applications/get-application-internal app-id))
         result (commands/handle-command cmd app command-injections)]
     (when-not (:errors result)
-      (let [events-from-db (mapv events/add-event! (:events result))]
+      (let [events-from-db (mapv #(events/add-event-with-compaction! app %) (:events result))]
         (doseq [cmd2 (run-process-managers events-from-db)]
           (let [result (command! cmd2)]
             (when (:errors result)
