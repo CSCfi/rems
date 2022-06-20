@@ -389,5 +389,7 @@
  :enable-catalogue-table true ; show catalogue page table of items
  :enable-catalogue-tree false ; show catalogue page tree of items
  :catalogue-tree-show-matching-parents true ; should parent categories be shown if children match?
- 
- :enable-cart true} ; show shopping cart and allow bundling multiple resources into one application
+
+ :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
+
+ :enable-save-compaction nil} ; whether to merge consecutive saves into one event (EXPERIMENTAL)

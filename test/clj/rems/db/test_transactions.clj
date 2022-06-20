@@ -87,6 +87,7 @@
     ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
 
     (with-redefs [rems.config/env (assoc rems.config/env
+                                         :enable-save-compaction true
                                          :database-lock-timeout "4s"
                                          :database-idle-in-transaction-session-timeout "8s")]
       (let [write-event (fn [app-id x]

@@ -50,6 +50,7 @@
   (with-open [server (stub/start! {"/created" {:status 200}
                                    "/all" {:status 200}})]
     (with-redefs [rems.config/env (assoc rems.config/env
+                                         :enable-save-compaction true
                                          :event-notification-targets [{:url (str (:uri server) "/created")
                                                                        :event-types [:application.event/created]}
                                                                       {:url (str (:uri server) "/all")}])]

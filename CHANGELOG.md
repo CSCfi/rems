@@ -22,7 +22,7 @@ Changes since v2.27
 - Default `robots.txt` has been included that indexes everything but the `/api`. NB: the bots are not able to index most pages as they are behind the login. (#2680)
 - HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
 - Validate organization when adding or editing it. (#2964)
-- Consecutive save events are compacted into one. This does not affect old save events. (#2767)
+- Consecutive save events are compacted into one. This does not affect old save events. This is turned off by default, until the whole autosave feature is finished. (#2767)
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)

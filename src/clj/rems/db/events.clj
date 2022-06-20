@@ -1,5 +1,6 @@
 (ns rems.db.events
   (:require [rems.application.events :as events]
+            [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -83,7 +84,8 @@
   (let [last-event (-> application
                        :application/events
                        last)]
-    (if (and (= :application.event/draft-saved
+    (if (and (:enable-save-compaction env)
+             (= :application.event/draft-saved
                 (:event/type event)
                 (:event/type last-event))
              (= (:application/id event)
