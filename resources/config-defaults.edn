@@ -23,7 +23,8 @@
  ;; When :nrepl-port is set, the application starts an nREPL server on load.
  :nrepl-port nil
 
- ;; When true, enables experimental and unfinished features.
+ ;; When true, enables development features
+ ;; (should not be turned on in production)
  :dev false
 
  ;; Uses :database-url if it's defined. Otherwise :database-jndi-name is used.
@@ -358,15 +359,14 @@
  ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
  :application-expiration nil
 
-
- ;; Experimental features
-
  ;; enable /api/applications/:id/experimental/pdf
+ ;; PDF API (experimental)
  :enable-pdf-api false
 
  ;; enable /api/permissions/:user
  ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
+
  ;; Keys for signing GA4GH Visas produced by permissions api or sent to EGA.
  ;; Format: path to file containing key in JWK (Json Web Key) format
  :ga4gh-visa-private-key nil
