@@ -22,5 +22,20 @@ However, there is a new user need https://github.com/CSCfi/rems/issues/2967.
 
 ## Considerations
 
-- It is clear that an rganization owner can edit everything in their own organizations.
+- It is clear that an organization owner can edit everything in their own organization.
 - It is also clear that there will be only one Catalogue for each REMS instance, so shared management is needed.
+- It would be useful to see other organization items, for example to copy or imitate them. If privacy is desired, it is possible to create a new REMS instance for that organization.
+- We can have the owner do the catalogue completely, but that would reduce the benefits of the delegated ownership.
+- We can have the owner do the shared catalogue items and organizations owners only do catalogue items from within their organization. This however creates a need to copy forms and licenses, where there could be a shared one. If there are many copies, synchonizing changes becomes extra work.
+
+## Proposed solution
+1. Add to form, workflow, resource and license an attribute `:sharing`, where the value can be `:public` (open for all) or `:private` (only for this organization)
+2. Modify create catalogue item component and API to only accept everything from the owner, and mixed organization items where the sharing value is public or its from your own organization.
+3. Make sure the dropdowns in create catalogue item by default show only the items you can use (e.g. public)
+
+## Open questions
+- Consider the name of the attribute `:sharing` or something better. Or `:organization/sharing` etc.
+- Decide which tasks to do first, and which ones are left for later.
+
+## Decision
+Let's implement the proposed solution, but split into tasks, so we can leave some of the tasks for follow-up, and proceed with a minimal set for the current need.
