@@ -30,11 +30,11 @@ However, there is a new user need https://github.com/CSCfi/rems/issues/2967.
 
 ## Proposed solution
 1. Add to form, workflow, resource and license an attribute `:sharing`, where the value can be `:public` (open for all) or `:private` (only for this organization)
-2. Modify create catalogue item component and API to only accept everything from the owner, and mixed organization items where the sharing value is public or its from your own organization.
-3. Make sure the dropdowns in create catalogue item by default show only the items you can use (e.g. public)
+2. Modify create catalogue item component and API to only accept everything from the owner, and mixed organization items where the sharing value is public or it is from your owned organization.
+3. Make sure the dropdowns in create catalogue item by default show only the items you can actually use (e.g. public).
 
 ## Open questions
-- Consider the name of the attribute `:sharing` or something better. Or `:organization/sharing` etc.
+- Consider the name of the attribute `:sharing` or something better. Or `:organization/sharing` etc. Or should it be `:organization/sharing {:sharing/type :public}` which would be the most future-proof.
 - Decide which tasks to do first, and which ones are left for later.
 
 ## Decision
