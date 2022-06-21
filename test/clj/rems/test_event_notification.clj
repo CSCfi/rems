@@ -50,6 +50,7 @@
   (with-open [server (stub/start! {"/created" {:status 200}
                                    "/all" {:status 200}})]
     (with-redefs [rems.config/env (assoc rems.config/env
+                                         :enable-save-compaction true
                                          :event-notification-targets [{:url (str (:uri server) "/created")
                                                                        :event-types [:application.event/created]}
                                                                       {:url (str (:uri server) "/all")}])]
@@ -87,7 +88,9 @@
             event-id (:event/id (first (rems.db.events/get-application-events app-id)))]
         (testing "no notifications before outbox is processed"
           (is (empty? (stub/recorded-requests server))))
+
         (event-notification/process-outbox!)
+
         (testing "created event gets sent to both endpoints"
           (let [notifications (get-notifications)
                 app-from-raw-api (api-call :get (str "/api/applications/" app-id "/raw") nil
@@ -111,19 +114,62 @@
                    (:data (first notifications))))
             (is (= (:data (first notifications))
                    (:data (second notifications))))))
-        (command/command! {:application-id app-id
+
+        (let [event (-> {:application-id app-id
+                         :type :application.command/save-draft
+                         :actor applicant
+                         :time (time/date-time 2001)
+                         :field-values [{:form form-id :field "field-1" :value "my value"}]}
+                        command/command!
+                        :events
+                        first)]
+
+          (event-notification/process-outbox!)
+
+          (testing "draft-saved event gets sent only to /all"
+            (let [requests (get-notifications)
+                  req (last requests)]
+              (is (= 3 (count requests)))
+              (is (= "/all" (:path req)))
+              (is (= "application.event/draft-saved"
+                     (:event/type (:data req))))
+              (is (= (:event/id event)
+                     (:event/id (:data req))))
+              (is (= "my value"
+                     (-> req
+                         :data
+                         :application/field-values
+                         first
+                         :value))))))
+
+        ;; another save gets sent even with compaction
+        (testing "another (compacted) save"
+          (let [event (-> {:application-id app-id
                            :type :application.command/save-draft
                            :actor applicant
                            :time (time/date-time 2001)
-                           :field-values [{:form form-id :field "field-1" :value "my value"}]})
-        (event-notification/process-outbox!)
-        (testing "draft-saved event gets sent only to /all"
-          (let [requests (get-notifications)
-                req (last requests)]
-            (is (= 3 (count requests)))
-            (is (= "/all" (:path req)))
-            (is (= "application.event/draft-saved"
-                   (:event/type (:data req))))))))))
+                           :field-values [{:form form-id :field "field-1" :value "new value"}]}
+                          command/command!
+                          :events
+                          first)]
+
+            (event-notification/process-outbox!)
+
+            (testing "draft-saved event gets sent only to /all"
+              (let [requests (get-notifications)
+                    req (last requests)]
+                (is (= 4 (count requests)))
+                (is (= "/all" (:path req)))
+                (is (= "application.event/draft-saved"
+                       (:event/type (:data req))))
+                (is (= (:event/id event)
+                       (:event/id (:data req))))
+                (is (= "new value"
+                       (-> req
+                           :data
+                           :application/field-values
+                           first
+                           :value)))))))))))
 
 (deftest test-event-notification-ordering
   (test-data/create-test-api-key!)

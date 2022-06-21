@@ -3,7 +3,6 @@
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx]]
             [rems.testing-util :refer [with-fixed-time]]

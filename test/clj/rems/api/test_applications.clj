@@ -6,6 +6,7 @@
             [rems.api.services.attachment :as attachment]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
+            [rems.config]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
@@ -13,10 +14,11 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.json]
-            [rems.testing-util :refer [with-user]]
+            [rems.testing-util :refer [with-fixed-time with-user]]
             [ring.mock.request :refer :all])
   (:import java.io.ByteArrayOutputStream
-           java.util.zip.ZipInputStream))
+           java.util.zip.ZipInputStream
+           [org.joda.time DateTime DateTimeUtils DateTimeZone]))
 
 (use-fixtures
   :each
@@ -515,6 +517,93 @@
               {:result result})
           (is (not= application-id (:application-id result))
               "should create a new application"))))))
+
+(deftest test-save-draft-compaction
+  (let [user-id "alice"
+        handler-id "handler"
+        form-id (test-helpers/create-form! {:form/fields [{:field/id "field"
+                                                           :field/type :text
+                                                           :field/title {:en "f" :fi "f" :sv "f"}
+                                                           :field/optional false}]})
+        workflow-id (test-helpers/create-workflow! {:type :workflow/master
+                                                    :handlers [handler-id]})
+        cat-item-id (test-helpers/create-catalogue-item! {:form-id form-id
+                                                          :workflow-id workflow-id})
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                          :actor user-id})]
+
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :enable-save-compaction true)]
+      (testing "save draft"
+        (with-fixed-time (time/date-time 2022 1 1)
+          (fn []
+
+            (is (= {:success true}
+                   (send-command user-id
+                                 {:type :application.command/save-draft
+                                  :application-id application-id
+                                  :field-values [{:form form-id
+                                                  :field "field"
+                                                  :value "1"}]}))))))
+
+      (testing "application has one save event"
+        (let [application (get-application-for-user application-id user-id)]
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"]
+                 (map :event/type (get application :application/events))))
+
+          (is (= {:event/actor "alice"
+                  :event/time "2022-01-01T00:00:00.000Z"
+                  :application/field-values [{:form form-id :field "field" :value "1"}]
+                  :event/type "application.event/draft-saved"}
+                 (-> application
+                     :application/events
+                     last
+                     (select-keys [:event/actor :event/time :application/field-values :event/type]))))
+
+          (is (= [{:field/id "field" :field/value "1"}]
+                 (->> application
+                      :application/forms
+                      (mapcat :form/fields)
+                      (map #(select-keys % [:field/id :field/value])))))))
+
+      (testing "save draft again"
+        (with-fixed-time (time/date-time 2022 1 2)
+          (fn []
+            (is (= {:success true}
+                   (send-command user-id
+                                 {:type :application.command/save-draft
+                                  :application-id application-id
+                                  :field-values [{:form form-id
+                                                  :field "field"
+                                                  :value "2"}]}))))))
+
+      (testing "application still has one save event"
+        (let [application (get-application-for-user application-id user-id)]
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"]
+                 (map :event/type (get application :application/events))))
+
+          (is (= {:event/actor "alice"
+                  :event/time "2022-01-02T00:00:00.000Z"
+                  :application/field-values [{:form form-id :field "field" :value "2"}]
+                  :event/type "application.event/draft-saved"}
+                 (-> application
+                     :application/events
+                     last
+                     (select-keys [:event/actor :event/time :application/field-values :event/type]))))
+
+          (is (= [{:field/id "field" :field/value "2"}]
+                 (->> application
+                      :application/forms
+                      (mapcat :form/fields)
+                      (map #(select-keys % [:field/id :field/value])))))))
+
+      (testing "submit works"
+        (is (= {:success true}
+               (send-command user-id
+                             {:type :application.command/submit
+                              :application-id application-id})))))))
 
 (deftest test-approve-with-end
   (let [api-key "42"

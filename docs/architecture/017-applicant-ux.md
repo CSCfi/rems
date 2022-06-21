@@ -38,6 +38,10 @@ Idea: Think of REMS validations more like spellchecking and less like
 validations. Higlight in red things that the applicant will want to
 fix, but don't prevent saving.
 
+### 2022-04-06 Save succeeds even with validation errors
+
+Draft saving succeeds again even with validation errors. This is implemented in the PR #2766. Validation errors are now shown in yellow.
+
 ## B) Validation errors are shown late
 
 You need to perform an action (save/submit) to see the validation
@@ -79,9 +83,15 @@ separately from the application events.
 Note: in both of these cases we would also retain the current Save
 button.
 
-# TODO Decision
+### 2021-06-18 Consecutive save compaction
 
-Here's a step-by-step plan for fixing these. We might not end up doing all of the steps.
+The PR #2966 implements consecutive save compaction, making consecutive saves in one event.
+The last save event is updated, with a new save event including id and data.
+Process managers and notifications are sent as before.
+
+# 2021-11-02 Decision
+
+Here's a step-by-step plan for fixing these.
 
 1. (Problem A) Make save succeed even with validation errors. Show validation errors in yellow (instead of red). [#2766](https://github.com/CSCfi/rems/issues/2766)
 2. (Problem B) Run validations in the frontend after the user has stopped typing. [#2614](https://github.com/CSCfi/rems/issues/2614)

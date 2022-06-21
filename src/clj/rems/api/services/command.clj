@@ -83,8 +83,8 @@
   (let [app (when-let [app-id (:application-id cmd)]
               (applications/get-application-internal app-id))
         result (commands/handle-command cmd app command-injections)]
-    (when-not (:errors result)
-      (let [events-from-db (mapv events/add-event! (:events result))]
+    (if-not (:errors result)
+      (let [events-from-db (mapv #(events/add-event-with-compaction! app %) (:events result))]
         (doseq [cmd2 (run-process-managers events-from-db)]
           (let [result (command! cmd2)]
             (when (:errors result)
@@ -92,5 +92,6 @@
                 (assert false
                         (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))
                 (log/error "process manager command failed"
-                           (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))))
-    result))
+                           (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
+        (assoc result :events events-from-db)) ; replace with events with id
+      result)))
