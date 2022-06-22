@@ -29,9 +29,10 @@
                           (update db ::message #(dissoc % location))
                           (dissoc db ::message))}))
 (rf/reg-event-fx ::show-flash-message
-                 (fn [{:keys [db]} [_ message opts]]
-                   (focus/focus-element-async (str "#" (location-to-id (:location message))))
-                   (when-some [timeout (:timeout opts)]
+                 (fn [{:keys [db]} [_ message {:keys [focus? timeout] :or {focus? true}}]]
+                   (when focus?
+                     (focus/focus-element-async (str "#" (location-to-id (:location message)))))
+                   (when (some? timeout)
                      (js/setTimeout #(rf/dispatch [::reset (:location message)]) timeout))
                    ;; TODO: flash the message with CSS
                    {:db (assoc-in db
@@ -52,6 +53,11 @@
   (show-success! location
                  [:div#status-success.flash-message-title description ": " [text :t.form/success]]))
 
+(defn show-quiet-success! [location description]
+  (show-success! location
+                 [:div#status-success.flash-message-title description]
+                 {:focus? false}))
+
 (defn show-error! [location content & [opts]]
   (let [message {:status :danger
                  :location location
@@ -70,11 +76,13 @@
                  :content content}]
     (rf/dispatch [::show-flash-message message opts])))
 
-(defn show-default-warning! [location description & more]
+(defn show-default-warning! [location description & {:keys [content focus?] :or {focus? true}}]
   (rf/dispatch [::reset])
-  (show-warning! location (into [:<>
-                                 [:div#status-warning.flash-message-title description ": " [text :t.form/success]]]
-                                more)))
+  (show-warning! location
+                 (into [:<>
+                        [:div#status-warning.flash-message-title description ": " [text :t.form/success]]]
+                       content)
+                 {:focus? focus?}))
 
 (defn component [location]
   (reagent/create-class

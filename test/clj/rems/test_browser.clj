@@ -22,7 +22,7 @@
             [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
-            [rems.config]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
@@ -507,13 +507,19 @@
 
         (fill-form-field "Simple text field" "Private field answer")
 
-        (testing "save draft succesfully"
-          (btu/scroll-and-click :save)
-          (is (btu/eventually-visible? :status-success)))
+        (testing "saved manually or automatically"
+          (if (:enable-autosave env)
+            (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
+            (do
+              (btu/scroll-and-click :save)
+              (is (btu/eventually-visible? {:id :status-success})))))
 
         (testing "add invalid value for field, try to save"
           (fill-form-field "Email field" "user")
-          (btu/scroll-and-click :save)
+
+          (when-not (:enable-autosave env)
+            (btu/scroll-and-click :save))
+
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."]
                  (get-validation-summary)))
