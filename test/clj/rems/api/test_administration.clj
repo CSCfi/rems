@@ -3,6 +3,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.core :as db]
+            [rems.db.workflow :as workflow]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]))
 
 (use-fixtures
@@ -32,7 +33,9 @@
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization {:organization/id "organization2"} :title "default workflow"
                                     :forms [{:form/id wf-form-id}]
-                                    :type :workflow/default :handlers ["owner"]}
+                                    :type :workflow/default
+                                    :handlers ["owner"]
+                                    :licenses [{:license/id license-id}]}
                                    +test-api-key+ "owner"))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
                                     {:form form-id
@@ -96,9 +99,6 @@
     (is form-id)
     (is workflow-id)
     (is catalogue-id)
-
-    ;; no api for this yet
-    (db/create-workflow-license! {:wfid workflow-id :licid license-id})
 
     (testing "can disable a resource"
       (is (:success (resource-enabled! false))))

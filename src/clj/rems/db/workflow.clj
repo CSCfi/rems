@@ -1,12 +1,11 @@
 (ns rems.db.workflow
   (:require [rems.application.events :as events]
             [rems.db.core :as db]
-            [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.json :as json]
-            [rems.util :refer [getx]]
             [schema.coerce :as coerce]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [medley.core :refer [update-existing-in]]))
 
 (s/defschema WorkflowBody
   {:type (apply s/enum events/workflow-types)
@@ -20,24 +19,21 @@
 (def ^:private validate-workflow-body
   (s/validator WorkflowBody))
 
-(defn create-workflow! [{:keys [organization type title handlers forms]}]
+(defn create-workflow! [{:keys [organization type title handlers forms licenses]}]
   (let [body {:type type
               :handlers handlers
-              :forms forms}]
+              :forms forms
+              :licenses licenses}]
     (:id (db/create-workflow! {:organization (:organization/id organization)
                                :title title
                                :workflow (json/generate-string
                                           (validate-workflow-body body))}))))
 
-(defn- get-workflow-licenses [id]
-  (->> (db/get-workflow-licenses {:wfid id})
-       (mapv #(licenses/get-license (getx % :licid)))))
-
 (defn- enrich-and-format-workflow [wf]
   (-> wf
       (update :workflow #(coerce-workflow-body (json/parse-string %)))
       (update :organization (fn [id] {:organization/id id}))
-      (assoc :licenses (get-workflow-licenses (:id wf)))
+      (update-in [:workflow :licenses] #(mapv (fn [id] {:license/id id}) %))
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
 (defn get-workflow [id]
@@ -49,27 +45,25 @@
        (map enrich-and-format-workflow)
        (db/apply-filters filters)))
 
-(defn join-workflow-licenses [workflow]
-  (assoc workflow :licenses (get-workflow-licenses (:id workflow))))
-
 (defn get-all-workflow-roles [userid]
   (when (some #(contains? (set (map :userid (get-in % [:workflow :handlers]))) userid)
               (get-workflows nil))
     #{:handler}))
 
 (defn- unrich-workflow [workflow]
-  ;; TODO: service does this too
   ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
-  (if (get-in workflow [:workflow :handlers])
-    (update-in workflow [:workflow :handlers] #(map :userid %))
-    workflow))
+  (-> workflow
+      (update-existing-in [:workflow :handlers] #(map :userid %))
+      (update-existing-in [:workflow :licenses] #(map :license/id %))))
 
-(defn edit-workflow! [{:keys [id organization title handlers]}]
+(defn edit-workflow! [{:keys [id organization title handlers licenses]}]
   (let [workflow (unrich-workflow (get-workflow id))
         workflow-body (cond-> (:workflow workflow)
-                        handlers (assoc :handlers handlers))]
+                        handlers (assoc :handlers handlers)
+                        licenses (assoc :licenses licenses))]
     (db/edit-workflow! {:id (or id (:id workflow))
                         :title (or title (:title workflow))
-                        :organization (or (:organization/id organization) (get-in workflow [:organization :organization/id]))
+                        :organization (or (:organization/id organization)
+                                          (get-in workflow [:organization :organization/id]))
                         :workflow (json/generate-string workflow-body)}))
   {:success true})

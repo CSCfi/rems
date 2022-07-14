@@ -8,6 +8,7 @@
             [rems.db.events :as db-events]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
+            [rems.db.workflow :as workflow]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import [clojure.lang ExceptionInfo]
@@ -61,8 +62,7 @@
 
     (testing "workflow licenses"
       (let [lic-id (test-helpers/create-license! {})
-            wf-id (test-helpers/create-workflow! {})
-            _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
+            wf-id (test-helpers/create-workflow! {:licenses [lic-id]})
             res-id (test-helpers/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
             cat-id (test-helpers/create-catalogue-item! {:resource-id res-id
                                                          :form-id form-id

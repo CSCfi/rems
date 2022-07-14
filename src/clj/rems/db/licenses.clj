@@ -55,7 +55,6 @@
 
 (defn get-licenses
   "Get licenses. Params map can contain:
-     :wfid -- workflow to get workflow licenses for
      :items -- sequence of catalogue items to get resource licenses for"
   [params]
   (->> (db/get-licenses params)
@@ -67,10 +66,7 @@
   (assoc x :licenses (get-resource-licenses (:id x))))
 
 (defn join-catalogue-item-licenses [item]
-  (assoc item
-         :licenses
-         (get-licenses {:wfid (:wfid item)
-                        :items [(:id item)]})))
+  (assoc item :licenses (get-licenses {:items [(:id item)]})))
 
 (defn join-license [x]
   (-> (get-license (:license/id x))

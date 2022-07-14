@@ -192,12 +192,16 @@
                                             :license/text {:en (apply str (repeat 10 "License text in English. "))
                                                            :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
                                                            :sv (apply str (repeat 10 "Licens på svenska. "))}})
-        wfid (test-helpers/create-workflow! {:type :workflow/default :title "Default workflow" :handlers ["handler" "developer"]})
+        wfid (test-helpers/create-workflow! {:type :workflow/default
+                                             :title "Default workflow"
+                                             :handlers ["handler" "developer"]
+                                             :licenses [link text]})
         decider-wf (test-helpers/create-workflow! {:actor "owner"
                                                    :organization {:organization/id "nbn"}
                                                    :title "Decider workflow"
                                                    :type :workflow/decider
-                                                   :handlers ["carl" "handler"]})
+                                                   :handlers ["carl" "handler"]
+                                                   :licenses [link text]})
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                                    :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                                    :sv "Exempelblankett med alla fälttyper"})
@@ -247,10 +251,6 @@
         ;; item-id3 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
         ;;                                                                                                :sv "Standard blankettarbetsflöde med DUO-koder"} :resource-id duo-resource})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
-    (test-helpers/create-workflow-licence! wfid link)
-    (test-helpers/create-workflow-licence! wfid text)
-    (test-helpers/create-workflow-licence! decider-wf link)
-    (test-helpers/create-workflow-licence! decider-wf text)
     (test-helpers/submit-application {:application-id app-id
                                       :actor "applicant"}))
   (f))
