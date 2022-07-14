@@ -405,23 +405,12 @@ SET
   id = id
 WHERE id = :id;
 
--- :name create-workflow-license! :insert
-INSERT INTO workflow_licenses
-(wfid, licid)
-VALUES
-(:wfid, :licid);
-
 -- TODO: consider renaming this to link-resource-license!
 -- :name create-resource-license! :insert
 INSERT INTO resource_licenses
 (resid, licid)
 VALUES
 (:resid, :licid);
-
--- :name get-workflow-licenses :? :*
-SELECT licid
-FROM workflow_licenses
-WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
@@ -448,14 +437,8 @@ FROM workflow wf;
 
 -- :name get-licenses :? :*
 -- :doc
--- - Gets application licenses by workflow and catalogue item ids
--- - :wfid workflow id for workflow licenses
+-- - Gets application licenses by catalogue item ids
 -- - :items vector of catalogue item ids for resource licenses
-SELECT lic.id, lic.type, lic.enabled, lic.archived, lic.organization
-FROM license lic
-INNER JOIN workflow_licenses wl ON lic.id = wl.licid
-WHERE wl.wfid = :wfid
-UNION
 SELECT lic.id, lic.type, lic.enabled, lic.archived, lic.organization
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
@@ -484,9 +467,6 @@ FROM license_localization;
 
 -- :name get-resources-for-license :? :*
 SELECT resid FROM resource_licenses WHERE licid = :id;
-
--- :name get-workflows-for-license :? :*
-SELECT wfid FROM workflow_licenses WHERE licid = :id;
 
 -- :name get-all-roles :? :*
 SELECT userid, role

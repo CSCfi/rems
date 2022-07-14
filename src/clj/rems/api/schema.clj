@@ -107,22 +107,22 @@
    (s/optional-key :resource/duo) {:duo/codes [schema-base/DuoCodeFull]}})
 
 (s/defschema V2License
-  {:license/id s/Int
-   :license/type (s/enum :text :link :attachment)
-   :license/title schema-base/LocalizedString
-   (s/optional-key :license/link) schema-base/LocalizedString
-   (s/optional-key :license/text) schema-base/LocalizedString
-   (s/optional-key :license/attachment-id) schema-base/LocalizedInt
-   (s/optional-key :license/attachment-filename) schema-base/LocalizedString
-   :license/enabled s/Bool
-   :license/archived s/Bool})
+  (merge
+   schema-base/LicenseId
+   {:license/type (s/enum :text :link :attachment)
+    :license/title schema-base/LocalizedString
+    (s/optional-key :license/link) schema-base/LocalizedString
+    (s/optional-key :license/text) schema-base/LocalizedString
+    (s/optional-key :license/attachment-id) schema-base/LocalizedInt
+    (s/optional-key :license/attachment-filename) schema-base/LocalizedString
+    :license/enabled s/Bool
+    :license/archived s/Bool}))
 
 (s/defschema Workflow
   {:id s/Int
    :organization schema-base/OrganizationOverview
    :title s/Str
    :workflow s/Any
-   :licenses [License]
    :enabled s/Bool
    :archived s/Bool})
 

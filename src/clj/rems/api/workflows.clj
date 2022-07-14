@@ -6,7 +6,6 @@
             [rems.application.events :as events]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -15,14 +14,16 @@
    :title s/Str
    (s/optional-key :forms) [{:form/id s/Int}]
    :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
-   (s/optional-key :handlers) [schema-base/UserId]})
+   (s/optional-key :handlers) [schema-base/UserId]
+   (s/optional-key :licenses) [schema-base/LicenseId]})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
    (s/optional-key :organization) schema-base/OrganizationId
    ;; type can't change
    (s/optional-key :title) s/Str
-   (s/optional-key :handlers) [schema-base/UserId]})
+   (s/optional-key :handlers) [schema-base/UserId]
+   (s/optional-key :licenses) [schema-base/LicenseId]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

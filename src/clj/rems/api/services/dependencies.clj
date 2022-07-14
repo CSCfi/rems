@@ -50,8 +50,9 @@
 
    (for [workflow (workflow/get-workflows {})
          dep (concat
-              (mapv (fn [lic] {:license/id (:id lic)}) (:licenses workflow))
-              (:forms (:workflow workflow))
+              (->> (get-in workflow [:workflow :licenses])
+                   (mapv #(select-keys % [:license/id])))
+              (get-in workflow [:workflow :forms])
               [(:organization workflow)])]
      {:from {:workflow/id (:id workflow)} :to dep})
 

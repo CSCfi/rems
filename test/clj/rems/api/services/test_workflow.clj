@@ -46,8 +46,8 @@
                                     :form/internal-name "workflow form"
                                     :form/external-title {:en "Workflow Form EN"
                                                           :fi "Workflow Form FI"
-                                                          :sv "Workflow Form SV"}}]}
-                :licenses []
+                                                          :sv "Workflow Form SV"}}]
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -63,8 +63,8 @@
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}
-                :licenses []
+                           :forms []
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -80,8 +80,8 @@
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}
-                :licenses []
+                           :forms []
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))))
@@ -102,7 +102,8 @@
                 :title "changed title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
-                           :forms []}}
+                           :forms []
+                           :licenses []}}
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))
 
@@ -117,7 +118,42 @@
                 :title "original title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}}
+                           :forms []
+                           :licenses []}}
+               (-> (workflow/get-workflow wf-id)
+                   (select-keys [:id :title :workflow]))))))
+
+    (testing "change licenses"
+      (let [licid (test-helpers/create-license! {:organization {:organization/id "abc"}})
+            licid-2 (test-helpers/create-license! {:organization {:organization/id "abc"}})
+            wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
+                                                  :type :workflow/master
+                                                  :title "original title"
+                                                  :handlers ["user1"]
+                                                  :licenses [licid]})
+            get-license (fn [id]
+                          {:license/id id
+                           :archived false
+                           :enabled true
+                           :licensetype "text"
+                           :localizations {}
+                           :organization {:organization/id "abc"
+                                          :organization/name {:en "ABC"}
+                                          :organization/short-name {:en "ABC"}}})
+            expected {:id wf-id
+                      :title "original title"
+                      :workflow {:type :workflow/master
+                                 :handlers [{:userid "user1"
+                                             :name "User 1"
+                                             :email "user1@example.com"}]
+                                 :forms []
+                                 :licenses [(get-license licid)]}}]
+        (is (= expected (-> (workflow/get-workflow wf-id)
+                            (select-keys [:id :title :workflow]))))
+        (is (:success (workflow/edit-workflow! {:id wf-id
+                                                :licenses [{:license/id licid-2}]})))
+        (is (= (-> expected
+                   (assoc-in [:workflow :licenses] [(get-license licid-2)]))
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))))
 

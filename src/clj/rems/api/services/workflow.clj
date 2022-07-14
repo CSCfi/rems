@@ -5,10 +5,10 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
-            [rems.json :as json]))
+            [rems.db.workflow :as workflow]))
 
 (defn invalid-forms-error [forms]
   (let [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
@@ -24,35 +24,35 @@
        :errors [{:type :invalid-user
                  :users invalid}]})))
 
-(defn create-workflow! [{:keys [organization handlers forms] :as cmd}]
+(defn invalid-licenses-error [licenses]
+  (let [ids (map :license/id licenses)]
+    (when-some [invalid (seq (remove licenses/license-exists? ids))]
+      {:success false
+       :errors [{:type :invalid-license
+                 :licenses invalid}]})))
+
+(defn create-workflow! [{:keys [organization handlers licenses forms] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)
-      (let [id (workflow/create-workflow! cmd)]
+      (invalid-licenses-error licenses)
+      (let [id (workflow/create-workflow! (-> cmd
+                                              (update :licenses #(map :license/id %))))]
         (dependencies/reset-cache!)
         {:success (not (nil? id))
          :id id})))
 
-(defn- unrich-workflow [workflow]
-  ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
-  (if (get-in workflow [:workflow :handlers])
-    (update-in workflow [:workflow :handlers] #(map :userid %))
-    workflow))
-
-;; TODO: use rems.db.workflow/edit-workflow! and don't go directly to db fns, same for other fns
-(defn edit-workflow! [{:keys [id organization title handlers]}]
-  (let [workflow (unrich-workflow (workflow/get-workflow id))
-        workflow-body (cond-> (:workflow workflow)
-                        handlers (assoc :handlers handlers))]
+(defn edit-workflow! [{:keys [id organization handlers licenses] :as cmd}]
+  (let [workflow (workflow/get-workflow id)]
     (util/check-allowed-organization! (:organization workflow))
     (when organization
       (util/check-allowed-organization! organization))
-    (db/edit-workflow! {:id id
-                        :title title
-                        :organization (:organization/id organization)
-                        :workflow (json/generate-string workflow-body)}))
-  (applications/reload-cache!)
-  {:success true})
+    (or (invalid-users-error handlers)
+        (invalid-licenses-error licenses)
+        (let [_ (workflow/edit-workflow! (-> cmd
+                                             (update :licenses #(map :license/id %))))]
+          (applications/reload-cache!)
+          {:success true}))))
 
 (defn set-workflow-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
@@ -79,8 +79,8 @@
     (->> workflow
          join-workflow-forms
          organizations/join-organization
-         workflow/join-workflow-licenses
-         (transform [:licenses ALL] organizations/join-organization))))
+         (transform [:workflow :licenses ALL] (comp organizations/join-organization
+                                                    licenses/join-license)))))
 
 (defn get-workflow [id]
   (->> (workflow/get-workflow id)
@@ -99,3 +99,4 @@
                            (get-in wf [:workflow :handlers]))
                          workflows)]
     (->> handlers distinct (sort-by :userid))))
+

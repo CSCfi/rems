@@ -71,3 +71,12 @@
          :licenses
          (get-licenses {:wfid (:wfid item)
                         :items [(:id item)]})))
+
+(defn join-license [x]
+  (-> (get-license (:license/id x))
+      (dissoc :id)
+      (merge x)))
+
+(defn license-exists? [id]
+  (some? (db/get-license {:id id})))
+
