@@ -7,12 +7,13 @@
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
+            [rems.common.util :refer [keep-keys replace-key]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
@@ -28,6 +29,7 @@
                ::form {:type :workflow/default})
     :dispatch-n [[::actors]
                  [::forms {:disabled true :archived true}]
+                 [::licenses]
                  (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
@@ -46,7 +48,9 @@
                             :organization organization
                             :type (:type workflow)
                             :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
-                            :handlers (get workflow :handlers)})))
+                            :handlers (get workflow :handlers)
+                            :licenses (->> (:licenses workflow)
+                                           (map #(replace-key % :license/id :id)))})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -72,7 +76,9 @@
                  {:organization {:organization/id (get-in form [:organization :organization/id])}
                   :title (trim-when-string (:title form))
                   :type (:type form)
-                  :forms (mapv #(select-keys % [:form/id]) (:forms form))}
+                  :forms (mapv #(select-keys % [:form/id]) (:forms form))
+                  :licenses (->> (:licenses form)
+                                 (mapv #(keep-keys {:id :license/id} %)))}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -88,7 +94,9 @@
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :id id
                  :title (:title form)
-                 :handlers (map :userid (:handlers form))}]
+                 :handlers (map :userid (:handlers form))
+                 :licenses (->> (:licenses form)
+                                (map #(keep-keys {:id :license/id} %)))}]
     (when (valid-edit-request? request)
       request)))
 
@@ -122,6 +130,12 @@
 
 (fetcher/reg-fetcher ::forms "/api/forms")
 
+(rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
+(rf/reg-event-db ::set-licenses (fn [db [_ licenses]]
+                                  (->> (sort-by :id licenses)
+                                       (assoc-in db [::form :licenses]))))
+(fetcher/reg-fetcher ::licenses "/api/licenses")
+
 ;;;; UI
 
 (def ^:private context
@@ -136,6 +150,29 @@
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
                        :label (text :t.create-workflow/title)}])
+
+(def ^:private licenses-dropdown-id "licenses-dropdown")
+
+(defn- workflow-licenses-field []
+  (let [licenses @(rf/subscribe [::licenses])
+        selected-licenses @(rf/subscribe [::selected-licenses])]
+    [:div.form-group
+     [:label.administration-field-label {:for licenses-dropdown-id}
+      (text :t.create-resource/licenses-selection)]
+     [dropdown/dropdown
+      {:id licenses-dropdown-id
+       :items licenses
+       :item-key :id
+       :item-label (fn [license]
+                     (str ; XXX: workaround for get-localized-title
+                      (:title (localized (:localizations license)))
+                      " (org: "
+                      (localized (get-in license [:organization
+                                                  :organization/short-name]))
+                      ")"))
+       :item-selected? #(contains? (set selected-licenses) %)
+       :multi? true
+       :on-change #(rf/dispatch [::set-licenses %])}]]))
 
 (defn- workflow-type-field []
   [radio-button-group context {:id :workflow-type
@@ -256,12 +293,14 @@
                  [:div#workflow-editor.fields
                   [workflow-organization-field]
                   [workflow-title-field]
-                  [workflow-type-field]
 
+                  [workflow-type-field]
                   (case workflow-type
                     :workflow/default [default-workflow-form]
                     :workflow/decider [decider-workflow-form]
                     :workflow/master [master-workflow-form])
+
+                  [workflow-licenses-field]
 
                   [:div.col.commands
                    [cancel-button]

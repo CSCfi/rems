@@ -68,7 +68,7 @@
                      (for [form (get-in workflow [:workflow :forms])]
                        [:li.list-group-item [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/internal-name form)]]))
                {:box? false}]]}]
-   [licenses-view (:licenses workflow) language]
+   [licenses-view (get-in workflow [:workflow :licenses]) language]
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]

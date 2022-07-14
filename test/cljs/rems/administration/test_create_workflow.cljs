@@ -31,7 +31,8 @@
                 :title "workflow title"
                 :type :workflow/default
                 :forms [{:form/id 13}]
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -47,7 +48,8 @@
                 :title "workflow title"
                 :type :workflow/decider
                 :forms [{:form/id 13}]
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -62,13 +64,18 @@
                 :title "workflow title"
                 :type :workflow/master
                 :forms []
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test
-  (is (= {:id 3 :organization {:organization/id "o"} :title "t" :handlers ["a" "b"]}
+  (is (= {:id 3
+          :organization {:organization/id "o"}
+          :title "t"
+          :handlers ["a" "b"]
+          :licenses []}
          (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))

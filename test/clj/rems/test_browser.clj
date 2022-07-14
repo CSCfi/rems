@@ -2226,6 +2226,7 @@
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
+      (select-option "Licenses" "General Terms of Use")
       (btu/screenshot "test-workflow-create-edit-1.png")
       (btu/scroll-and-click :save))
     (testing "view workflow"
@@ -2239,7 +2240,10 @@
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
               "Active" true}
-             (slurp-fields :workflow))))
+             (slurp-fields :workflow)))
+      (is (= ["License \"General Terms of Use\""]
+             (->> (btu/query-all {:class :license-title})
+                  (map btu/get-element-text-el)))))
     (testing "edit workflow"
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
@@ -2251,6 +2255,7 @@
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
+      (select-option "Licenses" "CC Attribution 4.0")
       (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
@@ -2265,6 +2270,10 @@
               "Forms" "Simple form"
               "Active" true}
              (slurp-fields :workflow)))
+      (is (= ["License \"CC Attribution 4.0\""
+              "License \"General Terms of Use\""]
+             (->> (btu/query-all {:class :license-title})
+                  (map btu/get-element-text-el))))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
