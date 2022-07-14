@@ -1,5 +1,5 @@
 (ns rems.common.util
-  (:require [medley.core :refer [map-vals]]
+  (:require [medley.core :refer [map-keys map-vals remove-keys]]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
@@ -608,3 +608,12 @@
     (is (= "id_123-element" (escape-element-id "123-element")))
     (is (= "id__123-element" (escape-element-id " 123-element")))))
 
+(defn keep-keys [f coll]
+  (->> coll
+       (map-keys f)
+       (remove-keys nil?)))
+
+(deftest test-keep-keys
+  (is (= {} (keep-keys {} {})))
+  (is (= {:b 1 :c 2} (keep-keys {:a :b :b :c} {:a 1 :b 2})))
+  (is (= {:b 1} (keep-keys {:a :b} {:a 1 :b 2}))))

@@ -6,12 +6,12 @@
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
             [conman.core :as conman]
-            [medley.core :refer [map-vals]]
+            [medley.core :refer [distinct-by map-vals]]
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.common.util :refer [conj-set]]
+            [rems.common.util :refer [conj-set keep-keys]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
@@ -53,9 +53,14 @@
 ;;; Running commands
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
-  (db/get-licenses
-   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id {}))
-    :items [catalogue-item-id]}))
+  (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
+        workflow-licenses (-> (:wfid item)
+                              workflow/get-workflow
+                              (get-in [:workflow :licenses]))]
+    (->> (licenses/get-licenses {:items [catalogue-item-id]})
+         (map #(keep-keys {:id :license/id} %))
+         (into workflow-licenses)
+         (distinct-by :license/id))))
 
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))

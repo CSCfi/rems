@@ -322,9 +322,8 @@
 (defn- build-licenses-list [catalogue-item-ids {:keys [get-catalogue-item-licenses]}]
   (->> catalogue-item-ids
        (mapcat get-catalogue-item-licenses)
-       distinct
-       (mapv (fn [license]
-               {:license/id (:id license)}))))
+       (distinct-by :license/id)
+       (mapv #(select-keys % [:license/id]))))
 
 (defn- entitlement-end-not-in-future-error
   "Checks that entitlement date time, if provided, is in the future."

@@ -175,9 +175,11 @@
         license-id2 (test-helpers/create-license! {})
         license-id3 (test-helpers/create-license! {})
         license-id4 (test-helpers/create-license! {})
+        workflow-license-id (test-helpers/create-license! {})
         form-id (test-helpers/create-form! {})
         workflow-id (test-helpers/create-workflow! {:type :workflow/master
-                                                    :handlers [handler-id]})
+                                                    :handlers [handler-id]
+                                                    :licenses [workflow-license-id]})
         cat-item-id1 (test-helpers/create-catalogue-item! {:resource-id (test-helpers/create-resource!
                                                                          {:license-ids [license-id1 license-id2]})
                                                            :form-id form-id
@@ -198,7 +200,9 @@
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/accept-licenses
                                             :application-id application-id
-                                            :accepted-licenses [license-id1 license-id2]})))
+                                            :accepted-licenses [license-id1
+                                                                license-id2
+                                                                workflow-license-id]})))
       (testing "with invalid application id"
         (is (= {:success false
                 :errors [{:type "application-not-found"}]}
@@ -398,14 +402,16 @@
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
           (let [application (get-application-for-user application-id user-id)]
-            (is (= #{license-id1 license-id2} (license-ids-for-application application)))
+            (is (= #{license-id1 license-id2 workflow-license-id}
+                   (license-ids-for-application application)))
             (is (= {:success true} (send-command handler-id
                                                  {:type :application.command/add-licenses
                                                   :application-id application-id
                                                   :licenses [license-id4]
                                                   :comment "Please approve these new terms"})))
             (let [application (get-application-for-user application-id user-id)]
-              (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application))))))
+              (is (= #{license-id1 license-id2 license-id4 workflow-license-id}
+                     (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
@@ -415,7 +421,8 @@
       (testing "changing resources as handler"
         (let [application (get-application-for-user application-id user-id)]
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
-          (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application)))
+          (is (= #{license-id1 license-id2 license-id4 workflow-license-id}
+                 (license-ids-for-application application)))
           (is (= {:success true} (send-command handler-id
                                                {:type :application.command/change-resources
                                                 :application-id application-id
@@ -424,7 +431,8 @@
           (let [application (get-application-for-user application-id user-id)]
             (is (= #{cat-item-id3} (catalogue-item-ids-for-application application)))
             ;; TODO: The previously added licenses should probably be retained in the licenses after changing resources.
-            (is (= #{license-id3} (license-ids-for-application application))))))
+            (is (= #{license-id3 workflow-license-id}
+                   (license-ids-for-application application))))))
 
       (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
@@ -433,7 +441,8 @@
                                               :catalogue-item-ids [cat-item-id2]})))
         (let [application (get-application-for-user application-id user-id)]
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
-          (is (= #{license-id1 license-id2} (license-ids-for-application application)))))
+          (is (= #{license-id1 license-id2 workflow-license-id}
+                 (license-ids-for-application application)))))
 
       (testing "request-decision with alternate id"
         (is (= {:success true} (send-command handler-id

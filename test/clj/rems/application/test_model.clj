@@ -222,8 +222,8 @@
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
-                  :handlers [(get-user "handler")]}
-       :licenses nil
+                  :handlers [(get-user "handler")]
+                  :licenses []}
        :enabled true
        :archived false}})
 
@@ -569,10 +569,10 @@
                                            :application/modified (DateTime. 3500)
                                            :application/events (conj (:application/events submitted-application)
                                                                      licenses-added-event)
-                                           :application/licenses [{:license/id 33}
-                                                                  {:license/id 30}
+                                           :application/licenses [{:license/id 30}
                                                                   {:license/id 31}
-                                                                  {:license/id 32}]})]
+                                                                  {:license/id 32}
+                                                                  {:license/id 33}]})]
     (is (= licenses-added-application (recreate licenses-added-application)))))
 
 (deftest test-application-view-copied

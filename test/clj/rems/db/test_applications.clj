@@ -58,7 +58,7 @@
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :id (applications/get-catalogue-item-licenses cat-id))))))
+               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))
 
     (testing "workflow licenses"
       (let [lic-id (test-helpers/create-license! {})
@@ -68,7 +68,7 @@
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :id (applications/get-catalogue-item-licenses cat-id))))))))
+               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))))
 
 (deftest test-application-external-id!
   (let [application-external-id! @#'applications/application-external-id!]

@@ -116,11 +116,11 @@
                  id))))
 
 (defn- dummy-get-catalogue-item-licenses [id]
-  (getx {1 [{:id 1}]
-         2 [{:id 2}]
-         3 [{:id 1}
-            {:id 2}
-            {:id 3}]
+  (getx {1 [{:license/id 1}]
+         2 [{:license/id 2}]
+         3 [{:license/id 1}
+            {:license/id 2}
+            {:license/id 3}]
          4 []
          5 []
          6 []} id))
@@ -577,10 +577,10 @@
                      cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
                      cat-4-other-form {:id cat-4-other-form :resid "res4" :formid form-2 :wfid wf-1}}
                     :get-catalogue-item-licenses
-                    {cat-1 [{:id license-1}]
-                     cat-2-other-license [{:id license-2}]
-                     cat-3-other-workflow [{:id license-1}]
-                     cat-4-other-form [{:id license-1}]}
+                    {cat-1 [{:license/id license-1}]
+                     cat-2-other-license [{:license/id license-2}]
+                     cat-3-other-workflow [{:license/id license-1}]
+                     cat-4-other-form [{:license/id license-1}]}
                     :valid-user? (:valid-user? injections)}]
 
     (testing "applicant can add resources to a draft application"

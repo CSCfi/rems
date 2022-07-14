@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
@@ -48,8 +48,8 @@
              :application/invitation-tokens {}
              :application/resources (map #(select-keys % [:catalogue-item/id :resource/ext-id])
                                          (:application/resources event))
-             :application/licenses (map #(select-keys % [:license/id])
-                                        (:application/licenses event))
+             :application/licenses (->> (:application/licenses event)
+                                        (mapv #(select-keys % [:license/id])))
              :application/accepted-licenses {}
              :application/events []
              :application/forms (:application/forms event)
@@ -221,8 +221,8 @@
       (assoc :application/modified (:event/time event))
       (assoc :application/forms (vec (:application/forms event)))
       (assoc :application/resources (vec (:application/resources event)))
-      (assoc :application/licenses (map #(select-keys % [:license/id])
-                                        (:application/licenses event)))))
+      (assoc :application/licenses (->> (:application/licenses event)
+                                        (map #(select-keys % [:license/id]))))))
 
 (defmethod application-base-view :application.event/closed
   [application _event]
@@ -507,6 +507,15 @@
       (-> application
           (assoc-in [:application/duo :duo/matches] matches)))))
 
+(defn- enrich-workflow-licenses [application get-workflow]
+  (let [wf (-> (get-in application [:application/workflow :workflow/id])
+               get-workflow)]
+    (-> application
+        (update :application/licenses (fn [app-licenses]
+                                        (->> (get-in wf [:workflow :licenses] [])
+                                             (into app-licenses)
+                                             (distinct-by :license/id)))))))
+
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
                            (map :license/id)
@@ -676,6 +685,7 @@
       (update :application/resources enrich-resources get-catalogue-item)
       enrich-application-duo-matches ; uses enriched resources
       (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
+      (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
