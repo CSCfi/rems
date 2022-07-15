@@ -1,6 +1,5 @@
 (ns rems.api.services.workflow
-  (:require [com.rpl.specter :refer [ALL transform]]
-            [rems.api.services.dependencies :as dependencies]
+  (:require [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -11,33 +10,29 @@
             [rems.db.workflow :as workflow]))
 
 (defn invalid-forms-error [forms]
-  (let [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
-    (when invalid
-      {:success false
-       :errors [{:type :invalid-form
-                 :forms invalid}]})))
+  (when-some [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
+    {:success false
+     :errors [{:type :invalid-form
+               :forms invalid}]}))
 
 (defn invalid-users-error [userids]
-  (let [invalid (seq (remove users/user-exists? userids))]
-    (when invalid
-      {:success false
-       :errors [{:type :invalid-user
-                 :users invalid}]})))
+  (when-some [invalid (seq (remove users/user-exists? userids))]
+    {:success false
+     :errors [{:type :invalid-user
+               :users invalid}]}))
 
 (defn invalid-licenses-error [licenses]
-  (let [ids (map :license/id licenses)]
-    (when-some [invalid (seq (remove licenses/license-exists? ids))]
-      {:success false
-       :errors [{:type :invalid-license
-                 :licenses invalid}]})))
+  (when-some [invalid (seq (remove (comp licenses/license-exists? :license/id) licenses))]
+    {:success false
+     :errors [{:type :invalid-license
+               :licenses invalid}]}))
 
 (defn create-workflow! [{:keys [organization handlers licenses forms] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)
       (invalid-licenses-error licenses)
-      (let [id (workflow/create-workflow! (-> cmd
-                                              (update :licenses #(map :license/id %))))]
+      (let [id (workflow/create-workflow! (update cmd :licenses #(map :license/id %)))]
         (dependencies/reset-cache!)
         {:success (not (nil? id))
          :id id})))
@@ -49,8 +44,8 @@
       (util/check-allowed-organization! organization))
     (or (invalid-users-error handlers)
         (invalid-licenses-error licenses)
-        (let [_ (workflow/edit-workflow! (-> cmd
-                                             (update :licenses #(map :license/id %))))]
+        (do
+          (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
           (applications/reload-cache!)
           {:success true}))))
 
@@ -69,18 +64,21 @@
 
 ;; TODO more systematic joining for these needed. Now we just add the title for the UI
 (defn- enrich-workflow-form [item]
-  (select-keys (dependencies/enrich-dependency item) [:form/id :form/internal-name :form/external-title]))
+  (-> item
+      dependencies/enrich-dependency
+      (select-keys [:form/id :form/internal-name :form/external-title])))
 
-(defn- join-workflow-forms [workflow]
-  (update-in workflow [:workflow :forms] (partial mapv enrich-workflow-form)))
+(defn- enrich-workflow-license [item]
+  (-> item
+      licenses/join-license
+      organizations/join-organization))
 
 (defn- join-dependencies [workflow]
   (when workflow
-    (->> workflow
-         join-workflow-forms
-         organizations/join-organization
-         (transform [:workflow :licenses ALL] (comp organizations/join-organization
-                                                    licenses/join-license)))))
+    (-> workflow
+        organizations/join-organization
+        (update-in [:workflow :forms] (partial map enrich-workflow-form))
+        (update-in [:workflow :licenses] (partial map enrich-workflow-license)))))
 
 (defn get-workflow [id]
   (->> (workflow/get-workflow id)

@@ -8,7 +8,6 @@
             [rems.db.events :as db-events]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
-            [rems.db.workflow :as workflow]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import [clojure.lang ExceptionInfo]

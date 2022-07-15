@@ -68,8 +68,8 @@
 (defn join-catalogue-item-licenses [item]
   (assoc item :licenses (get-licenses {:items [(:id item)]})))
 
-(defn join-license [x]
-  (-> (get-license (:license/id x))
+(defn join-license [{:keys [license/id] :as x}]
+  (-> (get-license id)
       (dissoc :id)
       (merge x)))
 

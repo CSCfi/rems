@@ -48,8 +48,8 @@
              :application/invitation-tokens {}
              :application/resources (map #(select-keys % [:catalogue-item/id :resource/ext-id])
                                          (:application/resources event))
-             :application/licenses (->> (:application/licenses event)
-                                        (mapv #(select-keys % [:license/id])))
+             :application/licenses (map #(select-keys % [:license/id])
+                                        (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
              :application/forms (:application/forms event)
@@ -221,8 +221,8 @@
       (assoc :application/modified (:event/time event))
       (assoc :application/forms (vec (:application/forms event)))
       (assoc :application/resources (vec (:application/resources event)))
-      (assoc :application/licenses (->> (:application/licenses event)
-                                        (map #(select-keys % [:license/id]))))))
+      (assoc :application/licenses (map #(select-keys % [:license/id])
+                                        (:application/licenses event)))))
 
 (defmethod application-base-view :application.event/closed
   [application _event]
@@ -508,13 +508,14 @@
           (assoc-in [:application/duo :duo/matches] matches)))))
 
 (defn- enrich-workflow-licenses [application get-workflow]
-  (let [wf (-> (get-in application [:application/workflow :workflow/id])
-               get-workflow)]
-    (-> application
-        (update :application/licenses (fn [app-licenses]
-                                        (->> (get-in wf [:workflow :licenses] [])
-                                             (into app-licenses)
-                                             (distinct-by :license/id)))))))
+  (let [wf (get-workflow (get-in application [:application/workflow :workflow/id]))]
+    (if-some [workflow-licenses (seq (get-in wf [:workflow :licenses]))]
+      (-> application
+          (update :application/licenses (fn [app-licenses]
+                                          (->> workflow-licenses
+                                               (into app-licenses)
+                                               (distinct-by :license/id)))))
+      application)))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
