@@ -1207,6 +1207,7 @@
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
               "Forms" ""
+              "Licenses" ""
               "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
