@@ -82,7 +82,7 @@
                               (on-change value)))]
     [:i.far.fa-lg
      {:id id
-      :class [:checkbox class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
+      :class [:checkbox class (if value :fa-check-square :fa-square)]
       :tabIndex 0
       :role :checkbox
       :aria-checked value
@@ -94,7 +94,8 @@
 (defn readonly-checkbox
   "Displays a readonly checkbox."
   [opts]
-  [checkbox opts])
+  [:span.readonly-checkbox
+   [checkbox (dissoc opts :on-change)]])
 
 (defn info-field
   "A component that shows a readonly field with title and value.
