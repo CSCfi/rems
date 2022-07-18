@@ -3,7 +3,6 @@
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
@@ -11,7 +10,7 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -65,10 +64,18 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
               [inline-info-field (text :t.administration/forms)
                (into [:ul.list-group]
-                     (for [form (get-in workflow [:workflow :forms])]
-                       [:li.list-group-item [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/internal-name form)]]))
+                     (for [form (get-in workflow [:workflow :forms])
+                           :let [uri (str "/administration/forms/" (:form/id form))
+                                 title (:form/internal-name form)]]
+                       [:li.list-group-item [atoms/link nil uri title]]))
+               {:box? false}]
+              [inline-info-field (text :t.administration/licenses)
+               (into [:ul.list-group]
+                     (for [license (get-in workflow [:workflow :licenses])
+                           :let [uri (str "/administration/licenses/" (:license/id license))
+                                 title (:title (localized (:localizations license)))]]
+                       [:li.list-group-item [atoms/link nil uri title]]))
                {:box? false}]]}]
-   [licenses-view (get-in workflow [:workflow :licenses]) language]
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]

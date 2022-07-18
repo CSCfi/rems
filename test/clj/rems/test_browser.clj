@@ -2239,11 +2239,9 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
+              "Licenses" "General Terms of Use"
               "Active" true}
-             (slurp-fields :workflow)))
-      (is (= ["License \"General Terms of Use\""]
-             (->> (btu/query-all {:class :license-title})
-                  (map btu/get-element-text-el)))))
+             (slurp-fields :workflow))))
     (testing "edit workflow"
       (btu/scroll-and-click {:fn/has-class :edit-workflow})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
@@ -2268,12 +2266,9 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"
+              "Licenses" "CC Attribution 4.0\nGeneral Terms of Use"
               "Active" true}
              (slurp-fields :workflow)))
-      (is (= ["License \"CC Attribution 4.0\""
-              "License \"General Terms of Use\""]
-             (->> (btu/query-all {:class :license-title})
-                  (map btu/get-element-text-el))))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
