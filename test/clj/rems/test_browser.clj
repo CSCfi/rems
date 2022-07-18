@@ -900,7 +900,8 @@
                 "Type" "Master workflow"
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
-                "Forms" ""}
+                "Forms" ""
+                "Licenses" ""}
                (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
