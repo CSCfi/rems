@@ -78,18 +78,19 @@
   (let [wrapped-on-change (fn [e]
                             (.preventDefault e)
                             (.stopPropagation e)
-                            (when on-change
-                              (on-change value)))]
+                            (on-change value))]
     [:i.far.fa-lg
-     {:id id
-      :class [:checkbox class (if value :fa-check-square :fa-square)]
-      :tabIndex 0
-      :role :checkbox
-      :aria-checked value
-      :aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
-      :on-click wrapped-on-change
-      :on-key-press #(when (= (.-key %) " ")
-                       (wrapped-on-change %))}]))
+     (cond-> {:id id
+              :class [:checkbox class (if value :fa-check-square :fa-square)]
+              :tabIndex 0
+              :role :checkbox
+              :aria-checked value
+              :aria-label (if value
+                            (text :t.form/checkbox-checked)
+                            (text :t.form/checkbox-unchecked))}
+       on-change (assoc :on-click wrapped-on-change
+                        :on-key-press #(when (= (.-key %) " ")
+                                         (wrapped-on-change %))))]))
 
 (defn readonly-checkbox
   "Displays a readonly checkbox."
