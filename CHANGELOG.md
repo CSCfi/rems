@@ -26,6 +26,7 @@ Changes since v2.27
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
+- Read-only checkbox should look different from editable checkbox yet again. (#2974)
 
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
