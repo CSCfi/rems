@@ -752,8 +752,7 @@
            [member-info {:element-id "applicant"
                          :attributes applicant
                          :application application
-                         :group? (or (seq members)
-                                     (seq invited-members))}]]
+                         :group? true}]]
           (concat
            (for [[index member] (map-indexed vector (sort-by :name members))]
              [member-info {:element-id (str "member" index)
