@@ -10,6 +10,8 @@ Changes since v2.27
 
 **NB: This release contains migrations!**
 
+- `workflow_licenses` table has been removed and the data is migrated to `workflow` table.
+
 ### Additions
 - Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
 - The packaged fonts are now only in WOFF and WOFF2 formats, as is required for extensive support these days. (#2592)
@@ -23,6 +25,7 @@ Changes since v2.27
 - HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
 - Validate organization when adding or editing it. (#2964)
 - Consecutive save events are compacted into one. This does not affect old save events. This is turned off by default, until the whole autosave feature is finished. (#2767)
+- Licenses can now be added to workflows through user interface and API. Workflow licenses are included in applications, similar to resource licenses. (#2158)
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
