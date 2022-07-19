@@ -87,7 +87,8 @@
               :aria-checked value
               :aria-label (if value
                             (text :t.form/checkbox-checked)
-                            (text :t.form/checkbox-unchecked))}
+                            (text :t.form/checkbox-unchecked))
+              :aria-readonly (nil? on-change)}
        on-change (assoc :on-click wrapped-on-change
                         :on-key-press #(when (= (.-key %) " ")
                                          (wrapped-on-change %))))]))
