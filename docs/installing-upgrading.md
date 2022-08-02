@@ -3,8 +3,11 @@ This is a short guide for running REMS as an uberjar. We also provide a [Dockerf
 # Installing REMS
 
 1. Get a `rems.jar` file. You can [build it yourself](development.md) or get one from the [GitHub releases page](https://github.com/CSCfi/rems/releases).
-1. Set up a PostgreSQL database and create the data model with e.g. `migrate` command.
 1. Write a configuration file. See [configuration.md](configuration.md) for instructions.
+1. Set up a PostgreSQL database and create the data model using `migrate` command.
+   It'll take you from empty database to the latest. Make sure you configured the connection details in the config file.
+
+        java -Drems.config=path/to/your/rems/config -jar rems.jar migrate
 1. Run rems with a command like
 
         java -Drems.config=path/to/your/rems/config -jar rems.jar run
