@@ -2,7 +2,7 @@
 
 REMS is an open source project and we are open to issues and pull requests from everyone. Before starting on working something big/non-trivial, please submit an issue first, we can help with the design and provide assistance!
 
-Instructions for getting started are in [docs/development.md](docs/development.md). You will also contain some architecture documentation and more guides in [docs directory](docs/).
+Instructions for getting started are in [docs/development.md](docs/development.md). You will also find architecture documentation and more guides in [docs directory](docs/).
 
 You can try things against our [demo instance](https://rems-demo.rahtiapp.fi/).
 
