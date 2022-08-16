@@ -23,6 +23,7 @@ Changes since v2.27
 - HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
 - Validate organization when adding or editing it. (#2964)
 - Consecutive save events are compacted into one. This does not affect old save events. This is turned off by default, until the whole autosave feature is finished. (#2767)
+- Application licenses are now rendered alphabetically in UI and PDF render. (#2979)
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
