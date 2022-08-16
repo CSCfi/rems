@@ -77,7 +77,9 @@
                       [:title (text :t.header/title)]
                       (include-css "/assets/bootstrap/css/bootstrap.min.css")
                       (include-css "/assets/font-awesome/css/all.css")
-                      (include-css (cache-bust (css-filename context/*lang*)))]
+                      (include-css (cache-bust (css-filename context/*lang*)))
+                      (for [extra-stylesheet (get-in env [:extra-stylesheets :files])]
+                        (include-css (cache-bust extra-stylesheet)))]
                      (logo-preloads))
                [:body
                 [:div#app app-content]
