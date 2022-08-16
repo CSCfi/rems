@@ -27,6 +27,7 @@ Changes since v2.27
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
 - Applicant member details now always have border in application user interface, even when there are no other members. (#2975)
+- Version number is shown again in browser console instead of message "Version information not available". This was due to change in build logic introduced by Shadow-CLJS. (#2984)
 
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
