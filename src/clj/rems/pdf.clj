@@ -152,10 +152,11 @@
           [:paragraph (localized (:license/attachment-filename license))])))
 
 (defn- render-licenses [application]
-  (list [:heading heading-style (text :t.form/licenses)]
-        (doall
-         (for [license (getx application :application/licenses)]
-           (render-license license)))))
+  (let [licenses (getx application :application/licenses)]
+    (list [:heading heading-style (text :t.form/licenses)]
+          (doall
+           (for [license (sort-by #(-> % :license/title localized) licenses)]
+             (render-license license))))))
 
 (defn- render-application [application]
   [{}
