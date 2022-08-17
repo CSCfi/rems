@@ -158,6 +158,12 @@ fix` or `lein cljfmt fix <file>` to automatically fix your formatting.
 
 This setup should correspond to pretty much the default indentation of CIDER in Emacs. Other editors may need to adjust settings here and there, but our CI will help you to spot any mistakes.
 
+## Dependency updating
+
+Dependencies are declared three places: `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling), `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end), and `package.json` includes Node.js dependencies (front-end).
+
+Running `lein antq` produces a list of outdated dependencies by looking at latest version. It can inspect both Leiningen and Shadow-CLJS dependencies. Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
+
 ## Component Guide
 
 You can access the component guide at `/guide`. It contains all the UI
