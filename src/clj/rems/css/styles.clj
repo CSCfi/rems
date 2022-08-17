@@ -32,39 +32,6 @@
                                   :lg (u/px 1200)
                                   :xl (u/px 1600)})
 
-
-;; Fonts of the app
-
-(defn- at-font-faces
-  "The theme :font-family settings will override these fonts is set.
-
-  Reason for this function to be included into our screen.css
-   - because themes like Findata can use them since our theme.edn doesn't offer a possibility to add custom fonts
-   - all the fonts need to be 'built in' to REMS, even if they're not active
-   - bundling Robot Slab and Lato in REMS is a bit of a hack, made for Findata & THL to get the sort of styles they want"
-  []
-  (list
-   (stylesheet/at-font-face {:font-family "'Lato'"
-                             :font-style "normal"
-                             :font-weight 300
-                             :font-display :swap
-                             :src "url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff')"})
-   (stylesheet/at-font-face {:font-family "'Lato'"
-                             :font-style "normal"
-                             :font-weight 400
-                             :font-display :swap
-                             :src "url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff')"})
-   (stylesheet/at-font-face {:font-family "'Lato'"
-                             :font-style "normal"
-                             :font-weight 700
-                             :font-display :swap
-                             :src "url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff')"})
-   (stylesheet/at-font-face {:font-family "'Roboto Slab'"
-                             :font-style "normal"
-                             :font-weight 400
-                             :font-display :swap
-                             :src "url('/font/Roboto-Slab.woff2') format('woff2')"})))
-
 (defn- form-placeholder-styles []
   (list
    [".form-control::placeholder" {:color "#555"}] ; Standard
@@ -372,7 +339,6 @@
 
 (defn build-screen []
   (list
-   (at-font-faces)
    [:* {:margin 0}]
    [:p:last-child {:margin-bottom 0}]
    [:a

@@ -304,6 +304,9 @@
 
  ;; Optional extra script files loaded when UI loads
  :extra-scripts {:root "/dev/null" :files []}
+ ;; Optional extra stylesheets loaded when UI loads.
+ ;; Use to set custom fonts for example
+ :extra-stylesheets {:root "./" :files ["/example-theme/extra-styles.css"]}
 
  ;; Optional extra pages shown in the navigation bar.
  ;;

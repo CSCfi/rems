@@ -102,6 +102,12 @@
       (when (contains? files (:uri request))
         (file-response (:uri request) {:root root})))))
 
+(defn extra-stylesheet-routes [{:keys [root files]}]
+  (let [files (set files)]
+    (fn [request]
+      (when (contains? files (:uri request))
+        (file-response (:uri request) {:root root})))))
+
 (defn- static-resources [path]
   (if path
     (route/files "/" {:root path})
@@ -131,6 +137,7 @@
      styles/css-routes
      resource-handler
      (extra-script-routes (:extra-scripts env))
+     (extra-stylesheet-routes (:extra-stylesheets env))
      (static-resources (:extra-static-resources env))
      (static-resources (:theme-static-resources env))
      webjar-handler))
