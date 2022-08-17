@@ -24,7 +24,7 @@ Changes since v2.27
 - Validate organization when adding or editing it. (#2964)
 - Consecutive save events are compacted into one. This does not affect old save events. This is turned off by default, until the whole autosave feature is finished. (#2767)
 - Application licenses are now rendered alphabetically in UI and PDF render. (#2979)
-- Custom stylesheets can now be added using `:extra-stylesheets` configuration option. This can be used to include custom fonts, for example.
+- Custom stylesheets can now be added using `:extra-stylesheets` configuration option. This can be used to include custom fonts, for example. (#2869)
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
