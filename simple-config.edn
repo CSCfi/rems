@@ -2,4 +2,5 @@
  :database-url "postgresql://db:5432/rems?user=rems&password=remspassword"
  :search-index-path "/tmp/rems-search-index"
  :authentication :fake
- :public-url "http://localhost:3000/"}
+ :public-url "http://localhost:3000/"
+ :extra-stylesheets {:root "./" :files ["/example-theme/extra-styles.css"]}}
