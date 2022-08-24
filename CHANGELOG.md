@@ -6,9 +6,12 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.27
+Changes since v2.28
+
+## v2.28 "Porkkalankatu" 2022-08-24
 
 **NB: This release contains migrations!**
+**NB: One of the migrations fixes organizations, that could be broken by previous features. **
 
 ### Additions
 - Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
