@@ -1,5 +1,4 @@
-(defproject rems "0.1.0-SNAPSHOT"
-
+(defproject rems "2.28"
   :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
   :url "https://github.com/CSCfi/rems"
 
