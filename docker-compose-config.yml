@@ -12,6 +12,7 @@ services:
       - "127.0.0.1:3000:3000"
     volumes:
       - ./simple-config.edn:/rems/config/config.edn
+      - ./example-theme/extra-styles.css:/rems/example-theme/extra-styles.css
 
   db:
     image: postgres:13
