@@ -109,10 +109,6 @@
   (btu/scroll-and-click {:fn/text "Manage categories"})
   (is (btu/eventually-visible? :categories)))
 
-(defn go-to-licenses []
-  (go-to-admin "Licenses")
-  (is (btu/eventually-visible? {:tag :h1 :fn/text "Licenses"})))
-
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -2791,18 +2787,23 @@
 
 (deftest test-licenses
   (login-as "owner")
-  (go-to-licenses)
+  (change-language :en)
+  (go-to-admin "Licenses")
+  (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
   (testing "create licenses with different license types"
     (testing "external link"
       (btu/scroll-and-click :create-license)
-      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create license"}))
       (select-option "Organization" "NBN")
       (fill-license-fields {:title "E2E license with external links"
                             :external-links {:en "http://www.google.com"
-                                             :fi "http://www.google.fi"
-                                             :sv "http://www.google.sv"}})
+                                             :fi "http://www.google.fi"}})
+      ; test svae button not active
+      (is (btu/disabled? :save))
+      (fill-license-fields {:external-links {:sv "http://www.google.sv"}})
+      (is (not (btu/disabled? :save)))
       (btu/scroll-and-click :save)
-      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
       (is (= {"Organization" "NBN"
               "Title (EN)" "E2E license with external links (EN)"
               "Title (FI)" "E2E license with external links (FI)"
@@ -2814,40 +2815,48 @@
               "Active" true}
              (slurp-fields :license))))
     (testing "inline text"
-      (go-to-licenses)
+      (go-to-admin "Licenses")
+      (change-language :fi)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Lisenssit"}))
       (btu/scroll-and-click :create-license)
-      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
-      (select-option "Organization" "NBN")
-      (fill-license-fields {:title "E2E license with inline text"
-                            :inline-text "Inline text lorem ipsum"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Uusi lisenssi"}))
+      (select-option "Organisaatio" "NBN")
+      (fill-license-fields {:inline-text "Inline text lorem ipsum"})
+      (is (btu/disabled? :save))
+      (fill-license-fields {:title "E2E license with inline text"})
+      (is (not (btu/disabled? :save)))
       (btu/scroll-and-click :save)
-      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
-      (is (= {"Organization" "NBN"
-              "Title (EN)" "E2E license with inline text (EN)"
-              "Title (FI)" "E2E license with inline text (FI)"
-              "Title (SV)" "E2E license with inline text (SV)"
-              "Type" "text"
-              "License text (EN)" "Inline text lorem ipsum (EN)"
-              "License text (FI)" "Inline text lorem ipsum (FI)"
-              "License text (SV)" "Inline text lorem ipsum (SV)"
-              "Active" true}
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Lisenssi"}))
+      (is (= {"Organisaatio" "NBN"
+              "Nimi (EN)" "E2E license with inline text (EN)"
+              "Nimi (FI)" "E2E license with inline text (FI)"
+              "Nimi (SV)" "E2E license with inline text (SV)"
+              "Tyyppi" "text"
+              "Lisenssin teksti (EN)" "Inline text lorem ipsum (EN)"
+              "Lisenssin teksti (FI)" "Inline text lorem ipsum (FI)"
+              "Lisenssin teksti (SV)" "Inline text lorem ipsum (SV)"
+              "Aktiivinen" true}
              (slurp-fields :license))))
     (testing "attachment"
-      (go-to-licenses)
+      (change-language :en) ; for (go-to-admin) to work
+      (go-to-admin "Licenses")
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
+      (change-language :sv)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenser"}))
       (btu/scroll-and-click :create-license)
-      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
-      (select-option "Organization" "NBN")
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Ny licens"}))
+      (select-option "Organisation" "NBN")
       (fill-license-fields {:title "E2E license with attachments"
                             :attachments true})
       (btu/scroll-and-click :save)
-      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
-      (is (= {"Organization" "NBN"
-              "Title (EN)" "E2E license with attachments (EN)"
-              "Title (FI)" "E2E license with attachments (FI)"
-              "Title (SV)" "E2E license with attachments (SV)"
-              "Type" "attachment"
-              "Attachment (EN)" "E2E license with attachments (EN)"
-              "Attachment (FI)" "E2E license with attachments (FI)"
-              "Attachment (SV)" "E2E license with attachments (SV)"
-              "Active" true}
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Licens"}))
+      (is (= {"Organisation" "NBN"
+              "Namn (EN)" "E2E license with attachments (EN)"
+              "Namn (FI)" "E2E license with attachments (FI)"
+              "Namn (SV)" "E2E license with attachments (SV)"
+              "Typ" "attachment"
+              "Bilaga (EN)" "E2E license with attachments (EN)"
+              "Bilaga (FI)" "E2E license with attachments (FI)"
+              "Bilaga (SV)" "E2E license with attachments (SV)"
+              "Aktiv" true}
              (slurp-fields :license))))))

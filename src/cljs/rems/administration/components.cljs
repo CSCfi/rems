@@ -14,7 +14,6 @@
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
-            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
             [rems.collapsible :as collapsible]
