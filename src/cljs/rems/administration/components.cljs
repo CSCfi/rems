@@ -212,13 +212,18 @@
 
 (defn localized-info-field
   "An info field for displaying text in all supported languages.
-  The data is passed in as a map of language to text."
-  [m {:keys [label]}]
+  The data is passed in as a map of language to text.
+  If :localizations-key is passed in opts, language to text is
+  mapped from `[:localizations lang localizations-key]` instead."
+  [m {:keys [label localizations-key] :as opts}]
   (let [languages @(rf/subscribe [:languages])
         to-label #(str label " (" (str/upper-case (name %)) ")")]
     (into [:<>]
-          (for [lang languages]
-            [inline-info-field (to-label lang) (get m lang)]))))
+          (for [lang languages
+                :let [value (if (some? localizations-key)
+                              (get-in m [:localizations lang localizations-key])
+                              (get m lang))]]
+            [inline-info-field (to-label lang) value]))))
 
 (defn organization-field [context {:keys [keys readonly]}]
   (let [label (text :t.administration/organization)
