@@ -2,12 +2,14 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [organization-field radio-button-group text-field textarea-autosize]]
-            [rems.atoms :as atoms :refer [file-download document-title]]
+            [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field radio-button-group]]
+            [rems.atoms :as atoms :refer [failure-symbol file-download document-title]]
             [rems.collapsible :as collapsible]
+            [rems.common.attachment-types :as attachment-types]
             [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [navigate! post! trim-when-string]]))
+            [rems.spinner :as spinner]
+            [rems.text :refer [text text-format]]
+            [rems.util :refer [format-file-size navigate! post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -105,15 +107,12 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
-(defn- language-heading [language]
-  [:h3 (str/upper-case (name language))])
-
 (defn- license-organization-field []
   [organization-field context {:keys [:organization]}])
 
-(defn- license-title-field [language]
-  [text-field context {:keys [:localizations language :title]
-                       :label (text :t.create-license/title)}])
+(defn- license-title-field []
+  [localized-text-field context {:localizations-key :title
+                                 :label (text :t.create-license/title)}])
 
 (defn- license-type-radio-group []
   [radio-button-group context {:id :license-type
@@ -127,20 +126,14 @@
                                          {:value license-type-attachment
                                           :label (text :t.create-license/license-attachment)}]}])
 
-(defn- current-license-type []
-  (let [form @(rf/subscribe [::form])]
-    (:licensetype form)))
+(defn- license-link-field []
+  [localized-text-field context {:localizations-key :link
+                                 :label (text :t.create-license/link-to-license)
+                                 :placeholder "https://example.com/license"}])
 
-(defn- license-link-field [language]
-  (when (= license-type-link (current-license-type))
-    [text-field context {:keys [:localizations language :link]
-                         :label (text :t.create-license/link-to-license)
-                         :placeholder "https://example.com/license"}]))
-
-(defn- license-text-field [language]
-  (when (= license-type-text (current-license-type))
-    [textarea-autosize context {:keys [:localizations language :text]
-                                :label (text :t.create-license/license-text)}]))
+(defn- license-text-field []
+  [localized-textarea-autosize context {:localizations-key :text
+                                        :label (text :t.create-license/license-text)}])
 
 (defn- set-attachment-event [language]
   (fn [event]
@@ -155,34 +148,52 @@
     (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
     (rf/dispatch [::remove-attachment language attachment-id])))
 
-(defn- license-attachment-field [language]
-  (when (= license-type-attachment (current-license-type))
-    (let [form @(rf/subscribe [::form])
-          filename (get-in form [:localizations language :attachment-filename])
-          attachment-id (get-in form [:localizations language :attachment-id])
-          filename-field [:a.btn.btn-secondary.mr-2
-                          {:href (str "/api/licenses/attachments/" attachment-id)
-                           :target :_blank}
-                          filename " " [file-download]]
-          upload-field [:div.upload-file.mr-2
-                        [:input {:style {:display "none"}
-                                 :type "file"
-                                 :id "upload-license-button"
-                                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                                 :on-change (set-attachment-event language)}]
-                        [:button.btn.btn-secondary
-                         {:type :button
-                          :on-click #(.click (.getElementById js/document "upload-license-button"))}
-                         (text :t.form/upload)]]
-          remove-button [:button.btn.btn-secondary.mr-2
-                         {:type :button
-                          :on-click (remove-attachment-event language attachment-id)}
-                         (text :t.form/attachment-remove)]]
-      (if (empty? filename)
-        upload-field
-        [:div {:style {:display :flex :justify-content :flex-start}}
-         filename-field
-         remove-button]))))
+(defn- license-attachment-field []
+  (into [:div.form-group.field
+         [:label.administration-field-label
+          (text :t.create-license/license-attachment)]
+         (let [allowed-extensions (->> attachment-types/allowed-extensions-string
+                                       (text-format :t.form/upload-extensions))
+               config @(rf/subscribe [:rems.config/config])]
+           [:div.mb-3
+            [:p allowed-extensions]
+            [:p (->> (format-file-size (:attachment-max-size config))
+                     (text-format :t.form/attachment-max-size))]])]
+        (for [language @(rf/subscribe [:languages])
+              :let [form @(rf/subscribe [::form])
+                    filename (get-in form [:localizations language :attachment-filename])
+                    attachment-id (get-in form [:localizations language :attachment-id])
+                    id (str "attachment-" (name language))
+                    input-id (str "upload-license-button-" (name language))
+                    upload-status (get-in form [:localizations language :attachment-upload-status])]]
+          [:div.form-group.row
+           [:label.col-sm-1.col-form-label {:for id}
+            (str/upper-case (name language))]
+           [:div.col-sm-11.d-flex.flex-wrap.align-items-center {:id id}
+            (if (empty? filename)
+              [:div.upload-file.mr-2
+               [:input {:style {:display "none"}
+                        :type "file"
+                        :id input-id
+                        :accept attachment-types/allowed-extensions-string
+                        :on-change (set-attachment-event language)}]
+               [:button.btn.btn-secondary {:type :button
+                                           :on-click #(.click (.getElementById js/document input-id))}
+                (text :t.form/upload)]]
+              [:div.d-flex.justify-content-start
+               [:a.attachment-link.btn.btn-secondary.mr-2
+                {:href (str "/api/licenses/attachments/" attachment-id)
+                 :target :_blank}
+                filename " " [file-download]]
+               [:button.btn.btn-secondary.mr-2 {:type :button
+                                                :on-click (remove-attachment-event language attachment-id)}
+                (text :t.form/attachment-remove)]])
+            [:span.ml-2
+             (case upload-status
+               :pending [spinner/small]
+               :success nil ; the new attachment row appearing is confirmation enough
+               :error [failure-symbol]
+               nil)]]])))
 
 (defn- save-license-button [on-click]
   (let [form @(rf/subscribe [::form])
@@ -202,7 +213,7 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [languages @(rf/subscribe [:languages])]
+  (let [current-license-type (:licensetype @(rf/subscribe [::form]))]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-license)]
@@ -213,13 +224,13 @@
        :always [:div.fields
                 [license-organization-field]
                 [license-type-radio-group]
-                (for [language languages] ; TODO only show when there is license type selected
-                  [:div.mb-3 {:key language} ; TODO use .dashed-group in these
-                   [language-heading language] ; TODO check if should do in label or some other grouping
-                   [license-title-field language]
-                   [license-link-field language]
-                   [license-text-field language]
-                   [license-attachment-field language]])
+                [license-title-field]
+                (condp = current-license-type
+                  license-type-link [license-link-field]
+                  license-type-text [license-text-field]
+                  license-type-attachment [license-attachment-field]
+                  nil)
                 [:div.col.commands
                  [cancel-button]
                  [save-license-button #(rf/dispatch [::create-license %])]]]}]]))
+

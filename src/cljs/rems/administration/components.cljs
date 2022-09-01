@@ -102,14 +102,47 @@
                                           (.. % -target -value)])}]
      [field-validation-message error label]]))
 
-(defn- localized-text-field-lang [context {:keys [keys-prefix label lang]}]
+(defn localized-textarea-autosize
+  "A textarea for inputting text in all supported languages.
+  Has a separate textareas for each language. The data is stored
+  in the form as a map of language to text. If `:localizations-key` is
+  provided in opts, languages are mapped from `[:localizations lang localizations-key]`
+  path."
+  [context {:keys [keys localizations-key label placeholder]}]
+  (into [:div.form-group.localized-field
+         [:label.administration-field-label label]]
+        (for [language @(rf/subscribe [:languages])]
+          (let [form @(rf/subscribe [(:get-form context)])
+                form-errors (when (:get-form-errors context)
+                              @(rf/subscribe [(:get-form-errors context)]))
+                keys (if (some? localizations-key)
+                       [:localizations language localizations-key]
+                       (conj keys language))
+                id (keys-to-id (if (some? localizations-key)
+                                 [:localizations language localizations-key]
+                                 keys))
+                error (get-in form-errors keys)]
+            [:div.row.mb-0
+             [:label.col-sm-1.col-form-label {:for id}
+              (str/upper-case (name language))]
+             [:div.col-sm-11
+              [textarea {:id id
+                         :placeholder placeholder
+                         :value (get-in form keys)
+                         :class (when error "is-invalid")
+                         :on-change #(rf/dispatch [(:update-form context)
+                                                   keys
+                                                   (.. % -target -value)])}]
+              [field-validation-message error label]]]))))
+
+(defn- localized-text-field-lang [context {:keys [localization-keys keys-prefix label lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
-        keys (conj keys-prefix lang)
+        keys (or localization-keys (conj keys-prefix lang))
         id (keys-to-id keys)
         error (get-in form-errors keys)]
-    [:div.form-group.row.mb-0
+    [:div.row.mb-0
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
      [:div.col-sm-11
@@ -125,24 +158,28 @@
 (defn localized-text-field
   "A text field for inputting text in all supported languages.
   Has a separate text fields for each language. The data is stored
-  in the form as a map of language to text."
-  [context {:keys [keys label collapse?]}]
+  in the form as a map of language to text. If `:localizations-key` is
+  provided in opts, languages are mapped from `[:localizations lang localizations-key]`
+  path."
+  [context {:keys [keys label localizations-key collapse?] :as opts}]
   (let [languages @(rf/subscribe [:languages])
-        id (keys-to-id keys)
+        id (keys-to-id (if (some? localizations-key) [localizations-key] keys))
         fields (into [:<>]
-                     (for [lang languages]
-                       [localized-text-field-lang context {:keys-prefix keys
-                                                           :label label
-                                                           :lang lang}]))]
+                     (for [lang languages
+                           :let [localization-opts (if (some? localizations-key)
+                                                     {:localization-keys [:localizations lang localizations-key]}
+                                                     {:keys-prefix keys})]]
+                       [localized-text-field-lang context (merge {:label label :lang lang}
+                                                                 localization-opts)]))]
     (if collapse?
-      [:div.form-group.field.mb-1
+      [:div.form-group.localized-field.mb-1
        [:label.administration-field-label
         label
         " "
         [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide)]]
        [:div.collapse {:id id}
         fields]]
-      [:div.form-group.field
+      [:div.form-group.localized-field
        [:label.administration-field-label label]
        fields])))
 
