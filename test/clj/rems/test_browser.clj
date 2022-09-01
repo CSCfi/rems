@@ -109,6 +109,10 @@
   (btu/scroll-and-click {:fn/text "Manage categories"})
   (is (btu/eventually-visible? :categories)))
 
+(defn go-to-licenses []
+  (go-to-admin "Licenses")
+  (is (btu/eventually-visible? {:tag :h1 :fn/text "Licenses"})))
+
 (defn change-language [language]
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -131,15 +135,33 @@
 
 ;;; application page
 
+(defn- slurp-localized-fields [selector]
+  (->> (for [form-group (btu/query-all [selector {:fn/has-classes [:form-group
+                                                                   :localized-field]}])
+             :when (btu/visible-el? form-group)
+             :let [label (btu/get-element-text-el (btu/child form-group {:tag :label}))]
+             row (btu/children form-group {:fn/has-class :row})
+             :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
+                   k (str label " (" k ")")
+                   v (btu/first-value-of-el row [{:css ".form-control"}
+                                                 {:css ".dropdown-container"}
+                                                 {:css ".list-group"}
+                                                 {:tag :a}])]]
+         [k v])
+       (into {})))
+
 (defn slurp-fields [selector]
   (->> (for [row (btu/query-all [selector {:fn/has-class :form-group}])
-             :when (btu/visible-el? row)
+             :when (and (btu/visible-el? row)
+                        (not (btu/has-class-el? row :localized-field))) ; ignore localized fields
              :let [k (btu/get-element-text-el (btu/child row {:tag :label}))
                    v (btu/first-value-of-el row [{:css ".form-control"}
                                                  {:css ".dropdown-container"}
-                                                 {:css ".list-group"}])]]
+                                                 {:css ".list-group"}
+                                                 {:tag :a}])]]
          [k v])
-       (into {})))
+       (into {})
+       (merge (slurp-localized-fields selector))))
 
 (defn slurp-table [& selectors]
   (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
@@ -176,18 +198,22 @@
 (defn fill-form-field
   "Fills a form field named by `label` with `text`.
 
-  Optionally give `:index` when several items match. It starts from 1.
-  Optionally give `:form-nth` when several forms exist. It starts from 1."
+  Optionally give `:index` when several items match. It starts from 0."
   [label text & [opts]]
-  (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
-  (assert (> (:form-index opts 1) 0) "indexing starts at 1") ; as above
+  (let [id (-> (btu/query-all {:css ".fields > *"})
+               (->> (mapcat #(btu/children % {:tag :label :fn/has-text label})))
+               (nth (:index opts 0))
+               (btu/get-element-attr-el :for))]
+    ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
+    (btu/fill-human {:id id} text)))
 
-  (let [index (dec (:index opts 1))
-        form-index (dec (:form-index opts 1))
-        id (-> (btu/query-all {:css ".fields"})
-               (nth form-index)
-               (btu/children {:tag :label :fn/has-text label})
-               (nth index)
+(defn fill-localized-form-field
+  "Fills a localized form field `langcode`, named by `field-label`, with `text`."
+  [field-label langcode text]
+  (let [id (-> (btu/query-all {:css ".fields > *"})
+               (->> (filter #(seq (btu/children % {:fn/has-text field-label})))
+                    (mapcat #(btu/children % {:tag :label :fn/has-text langcode})))
+               first
                (btu/get-element-attr-el :for))]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
@@ -281,6 +307,33 @@
                                   {:tag :label :fn/has-text label}]))
         id (btu/get-element-attr-el el :for)]
     (btu/get-element-text {:id (str id "-error")})))
+
+(defn fill-license-fields [{:keys [title external-links inline-text attachments]}]
+  (when title
+    (btu/fill-human :localizations-en-title (str title " (EN)"))
+    (btu/fill-human :localizations-fi-title (str title " (FI)"))
+    (btu/fill-human :localizations-sv-title (str title " (SV)")))
+  (when external-links
+    (btu/scroll-and-click :licensetype-link)
+    (btu/eventually-visible? :localizations-en-link)
+    (btu/fill-human :localizations-en-link (:en external-links))
+    (btu/fill-human :localizations-fi-link (:fi external-links))
+    (btu/fill-human :localizations-sv-link (:sv external-links)))
+  (when inline-text
+    (btu/scroll-and-click :licensetype-text)
+    (btu/eventually-visible? :localizations-en-text)
+    (btu/fill-human :localizations-en-text (str inline-text " (EN)"))
+    (btu/fill-human :localizations-fi-text (str inline-text " (FI)"))
+    (btu/fill-human :localizations-sv-text (str inline-text " (SV)")))
+  (when attachments
+    (btu/scroll-and-click :licensetype-attachment)
+    (btu/eventually-visible? :attachment-en) ; inputs are hidden
+    (btu/upload-file :upload-license-button-en "test-data/test.txt")
+    (btu/wait-predicate #(= (set ["test.txt"]) (set (get-attachments))))
+    (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
+    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt"]) (set (get-attachments))))
+    (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
+    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt" "test-sv.txt"]) (set (get-attachments))))))
 
 ;; TODO: return to DUO tests once features are complete
 ;; (defn get-duo-codes [s]
@@ -447,7 +500,7 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
-        (fill-form-field "Simple text field" "Private field answer" {:form-index 2})
+        (fill-form-field "Simple text field" "Private field answer")
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
@@ -1068,12 +1121,12 @@
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
-      (fill-form-field "Title" (str (btu/context-getx :license-name) " EN") {:index 1})
-      (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-      (fill-form-field "Title" (str (btu/context-getx :license-name) " FI") {:index 2})
-      (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-      (fill-form-field "Title" (str (btu/context-getx :license-name) " SV") {:index 3})
-      (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
+      (btu/fill-human :localizations-en-title (str (btu/context-getx :license-name) " EN"))
+      (btu/fill-human :localizations-en-link "https://www.csc.fi/home")
+      (btu/fill-human :localizations-fi-title (str (btu/context-getx :license-name) " FI"))
+      (btu/fill-human :localizations-fi-link "https://www.csc.fi/etusivu")
+      (btu/fill-human :localizations-sv-title (str (btu/context-getx :license-name) " SV"))
+      (btu/fill-human :localizations-sv-link "https://www.csc.fi/home")
       (btu/screenshot "about-to-create-license.png")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
@@ -1242,9 +1295,9 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
       (btu/wait-page-loaded)
       (select-option "Organization" (btu/context-getx :organization-name))
-      (fill-form-field "Title" (btu/context-getx :catalogue-item-name) {:index 1})
-      (fill-form-field "Title" (str (btu/context-getx :catalogue-item-name) " FI") {:index 2})
-      (fill-form-field "Title" (str (btu/context-getx :catalogue-item-name) " SV") {:index 3})
+      (fill-localized-form-field "Title" "EN" (btu/context-getx :catalogue-item-name))
+      (fill-localized-form-field "Title" "FI" (str (btu/context-getx :catalogue-item-name) " FI"))
+      (fill-localized-form-field "Title" "SV" (str (btu/context-getx :catalogue-item-name) " SV"))
       (select-option "Workflow" (btu/context-getx :workflow-name))
       (select-option "Resource" (btu/context-getx :resid))
       (when-let [form-name (btu/context-getx :form-name)]
@@ -1360,7 +1413,7 @@
     (login-as "owner")
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
     (btu/wait-page-loaded)
-    (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
+    (is (btu/eventually-visible? {:id :title-en :fn/has-text "test-edit-catalogue-item EN"}))
     (btu/screenshot "test-edit-catalogue-item-1.png")
     (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
@@ -1402,7 +1455,7 @@
       (testing "editing"
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
         (btu/wait-page-loaded)
-        (is (btu/eventually-visible? {:id :title-en :value "test-edit-catalogue-item EN"}))
+        (is (btu/eventually-visible? {:id :title-en :fn/has-text "test-edit-catalogue-item EN"}))
         (is (= {"Organization" "Select..." ; unable to select a disabled org again
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
@@ -2735,3 +2788,66 @@
       (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More infoRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
+
+(deftest test-licenses
+  (login-as "owner")
+  (go-to-licenses)
+  (testing "create licenses with different license types"
+    (testing "external link"
+      (btu/scroll-and-click :create-license)
+      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
+      (select-option "Organization" "NBN")
+      (fill-license-fields {:title "E2E license with external links"
+                            :external-links {:en "http://www.google.com"
+                                             :fi "http://www.google.fi"
+                                             :sv "http://www.google.sv"}})
+      (btu/scroll-and-click :save)
+      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
+      (is (= {"Organization" "NBN"
+              "Title (EN)" "E2E license with external links (EN)"
+              "Title (FI)" "E2E license with external links (FI)"
+              "Title (SV)" "E2E license with external links (SV)"
+              "Type" "link"
+              "External link (EN)" "http://www.google.com"
+              "External link (FI)" "http://www.google.fi"
+              "External link (SV)" "http://www.google.sv"
+              "Active" true}
+             (slurp-fields :license))))
+    (testing "inline text"
+      (go-to-licenses)
+      (btu/scroll-and-click :create-license)
+      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
+      (select-option "Organization" "NBN")
+      (fill-license-fields {:title "E2E license with inline text"
+                            :inline-text "Inline text lorem ipsum"})
+      (btu/scroll-and-click :save)
+      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
+      (is (= {"Organization" "NBN"
+              "Title (EN)" "E2E license with inline text (EN)"
+              "Title (FI)" "E2E license with inline text (FI)"
+              "Title (SV)" "E2E license with inline text (SV)"
+              "Type" "text"
+              "License text (EN)" "Inline text lorem ipsum (EN)"
+              "License text (FI)" "Inline text lorem ipsum (FI)"
+              "License text (SV)" "Inline text lorem ipsum (SV)"
+              "Active" true}
+             (slurp-fields :license))))
+    (testing "attachment"
+      (go-to-licenses)
+      (btu/scroll-and-click :create-license)
+      (btu/eventually-visible? {:tag :h1 :fn/text "Create license"})
+      (select-option "Organization" "NBN")
+      (fill-license-fields {:title "E2E license with attachments"
+                            :attachments true})
+      (btu/scroll-and-click :save)
+      (btu/eventually-visible? {:tag :h1 :fn/text "License"})
+      (is (= {"Organization" "NBN"
+              "Title (EN)" "E2E license with attachments (EN)"
+              "Title (FI)" "E2E license with attachments (FI)"
+              "Title (SV)" "E2E license with attachments (SV)"
+              "Type" "attachment"
+              "Attachment (EN)" "E2E license with attachments (EN)"
+              "Attachment (FI)" "E2E license with attachments (FI)"
+              "Attachment (SV)" "E2E license with attachments (SV)"
+              "Active" true}
+             (slurp-fields :license))))))
