@@ -14,6 +14,7 @@
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
+            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.atoms :refer [info-field textarea]]
             [rems.collapsible :as collapsible]
@@ -111,35 +112,37 @@
   [context {:keys [keys localizations-key label placeholder]}]
   (into [:div.form-group.localized-field
          [:label.administration-field-label label]]
-        (for [language @(rf/subscribe [:languages])]
-          (let [form @(rf/subscribe [(:get-form context)])
-                form-errors (when (:get-form-errors context)
-                              @(rf/subscribe [(:get-form-errors context)]))
-                keys (if (some? localizations-key)
-                       [:localizations language localizations-key]
-                       (conj keys language))
-                id (keys-to-id (if (some? localizations-key)
-                                 [:localizations language localizations-key]
-                                 keys))
-                error (get-in form-errors keys)]
-            [:div.row.mb-0
-             [:label.col-sm-1.col-form-label {:for id}
-              (str/upper-case (name language))]
-             [:div.col-sm-11
-              [textarea {:id id
-                         :placeholder placeholder
-                         :value (get-in form keys)
-                         :class (when error "is-invalid")
-                         :on-change #(rf/dispatch [(:update-form context)
-                                                   keys
-                                                   (.. % -target -value)])}]
-              [field-validation-message error label]]]))))
+        (for [language @(rf/subscribe [:languages])
+              :let [form @(rf/subscribe [(:get-form context)])
+                    form-errors (when (:get-form-errors context)
+                                  @(rf/subscribe [(:get-form-errors context)]))
+                    keys (if (some? localizations-key)
+                           [:localizations language localizations-key]
+                           (conj keys language))
+                    id (keys-to-id (if (some? localizations-key)
+                                     [:localizations language localizations-key]
+                                     keys))
+                    error (get-in form-errors keys)]]
+          [:div.row.mb-0
+           [:label.col-sm-1.col-form-label {:for id}
+            (str/upper-case (name language))]
+           [:div.col-sm-11
+            [textarea {:id id
+                       :placeholder placeholder
+                       :value (get-in form keys)
+                       :class (when error "is-invalid")
+                       :on-change #(rf/dispatch [(:update-form context)
+                                                 keys
+                                                 (.. % -target -value)])}]
+            [field-validation-message error label]]])))
 
-(defn- localized-text-field-lang [context {:keys [localization-keys keys-prefix label lang]}]
+(defn- localized-text-field-lang [context {:keys [keys-prefix label lang localizations-key]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
-        keys (or localization-keys (conj keys-prefix lang))
+        keys (if localizations-key
+               [:localizations lang localizations-key]
+               (conj keys-prefix lang))
         id (keys-to-id keys)
         error (get-in form-errors keys)]
     [:div.row.mb-0
@@ -161,16 +164,16 @@
   in the form as a map of language to text. If `:localizations-key` is
   provided in opts, languages are mapped from `[:localizations lang localizations-key]`
   path."
-  [context {:keys [keys label localizations-key collapse?] :as opts}]
+  [context {:keys [keys label localizations-key collapse?]}]
   (let [languages @(rf/subscribe [:languages])
         id (keys-to-id (if (some? localizations-key) [localizations-key] keys))
         fields (into [:<>]
-                     (for [lang languages
-                           :let [localization-opts (if (some? localizations-key)
-                                                     {:localization-keys [:localizations lang localizations-key]}
-                                                     {:keys-prefix keys})]]
-                       [localized-text-field-lang context (merge {:label label :lang lang}
-                                                                 localization-opts)]))]
+                     (for [lang languages]
+                       [localized-text-field-lang context
+                        {:keys-prefix keys
+                         :label label
+                         :lang lang
+                         :localizations-key localizations-key}]))]
     (if collapse?
       [:div.form-group.localized-field.mb-1
        [:label.administration-field-label
