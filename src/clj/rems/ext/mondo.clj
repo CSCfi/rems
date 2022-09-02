@@ -9,6 +9,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [medley.core :refer [find-first update-existing index-by]]
+            [com.rpl.specter :refer [ALL filterer must transform]]
             [com.stuartsierra.dependency :as dep]
             [rems.config]
             [rems.github :as github]))
@@ -179,21 +180,15 @@
     (sort-by :id codes)
     (map #(update-existing % :id add-mondo-prefix) codes)))
 
+(defn- update-mondo-prefix [restriction]
+  (->> restriction
+       (transform [(must :values) (filterer (comp some? :id)) ALL]
+                  #(update-existing (get-codes (:id %)) :id add-mondo-prefix))))
+
 (defn join-mondo-code [duo-code]
-  (update-existing duo-code
-                   :restrictions
-                   (fn [restrictions]
-                     (for [restriction restrictions]
-                       (if (= :mondo (:type restriction))
-                         (update-existing restriction
-                                          :values
-                                          (fn [values]
-                                            (mapv (fn [value]
-                                                    (if-some [id (:id value)]
-                                                      (update-existing (get-codes id) :id add-mondo-prefix)
-                                                      value))
-                                                  values)))
-                         restriction)))))
+  (->> duo-code
+       (transform [(must :restrictions) (filterer (comp #{:mondo} :type)) ALL]
+                  update-mondo-prefix)))
 
 (deftest test-join-mondo-code
   (with-redefs [rems.config/env {:enable-duo true}]
