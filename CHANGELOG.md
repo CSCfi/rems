@@ -6,6 +6,9 @@ have notable changes.
 
 ## Unreleased
 
+### Fixes
+- License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
+
 Changes since v2.28
 
 ## v2.28 "Porkkalankatu" 2022-08-24
