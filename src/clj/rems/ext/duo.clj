@@ -194,6 +194,12 @@
        (find-first #(= kw (:type %)))
        :values))
 
+(defn- map-restrictions [duo kw]
+  (let [values (get-restrictions duo kw)]
+    (case kw
+      :mondo (map :id values)
+      :date (some-> values first :value time-format/parse))))
+
 (defn check-duo-code
   "Validate that `query-code` is compatible with `dataset-code`.
    
@@ -203,22 +209,22 @@
   (if-not (= (:id dataset-code) (:id query-code))
     :duo/not-found
     (case (:id dataset-code)
-       ;; "This data use permission indicates that use is allowed provided it is related to the specified disease."
-      "DUO:0000007" (let [required-codes (set (map :id (get-restrictions dataset-code :mondo)))
-                          provided-codes (set (map :id (get-restrictions query-code :mondo)))
-                          unmatched-codes (difference required-codes provided-codes)]
+       ;; "This data use permission indicates that use is allowed provided it
+       ;;  is related to the specified disease."
+      "DUO:0000007" (let [required-codes (set (map-restrictions dataset-code :mondo))
+                          provided-codes (set (map-restrictions query-code :mondo))]
                       (if (seq (intersection required-codes provided-codes))
                         :duo/compatible ; one matching Mondo is enough for DUO compatibility
-                        (-> (mapcat mondo/get-mondo-parents provided-codes)
-                            set
-                            (intersection unmatched-codes)
-                            (as-> matching-ancestors
-                                  (if (seq matching-ancestors) :duo/compatible :duo/not-compatible)))))
-       ;; "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."
-      "DUO:0000024" (let [required-dt (some-> dataset-code (get-restrictions :date) first :value time-format/parse)
-                          dt (some-> query-code (get-restrictions :date) first :value time-format/parse)]
+                        (let [unmatched-codes (difference required-codes provided-codes)
+                              parent-codes (set (mapcat mondo/get-mondo-parents provided-codes))]
+                          (if (seq (intersection unmatched-codes parent-codes))
+                            :duo/compatible :duo/not-compatible))))
+       ;; "This data use modifier indicates that requestor agrees not to publish
+       ;;  results of studies until a specific date."
+      "DUO:0000024" (let [required-dt (map-restrictions dataset-code :date)
+                          dt (map-restrictions query-code :date)]
                       (if (or (time/equal? dt required-dt)
-                              (not (-> dt (time/before? required-dt))))
+                              (not (time/before? dt required-dt)))
                         :duo/compatible :duo/not-compatible))
 
       (if (seq (:restrictions dataset-code))
