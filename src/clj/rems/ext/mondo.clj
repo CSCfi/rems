@@ -91,7 +91,9 @@
            compressed-format
            vec))))
 
-(def ^:private supported-mondo-release-tag "the version of Mondo we support so far" "v2021-10-01")
+(def ^:private supported-mondo-release-tag
+  "the version of Mondo we support so far"
+  "v2022-08-01")
 
 (def ^:private code-by-id (atom nil))
 (def ^:private codes-dag (atom nil))
