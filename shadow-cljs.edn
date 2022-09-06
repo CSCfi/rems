@@ -13,7 +13,12 @@
                 [venantius/accountant "0.2.5"]
                 [prismatic/schema "1.2.1"]]
 
- :source-paths ["env/dev/clj" "src/cljs" "src/cljc" "src/clj" "test/cljs"]
+ :source-paths ["target/uberjar/resources"
+                "env/dev/clj"
+                "src/cljs"
+                "src/cljc"
+                "src/clj"
+                "test/cljs"]
 
  :nrepl {:port 7002}
 

@@ -1,0 +1,31 @@
+@font-face {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('/font/Lato-Light.woff2') format('woff2'),
+         url('/font/Lato-Light.woff') format('woff');
+}
+@font-face {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/font/Lato-Regular.woff2') format('woff2'),
+         url('/font/Lato-Regular.woff') format('woff');
+}
+@font-face {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/font/Lato-Bold.woff2') format('woff2'),
+         url('/font/Lato-Bold.woff') format('woff');
+}
+@font-face {
+    font-family: "Roboto Slab";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/font/Roboto-Slab.woff2') format('woff2');
+}

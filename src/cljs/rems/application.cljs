@@ -526,7 +526,7 @@
          [flash-message/component :accept-licenses]
          [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
-               (for [license licenses]
+               (for [license (sort-by #(-> % :license/title localized) licenses)]
                  [license-field
                   application
                   (assoc license
@@ -752,8 +752,7 @@
            [member-info {:element-id "applicant"
                          :attributes applicant
                          :application application
-                         :group? (or (seq members)
-                                     (seq invited-members))}]]
+                         :group? true}]]
           (concat
            (for [[index member] (map-indexed vector (sort-by :name members))]
              [member-info {:element-id (str "member" index)

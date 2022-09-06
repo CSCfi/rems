@@ -166,7 +166,7 @@
 
 (defn version-info []
   (if-let [{:keys [version revision]} git/+version+]
-    (do (println "Version: " version)
+    (do (println "Version:" version)
         (println (str git/+commits-url+ revision)))
     (println "Version information not available")))
 

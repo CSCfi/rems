@@ -1,5 +1,4 @@
-(defproject rems "0.1.0-SNAPSHOT"
-
+(defproject rems "2.28"
   :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
   :url "https://github.com/CSCfi/rems"
 
@@ -77,7 +76,10 @@
   :plugins [[lein-cljfmt "0.6.7"]
             [lein-cprop "1.0.3"]
             [lein-shell "0.5.0"]
-            [migratus-lein "0.5.7"]]
+            [migratus-lein "0.5.7"]
+            [com.github.liquidz/antq "RELEASE"]]
+  
+  :antq {}
 
   :cljfmt {:paths ["src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ;; need explicit paths to include cljs
            :remove-consecutive-blank-lines? false} ;; too many changes for now

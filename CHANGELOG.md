@@ -6,11 +6,18 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.27
+Changes since v2.28
 
 **NB: This release contains migrations!**
+**NB: `workflow_licenses` table has been removed and the data is migrated to `workflow` table.**
 
-- `workflow_licenses` table has been removed and the data is migrated to `workflow` table.
+### Additions
+- Licenses can now be added to workflows through user interface and API. Workflow licenses are included in applications, similar to resource licenses. (#2158)
+
+## v2.28 "Porkkalankatu" 2022-08-24
+
+**NB: This release contains migrations!**
+**NB: One of the migrations fixes organizations, that could be broken by previous features.**
 
 ### Additions
 - Application UI view is now visually more compact for non-handler users. State and members blocks are collapsed initially, and can be expanded to show more details. (#2871)
@@ -25,10 +32,15 @@ Changes since v2.27
 - HTTP/2 (and others) can be configured, see `:jetty-extra-params` in `config-defaults.edn`.
 - Validate organization when adding or editing it. (#2964)
 - Consecutive save events are compacted into one. This does not affect old save events. This is turned off by default, until the whole autosave feature is finished. (#2767)
-- Licenses can now be added to workflows through user interface and API. Workflow licenses are included in applications, similar to resource licenses. (#2158)
+- Application licenses are now rendered alphabetically in UI and PDF render. (#2979)
+- Custom stylesheets can now be added using `:extra-stylesheets` configuration option. This can be used to include custom fonts, for example. Example stylesheet is included in `config-defaults.edn` and is located in `example-theme/extra-styles.css`. (#2869)
+- Example custom stylesheet `example-theme/extra-styles.css` is included in Docker images built using `Dockerfile` and `docker-compose-config.yml`, so that default REMS fonts are automatically included when running REMS for the first time, for example. (#2869)
 
 ### Fixes
 - Add missing migration to remove organization modifier and last modified from the data. (#2964)
+- Read-only checkbox should look different from editable checkbox yet again. (#2974)
+- Applicant member details now always have border in application user interface, even when there are no other members. (#2975)
+- Version number is shown again in browser console instead of message "Version information not available". This was due to change in build logic introduced by Shadow-CLJS. (#2984)
 
 ## v2.27 "Lauttasaaren silta" 2022-06-06
 
