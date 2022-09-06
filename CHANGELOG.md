@@ -6,6 +6,9 @@ have notable changes.
 
 ## Unreleased
 
+### Additions
+- Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
+
 Changes since v2.28
 
 ## v2.28 "Porkkalankatu" 2022-08-24
