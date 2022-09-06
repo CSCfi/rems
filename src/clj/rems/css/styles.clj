@@ -378,7 +378,7 @@
      {:left (u/em 0)}]]
    [:#main-content {:display :flex
                     :flex-direction :column
-                    :flex-wrap :none
+                    :flex-wrap :no-wrap
                     :min-height (u/px 300)
                     :max-width content-width
                     :flex-grow 1
