@@ -1,4 +1,4 @@
-# 019: Catalogue Management With Organization Delgation
+# 019: Catalogue Management With Organization Delegation
 
 Authors: @Macroz, @aatkin, @jaakkocsc
 
@@ -27,14 +27,17 @@ However, there is a new user need https://github.com/CSCfi/rems/issues/2967.
 - It would be useful to see other organization items, for example to copy or imitate them. If privacy is desired, it is possible to create a new REMS instance for that organization.
 - We can have the owner do the catalogue completely, but that would reduce the benefits of the delegated ownership.
 - We can have the owner do the shared catalogue items and organizations owners only do catalogue items from within their organization. This however creates a need to copy forms and licenses, where there could be a shared one. If there are many copies, synchonizing changes becomes extra work.
+- Consider the name of the attribute `:sharing` or something better. Or `:organization/sharing` etc. Or should it be `:organization/sharing {:sharing/type :public}` which would be the most future-proof. Let's do the latter, which is most future-proof.
 
 ## Proposed solution
 1. Add to form, workflow, resource and license an attribute `:sharing`, where the value can be `:public` (open for all) or `:private` (only for this organization)
 2. Modify create catalogue item component and API to only accept everything from the owner, and mixed organization items where the sharing value is public or it is from your owned organization.
 3. Make sure the dropdowns in create catalogue item by default show only the items you can actually use (e.g. public).
+4. It should be possible to edit this attribute after an item is created. If an item is public and it is made private, then existing items shall work still and be in the catalogue.
 
-## Open questions
-- Consider the name of the attribute `:sharing` or something better. Or `:organization/sharing` etc. Or should it be `:organization/sharing {:sharing/type :public}` which would be the most future-proof.
+NB: Migration should keep everything as is and the default for new items shall be private, so that sharing is an explicit choice.
+
+## Open questions 
 - Decide which tasks to do first, and which ones are left for later.
 
 ## Decision
