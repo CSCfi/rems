@@ -37,7 +37,8 @@
    (s/optional-key :enable-catalogue-table) s/Bool
    (s/optional-key :enable-catalogue-tree) s/Bool
    (s/optional-key :catalogue-tree-show-matching-parents) s/Bool
-   (s/optional-key :enable-cart) s/Bool})
+   (s/optional-key :enable-cart) s/Bool
+   (s/optional-key :application-list-hidden-columns) [s/Keyword]})
 
 (def translations-api
   (context "/translations" []
