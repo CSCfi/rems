@@ -127,7 +127,7 @@
                    :license-field "Lisenssi \"%1\""
                    :licenses "Lisenssit"
                    :manage-categories "Hallinnoi kategorioita"
-                   :more-info "Lisätietoja-URL (valinnainen)"
+                   :more-info "Lisätietoja-URL"
                    :name "Nimi"
                    :no-categories "Ei kategorioita"
                    :no-form "Ei lomaketta"

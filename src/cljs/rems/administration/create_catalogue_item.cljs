@@ -3,7 +3,7 @@
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [organization-field text-field]]
+            [rems.administration.components :refer [localized-text-field organization-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
@@ -157,17 +157,14 @@
 (defn- catalogue-item-organization-field []
   [organization-field context {:keys [:organization]}])
 
-(defn- catalogue-item-title-field [language]
-  [text-field context {:keys [:title language]
-                       :label (str (text :t.administration/title)
-                                   " (" (str/upper-case (name language)) ")")
-                       :placeholder (text :t.administration/title)}])
+(defn- catalogue-item-title-field []
+  [localized-text-field context {:keys [:title]
+                                 :label (text :t.administration/title)}])
 
-(defn- catalogue-item-infourl-field [language]
-  [text-field context {:keys [:infourl language]
-                       ;; no placeholder to make clear that field is optional
-                       :label (str (text :t.administration/more-info)
-                                   " (" (str/upper-case (name language)) ")")}])
+(defn- catalogue-item-infourl-field []
+  [localized-text-field context {:keys [:infourl]
+                                 :label (str (text :t.administration/more-info) " "
+                                             (text :t.administration/optional))}])
 
 (defn- catalogue-item-workflow-field []
   (let [workflows @(rf/subscribe [::workflows])
@@ -311,10 +308,8 @@
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor.fields
                    [catalogue-item-organization-field]
-                   (for [language languages]
-                     [:<> {:key language}
-                      [catalogue-item-title-field language]
-                      [catalogue-item-infourl-field language]])
+                   [catalogue-item-title-field]
+                   [catalogue-item-infourl-field]
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]

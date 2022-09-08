@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field localized-info-field]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [license-attachment-link external-link readonly-checkbox document-title]]
             [rems.common.util :refer [andstr]]
@@ -41,36 +41,39 @@
    [collapsible/component
     {:id "license"
      :title [:span (andstr (get-in license [:organization :organization/short-name language]) "/") (get-localized-title license language)]
-     :always (into [:div#license
-                    [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name language])]]
-                   (concat
-                    (for [[langcode localization] (:localizations license)]
-                      [inline-info-field (str (text :t.administration/title)
-                                              " (" (str/upper-case (name langcode)) ")")
-                       (:title localization)])
-                    [[inline-info-field (text :t.administration/type) (:licensetype license)]]
-                    (when (= "link" (:licensetype license))
-                      (for [[langcode localization] (:localizations license)]
-                        (when (:textcontent localization)
-                          [inline-info-field
-                           (str (text :t.create-license/external-link)
-                                " (" (str/upper-case (name langcode)) ")")
-                           [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]])))
-                    (when (= "text" (:licensetype license))
-                      (for [[langcode localization] (:localizations license)]
-                        (when (:textcontent localization)
-                          [inline-info-field (str (text :t.create-license/license-text)
-                                                  " (" (str/upper-case (name langcode)) ")")
-                           (:textcontent localization)])))
-                    (when (= "attachment" (:licensetype license))
-                      (for [[langcode localization] (:localizations license)]
-                        (when (:attachment-id localization)
-                          [inline-info-field
-                           (str (text :t.create-license/license-attachment)
-                                " (" (str/upper-case (name langcode)) ")")
-                           [license-attachment-link (:attachment-id localization) (:title localization)]
-                           {:box? false}])))
-                    [[inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? license)}]]]))}]
+     :always [:div#license
+              [inline-info-field (text :t.administration/organization) (get-in license [:organization :organization/name language])]
+              [localized-info-field license {:localizations-key :title
+                                             :label (text :t.administration/title)}]
+              [inline-info-field (text :t.administration/type) (:licensetype license)]
+              (case (:licensetype license)
+                "link"
+                (into [:<>]
+                      (for [langcode @(rf/subscribe [:languages])
+                            :let [textcontent (get-in license [:localizations langcode :textcontent])]]
+                        [inline-info-field
+                         (str (text :t.create-license/external-link)
+                              " (" (str/upper-case (name langcode)) ")")
+                         [:a {:target :_blank :href textcontent}
+                          textcontent " " [external-link]]]))
+                "text"
+                [localized-info-field license {:localizations-key :textcontent
+                                               :label (text :t.create-license/license-text)}]
+                "attachment"
+                (into [:<>]
+                      (for [langcode @(rf/subscribe [:languages])
+                            :let [attachment-id (get-in license [:localizations langcode :attachment-id])
+                                  title (get-in license [:localizations langcode :title])]]
+                        [inline-info-field
+                         (str (text :t.create-license/license-attachment)
+                              " (" (str/upper-case (name langcode)) ")")
+                         (when (some? attachment-id)
+                           [license-attachment-link attachment-id title])
+                         {:box? false}]))
+                nil)
+              [inline-info-field (text :t.administration/active)
+               [readonly-checkbox {:value (status-flags/active? license)}]]]}]
+
    (let [id (:id license)]
      [:div.col.commands
       [administration/back-button "/administration/licenses"]
