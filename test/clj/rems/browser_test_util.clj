@@ -321,6 +321,7 @@
 (def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
 (def has-class? (wrap-etaoin et/has-class?))
+(def has-class-el? (wrap-etaoin et/has-class-el?))
 (def disabled? (wrap-etaoin et/disabled?))
 (def clear (wrap-etaoin et/clear))
 (def clear-el (wrap-etaoin et/clear-el))

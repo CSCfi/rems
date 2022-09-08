@@ -127,7 +127,7 @@
                    :license-field "Licens \"%1\""
                    :licenses "Licenser"
                    :manage-categories "Administrera kategorier"
-                   :more-info "Webbadress för tilläggsinformation (valfritt)"
+                   :more-info "Webbadress för tilläggsinformation"
                    :name "Namn"
                    :no-categories "Inga kategorier"
                    :no-form "Ingen blankett"
