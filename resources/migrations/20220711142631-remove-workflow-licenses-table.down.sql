@@ -1,4 +1,4 @@
-CREATE TABLE workflow_licenses (
+CREATE TABLE if not exists workflow_licenses (
   id serial NOT NULL PRIMARY KEY,
   wfId integer DEFAULT NULL,
   licId integer DEFAULT NULL,
