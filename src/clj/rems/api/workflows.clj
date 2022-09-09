@@ -22,8 +22,7 @@
    (s/optional-key :organization) schema-base/OrganizationId
    ;; type can't change
    (s/optional-key :title) s/Str
-   (s/optional-key :handlers) [schema-base/UserId]
-   (s/optional-key :licenses) [schema-base/LicenseId]})
+   (s/optional-key :handlers) [schema-base/UserId]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

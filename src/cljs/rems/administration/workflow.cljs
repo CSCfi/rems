@@ -63,19 +63,19 @@
                                                                          (str/join ", "))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
               [inline-info-field (text :t.administration/forms)
-               (into [:ul.list-group]
-                     (for [form (get-in workflow [:workflow :forms])
-                           :let [uri (str "/administration/forms/" (:form/id form))
-                                 title (:form/internal-name form)]]
-                       [:li.list-group-item [atoms/link nil uri title]]))
-               {:box? false}]
+               (->> (for [form (get-in workflow [:workflow :forms])
+                          :let [uri (str "/administration/forms/" (:form/id form))
+                                title (:form/internal-name form)]]
+                      [atoms/link nil uri title])
+                    (interpose ", ")
+                    (into [:<>]))]
               [inline-info-field (text :t.administration/licenses)
-               (into [:ul.list-group]
-                     (for [license (get-in workflow [:workflow :licenses])
-                           :let [uri (str "/administration/licenses/" (:license/id license))
-                                 title (:title (localized (:localizations license)))]]
-                       [:li.list-group-item [atoms/link nil uri title]]))
-               {:box? false}]]}]
+               (->> (for [license (get-in workflow [:workflow :licenses])
+                          :let [uri (str "/administration/licenses/" (:license/id license))
+                                title (:title (localized (:localizations license)))]]
+                      [atoms/link nil uri title])
+                    (interpose ", ")
+                    (into [:<>]))]]}]
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]

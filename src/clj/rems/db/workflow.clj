@@ -56,11 +56,10 @@
       (update-existing-in [:workflow :handlers] #(map :userid %))
       (update-existing-in [:workflow :licenses] #(map :license/id %))))
 
-(defn edit-workflow! [{:keys [id organization title handlers licenses]}]
+(defn edit-workflow! [{:keys [id organization title handlers]}]
   (let [workflow (unrich-workflow (get-workflow id))
         workflow-body (cond-> (:workflow workflow)
-                        handlers (assoc :handlers handlers)
-                        licenses (assoc :licenses licenses))]
+                        handlers (assoc :handlers handlers))]
     (db/edit-workflow! {:id (or id (:id workflow))
                         :title (or title (:title workflow))
                         :organization (or (:organization/id organization)

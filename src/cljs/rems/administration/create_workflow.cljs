@@ -93,9 +93,7 @@
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :id id
                  :title (:title form)
-                 :handlers (map :userid (:handlers form))
-                 :licenses (->> (:licenses form)
-                                (map #(keep-keys {:id :license/id} %)))}]
+                 :handlers (map :userid (:handlers form))}]
     (when (valid-edit-request? request)
       request)))
 

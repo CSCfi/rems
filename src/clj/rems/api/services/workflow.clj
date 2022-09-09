@@ -37,13 +37,12 @@
         {:success (not (nil? id))
          :id id})))
 
-(defn edit-workflow! [{:keys [id organization handlers licenses] :as cmd}]
+(defn edit-workflow! [{:keys [id organization handlers] :as cmd}]
   (let [workflow (workflow/get-workflow id)]
     (util/check-allowed-organization! (:organization workflow))
     (when organization
       (util/check-allowed-organization! organization))
     (or (invalid-users-error handlers)
-        (invalid-licenses-error licenses)
         (do
           (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
           (applications/reload-cache!)
