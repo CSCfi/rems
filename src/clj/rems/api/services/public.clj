@@ -27,7 +27,8 @@
                     :enable-catalogue-table
                     :enable-catalogue-tree
                     :catalogue-tree-show-matching-parents
-                    :enable-cart]))
+                    :enable-cart
+                    :application-list-hidden-columns]))
 
 (defn get-config-full []
   (assoc env

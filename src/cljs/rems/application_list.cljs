@@ -171,7 +171,8 @@
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
         id-column (get config :application-id-column :id)]
-    {:visible-columns #{id-column :description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view}
+    {:visible-columns (set/difference #{id-column :description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view}
+                                      (set (get config :application-list-hidden-columns)))
      :default-sort-column :created
      :default-sort-order :desc}))
 

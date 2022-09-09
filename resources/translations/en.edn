@@ -130,7 +130,7 @@
                    :license-field "License \"%1\""
                    :licenses "Licenses"
                    :manage-categories "Manage categories"
-                   :more-info "More info URL (optional)"
+                   :more-info "More info URL"
                    :name "Name"
                    :no-categories "No categories"
                    :no-form "No form"

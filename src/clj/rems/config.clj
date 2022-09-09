@@ -51,8 +51,14 @@
            :email-retry-period "P20d"
            :disable-commands ["application.command/close" "application.command/reject"]}))))
 
-(def known-config-keys
+(defn known-config-keys []
   (set (keys (load-config :resource "config-defaults.edn"))))
+
+(defn env-config-keys []
+  (set (keys (source/from-env))))
+
+(defn system-properties-keys []
+  (set (keys (source/from-system-props))))
 
 ;; if we start doing more thorough validation, could use a schema instead
 (defn- validate-config [config]
@@ -74,8 +80,11 @@
                 ":"
                 (pr-str invalid-events))
       (log/warn "Supported event types:" (pr-str events/event-types))))
-  (when-let [invalid-keys (seq (remove known-config-keys (keys config)))]
-    (log/warn "Unrecognized config keys: " (pr-str invalid-keys)))
+  (when-let [unrecognized-keys (seq (->> (keys config)
+                                         (remove (known-config-keys))
+                                         (remove (system-properties-keys)) ; don't complain about system properties
+                                         (remove (env-config-keys))))] ; don't complain about environment
+    (log/warn "Unrecognized config keys: " (pr-str unrecognized-keys)))
   config)
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"
