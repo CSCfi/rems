@@ -395,4 +395,8 @@
 
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
 
- :enable-save-compaction nil} ; whether to merge consecutive saves into one event (EXPERIMENTAL)
+ :enable-save-compaction nil ; whether to merge consecutive saves into one event (EXPERIMENTAL)
+
+ ; which columns in applications list(s) should be hidden in UI
+ ; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
+ :application-list-hidden-columns []} 
