@@ -76,8 +76,7 @@
                   :title (trim-when-string (:title form))
                   :type (:type form)
                   :forms (mapv #(select-keys % [:form/id]) (:forms form))
-                  :licenses (->> (:licenses form)
-                                 (mapv #(keep-keys {:id :license/id} %)))}
+                  :licenses (vec (keep-keys {:id :license/id} (:licenses form)))}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)

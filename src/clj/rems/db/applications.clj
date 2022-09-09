@@ -58,7 +58,7 @@
                               workflow/get-workflow
                               (get-in [:workflow :licenses]))]
     (->> (licenses/get-licenses {:items [catalogue-item-id]})
-         (map #(keep-keys {:id :license/id} %))
+         (keep-keys {:id :license/id})
          (into workflow-licenses)
          (distinct-by :license/id))))
 
