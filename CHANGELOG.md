@@ -6,6 +6,9 @@ have notable changes.
 
 ## Unreleased
 
+### Additions
+- Mondo codes have been updated to version v2022-08-01. (#3031)
+
 Changes since v2.28
 
 ## v2.28 "Porkkalankatu" 2022-08-24
