@@ -39,7 +39,7 @@
   (mount/start #'rems.application.search/search-index)
   (f))
 
-(defn caches-fixture [f]
+(defn reset-caches-fixture [f]
   (try
     (mount/start #'applications/all-applications-cache)
     (f)

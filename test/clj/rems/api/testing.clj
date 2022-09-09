@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
-            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture reset-caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [rems.locales]
             [rems.middleware]
@@ -37,7 +37,7 @@
                   rollback-db-fixture
                   handler-fixture
                   search-index-fixture
-                  caches-fixture]))
+                  reset-caches-fixture]))
 
 (defn authenticate [request api-key user-id]
   (cond-> request

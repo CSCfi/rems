@@ -2,13 +2,13 @@
   (:require [clojure.test :refer :all]
             [rems.api.services.workflow :as workflow]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
 
 (use-fixtures
   :once
   test-db-fixture
-  caches-fixture)
+  reset-caches-fixture)
 
 (use-fixtures :each rollback-db-fixture)
 
