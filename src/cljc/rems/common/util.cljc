@@ -1,5 +1,5 @@
 (ns rems.common.util
-  (:require [medley.core :refer [map-vals]]
+  (:require [medley.core :refer [map-keys map-vals remove-keys]]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
@@ -382,14 +382,6 @@
                         {:id 4 :unrelated "is destroyed in a cycle"}
                         {:id 5 :unrelated "survives"}])))))
 
-(defn distinct-by
-  "Remove duplicates from sequence, comparing the value returned by key-fn.
-   The first element that key-fn returns a given value for is retained.
-
-   Order of sequence is not preserved in any way."
-  [key-fn sequence]
-  (map first (vals (group-by key-fn sequence))))
-
 (defn andstr
   "Like `apply str coll` but only produces something if all the
   values are truthy like with `and`.
@@ -545,7 +537,10 @@
   (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
   (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
 
-(defn assoc-some-in [m ks v]
+(defn assoc-some-in
+  "Like `clojure.core/assoc-in`, but only associates value `v` in key path
+   `ks` of associate collection `m` when `(true? (some? v)))`."
+  [m ks v]
   (if (some? v)
     (assoc-in m ks v)
     m))
@@ -594,7 +589,10 @@
   (is (= {:a 1 :b true} (update-present {:a 1 :b nil} :b (constantly true)))))
 
 ;; https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id
-(defn escape-element-id [id]
+(defn escape-element-id
+  "Replaces non-conforming characters from string `id` for the purpose
+   of creating an identifier suitable for HTML element id."
+  [id]
   (when (string? id)
     (-> id
         (str/replace #"[^A-Za-z0-9\-\_]" "_") ; "only ASCII letters, digits, '_', and '-' should be used,"
@@ -608,3 +606,17 @@
     (is (= "id_123-element" (escape-element-id "123-element")))
     (is (= "id__123-element" (escape-element-id " 123-element")))))
 
+(defn keep-keys
+  "Takes a sequence of associative collections and maps function `f`
+   over keys of each, returning a new associative collection with
+   non-nil keys. Useful for renaming and selecting only a subset of
+   associative collection keys."
+  [f coll]
+  (->> coll
+       (map (partial map-keys f))
+       (map (partial remove-keys nil?))))
+
+(deftest test-keep-keys
+  (is (= [] (keep-keys {} [])))
+  (is (= [{:b 1}] (keep-keys {:a :b} [{:a 1}])))
+  (is (= [{:b 1} {:c 2}] (keep-keys {:a :b :b :c} [{:a 1} {:b 2}]))))

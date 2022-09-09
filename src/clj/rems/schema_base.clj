@@ -114,3 +114,6 @@
   (merge Category
          {(s/optional-key :category/children) [Category]}))
 
+(s/defschema LicenseId
+  {:license/id s/Int})
+

@@ -8,9 +8,12 @@
                 :title "workflow title"
                 :type :workflow/default
                 :forms [{:form/id 123}]
-                :handlers ["bob"]}]
+                :handlers ["bob"]
+                :licenses [{:id 1}]}]
       (is (not (nil? (build-create-request form))))
-      (is (not (nil? (build-create-request (dissoc form :forms)))))
+      (is (not (nil? (build-create-request (dissoc form :forms :licenses)))))
+      (is (= {:licenses [{:license/id 1}]}
+             (select-keys (build-create-request form) [:licenses])))
       (testing "missing organization"
         (is (nil? (build-create-request (assoc form :organization nil)))))
       (testing "missing title"
@@ -31,7 +34,8 @@
                 :title "workflow title"
                 :type :workflow/default
                 :forms [{:form/id 13}]
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -47,7 +51,8 @@
                 :title "workflow title"
                 :type :workflow/decider
                 :forms [{:form/id 13}]
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -62,14 +67,21 @@
                 :title "workflow title"
                 :type :workflow/master
                 :forms []
-                :handlers ["bob" "carl"]}
+                :handlers ["bob" "carl"]
+                :licenses []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test
-  (is (= {:id 3 :organization {:organization/id "o"} :title "t" :handlers ["a" "b"]}
-         (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (= {:id 3
+          :organization {:organization/id "o"}
+          :title "t"
+          :handlers ["a" "b"]}
+         (build-edit-request 3 {:organization {:organization/id "o"}
+                                :title "t"
+                                :handlers [{:userid "a"} {:userid "b"}]
+                                :licenses [{:id 1}]}))) ; licenses should not be mapped
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "" :handlers [{:userid "a"} {:userid "b"}]})))

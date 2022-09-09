@@ -1,13 +1,15 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
             [rems.api.services.licenses :as licenses]
-            [rems.api.services.workflow :as workflow]
+            [rems.api.services.workflow :as workflows]
             [rems.api.testing :refer :all]
+            [rems.common.util :refer [replace-key]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
+            [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
             [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
@@ -25,7 +27,8 @@
    :workflow {:type "workflow/default"
               :forms []
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
-                         {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
+                         {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]
+              :licenses []}
    :enabled true
    :archived false})
 
@@ -126,12 +129,14 @@
 (deftest workflows-enabled-archived-test
   (create-handlers!)
   (let [user-id "owner"
+        lic-id (test-helpers/create-license! {:organization {:organization/id "organization1"}})
+        lic (-> (licenses/get-license lic-id)
+                (replace-key :id :license/id))
         wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
                                              :title "workflow title"
                                              :type :workflow/default
-                                             :handlers ["handler" "carl"]})
-        lic-id (test-helpers/create-license! {:organization {:organization/id "organization1"}})
-        _ (db/create-workflow-license! {:wfid wfid :licid lic-id :organization "organization1"})
+                                             :handlers ["handler" "carl"]
+                                             :licenses [lic-id]})
 
         fetch #(fetch +test-api-key+ user-id wfid)
         archive-license! #(with-user user-id
@@ -146,23 +151,28 @@
                                   :archived %1}
                                  +test-api-key+ %2)]
     (testing "before changes"
-      (is (= expected (fetch))))
+      (is (= (-> expected
+                 (assoc-in [:workflow :licenses] [lic]))
+             (fetch))))
     (testing "as owner"
       (testing "disable and archive"
         (is (:success (set-enabled! false user-id)))
         (is (:success (set-archived! true user-id)))
-        (is (= (assoc expected
-                      :enabled false
-                      :archived true)
+        (is (= (-> expected
+                   (assoc :enabled false
+                          :archived true)
+                   (assoc-in [:workflow :licenses] [lic]))
                (fetch))))
       (testing "re-enable"
         (is (:success (set-enabled! true user-id)))
-        (is (= (assoc expected
-                      :archived true)
+        (is (= (-> expected
+                   (assoc :archived true)
+                   (assoc-in [:workflow :licenses] [lic]))
                (fetch))))
       (testing "unarchive"
         (is (:success (set-archived! false user-id)))
-        (is (= expected
+        (is (= (-> expected
+                   (assoc-in [:workflow :licenses] [lic]))
                (fetch))))
       (testing "cannot unarchive if license is archived"
         (set-archived! true user-id)
@@ -173,9 +183,10 @@
     (testing "as organization-owner"
       (is (:success (set-enabled! false "organization-owner1")))
       (is (:success (set-archived! true "organization-owner1")))
-      (is (= (assoc expected
-                    :enabled false
-                    :archived true)
+      (is (= (-> expected
+                 (assoc :enabled false
+                        :archived true)
+                 (assoc-in [:workflow :licenses] [lic]))
              (fetch))))
     (testing "as owner of different organization"
       (is (response-is-forbidden? (api-response :put "/api/workflows/enabled"
@@ -242,7 +253,8 @@
                                            :nickname "In Wonderland"
                                            :userid "alice"
                                            :organizations [{:organization/id "default"}]
-                                           :researcher-status-by "so"}]})
+                                           :researcher-status-by "so"}]
+                               :licenses []})
              (fetch +test-api-key+ user-id wfid))))
 
     (testing "edit as organization-owner"
@@ -267,8 +279,8 @@
   (let [enabled-wf (test-helpers/create-workflow! {})
         disabled-wf (test-helpers/create-workflow! {})
         _ (with-user "owner"
-            (workflow/set-workflow-enabled! {:id disabled-wf
-                                             :enabled false}))
+            (workflows/set-workflow-enabled! {:id disabled-wf
+                                              :enabled false}))
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})
                                                    (authenticate +test-api-key+ "owner")
                                                    handler

@@ -35,7 +35,7 @@
     (-> item
         organizations/join-organization
         (update :categories category/enrich-categories)
-         ;; not used at the moment
+        ;; XXX: not used at the moment
         #_licenses/join-catalogue-item-licenses
         #_(transform [:licenses ALL] organizations/join-organization))))
 

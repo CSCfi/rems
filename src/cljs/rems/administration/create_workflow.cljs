@@ -7,28 +7,29 @@
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
+            [rems.common.util :refer [keep-keys replace-key]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
   (find-first #(= (id-key %) id) items))
 
-(rf/reg-event-fx
- ::enter-page
- (fn [{:keys [db]} [_ workflow-id]]
-   {:db (assoc db
-               ::workflow-id workflow-id
-               ::actors nil
-               ::editing? (some? workflow-id)
-               ::form {:type :workflow/default})
-    :dispatch-n [[::actors]
-                 [::forms {:disabled true :archived true}]
-                 (when workflow-id [::workflow])]}))
+(rf/reg-event-fx ::enter-page
+                 (fn [{:keys [db]} [_ workflow-id]]
+                   {:db (assoc db
+                               ::workflow-id workflow-id
+                               ::actors nil
+                               ::editing? (some? workflow-id)
+                               ::form {:type :workflow/default})
+                    :dispatch-n [[::actors]
+                                 [::forms {:disabled true :archived true}]
+                                 [::licenses]
+                                 (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
@@ -37,16 +38,18 @@
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
 
-(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
+(rf/reg-event-db ::set-form-field
+                 (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db
- ::fetch-workflow-success
- (fn [db [_ {:keys [title organization workflow]}]]
-   (update db ::form merge {:title title
-                            :organization organization
-                            :type (:type workflow)
-                            :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
-                            :handlers (get workflow :handlers)})))
+(rf/reg-event-db ::fetch-workflow-success
+                 (fn [db [_ {:keys [title organization workflow]}]]
+                   (update db ::form merge {:title title
+                                            :organization organization
+                                            :type (:type workflow)
+                                            :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
+                                            :handlers (get workflow :handlers)
+                                            :licenses (->> (:licenses workflow)
+                                                           (map #(replace-key % :license/id :id)))})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -72,7 +75,8 @@
                  {:organization {:organization/id (get-in form [:organization :organization/id])}
                   :title (trim-when-string (:title form))
                   :type (:type form)
-                  :forms (mapv #(select-keys % [:form/id]) (:forms form))}
+                  :forms (mapv #(select-keys % [:form/id]) (:forms form))
+                  :licenses (vec (keep-keys {:id :license/id} (:licenses form)))}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -92,27 +96,25 @@
     (when (valid-edit-request? request)
       request)))
 
-(rf/reg-event-fx
- ::create-workflow
- (fn [_ [_ request]]
-   (let [description [text :t.administration/create-workflow]]
-     (post! "/api/workflows/create"
-            {:params request
-             :handler (flash-message/default-success-handler
-                       :top description #(navigate! (str "/administration/workflows/" (:id %))))
-             :error-handler (flash-message/default-error-handler :top description)}))
-   {}))
+(rf/reg-event-fx ::create-workflow
+                 (fn [_ [_ request]]
+                   (let [description [text :t.administration/create-workflow]]
+                     (post! "/api/workflows/create"
+                            {:params request
+                             :handler (flash-message/default-success-handler
+                                       :top description #(navigate! (str "/administration/workflows/" (:id %))))
+                             :error-handler (flash-message/default-error-handler :top description)}))
+                   {}))
 
-(rf/reg-event-fx
- ::edit-workflow
- (fn [_ [_ request]]
-   (let [description [text :t.administration/edit-workflow]]
-     (put! "/api/workflows/edit"
-           {:params request
-            :handler (flash-message/default-success-handler
-                      :top description #(navigate! (str "/administration/workflows/" (:id request))))
-            :error-handler (flash-message/default-error-handler :top description)}))
-   {}))
+(rf/reg-event-fx ::edit-workflow
+                 (fn [_ [_ request]]
+                   (let [description [text :t.administration/edit-workflow]]
+                     (put! "/api/workflows/edit"
+                           {:params request
+                            :handler (flash-message/default-success-handler
+                                      :top description #(navigate! (str "/administration/workflows/" (:id request))))
+                            :error-handler (flash-message/default-error-handler :top description)}))
+                   {}))
 
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
 
@@ -121,6 +123,12 @@
 (rf/reg-event-db ::set-forms (fn [db [_ form-ids]] (assoc-in db [::form :forms] form-ids)))
 
 (fetcher/reg-fetcher ::forms "/api/forms")
+
+(rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
+(rf/reg-event-db ::set-licenses (fn [db [_ licenses]]
+                                  (->> (sort-by :id licenses)
+                                       (assoc-in db [::form :licenses]))))
+(fetcher/reg-fetcher ::licenses "/api/licenses")
 
 ;;;; UI
 
@@ -136,6 +144,35 @@
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
                        :label (text :t.create-workflow/title)}])
+
+(def ^:private licenses-dropdown-id "licenses-dropdown")
+
+(defn- workflow-licenses-field []
+  (let [licenses @(rf/subscribe [::licenses])
+        selected-licenses @(rf/subscribe [::selected-licenses])
+        editing? @(rf/subscribe [::editing?])]
+    [:div.form-group
+     [:label.administration-field-label {:for licenses-dropdown-id}
+      (text :t.create-resource/licenses-selection)]
+     (if editing?
+       [fields/readonly-field-raw
+        {:id "workflow-licenses"
+         :values (for [license selected-licenses
+                       :let [uri (str "/administration/licenses/" (:license/id license))
+                             title (:title (localized (:localizations license)))]]
+                   [atoms/link nil uri title])}]
+       [dropdown/dropdown
+        {:id licenses-dropdown-id
+         :items licenses
+         :item-key :id
+         :item-label (fn [license]
+                       (let [title (:title (localized (:localizations license)))
+                             organization (localized (get-in license [:organization
+                                                                      :organization/short-name]))]
+                         (str title " (org: " organization ")"))) ; XXX: workaround for get-localized-title
+         :item-selected? #(contains? (set selected-licenses) %)
+         :multi? true
+         :on-change #(rf/dispatch [::set-licenses %])}])]))
 
 (defn- workflow-type-field []
   [radio-button-group context {:id :workflow-type
@@ -256,12 +293,14 @@
                  [:div#workflow-editor.fields
                   [workflow-organization-field]
                   [workflow-title-field]
-                  [workflow-type-field]
 
+                  [workflow-type-field]
                   (case workflow-type
                     :workflow/default [default-workflow-form]
                     :workflow/decider [decider-workflow-form]
                     :workflow/master [master-workflow-form])
+
+                  [workflow-licenses-field]
 
                   [:div.col.commands
                    [cancel-button]

@@ -116,9 +116,6 @@
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
-(defn create-workflow-licence! [wfid licid]
-  (db/create-workflow-license! {:wfid wfid :licid licid}))
-
 (defn create-form! [{:keys [actor organization]
                      :form/keys [internal-name external-title fields]
                      :as command}]
@@ -146,7 +143,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-workflow! [{:keys [actor organization title type handlers forms]
+(defn create-workflow! [{:keys [actor organization title type handlers forms licenses]
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
@@ -157,7 +154,8 @@
                    :forms forms
                    :handlers (or handlers
                                  (do (create-user! (get +fake-user-data+ "developer"))
-                                     ["developer"]))}))]
+                                     ["developer"]))
+                   :licenses (mapv (fn [id] {:license/id id}) licenses)}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

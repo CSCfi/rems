@@ -958,7 +958,8 @@
                 "Type" "Master workflow"
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
-                "Forms" ""}
+                "Forms" ""
+                "Licenses" ""}
                (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
@@ -1264,6 +1265,7 @@
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
               "Forms" ""
+              "Licenses" ""
               "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
@@ -2284,6 +2286,7 @@
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
+      (select-option "Licenses" "General Terms of Use")
       (btu/screenshot "test-workflow-create-edit-1.png")
       (btu/scroll-and-click :save))
     (testing "view workflow"
@@ -2296,6 +2299,7 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
+              "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow))))
     (testing "edit workflow"
@@ -2309,6 +2313,7 @@
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
+      (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
       (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
@@ -2321,6 +2326,7 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"
+              "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))

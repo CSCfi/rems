@@ -222,8 +222,8 @@
        :organization {:organization/id "org" :organization/name {:fi "Organisaatio" :en "Organization"} :organization/short-name {:fi "ORG" :en "ORG"}}
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
-                  :handlers [(get-user "handler")]}
-       :licenses nil
+                  :handlers [(get-user "handler")]
+                  :licenses []}
        :enabled true
        :archived false}})
 

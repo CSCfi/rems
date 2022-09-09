@@ -15,10 +15,15 @@ have notable changes.
 
 Changes since v2.28
 
+**NB: This release contains migrations!**
+**NB: `workflow_licenses` table has been removed and the data is migrated to `workflow` table.**
+
+### Additions
+- Licenses can now be added to workflows through user interface and API. Workflow licenses are included in applications, similar to resource licenses. (#2158)
+
 ## v2.28 "Porkkalankatu" 2022-08-24
 
 **NB: This release contains migrations!**
-
 **NB: One of the migrations fixes organizations, that could be broken by previous features.**
 
 ### Additions

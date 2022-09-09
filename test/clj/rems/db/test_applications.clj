@@ -57,18 +57,17 @@
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :id (applications/get-catalogue-item-licenses cat-id))))))
+               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))
 
     (testing "workflow licenses"
       (let [lic-id (test-helpers/create-license! {})
-            wf-id (test-helpers/create-workflow! {})
-            _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
+            wf-id (test-helpers/create-workflow! {:licenses [lic-id]})
             res-id (test-helpers/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
             cat-id (test-helpers/create-catalogue-item! {:resource-id res-id
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :id (applications/get-catalogue-item-licenses cat-id))))))))
+               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))))
 
 (deftest test-application-external-id!
   (let [application-external-id! @#'applications/application-external-id!]

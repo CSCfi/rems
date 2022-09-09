@@ -25,7 +25,9 @@
         cat-form (test-helpers/create-form! {})
         unused-form (test-helpers/create-form! {})
         wf-1 (test-helpers/create-workflow! {:forms [{:form/id shared-form}]})
-        wf-2 (test-helpers/create-workflow! {:forms [{:form/id wf-form} {:form/id shared-form}]})
+        wf-2 (test-helpers/create-workflow! {:forms [{:form/id wf-form}
+                                                     {:form/id shared-form}]
+                                             :licenses [shared-license]})
         category-1 (test-helpers/create-category! {:category/title {:fi "Testikategoria"
                                                                     :en "Test category"
                                                                     :sv "Test kategori"}
@@ -43,8 +45,6 @@
         cat-2 (test-helpers/create-catalogue-item! {:resource-id res-1
                                                     :form-id shared-form
                                                     :workflow-id wf-2})]
-    ;; TODO no public way to set workflow licenses for now
-    (db/create-workflow-license! {:wfid wf-2 :licid shared-license})
 
     (testing "dependencies"
       (is (= {:dependencies

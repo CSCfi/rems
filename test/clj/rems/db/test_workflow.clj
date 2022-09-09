@@ -22,16 +22,17 @@
                                          :type :workflow/default
                                          :title "test-crud-workflow-title"
                                          :handlers ["bob" "handler"]
-                                         :forms []})]
+                                         :forms []
+                                         :licenses []})]
       (is (number? id))
       (is (= {:archived false
-              :licenses []
               :organization {:organization/id "abc"}
               :title "test-crud-workflow-title"
               :workflow {:type :workflow/default
                          :handlers [{:userid "bob" :name nil :email nil}
                                     {:userid "handler" :name nil :email nil}]
-                         :forms []}
+                         :forms []
+                         :licenses []}
               :id id
               :enabled true}
              (workflow/get-workflow id)))
@@ -40,14 +41,14 @@
         (workflow/edit-workflow! {:id id
                                   :handlers ["bob" "handler" "alice"]})
         (is (= {:archived false
-                :licenses []
                 :organization {:organization/id "abc"}
                 :title "test-crud-workflow-title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "bob" :name nil :email nil}
                                       {:userid "handler" :name nil :email nil}
                                       {:userid "alice" :name nil :email nil}]
-                           :forms []}
+                           :forms []
+                           :licenses []}
                 :id id
                 :enabled true}
                (workflow/get-workflow id)))))))

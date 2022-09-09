@@ -1,6 +1,6 @@
 (ns rems.db.licenses
   "querying localized licenses"
-  (:require [rems.common.util :refer [distinct-by]]
+  (:require [medley.core :refer [distinct-by]]
             [rems.db.core :as db]))
 
 (defn- format-license [license]
@@ -55,7 +55,6 @@
 
 (defn get-licenses
   "Get licenses. Params map can contain:
-     :wfid -- workflow to get workflow licenses for
      :items -- sequence of catalogue items to get resource licenses for"
   [params]
   (->> (db/get-licenses params)
@@ -67,7 +66,13 @@
   (assoc x :licenses (get-resource-licenses (:id x))))
 
 (defn join-catalogue-item-licenses [item]
-  (assoc item
-         :licenses
-         (get-licenses {:wfid (:wfid item)
-                        :items [(:id item)]})))
+  (assoc item :licenses (get-licenses {:items [(:id item)]})))
+
+(defn join-license [{:keys [license/id] :as x}]
+  (-> (get-license id)
+      (dissoc :id)
+      (merge x)))
+
+(defn license-exists? [id]
+  (some? (db/get-license {:id id})))
+

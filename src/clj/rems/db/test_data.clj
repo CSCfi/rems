@@ -13,6 +13,7 @@
             [rems.db.users :as users]
             [rems.db.test-data-helpers :refer :all]
             [rems.db.test-data-users :refer :all]
+            [rems.db.workflow :as workflow]
             [rems.testing-util :refer [with-user]]
             [rems.config])
   (:import [java.util UUID]
@@ -234,75 +235,74 @@
         owner (users :owner)
         organization-owner1 (users :organization-owner1)
         handlers [approver1 approver2 rejecter-bot]
+        link (create-license! {:actor owner
+                               :license/type :link
+                               :organization {:organization/id "nbn"}
+                               :license/title {:en "CC Attribution 4.0"
+                                               :fi "CC Nimeä 4.0"
+                                               :sv "CC Erkännande 4.0"}
+                               :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                              :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                              :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        text (create-license! {:actor owner
+                               :license/type :text
+                               :organization {:organization/id "nbn"}
+                               :license/title {:en "General Terms of Use"
+                                               :fi "Yleiset käyttöehdot"
+                                               :sv "Allmänna villkor"}
+                               :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                              :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                              :sv (apply str (repeat 10 "Licens på svenska. "))}})
         default (create-workflow! {:actor owner
                                    :organization {:organization/id "nbn"}
                                    :title "Default workflow"
                                    :type :workflow/default
-                                   :handlers handlers})
+                                   :handlers handlers
+                                   :licenses [link text]})
         decider (create-workflow! {:actor owner
                                    :organization {:organization/id "nbn"}
                                    :title "Decider workflow"
                                    :type :workflow/decider
-                                   :handlers handlers})
+                                   :handlers handlers
+                                   :licenses [link text]})
         master (create-workflow! {:actor owner
                                   :organization {:organization/id "nbn"}
                                   :title "Master workflow"
                                   :type :workflow/master
-                                  :handlers handlers})
+                                  :handlers handlers
+                                  :licenses [link text]})
         auto-approve (create-workflow! {:actor owner
                                         :organization {:organization/id "nbn"}
                                         :title "Auto-approve workflow"
-                                        :handlers [approver-bot rejecter-bot]})
+                                        :handlers [approver-bot rejecter-bot]
+                                        :licenses [link text]})
         organization-owner (create-workflow! {:actor organization-owner1
                                               :organization {:organization/id "organization1"}
                                               :title "Owned by organization owner"
                                               :type :workflow/default
                                               :handlers handlers})
-        with-form (create-workflow! {:actor owner
-                                     :organization {:organization/id "nbn"}
-                                     :title "With workflow form"
-                                     :type :workflow/default
-                                     :handlers handlers
-                                     :forms [{:form/id (create-form! {:actor owner
-                                                                      :form/internal-name "Workflow form"
-                                                                      :form/external-title {:en "Workflow form"
-                                                                                            :fi "Työvuon lomake"
-                                                                                            :sv "Blankett för arbetsflöde"}
-                                                                      :organization {:organization/id "nbn"}
-                                                                      :form/fields [{:field/type :description
-                                                                                     :field/title {:fi "Kuvaus"
-                                                                                                   :en "Description"
-                                                                                                   :sv "Rubrik"}
-                                                                                     :field/optional false}]})}]})
+        _with-form (create-workflow! {:actor owner
+                                      :organization {:organization/id "nbn"}
+                                      :title "With workflow form"
+                                      :type :workflow/default
+                                      :handlers handlers
+                                      :licenses [link text]
+                                      :forms [{:form/id (create-form! {:actor owner
+                                                                       :form/internal-name "Workflow form"
+                                                                       :form/external-title {:en "Workflow form"
+                                                                                             :fi "Työvuon lomake"
+                                                                                             :sv "Blankett för arbetsflöde"}
+                                                                       :organization {:organization/id "nbn"}
+                                                                       :form/fields [{:field/type :description
+                                                                                      :field/title {:fi "Kuvaus"
+                                                                                                    :en "Description"
+                                                                                                    :sv "Rubrik"}
+                                                                                      :field/optional false}]})}]})
         ega (create-workflow! {:actor owner
                                :organization {:organization/id "csc"}
                                :title "EGA workflow, a variant of default"
                                :type :workflow/default
                                :handlers handlers})]
-
-    ;; attach both kinds of licenses to all workflows created by owner except EGA
-    (let [link (create-license! {:actor owner
-                                 :license/type :link
-                                 :organization {:organization/id "nbn"}
-                                 :license/title {:en "CC Attribution 4.0"
-                                                 :fi "CC Nimeä 4.0"
-                                                 :sv "CC Erkännande 4.0"}
-                                 :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                                :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
-          text (create-license! {:actor owner
-                                 :license/type :text
-                                 :organization {:organization/id "nbn"}
-                                 :license/title {:en "General Terms of Use"
-                                                 :fi "Yleiset käyttöehdot"
-                                                 :sv "Allmänna villkor"}
-                                 :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
-                                                :sv (apply str (repeat 10 "Licens på svenska. "))}})]
-      (doseq [licid [link text]]
-        (doseq [wfid [default decider master auto-approve with-form]]
-          (db/create-workflow-license! {:wfid wfid :licid licid}))))
-
     {:default default
      :ega ega
      :decider decider
@@ -744,8 +744,8 @@
                                                                         :more-info {:en "This DUO code is optional but recommended"}}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
-        _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
-                                        :licid license-organization-owner})
+        _ (workflow/edit-workflow! {:id (:organization-owner workflows)
+                                    :licenses [license-organization-owner]})
 
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"

@@ -46,8 +46,8 @@
                                     :form/internal-name "workflow form"
                                     :form/external-title {:en "Workflow Form EN"
                                                           :fi "Workflow Form FI"
-                                                          :sv "Workflow Form SV"}}]}
-                :licenses []
+                                                          :sv "Workflow Form SV"}}]
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -63,8 +63,8 @@
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}
-                :licenses []
+                           :forms []
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))
@@ -80,8 +80,8 @@
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                       {:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}
-                :licenses []
+                           :forms []
+                           :licenses []}
                 :enabled true
                 :archived false}
                (workflow/get-workflow wf-id)))))))
@@ -92,19 +92,24 @@
   (with-user "owner"
     (test-helpers/create-organization! {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}})
     (testing "change title"
-      (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
+      (let [licid (test-helpers/create-license! {:organization {:organization/id "abc"}})
+            wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
                                                   :type :workflow/master
                                                   :title "original title"
-                                                  :handlers ["user1"]})]
+                                                  :handlers ["user1"]
+                                                  :licenses [licid]})]
         (workflow/edit-workflow! {:id wf-id
                                   :title "changed title"})
         (is (= {:id wf-id
                 :title "changed title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
-                           :forms []}}
+                           :forms []
+                           :licenses [{:license/id licid}]}}
                (-> (workflow/get-workflow wf-id)
-                   (select-keys [:id :title :workflow]))))))
+                   (select-keys [:id :title :workflow])
+                   (update-in [:workflow :licenses]
+                              (partial map #(select-keys % [:license/id]))))))))
 
     (testing "change handlers"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
@@ -117,7 +122,8 @@
                 :title "original title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]
-                           :forms []}}
+                           :forms []
+                           :licenses []}}
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))))
 

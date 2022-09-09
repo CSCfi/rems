@@ -14,8 +14,7 @@
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflows]
+            [rems.db.workflow :as workflow]
             [rems.layout :refer [error-page]]
             [rems.logging :refer [with-mdc]]
             [rems.middleware.dev :refer [wrap-dev]]
@@ -71,7 +70,7 @@
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
                                             (organizations/get-all-organization-roles (getx-user-id))
-                                            (workflows/get-all-workflow-roles (getx-user-id))
+                                            (workflow/get-all-workflow-roles (getx-user-id))
                                             (applications/get-all-application-roles (getx-user-id))))
                                (when (:uses-valid-api-key? request)
                                  #{:api-key}))]
