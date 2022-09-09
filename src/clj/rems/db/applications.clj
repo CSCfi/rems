@@ -54,8 +54,7 @@
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
   (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
-        workflow-licenses (-> (:wfid item)
-                              workflow/get-workflow
+        workflow-licenses (-> (workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
     (->> (licenses/get-licenses {:items [catalogue-item-id]})
          (keep-keys {:id :license/id})

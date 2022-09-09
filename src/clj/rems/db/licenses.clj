@@ -1,6 +1,6 @@
 (ns rems.db.licenses
   "querying localized licenses"
-  (:require [rems.common.util :refer [distinct-by]]
+  (:require [medley.core :refer [distinct-by]]
             [rems.db.core :as db]))
 
 (defn- format-license [license]
