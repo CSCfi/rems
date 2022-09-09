@@ -2326,7 +2326,7 @@
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"
-              "Licenses" "CC Attribution 4.0"
+              "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
