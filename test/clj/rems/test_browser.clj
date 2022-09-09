@@ -2255,7 +2255,7 @@
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
-      (is (= "CC Attribution 4.0" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
+      (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
       (btu/screenshot "test-workflow-create-edit-4.png")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
