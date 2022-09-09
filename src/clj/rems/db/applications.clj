@@ -298,3 +298,7 @@
 (defn delete-application-and-reload-cache! [app-id]
   (delete-application! app-id)
   (reload-cache!))
+
+(defn reset-cache! []
+  (events-cache/empty! all-applications-cache))
+
