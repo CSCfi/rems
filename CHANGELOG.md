@@ -8,6 +8,7 @@ have notable changes.
 
 ### Additions
 - Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
+- Mondo codes have been updated to version v2022-08-01. (#3031)
 
 ### Fixes
 - License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
