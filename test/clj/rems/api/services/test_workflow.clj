@@ -95,7 +95,8 @@
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
                                                   :type :workflow/master
                                                   :title "original title"
-                                                  :handlers ["user1"]})]
+                                                  :handlers ["user1"]
+                                                  :licenses [1]})]
         (workflow/edit-workflow! {:id wf-id
                                   :title "changed title"})
         (is (= {:id wf-id
@@ -103,7 +104,7 @@
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
                            :forms []
-                           :licenses []}}
+                           :licenses [{:license/id 1}]}}
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))
 
@@ -120,40 +121,6 @@
                            :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]
                            :forms []
                            :licenses []}}
-               (-> (workflow/get-workflow wf-id)
-                   (select-keys [:id :title :workflow]))))))
-
-    (testing "change licenses"
-      (let [licid (test-helpers/create-license! {:organization {:organization/id "abc"}})
-            licid-2 (test-helpers/create-license! {:organization {:organization/id "abc"}})
-            wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
-                                                  :type :workflow/master
-                                                  :title "original title"
-                                                  :handlers ["user1"]
-                                                  :licenses [licid]})
-            get-license (fn [id]
-                          {:license/id id
-                           :archived false
-                           :enabled true
-                           :licensetype "text"
-                           :localizations {}
-                           :organization {:organization/id "abc"
-                                          :organization/name {:en "ABC"}
-                                          :organization/short-name {:en "ABC"}}})
-            expected {:id wf-id
-                      :title "original title"
-                      :workflow {:type :workflow/master
-                                 :handlers [{:userid "user1"
-                                             :name "User 1"
-                                             :email "user1@example.com"}]
-                                 :forms []
-                                 :licenses [(get-license licid)]}}]
-        (is (= expected (-> (workflow/get-workflow wf-id)
-                            (select-keys [:id :title :workflow]))))
-        (is (:success (workflow/edit-workflow! {:id wf-id
-                                                :licenses [{:license/id licid-2}]})))
-        (is (= (-> expected
-                   (assoc-in [:workflow :licenses] [(get-license licid-2)]))
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))))
 
