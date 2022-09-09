@@ -4,9 +4,11 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.api.services.dependencies :as dependencies]
             [rems.application.search]
             [rems.config :refer [env]]
-            [rems.db.applications]
+            [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -27,7 +29,7 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
-  (rems.db.applications/empty-injections-cache!)
+  (applications/empty-injections-cache!)
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   (f)
   (mount/stop))
@@ -37,12 +39,15 @@
   (mount/start #'rems.application.search/search-index)
   (f))
 
-(defn caches-fixture [f]
+(defn reset-caches-fixture [f]
   (try
-    (mount/start #'rems.db.applications/all-applications-cache)
+    (mount/start #'applications/all-applications-cache)
     (f)
     (finally
+      (applications/reset-cache!)
+      (catalogue/reset-cache!)
       (category/reset-cache!)
+      (dependencies/reset-cache!)
       (user-mappings/reset-cache!))))
 
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience

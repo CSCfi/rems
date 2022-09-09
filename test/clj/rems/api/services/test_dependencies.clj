@@ -3,13 +3,13 @@
             [rems.api.services.dependencies :as dependencies]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [caches-fixture test-db-fixture rollback-db-fixture]]))
+            [rems.db.testing :refer [reset-caches-fixture test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures
   :each
   rollback-db-fixture
-  caches-fixture)
+  reset-caches-fixture)
 
 (deftest test-dependencies
   (let [shared-license (test-helpers/create-license! {})

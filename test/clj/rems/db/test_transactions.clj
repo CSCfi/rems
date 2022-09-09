@@ -5,7 +5,7 @@
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [test-db-fixture reset-db-fixture]]
+            [rems.db.testing :refer [reset-caches-fixture test-db-fixture reset-db-fixture]]
             [rems.db.users :as users])
   (:import [java.sql SQLException]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
@@ -14,7 +14,8 @@
 (use-fixtures
   :once
   test-db-fixture
-  reset-db-fixture)
+  reset-db-fixture
+  reset-caches-fixture)
 
 (defn- create-dummy-user []
   (let [user-id "user"]
