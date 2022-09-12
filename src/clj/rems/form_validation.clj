@@ -140,21 +140,18 @@
       (missing-columns-error field)
       (invalid-attachment-error field)))
 
-(defn- validate-field-submit [field]
+(defn- validate-field [field]
   (or (required-error field)
       (validate-field-content field)))
 
-(defn- validate-draft-field [field]
-  (validate-field-content field))
-
 (defn validate-fields-for-draft [fields]
   (->> (sort-by :field/id fields)
-       (map validate-draft-field)
+       (map validate-field)
        (remove nil?)
        (seq)))
 
 (defn validate-fields-for-submit [fields]
   (->> (sort-by :field/id fields)
-       (map validate-field-submit)
+       (map validate-field)
        (remove nil?)
        (seq)))
