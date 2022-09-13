@@ -37,7 +37,7 @@
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
-(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline? input-style] :as opts}]
+(defn input-field [{:keys [keys label placeholder context type normalizer readonly inline? input-style on-change] :as opts}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
@@ -58,9 +58,10 @@
                                    :placeholder placeholder
                                    :class (when error "is-invalid")
                                    :value (get-in form keys)
-                                   :on-change #(rf/dispatch [(:update-form context)
-                                                             keys
-                                                             (normalizer (.. % -target -value))])}
+                                   :on-change #(do (when on-change (on-change %))
+                                                   (rf/dispatch [(:update-form context)
+                                                                 keys
+                                                                 (normalizer (.. % -target -value))]))}
                                   (select-keys opts [:min :max]))]
       [field-validation-message error label]]]))
 
@@ -290,7 +291,7 @@
      [field-validation-message (get-in form-errors keys) label]]))
 
 (defn date-field
-  [context {:keys [label keys min max validation optional]}]
+  [context {:keys [label keys min max validation optional on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         value (get-in form keys)
         form-errors (when (:get-form-errors context)
@@ -311,7 +312,8 @@
                                                (str id "-error"))
                            :min min
                            :max max
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (.. % -target -value)])}]
+                           :on-change #(do (when on-change (on-change %))
+                                           (rf/dispatch [(:update-form context)
+                                                         keys
+                                                         (.. % -target -value)]))}]
      [field-validation-message (get-in form-errors keys) label]]))

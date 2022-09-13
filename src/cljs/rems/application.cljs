@@ -1021,7 +1021,7 @@
                                   (str id " – " (localized label))))
                   :item-selected? (fn [duo] (some #(= (:id duo) (:id %)) selected-duos))
                   :multi? true
-                  :on-change #(rf/dispatch [::set-duo-codes %])}]]
+                  :on-change #(do (fields/always-on-change %) (rf/dispatch [::set-duo-codes %]))}]]
                (doall
                 (for [edit-duo (sort-by :id selected-duos)
                       :let [duo-matches (->> application-duo-matches
@@ -1029,6 +1029,7 @@
                   ^{:key (:id edit-duo)}
                   [:div.form-field
                    [duo-field edit-duo {:context duo-context
+                                        :on-change fields/always-on-change
                                         :duo/statuses (map (comp :validity :duo/validation) duo-matches)
                                         :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
                                         :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))

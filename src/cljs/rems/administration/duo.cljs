@@ -66,7 +66,7 @@
 
 (defn duo-info-field
   "Read-only field for displaying DUO code.
-   
+
    Options:
    * `:id` Unique id for expandable content
    * `:compact?` Display more compact header
@@ -122,7 +122,9 @@
            :item-label #(text-format :t.label/dash (:id %) (:label %))
            :multi? true
            :items mondos
-           :on-change #(rf/dispatch [(:update-form context) update-path %])
+           :on-change #(do (rf/dispatch [(:update-form context) update-path %])
+                           (when (:on-change opts)
+                             ((:on-change opts) %)))
            :on-load-options (-> (fn [{:keys [query-string on-data]}]
                                   (rf/dispatch [::mondo-codes {:search-text query-string} {:on-data on-data}]))
                                 (debounce 500))
@@ -132,6 +134,7 @@
       (let [update-path [duo-id :restrictions :date]]
         [date-field context
          {:label restriction-label
+          :on-change (:on-change opts)
           :keys update-path}])
 
       :months
@@ -140,12 +143,14 @@
                       :context context
                       :keys update-path
                       :label restriction-label
+                      :on-change (:on-change opts)
                       :input-style {:max-width 200}}])
 
       (:topic :location :institute :collaboration :project :users)
       (let [update-path [duo-id :restrictions (:type restriction)]]
         [text-field context
          {:keys update-path
+          :on-change (:on-change opts)
           :label restriction-label}])
 
       nil)))
@@ -168,6 +173,7 @@
      ^{:key (key restriction)}
      [duo-restriction-field {:duo/id (:id duo)
                              :context (:context opts)
+                             :on-change (:on-change opts)
                              :duo/restriction {:type (key restriction)
                                                :values (val restriction)}}])
    (into [:<>] (for [error (:duo/errors opts)]

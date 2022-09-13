@@ -183,7 +183,7 @@
 (def ^:private debounced-notify-activity
   (debounce notify-activity 1000))
 
-(defn- always-on-change
+(defn always-on-change
   "Triggers autosave related functions.
 
   Should be called always when something is changed in the application, that doesn't explicitly also save.
