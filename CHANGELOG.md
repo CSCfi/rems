@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.29
 
+### Fixes
+- Application warning and error links were not functioning correctly for attachment fields. This is now fixed. (#2955)
+
 ## v2.29 "Länsisatamankatu" 2022-09-12
 
 **NB: This release contains migrations!**
