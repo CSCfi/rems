@@ -4,10 +4,10 @@
             [rems.common.form :as form]
             [rems.common.util :refer [+email-regex+
                                       +phone-number-regex+
-                                      +valid-ip-address-regex+
-                                      +valid-ip-address-regex-version-six+
-                                      +reserved-ip-address-range-regex+
-                                      +reserved-ip-address-range-regex-version-six+]]))
+                                      +ipv4-regex+
+                                      +ipv6-regex+
+                                      +reserved-ipv4-range-regex+
+                                      +reserved-ipv6-range-regex+]]))
 
 (defn- all-columns-set? [field]
   (when (sequential? (:field/value field))
@@ -59,20 +59,14 @@
 (defn- invalid-ip-address-error [field]
   (when (and (= (:field/type field) :ip-address)
              (not (str/blank? (:field/value field))))
-    (cond
-      (or
-       (and (first (re-matches +valid-ip-address-regex+ (:field/value field)))
-            (first (re-matches +reserved-ip-address-range-regex+ (:field/value field))))
-       (and (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))
-            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field)))))
-      {:field-id (:field/id field)
-       :type     :t.form.validation/invalid-ip-address-private}
-      (and
-       (not (first (re-matches +valid-ip-address-regex+ (:field/value field))))
-       (not (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))))
-      {:field-id (:field/id field)
-       :type     :t.form.validation/invalid-ip-address}
-      :else nil)))
+    (let [matches #(first (re-matches % (:field/value field)))
+          invalid-ip? (not-any? matches [+ipv4-regex+ +ipv6-regex+])
+          private-ip? (or (every? matches [+ipv4-regex+ +reserved-ipv4-range-regex+])
+                          (every? matches [+ipv6-regex+ +reserved-ipv6-range-regex+]))]
+      (or (when invalid-ip? {:field-id (:field/id field)
+                             :type :t.form.validation/invalid-ip-address})
+          (when private-ip? {:field-id (:field/id field)
+                             :type :t.form.validation/invalid-ip-address-private})))))
 
 (defn- option-value-valid? [field]
   (let [allowed-values (set (conj (map :key (:field/options field)) ""))]
