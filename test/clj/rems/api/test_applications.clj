@@ -1032,7 +1032,9 @@
                                                   :actor user-id})]
 
     (testing "set value of optional field"
-      (is (= {:success true}
+      (is (= {:success true
+              :warnings [{:field-id "req1" :form-id form-id :type "t.form.validation/required"}
+                         {:field-id "req2" :form-id form-id2 :type "t.form.validation/required"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "opt1" :value "opt"}]})
@@ -1158,7 +1160,8 @@
         (is (= [] (get-in app [:application/forms 0 :form/fields 0 :field/value])))
         (is (= [] (get-in app [:application/forms 0 :form/fields 1 :field/value])))))
     (testing "save a draft"
-      (is (= {:success true}
+      (is (= {:success true
+              :warnings [{:field-id "req" :form-id form-id :type "t.form.validation/required"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "opt"
@@ -1198,7 +1201,8 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "save a new draft"
-      (is (= {:success true}
+      (is (= {:success true
+              :warnings [{:type "t.form.validation/column-values-missing" :form-id form-id :field-id "opt"}]}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:form form-id :field "opt"

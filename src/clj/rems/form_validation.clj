@@ -9,26 +9,16 @@
                                       +reserved-ipv4-range-regex+
                                       +reserved-ipv6-range-regex+]]))
 
-(defn- all-columns-set? [field]
-  (when (sequential? (:field/value field))
-    (->> (mapcat :value (:field/value field))
-         (not-any? str/blank?))))
-
 (defn- required-error [field]
   (let [field-value (:field/value field)]
     (when (and (:field/visible field)
                (not (:field/optional field)))
       (case (:field/type field)
         (:header :label) nil
-        :table (or
-                ;; a non-optional table must have at least one row
-                (when (empty? field-value)
-                  {:field-id (:field/id field)
-                   :type :t.form.validation/required})
-                ;; all tables must have all columns set for all rows
-                (when-not (all-columns-set? field)
-                  {:field-id (:field/id field)
-                   :type :t.form.validation/column-values-missing}))
+        :table ;; a non-optional table must have at least one row
+        (when (empty? field-value)
+          {:field-id (:field/id field)
+           :type :t.form.validation/required})
         ;; default:
         (when (cond
                 (string? field-value) (str/blank? field-value)
@@ -92,14 +82,17 @@
   (when (= (:field/type field) :table)
     (let [columns (set (map :key (:field/columns field)))
           row-ok? (fn [row] (= columns (set (map :column row))))
+          columns-set? (fn [row] (not-any? (comp str/blank? :value) row))
           value (:field/value field)]
       ;; Schema validation guarantees that it's either a s/Str or
       ;; a [[{:column s/Str :value s/Str}]], and we've ruled out s/Str
       ;; in wrong-value-type-error
-      (when-not (every? row-ok? value)
-        ;; TODO more specific error?
-        {:field-id (:field/id field)
-         :type     :t.form.validation/invalid-value}))))
+      (or (when-not (every? row-ok? value)
+            {:field-id (:field/id field)
+             :type :t.form.validation/invalid-value})
+          (when-not (every? columns-set? value)
+            {:field-id (:field/id field)
+             :type :t.form.validation/column-values-missing})))))
 
 ;; TODO: validate that attachments are actually valid?
 (defn- invalid-attachment-error [field]
