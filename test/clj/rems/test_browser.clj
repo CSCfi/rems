@@ -509,7 +509,8 @@
 
         (testing "save draft succesfully"
           (btu/scroll-and-click :save)
-          (is (btu/eventually-visible? :status-success)))
+          ;; TODO: check validation warning content
+          (is (btu/eventually-visible? :status-warning)))
 
         (testing "add invalid value for field, try to save"
           (fill-form-field "Email field" "user")
