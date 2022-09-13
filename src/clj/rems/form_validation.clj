@@ -10,32 +10,31 @@
                                       +reserved-ip-address-range-regex-version-six+]]))
 
 (defn- all-columns-set? [field]
-  (let [valid-row? #(not-any? str/blank? (map :value %))]
-    (every? valid-row? (:field/value field))))
+  (when (sequential? (:field/value field))
+    (->> (mapcat :value (:field/value field))
+         (not-any? str/blank?))))
 
 (defn- required-error [field]
-  (when (:field/visible field)
-    (case (:field/type field)
-      (:header :label)
-      nil
-
-      :table
-      (or
-       ;; a non-optional table must have at least one row
-       (when-not (:field/optional field)
-         (when (empty? (:field/value field))
-           {:field-id (:field/id field)
-            :type     :t.form.validation/required}))
-       ;; all tables must have all columns set for all rows
-       (when-not (all-columns-set? field)
-         {:field-id (:field/id field)
-          :type     :t.form.validation/column-values-missing}))
-
-      ;; default:
-      (when-not (:field/optional field)
-        (when (str/blank? (:field/value field))
+  (let [field-value (:field/value field)]
+    (when (and (:field/visible field)
+               (not (:field/optional field)))
+      (case (:field/type field)
+        (:header :label) nil
+        :table (or
+                ;; a non-optional table must have at least one row
+                (when (empty? field-value)
+                  {:field-id (:field/id field)
+                   :type :t.form.validation/required})
+                ;; all tables must have all columns set for all rows
+                (when-not (all-columns-set? field)
+                  {:field-id (:field/id field)
+                   :type :t.form.validation/column-values-missing}))
+        ;; default:
+        (when (cond
+                (string? field-value) (str/blank? field-value)
+                :else (nil? field-value))
           {:field-id (:field/id field)
-           :type     :t.form.validation/required})))))
+           :type :t.form.validation/required})))))
 
 (defn- too-long-error [field]
   (when-let [limit (:field/max-length field)]
@@ -144,14 +143,8 @@
   (or (required-error field)
       (validate-field-content field)))
 
-(defn validate-fields-for-draft [fields]
+(defn validate-fields [fields]
   (->> (sort-by :field/id fields)
-       (map validate-field)
-       (remove nil?)
-       (seq)))
+       (keep validate-field)
+       not-empty))
 
-(defn validate-fields-for-submit [fields]
-  (->> (sort-by :field/id fields)
-       (map validate-field)
-       (remove nil?)
-       (seq)))
