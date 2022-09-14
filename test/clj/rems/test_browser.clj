@@ -515,7 +515,7 @@
                  (get-validation-summary)))
           (is (= "Invalid email address."
                  (get-validation-for-field "Email field"))))
-        
+
         (fill-form-field "Email field" "@example.com")
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
