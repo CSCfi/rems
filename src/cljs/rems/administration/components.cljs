@@ -43,6 +43,7 @@
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
         normalizer (or normalizer identity)
+        on-change (or on-change (fn [_]))
         error (get-in form-errors keys)]
     [:div.form-group.field {:class (when inline? "row")}
      [:label {:for id
@@ -58,10 +59,11 @@
                                    :placeholder placeholder
                                    :class (when error "is-invalid")
                                    :value (get-in form keys)
-                                   :on-change #(do (when on-change (on-change %))
-                                                   (rf/dispatch [(:update-form context)
-                                                                 keys
-                                                                 (normalizer (.. % -target -value))]))}
+                                   :on-change #(let [new-value (normalizer (.. % -target -value))]
+                                                 (rf/dispatch [(:update-form context)
+                                                               keys
+                                                               new-value])
+                                                 (on-change new-value))}
                                   (select-keys opts [:min :max]))]
       [field-validation-message error label]]]))
 
@@ -86,10 +88,12 @@
 
 (defn textarea-autosize
   "A basic textarea, full page width."
-  [context {:keys [keys label placeholder]}]
+  [context {:keys [keys label placeholder normalizer on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
+        normalizer (or normalizer identity)
+        on-change (or on-change (fn [_]))
         id (keys-to-id keys)
         error (get-in form-errors keys)]
     [:div.form-group.field
@@ -98,9 +102,11 @@
                 :placeholder placeholder
                 :value (get-in form keys)
                 :class (when error "is-invalid")
-                :on-change #(rf/dispatch [(:update-form context)
-                                          keys
-                                          (.. % -target -value)])}]
+                :on-change #(let [new-value (normalizer (.. % -target -value))]
+                              (rf/dispatch [(:update-form context)
+                                            keys
+                                            new-value])
+                              (on-change new-value))}]
      [field-validation-message error label]]))
 
 (defn localized-textarea-autosize
@@ -109,40 +115,46 @@
   in the form as a map of language to text. If `:localizations-key` is
   provided in opts, languages are mapped from `[:localizations lang localizations-key]`
   path."
-  [context {:keys [keys localizations-key label placeholder]}]
-  (into [:div.form-group.localized-field
-         [:label.administration-field-label label]]
-        (for [language @(rf/subscribe [:languages])
-              :let [form @(rf/subscribe [(:get-form context)])
-                    form-errors (when (:get-form-errors context)
-                                  @(rf/subscribe [(:get-form-errors context)]))
-                    keys (if (some? localizations-key)
-                           [:localizations language localizations-key]
-                           (conj keys language))
-                    id (keys-to-id (if (some? localizations-key)
-                                     [:localizations language localizations-key]
-                                     keys))
-                    error (get-in form-errors keys)]]
-          [:div.row.mb-0
-           [:label.col-sm-1.col-form-label {:for id}
-            (str/upper-case (name language))]
-           [:div.col-sm-11
-            [textarea {:id id
-                       :placeholder placeholder
-                       :value (get-in form keys)
-                       :class (when error "is-invalid")
-                       :on-change #(rf/dispatch [(:update-form context)
-                                                 keys
-                                                 (.. % -target -value)])}]
-            [field-validation-message error label]]])))
+  [context {:keys [keys localizations-key label placeholder normalizer on-change]}]
+  (let [normalizer (or normalizer identity)
+        on-change (or on-change (fn [_]))]
+    (into [:div.form-group.localized-field
+           [:label.administration-field-label label]]
+          (for [language @(rf/subscribe [:languages])
+                :let [form @(rf/subscribe [(:get-form context)])
+                      form-errors (when (:get-form-errors context)
+                                    @(rf/subscribe [(:get-form-errors context)]))
+                      keys (if (some? localizations-key)
+                             [:localizations language localizations-key]
+                             (conj keys language))
+                      id (keys-to-id (if (some? localizations-key)
+                                       [:localizations language localizations-key]
+                                       keys))
+                      error (get-in form-errors keys)]]
+            [:div.row.mb-0
+             [:label.col-sm-1.col-form-label {:for id}
+              (str/upper-case (name language))]
+             [:div.col-sm-11
+              [textarea {:id id
+                         :placeholder placeholder
+                         :value (get-in form keys)
+                         :class (when error "is-invalid")
+                         :on-change #(let [new-value (normalizer (.. % -target -value))]
+                                       (rf/dispatch [(:update-form context)
+                                                     keys
+                                                     new-value])
+                                       (on-change new-value))}]
+              [field-validation-message error label]]]))))
 
-(defn- localized-text-field-lang [context {:keys [keys-prefix label lang localizations-key]}]
+(defn- localized-text-field-lang [context {:keys [keys-prefix label lang localizations-key normalizer on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         keys (if localizations-key
                [:localizations lang localizations-key]
                (conj keys-prefix lang))
+        normalizer (or normalizer identity)
+        on-change (or on-change (fn [_]))
         id (keys-to-id keys)
         error (get-in form-errors keys)]
     [:div.row.mb-0
@@ -153,9 +165,11 @@
                  :min-rows 1
                  :value (get-in form keys)
                  :class (when error "is-invalid")
-                 :on-change #(rf/dispatch [(:update-form context)
-                                           keys
-                                           (.. % -target -value)])}]
+                 :on-change #(let [new-value (normalizer (.. % -target -value))]
+                               (rf/dispatch [(:update-form context)
+                                             keys
+                                             new-value])
+                               (on-change new-value))}]
       [field-validation-message error label]]]))
 
 (defn localized-text-field
@@ -164,7 +178,7 @@
   in the form as a map of language to text. If `:localizations-key` is
   provided in opts, languages are mapped from `[:localizations lang localizations-key]`
   path."
-  [context {:keys [keys label localizations-key collapse?]}]
+  [context {:keys [keys label localizations-key collapse? normalizer on-change]}]
   (let [languages @(rf/subscribe [:languages])
         id (keys-to-id (if (some? localizations-key) [localizations-key] keys))
         fields (into [:<>]
@@ -173,7 +187,9 @@
                         {:keys-prefix keys
                          :label label
                          :lang lang
-                         :localizations-key localizations-key}]))]
+                         :localizations-key localizations-key
+                         :normalizer normalizer
+                         :on-change on-change}]))]
     (if collapse?
       [:div.form-group.localized-field.mb-1
        [:label.administration-field-label
@@ -188,27 +204,31 @@
 
 (defn checkbox
   "A single checkbox, on its own line."
-  [context {:keys [keys label negate?]}]
+  [context {:keys [keys label negate? on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         val-fn (if negate?
                  (comp not boolean)
                  boolean)
+        on-change (or on-change (fn [_]))
         id (keys-to-id keys)]
     [:div.form-group.field
      [:div.form-check
       [:input.form-check-input {:id id
                                 :type "checkbox"
                                 :checked (val-fn (get-in form keys))
-                                :on-change #(rf/dispatch [(:update-form context)
-                                                          keys
-                                                          (val-fn (.. % -target -checked))])}]
+                                :on-change #(let [new-value (val-fn (.. % -target -checked))]
+                                              (rf/dispatch [(:update-form context)
+                                                            keys
+                                                            new-value])
+                                              (on-change new-value))}]
       [:label.form-check-label {:for id}
        label]]]))
 
-(defn- radio-button [context {:keys [keys value label orientation readonly]}]
+(defn- radio-button [context {:keys [keys value label orientation readonly on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
+        on-change (or on-change (fn [_]))
         name (keys-to-id keys)
         id (keys-to-id (conj keys value))
         error (get-in form-errors keys)]
@@ -223,7 +243,8 @@
                                :value value
                                :checked (= value (get-in form keys))
                                :on-change #(when (.. % -target -checked)
-                                             (rf/dispatch [(:update-form context) keys value]))}]
+                                             (rf/dispatch [(:update-form context) keys value])
+                                             (on-change value))}]
      [:label.form-check-label {:for id}
       label]]))
 
@@ -235,7 +256,7 @@
   `label`        - optional label text for group
   `options`      - list of `{:value \"...\", :label \"...\"}`
   `readonly`     - boolean"
-  [context {:keys [id keys label orientation options readonly]}]
+  [context {:keys [id keys label orientation options readonly on-change]}]
   [:div.form-group.field {:id id}
    (when label [:label.administration-field-label {:for id} label])
    (into [:div.form-control]
@@ -244,7 +265,8 @@
                                        :value value
                                        :label label
                                        :readonly readonly
-                                       :orientation orientation}])
+                                       :orientation orientation
+                                       :on-change on-change}])
               options))])
 
 (defn inline-info-field [text value & [opts]]
@@ -255,7 +277,7 @@
   The data is passed in as a map of language to text.
   If :localizations-key is passed in opts, language to text is
   mapped from `[:localizations lang localizations-key]` instead."
-  [m {:keys [label localizations-key] :as opts}]
+  [m {:keys [label localizations-key]}]
   (let [languages @(rf/subscribe [:languages])
         to-label #(str label " (" (str/upper-case (name %)) ")")]
     (into [:<>]
@@ -265,12 +287,13 @@
                               (get m lang))]]
             [inline-info-field (to-label lang) value]))))
 
-(defn organization-field [context {:keys [keys readonly]}]
+(defn organization-field [context {:keys [keys readonly on-change]}]
   (let [label (text :t.administration/organization)
         organizations @(rf/subscribe [:owned-organizations])
         language @(rf/subscribe [:language])
         form @(rf/subscribe [(:get-form context)])
         value (get-in form keys)
+        on-change (or on-change (fn [_]))
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
@@ -287,13 +310,17 @@
          :item-key :organization/id
          :item-label (comp language :organization/name)
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [(:update-form context) keys %])}])
+         :on-change #(let [new-value %]
+                       (rf/dispatch [(:update-form context) keys new-value])
+                       (on-change new-value))}])
      [field-validation-message (get-in form-errors keys) label]]))
 
 (defn date-field
-  [context {:keys [label keys min max validation optional on-change]}]
+  [context {:keys [label keys min max validation optional normalizer on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         value (get-in form keys)
+        normalizer (or normalizer identity)
+        on-change (or on-change (fn [_]))
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)]
@@ -312,8 +339,9 @@
                                                (str id "-error"))
                            :min min
                            :max max
-                           :on-change #(do (when on-change (on-change %))
-                                           (rf/dispatch [(:update-form context)
-                                                         keys
-                                                         (.. % -target -value)]))}]
+                           :on-change #(let [new-value (normalizer (.. % -target -value))]
+                                         (rf/dispatch [(:update-form context)
+                                                       keys
+                                                       new-value])
+                                         (on-change new-value))}]
      [field-validation-message (get-in form-errors keys) label]]))
