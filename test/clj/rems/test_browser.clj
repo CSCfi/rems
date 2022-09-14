@@ -110,7 +110,11 @@
   (is (btu/eventually-visible? :categories)))
 
 (defn change-language [language]
-  (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
+  (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}])
+  ;; wait for the new language to take effect
+  (btu/wait-predicate #(= (btu/value-of [{:css ".footer-text"}])
+                          (text/with-language language
+                            (fn [] (text/text :t/footer))))))
 
 (defmacro with-language
   "Executes body between calls to `(change-language language)`
