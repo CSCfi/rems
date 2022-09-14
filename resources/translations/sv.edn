@@ -419,7 +419,7 @@
          :attachments-as-zip "Bilagor (zip)"
          :autosave "Automatisk sparning"
          :autosave-confirmed "Ansökan är sparad."
-         :autosave-in-progress" Sparar"
+         :autosave-in-progress "Sparar"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Kommentar"
