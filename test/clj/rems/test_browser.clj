@@ -507,20 +507,15 @@
 
         (fill-form-field "Simple text field" "Private field answer")
 
-        (testing "save draft succesfully"
-          (btu/scroll-and-click :save)
-          ;; TODO: check validation warning content
-          (is (btu/eventually-visible? :status-warning)))
-
-        (testing "add invalid value for field, try to save"
+        (testing "save draft succesfully, but show validation warnings"
           (fill-form-field "Email field" "user")
           (btu/scroll-and-click :save)
           (is (btu/eventually-visible? :status-warning))
-          (is (= ["Invalid email address."]
+          (is (= ["Field \"Text field\" is required." "Invalid email address."]
                  (get-validation-summary)))
           (is (= "Invalid email address."
                  (get-validation-for-field "Email field"))))
-
+        
         (fill-form-field "Email field" "@example.com")
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
