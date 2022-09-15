@@ -343,14 +343,14 @@
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::remove-attachment
- (fn [db [_ form-id field-id attachment-id]]
+ (fn [{:keys [db]} [_ form-id field-id attachment-id]]
    (fields/always-on-change attachment-id)
-   (update-in db [::edit-application :field-values form-id field-id]
-              (comp form/unparse-attachment-ids
-                    (partial remove #{attachment-id})
-                    form/parse-attachment-ids))))
+   {:db (update-in db [::edit-application :field-values form-id field-id]
+                   (comp form/unparse-attachment-ids
+                         (partial remove #{attachment-id})
+                         form/parse-attachment-ids))}))
 
 (rf/reg-event-db
  ::set-field-value
