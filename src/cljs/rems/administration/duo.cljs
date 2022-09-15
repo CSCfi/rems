@@ -105,7 +105,7 @@
 
 (fetcher/reg-fetcher ::mondo-codes "/api/resources/search-mondo-codes")
 
-(defn duo-restriction-field [opts]
+(defn duo-restriction-field [{:keys [on-change] :as opts}]
   (let [duo-id (:duo/id opts)
         context (:context opts)
         restriction (:duo/restriction opts)
@@ -122,9 +122,10 @@
            :item-label #(text-format :t.label/dash (:id %) (:label %))
            :multi? true
            :items mondos
-           :on-change #(do (rf/dispatch [(:update-form context) update-path %])
-                           (when (:on-change opts)
-                             ((:on-change opts) %)))
+           :on-change #(let [new-value %]
+                         (rf/dispatch [(:update-form context) update-path new-value])
+                         (when on-change
+                           (on-change new-value)))
            :on-load-options (-> (fn [{:keys [query-string on-data]}]
                                   (rf/dispatch [::mondo-codes {:search-text query-string} {:on-data on-data}]))
                                 (debounce 500))
@@ -134,7 +135,7 @@
       (let [update-path [duo-id :restrictions :date]]
         [date-field context
          {:label restriction-label
-          :on-change (:on-change opts)
+          :on-change on-change
           :keys update-path}])
 
       :months
@@ -143,14 +144,14 @@
                       :context context
                       :keys update-path
                       :label restriction-label
-                      :on-change (:on-change opts)
+                      :on-change on-change
                       :input-style {:max-width 200}}])
 
       (:topic :location :institute :collaboration :project :users)
       (let [update-path [duo-id :restrictions (:type restriction)]]
         [text-field context
          {:keys update-path
-          :on-change (:on-change opts)
+          :on-change on-change
           :label restriction-label}])
 
       nil)))
