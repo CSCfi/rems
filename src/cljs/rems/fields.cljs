@@ -187,7 +187,7 @@
   "Triggers autosave related functions.
 
   Should be called always when something is changed in the application, that doesn't explicitly also save.
-  For example, attachments internally also save the application, but changing a text field value doesn't."
+  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
   [event-value]
   (rate-limited-clear-message) ; clear status as soon as possible
   (debounced-notify-activity) ; try autosave only every second or so
