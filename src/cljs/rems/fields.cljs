@@ -499,6 +499,7 @@
 
 ;; TODO: check if this and common.form/field-types could be combined
 (defn field [field]
+  (assert (fn? (:on-change field)) "A field must have :on-change handler")
   (case (:field/type field)
     :attachment [attachment-field field]
     :date [date-field field]
