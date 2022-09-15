@@ -321,7 +321,8 @@
                          ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
-                         (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
+                         (fields/always-on-change (:id response))
+                         (rf/dispatch [::set-attachment-status form-id field-id :success]))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
                                (cond (= 413 (:status response))
@@ -345,6 +346,7 @@
 (rf/reg-event-db
  ::remove-attachment
  (fn [db [_ form-id field-id attachment-id]]
+   (fields/always-on-change attachment-id)
    (update-in db [::edit-application :field-values form-id field-id]
               (comp form/unparse-attachment-ids
                     (partial remove #{attachment-id})
