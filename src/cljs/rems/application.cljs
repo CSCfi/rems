@@ -321,8 +321,11 @@
                          ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
-                         (fields/always-on-change (:id response))
-                         (rf/dispatch [::set-attachment-status form-id field-id :success]))
+                         (if (:enable-autosave config)
+                           (do
+                             (fields/always-on-change (:id response))
+                             (rf/dispatch [::set-attachment-status form-id field-id :success]))
+                           (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
                                (cond (= 413 (:status response))
