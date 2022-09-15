@@ -178,7 +178,7 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validations! [description application & [on-success]]
+(defn- handle-validations! [description application & [{:keys [on-success default-success? focus?] :or {default-success? true focus? true}}]]
   (fn [{:keys [errors warnings success] :as _response}]
     (flash-message/clear-message! :top-validation)
     (rf/dispatch [::set-validations errors warnings])
@@ -191,9 +191,10 @@
         (if (seq warnings)
           (flash-message/show-default-warning! :top-validation
                                                description
-                                               [validations {:application application
-                                                             :warnings warnings}])
-          (flash-message/show-default-success! :top-validation description))
+                                               {:focus? focus?
+                                                :content [[validations {:application application
+                                                                        :warnings warnings}]]})
+          (when default-success? (flash-message/show-default-success! :top-validation description)))
         (when on-success (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
@@ -206,13 +207,15 @@
                                 :mondo (map #(select-keys % [:id]) values)
                                 (if (some? values) [{:value values}] []))})}))
 
-(defn- save-draft! [description application edit-application handler]
+(defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
+  (flash-message/clear-message! :actions)
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application (:field-values edit-application))
                    :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
           :handler handler
-          :error-handler (flash-message/default-error-handler :actions description)}))
+          :error-handler (or error-handler
+                             (flash-message/default-error-handler :actions description))}))
 
 (rf/reg-event-fx
  ::save-application
@@ -224,10 +227,39 @@
                   edit-application
                   (fn [response]
                     (rf/dispatch [::fetch-application (:application/id application)])
-                    (apply (handle-validations! description application on-success) [response]))))
+                    (apply (handle-validations! description application {:on-success on-success}) [response]))))
    {:db (-> db
             (assoc-in [::edit-application :validation :errors] nil)
             (assoc-in [::edit-application :validation :warnings] nil))}))
+
+
+(rf/reg-event-db ::set-autosaving (fn [db [_ value]] (assoc db ::autosaving value)))
+(rf/reg-sub ::autosaving (fn [db _] (::autosaving db)))
+
+(rf/reg-event-fx
+ ::autosave-application
+ (fn [{:keys [db]} [_]]
+   (if (-> db :config :enable-autosave)
+     (let [application (-> db ::application :data)
+           edit-application (::edit-application db)
+           description [text :t.form/autosave]]
+       (save-draft! description
+                    application
+                    edit-application
+                    (fn [response]
+                      (rf/dispatch [::fetch-application (:application/id application) false])
+                      (apply (handle-validations! description application {:on-success #(do (rf/dispatch [::set-autosaving false])
+                                                                                            (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed]))
+                                                                           :default-success? false
+                                                                           :focus? false})
+                             [response]))
+                    {:error-handler (fn [err]
+                                      (rf/dispatch [::set-autosaving false]))})
+       {:db (-> db
+                (assoc ::autosaving true)
+                (assoc-in [::edit-application :validation :errors] nil)
+                (assoc-in [::edit-application :validation :warnings] nil))})
+     {})))
 
 (rf/reg-event-fx
  ::submit-application
@@ -245,8 +277,7 @@
                               :handler (handle-validations!
                                         description
                                         application
-                                        (fn []
-                                          (rf/dispatch [::fetch-application (:application/id application)])))
+                                        {:on-success (fn [] (rf/dispatch [::fetch-application (:application/id application)]))})
                               :error-handler (flash-message/default-error-handler :actions description)})))))
    {:db (-> db
             (assoc-in [::edit-application :validation :errors] nil)
@@ -294,7 +325,11 @@
                          ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
-                         (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])]))
+                         (if (:enable-autosave config)
+                           (do
+                             (fields/always-on-change (:id response))
+                             (rf/dispatch [::set-attachment-status form-id field-id :success]))
+                           (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
                                (cond (= 413 (:status response))
@@ -315,13 +350,14 @@
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::remove-attachment
- (fn [db [_ form-id field-id attachment-id]]
-   (update-in db [::edit-application :field-values form-id field-id]
-              (comp form/unparse-attachment-ids
-                    (partial remove #{attachment-id})
-                    form/parse-attachment-ids))))
+ (fn [{:keys [db]} [_ form-id field-id attachment-id]]
+   (fields/always-on-change attachment-id)
+   {:db (update-in db [::edit-application :field-values form-id field-id]
+                   (comp form/unparse-attachment-ids
+                         (partial remove #{attachment-id})
+                         form/parse-attachment-ids))}))
 
 (rf/reg-event-db
  ::set-field-value
@@ -817,27 +853,31 @@
     [request-decision-action-link]
     [invite-decider-action-link]]])
 
-(defn- action-buttons [application]
-  (let [commands-and-actions [:application.command/save-draft [save-button]
-                              :application.command/submit [submit-button]
-                              :application.command/return [return-action-button]
-                              ;; this assumes that request-review and invite-reviewer are both possible or neither is
-                              :application.command/request-review [request-review-dropdown]
-                              :application.command/invite-reviewer [request-review-dropdown]
-                              :application.command/review [review-action-button]
-                              ;; ditto for decision
-                              :application.command/request-decision [request-decision-dropdown]
-                              :application.command/invite-decider [request-decision-dropdown]
-                              :application.command/decide [decide-action-button]
-                              :application.command/remark [remark-action-button]
-                              :application.command/approve [approve-reject-action-button]
-                              :application.command/reject [approve-reject-action-button]
-                              :application.command/revoke [revoke-action-button]
-                              :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
-                                                                        [assign-external-id-button (get application :application/assigned-external-id "")])
-                              :application.command/close [close-action-button]
-                              :application.command/delete [delete-action-button]
-                              :application.command/copy-as-new [copy-as-new-button]]]
+(defn- action-buttons [application config]
+  (let [commands-and-actions (concat
+                              (when-not (:enable-autosave config)
+                                ;; no explicit command for :application.command/save-draft when autosave
+                                [:application.command/save-draft [save-button]])
+
+                              [:application.command/submit [submit-button]
+                               :application.command/return [return-action-button]
+                               ;; this assumes that request-review and invite-reviewer are both possible or neither is
+                               :application.command/request-review [request-review-dropdown]
+                               :application.command/invite-reviewer [request-review-dropdown]
+                               :application.command/review [review-action-button]
+                               ;; ditto for decision
+                               :application.command/request-decision [request-decision-dropdown]
+                               :application.command/invite-decider [request-decision-dropdown]
+                               :application.command/decide [decide-action-button]
+                               :application.command/remark [remark-action-button]
+                               :application.command/approve [approve-reject-action-button]
+                               :application.command/reject [approve-reject-action-button]
+                               :application.command/revoke [revoke-action-button]
+                               :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
+                                                                         [assign-external-id-button (get application :application/assigned-external-id "")])
+                               :application.command/close [close-action-button]
+                               :application.command/delete [delete-action-button]
+                               :application.command/copy-as-new [copy-as-new-button]])]
     (concat (distinct (for [[command action] (partition 2 commands-and-actions)
                             :when (contains? (:application/permissions application) command)]
                         action))
@@ -845,36 +885,38 @@
                   [attachment-zip-button application]))))
 
 
-(defn- actions-form [application]
+(defn- actions-form [application config]
   (let [app-id (:application/id application)
         ;; The :see-everything permission is used to determine whether the user
         ;; is allowed to see all comments. It would not make sense for the user
         ;; to be able to write a comment which he then cannot see.
         show-comment-field? (contains? (:application/permissions application) :see-everything)
-        actions (action-buttons application)
+        actions (action-buttons application config)
         reload (partial reload! app-id)
-        forms [[:div#actions-forms.mt-3
-                [request-review-form app-id reload]
-                [request-decision-form app-id reload]
-                [invite-decider-form app-id reload]
-                [invite-reviewer-form app-id reload]
-                [review-form app-id reload]
-                [remark-form app-id reload]
-                [close-form app-id show-comment-field? reload]
-                [revoke-form app-id reload]
-                [decide-form app-id reload]
-                [return-form app-id reload]
-                [approve-reject-form app-id reload]
-                [assign-external-id-form app-id reload]
-                [delete-form app-id #(do (flash-message/show-default-success! :top [text :t.actions/delete])
-                                         (navigate! "/catalogue"))]]]]
+        go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
+                             (navigate! "/catalogue"))]
     (when (seq actions)
       [collapsible/component
        {:id "actions-collapse"
         :title (text :t.form/actions)
-        :always (into [:div (into [:div#action-commands]
-                                  actions)]
-                      forms)}])))
+        :always [:div
+
+                 (into [:div#action-commands] actions)
+
+                 [:div#actions-forms.mt-3
+                  [request-review-form app-id reload]
+                  [request-decision-form app-id reload]
+                  [invite-decider-form app-id reload]
+                  [invite-reviewer-form app-id reload]
+                  [review-form app-id reload]
+                  [remark-form app-id reload]
+                  [close-form app-id show-comment-field? reload]
+                  [revoke-form app-id reload]
+                  [decide-form app-id reload]
+                  [return-form app-id reload]
+                  [approve-reject-form app-id reload]
+                  [assign-external-id-form app-id reload]
+                  [delete-form app-id go-to-catalogue]]]}])))
 
 (defn- render-resource [resource language]
   (let [config @(rf/subscribe [:rems.config/config])
@@ -982,7 +1024,7 @@
                                   (str id " – " (localized label))))
                   :item-selected? (fn [duo] (some #(= (:id duo) (:id %)) selected-duos))
                   :multi? true
-                  :on-change #(rf/dispatch [::set-duo-codes %])}]]
+                  :on-change #(do (fields/always-on-change %) (rf/dispatch [::set-duo-codes %]))}]]
                (doall
                 (for [edit-duo (sort-by :id selected-duos)
                       :let [duo-matches (->> application-duo-matches
@@ -990,6 +1032,7 @@
                   ^{:key (:id edit-duo)}
                   [:div.form-field
                    [duo-field edit-duo {:context duo-context
+                                        :on-change fields/always-on-change
                                         :duo/statuses (map (comp :validity :duo/validation) duo-matches)
                                         :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
                                         :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
@@ -1056,7 +1099,12 @@
     [:div.col-lg-4.spaced-vertically-3
      [:div#actions
       [flash-message/component :actions]
-      [actions-form application]]]]])
+      (when (and (not @(rf/subscribe [::flash-message/message :actions])) ; avoid two messages at the same time and causing re-layout
+                 @(rf/subscribe [::autosaving]))
+        [:div.alert.alert-info
+         [text :t.form/autosave-in-progress]
+         [:span.ml-2 [spinner/small]]])
+      [actions-form application config]]]]])
 
 ;;;; Entrypoint
 

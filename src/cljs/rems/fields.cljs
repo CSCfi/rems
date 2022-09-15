@@ -2,12 +2,14 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             ["diff-match-patch" :refer [diff_match_patch]]
+            [goog.functions :refer [debounce rateLimit]]
             [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.form :as common-form]
-            [rems.common.util :refer [build-index getx]]
+            [rems.common.util :refer [assoc-not-present build-index getx]]
+            [rems.flash-message]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
@@ -169,8 +171,30 @@
 (defn- event-value [event]
   (.. event -target -value))
 
+(defn- clear-message []
+  (rems.flash-message/clear-message! :actions-form-flash))
+
+(def ^:private rate-limited-clear-message
+  (rateLimit clear-message 1000))
+
+(defn- notify-activity []
+  (rf/dispatch [:rems.application/autosave-application]))
+
+(def ^:private debounced-notify-activity
+  (debounce notify-activity 1000))
+
+(defn always-on-change
+  "Triggers autosave related functions.
+
+  Should be called always when something is changed in the application, that doesn't explicitly also save.
+  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
+  [event-value]
+  (rate-limited-clear-message) ; clear status as soon as possible
+  (debounced-notify-activity) ; try autosave only every second or so
+  event-value)
+
 (defn text-field
-  [{:keys [validation on-change info-text type] :as opts}]
+  [{:keys [validation on-change _info-text _type] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -193,7 +217,7 @@
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :value value
-                           :on-change (comp on-change event-value)}]]))
+                           :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
@@ -213,7 +237,7 @@
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :value value
-                :on-change (comp on-change event-value)}]]))
+                :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
@@ -233,7 +257,7 @@
                                                (str (field-name opts) "-error"))
                            :min min
                            :max max
-                           :on-change (comp on-change event-value)}]]))
+                           :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn- option-label [value options]
   (let [label (->> options
@@ -258,7 +282,7 @@
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (field-name opts) "-error"))
-                                  :on-change (comp on-change event-value)}
+                                  :on-change (comp on-change always-on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
              [:option {:value key}
@@ -288,8 +312,10 @@
                                (let [checked (.. event -target -checked)
                                      selected-keys (if checked
                                                      (conj selected-keys key)
-                                                     (disj selected-keys key))]
-                                 (on-change (common-form/unparse-multiselect-values selected-keys))))]
+                                                     (disj selected-keys key))
+                                     value (common-form/unparse-multiselect-values selected-keys)]
+                                 (always-on-change value)
+                                 (on-change value)))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
@@ -362,7 +388,7 @@
           [attachment-link att])))
 
 (defn attachment-field
-  [{:keys [validation on-attach on-remove-attachment success] :as opts}]
+  [{:keys [on-attach on-remove-attachment] :as opts}]
   [field-wrapper (assoc opts
                         :readonly-component [attachment-row (:field/attachments opts)]
                         :diff-component [:div {:style {:display :flex}}
@@ -405,9 +431,9 @@
                                               :aria-label (localized label)
                                               :id (str id "-row" row-i "-" key)
                                               :value (get-in rows [row-i key])
-                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
+                                              :on-change #(on-change (always-on-change (assoc-in rows [row-i key] (event-value %))))}])])
                    (when-not readonly
-                     [[:td.align-middle [items/remove-button #(on-change (items/remove rows row-i))]]]))))
+                     [[:td.align-middle [items/remove-button #(on-change (always-on-change (items/remove rows row-i)))]]]))))
           (when (and readonly (empty? rows))
             [[:tr [:td {:col-span (count columns)}
                    (text :t.form/no-rows)]]])
@@ -415,7 +441,7 @@
             [[:tr [:td {:col-span (count columns)}
                    [:button.btn.btn-outline-secondary
                     {:id (str id "-add-row")
-                     :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
+                     :on-click #(on-change (always-on-change (conj rows (zipmap (mapv :key columns) (repeat "")))))}
                     [add-symbol]
                     " "
                     (text :t.form/add-row)]]]])))])
@@ -465,33 +491,30 @@
                                  (empty? rows))
                           [(zipmap (mapv :key (:field/columns field)) (repeat ""))]
                           rows))
-                :on-change #(on-change (table-to-backend %))}]])
+                :on-change #(on-change (always-on-change (table-to-backend %)))}]])
 
 (defn unsupported-field
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
-(def ^:private field-defaults
-  {:on-change (fn [_] nil)})
-
 ;; TODO: check if this and common.form/field-types could be combined
 (defn field [field]
-  (let [f (merge field-defaults field)]
-    (case (:field/type f)
-      :attachment [attachment-field f]
-      :date [date-field f]
-      :description [text-field f]
-      :email [text-field f]
-      :header [header-field f]
-      :label [label f]
-      :multiselect [multiselect-field f]
-      :option [option-field f]
-      :phone-number [text-field f]
-      :ip-address [text-field f]
-      :table [table-field f]
-      :text [text-field f]
-      :texta [texta-field f]
-      [unsupported-field f])))
+  (let [field (assoc-not-present field :on-change identity)]
+    (case (:field/type field)
+      :attachment [attachment-field field]
+      :date [date-field field]
+      :description [text-field field]
+      :email [text-field field]
+      :header [header-field field]
+      :label [label field]
+      :multiselect [multiselect-field field]
+      :option [option-field field]
+      :phone-number [text-field field]
+      :ip-address [text-field field]
+      :table [table-field field]
+      :text [text-field field]
+      :texta [texta-field field]
+      [unsupported-field field])))
 
 ;;;; Guide
 

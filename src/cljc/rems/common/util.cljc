@@ -588,6 +588,26 @@
   (is (= {:a 1 :b true} (update-present {:a 1 :b 2} :b (constantly true))))
   (is (= {:a 1 :b true} (update-present {:a 1 :b nil} :b (constantly true)))))
 
+(defn assoc-not-present
+  "Like `clojure.core/assoc` but only assocs values into `m` if the key is not already present in `m`.
+
+  Good for setting default values."
+  [m & kvs]
+  (reduce (fn [m [k v]]
+            (if (contains? m k)
+              m
+              (assoc m k v)))
+          m
+          (partition 2 kvs)))
+
+(deftest test-assoc-not-present
+  (is (= {:a 1} (assoc-not-present {} :a 1)))
+  (is (= {:a 1 :b 2} (assoc-not-present {:b 2} :a 1)))
+  (is (= {:a 1} (assoc-not-present {:a 1} :a 2))
+      "doesn't replace existing key")
+  (is (= {:a 1 :b 2 :c 3 :d 4} (assoc-not-present {:a 1 :c 3} :a 2 :b 2 :c 4 :d 4))
+      "complex example"))
+
 ;; https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id
 (defn escape-element-id
   "Replaces non-conforming characters from string `id` for the purpose

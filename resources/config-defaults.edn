@@ -394,9 +394,8 @@
  :catalogue-tree-show-matching-parents true ; should parent categories be shown if children match?
 
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
-
- :enable-save-compaction nil ; whether to merge consecutive saves into one event (EXPERIMENTAL)
-
+ :enable-save-compaction false ; whether to merge consecutive saves into one event (EXPERIMENTAL)
+ :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
  ; which columns in applications list(s) should be hidden in UI
  ; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
- :application-list-hidden-columns []} 
+ :application-list-hidden-columns []}
