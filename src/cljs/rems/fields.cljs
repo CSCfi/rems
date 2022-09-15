@@ -8,7 +8,7 @@
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.form :as common-form]
-            [rems.common.util :refer [build-index getx]]
+            [rems.common.util :refer [assoc-not-present build-index getx]]
             [rems.flash-message]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
@@ -499,22 +499,22 @@
 
 ;; TODO: check if this and common.form/field-types could be combined
 (defn field [field]
-  (assert (fn? (:on-change field)) "A field must have :on-change handler")
-  (case (:field/type field)
-    :attachment [attachment-field field]
-    :date [date-field field]
-    :description [text-field field]
-    :email [text-field field]
-    :header [header-field field]
-    :label [label field]
-    :multiselect [multiselect-field field]
-    :option [option-field field]
-    :phone-number [text-field field]
-    :ip-address [text-field field]
-    :table [table-field field]
-    :text [text-field field]
-    :texta [texta-field field]
-    [unsupported-field field]))
+  (let [field (assoc-not-present field :on-change identity)]
+    (case (:field/type field)
+      :attachment [attachment-field field]
+      :date [date-field field]
+      :description [text-field field]
+      :email [text-field field]
+      :header [header-field field]
+      :label [label field]
+      :multiselect [multiselect-field field]
+      :option [option-field field]
+      :phone-number [text-field field]
+      :ip-address [text-field field]
+      :table [table-field field]
+      :text [text-field field]
+      :texta [texta-field field]
+      [unsupported-field field])))
 
 ;;;; Guide
 
