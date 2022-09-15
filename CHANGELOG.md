@@ -6,6 +6,8 @@ have notable changes.
 
 ## Unreleased
 
+Changes since v2.29
+
 ### Additions
 - Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
 - Mondo codes have been updated to version v2022-08-01. (#3031)
@@ -20,13 +22,19 @@ have notable changes.
 - License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
 - Don't needlessly complain about the config keys that are passed automatically from system properties and the environment. (#2935)
 
-Changes since v2.28
+## v2.29 "Länsisatamankatu" 2022-09-12
 
 **NB: This release contains migrations!**
 **NB: `workflow_licenses` table has been removed and the data is migrated to `workflow` table.**
 
 ### Additions
+- Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
+- Mondo codes have been updated to version v2022-08-01. (#3031)
 - Licenses can now be added to workflows through user interface and API. Workflow licenses are included in applications, similar to resource licenses. (#2158)
+
+### Fixes
+- License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
+- Don't needlessly complain about the config keys that are passed automatically from system properties and the environment. (#2935)
 
 ## v2.28 "Porkkalankatu" 2022-08-24
 
