@@ -204,15 +204,22 @@
   (find-rows [:licenses]
              {:fn/text (str (btu/context-getx :license-name) " EN")}))
 
+(defn get-form-field-id [label opts]
+  (let [id (-> (btu/query-all {:css ".fields > *"})
+               (->> (mapcat #(btu/children % {:tag :label :fn/has-text label})))
+               (nth (:index opts 0))
+               (btu/get-element-attr-el :for))]
+    id))
+
+(defn clear-form-field [label & [opts]]
+  (btu/clear {:id (get-form-field-id label opts)}))
+
 (defn fill-form-field
   "Fills a form field named by `label` with `text`.
 
   Optionally give `:index` when several items match. It starts from 0."
   [label text & [opts]]
-  (let [id (-> (btu/query-all {:css ".fields > *"})
-               (->> (mapcat #(btu/children % {:tag :label :fn/has-text label})))
-               (nth (:index opts 0))
-               (btu/get-element-attr-el :for))]
+  (let [id (get-form-field-id label opts)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
 
@@ -509,20 +516,22 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
-        (fill-form-field "Simple text field" "Private field answer")
+        (fill-form-field "Simple text field" "Private field answer before autosave")
 
-        (testing "saved manually or automatically"
-          (if (:enable-autosave env)
-            (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
-            (do
-              (btu/scroll-and-click :save)
-              (is (btu/eventually-visible? {:id :status-success})))))
+        (btu/scroll-and-click :save)
+        (is (btu/eventually-visible? {:id :status-success}))
+
+        ;; let's also try autosave
+        (let [reset-config (btu/set-client-config {:enable-autosave true})]
+          (clear-form-field "Simple text field")
+          (fill-form-field "Simple text field" "Private field answer")
+          (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
+          (reset-config))
 
         (testing "add invalid value for field, try to save"
           (fill-form-field "Email field" "user")
 
-          (when-not (:enable-autosave env)
-            (btu/scroll-and-click :save))
+          (btu/scroll-and-click :save)
 
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."]
