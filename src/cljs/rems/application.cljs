@@ -207,13 +207,15 @@
                                 :mondo (map #(select-keys % [:id]) values)
                                 (if (some? values) [{:value values}] []))})}))
 
-(defn- save-draft! [description application edit-application handler]
+(defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
+  (flash-message/clear-message! :actions)
   (post! "/api/applications/save-draft"
          {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application (:field-values edit-application))
                    :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
           :handler handler
-          :error-handler (flash-message/default-error-handler :actions description)}))
+          :error-handler (or error-handler
+                             (flash-message/default-error-handler :actions description))}))
 
 (rf/reg-event-fx
  ::save-application
@@ -247,10 +249,12 @@
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
                       (apply (handle-validations! description application {:on-success #(do (rf/dispatch [::set-autosaving false])
-                                                                                            (flash-message/show-quiet-success! :actions-form-flash [text :t.form/autosave-confirmed]))
+                                                                                            (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed]))
                                                                            :default-success? false
                                                                            :focus? false})
-                             [response])))
+                             [response]))
+                    {:error-handler (fn [err]
+                                      (rf/dispatch [::set-autosaving false]))})
        {:db (-> db
                 (assoc ::autosaving true)
                 (assoc-in [::edit-application :validation :errors] nil)
@@ -896,12 +900,6 @@
        {:id "actions-collapse"
         :title (text :t.form/actions)
         :always [:div
-                 (when @(rf/subscribe [::autosaving])
-                       [:div.alert.alert-info
-                        [text :t.form/autosave-in-progress]
-                        [:span.ml-2 [spinner/small]]])
-
-                 [flash-message/component :actions-form-flash]
 
                  (into [:div#action-commands] actions)
 
@@ -1101,6 +1099,11 @@
     [:div.col-lg-4.spaced-vertically-3
      [:div#actions
       [flash-message/component :actions]
+      (when (and (not @(rf/subscribe [::flash-message/message :actions])) ; avoid two messages at the same time and causing re-layout
+                 @(rf/subscribe [::autosaving]))
+        [:div.alert.alert-info
+         [text :t.form/autosave-in-progress]
+         [:span.ml-2 [spinner/small]]])
       [actions-form application config]]]]])
 
 ;;;; Entrypoint
