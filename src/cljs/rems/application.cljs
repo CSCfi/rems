@@ -892,9 +892,9 @@
         :title (text :t.form/actions)
         :always [:div
                  (when @(rf/subscribe [::autosaving])
-                   [:div.d-flex.flex-row.alert.alert-info
-                    [text :t.form/autosave-in-progress]
-                    [spinner/small]])
+                       [:div.alert.alert-info
+                        [text :t.form/autosave-in-progress]
+                        [:span.ml-2 [spinner/small]]])
 
                  [flash-message/component :actions-form-flash]
 
