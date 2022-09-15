@@ -22,7 +22,6 @@
             [rems.api.services.workflow :as workflows]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
-            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
