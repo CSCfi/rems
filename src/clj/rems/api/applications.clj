@@ -201,7 +201,6 @@
         (attachment/download attachment)
         (api-util/not-found-json-response)))
 
-    ;; TODO: think about size limit
     (POST "/add-attachment" []
       :summary "Add an attachment file related to an application"
       :roles #{:logged-in}
