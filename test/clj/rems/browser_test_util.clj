@@ -536,10 +536,12 @@
         (when (seq @violations)
           (throw (Exception. (str "\n\n\nThere are accessibility violations: " (count @violations) "\n\n\n"))))))))
 
-(defn set-client-config
-  [config]
-  (js-execute "return window.rems.config.set_config_BANG_(arguments[0]);" config)
-  (fn []
-    (js-async "var args = arguments;
-               var callback = args[args.length - 1];
-               window.rems.config.fetch_config_BANG_(callback);")))
+(defmacro with-client-config [config & body]
+  `(do
+     (rems.browser-test-util/js-execute
+      "return window.rems.config.set_config_BANG_(arguments[0]);" ~config)
+     ~@body
+     (rems.browser-test-util/js-async
+      "var args = arguments;
+       var callback = args[args.length - 1];
+       return window.rems.config.fetch_config_BANG_(callback);")))
