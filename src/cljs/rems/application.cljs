@@ -84,7 +84,10 @@
                   [:a {:href "#"
                        :on-click (case (:field/type field)
                                    ;; workaround for tables: there's no single input to focus
-                                   :table #(focus/focus-selector (str "#container-" (fields/field-name field)))
+                                   :table #(focus/focus-selector (str "#container-"
+                                                                      (fields/field-name field)))
+                                   :attachment (focus-input-field (str "upload-"
+                                                                       (fields/field-name field)))
                                    (focus-input-field (fields/field-name field)))}
                    (text-format type (localized (:field/title field)))]
                   (text type))]))])

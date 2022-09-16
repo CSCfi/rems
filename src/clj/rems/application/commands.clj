@@ -259,14 +259,14 @@
 
 (defn- form-validation-warnings [forms]
   (let [warnings (for [form forms
-                       warning (form-validation/validate-fields-for-draft (:form/fields form))]
+                       warning (form-validation/validate-fields (:form/fields form))]
                    (assoc warning :form-id (:form/id form)))]
     (when (seq warnings)
       {:warnings warnings})))
 
 (defn- form-validation-errors [forms]
   (let [errors (for [form forms
-                     error (form-validation/validate-fields-for-submit (:form/fields form))]
+                     error (form-validation/validate-fields (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))

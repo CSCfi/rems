@@ -321,6 +321,7 @@
   (let [el (first (btu/query-all [{:css ".fields"}
                                   {:tag :label :fn/has-text label}]))
         id (btu/get-element-attr-el el :for)]
+    (btu/wait-visible {:id (str id "-error")})
     (btu/get-element-text {:id (str id "-error")})))
 
 (defn fill-license-fields [{:keys [title external-links inline-text attachments]}]
@@ -472,15 +473,14 @@
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
 
         (testing "uploading oversized attachment should display error"
-          (let [reset-config (btu/set-client-config {:attachment-max-size 900})]
+          (btu/with-client-config {:attachment-max-size 900}
             (btu/upload-file attachment-field-upload-selector "resources/public/img/rems_logo_fi.png")
             (is (btu/eventually-visible? :status-failed))
             (is (= ["Upload an attachment: Failed"
                     (str/join "\n" ["The attachment is too large."
                                     "rems_logo_fi.png 10.34 KB"
                                     "Allowed maximum size of an attachment: 0.9 KB."])]
-                   (get-error-summary)))
-            (reset-config)))
+                   (get-error-summary)))))
 
         (is (not (btu/field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
@@ -517,38 +517,37 @@
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
-        (btu/scroll-and-click :save)
-        (is (btu/eventually-visible? {:id :status-success}))
-
-        ;; let's also try autosave
-        (let [reset-config (btu/set-client-config {:enable-autosave true})]
-          (clear-form-field "Simple text field")
-          (fill-form-field "Simple text field" "Private field answer")
-          (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
-          (reset-config))
-
-        (testing "add invalid value for field, try to save"
+        (testing "save draft succesfully, but show validation warnings"
           (fill-form-field "Email field" "user")
-
           (btu/scroll-and-click :save)
-
           (is (btu/eventually-visible? :status-warning))
-          (is (= ["Invalid email address."]
+          (is (= ["Field \"Text field\" is required."
+                  "Invalid email address."]
                  (get-validation-summary)))
           (is (= "Invalid email address."
                  (get-validation-for-field "Email field"))))
 
-        (fill-form-field "Email field" "@example.com")
+        ;; let's also try autosave
+        (btu/with-client-config {:enable-autosave true}
+          (clear-form-field "Simple text field")
+          (fill-form-field "Simple text field" "Private field answer")
+          (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
+          (is (btu/eventually-visible? :status-warning))
+          (is (= ["Field \"Text field\" is required."
+                  "Invalid email address."]
+                 (get-validation-summary))))
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
           (btu/scroll-and-click :submit)
           (is (btu/eventually-visible? {:id "status-failed" :fn/has-text "Send application"}))
           (is (= ["Terms of use not accepted."
-                  "Field \"Text field\" is required."]
+                  "Field \"Text field\" is required."
+                  "Invalid email address."]
                  (get-validation-summary)))
           (is (= "Field \"Text field\" is required."
                  (get-validation-for-field "Text field"))))
 
+        (fill-form-field "Email field" "@example.com") ; to complete email field value
         (fill-form-field "Text field" "Test")
 
         (accept-licenses)

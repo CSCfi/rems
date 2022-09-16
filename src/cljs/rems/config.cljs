@@ -29,10 +29,10 @@
   (let [config @(rf/subscribe [::config])]
     (boolean (:dev config))))
 
-(defn ^:export set-config!
-  [js-config]
-  (rf/dispatch-sync [::loaded-config (merge @(rf/subscribe [::config])
-                                            (js->clj js-config :keywordize-keys true))]))
+(defn ^:export set-config! [js-config]
+  (when (dev-environment?)
+    (rf/dispatch-sync [::loaded-config (merge @(rf/subscribe [::config])
+                                              (js->clj js-config :keywordize-keys true))])))
 
 ;; organizations
 

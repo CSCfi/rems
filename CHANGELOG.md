@@ -21,6 +21,7 @@ Changes since v2.29
 ### Fixes
 - License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
 - Don't needlessly complain about the config keys that are passed automatically from system properties and the environment. (#2935)
+- Application warning and error links were not functioning correctly for attachment fields. This is now fixed. (#2955)
 
 ## v2.29 "Länsisatamankatu" 2022-09-12
 

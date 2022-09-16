@@ -4,38 +4,27 @@
             [rems.common.form :as form]
             [rems.common.util :refer [+email-regex+
                                       +phone-number-regex+
-                                      +valid-ip-address-regex+
-                                      +valid-ip-address-regex-version-six+
-                                      +reserved-ip-address-range-regex+
-                                      +reserved-ip-address-range-regex-version-six+]]))
-
-(defn- all-columns-set? [field]
-  (let [valid-row? #(not-any? str/blank? (map :value %))]
-    (every? valid-row? (:field/value field))))
+                                      +ipv4-regex+
+                                      +ipv6-regex+
+                                      +reserved-ipv4-range-regex+
+                                      +reserved-ipv6-range-regex+]]))
 
 (defn- required-error [field]
-  (when (:field/visible field)
-    (case (:field/type field)
-      (:header :label)
-      nil
-
-      :table
-      (or
-       ;; a non-optional table must have at least one row
-       (when-not (:field/optional field)
-         (when (empty? (:field/value field))
-           {:field-id (:field/id field)
-            :type     :t.form.validation/required}))
-       ;; all tables must have all columns set for all rows
-       (when-not (all-columns-set? field)
-         {:field-id (:field/id field)
-          :type     :t.form.validation/column-values-missing}))
-
-      ;; default:
-      (when-not (:field/optional field)
-        (when (str/blank? (:field/value field))
+  (let [field-value (:field/value field)]
+    (when (and (:field/visible field)
+               (not (:field/optional field)))
+      (case (:field/type field)
+        (:header :label) nil
+        :table ;; a non-optional table must have at least one row
+        (when (empty? field-value)
           {:field-id (:field/id field)
-           :type     :t.form.validation/required})))))
+           :type :t.form.validation/required})
+        ;; default:
+        (when (cond
+                (string? field-value) (str/blank? field-value)
+                :else (nil? field-value))
+          {:field-id (:field/id field)
+           :type :t.form.validation/required})))))
 
 (defn- too-long-error [field]
   (when-let [limit (:field/max-length field)]
@@ -60,20 +49,14 @@
 (defn- invalid-ip-address-error [field]
   (when (and (= (:field/type field) :ip-address)
              (not (str/blank? (:field/value field))))
-    (cond
-      (or
-       (and (first (re-matches +valid-ip-address-regex+ (:field/value field)))
-            (first (re-matches +reserved-ip-address-range-regex+ (:field/value field))))
-       (and (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))
-            (first (re-matches +reserved-ip-address-range-regex-version-six+ (:field/value field)))))
-      {:field-id (:field/id field)
-       :type     :t.form.validation/invalid-ip-address-private}
-      (and
-       (not (first (re-matches +valid-ip-address-regex+ (:field/value field))))
-       (not (first (re-matches +valid-ip-address-regex-version-six+ (:field/value field)))))
-      {:field-id (:field/id field)
-       :type     :t.form.validation/invalid-ip-address}
-      :else nil)))
+    (let [matches #(first (re-matches % (:field/value field)))
+          invalid-ip? (not-any? matches [+ipv4-regex+ +ipv6-regex+])
+          private-ip? (or (every? matches [+ipv4-regex+ +reserved-ipv4-range-regex+])
+                          (every? matches [+ipv6-regex+ +reserved-ipv6-range-regex+]))]
+      (or (when invalid-ip? {:field-id (:field/id field)
+                             :type :t.form.validation/invalid-ip-address})
+          (when private-ip? {:field-id (:field/id field)
+                             :type :t.form.validation/invalid-ip-address-private})))))
 
 (defn- option-value-valid? [field]
   (let [allowed-values (set (conj (map :key (:field/options field)) ""))]
@@ -99,14 +82,17 @@
   (when (= (:field/type field) :table)
     (let [columns (set (map :key (:field/columns field)))
           row-ok? (fn [row] (= columns (set (map :column row))))
+          columns-set? (fn [row] (not-any? (comp str/blank? :value) row))
           value (:field/value field)]
       ;; Schema validation guarantees that it's either a s/Str or
       ;; a [[{:column s/Str :value s/Str}]], and we've ruled out s/Str
       ;; in wrong-value-type-error
-      (when-not (every? row-ok? value)
-        ;; TODO more specific error?
-        {:field-id (:field/id field)
-         :type     :t.form.validation/invalid-value}))))
+      (or (when-not (every? row-ok? value)
+            {:field-id (:field/id field)
+             :type :t.form.validation/invalid-value})
+          (when-not (every? columns-set? value)
+            {:field-id (:field/id field)
+             :type :t.form.validation/column-values-missing})))))
 
 ;; TODO: validate that attachments are actually valid?
 (defn- invalid-attachment-error [field]
@@ -140,21 +126,12 @@
       (missing-columns-error field)
       (invalid-attachment-error field)))
 
-(defn- validate-field-submit [field]
+(defn- validate-field [field]
   (or (required-error field)
       (validate-field-content field)))
 
-(defn- validate-draft-field [field]
-  (validate-field-content field))
-
-(defn validate-fields-for-draft [fields]
+(defn validate-fields [fields]
   (->> (sort-by :field/id fields)
-       (map validate-draft-field)
-       (remove nil?)
-       (seq)))
+       (keep validate-field)
+       not-empty))
 
-(defn validate-fields-for-submit [fields]
-  (->> (sort-by :field/id fields)
-       (map validate-field-submit)
-       (remove nil?)
-       (seq)))
