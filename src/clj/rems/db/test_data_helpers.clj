@@ -239,6 +239,18 @@
                                                (:option :multiselect) (:key (first (:field/options field)))
                                                (or field-value "x"))})))))
 
+(defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
+  (let [app (applications/get-application-for-user actor application-id)]
+    (command! (assoc (base-command command)
+                     :type :application.command/save-draft
+                     ;; copy existing forms so as to not override
+                     :field-values (for [form (:application/forms app)
+                                         field (:form/fields form)]
+                                     {:form (:form/id form)
+                                      :field (:field/id field)
+                                      :value (:field/value field)})
+                     :duo-codes duos))))
+
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
   (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)

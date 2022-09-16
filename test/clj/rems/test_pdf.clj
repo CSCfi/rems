@@ -257,7 +257,14 @@
                                                            :fi "Tekstiä"}})
         ;; TODO attachment license
         resource (test-helpers/create-resource! {:resource-ext-id "pdf-resource-ext"
-                                                 :license-ids [lic1 lic2]})
+                                                 :license-ids [lic1 lic2]
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                               :values [{:id "MONDO:0000928"}]}]}
+                                                                            {:id "DUO:0000015"}
+                                                                            {:id "DUO:0000027"
+                                                                             :restrictions [{:type :project
+                                                                                             :values [{:value "project name here"}]}]
+                                                                             :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}})
         form (test-helpers/create-form! {:form/internal-name  "Form"
                                          :form/external-title {:en "Form"
                                                                :fi  "Lomake"
@@ -296,6 +303,13 @@
                                   :field-value "pdf test"
                                   :attachment (str attachment-1 "," attachment-2)
                                   :optional-fields true}))
+      ;; third draft-saved event
+      (test-helpers/fill-duo-codes! {:time (time/date-time 2000)
+                                     :actor applicant
+                                     :application-id application-id
+                                     :duos [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
+                                            {:id "DUO:0000015"}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
       (test-helpers/accept-licenses! {:time (time/date-time 2000)
                                       :actor applicant
                                       :application-id application-id})
