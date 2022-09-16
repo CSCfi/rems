@@ -466,7 +466,8 @@
                :remove "Poista"}
   :label {:default "%1: %2"
           :dash "%1 – %2"
-          :long "%1: %2 – %3"}
+          :long "%1: %2 – %3"
+          :parens "%1 (%2)"}
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
