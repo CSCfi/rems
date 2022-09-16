@@ -28,7 +28,8 @@
                     :enable-catalogue-tree
                     :catalogue-tree-show-matching-parents
                     :enable-cart
-                    :application-list-hidden-columns]))
+                    :application-list-hidden-columns
+                    :enable-autosave]))
 
 (defn get-config-full []
   (assoc env
