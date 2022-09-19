@@ -25,6 +25,7 @@ Changes since v2.29
   - In the future, autosave may become the default mode. (#2767)
   - Applications don't yet automatically get reloaded, should another person be viewing the same application.
     This is a potential future feature. (see #2622, #2244)
+- Organization owners are now allowed to edit their own organizations owners. (#2828)
 
 ### Fixes
 - License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
