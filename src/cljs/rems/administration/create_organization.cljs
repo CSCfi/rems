@@ -43,8 +43,6 @@
 (fetcher/reg-fetcher ::organization "/api/organizations/:id" {:path-params (fn [db] {:id (::organization-id db)})
                                                               :on-success #(rf/dispatch [::fetch-organization-success %])})
 
-
-
 ;;; form submit
 
 (defn- valid-review-email? [languages review-email]
@@ -180,7 +178,10 @@
   (let [form @(rf/subscribe [::form])
         all-owners @(rf/subscribe [::available-owners])
         selected-owners (set (map :userid (get-in form [:organization/owners])))
-        roles @(rf/subscribe [:roles])]
+        roles @(rf/subscribe [:roles])
+        owner? (contains? roles :owner)
+        organization-owner? (-> selected-owners
+                                (contains? (:userid @(rf/subscribe [:user]))))]
     [:div.form-group
      [:label.administration-field-label
       {:for owners-dropdown-id}
@@ -192,8 +193,7 @@
        :item-label :display
        :item-selected? #(contains? selected-owners (% :userid))
        :multi? true
-       :disabled? (and (some #{:organization-owner} roles)
-                       (not (some #{:owner} roles)))
+       :disabled? (not (or organization-owner? owner?))
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
