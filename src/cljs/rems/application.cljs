@@ -112,6 +112,7 @@
 (rf/reg-sub ::application-id (fn [db _] (::application-id db)))
 (rf/reg-sub ::application (fn [db [_ k]] (get-in db [::application (or k :data)])))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
+(rf/reg-sub ::editable? :<- [::application] form-fields-editable?)
 
 (rf/reg-event-fx
  ::enter-application-page
@@ -505,8 +506,7 @@
         field-validations (index-by [:form-id :field-id]
                                     (some seq [(:errors validations) (:warnings validations)]))
         attachments (index-by [:attachment/id] (:application/attachments application))
-        form-fields-editable? (form-fields-editable? application)
-        readonly? (not form-fields-editable?)
+        readonly? (not @(rf/subscribe [::editable?]))
         language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
@@ -555,8 +555,7 @@
                                       (contains? roles :applicant))
           accepted-licenses (get (:application/accepted-licenses application) userid)
           permissions (:application/permissions application)
-          form-fields-editable? (form-fields-editable? application)
-          readonly? (not form-fields-editable?)]
+          readonly? (not @(rf/subscribe [::editable?]))]
       [collapsible/component
        {:id "application-licenses"
         :title (text :t.form/licenses)
@@ -1093,7 +1092,8 @@
      [:div.mt-3 [applicants-info application userid]]
      [:div.mt-3 [applied-resources application userid language]]
      (when (:enable-duo config)
-       (if (= userid (-> application :application/applicant :userid))
+       (if (and @(rf/subscribe [::editable?])
+                (= userid (get-in application [:application/applicant :userid])))
          [:div.mt-3 [edit-application-duo-codes]]
          [:div.mt-3 [application-duo-codes]]))
      (when (contains? (:application/permissions application) :see-everything)
