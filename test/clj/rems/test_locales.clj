@@ -62,11 +62,14 @@
   (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z0-9./]+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
-    (->> grep
-         :out
-         str/split-lines
-         (map read-string)
-         set)))
+    (-> grep
+        :out
+        str/split-lines
+        (->> (map read-string))
+        set
+        ; XXX: these keys are considered optional and have programmatical fallbacks
+        (clojure.set/difference #{:t.applications.intro/applicants-members
+                                  :t.applications.intro/handlers-reviewers-deciders}))))
 
 (deftest test-translation-keywords-in-use
   (let [keys-in-source (set (translation-keywords-in-use))]
