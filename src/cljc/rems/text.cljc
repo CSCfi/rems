@@ -1,5 +1,6 @@
 (ns rems.text
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.set]
+            [clojure.test :refer [deftest is]]
             #?(:clj [clj-time.core :as time]
                :cljs [cljs-time.core :as time])
             #?(:clj [clj-time.format :as time-format]
@@ -28,13 +29,15 @@
 (defn text-format
   "Return the tempura translation for a given key & time arguments"
   [k & args]
-  #?(:clj (context/*tempura* [k :t/missing] (vec args))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (tr {:dict @translations}
-                 [@language]
-                 [k :t/missing (failsafe-fallback k args)]
-                 (vec args)))))
+  (let [keys (->> (get (last args) :fallbacks [:t/missing])
+                  (into [k]))]
+    #?(:clj (context/*tempura* keys (vec args))
+       :cljs (let [translations (rf/subscribe [:translations])
+                   language (rf/subscribe [:language])]
+               (tr {:dict @translations}
+                   [@language]
+                   (into keys (failsafe-fallback k args))
+                   (vec args))))))
 
 (defn text
   "Return the tempura translation for a given key. Additional fallback
@@ -216,3 +219,15 @@
          (str " " (text-format :t.applications/entitlement-end (localize-utc-date end))))
 
        nil))))
+
+(defn localize-application-intro [application]
+  (let [roles (:application/roles application)
+        localize-role-or #(text-format (keyword "t.applications.intro.role"
+                                                (name (first roles)))
+                                       {:fallbacks [%1 :t.applications.intro/default]})]
+    (condp (comp not-empty clojure.set/intersection) roles
+      #{:applicant :member} (localize-role-or
+                             :t.applications.intro/applicants-members)
+      #{:handler :reviewer :decider} (localize-role-or
+                                      :t.applications.intro/handlers-reviewers-deciders)
+      (text-format :t.applications.intro/default))))

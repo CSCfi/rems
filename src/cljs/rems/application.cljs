@@ -42,7 +42,7 @@
             [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
+            [rems.text :refer [localize-application-intro localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
@@ -1085,7 +1085,7 @@
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
-   (text :t.applications/intro)
+   [localize-application-intro application]
    [:div.row
     [:div.col-lg-8
      [application-state application config highlight-request-id userid]
