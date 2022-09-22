@@ -234,7 +234,16 @@
                  :handlers "Handlers"
                  :highlight-related-events "Show related events."
                  :id "Id"
-                 :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
+                 ;; intro text in application page can be keyed in a few different ways.
+                 ;; role-specific localizations are applied first (:role) if exists, then
+                 ;; group-specific localizations :applicants-members and :handlers-reviewers-deciders if exists,
+                 ;; and finally :default key.
+                 ;; allowed roles: #{:applicant :member :handler :decider :reviewer}
+                 :intro {:default [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
+                        ;;  :role {:reviewer :en.applications.intro.default}
+                        ;;  :applicants-members :en.applications.intro.default
+                        ;;  :handlers-reviewers-deciders :en.applications.intro.default
+                         }
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"

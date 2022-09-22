@@ -218,7 +218,16 @@
                  :handlers "Handläggare"
                  :highlight-related-events "Visa relaterade händelser."
                  :id "id"
-                 :intro [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
+                 ;; intro text in application page can be keyed in a few different ways.
+                 ;; role-specific localizations are applied first (:role) if exists, then
+                 ;; group-specific localizations :applicants-members and :handlers-reviewers-deciders if exists,
+                 ;; and finally :default key.
+                 ;; allowed roles: #{:applicant :member :handler :decider :reviewer}
+                 :intro {:default [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
+                        ;;  :role {:reviewer :sv.applications.intro.default}
+                        ;;  :applicants-members :sv.applications.intro.default
+                        ;;  :handlers-reviewers-deciders :sv.applications.intro.default
+                         }
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"

@@ -218,7 +218,16 @@
                  :handlers "Käsittelijät"
                  :highlight-related-events "Näytä liittyvät tapahtumat."
                  :id "Tunniste"
-                 :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
+                 ;; intro text in application page can be keyed in a few different ways.
+                 ;; role-specific localizations are applied first (:role) if exists, then
+                 ;; group-specific localizations :applicants-members and :handlers-reviewers-deciders if exists,
+                 ;; and finally :default key.
+                 ;; allowed roles: #{:applicant :member :handler :decider :reviewer}
+                 :intro {:default [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
+                        ;;  :role {:reviewer :fi.applications.intro.default}
+                        ;;  :applicants-members :fi.applications.intro.default
+                        ;;  :handlers-reviewers-deciders :fi.applications.intro.default
+                         }
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
