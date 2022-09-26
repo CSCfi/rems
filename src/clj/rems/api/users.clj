@@ -18,6 +18,8 @@
    (s/optional-key :organizations) [schema-base/OrganizationId]
    s/Keyword s/Any})
 
+(def EditUserCommand CreateUserCommand)
+
 (def users-api
   (context "/users" []
     :tags ["users"]
@@ -28,6 +30,14 @@
       :body [command CreateUserCommand]
       :return schema/SuccessResponse
       (users/add-user! command)
+      (ok {:success true}))
+
+    (PUT "/edit" []
+      :summary "Update user"
+      :roles #{:owner :user-owner}
+      :body [command EditUserCommand]
+      :return schema/SuccessResponse
+      (users/edit-user! command)
       (ok {:success true}))
 
     (GET "/active" []

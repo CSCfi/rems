@@ -58,6 +58,11 @@
   [user]
   (add-user-raw! (:userid user) (unformat-user user)))
 
+(defn edit-user!
+  "Update a user given formatted user attributes."
+  [user]
+  (db/edit-user! {:user (:userid user) :userattrs (json/generate-string (unformat-user user))}))
+
 (defn get-raw-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
 
