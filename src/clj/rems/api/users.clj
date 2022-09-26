@@ -18,7 +18,7 @@
    (s/optional-key :organizations) [schema-base/OrganizationId]
    s/Keyword s/Any})
 
-(def EditUserCommand CreateUserCommand)
+(s/defschema EditUserCommand CreateUserCommand)
 
 (def users-api
   (context "/users" []
