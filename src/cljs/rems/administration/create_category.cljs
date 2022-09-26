@@ -58,7 +58,7 @@
  ::create-category
  (fn [_ [_ request]]
    (let [description [text :t.administration/save]]
-     (post! "/api/categories"
+     (post! "/api/categories/create"
             {:params request
              :handler (flash-message/default-success-handler
                        :top description #(navigate! (str "/administration/categories/" (:category/id %))))

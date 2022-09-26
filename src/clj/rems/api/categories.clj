@@ -33,15 +33,31 @@
         (ok category)
         (not-found-json-response)))
 
-    (POST "/" []
+    (POST "/create" []
       :summary "Create category"
       :roles +admin-write-roles+
       :body [command schema/CreateCategoryCommand]
       :return CreateCategoryResponse
       (ok (category/create-category! command)))
 
-    (PUT "/" []
+    (PUT "/edit" []
       :summary "Update category"
+      :roles +admin-write-roles+
+      :body [command schema/UpdateCategoryCommand]
+      :return schema/SuccessResponse
+      (if (category/get-category (:category/id command))
+        (ok (category/update-category! command))
+        (not-found-json-response)))
+
+    (POST "/" []
+      :summary "Create category. DEPRECATED, will disappear, use /create instead"
+      :roles +admin-write-roles+
+      :body [command schema/CreateCategoryCommand]
+      :return CreateCategoryResponse
+      (ok (category/create-category! command)))
+
+    (PUT "/" []
+      :summary "Update category, DEPRECATED, will disappear, use /edit instead"
       :roles +admin-write-roles+
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
