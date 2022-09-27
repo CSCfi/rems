@@ -500,6 +500,11 @@ VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET userAttrs = :userattrs::jsonb;
 
+-- :name edit-user! :!
+UPDATE users
+SET userAttrs = :userattrs::jsonb
+WHERE userId = :user;
+
 -- :name remove-user! :!
 DELETE from users
 WHERE userId = :user;

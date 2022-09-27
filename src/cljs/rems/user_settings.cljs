@@ -101,7 +101,7 @@
  (fn [{:keys [db]} [_ language]]
    (let [user-id (get-in db [:identity :user :userid])]
      (when user-id
-       (put! "/api/user-settings"
+       (put! "/api/user-settings/edit"
              {:params {:language language}
               :handler #(rf/dispatch [::fetch-user-settings])
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
