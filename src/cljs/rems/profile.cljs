@@ -39,7 +39,7 @@
  ::save
  (fn [{:keys [db]} _]
    (let [description [text :t.profile/save]]
-     (put! "/api/user-settings"
+     (put! "/api/user-settings/edit"
            {:params (::form db)
             :handler (flash-message/default-success-handler :top description
                                                             #(rf/dispatch [::user-settings]))

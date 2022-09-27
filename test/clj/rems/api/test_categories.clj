@@ -30,7 +30,7 @@
           (is (= {:error "not found"} (read-body response)))))
 
       (testing "create"
-        (let [category (api-call :post "/api/categories"
+        (let [category (api-call :post "/api/categories/create"
                                  create-category-data
                                  +test-api-key+ user-id)]
           (is (:success category))
@@ -45,13 +45,13 @@
               (is (= expected result))))))
 
       (testing "adding category as children"
-        (let [dep-category (api-call :post "/api/categories"
+        (let [dep-category (api-call :post "/api/categories/create"
                                      create-category-data
                                      +test-api-key+ user-id)]
           (is (:success dep-category))
           (is (int? (:category/id dep-category)))
 
-          (let [category (api-call :post "/api/categories"
+          (let [category (api-call :post "/api/categories/create"
                                    (merge create-category-data
                                           {:category/children [{:category/id (:category/id dep-category)}]})
                                    +test-api-key+ user-id)]
@@ -70,7 +70,7 @@
               (is (= expected result))))))
 
       (testing "creating category with non-existing children should fail"
-        (let [result (api-call :post "/api/categories"
+        (let [result (api-call :post "/api/categories/create"
                                (merge create-category-data
                                       {:category/children [{:category/id 9999999}]})
                                +test-api-key+ user-id)]
@@ -94,14 +94,14 @@
                                                :en "integration test 2"}}]
     (doseq [user-id [owner org-owner]]
       (testing "create"
-        (let [category (api-call :post "/api/categories"
+        (let [category (api-call :post "/api/categories/create"
                                  create-category-data
                                  +test-api-key+ user-id)]
           (is (:success category))
           (is (int? (:category/id category)))
 
           (testing "and update"
-            (let [update-result (api-call :put "/api/categories"
+            (let [update-result (api-call :put "/api/categories/edit"
                                           (merge create-category-data
                                                  update-category-data
                                                  {:category/id (:category/id category)})
@@ -116,7 +116,7 @@
                 (is (= expected result)))))
 
           (testing "updating category with self as child should fail"
-            (let [result (api-call :put "/api/categories"
+            (let [result (api-call :put "/api/categories/edit"
                                    (merge create-category-data
                                           update-category-data
                                           {:category/id (:category/id category)
@@ -128,19 +128,19 @@
                      (:errors result)))))
 
           (testing "should error when setting ancestor categories as category children"
-            (let [ancestor-category (api-call :post "/api/categories"
+            (let [ancestor-category (api-call :post "/api/categories/create"
                                               (merge create-category-data
                                                      {:category/children [{:category/id (:category/id category)}]})
                                               +test-api-key+ user-id)
-                  subcategory (api-call :post "/api/categories"
+                  subcategory (api-call :post "/api/categories/create"
                                         create-category-data
                                         +test-api-key+ user-id)
-                  update-parent-result (api-call :put "/api/categories"
+                  update-parent-result (api-call :put "/api/categories/edit"
                                                  (merge create-category-data
                                                         {:category/id (:category/id category)
                                                          :category/children [{:category/id (:category/id subcategory)}]})
                                                  +test-api-key+ user-id)
-                  loop-update-result (api-call :put "/api/categories"
+                  loop-update-result (api-call :put "/api/categories/edit"
                                                (merge create-category-data
                                                       {:category/id (:category/id subcategory)
                                                        :category/children [{:category/id (:category/id ancestor-category)}
@@ -156,7 +156,7 @@
                      (:errors loop-update-result)))))))
 
       (testing "updating non-existing category returns 404"
-        (let [response (api-response :put "/api/categories"
+        (let [response (api-response :put "/api/categories/edit"
                                      (merge create-category-data
                                             update-category-data
                                             {:category/id 9999999})
@@ -177,10 +177,10 @@
 
     (doseq [user-id [owner org-owner]]
       (testing "create"
-        (let [dep-category (api-call :post "/api/categories"
+        (let [dep-category (api-call :post "/api/categories/create"
                                      create-category-data
                                      +test-api-key+ user-id)
-              category (api-call :post "/api/categories"
+              category (api-call :post "/api/categories/create"
                                  (merge create-category-data
                                         {:category/children [{:category/id (:category/id dep-category)}]})
                                  +test-api-key+ user-id)]
@@ -201,13 +201,13 @@
                 (is (= {:error "not found"} (read-body response))))))))
 
       (testing "cannot delete category that is depended on by another category"
-        (let [dep-category (api-call :post "/api/categories"
+        (let [dep-category (api-call :post "/api/categories/create"
                                      create-category-data
                                      +test-api-key+ user-id)]
           (is (:success dep-category))
           (is (int? (:category/id dep-category)))
 
-          (let [category (api-call :post "/api/categories"
+          (let [category (api-call :post "/api/categories/create"
                                    (merge create-category-data
                                           {:category/children [{:category/id (:category/id dep-category)}]})
                                    +test-api-key+ user-id)]
@@ -224,7 +224,7 @@
                      (:errors result)))))))
 
       (testing "cannot delete category that is depended on by a catalogue item"
-        (let [dep-category (api-call :post "/api/categories"
+        (let [dep-category (api-call :post "/api/categories/create"
                                      create-category-data
                                      +test-api-key+ user-id)]
           (is (:success dep-category))

@@ -32,8 +32,15 @@
       :return GetUserSettings
       (ok (user-settings/get-user-settings (get-user-id))))
 
-    (PUT "/" []
+    (PUT "/edit" []
       :summary "Update user settings"
+      :roles #{:logged-in}
+      :body [settings UpdateUserSettings]
+      :return schema/SuccessResponse
+      (ok (user-settings/update-user-settings! (getx-user-id) settings)))
+
+    (PUT "/" []
+      :summary "Update user settings, DEPRECATED, will disappear, use /edit instead"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse

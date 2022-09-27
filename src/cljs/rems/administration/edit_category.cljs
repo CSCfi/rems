@@ -75,7 +75,7 @@
  (fn [{:keys [db]} [_ request]]
    (let [description [text :t.administration/save]
          category-id (parse-int (::category-id db))]
-     (put! (str "/api/categories")
+     (put! (str "/api/categories/edit")
            {:params (assoc request :category/id category-id)
             :handler (flash-message/status-update-handler
                       :top description #(navigate! (str "/administration/categories/" category-id)))

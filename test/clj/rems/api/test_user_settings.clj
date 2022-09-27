@@ -39,7 +39,7 @@
                  read-ok-body))))
 
     (testing "update user settings"
-      (-> (request :put "/api/user-settings")
+      (-> (request :put "/api/user-settings/edit")
           (json-body {:language :fi})
           (authenticate "42" user-id)
           handler

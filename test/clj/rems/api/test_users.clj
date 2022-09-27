@@ -38,8 +38,8 @@
               :email "d@av.id"
               :name "David Newuser"} (users/get-user userid))))
 
-    (testing "update (or, create is idempotent)"
-      (-> (request :post (str "/api/users/create"))
+    (testing "update with edit"
+      (-> (request :put (str "/api/users/edit"))
           (json-body (assoc new-user
                             :email "new email"
                             :name "new name"))
@@ -48,7 +48,19 @@
           assert-response-is-ok)
       (is (= {:userid "david"
               :email "new email"
-              :name "new name"} (users/get-user userid)))))
+              :name "new name"} (users/get-user userid))))
+
+    (testing "update with create (idempotent)"
+      (-> (request :post (str "/api/users/create"))
+          (json-body (assoc new-user
+                            :email "new email2"
+                            :name "new name2"))
+          (authenticate +test-api-key+ "owner")
+          handler
+          assert-response-is-ok)
+      (is (= {:userid "david"
+              :email "new email2"
+              :name "new name2"} (users/get-user userid)))))
 
   (testing "create user with organization and nickname, without email"
     (let [userid "user-with-org"]

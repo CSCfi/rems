@@ -8,6 +8,14 @@ have notable changes.
 
 Changes since v2.29
 
+### Changes
+- Some API methods have been unified with the rest by using the command pattern: (#3036)
+  - Categories have a new `POST /create` and a `PUT /edit` endpoint like the others.
+  - User settings have a new `PUT /edit` endpoint.
+  - User has a `PUT /edit` endpoint, `/create` remains "create or update".
+  - The changes should be backwards-compatible as the old endpoints remain.
+  - The non-standard endpoints have been been deprecated and will be removed later.
+
 ### Additions
 - Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
 - Mondo codes have been updated to version v2022-08-01. (#3031)
