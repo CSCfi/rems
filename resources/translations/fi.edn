@@ -188,7 +188,7 @@
                           :decider-joined "%1 hyväksyi kutsun päättämään."
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :deleted "%1 poisti luonnoksen."
-                          :draft-saved "%1 tallensi luonnoksen."
+                          :draft-saved "%1 päivitti hakemusta."
                           :external-id-assigned "%1 lisäsi tunnisteen %2."
                           :expiration-notifications-sent "%1 lähetti sähköpostimuistutuksen vanhentuvasta hakemuksesta."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."

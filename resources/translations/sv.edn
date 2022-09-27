@@ -188,7 +188,7 @@
                           :decider-joined "%1 blev beslutare." ; TODO check
                           :decision-requested "%1 begärde beslut från användare %2."
                           :deleted "%1 raderade utkastet."
-                          :draft-saved "%1 sparade ett utkast."
+                          :draft-saved "%1 förändrade ansökan."
                           :external-id-assigned "%1 lade till externt id %2."
                           :expiration-notifications-sent "%1 skickade e-post p.g.a. inaktiv ansökan."
                           :licenses-accepted "%1 accepterade licenserna."

@@ -199,7 +199,7 @@
                           ;; %2 - name of decider
                           :decision-requested "%1 requested a decision from %2."
                           :deleted "%1 deleted the draft."
-                          :draft-saved "%1 saved a draft."
+                          :draft-saved "%1 updated the application."
                           ;; %2 - external id
                           :external-id-assigned "%1 assigned an external id %2."
                           :expiration-notifications-sent "%1 sent expiration notification email."
