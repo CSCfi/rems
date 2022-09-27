@@ -92,6 +92,9 @@
 (defn- time-format []
   (time-format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
 
+(defn- time-format-with-seconds []
+  (time-format/formatter "yyyy-MM-dd HH:mm:ss" (time/default-time-zone)))
+
 (defn localize-time [time]
   #?(:clj (when time
             (let [time (if (string? time) (time-format/parse time) time)]
@@ -99,6 +102,16 @@
      :cljs (let [time (if (string? time) (time-format/parse time) time)]
              (when time
                (time-format/unparse-local (time-format) (time/to-default-time-zone time))))))
+
+(defn localize-time-with-seconds
+  "Localized datetime with second precision."
+  [time]
+  #?(:clj (when time
+            (let [time (if (string? time) (time-format/parse time) time)]
+              (time-format/unparse (time-format-with-seconds) time)))
+     :cljs (let [time (if (string? time) (time-format/parse time) time)]
+             (when time
+               (time-format/unparse-local (time-format-with-seconds) (time/to-default-time-zone time))))))
 
 (defn localize-utc-date
   "For a given time instant, return the ISO date (yyyy-MM-dd) that it corresponds to in UTC."

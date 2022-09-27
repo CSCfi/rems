@@ -4,6 +4,7 @@
             [goog.string]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
+            [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
@@ -42,7 +43,7 @@
             [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
+            [rems.text :refer [localize-decision localize-event localized localize-state localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
@@ -253,7 +254,10 @@
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
                       (apply (handle-validations! description application {:on-success #(do (rf/dispatch [::set-autosaving false])
-                                                                                            (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed]))
+                                                                                            (flash-message/show-quiet-success! :actions [:div
+                                                                                                                                         [text :t.form/autosave-confirmed]
+                                                                                                                                         " "
+                                                                                                                                         (localize-time-with-seconds (time-core/now))]))
                                                                            :default-success? false
                                                                            :focus? false})
                              [response]))
