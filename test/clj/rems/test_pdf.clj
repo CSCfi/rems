@@ -474,15 +474,28 @@
               [[:heading pdf/heading-style "Resources"]
                [[[:paragraph pdf/field-heading-style "Catalogue item (pdf-resource-ext)"]
                  [[:paragraph pdf/field-style "Data Use Ontology"]
-                  [:list
-                   [:phrase [:paragraph "Disease specific research: eyelid melanoma"]]
-                   [:phrase [:paragraph "No general methods research"]]
-                   [:phrase [:paragraph "Project specific restriction: project name here"]]]]]]]
+                  [[:paragraph {:spacing-before 8}
+                    [:paragraph nil "DS – Disease specific research"]
+                    [:list
+                     [[:phrase "MONDO:0000928 – Eyelid melanoma"]]]]
+                   [:paragraph {:spacing-before 8}
+                    [:paragraph nil "NMDS – No general methods research"]
+                    [:list []]]
+                   [:paragraph {:spacing-before 8}
+                    [:paragraph nil "PS – Project specific restriction"]
+                    [:list [[:phrase "project name here"]]]]]]]]]
               [[:heading pdf/heading-style "Data Use Ontology"]
-               [:paragraph pdf/field-style
-                [:paragraph "Disease specific research: eyelid melanoma"]
-                [:paragraph "No general methods research"]
-                [:paragraph "Project specific restriction: my project"]]]
+               [:paragraph {:spacing-before 8}]
+               [:paragraph nil
+                [:paragraph {:style :bold} "DS – Disease specific research"]
+                [:list
+                 [[:phrase "MONDO:0000928 – Eyelid melanoma"]]]]
+               [:paragraph {:spacing-before 8}
+                [:paragraph {:style :bold} "NMDS – No general methods research"]
+                [:list []]]
+               [:paragraph {:spacing-before 8}
+                [:paragraph {:style :bold} "PS – Project specific restriction"]
+                [:list [[:phrase "my project"]]]]]
               [[:heading pdf/heading-style "Terms of use"]
                [[[:paragraph pdf/field-heading-style "Google license"]
                  [:paragraph "http://google.com"]]
