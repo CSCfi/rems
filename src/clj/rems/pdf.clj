@@ -59,17 +59,20 @@
     (for [member (getx application :application/members)]
       (render-user application member (text :t.applicant-info/member))))))
 
-(defn- render-duo [duo]
-  (let [title (str/capitalize (localized (:label duo)))
-        restrictions (for [restriction (:restrictions duo)
-                           value (:values restriction)]
-                       (case (:type restriction)
-                         :mondo (:label value)
-                         (:value value)))]
-    [:paragraph
-     (if (seq restrictions)
-       (text-format :t.label/default title (str/join ", " restrictions))
-       title)]))
+(defn- render-duo [duo & [opts]]
+  (let [label (text-format :t.label/dash
+                           (:shorthand duo)
+                           (str/capitalize (localized (:label duo))))]
+    [:paragraph (:field-style opts)
+     [:paragraph (:label-style opts) label]
+     [:list
+      (for [restriction (:restrictions duo)
+            value (:values restriction)]
+        [:phrase (case (:type restriction)
+                   :mondo (text-format :t.label/dash
+                                       (:id value)
+                                       (str/capitalize (:label value)))
+                   (:value value))])]]))
 
 (defn- render-resources [application]
   (let [resources (getx application :application/resources)]
@@ -86,14 +89,18 @@
          (when (seq duos)
            (list
             [:paragraph field-style (text :t.duo/title)]
-            (into [:list] (for [duo duos]
-                            [:phrase (render-duo duo)]))))))))))
+            (for [duo duos]
+              (render-duo duo {:field-style {:spacing-before 8}}))))))))))
 
 (defn- render-duos [application]
   (when-some [duos (seq (get-in application [:application/duo :duo/codes]))]
-    (list [:heading heading-style (text :t.duo/title)]
-          (into [:paragraph field-style]
-                (map render-duo duos)))))
+    (concat
+     (list [:heading heading-style (text :t.duo/title)]
+           [:paragraph field-style]
+           (render-duo (first duos) {:label-style {:style :bold}}))
+     (for [duo (rest duos)]
+       (render-duo duo {:field-style {:spacing-before 8}
+                        :label-style {:style :bold}})))))
 
 (defn- render-license [license]
   (list [:paragraph field-heading-style (localized (:license/title license))]
