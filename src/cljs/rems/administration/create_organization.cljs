@@ -118,7 +118,8 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(navigate! (str "/administration/organizations/" (:organization/id request))))
+                      :top description #(do (config/fetch-organizations!)
+                                            (navigate! (str "/administration/organizations/" (:organization/id %)))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
