@@ -183,23 +183,31 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validations! [{:keys [errors warnings success] :as _response} description application & [{:keys [on-success default-success? focus?] :or {default-success? true focus? true}}]]
-  (flash-message/clear-message! :top-validation)
-  (rf/dispatch [::set-validations errors warnings])
-  (if-not success
-    (flash-message/show-default-error! :top-validation
-                                       description
-                                       [validations {:application application
-                                                     :errors errors}])
-    (do
-      (if (seq warnings)
-        (flash-message/show-default-warning! :top-validation
-                                             description
-                                             {:focus? focus?
-                                              :content [[validations {:application application
-                                                                      :warnings warnings}]]})
-        (when default-success? (flash-message/show-default-success! :top-validation description)))
-      (when on-success (on-success)))))
+(defn- handle-validations!
+  [{:keys [errors warnings success] :as _response}
+   description
+   application
+   & [{:keys [on-success default-success? focus? warn-about-missing?]
+       :or {default-success? true
+            focus? true
+            warn-about-missing? true}}]]
+  (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
+    (flash-message/clear-message! :top-validation)
+    (rf/dispatch [::set-validations errors warnings])
+    (if-not success
+      (flash-message/show-default-error! :top-validation
+                                         description
+                                         [validations {:application application
+                                                       :errors errors}])
+      (do
+        (if (seq warnings)
+          (flash-message/show-default-warning! :top-validation
+                                               description
+                                               {:focus? focus?
+                                                :content [[validations {:application application
+                                                                        :warnings warnings}]]})
+          (when default-success? (flash-message/show-default-success! :top-validation description)))
+        (when on-success (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
   (for [duo duo-codes]
@@ -258,7 +266,8 @@
                                                                                                                                            " "
                                                                                                                                            (localize-time-with-seconds (time-core/now))]))
                                                                              :default-success? false
-                                                                             :focus? false}))
+                                                                             :focus? false
+                                                                             :warn-about-missing? false}))
                     {:error-handler (fn [err]
                                       (rf/dispatch [::set-autosaving false]))})
        {:db (-> db
