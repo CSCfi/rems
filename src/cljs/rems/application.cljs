@@ -183,24 +183,23 @@
         :when (form/field-visible? field (get field-values form-id))]
     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
-(defn- handle-validations! [description application & [{:keys [on-success default-success? focus?] :or {default-success? true focus? true}}]]
-  (fn [{:keys [errors warnings success] :as _response}]
-    (flash-message/clear-message! :top-validation)
-    (rf/dispatch [::set-validations errors warnings])
-    (if-not success
-      (flash-message/show-default-error! :top-validation
-                                         description
-                                         [validations {:application application
-                                                       :errors errors}])
-      (do
-        (if (seq warnings)
-          (flash-message/show-default-warning! :top-validation
-                                               description
-                                               {:focus? focus?
-                                                :content [[validations {:application application
-                                                                        :warnings warnings}]]})
-          (when default-success? (flash-message/show-default-success! :top-validation description)))
-        (when on-success (on-success))))))
+(defn- handle-validations! [{:keys [errors warnings success] :as _response} description application & [{:keys [on-success default-success? focus?] :or {default-success? true focus? true}}]]
+  (flash-message/clear-message! :top-validation)
+  (rf/dispatch [::set-validations errors warnings])
+  (if-not success
+    (flash-message/show-default-error! :top-validation
+                                       description
+                                       [validations {:application application
+                                                     :errors errors}])
+    (do
+      (if (seq warnings)
+        (flash-message/show-default-warning! :top-validation
+                                             description
+                                             {:focus? focus?
+                                              :content [[validations {:application application
+                                                                      :warnings warnings}]]})
+        (when default-success? (flash-message/show-default-success! :top-validation description)))
+      (when on-success (on-success)))))
 
 (defn- duo-codes-to-api [duo-codes]
   (for [duo duo-codes]
@@ -232,7 +231,7 @@
                   edit-application
                   (fn [response]
                     (rf/dispatch [::fetch-application (:application/id application)])
-                    (apply (handle-validations! description application {:on-success on-success}) [response]))))
+                    (handle-validations! response description application {:on-success on-success}))))
    {:db (-> db
             (assoc-in [::edit-application :validation :errors] nil)
             (assoc-in [::edit-application :validation :warnings] nil))}))
@@ -253,14 +252,13 @@
                     edit-application
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
-                      (apply (handle-validations! description application {:on-success #(do (rf/dispatch [::set-autosaving false])
-                                                                                            (flash-message/show-quiet-success! :actions [:div
-                                                                                                                                         [text :t.form/autosave-confirmed]
-                                                                                                                                         " "
-                                                                                                                                         (localize-time-with-seconds (time-core/now))]))
-                                                                           :default-success? false
-                                                                           :focus? false})
-                             [response]))
+                      (handle-validations! response description application {:on-success #(do (rf/dispatch [::set-autosaving false])
+                                                                                              (flash-message/show-quiet-success! :actions [:div
+                                                                                                                                           [text :t.form/autosave-confirmed]
+                                                                                                                                           " "
+                                                                                                                                           (localize-time-with-seconds (time-core/now))]))
+                                                                             :default-success? false
+                                                                             :focus? false}))
                     {:error-handler (fn [err]
                                       (rf/dispatch [::set-autosaving false]))})
        {:db (-> db
@@ -279,13 +277,15 @@
                   edit-application
                   (fn [response] ; because warnings are treated as errors in submit, skip validation handling here
                     (if-not (:success response)
-                      (apply (handle-validations! description application) [response])
+                      (handle-validations! response description application)
                       (post! "/api/applications/submit"
                              {:params {:application-id (:application/id application)}
-                              :handler (handle-validations!
-                                        description
-                                        application
-                                        {:on-success (fn [] (rf/dispatch [::fetch-application (:application/id application)]))})
+                              :handler (fn [response]
+                                         (handle-validations!
+                                          response
+                                          description
+                                          application
+                                          {:on-success (fn [] (rf/dispatch [::fetch-application (:application/id application)]))}))
                               :error-handler (flash-message/default-error-handler :actions description)})))))
    {:db (-> db
             (assoc-in [::edit-application :validation :errors] nil)
