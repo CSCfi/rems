@@ -193,7 +193,8 @@
        :item-label :display
        :item-selected? #(contains? selected-owners (% :userid))
        :multi? true
-       :disabled? (not org-owner?)
+       :disabled? (and @(rf/subscribe [::editing?])
+                       (not org-owner?))
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
