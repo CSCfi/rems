@@ -2490,6 +2490,13 @@
                               :name "Organization Owner 2"
                               :email "organization-owner2@example.com"
                               :organizations [{:organization/id "Default"}]})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "organization-owner2-dummy-organization"
+                                      :organization/short-name {:en "dummy-en" :fi "dummy-fi" :sv "dummy-sv"}
+                                      :organization/name {:en (str "dummy-organization-" " en")
+                                                          :fi (str "dummy-organization-" " fi")
+                                                          :sv (str "dummy-organization-" " sv")}
+                                      :organization/owners [{:userid "organization-owner2"}]})
 
   (btu/with-postmortem
     (login-as "owner")
@@ -2593,7 +2600,7 @@
                 "Active" true}
                (slurp-fields :organization))))
 
-      (testing "edit as organization owner 1"
+      (testing "edit as organization owner 2"
         (btu/scroll-and-click :edit-organization)
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
@@ -2622,40 +2629,39 @@
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" true}
-                 (slurp-fields :organization)))))
-
-      (testing "edit as organization owner 1, remove self as organization owner"
-        (btu/scroll-and-click :edit-organization)
-        (btu/wait-page-loaded)
-        (is (btu/eventually-visible? :short-name-en))
-
-        (remove-option "Owners (optional)" "Organization Owner 1")
-        (btu/scroll-and-click :save)
-        (is (btu/eventually-visible? {:css ".alert-success"}))
-        (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-
-        (testing "view after editing, organization owner 1 is no longer in organization owners"
-          (is (btu/eventually-visible? :organization))
-          (is (= {"Id" (btu/context-getx :organization-id)
-                  "Short name (FI)" "SNFI"
-                  "Short name (EN)" "SNEN"
-                  "Short name (SV)" "SNSV"
-                  "Title (EN)" (str (btu/context-getx :organization-name) " EN")
-                  "Title (FI)" (str (btu/context-getx :organization-name) " FI")
-                  "Title (SV)" (str (btu/context-getx :organization-name) " SV")
-                  "Owners" "Organization Owner 2 (organization-owner2@example.com)"
-                  "Name (FI)" "Review mail FI"
-                  "Name (SV)" "Review mail SV"
-                  "Name (EN)" "Review mail EN"
-                  "Email" "review.email@example.com"
-                  "Active" true}
                  (slurp-fields :organization))))
-
-        (testing "edit organization again, owners field should be disabled"
+        (testing "edit again, remove self as organization owner"
           (btu/scroll-and-click :edit-organization)
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? :short-name-en))
-          (is (btu/disabled? {:id (get-dropdown-id "Owners (optional)")})))))))
+
+          (remove-option "Owners (optional)" "Organization Owner 2")
+          (btu/scroll-and-click :save)
+          (is (btu/eventually-visible? {:css ".alert-success"}))
+          (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+          (testing "view after editing, organization owner 2 is no longer in organization owners"
+            (is (btu/eventually-visible? :organization))
+            (is (= {"Id" (btu/context-getx :organization-id)
+                    "Short name (FI)" "SNFI"
+                    "Short name (EN)" "SNEN"
+                    "Short name (SV)" "SNSV"
+                    "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+                    "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+                    "Title (SV)" (str (btu/context-getx :organization-name) " SV")
+                    "Owners" "Organization Owner 1 (organization-owner1@example.com)"
+                    "Name (FI)" "Review mail FI"
+                    "Name (SV)" "Review mail SV"
+                    "Name (EN)" "Review mail EN"
+                    "Email" "review.email@example.com"
+                    "Active" true}
+                   (slurp-fields :organization))))
+
+          (testing "edit organization again, owners field should be disabled"
+            (btu/scroll-and-click :edit-organization)
+            (btu/wait-page-loaded)
+            (is (btu/eventually-visible? :short-name-en))
+            (is (btu/disabled? {:id (get-dropdown-id "Owners (optional)")}))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
