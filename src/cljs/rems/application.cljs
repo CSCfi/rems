@@ -112,6 +112,7 @@
 (rf/reg-sub ::application-id (fn [db _] (::application-id db)))
 (rf/reg-sub ::application (fn [db [_ k]] (get-in db [::application (or k :data)])))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
+(rf/reg-sub ::readonly? :<- [::application] (comp not form-fields-editable?))
 
 (rf/reg-event-fx
  ::enter-application-page
@@ -505,8 +506,6 @@
         field-validations (index-by [:form-id :field-id]
                                     (some seq [(:errors validations) (:warnings validations)]))
         attachments (index-by [:attachment/id] (:application/attachments application))
-        form-fields-editable? (form-fields-editable? application)
-        readonly? (not form-fields-editable?)
         language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
@@ -528,7 +527,7 @@
 
                                                     :diff (get show-diff field-id)
                                                     :validation (get-in field-validations [form-id field-id])
-                                                    :readonly readonly?
+                                                    :readonly @(rf/subscribe [::readonly?])
                                                     :app-id (:application/id application)
                                                     :on-change #(rf/dispatch [::set-field-value form-id field-id %])
                                                     :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])}
@@ -554,9 +553,7 @@
           show-accepted-licenses? (or (contains? roles :member)
                                       (contains? roles :applicant))
           accepted-licenses (get (:application/accepted-licenses application) userid)
-          permissions (:application/permissions application)
-          form-fields-editable? (form-fields-editable? application)
-          readonly? (not form-fields-editable?)]
+          permissions (:application/permissions application)]
       [collapsible/component
        {:id "application-licenses"
         :title (text :t.form/licenses)
@@ -570,7 +567,7 @@
                   application
                   (assoc license
                          :accepted (contains? accepted-licenses (:license/id license))
-                         :readonly readonly?)
+                         :readonly @(rf/subscribe [::readonly?]))
                   show-accepted-licenses?]))
          (when (contains? permissions :application.command/add-licenses)
            [:<>
@@ -1093,9 +1090,9 @@
      [:div.mt-3 [applicants-info application userid]]
      [:div.mt-3 [applied-resources application userid language]]
      (when (:enable-duo config)
-       (if (= userid (-> application :application/applicant :userid))
-         [:div.mt-3 [edit-application-duo-codes]]
-         [:div.mt-3 [application-duo-codes]]))
+       (if @(rf/subscribe [::readonly?])
+         [:div.mt-3 [application-duo-codes]]
+         [:div.mt-3 [edit-application-duo-codes]]))
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
