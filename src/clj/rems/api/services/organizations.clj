@@ -58,16 +58,16 @@
                :organization/id (:organization/id org)}]}))
 
 (defn edit-organization! [userid org]
-  (organizations/update-organization! (:organization/id org)
-                                      (fn [db-organization]
-                                        (let [organization-owners (set (map :userid (:organization/owners db-organization)))
-                                              organization-owner? (contains? organization-owners userid)
-                                              owner? (contains? context/*roles* :owner)]
-                                          (merge db-organization
-                                                 (remove-keys (if (and organization-owner? (not owner?))
-                                                                #{:organization/id :organization/owners} ; org owner can't update owners
-                                                                #{:organization/id})
-                                                              org)))))
+  (organizations/update-organization!
+   (:organization/id org)
+   (fn [db-organization]
+     (let [organization-owners (set (map :userid (:organization/owners db-organization)))
+           organization-owner? (contains? organization-owners userid)
+           owner? (contains? context/*roles* :owner)]
+       (merge db-organization
+              (cond-> org
+                true (dissoc :organization/id)
+                (not (or organization-owner? owner?)) (dissoc :organization/owners))))))
   {:success true
    :organization/id (:organization/id org)})
 

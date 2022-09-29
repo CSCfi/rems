@@ -199,11 +199,13 @@
 (defn- select-button-by-label [label]
   {:css ".btn" :fn/text label})
 
-(comment
-  (find-rows [:licenses]
-             {:fn/text (str (btu/context-getx :license-name) " EN")}))
+(defn get-field-id [label & [opts]]
+  (let [id (-> (btu/query-all {:tag :label :fn/has-text label})
+               (nth (:index opts 0))
+               (btu/get-element-attr-el :for))]
+    id))
 
-(defn get-form-field-id [label opts]
+(defn get-form-field-id [label & [opts]]
   (let [id (-> (btu/query-all {:css ".fields > *"})
                (->> (mapcat #(btu/children % {:tag :label :fn/has-text label})))
                (nth (:index opts 0))
@@ -260,24 +262,37 @@
    id date))
 
 (defn set-date-for-label [label date]
-  (let [id (btu/get-element-attr [{:css ".fields"}
-                                  {:tag :label :fn/text label}]
-                                 :for)]
+  (let [id (get-form-field-id label)]
     (set-date id date)))
 
-(defn select-option [label option]
-  (let [id (btu/get-element-attr [{:css ".fields"}
-                                  {:tag :label :fn/has-text label}]
-                                 :for)]
+(defn get-field-by-label [label & [opts]]
+  (let [fields-selector (when (:field-only opts) {:css ".fields"})
+        field (btu/query (filterv some? [fields-selector
+                                         {:tag :label :fn/has-text label}
+                                         {:xpath ".."}]))]
+    (btu/wait-visible-el field)
+    field))
+
+(defn select-option [label option & [opts]]
+  (let [fields-selector (when (:field-only opts) {:css ".fields"})
+        id (-> (filterv some? [fields-selector
+                               {:tag :label :fn/has-text label}])
+               (btu/get-element-attr :for))]
+    (btu/wait-visible {:id id})
     (btu/fill {:id id} (str option "\n"))))
 
-;; TODO  see if the select-option could be combined
-(defn select-option*
-  "Version of `select-option` that does not limit to .fields."
-  [label option]
-  (let [id (btu/get-element-attr [{:tag :label :fn/has-text label}]
-                                 :for)]
-    (btu/fill {:id id} (str option "\n"))))
+(defn remove-option [label option & [opts]]
+  (let [value-class "dropdown-select__multi-value"
+        selector (filterv some?
+                          [(when (:field opts) {:css ".fields"})
+                           {:tag :label :fn/has-text label}
+                           {:xpath ".."} ; found dropdown label, back up to parent
+                           {:fn/has-class value-class :fn/has-text option}
+                           {:xpath ".."} ; found option text, back up to parent
+                           {:fn/has-class (str value-class "__remove")}])
+        remove-button (btu/query selector)]
+    (btu/wait-visible-el remove-button)
+    (btu/click-el remove-button)))
 
 (defn fill-category-fields [{:keys [title description display-order categories]}]
   (btu/fill-human :title-en title)
@@ -1121,7 +1136,7 @@
     (btu/fill-human :name-en (str (btu/context-getx :organization-name) " EN"))
     (btu/fill-human :name-fi (str (btu/context-getx :organization-name) " FI"))
     (btu/fill-human :name-sv (str (btu/context-getx :organization-name) " SV"))
-    (select-option* "Owners" "Organization owner 1")
+    (select-option "Owners" "Organization owner 1" {:fields-only false})
     (btu/scroll-and-click :add-review-email)
     (btu/scroll-and-click :add-review-email)
 
@@ -2435,7 +2450,7 @@
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :label :fn/text "Form"}))
-      (select-option* "Form" (btu/context-getx :form-title))
+      (select-option "Form" (btu/context-getx :form-title) {:fields-only false})
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
@@ -2461,13 +2476,18 @@
   (test-helpers/create-user! {:userid "organization-owner1"
                               :name "Organization Owner 1"
                               :email "organization-owner1@example.com"
-                              :organizations [{:organization/id "Default"}]}
-                             :owner)
+                              :organizations [{:organization/id "Default"}]})
   (test-helpers/create-user! {:userid "organization-owner2"
                               :name "Organization Owner 2"
                               :email "organization-owner2@example.com"
-                              :organizations [{:organization/id "Default"}]}
-                             :owner)
+                              :organizations [{:organization/id "Default"}]})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "organization-owner2-dummy-organization"
+                                      :organization/short-name {:en "dummy-en" :fi "dummy-fi" :sv "dummy-sv"}
+                                      :organization/name {:en (str "dummy-organization-" " en")
+                                                          :fi (str "dummy-organization-" " fi")
+                                                          :sv (str "dummy-organization-" " sv")}
+                                      :organization/owners [{:userid "organization-owner2"}]})
 
   (btu/with-postmortem
     (login-as "owner")
@@ -2497,7 +2517,7 @@
       (btu/scroll-and-click :edit-organization)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :short-name-en))
-      (select-option* "Owners" "Organization owner 2")
+      (select-option "Owners" "Organization owner 2")
       (btu/clear :short-name-en)
       (btu/fill-human :short-name-en "SNEN2")
       (btu/clear :short-name-fi)
@@ -2532,7 +2552,7 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :organization))
       (btu/fill-human :resid (str "resource for " (btu/context-getx :organization-name)))
-      (select-option* "Organization" (btu/context-getx :organization-name))
+      (select-option "Organization" (btu/context-getx :organization-name) {:fields-only false})
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"})))
 
@@ -2571,7 +2591,7 @@
                 "Active" true}
                (slurp-fields :organization))))
 
-      (testing "edit as organization owner"
+      (testing "edit as organization owner 2"
         (btu/scroll-and-click :edit-organization)
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
@@ -2600,7 +2620,39 @@
                   "Name (EN)" "Review mail EN"
                   "Email" "review.email@example.com"
                   "Active" true}
-                 (slurp-fields :organization))))))))
+                 (slurp-fields :organization))))
+        (testing "edit again, remove self as organization owner"
+          (btu/scroll-and-click :edit-organization)
+          (btu/wait-page-loaded)
+          (is (btu/eventually-visible? :short-name-en))
+
+          (remove-option "Owners (optional)" "Organization Owner 2")
+          (btu/scroll-and-click :save)
+          (is (btu/eventually-visible? {:css ".alert-success"}))
+          (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+
+          (testing "view after editing, organization owner 2 is no longer in organization owners"
+            (is (btu/eventually-visible? :organization))
+            (is (= {"Id" (btu/context-getx :organization-id)
+                    "Short name (FI)" "SNFI"
+                    "Short name (EN)" "SNEN"
+                    "Short name (SV)" "SNSV"
+                    "Title (EN)" (str (btu/context-getx :organization-name) " EN")
+                    "Title (FI)" (str (btu/context-getx :organization-name) " FI")
+                    "Title (SV)" (str (btu/context-getx :organization-name) " SV")
+                    "Owners" "Organization Owner 1 (organization-owner1@example.com)"
+                    "Name (FI)" "Review mail FI"
+                    "Name (SV)" "Review mail SV"
+                    "Name (EN)" "Review mail EN"
+                    "Email" "review.email@example.com"
+                    "Active" true}
+                   (slurp-fields :organization))))
+
+          (testing "edit organization again, owners field should be disabled"
+            (btu/scroll-and-click :edit-organization)
+            (btu/wait-page-loaded)
+            (is (btu/eventually-visible? :short-name-en))
+            (is (btu/disabled? {:id (get-field-id "Owners (optional)")}))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"

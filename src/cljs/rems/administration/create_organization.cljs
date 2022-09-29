@@ -43,8 +43,6 @@
 (fetcher/reg-fetcher ::organization "/api/organizations/:id" {:path-params (fn [db] {:id (::organization-id db)})
                                                               :on-success #(rf/dispatch [::fetch-organization-success %])})
 
-
-
 ;;; form submit
 
 (defn- valid-review-email? [languages review-email]
@@ -120,7 +118,8 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(navigate! (str "/administration/organizations/" (:organization/id request))))
+                      :top description #(do (config/fetch-organizations!)
+                                            (navigate! (str "/administration/organizations/" (:organization/id %)))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -180,11 +179,13 @@
   (let [form @(rf/subscribe [::form])
         all-owners @(rf/subscribe [::available-owners])
         selected-owners (set (map :userid (get-in form [:organization/owners])))
-        roles @(rf/subscribe [:roles])]
+        organization-id (:organization/id form)
+        org-owner? (->> @(rf/subscribe [:owned-organizations])
+                        (some (comp #{organization-id} :organization/id)))]
     [:div.form-group
      [:label.administration-field-label
       {:for owners-dropdown-id}
-      (text :t.administration/owners) " " (text :t.administration/optional)]
+      (str (text :t.administration/owners) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id owners-dropdown-id
        :items all-owners
@@ -192,8 +193,8 @@
        :item-label :display
        :item-selected? #(contains? selected-owners (% :userid))
        :multi? true
-       :disabled? (and (some #{:organization-owner} roles)
-                       (not (some #{:owner} roles)))
+       :disabled? (and @(rf/subscribe [::editing?])
+                       (not org-owner?))
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
@@ -232,7 +233,7 @@
     [:div.form-group
      [:label.administration-field-label
       {:for :review-emails}
-      (text :t.administration/review-emails) " " (text :t.administration/optional)]
+      (str (text :t.administration/review-emails) " " (text :t.administration/optional))]
      (for [[field-index _review-email] (indexed (:organization/review-emails form))]
        ^{:key field-index} [organization-review-email-field field-index])
      [:div.dashed-group.text-center
