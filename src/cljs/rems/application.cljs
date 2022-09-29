@@ -1011,10 +1011,11 @@
                (when-let [missing-duos (seq (unmatched-duos application-duo-matches))]
                  [:div.alert.alert-warning
                   [:p (text :t.applications.duos.validation/missing-duo-codes)]
-                  (into [:ul]
-                        (for [duo missing-duos]
-                          ^{:key (:duo/id duo)}
-                          [:li (str (:duo/shorthand duo) " - " (localized (:duo/label duo)))]))])
+                  [:ul (for [duo missing-duos
+                             :let [label (localized (:duo/label duo))]]
+                         ^{:key (:duo/id duo)}
+                         [:li (text-format :t.label/dash
+                                           (:duo/shorthand duo) label)])]])
                [:div.mb-3
                 [:label.administration-field-label {:for "duos-dropdown"} (text :t.duo/title)]
                 [dropdown/dropdown
@@ -1090,11 +1091,11 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id userid]
      [:div.mt-3 [applicants-info application userid]]
+     [:div.mt-3 [applied-resources application userid language]]
      (when (:enable-duo config)
        (if (= userid (-> application :application/applicant :userid))
          [:div.mt-3 [edit-application-duo-codes]]
          [:div.mt-3 [application-duo-codes]]))
-     [:div.mt-3 [applied-resources application userid language]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
