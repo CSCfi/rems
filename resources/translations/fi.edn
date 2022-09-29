@@ -170,6 +170,7 @@
                  :applicant "Hakija"
                  :application "Hakemus"
                  :applications "Hakemukset"
+                 :continue-existing-application "Jatka hakemusta"
                  :copied-from "kopioitu hakemuksesta"
                  :copied-to "kopioitu hakemukseksi"
                  :created "Luotu"

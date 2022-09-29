@@ -146,27 +146,37 @@
 
 (defn- initialize-edit-application [db]
   (let [application (get-in db [::application :data])
-        field-values (->> (for [form (:application/forms application)
-                                field (:form/fields form)]
-                            {:form (:form/id form)
-                             :field (:field/id field)
-                             :value (:field/value field)})
-                          (build-index {:keys [:form :field] :value-fn :value}))
+        field-values (for [form (:application/forms application)
+                           field (:form/fields form)]
+                       {:form (:form/id form)
+                        :field (:field/id field)
+                        :value (:field/value field)})
+        field-values-by-form-field (->> field-values
+                                        (build-index {:keys [:form :field] :value-fn :value}))
         duo-codes (->> (get-in application [:application/duo :duo/codes])
                        (map #(update-existing % :restrictions index-duo-restrictions))
-                       (build-index {:keys [:id]}))]
+                       (build-index {:keys [:id]}))
+        any-field-answer? (some (fn [{:keys [value]}]
+                                  (cond (string? value) (not (str/blank? value))
+                                        (coll? value) (seq value)
+                                        :else (some? value)))
+                                field-values)
+        any-duo-answer? (seq duo-codes)]
+    (when (or any-field-answer? any-duo-answer?)
+      (rf/dispatch [::validate-application]))
     (assoc db ::edit-application {:duo-codes duo-codes
-                                  :field-values field-values
+                                  :field-values field-values-by-form-field
                                   :show-diff {}
                                   :validation nil
                                   :attachment-status {}})))
 
-(rf/reg-event-db
+
+(rf/reg-event-fx
  ::fetch-application-result
- (fn [db [_ application full-reload?]]
+ (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
-     (cond-> (update db ::application fetcher/finished application)
-       (or initial-fetch? full-reload?) (initialize-edit-application)))))
+     {:db (cond-> (update db ::application fetcher/finished application)
+            (or initial-fetch? full-reload?) (initialize-edit-application))})))
 
 (rf/reg-event-db
  ::set-validations
@@ -218,6 +228,22 @@
                       :values (case (key restriction)
                                 :mondo (map #(select-keys % [:id]) values)
                                 (if (some? values) [{:value values}] []))})}))
+
+(rf/reg-event-fx
+ ::validate-application
+ (fn [{:keys [db]} [_]]
+   (let [application (:data (::application db))
+         edit-application (::edit-application db)
+         description [text :t.applications/continue-existing-application]]
+     (flash-message/clear-message! :actions)
+     (post! "/api/applications/validate"
+            {:params {:application-id (:application/id application)
+                      :field-values (field-values-to-api application (:field-values edit-application))
+                      :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+             :handler (fn [response]
+                        (handle-validations! response description application))
+             :error-handler (flash-message/default-error-handler :actions description)})
+     {})))
 
 (defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
   (flash-message/clear-message! :actions)

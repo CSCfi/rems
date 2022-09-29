@@ -170,6 +170,7 @@
                  :applicant "Sökande"
                  :application "Ansökan"
                  :applications "Ansökningar"
+                 :continue-existing-application "Återuppta ansökan"
                  :copied-from "Kopierat från ansökan"
                  :copied-to "Kopierat till ansökan"
                  :created "Skapad"
