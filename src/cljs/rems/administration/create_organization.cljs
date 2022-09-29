@@ -185,7 +185,7 @@
     [:div.form-group
      [:label.administration-field-label
       {:for owners-dropdown-id}
-      (text :t.administration/owners) " " (text :t.administration/optional)]
+      (str (text :t.administration/owners) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id owners-dropdown-id
        :items all-owners
@@ -233,7 +233,7 @@
     [:div.form-group
      [:label.administration-field-label
       {:for :review-emails}
-      (text :t.administration/review-emails) " " (text :t.administration/optional)]
+      (str (text :t.administration/review-emails) " " (text :t.administration/optional))]
      (for [[field-index _review-email] (indexed (:organization/review-emails form))]
        ^{:key field-index} [organization-review-email-field field-index])
      [:div.dashed-group.text-center

@@ -199,11 +199,13 @@
 (defn- select-button-by-label [label]
   {:css ".btn" :fn/text label})
 
-(comment
-  (find-rows [:licenses]
-             {:fn/text (str (btu/context-getx :license-name) " EN")}))
+(defn get-field-id [label & [opts]]
+  (let [id (-> (btu/query-all {:tag :label :fn/has-text label})
+               (nth (:index opts 0))
+               (btu/get-element-attr-el :for))]
+    id))
 
-(defn get-form-field-id [label opts]
+(defn get-form-field-id [label & [opts]]
   (let [id (-> (btu/query-all {:css ".fields > *"})
                (->> (mapcat #(btu/children % {:tag :label :fn/has-text label})))
                (nth (:index opts 0))
@@ -260,47 +262,36 @@
    id date))
 
 (defn set-date-for-label [label date]
-  (let [id (btu/get-element-attr [{:css ".fields"}
-                                  {:tag :label :fn/text label}]
-                                 :for)]
+  (let [id (get-form-field-id label)]
     (set-date id date)))
 
-(defn get-field-by-label
-  "Finds form-group field by label using label tag inside field.
-   Useful for e.g. finding dropdown fields. More robust than
-   :fn/has-text which fails if label text is in separate DOM nodes."
-  [label & [opts]]
-  (->> (btu/query-all (if (:fields-only opts)
-                        {:css ".fields > .form-group"}
-                        {:css ".form-group"}))
-       (find-first #(some-> (btu/children % {:tag :label})
-                            first
-                            btu/get-element-text-el
-                            (clojure.string/includes? label)))))
-
-(defn get-dropdown-id [label & [opts]]
-  (let [dropdown (get-field-by-label label opts)]
-    (-> (btu/children dropdown {:tag :label})
-        first
-        (btu/get-element-attr-el :for))))
+(defn get-field-by-label [label & [opts]]
+  (let [fields-selector (when (:field-only opts) {:css ".fields"})
+        field (btu/query (filterv some? [fields-selector
+                                         {:tag :label :fn/has-text label}
+                                         {:xpath ".."}]))]
+    (btu/wait-visible-el field)
+    field))
 
 (defn select-option [label option & [opts]]
-  (let [id (get-dropdown-id label opts)]
+  (let [fields-selector (when (:field-only opts) {:css ".fields"})
+        id (-> (filterv some? [fields-selector
+                               {:tag :label :fn/has-text label}])
+               (btu/get-element-attr :for))]
+    (btu/wait-visible {:id id})
     (btu/fill {:id id} (str option "\n"))))
 
-(defn remove-option [label option]
-  (let [dropdown (get-field-by-label label)
-        _ (is (btu/visible-el? dropdown))
-        option (->> (btu/children dropdown {:fn/has-class
-                                            "dropdown-select__multi-value"})
-                    (find-first #(-> (btu/get-element-text-el %)
-                                     (clojure.string/includes? option))))
-        _ (is (btu/visible-el? option))
-        remove-button (-> option
-                          (btu/children {:fn/has-class
-                                         "dropdown-select__multi-value__remove"})
-                          first)]
-    (is (btu/visible-el? remove-button))
+(defn remove-option [label option & [opts]]
+  (let [value-class "dropdown-select__multi-value"
+        selector (filterv some?
+                          [(when (:field opts) {:css ".fields"})
+                           {:tag :label :fn/has-text label}
+                           {:xpath ".."} ; found dropdown label, back up to parent
+                           {:fn/has-class value-class :fn/has-text option}
+                           {:xpath ".."} ; found option text, back up to parent
+                           {:fn/has-class (str value-class "__remove")}])
+        remove-button (btu/query selector)]
+    (btu/wait-visible-el remove-button)
     (btu/click-el remove-button)))
 
 (defn fill-category-fields [{:keys [title description display-order categories]}]
@@ -2661,7 +2652,7 @@
             (btu/scroll-and-click :edit-organization)
             (btu/wait-page-loaded)
             (is (btu/eventually-visible? :short-name-en))
-            (is (btu/disabled? {:id (get-dropdown-id "Owners (optional)")}))))))))
+            (is (btu/disabled? {:id (get-field-id "Owners (optional)")}))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
