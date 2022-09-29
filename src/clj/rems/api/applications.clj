@@ -64,6 +64,13 @@
   (assoc schema/SuccessResponse
          (s/optional-key :application-id) s/Int))
 
+(s/defschema ValidateRequest
+  (assoc commands/CommandBase
+         :field-values [{:form schema-base/FormId
+                         :field schema-base/FieldId
+                         :value schema-base/FieldValue}]
+         (s/optional-key :duo-codes) [schema-base/DuoCode]))
+
 ;; Api implementation
 
 (defn- filter-with-search [query apps]
@@ -110,6 +117,11 @@
                   :token invitation-token})
     {:success false
      :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
+
+(defn validate-application [request]
+  (let [application (applications/get-application-for-user (getx-user-id) (:application-id request))]
+    (merge {:success true}
+           (commands/validate-application application (:field-values request)))))
 
 (def my-applications-api
   (context "/my-applications" []
@@ -215,6 +227,13 @@
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
       (ok (accept-invitation invitation-token)))
+
+    (POST "/validate" []
+      :summary "Validate the form, like in save, but nothing is saved. NB: At the moment, both errors and validations are identical, but this may not always be so."
+      :roles #{:logged-in}
+      :body [request ValidateRequest]
+      :return schema/SuccessResponse
+      (ok (validate-application request)))
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
