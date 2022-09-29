@@ -509,7 +509,8 @@
                :remove "Remove"}
   :label {:default "%1: %2"
           :dash "%1 – %2"
-          :long "%1: %2 – %3"}
+          :long "%1: %2 – %3"
+          :parens "%1 (%2)"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
   :login {:alternative "Other login options"

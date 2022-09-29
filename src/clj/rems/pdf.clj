@@ -7,27 +7,16 @@
             [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
             [rems.context :as context]
-            [rems.text :refer [localized localize-decision localize-event localize-state localize-time text with-language]]
+            [rems.text :refer [localized localize-decision localize-event localize-state localize-time text text-format with-language]]
             [rems.util :refer [getx]])
   (:import [java.io ByteArrayOutputStream]))
 
-(defn- render-user [application user]
-  (str (or (:name user)
-           (:userid user))
-       " (" (:userid user) ")"
-       " <" (:email user) ">. "
-       (when-let [userid (:userid user)]
-         (str (text :t.form/accepted-licenses)
-              ": "
-              (if (application-util/accepted-licenses? application userid)
-                (text :t.form/checkbox-checked)
-                (text :t.form/checkbox-unchecked))))))
-
 (def heading-style {:spacing-before 20})
+(def field-heading-style {:spacing-before 8 :style :bold})
+(def field-style {:spacing-before 8})
 
 (defn- render-header [application]
-  (let [state (getx application :application/state)
-        resources (getx application :application/resources)]
+  (let [state (getx application :application/state)]
     (list
      [:heading heading-style
       (str (text :t.applications/application)
@@ -36,63 +25,114 @@
                 (getx application :application/id))
            (when-let [description (get application :application/description)]
              (str ": " description)))]
-     [:paragraph
+     [:paragraph field-style
       (text :t.pdf/generated)
       " "
       (localize-time (time/now))]
      [:paragraph
       (text :t.applications/state)
-      (when state [:phrase ": " (localize-state state)])]
-     [:heading heading-style (text :t.applicant-info/applicants)]
-     [:paragraph (text :t.applicant-info/applicant) ": " (render-user application (getx application :application/applicant))]
-     (doall
-      (for [member (getx application :application/members)]
-        [:paragraph (text :t.applicant-info/member) ": " (render-user application member)]))
-     [:heading heading-style (text :t.form/resources)]
+      (when state [:phrase ": " (localize-state state)])])))
+
+(defn- render-user [application user label]
+  (let [userid (:userid user)
+        email (:email user)]
+    (list
+     [:paragraph field-style
+      [:phrase {:style :bold} label] ": " (if-let [name (:name user)]
+                                            (str name " (" userid ") <" email ">")
+                                            (str userid " <" email ">"))]
+     (when (some? userid)
+       [:paragraph
+        (text-format :t.label/default
+                     (text :t.form/accepted-licenses)
+                     (if (application-util/accepted-licenses? application userid)
+                       (text :t.form/checkbox-checked)
+                       (text :t.form/checkbox-unchecked)))]))))
+
+(defn- render-applicants [application]
+  (list
+   [:heading heading-style (text :t.applicant-info/applicants)]
+   (render-user application
+                (getx application :application/applicant)
+                (text :t.applicant-info/applicant))
+   (doall
+    (for [member (getx application :application/members)]
+      (render-user application member (text :t.applicant-info/member))))))
+
+(defn- render-duo [duo & [opts]]
+  (let [label (text-format :t.label/dash
+                           (:shorthand duo)
+                           (str/capitalize (localized (:label duo))))]
+    [:paragraph (:field-style opts)
+     [:paragraph (:label-style opts) label]
      [:list
       (doall
-       (for [resource resources]
-         [:phrase
-          (localized (:catalogue-item/title resource))
-          " (" (:resource/ext-id resource) ")"]))])))
+       (for [restriction (:restrictions duo)
+             value (:values restriction)]
+         [:phrase (case (:type restriction)
+                    :mondo (text-format :t.label/dash
+                                        (:id value)
+                                        (str/capitalize (:label value)))
+                    (:value value))]))]]))
+
+(defn- render-resources [application]
+  (let [resources (getx application :application/resources)]
+    (list
+     [:heading heading-style (text :t.form/resources)]
+     (doall
+      (for [resource resources
+            :let [title (localized (:catalogue-item/title resource))
+                  ext-id (:resource/ext-id resource)
+                  duos (get-in resource [:resource/duo :duo/codes])]]
+        (list
+         [:paragraph field-heading-style
+          (text-format :t.label/parens title ext-id)]
+         (when (seq duos)
+           (list
+            [:paragraph field-style (text :t.duo/title)]
+            (doall
+             (for [duo duos]
+               (render-duo duo {:field-style {:spacing-before 8}})))))))))))
+
+(defn- render-duos [application]
+  (when-some [duos (seq (get-in application [:application/duo :duo/codes]))]
+    (concat
+     (list [:heading heading-style (text :t.duo/title)]
+           [:paragraph field-style] ; for margin
+           (render-duo (first duos) {:label-style {:style :bold}}))
+     (doall
+      (for [duo (rest duos)]
+        (render-duo duo {:field-style {:spacing-before 8}
+                         :label-style {:style :bold}}))))))
+
+(defn- render-license [license]
+  (list [:paragraph field-heading-style (localized (:license/title license))]
+        (case (:license/type license)
+          :text
+          [:paragraph (localized (:license/text license))]
+          :link
+          [:paragraph (localized (:license/link license))]
+          :attachment
+          [:paragraph (localized (:license/attachment-filename license))])))
+
+(defn- render-licenses [application]
+  (list [:heading heading-style (text :t.form/licenses)]
+        (doall
+         (for [license (getx application :application/licenses)]
+           (render-license license)))))
 
 (defn- attachment-filenames [application]
-  (build-index {:keys [:attachment/id] :value-fn :attachment/filename} (:application/attachments application)))
-
-(defn- render-events [application]
-  (let [filenames (attachment-filenames application)
-        events (getx application :application/events)]
-    (list
-     [:heading heading-style (text :t.form/events)]
-     (if (empty? events)
-       [:paragraph "–"]
-       [:list
-        (doall
-         (for [event events
-               :when (not (#{:application.event/draft-saved} (:event/type event)))]
-           [:phrase
-            (localize-time (:event/time event))
-            " "
-            (localize-event event)
-            (when-let [decision (localize-decision event)]
-              (str "\n" decision))
-            (let [comment (get event :application/comment)]
-              (when-not (empty? comment)
-                (str "\n"
-                     (text :t.form/comment)
-                     ": "
-                     comment)))
-            (when-let [attachments (seq (get event :event/attachments))]
-              (str "\n"
-                   (text :t.form/attachments)
-                   ": "
-                   (str/join ", " (map (comp filenames :attachment/id) attachments))))]))]))))
+  (->> (:application/attachments application)
+       (build-index {:keys [:attachment/id]
+                     :value-fn :attachment/filename})))
 
 (defn- field-value [filenames field]
   (let [value (:field/value field)]
     (case (:field/type field)
       (:option :multiselect)
-      (localized (get (build-index {:keys [:key] :value-fn :label} (:field/options field)) value))
+      (localized (-> (build-index {:keys [:key] :value-fn :label}
+                                  (:field/options field))
+                     (get value)))
 
       :attachment
       (if (empty? value)
@@ -114,17 +154,12 @@
 
       (:field/value field))))
 
-(def label-field-style {:spacing-before 8})
-(def header-field-style {:spacing-before 8 :style :bold :size 15})
-(def field-style {:spacing-before 8 :style :bold})
-
 (defn- render-field [filenames field]
   (when (:field/visible field)
     (list
      [:paragraph (case (:field/type field)
-                   :label label-field-style
-                   :header header-field-style
-                   field-style)
+                   :header (merge field-heading-style {:size 15})
+                   field-heading-style)
       (localized (:field/title field))]
      [:paragraph (field-value filenames field)])))
 
@@ -135,32 +170,45 @@
            :let [fields (->> (getx form :form/fields)
                              (remove :field/private))]
            :when (seq fields)]
-       (list [:heading heading-style (or (get-in form [:form/external-title context/*lang*]) (text :t.form/application))]
+       (list [:heading heading-style (or (get-in form [:form/external-title context/*lang*])
+                                         (text :t.form/application))]
              (doall (for [field fields]
                       (render-field filenames field))))))))
 
-(def license-title-style {:style :bold})
-
-(defn- render-license [license]
-  (list [:paragraph license-title-style (localized (:license/title license))]
-        (case (:license/type license)
-          :text
-          [:paragraph (localized (:license/text license))]
-          :link
-          [:paragraph (localized (:license/link license))]
-          :attachment
-          [:paragraph (localized (:license/attachment-filename license))])))
-
-(defn- render-licenses [application]
-  (let [licenses (getx application :application/licenses)]
-    (list [:heading heading-style (text :t.form/licenses)]
-          (doall
-           (for [license (sort-by #(-> % :license/title localized) licenses)]
-             (render-license license))))))
+(defn- render-events [application]
+  (let [filenames (attachment-filenames application)
+        events (getx application :application/events)]
+    (list
+     [:heading heading-style (text :t.form/events)]
+     [:paragraph field-style
+      (if (empty? events)
+        ""
+        [:list
+         (doall
+          (for [event events
+                :when (not (#{:application.event/draft-saved}
+                            (:event/type event)))]
+            [:phrase
+             (localize-time (:event/time event)) " " (localize-event event)
+             (when-let [decision (localize-decision event)]
+               (str "\n" decision))
+             (when-some [comment (not-empty (:application/comment event))]
+               (str "\n" (text-format :t.label/default
+                                      (text :t.form/comment)
+                                      comment)))
+             (when-some [attachments (seq (:event/attachments event))]
+               (str "\n" (text-format :t.label/default
+                                      (text :t.form/attachments)
+                                      (->> attachments
+                                           (map (comp filenames :attachment/id))
+                                           (str/join ", ")))))]))])])))
 
 (defn- render-application [application]
   [{}
    (render-header application)
+   (render-applicants application)
+   (render-resources application)
+   (render-duos application)
    (render-licenses application)
    (render-fields application)
    (render-events application)])
