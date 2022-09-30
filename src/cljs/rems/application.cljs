@@ -241,7 +241,7 @@
                       :field-values (field-values-to-api application (:field-values edit-application))
                       :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
              :handler (fn [response]
-                        (handle-validations! response description application))
+                        (handle-validations! response description application {:default-success? false}))
              :error-handler (flash-message/default-error-handler :actions description)})
      {})))
 
