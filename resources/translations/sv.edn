@@ -432,6 +432,7 @@
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
          :invalid-attachment "Filtyp inte tillåten."
+         :last-save "Senaste sparning %1."
          :too-large-attachment "Bilagan är för stort."
          :attachment-max-size "Maximal storlek på bilaga: %1."
          :licenses "Licenser"

@@ -287,10 +287,7 @@
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
                       (handle-validations! response description application {:on-success #(do (rf/dispatch [::set-autosaving false])
-                                                                                              (flash-message/show-quiet-success! :actions [:div
-                                                                                                                                           [text :t.form/autosave-confirmed]
-                                                                                                                                           " "
-                                                                                                                                           (localize-time-with-seconds (time-core/now))]))
+                                                                                              (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed] {:content [[text-format :t.form/last-save (localize-time-with-seconds (time-core/now))]]}))
                                                                              :default-success? false
                                                                              :focus? false
                                                                              :warn-about-missing? false}))

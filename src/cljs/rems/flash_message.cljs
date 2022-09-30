@@ -53,10 +53,13 @@
   (show-success! location
                  [:div#status-success.flash-message-title description ": " [text :t.form/success]]))
 
-(defn show-quiet-success! [location description]
-  (show-success! location
-                 [:div#status-success.flash-message-title description]
-                 {:focus? false}))
+(defn show-quiet-success! [location description & [opts]]
+  (let [message {:status :success
+                 :location location
+                 :content (into [:<>
+                                 [:div#status-warning.flash-message-title description]]
+                                (:content opts))}]
+    (rf/dispatch [::show-flash-message message opts])))
 
 (defn show-error! [location content & [opts]]
   (let [message {:status :danger
