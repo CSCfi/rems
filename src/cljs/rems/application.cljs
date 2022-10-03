@@ -242,7 +242,9 @@
                       :field-values (field-values-to-api application (:field-values edit-application))
                       :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
              :handler (fn [response]
-                        (handle-validations! response description application {:default-success? false}))
+                        (handle-validations! (dissoc response :errors) ; only use the warnings in this step
+                                             description application {:default-success? false
+                                                                      :warn-about-missing? false})) ; don't complain about unfilled required fields
              :error-handler (flash-message/default-error-handler :actions description)})
      {})))
 
