@@ -162,7 +162,8 @@
                                         :else (some? value)))
                                 field-values)
         any-duo-answer? (seq duo-codes)]
-    (when (or any-field-answer? any-duo-answer?)
+    (when (and (form-fields-editable? application)
+               (or any-field-answer? any-duo-answer?))
       (rf/dispatch [::validate-application]))
     (assoc db ::edit-application {:duo-codes duo-codes
                                   :field-values field-values-by-form-field
