@@ -29,6 +29,7 @@ Changes since v2.29
     This is a potential future feature. (see #2622, #2244)
 - Data Use Ontology (DUO) codes are now rendered in application pdf. Rendered pdf styles have also been tuned for more consistent look. (#2857)
 - Organization owners are now allowed to edit their own organizations owners. (#2828)
+- Updated Mondo-code definitions to v2022-09-06. (#3031)
 
 ### Fixes
 - License, create/edit license and create/edit catalogue item administrator views have been updated to display localized fields the same way other administrator views do. (#1334)
