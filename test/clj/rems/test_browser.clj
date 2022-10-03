@@ -546,7 +546,7 @@
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
           (fill-form-field "Simple text field" "Private field answer")
-          (is (btu/eventually-visible? [{:id :status-success} {:fn/has-text "Application is saved."}]))
+          (is (btu/eventually-visible? [{:id :status-success :fn/has-text "Application is saved."}]))
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
                  (get-validation-summary))))
