@@ -369,6 +369,14 @@
           (ok-with-data {:application-id (:application/id event)}
                         [event]))))))
 
+(defn validate-application [application field-values]
+  (let [forms (for [form (:application/forms application)]
+                (-> form
+                    (form/enrich-form-answers field-values nil)
+                    (form/enrich-form-field-visible)))]
+    (merge (form-validation-errors forms)
+           (form-validation-warnings forms))))
+
 (defmethod command-handler :application.command/save-draft
   [cmd application _injections]
   (let [answers (:field-values cmd)

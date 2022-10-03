@@ -678,7 +678,8 @@
    ;; and overrides that for example when there is a sibling .form-control.is-invalid,
    ;; but that doesn't work with checkbox groups, dropdowns, etc., and we anyways
    ;; don't need the feature of hiding this div with CSS when it has no content.
-   [:div.invalid-feedback {:display :block}]
+   [:div.invalid-feedback {:display :block
+                           :font-size :inherit}]
 
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]

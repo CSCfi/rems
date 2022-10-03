@@ -546,10 +546,9 @@
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
           (fill-form-field "Simple text field" "Private field answer")
-          (is (btu/eventually-visible? {:id :status-success :fn/text "Application is saved."}))
+          (is (btu/eventually-visible? [{:id :status-success :fn/has-text "Application is saved."}]))
           (is (btu/eventually-visible? :status-warning))
-          (is (= ["Field \"Text field\" is required."
-                  "Invalid email address."]
+          (is (= ["Invalid email address."] ; only invalid values are warned about
                  (get-validation-summary))))
 
         (testing "try to submit without accepting licenses or filling in a mandatory field"
@@ -924,6 +923,7 @@
         (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
         (btu/wait-page-loaded)
         ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (btu/wait-visible :logout)
         (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
