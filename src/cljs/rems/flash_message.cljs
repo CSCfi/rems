@@ -57,7 +57,7 @@
   (let [message {:status :success
                  :location location
                  :content (into [:<>
-                                 [:div#status-warning.flash-message-title description]]
+                                 [:div#status-success.flash-message-title description]]
                                 (:content opts))}]
     (rf/dispatch [::show-flash-message message opts])))
 
