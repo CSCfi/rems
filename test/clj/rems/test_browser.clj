@@ -2628,6 +2628,7 @@
 
           (remove-option "Owners (optional)" "Organization Owner 2")
           (btu/scroll-and-click :save)
+          (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:css ".alert-success"}))
           (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
@@ -2646,13 +2647,8 @@
                     "Name (EN)" "Review mail EN"
                     "Email" "review.email@example.com"
                     "Active" true}
-                   (slurp-fields :organization))))
-
-          (testing "edit organization again, owners field should be disabled"
-            (btu/scroll-and-click :edit-organization)
-            (btu/wait-page-loaded)
-            (is (btu/eventually-visible? :short-name-en))
-            (is (btu/disabled? {:id (get-field-id "Owners (optional)")}))))))))
+                   (slurp-fields :organization)))
+            (is (not (btu/visible? :edit-organization)))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
