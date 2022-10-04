@@ -4,12 +4,12 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
+            [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -61,35 +61,39 @@
            (interpose [:br]))]]))
 
 (defn organization-view [organization language]
-  [:div.spaced-vertically-3
-   [collapsible/component
-    {:id "organization"
-     :title (get-in organization [:organization/name language])
-     :always [:div
-              [inline-info-field (text :t.administration/id) (:organization/id organization)]
-              (doall (for [[langcode localization] (:organization/short-name organization)]
-                       ^{:key (str "short-name-" (name langcode))}
-                       [inline-info-field (str (text :t.administration/short-name)
-                                               " (" (str/upper-case (name langcode)) ")")
-                        localization]))
-              (doall (for [[langcode localization] (:organization/name organization)]
-                       ^{:key (str "name-" (name langcode))}
-                       [inline-info-field (str (text :t.administration/title)
-                                               " (" (str/upper-case (name langcode)) ")")
-                        localization]))
-              [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
-                                                                      (map enrich-user)
-                                                                      (map :display)
-                                                                      (interpose [:br]))]
-              [review-emails-field (:organization/review-emails organization)]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
-   (let [id (:organization/id organization)]
-     [:div.col.commands
-      [administration/back-button "/administration/organizations"]
-      [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
-       [edit-button id]
-       [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])])
+  (let [organization-id (:organization/id organization)
+        org-owner? (->> @(rf/subscribe [:owned-organizations])
+                        (some (comp #{organization-id} :organization/id)))]
+    [:div.spaced-vertically-3
+     [collapsible/component
+      {:id "organization"
+       :title (get-in organization [:organization/name language])
+       :always [:div
+                [inline-info-field (text :t.administration/id) (:organization/id organization)]
+                (doall (for [[langcode localization] (:organization/short-name organization)]
+                         ^{:key (str "short-name-" (name langcode))}
+                         [inline-info-field (str (text :t.administration/short-name)
+                                                 " (" (str/upper-case (name langcode)) ")")
+                          localization]))
+                (doall (for [[langcode localization] (:organization/name organization)]
+                         ^{:key (str "name-" (name langcode))}
+                         [inline-info-field (str (text :t.administration/title)
+                                                 " (" (str/upper-case (name langcode)) ")")
+                          localization]))
+                [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
+                                                                        (map enrich-user)
+                                                                        (map :display)
+                                                                        (interpose [:br]))]
+                [review-emails-field (:organization/review-emails organization)]
+                [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
+     (let [id (:organization/id organization)]
+       [:div.col.commands
+        [administration/back-button "/administration/organizations"]
+        (when org-owner?
+          [edit-button id])
+        [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
+         [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
+         [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])]))
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])
