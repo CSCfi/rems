@@ -32,6 +32,7 @@
                      :duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
+                     :missing-acl "Inte tillräckligt med rättigheter"
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
                      :validation-errors "Var vänlig kontrollera följande:"
                      :validation-warnings "Vänligen kontrollera följande innan du skickar in:"

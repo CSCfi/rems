@@ -34,6 +34,7 @@
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
                      ;; %1 - organization name
+                     :missing-acl "No sufficient rights"
                      :organization-does-not-exist "Organization \"%1\" does not exist"
                      :validation-errors "Check the following errors:"
                      :validation-warnings "Check the following before submit:"

@@ -32,6 +32,7 @@
                      :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
+                     :missing-acl "Puutteelliset käyttöoikeudet"
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"
                      :validation-errors "Tarkasta seuraavat virheet:"
                      :validation-warnings "Tarkasta vielä seuraavat ennen lähetystä:"
