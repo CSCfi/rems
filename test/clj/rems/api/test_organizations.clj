@@ -158,30 +158,42 @@
                   :enabled true
                   :archived false}
                  (find-first (comp #{organization-id} :organization/id) (get-orgs owner))
-                 (get-org owner organization-id))))
-        (testing "unable to edit organization owners when no longer organization owner"
+                 (get-org owner organization-id)))
+
+          (testing "unable to edit organization owners when no longer organization owner"
           ;; XXX: org owner loses the role #{:organization-owner} if user is not
           ;; organization owner in any org. hence we create a second org which
           ;; maintains this role.
-          (api-call :post "/api/organizations/create"
-                    {:organization/id organization-id-2
-                     :organization/name {:fi "Organisaatiot API Test ORG"
-                                         :en "Organizations API Test ORG"}
-                     :organization/short-name {:fi "ORG" :en "ORG"}
-                     :organization/owners [{:userid org-owner1}]
-                     :organization/review-emails []}
-                    api-key owner)
-          (let [data (api-call :put "/api/organizations/edit"
-                               {:organization/id organization-id
-                                :organization/name {:fi "Organisaatiot API Test ORG 3"
-                                                    :en "Organizations API Test ORG 3"}
-                                :organization/short-name {:fi "ORG3" :en "ORG3"}
-                                :organization/owners [{:userid org-owner1}]
-                                :organization/review-emails [{:email "test@organization3.test.org"
-                                                              :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
-                                                                     :en "Organizations 3 API Test ORG Reviewers"}}]}
-                               api-key org-owner1)]
-            (is (= organization-id (:organization/id data)))
+            (api-call :post "/api/organizations/create"
+                      {:organization/id organization-id-2
+                       :organization/name {:fi "Organisaatiot API Test ORG"
+                                           :en "Organizations API Test ORG"}
+                       :organization/short-name {:fi "ORG" :en "ORG"}
+                       :organization/owners [{:userid org-owner1}]
+                       :organization/review-emails []}
+                      api-key owner)
+            (let [org-data {:organization/id organization-id
+                            :organization/name {:fi "Organisaatiot API Test ORG 3"
+                                                :en "Organizations API Test ORG 3"}
+                            :organization/short-name {:fi "ORG3" :en "ORG3"}
+                            :organization/owners [{:userid org-owner2}]
+                            :organization/review-emails [{:email "test@organization3.test.org"
+                                                          :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
+                                                                 :en "Organizations 3 API Test ORG Reviewers"}}]}]
+              (is (= {:success false
+                      :organization/id organization-id
+                      :errors [{:type "t.actions.errors/missing-acl"
+                                :userid org-owner1}]}
+                     (api-call :put "/api/organizations/edit"
+                               (assoc org-data :organization/name {:fi "Ei mene läpi"})
+                               api-key org-owner1)))
+              (is (= {:success false
+                      :organization/id organization-id
+                      :errors [{:type "t.actions.errors/missing-acl"
+                                :userid org-owner1}]}
+                     (api-call :put "/api/organizations/edit"
+                               (assoc org-data :organization/owners [{:userid org-owner1}])
+                               api-key org-owner1))))
             (is (= {:organization/id organization-id
                     :organization/name {:fi "Organisaatiot API Test ORG 3"
                                         :en "Organizations API Test ORG 3"}
@@ -193,7 +205,8 @@
                     :enabled true
                     :archived false}
                    (find-first (comp #{organization-id} :organization/id) (get-orgs owner))
-                   (get-org owner organization-id)))))))))
+                   (get-org owner organization-id))
+                "organization data is unchanged")))))))
 
 (deftest organization-api-status-test
   (api-key/add-api-key! "42")
