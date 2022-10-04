@@ -36,6 +36,7 @@ Changes since v2.29
 - Don't needlessly complain about the config keys that are passed automatically from system properties and the environment. (#2935)
 - Application warning and error links were not functioning correctly for attachment fields. This is now fixed. (#2955)
 - DUO fields are no longer editable in the UI when application is not in editable state. (#2997)
+- Organization edit now requires user to be either owner or organization owner of the organization. (#2828)
 
 ## v2.29 "Länsisatamankatu" 2022-09-12
 
