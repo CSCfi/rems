@@ -17,6 +17,7 @@ Changes since v2.29
   - The non-standard endpoints have been been deprecated and will be removed later.
 - The text for saving has been changed "Alice saved a draft." -> "Alice updated the application.". This will be clearer in the future when autosave is enabled (#3045)
 - When continuing an old application, the applicant will be shown a warning about problematic fields. (#3045)
+- Data Use Ontology (DUO) is no longer shown in application UI if none of the resources contain DUO codes. (#3048)
 
 ### Additions
 - Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
