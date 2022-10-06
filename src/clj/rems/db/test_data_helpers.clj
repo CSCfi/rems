@@ -20,6 +20,9 @@
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]))
 
+(defn select-config-langs [m]
+  (select-keys m (:languages rems.config/env)))
+
 ;;; helpers for generating test data
 
 (defn command! [command]
@@ -67,14 +70,23 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization! {:organization/id (or id "default")
-                                                 :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
-                                                 :organization/short-name (or short-name {:fi "Oletus" :en "Default" :sv "Standard"})
-                                                 :organization/owners (or owners
-                                                                          (if users
-                                                                            [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
-                                                                            []))
-                                                 :organization/review-emails (or review-emails [])})]
+        result (organizations/add-organization!
+                {:organization/id (or id "default")
+                 :organization/name (select-config-langs
+                                     (or name {:fi "Oletusorganisaatio"
+                                               :en "The Default Organization"
+                                               :sv "Standardorganisationen"}))
+                 :organization/short-name (select-config-langs
+                                           (or short-name {:fi "Oletus"
+                                                           :en "Default"
+                                                           :sv "Standard"}))
+                 :organization/owners (or owners
+                                          (if users
+                                            [{:userid (users :organization-owner1)}
+                                             {:userid (users :organization-owner2)}]
+                                            []))
+                 :organization/review-emails (->> (or review-emails [])
+                                                  (mapv #(update % :name select-config-langs)))})]
     (assert (:success result) {:command command :result result})
     (:organization/id result)))
 
