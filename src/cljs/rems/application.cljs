@@ -1118,6 +1118,11 @@
                                      :duo/matches matches
                                      :duo/more-infos (find-duo-more-info duo)}]))])}]))
 
+(defn- get-resource-duos [application]
+  (let [duos (->> (:application/resources application)
+                  (mapcat #(get-in % [:resource/duo :duo/codes])))]
+    duos))
+
 (defn- render-application [{:keys [application config userid highlight-request-id language]}]
   [:<>
    [disabled-items-warning application]
@@ -1128,7 +1133,8 @@
      [application-state application config highlight-request-id userid]
      [:div.mt-3 [applicants-info application userid]]
      [:div.mt-3 [applied-resources application userid language]]
-     (when (:enable-duo config)
+     (when (and (:enable-duo config)
+                (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
          [:div.mt-3 [application-duo-codes]]
          [:div.mt-3 [edit-application-duo-codes]]))
