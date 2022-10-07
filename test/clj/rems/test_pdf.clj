@@ -524,7 +524,7 @@
                  [[:paragraph pdf/field-heading-style "Conditional field. Shown only if first option is selected above."]
                   [:paragraph "pdf test"]]
                  [[:paragraph pdf/field-heading-style "Multi-select list"]
-                  [:paragraph "First option"]]
+                  [:paragraph "First option, Second option, Third option"]]
                  [[:paragraph pdf/field-heading-style "Table"]
                   [:paragraph
                    [:table {:header ["First" "Second"]}
