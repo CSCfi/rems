@@ -129,10 +129,19 @@
 (defn- field-value [filenames field]
   (let [value (:field/value field)]
     (case (:field/type field)
-      (:option :multiselect)
+      :option
       (localized (-> (build-index {:keys [:key] :value-fn :label}
                                   (:field/options field))
                      (get value)))
+
+      :multiselect
+      (let [options (build-index {:keys [:key] :value-fn :label}
+                                 (:field/options field))
+            values (form/parse-multiselect-values value)]
+        (->> (sort values) ; parse returns set which can be in random order
+             (map (partial get options))
+             (map localized)
+             (str/join ", ")))
 
       :attachment
       (if (empty? value)
