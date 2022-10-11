@@ -11,7 +11,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.db.test-data-helpers :refer :all]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
             [rems.db.workflow :as workflow]
             [rems.testing-util :refer [with-user]]
@@ -26,7 +26,7 @@
 (defn- create-users-and-roles! [users attrs]
   (doseq [user (vals users)]
     (when-let [data (get attrs user)]
-      (create-user! data)))
+      (test-helpers/create-user! data)))
   (roles/add-role! (users :owner) :owner)
   (roles/add-role! (users :reporter) :reporter))
 
@@ -38,27 +38,27 @@
 
 (defn create-bots! []
   (doseq [attr (vals +bot-user-data+)]
-    (create-user! attr))
+    (test-helpers/create-user! attr))
   (roles/add-role! (:expirer-bot +bot-users+) :expirer))
 
 (defn- create-archived-form! [actor]
   (with-user actor
-    (let [id (create-form! {:actor actor
-                            :organization {:organization/id "nbn"}
-                            :form/internal-name "Archived form, should not be seen by applicants"
-                            :form/external-title {:en "Archived form, should not be seen by applicants"
-                                                  :fi "Archived form, should not be seen by applicants"
-                                                  :sv "Archived form, should not be seen by applicants"}})]
+    (let [id (test-helpers/create-form! {:actor actor
+                                         :organization {:organization/id "nbn"}
+                                         :form/internal-name "Archived form, should not be seen by applicants"
+                                         :form/external-title {:en "Archived form, should not be seen by applicants"
+                                                               :fi "Archived form, should not be seen by applicants"
+                                                               :sv "Archived form, should not be seen by applicants"}})]
       (form/set-form-archived! {:id id :archived true}))))
 
 (defn- create-disabled-license! [{:keys [actor organization]}]
-  (let [id (create-license! {:actor actor
-                             :license/type "link"
-                             :organization organization
-                             :license/title {:en "Disabled license"
-                                             :fi "Käytöstä poistettu lisenssi"}
-                             :license/link {:en "http://disabled"
-                                            :fi "http://disabled"}})]
+  (let [id (test-helpers/create-license! {:actor actor
+                                          :license/type "link"
+                                          :organization organization
+                                          :license/title {:en "Disabled license"
+                                                          :fi "Käytöstä poistettu lisenssi"}
+                                          :license/link {:en "http://disabled"
+                                                         :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
 (def all-field-types-example
@@ -220,12 +220,11 @@
 (defn create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
   [actor organization internal-name external-title]
-  (create-form!
-   {:actor actor
-    :organization organization
-    :form/internal-name internal-name
-    :form/external-title external-title
-    :form/fields all-field-types-example}))
+  (test-helpers/create-form! {:actor actor
+                              :organization organization
+                              :form/internal-name internal-name
+                              :form/external-title external-title
+                              :form/fields all-field-types-example}))
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
@@ -235,74 +234,74 @@
         owner (users :owner)
         organization-owner1 (users :organization-owner1)
         handlers [approver1 approver2 rejecter-bot]
-        link (create-license! {:actor owner
-                               :license/type :link
-                               :organization {:organization/id "nbn"}
-                               :license/title {:en "CC Attribution 4.0"
-                                               :fi "CC Nimeä 4.0"
-                                               :sv "CC Erkännande 4.0"}
-                               :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                              :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                              :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
-        text (create-license! {:actor owner
-                               :license/type :text
-                               :organization {:organization/id "nbn"}
-                               :license/title {:en "General Terms of Use"
-                                               :fi "Yleiset käyttöehdot"
-                                               :sv "Allmänna villkor"}
-                               :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                              :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
-                                              :sv (apply str (repeat 10 "Licens på svenska. "))}})
-        default (create-workflow! {:actor owner
-                                   :organization {:organization/id "nbn"}
-                                   :title "Default workflow"
-                                   :type :workflow/default
-                                   :handlers handlers
-                                   :licenses [link text]})
-        decider (create-workflow! {:actor owner
-                                   :organization {:organization/id "nbn"}
-                                   :title "Decider workflow"
-                                   :type :workflow/decider
-                                   :handlers handlers
-                                   :licenses [link text]})
-        master (create-workflow! {:actor owner
-                                  :organization {:organization/id "nbn"}
-                                  :title "Master workflow"
-                                  :type :workflow/master
-                                  :handlers handlers
-                                  :licenses [link text]})
-        auto-approve (create-workflow! {:actor owner
-                                        :organization {:organization/id "nbn"}
-                                        :title "Auto-approve workflow"
-                                        :handlers [approver-bot rejecter-bot]
-                                        :licenses [link text]})
-        organization-owner (create-workflow! {:actor organization-owner1
-                                              :organization {:organization/id "organization1"}
-                                              :title "Owned by organization owner"
-                                              :type :workflow/default
-                                              :handlers handlers})
-        _with-form (create-workflow! {:actor owner
-                                      :organization {:organization/id "nbn"}
-                                      :title "With workflow form"
-                                      :type :workflow/default
-                                      :handlers handlers
-                                      :licenses [link text]
-                                      :forms [{:form/id (create-form! {:actor owner
-                                                                       :form/internal-name "Workflow form"
-                                                                       :form/external-title {:en "Workflow form"
-                                                                                             :fi "Työvuon lomake"
-                                                                                             :sv "Blankett för arbetsflöde"}
-                                                                       :organization {:organization/id "nbn"}
-                                                                       :form/fields [{:field/type :description
-                                                                                      :field/title {:fi "Kuvaus"
-                                                                                                    :en "Description"
-                                                                                                    :sv "Rubrik"}
-                                                                                      :field/optional false}]})}]})
-        ega (create-workflow! {:actor owner
-                               :organization {:organization/id "csc"}
-                               :title "EGA workflow, a variant of default"
-                               :type :workflow/default
-                               :handlers handlers})]
+        link (test-helpers/create-license! {:actor owner
+                                            :license/type :link
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "CC Attribution 4.0"
+                                                            :fi "CC Nimeä 4.0"
+                                                            :sv "CC Erkännande 4.0"}
+                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        text (test-helpers/create-license! {:actor owner
+                                            :license/type :text
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "General Terms of Use"
+                                                            :fi "Yleiset käyttöehdot"
+                                                            :sv "Allmänna villkor"}
+                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
+        default (test-helpers/create-workflow! {:actor owner
+                                                :organization {:organization/id "nbn"}
+                                                :title "Default workflow"
+                                                :type :workflow/default
+                                                :handlers handlers
+                                                :licenses [link text]})
+        decider (test-helpers/create-workflow! {:actor owner
+                                                :organization {:organization/id "nbn"}
+                                                :title "Decider workflow"
+                                                :type :workflow/decider
+                                                :handlers handlers
+                                                :licenses [link text]})
+        master (test-helpers/create-workflow! {:actor owner
+                                               :organization {:organization/id "nbn"}
+                                               :title "Master workflow"
+                                               :type :workflow/master
+                                               :handlers handlers
+                                               :licenses [link text]})
+        auto-approve (test-helpers/create-workflow! {:actor owner
+                                                     :organization {:organization/id "nbn"}
+                                                     :title "Auto-approve workflow"
+                                                     :handlers [approver-bot rejecter-bot]
+                                                     :licenses [link text]})
+        organization-owner (test-helpers/create-workflow! {:actor organization-owner1
+                                                           :organization {:organization/id "organization1"}
+                                                           :title "Owned by organization owner"
+                                                           :type :workflow/default
+                                                           :handlers handlers})
+        _with-form (test-helpers/create-workflow! {:actor owner
+                                                   :organization {:organization/id "nbn"}
+                                                   :title "With workflow form"
+                                                   :type :workflow/default
+                                                   :handlers handlers
+                                                   :licenses [link text]
+                                                   :forms [{:form/id (test-helpers/create-form! {:actor owner
+                                                                                                 :form/internal-name "Workflow form"
+                                                                                                 :form/external-title {:en "Workflow form"
+                                                                                                                       :fi "Työvuon lomake"
+                                                                                                                       :sv "Blankett för arbetsflöde"}
+                                                                                                 :organization {:organization/id "nbn"}
+                                                                                                 :form/fields [{:field/type :description
+                                                                                                                :field/title {:fi "Kuvaus"
+                                                                                                                              :en "Description"
+                                                                                                                              :sv "Rubrik"}
+                                                                                                                :field/optional false}]})}]})
+        ega (test-helpers/create-workflow! {:actor owner
+                                            :organization {:organization/id "csc"}
+                                            :title "EGA workflow, a variant of default"
+                                            :type :workflow/default
+                                            :handlers handlers})]
     {:default default
      :ega ega
      :decider decider
@@ -313,170 +312,170 @@
 (defn- create-bona-fide-catalogue-item! [users]
   (let [owner (:owner users)
         bot (:bona-fide-bot users)
-        res (create-resource! {:resource-ext-id "bona-fide"
-                               :organization {:organization/id "default"}
-                               :actor owner})
-        form (create-form! {:actor owner
-                            :form/internal-name "Bona Fide form"
-                            :form/external-title {:en "Form"
-                                                  :fi "Lomake"
-                                                  :sv "Blankett"}
-                            :organization {:organization/id "default"}
-                            :form/fields [{:field/type :email
-                                           :field/title {:fi "Suosittelijan sähköpostiosoite"
-                                                         :en "Referer's email address"
-                                                         :sv "sv"}
-                                           :field/optional false}]})
-        wf (create-workflow! {:actor owner
-                              :organization {:organization/id "default"}
-                              :title "Bona Fide workflow"
-                              :type :workflow/default
-                              :handlers [bot]})]
-    (create-catalogue-item! {:actor owner
-                             :organization {:organization/id "default"}
-                             :title {:en "Apply for Bona Fide researcher status"
-                                     :fi "Hae Bona Fide tutkija -statusta"
-                                     :sv "sv"}
-                             :resource-id res
-                             :form-id form
-                             :workflow-id wf})))
+        res (test-helpers/create-resource! {:resource-ext-id "bona-fide"
+                                            :organization {:organization/id "default"}
+                                            :actor owner})
+        form (test-helpers/create-form! {:actor owner
+                                         :form/internal-name "Bona Fide form"
+                                         :form/external-title {:en "Form"
+                                                               :fi "Lomake"
+                                                               :sv "Blankett"}
+                                         :organization {:organization/id "default"}
+                                         :form/fields [{:field/type :email
+                                                        :field/title {:fi "Suosittelijan sähköpostiosoite"
+                                                                      :en "Referer's email address"
+                                                                      :sv "sv"}
+                                                        :field/optional false}]})
+        wf (test-helpers/create-workflow! {:actor owner
+                                           :organization {:organization/id "default"}
+                                           :title "Bona Fide workflow"
+                                           :type :workflow/default
+                                           :handlers [bot]})]
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :organization {:organization/id "default"}
+                                          :title {:en "Apply for Bona Fide researcher status"
+                                                  :fi "Hae Bona Fide tutkija -statusta"
+                                                  :sv "sv"}
+                                          :resource-id res
+                                          :form-id form
+                                          :workflow-id wf})))
 
 (defn- create-disabled-applications! [catid applicant approver]
-  (create-draft! applicant [catid] "draft with disabled item")
+  (test-helpers/create-draft! applicant [catid] "draft with disabled item")
 
-  (let [appid1 (create-draft! applicant [catid] "submitted application with disabled item")]
-    (command! {:type :application.command/submit
-               :application-id appid1
-               :actor applicant}))
+  (let [appid1 (test-helpers/create-draft! applicant [catid] "submitted application with disabled item")]
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id appid1
+                            :actor applicant}))
 
-  (let [appid2 (create-draft! applicant [catid] "approved application with disabled item")]
-    (command! {:type :application.command/submit
-               :application-id appid2
-               :actor applicant})
-    (command! {:type :application.command/approve
-               :application-id appid2
-               :actor approver
-               :comment "Looking good"})))
+  (let [appid2 (test-helpers/create-draft! applicant [catid] "approved application with disabled item")]
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id appid2
+                            :actor applicant})
+    (test-helpers/command! {:type :application.command/approve
+                            :application-id appid2
+                            :actor approver
+                            :comment "Looking good"})))
 
 (defn- create-member-applications! [catid applicant approver members]
-  (let [appid1 (create-draft! applicant [catid] "draft with invited members")]
-    (command! {:type :application.command/invite-member
-               :application-id appid1
-               :actor applicant
-               :member {:name "John Smith" :email "john.smith@example.org"}}))
-  (let [appid2 (create-draft! applicant [catid] "submitted with members")]
-    (command! {:type :application.command/invite-member
-               :application-id appid2
-               :actor applicant
-               :member {:name "John Smith" :email "john.smith@example.org"}})
-    (command! {:type :application.command/submit
-               :application-id appid2
-               :actor applicant})
+  (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
+    (test-helpers/command! {:type :application.command/invite-member
+                            :application-id appid1
+                            :actor applicant
+                            :member {:name "John Smith" :email "john.smith@example.org"}}))
+  (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
+    (test-helpers/command! {:type :application.command/invite-member
+                            :application-id appid2
+                            :actor applicant
+                            :member {:name "John Smith" :email "john.smith@example.org"}})
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id appid2
+                            :actor applicant})
     (doseq [member members]
-      (command! {:type :application.command/add-member
-                 :application-id appid2
-                 :actor approver
-                 :member member}))))
+      (test-helpers/command! {:type :application.command/add-member
+                              :application-id appid2
+                              :actor approver
+                              :member member}))))
 
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
 
-    (create-draft! applicant [catid] "draft application")
+    (test-helpers/create-draft! applicant [catid] "draft application")
 
-    (let [app-id (create-draft! applicant [catid] "applied")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "applied")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant}))
 
     (let [time (time/minus (time/now) (time/days 7))
-          app-id (create-draft! applicant [catid] "old applied" time)]
-      (command! {:time time
-                 :type :application.command/submit
-                 :application-id app-id
-                 :actor applicant}))
+          app-id (test-helpers/create-draft! applicant [catid] "old applied" time)]
+      (test-helpers/command! {:time time
+                              :type :application.command/submit
+                              :application-id app-id
+                              :actor applicant}))
 
-    (let [app-id (create-draft! applicant [catid] "approved with comment")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-review
-                 :application-id app-id
-                 :actor approver
-                 :reviewers [reviewer]
-                 :comment "please have a look"})
-      (command! {:type :application.command/review
-                 :application-id app-id
-                 :actor reviewer
-                 :comment "looking good"})
-      (command! {:type :application.command/approve
-                 :application-id app-id
-                 :actor approver
-                 :comment "Thank you! Approved!"}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "approved with comment")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor approver
+                              :reviewers [reviewer]
+                              :comment "please have a look"})
+      (test-helpers/command! {:type :application.command/review
+                              :application-id app-id
+                              :actor reviewer
+                              :comment "looking good"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id app-id
+                              :actor approver
+                              :comment "Thank you! Approved!"}))
 
-    (let [app-id (create-draft! applicant [catid] "rejected")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/reject
-                 :application-id app-id
-                 :actor approver
-                 :comment "Never going to happen"}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "rejected")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/reject
+                              :application-id app-id
+                              :actor approver
+                              :comment "Never going to happen"}))
 
-    (let [app-id (create-draft! applicant [catid] "returned")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/return
-                 :application-id app-id
-                 :actor approver
-                 :comment "Need more details"}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "returned")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/return
+                              :application-id app-id
+                              :actor approver
+                              :comment "Need more details"}))
 
-    (let [app-id (create-draft! applicant [catid] "approved & closed")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-review
-                 :application-id app-id
-                 :actor approver
-                 :reviewers [reviewer]
-                 :comment "please have a look"})
-      (command! {:type :application.command/review
-                 :application-id app-id
-                 :actor reviewer
-                 :comment "looking good"})
-      (command! {:type :application.command/approve
-                 :application-id app-id
-                 :actor approver
-                 :comment "Thank you! Approved!"})
-      (command! {:type :application.command/close
-                 :application-id app-id
-                 :actor approver
-                 :comment "Research project complete, closing."}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "approved & closed")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor approver
+                              :reviewers [reviewer]
+                              :comment "please have a look"})
+      (test-helpers/command! {:type :application.command/review
+                              :application-id app-id
+                              :actor reviewer
+                              :comment "looking good"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id app-id
+                              :actor approver
+                              :comment "Thank you! Approved!"})
+      (test-helpers/command! {:type :application.command/close
+                              :application-id app-id
+                              :actor approver
+                              :comment "Research project complete, closing."}))
 
-    (let [app-id (create-draft! applicant [catid] "waiting for review")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-review
-                 :application-id app-id
-                 :actor approver
-                 :reviewers [reviewer]
-                 :comment ""}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "waiting for review")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor approver
+                              :reviewers [reviewer]
+                              :comment ""}))
 
-    (let [app-id (create-draft! applicant [catid] "waiting for decision")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-decision
-                 :application-id app-id
-                 :actor approver
-                 :deciders [reviewer]
-                 :comment ""}))
+    (let [app-id (test-helpers/create-draft! applicant [catid] "waiting for decision")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-decision
+                              :application-id app-id
+                              :actor approver
+                              :deciders [reviewer]
+                              :comment ""}))
 
     (->> (time/minus (time/now) (time/days 84))
-         (create-draft! applicant [catid] "long forgotten draft"))))
+         (test-helpers/create-draft! applicant [catid] "long forgotten draft"))))
 
 (defn- range-1
   "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
@@ -518,65 +517,64 @@
                                                 :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
                                                 :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
                                                 :organization/review-emails []})
-        workflow-id (create-workflow! {:actor owner
-                                       :organization {:organization/id "perf"}
-                                       :title "Performance tests"
-                                       :handlers handlers})
-        form-id (create-form!
-                 {:actor owner
-                  :organization {:organization/id "perf"}
-                  :form/internal-name "Performance tests"
-                  :form/external-title {:en "Performance tests EN"
-                                        :fi "Performance tests FI"
-                                        :sv "Performance tests SV"}
-                  :form/fields [{:field/title {:en "Project name"
-                                               :fi "Projektin nimi"
-                                               :sv "Projektets namn"}
-                                 :field/optional false
-                                 :field/type :description
-                                 :field/placeholder {:en "Project"
-                                                     :fi "Projekti"
-                                                     :sv "Projekt"}}
+        workflow-id (test-helpers/create-workflow! {:actor owner
+                                                    :organization {:organization/id "perf"}
+                                                    :title "Performance tests"
+                                                    :handlers handlers})
+        form-id (test-helpers/create-form! {:actor owner
+                                            :organization {:organization/id "perf"}
+                                            :form/internal-name "Performance tests"
+                                            :form/external-title {:en "Performance tests EN"
+                                                                  :fi "Performance tests FI"
+                                                                  :sv "Performance tests SV"}
+                                            :form/fields [{:field/title {:en "Project name"
+                                                                         :fi "Projektin nimi"
+                                                                         :sv "Projektets namn"}
+                                                           :field/optional false
+                                                           :field/type :description
+                                                           :field/placeholder {:en "Project"
+                                                                               :fi "Projekti"
+                                                                               :sv "Projekt"}}
 
-                                {:field/title {:en "Project description"
-                                               :fi "Projektin kuvaus"
-                                               :sv "Projektets beskrivning"}
-                                 :field/optional false
-                                 :field/type :texta
-                                 :field/placeholder {:en "The purpose of the project is to..."
-                                                     :fi "Projektin tarkoitus on..."
-                                                     :sv "Det här projekt..."}}]})
+                                                          {:field/title {:en "Project description"
+                                                                         :fi "Projektin kuvaus"
+                                                                         :sv "Projektets beskrivning"}
+                                                           :field/optional false
+                                                           :field/type :texta
+                                                           :field/placeholder {:en "The purpose of the project is to..."
+                                                                               :fi "Projektin tarkoitus on..."
+                                                                               :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
-        category {:category/id (create-category! {:actor owner
-                                                  :category/title {:en "Performance"
-                                                                   :fi "Suorituskyky"
-                                                                   :sv "Prestand"}
-                                                  :category/description {:en "These catalogue items are for performance test."
-                                                                         :fi "Nämä resurssit ovat suorituskykytestausta varten."
-                                                                         :sv "Dessa resurser är för prestand."}})}
-        license-id (create-license! {:actor owner
-                                     :license/type :text
-                                     :organization {:organization/id "perf"}
-                                     :license/title {:en "Performance License"
-                                                     :fi "Suorituskykylisenssi"
-                                                     :sv "Licens för prestand"}
-                                     :license/text {:en "Be fast."
-                                                    :fi "Ole nopea."
-                                                    :sv "Var snabb."}})
+        category {:category/id (test-helpers/create-category! {:actor owner
+                                                               :category/title {:en "Performance"
+                                                                                :fi "Suorituskyky"
+                                                                                :sv "Prestand"}
+                                                               :category/description {:en "These catalogue items are for performance test."
+                                                                                      :fi "Nämä resurssit ovat suorituskykytestausta varten."
+                                                                                      :sv "Dessa resurser är för prestand."}})}
+        license-id (test-helpers/create-license! {:actor owner
+                                                  :license/type :text
+                                                  :organization {:organization/id "perf"}
+                                                  :license/title {:en "Performance License"
+                                                                  :fi "Suorituskykylisenssi"
+                                                                  :sv "Licens för prestand"}
+                                                  :license/text {:en "Be fast."
+                                                                 :fi "Ole nopea."
+                                                                 :sv "Var snabb."}})
         cat-item-ids (vec (in-parallel
                            (for [n (range-1 resource-count)]
                              (fn []
-                               (let [resource-id (create-resource! {:organization {:organization/id "perf"}
-                                                                    :license-ids [license-id]})]
-                                 (create-catalogue-item! {:actor owner
-                                                          :title {:en (str "Performance test resource " n)
-                                                                  :fi (str "Suorituskykytestiresurssi " n)
-                                                                  :sv (str "Licens för prestand " n)}
-                                                          :resource-id resource-id
-                                                          :form-id form-id
-                                                          :organization {:organization/id "perf"}
-                                                          :workflow-id workflow-id
-                                                          :categories [category]}))))))
+                               (let [resource-id (test-helpers/create-resource! {:organization {:organization/id "perf"}
+                                                                                 :license-ids [license-id]})]
+                                 (test-helpers/create-catalogue-item! {:actor owner
+                                                                       :title {:en (str "Performance test resource " n)
+                                                                               :fi (str "Suorituskykytestiresurssi " n)
+                                                                               :sv (str "Licens för prestand " n)}
+                                                                       :resource-id resource-id
+                                                                       :form-id form-id
+                                                                       :organization {:organization/id "perf"}
+                                                                       :workflow-id workflow-id
+                                                                       :categories [category]}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
                          (fn []
@@ -592,32 +590,32 @@
          (let [cat-item-id (rand-nth cat-item-ids)
                user-id (rand-nth user-ids)
                handler (rand-nth handlers)
-               app-id (create-application! {:catalogue-item-ids [cat-item-id]
-                                            :actor user-id})
+               app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                         :actor user-id})
                long-answer (random-long-string)]
            (dotimes [i 20] ; user saves ~ 20 times while writing an application
-             (command! {:type :application.command/save-draft
-                        :application-id app-id
-                        :actor user-id
-                        :field-values [{:form form-id
-                                        :field (:field/id (first (:form/fields form)))
-                                        :value (str "Performance test application " (UUID/randomUUID))}
-                                       {:form form-id
-                                        :field (:field/id (second (:form/fields form)))
+             (test-helpers/command! {:type :application.command/save-draft
+                                     :application-id app-id
+                                     :actor user-id
+                                     :field-values [{:form form-id
+                                                     :field (:field/id (first (:form/fields form)))
+                                                     :value (str "Performance test application " (UUID/randomUUID))}
+                                                    {:form form-id
+                                                     :field (:field/id (second (:form/fields form)))
                                         ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
                                         ;; to increase the memory requirements of an application
-                                        :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}]}))
-           (command! {:type :application.command/accept-licenses
-                      :application-id app-id
-                      :actor user-id
-                      :accepted-licenses [license-id]})
-           (command! {:type :application.command/submit
-                      :application-id app-id
-                      :actor user-id})
-           (command! {:type :application.command/approve
-                      :application-id app-id
-                      :actor handler
-                      :comment ""})))))
+                                                     :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}]}))
+           (test-helpers/command! {:type :application.command/accept-licenses
+                                   :application-id app-id
+                                   :actor user-id
+                                   :accepted-licenses [license-id]})
+           (test-helpers/command! {:type :application.command/submit
+                                   :application-id app-id
+                                   :actor user-id})
+           (test-helpers/command! {:type :application.command/approve
+                                   :application-id app-id
+                                   :actor handler
+                                   :comment ""})))))
     (log/info "Performance test applications created")))
 
 (defn- create-items! [users]
@@ -625,123 +623,124 @@
         organization-owner1 (users :organization-owner1)
 
         ;; Create licenses
-        license1 (create-license! {:actor owner
-                                   :license/type :link
-                                   :organization {:organization/id "nbn"}
-                                   :license/title {:en "Demo license"
-                                                   :fi "Demolisenssi"
-                                                   :sv "Demolicens"}
-                                   :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"
-                                                  :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
-        license2 (create-license! {:actor owner
-                                   :license/type :link
-                                   :organization {:organization/id "nbn"}
-                                   :license/title {:en "Demo license 2"
-                                                   :fi "Demolisenssi 2"
-                                                   :sv "Demolicens 2"}
-                                   :license/link {:en "https://fedoraproject.org/wiki/Licensing/Beerware"
-                                                  :fi "https://fedoraproject.org/wiki/Licensing/Beerware"
-                                                  :sv "https://fedoraproject.org/wiki/Licensing/Beerware"}})
-        extra-license (create-license! {:actor owner
-                                        :license/type :link
-                                        :organization {:organization/id "nbn"}
-                                        :license/title {:en "Extra license"
-                                                        :fi "Ylimääräinen lisenssi"
-                                                        :sv "Extra licens"}
-                                        :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"
-                                                       :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
-        license-organization-owner (create-license! {:actor organization-owner1
+        license1 (test-helpers/create-license! {:actor owner
+                                                :license/type :link
+                                                :organization {:organization/id "nbn"}
+                                                :license/title {:en "Demo license"
+                                                                :fi "Demolisenssi"
+                                                                :sv "Demolicens"}
+                                                :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                               :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                               :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
+        license2 (test-helpers/create-license! {:actor owner
+                                                :license/type :link
+                                                :organization {:organization/id "nbn"}
+                                                :license/title {:en "Demo license 2"
+                                                                :fi "Demolisenssi 2"
+                                                                :sv "Demolicens 2"}
+                                                :license/link {:en "https://fedoraproject.org/wiki/Licensing/Beerware"
+                                                               :fi "https://fedoraproject.org/wiki/Licensing/Beerware"
+                                                               :sv "https://fedoraproject.org/wiki/Licensing/Beerware"}})
+        extra-license (test-helpers/create-license! {:actor owner
                                                      :license/type :link
-                                                     :organization {:organization/id "organization1"}
-                                                     :license/title {:en "License owned by organization owner"
-                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
-                                                                     :sv "Licens som ägs av organisationägare"}
+                                                     :organization {:organization/id "nbn"}
+                                                     :license/title {:en "Extra license"
+                                                                     :fi "Ylimääräinen lisenssi"
+                                                                     :sv "Extra licens"}
                                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
+        license-organization-owner (test-helpers/create-license! {:actor organization-owner1
+                                                                  :license/type :link
+                                                                  :organization {:organization/id "organization1"}
+                                                                  :license/title {:en "License owned by organization owner"
+                                                                                  :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
+                                                                                  :sv "Licens som ägs av organisationägare"}
+                                                                  :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                                 :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                                 :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
 
-        ega-creative-commons-license (create-license! {:actor owner
-                                                       :license/type :link
-                                                       :organization {:organization/id "csc"}
-                                                       :license/title {:en "CC Attribution 4.0"
-                                                                       :fi "CC Nimeä 4.0"
-                                                                       :sv "CC Erkännande 4.0"}
-                                                       :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                                      :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                                                      :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        ega-creative-commons-license (test-helpers/create-license! {:actor owner
+                                                                    :license/type :link
+                                                                    :organization {:organization/id "csc"}
+                                                                    :license/title {:en "CC Attribution 4.0"
+                                                                                    :fi "CC Nimeä 4.0"
+                                                                                    :sv "CC Erkännande 4.0"}
+                                                                    :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                                                   :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                                                   :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
 
         _ (create-disabled-license! {:actor owner
                                      :organization {:organization/id "nbn"}})
-        attachment-license (create-attachment-license! {:actor owner
-                                                        :organization {:organization/id "nbn"}})
+        attachment-license (test-helpers/create-attachment-license! {:actor owner
+                                                                     :organization {:organization/id "nbn"}})
 
         ;; Create resources
-        res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization {:organization/id "nbn"}
-                                :actor owner})
-        res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization {:organization/id "nbn"}
-                                :actor owner
-                                :license-ids [license1]})
-        res3 (create-resource! {:resource-ext-id "something else"
-                                :organization {:organization/id "hus"}
-                                :actor owner
-                                :license-ids [license1 extra-license attachment-license]})
+        res1 (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                             :organization {:organization/id "nbn"}
+                                             :actor owner})
+        res2 (test-helpers/create-resource! {:resource-ext-id "Extra Data"
+                                             :organization {:organization/id "nbn"}
+                                             :actor owner
+                                             :license-ids [license1]})
+        res3 (test-helpers/create-resource! {:resource-ext-id "something else"
+                                             :organization {:organization/id "hus"}
+                                             :actor owner
+                                             :license-ids [license1 extra-license attachment-license]})
 
-        ega-resource (create-resource! {:resource-ext-id "EGAD00001006673"
-                                        :organization {:organization/id "csc"}
-                                        :actor owner
-                                        :license-ids [ega-creative-commons-license]})
+        ega-resource (test-helpers/create-resource! {:resource-ext-id "EGAD00001006673"
+                                                     :organization {:organization/id "csc"}
+                                                     :actor owner
+                                                     :license-ids [ega-creative-commons-license]})
 
-        res-organization-owner (create-resource! {:resource-ext-id "Owned by organization owner"
-                                                  :organization {:organization/id "organization1"}
-                                                  :actor organization-owner1
-                                                  :license-ids [license-organization-owner]})
-        res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
-                                                  :organization {:organization/id "nbn"}
-                                                  :actor owner
-                                                  :license-ids [extra-license attachment-license]})
-        _res-duplicate-resource-name1 (create-resource! {:resource-ext-id "duplicate resource name"
-                                                         :organization {:organization/id "hus"}
-                                                         :actor owner
-                                                         :license-ids [license1 extra-license attachment-license]})
-        _res-duplicate-resource-name2 (create-resource! {:resource-ext-id "duplicate resource name"
-                                                         :organization {:organization/id "hus"}
-                                                         :actor owner
-                                                         :license-ids [license2 extra-license attachment-license]})
-        _res-duplicate-resource-name-with-long-name1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
-                                                                        :organization {:organization/id "hus"}
-                                                                        :actor owner
-                                                                        :license-ids [license1 extra-license attachment-license]})
-        _res-duplicate-resource-name-with-long-name2 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
-                                                                        :organization {:organization/id "hus"}
-                                                                        :actor owner
-                                                                        :license-ids [license2 extra-license attachment-license]})
+        res-organization-owner (test-helpers/create-resource! {:resource-ext-id "Owned by organization owner"
+                                                               :organization {:organization/id "organization1"}
+                                                               :actor organization-owner1
+                                                               :license-ids [license-organization-owner]})
+        res-with-extra-license (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
+                                                               :organization {:organization/id "nbn"}
+                                                               :actor owner
+                                                               :license-ids [extra-license attachment-license]})
+        _res-duplicate-resource-name1 (test-helpers/create-resource! {:resource-ext-id "duplicate resource name"
+                                                                      :organization {:organization/id "hus"}
+                                                                      :actor owner
+                                                                      :license-ids [license1 extra-license attachment-license]})
+        _res-duplicate-resource-name2 (test-helpers/create-resource! {:resource-ext-id "duplicate resource name"
+                                                                      :organization {:organization/id "hus"}
+                                                                      :actor owner
+                                                                      :license-ids [license2 extra-license attachment-license]})
+        _res-duplicate-resource-name-with-long-name1 (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                                     :organization {:organization/id "hus"}
+                                                                                     :actor owner
+                                                                                     :license-ids [license1 extra-license attachment-license]})
+        _res-duplicate-resource-name-with-long-name2 (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263443773465837568375683683756"
+                                                                                     :organization {:organization/id "hus"}
+                                                                                     :actor owner
+                                                                                     :license-ids [license2 extra-license attachment-license]})
         duo-resource-1 (when (:enable-duo rems.config/env)
-                         (create-resource! {:resource-ext-id "Eyelid melanoma samples"
-                                            :organization {:organization/id "nbn"}
-                                            :actor owner
-                                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                          :values [{:id "MONDO:0000928"}]}]}
-                                                                       {:id "DUO:0000015"}
-                                                                       {:id "DUO:0000019"}
-                                                                       {:id "DUO:0000027"
-                                                                        :restrictions [{:type :project
-                                                                                        :values [{:value "project name here"}]}]
-                                                                        :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
+                         (test-helpers/create-resource! {:resource-ext-id "Eyelid melanoma samples"
+                                                         :organization {:organization/id "nbn"}
+                                                         :actor owner
+                                                         :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                                                       :values [{:id "MONDO:0000928"}]}]}
+                                                                                    {:id "DUO:0000015"}
+                                                                                    {:id "DUO:0000019"}
+                                                                                    {:id "DUO:0000027"
+                                                                                     :restrictions [{:type :project
+                                                                                                     :values [{:value "project name here"}]}]
+                                                                                     :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
         duo-resource-2 (when (:enable-duo rems.config/env)
-                         (create-resource! {:resource-ext-id "Spinal cord melanoma samples"
-                                            :organization {:organization/id "nbn"}
-                                            :actor owner
-                                            :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                          :values [{:id "MONDO:0001893"}]}]}
-                                                                       {:id "DUO:0000019"}
-                                                                       {:id "DUO:0000027"
-                                                                        :restrictions [{:type :project
-                                                                                        :values [{:value "project name here"}]}]
-                                                                        :more-info {:en "This DUO code is optional but recommended"}}]}}))
+                         (test-helpers/create-resource! {:resource-ext-id "Spinal cord melanoma samples"
+                                                         :organization {:organization/id "nbn"}
+                                                         :actor owner
+                                                         :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                                                                     :restrictions [{:type :mondo
+                                                                                                     :values [{:id "MONDO:0001893"}]}]}
+                                                                                    {:id "DUO:0000019"}
+                                                                                    {:id "DUO:0000027"
+                                                                                     :restrictions [{:type :project
+                                                                                                     :values [{:value "project name here"}]}]
+                                                                                     :more-info {:en "This DUO code is optional but recommended"}}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (workflow/edit-workflow! {:id (:organization-owner workflows)
@@ -751,346 +750,349 @@
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                        :sv "Exempelblankett med alla fälttyper"})
 
-        form-with-public-and-private-fields (create-form! {:actor owner
-                                                           :organization {:organization/id "nbn"}
-                                                           :form/internal-name "Public and private fields form"
-                                                           :form/external-title {:en "Form"
-                                                                                 :fi "Lomake"
-                                                                                 :sv "Blankett"}
-                                                           :form/fields [{:field/title {:en "Simple text field"
-                                                                                        :fi "Yksinkertainen tekstikenttä"
-                                                                                        :sv "Textfält"}
-                                                                          :field/optional false
-                                                                          :field/type :text
-                                                                          :field/max-length 100}
-                                                                         {:field/title {:en "Private text field"
-                                                                                        :fi "Yksityinen tekstikenttä"
-                                                                                        :sv "Privat textfält"}
-                                                                          :field/optional false
-                                                                          :field/type :text
-                                                                          :field/max-length 100
-                                                                          :field/privacy :private}]})
+        form-with-public-and-private-fields (test-helpers/create-form! {:actor owner
+                                                                        :organization {:organization/id "nbn"}
+                                                                        :form/internal-name "Public and private fields form"
+                                                                        :form/external-title {:en "Form"
+                                                                                              :fi "Lomake"
+                                                                                              :sv "Blankett"}
+                                                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                                                     :sv "Textfält"}
+                                                                                       :field/optional false
+                                                                                       :field/type :text
+                                                                                       :field/max-length 100}
+                                                                                      {:field/title {:en "Private text field"
+                                                                                                     :fi "Yksityinen tekstikenttä"
+                                                                                                     :sv "Privat textfält"}
+                                                                                       :field/optional false
+                                                                                       :field/type :text
+                                                                                       :field/max-length 100
+                                                                                       :field/privacy :private}]})
 
-        form-private-nbn (create-form! {:actor owner
-                                        :organization {:organization/id "nbn"}
-                                        :form/internal-name "Simple form"
-                                        :form/external-title {:en "Form"
-                                                              :fi "Lomake"
-                                                              :sv "Blankett"}
-                                        :form/fields [{:field/title {:en "Simple text field"
-                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                     :sv "Textfält"}
-                                                       :field/optional false
-                                                       :field/type :text
-                                                       :field/max-length 100
-                                                       :field/privacy :private}]})
+        form-private-nbn (test-helpers/create-form! {:actor owner
+                                                     :organization {:organization/id "nbn"}
+                                                     :form/internal-name "Simple form"
+                                                     :form/external-title {:en "Form"
+                                                                           :fi "Lomake"
+                                                                           :sv "Blankett"}
+                                                     :form/fields [{:field/title {:en "Simple text field"
+                                                                                  :fi "Yksinkertainen tekstikenttä"
+                                                                                  :sv "Textfält"}
+                                                                    :field/optional false
+                                                                    :field/type :text
+                                                                    :field/max-length 100
+                                                                    :field/privacy :private}]})
 
-        form-private-thl (create-form! {:actor owner
-                                        :organization {:organization/id "thl"}
-                                        :form/internal-name "Simple form"
-                                        :form/external-title {:en "Form"
-                                                              :fi "Lomake"
-                                                              :sv "Blankett"}
-                                        :form/fields [{:field/title {:en "Simple text field"
-                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                     :sv "Textfält"}
-                                                       :field/optional false
-                                                       :field/type :text
-                                                       :field/max-length 100
-                                                       :field/privacy :private}]})
-        form-private-hus (create-form! {:actor owner
-                                        :organization {:organization/id "hus"}
-                                        :form/internal-name "Simple form"
-                                        :form/external-title {:en "Form"
-                                                              :fi "Lomake"
-                                                              :sv "Blankett"}
-                                        :form/fields [{:field/title {:en "Simple text field"
-                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                     :sv "Textfält"}
-                                                       :field/optional false
-                                                       :field/type :text
-                                                       :field/max-length 100
-                                                       :field/privacy :private}]})
-        form-organization-owner (create-all-field-types-example-form! organization-owner1 {:organization/id "organization1"} "Owned by organization owner" {:en "Owned by organization owner"
-                                                                                                                                                            :fi "Omistaja organization owner"
-                                                                                                                                                            :sv "Ägare organization owner"})
+        form-private-thl (test-helpers/create-form! {:actor owner
+                                                     :organization {:organization/id "thl"}
+                                                     :form/internal-name "Simple form"
+                                                     :form/external-title {:en "Form"
+                                                                           :fi "Lomake"
+                                                                           :sv "Blankett"}
+                                                     :form/fields [{:field/title {:en "Simple text field"
+                                                                                  :fi "Yksinkertainen tekstikenttä"
+                                                                                  :sv "Textfält"}
+                                                                    :field/optional false
+                                                                    :field/type :text
+                                                                    :field/max-length 100
+                                                                    :field/privacy :private}]})
+        form-private-hus (test-helpers/create-form! {:actor owner
+                                                     :organization {:organization/id "hus"}
+                                                     :form/internal-name "Simple form"
+                                                     :form/external-title {:en "Form"
+                                                                           :fi "Lomake"
+                                                                           :sv "Blankett"}
+                                                     :form/fields [{:field/title {:en "Simple text field"
+                                                                                  :fi "Yksinkertainen tekstikenttä"
+                                                                                  :sv "Textfält"}
+                                                                    :field/optional false
+                                                                    :field/type :text
+                                                                    :field/max-length 100
+                                                                    :field/privacy :private}]})
+        form-organization-owner (create-all-field-types-example-form! organization-owner1
+                                                                      {:organization/id "organization1"}
+                                                                      "Owned by organization owner"
+                                                                      {:en "Owned by organization owner"
+                                                                       :fi "Omistaja organization owner"
+                                                                       :sv "Ägare organization owner"})
 
-        ega-form (create-form! {:actor owner
-                                :organization {:organization/id "csc"}
-                                :form/internal-name "EGA Application Form"
-                                :form/external-title {:en "EGA Form"
-                                                      :fi "EGA Lomake"
-                                                      :sv "EGA Blankett"}
-                                :form/fields [{:field/title {:en "Description"
-                                                             :fi "Kuvaus"
-                                                             :sv "Text"}
-                                               :field/optional false
-                                               :field/type :text}]})
+        ega-form (test-helpers/create-form! {:actor owner
+                                             :organization {:organization/id "csc"}
+                                             :form/internal-name "EGA Application Form"
+                                             :form/external-title {:en "EGA Form"
+                                                                   :fi "EGA Lomake"
+                                                                   :sv "EGA Blankett"}
+                                             :form/fields [{:field/title {:en "Description"
+                                                                          :fi "Kuvaus"
+                                                                          :sv "Text"}
+                                                            :field/optional false
+                                                            :field/type :text}]})
 
         ;; Create categories
-        ordinary-category {:category/id (create-category! {:actor owner
-                                                           :category/title {:en "Ordinary"
-                                                                            :fi "Tavalliset"
-                                                                            :sv "Vanliga"}})}
-        technical-category {:category/id (create-category! {:actor owner
-                                                            :category/title {:en "Technical"
-                                                                             :fi "Tekniset"
-                                                                             :sv "Teknisk"}})}
+        ordinary-category {:category/id (test-helpers/create-category! {:actor owner
+                                                                        :category/title {:en "Ordinary"
+                                                                                         :fi "Tavalliset"
+                                                                                         :sv "Vanliga"}})}
+        technical-category {:category/id (test-helpers/create-category! {:actor owner
+                                                                         :category/title {:en "Technical"
+                                                                                          :fi "Tekniset"
+                                                                                          :sv "Teknisk"}})}
 
-        special-category {:category/id (create-category! {:actor owner
-                                                          :category/title {:en "Special"
-                                                                           :fi "Erikoiset"
-                                                                           :sv "Speciellt"}
-                                                          :category/description {:en "Special catalogue items for demonstration purposes."
-                                                                                 :fi "Erikoiset resurssit demoja varten."
-                                                                                 :sv "Särskilda katalogposter för demonstration."}
-                                                          :category/children [technical-category]})}]
+        special-category {:category/id (test-helpers/create-category! {:actor owner
+                                                                       :category/title {:en "Special"
+                                                                                        :fi "Erikoiset"
+                                                                                        :sv "Speciellt"}
+                                                                       :category/description {:en "Special catalogue items for demonstration purposes."
+                                                                                              :fi "Erikoiset resurssit demoja varten."
+                                                                                              :sv "Särskilda katalogposter för demonstration."}
+                                                                       :category/children [technical-category]})}]
     (create-archived-form! owner)
 
     ;; Create catalogue items
-    (create-catalogue-item! {:actor owner
-                             :title {:en "Master workflow"
-                                     :fi "Master-työvuo"
-                                     :sv "Master-arbetsflöde"}
-                             :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"
-                                       :sv "http://www.google.se"}
-                             :resource-id res1
-                             :form-id form
-                             :organization {:organization/id "nbn"}
-                             :workflow-id (:master workflows)
-                             :categories [technical-category]})
-    (create-catalogue-item! {:actor owner
-                             :title {:en "Decider workflow"
-                                     :fi "Päättäjätyövuo"
-                                     :sv "Arbetsflöde för beslutsfattande"}
-                             :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"
-                                       :sv "http://www.google.se"}
-                             :resource-id res1
-                             :form-id form
-                             :organization {:organization/id "nbn"}
-                             :workflow-id (:decider workflows)
-                             :categories [special-category]})
-    (let [catid (create-catalogue-item! {:actor owner
-                                         :title {:en "Default workflow"
-                                                 :fi "Oletustyövuo"
-                                                 :sv "Standard arbetsflöde"}
-                                         :infourl {:en "http://www.google.com"
-                                                   :fi "http://www.google.fi"
-                                                   :sv "http://www.google.se"}
-                                         :resource-id res1
-                                         :form-id form
-                                         :organization {:organization/id "nbn"}
-                                         :workflow-id (:default workflows)
-                                         :categories [ordinary-category]})]
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Master workflow"
+                                                  :fi "Master-työvuo"
+                                                  :sv "Master-arbetsflöde"}
+                                          :infourl {:en "http://www.google.com"
+                                                    :fi "http://www.google.fi"
+                                                    :sv "http://www.google.se"}
+                                          :resource-id res1
+                                          :form-id form
+                                          :organization {:organization/id "nbn"}
+                                          :workflow-id (:master workflows)
+                                          :categories [technical-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Decider workflow"
+                                                  :fi "Päättäjätyövuo"
+                                                  :sv "Arbetsflöde för beslutsfattande"}
+                                          :infourl {:en "http://www.google.com"
+                                                    :fi "http://www.google.fi"
+                                                    :sv "http://www.google.se"}
+                                          :resource-id res1
+                                          :form-id form
+                                          :organization {:organization/id "nbn"}
+                                          :workflow-id (:decider workflows)
+                                          :categories [special-category]})
+    (let [catid (test-helpers/create-catalogue-item! {:actor owner
+                                                      :title {:en "Default workflow"
+                                                              :fi "Oletustyövuo"
+                                                              :sv "Standard arbetsflöde"}
+                                                      :infourl {:en "http://www.google.com"
+                                                                :fi "http://www.google.fi"
+                                                                :sv "http://www.google.se"}
+                                                      :resource-id res1
+                                                      :form-id form
+                                                      :organization {:organization/id "nbn"}
+                                                      :workflow-id (:default workflows)
+                                                      :categories [ordinary-category]})]
       (create-applications! catid users))
-    (create-catalogue-item! {:actor owner
-                             :title {:en "Default workflow 2"
-                                     :fi "Oletustyövuo 2"
-                                     :sv "Standard arbetsflöde 2"}
-                             :resource-id res2
-                             :form-id form-private-thl
-                             :organization {:organization/id "csc"}
-                             :workflow-id (:default workflows)
-                             :categories [ordinary-category]})
-    (create-catalogue-item! {:actor owner
-                             :title {:en "Default workflow 3"
-                                     :fi "Oletustyövuo 3"
-                                     :sv "Standard arbetsflöde 3"}
-                             :resource-id res3
-                             :form-id form-private-hus
-                             :organization {:organization/id "hus"}
-                             :workflow-id (:default workflows)
-                             :categories [ordinary-category]})
-    (create-catalogue-item! {:actor owner
-                             :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
-                                     :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
-                                     :sv "CINECA synthetic cohort EUROPE UK1 referencing fake samples"}
-                             :resource-id ega-resource
-                             :form-id ega-form
-                             :organization {:organization/id "csc"}
-                             :workflow-id (:ega workflows)
-                             :categories [special-category]})
-    (create-catalogue-item! {:actor owner
-                             :title {:en "Default workflow with extra license"
-                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"
-                                     :sv "Arbetsflöde med extra licens"}
-                             :resource-id res-with-extra-license
-                             :form-id form
-                             :organization {:organization/id "nbn"}
-                             :workflow-id (:default workflows)
-                             :categories [ordinary-category]})
-    (create-catalogue-item! {:title {:en "Auto-approve workflow"
-                                     :fi "Työvuo automaattisella hyväksynnällä"
-                                     :sv "Arbetsflöde med automatisk godkänning"}
-                             :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"
-                                       :sv "http://www.google.se"}
-                             :resource-id res1
-                             :form-id form
-                             :organization {:organization/id "nbn"}
-                             :workflow-id (:auto-approve workflows)
-                             :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Default workflow 2"
+                                                  :fi "Oletustyövuo 2"
+                                                  :sv "Standard arbetsflöde 2"}
+                                          :resource-id res2
+                                          :form-id form-private-thl
+                                          :organization {:organization/id "csc"}
+                                          :workflow-id (:default workflows)
+                                          :categories [ordinary-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Default workflow 3"
+                                                  :fi "Oletustyövuo 3"
+                                                  :sv "Standard arbetsflöde 3"}
+                                          :resource-id res3
+                                          :form-id form-private-hus
+                                          :organization {:organization/id "hus"}
+                                          :workflow-id (:default workflows)
+                                          :categories [ordinary-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
+                                                  :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
+                                                  :sv "CINECA synthetic cohort EUROPE UK1 referencing fake samples"}
+                                          :resource-id ega-resource
+                                          :form-id ega-form
+                                          :organization {:organization/id "csc"}
+                                          :workflow-id (:ega workflows)
+                                          :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Default workflow with extra license"
+                                                  :fi "Oletustyövuo ylimääräisellä lisenssillä"
+                                                  :sv "Arbetsflöde med extra licens"}
+                                          :resource-id res-with-extra-license
+                                          :form-id form
+                                          :organization {:organization/id "nbn"}
+                                          :workflow-id (:default workflows)
+                                          :categories [ordinary-category]})
+    (test-helpers/create-catalogue-item! {:title {:en "Auto-approve workflow"
+                                                  :fi "Työvuo automaattisella hyväksynnällä"
+                                                  :sv "Arbetsflöde med automatisk godkänning"}
+                                          :infourl {:en "http://www.google.com"
+                                                    :fi "http://www.google.fi"
+                                                    :sv "http://www.google.se"}
+                                          :resource-id res1
+                                          :form-id form
+                                          :organization {:organization/id "nbn"}
+                                          :workflow-id (:auto-approve workflows)
+                                          :categories [special-category]})
     (create-bona-fide-catalogue-item! (merge users +bot-users+))
-    (let [default-disabled (create-catalogue-item! {:actor owner
-                                                    :title {:en "Default workflow (disabled)"
-                                                            :fi "Oletustyövuo (pois käytöstä)"
-                                                            :sv "Standard arbetsflöde (avaktiverat)"}
-                                                    :resource-id res1
-                                                    :form-id form
-                                                    :organization {:organization/id "nbn"}
-                                                    :workflow-id (:default workflows)
-                                                    :categories [ordinary-category]})]
+    (let [default-disabled (test-helpers/create-catalogue-item! {:actor owner
+                                                                 :title {:en "Default workflow (disabled)"
+                                                                         :fi "Oletustyövuo (pois käytöstä)"
+                                                                         :sv "Standard arbetsflöde (avaktiverat)"}
+                                                                 :resource-id res1
+                                                                 :form-id form
+                                                                 :organization {:organization/id "nbn"}
+                                                                 :workflow-id (:default workflows)
+                                                                 :categories [ordinary-category]})]
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
                                      (users :approver1))
       (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
-    (let [default-expired (create-catalogue-item! {:actor owner
-                                                   :title {:en "Default workflow (expired)"
-                                                           :fi "Oletustyövuo (vanhentunut)"
-                                                           :sv "Standard arbetsflöde (utgånget)"}
-                                                   :resource-id res1
-                                                   :form-id form
-                                                   :organization {:organization/id "nbn"}
-                                                   :workflow-id (:default workflows)
-                                                   :categories [ordinary-category]})]
+    (let [default-expired (test-helpers/create-catalogue-item! {:actor owner
+                                                                :title {:en "Default workflow (expired)"
+                                                                        :fi "Oletustyövuo (vanhentunut)"
+                                                                        :sv "Standard arbetsflöde (utgånget)"}
+                                                                :resource-id res1
+                                                                :form-id form
+                                                                :organization {:organization/id "nbn"}
+                                                                :workflow-id (:default workflows)
+                                                                :categories [ordinary-category]})]
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
-    (create-catalogue-item! {:actor organization-owner1
-                             :title {:en "Owned by organization owner"
-                                     :fi "Organisaatio-omistajan omistama"
-                                     :sv "Ägas av organisationägare"}
-                             :resource-id res-organization-owner
-                             :form-id form-organization-owner
-                             :organization {:organization/id "organization1"}
-                             :workflow-id (:organization-owner workflows)
-                             :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor organization-owner1
+                                          :title {:en "Owned by organization owner"
+                                                  :fi "Organisaatio-omistajan omistama"
+                                                  :sv "Ägas av organisationägare"}
+                                          :resource-id res-organization-owner
+                                          :form-id form-organization-owner
+                                          :organization {:organization/id "organization1"}
+                                          :workflow-id (:organization-owner workflows)
+                                          :categories [special-category]})
 
     (let [applicant (users :applicant1)
           handler (users :approver2)
           reviewer (users :reviewer)
-          catid-1 (create-catalogue-item! {:actor owner
-                                           :title {:en "Default workflow with public and private fields"
-                                                   :fi "Testityövuo julkisilla ja yksityisillä lomakekentillä"
-                                                   :sv "Standard arbetsflöde med publika och privata textfält"}
-                                           :resource-id res1
-                                           :form-id form-with-public-and-private-fields
-                                           :organization {:organization/id "nbn"}
-                                           :workflow-id (:default workflows)
-                                           :categories [ordinary-category]})
-          catid-2 (create-catalogue-item! {:actor owner
-                                           :title {:en "Default workflow with private form"
-                                                   :fi "Oletustyövuo yksityisellä lomakkeella"
-                                                   :sv "Standard arbetsflöde med privat blankett"}
-                                           :resource-id res2
-                                           :form-id form-private-nbn
-                                           :organization {:organization/id "nbn"}
-                                           :workflow-id (:default workflows)
-                                           :categories [ordinary-category]})
-          app-id (create-draft! applicant [catid-1 catid-2] "two-form draft application")]
-      (command! {:type :application.command/submit
-                 :application-id app-id
-                 :actor applicant})
-      (command! {:type :application.command/request-review
-                 :application-id app-id
-                 :actor handler
-                 :reviewers [reviewer]
-                 :comment "please have a look"}))
+          catid-1 (test-helpers/create-catalogue-item! {:actor owner
+                                                        :title {:en "Default workflow with public and private fields"
+                                                                :fi "Testityövuo julkisilla ja yksityisillä lomakekentillä"
+                                                                :sv "Standard arbetsflöde med publika och privata textfält"}
+                                                        :resource-id res1
+                                                        :form-id form-with-public-and-private-fields
+                                                        :organization {:organization/id "nbn"}
+                                                        :workflow-id (:default workflows)
+                                                        :categories [ordinary-category]})
+          catid-2 (test-helpers/create-catalogue-item! {:actor owner
+                                                        :title {:en "Default workflow with private form"
+                                                                :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                                :sv "Standard arbetsflöde med privat blankett"}
+                                                        :resource-id res2
+                                                        :form-id form-private-nbn
+                                                        :organization {:organization/id "nbn"}
+                                                        :workflow-id (:default workflows)
+                                                        :categories [ordinary-category]})
+          app-id (test-helpers/create-draft! applicant [catid-1 catid-2] "two-form draft application")]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor handler
+                              :reviewers [reviewer]
+                              :comment "please have a look"}))
 
     (when (:enable-duo rems.config/env)
       (let [applicant (users :applicant1)
             handler (users :approver2)
             reviewer (users :reviewer)
-            cat-id (create-catalogue-item! {:actor owner
-                                            :title {:en "Apply for eyelid melanoma dataset (EN)"
-                                                    :fi "Apply for eyelid melanoma dataset (FI)"
-                                                    :sv "Apply for eyelid melanoma dataset (SV)"}
-                                            :resource-id duo-resource-1
-                                            :form-id form
-                                            :organization {:organization/id "nbn"}
-                                            :workflow-id (:default workflows)
-                                            :categories [special-category]})
-            cat-id-2 (create-catalogue-item! {:actor owner
-                                              :title {:en "Apply for spinal cord melanoma dataset (EN)"
-                                                      :fi "Apply for spinal cord melanoma dataset (FI)"
-                                                      :sv "Apply for spinal cord melanoma dataset (SV)"}
-                                              :resource-id duo-resource-2
-                                              :form-id form
-                                              :organization {:organization/id "nbn"}
-                                              :workflow-id (:default workflows)
-                                              :categories [special-category]})
-            app-id (create-draft! applicant [cat-id-2] "draft application with DUO codes")
-            app-id-2 (create-draft! applicant [cat-id] "application with DUO codes")]
-        (command! {:type :application.command/save-draft
-                   :application-id app-id
-                   :actor applicant
-                   :field-values []
-                   :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
-        (command! {:type :application.command/save-draft
-                   :application-id app-id-2
-                   :actor applicant
-                   :field-values []
-                   :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
-                               {:id "DUO:0000015"}
-                               {:id "DUO:0000019"}
-                               {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
-        (command! {:type :application.command/submit
-                   :application-id app-id-2
-                   :actor applicant})
-        (command! {:type :application.command/request-review
-                   :application-id app-id-2
-                   :actor handler
-                   :reviewers [reviewer]
-                   :comment "please have a look"})))))
+            cat-id (test-helpers/create-catalogue-item! {:actor owner
+                                                         :title {:en "Apply for eyelid melanoma dataset (EN)"
+                                                                 :fi "Apply for eyelid melanoma dataset (FI)"
+                                                                 :sv "Apply for eyelid melanoma dataset (SV)"}
+                                                         :resource-id duo-resource-1
+                                                         :form-id form
+                                                         :organization {:organization/id "nbn"}
+                                                         :workflow-id (:default workflows)
+                                                         :categories [special-category]})
+            cat-id-2 (test-helpers/create-catalogue-item! {:actor owner
+                                                           :title {:en "Apply for spinal cord melanoma dataset (EN)"
+                                                                   :fi "Apply for spinal cord melanoma dataset (FI)"
+                                                                   :sv "Apply for spinal cord melanoma dataset (SV)"}
+                                                           :resource-id duo-resource-2
+                                                           :form-id form
+                                                           :organization {:organization/id "nbn"}
+                                                           :workflow-id (:default workflows)
+                                                           :categories [special-category]})
+            app-id (test-helpers/create-draft! applicant [cat-id-2] "draft application with DUO codes")
+            app-id-2 (test-helpers/create-draft! applicant [cat-id] "application with DUO codes")]
+        (test-helpers/command! {:type :application.command/save-draft
+                                :application-id app-id
+                                :actor applicant
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
+        (test-helpers/command! {:type :application.command/save-draft
+                                :application-id app-id-2
+                                :actor applicant
+                                :field-values []
+                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
+                                            {:id "DUO:0000015"}
+                                            {:id "DUO:0000019"}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
+        (test-helpers/command! {:type :application.command/submit
+                                :application-id app-id-2
+                                :actor applicant})
+        (test-helpers/command! {:type :application.command/request-review
+                                :application-id app-id-2
+                                :actor handler
+                                :reviewers [reviewer]
+                                :comment "please have a look"})))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
         organization-owner2 (users :organization-owner2)]
     ;; Create organizations
-    (create-organization! {:actor owner :users users})
-    (create-organization! {:actor owner
-                           :organization/id "hus"
-                           :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
-                           :organization/short-name {:fi "HUS" :en "HUS" :sv "HUS"}
-                           :organization/owners [{:userid organization-owner1}]
-                           :organization/review-emails []})
-    (create-organization! {:actor owner
-                           :organization/id "thl"
-                           :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
-                           :organization/short-name {:fi "THL" :en "THL" :sv "THL"}
-                           :organization/owners [{:userid organization-owner2}]
-                           :organization/review-emails []})
-    (create-organization! {:actor owner
-                           :organization/id "nbn"
-                           :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
-                           :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
-                           :organization/owners [{:userid organization-owner2}]
-                           :organization/review-emails []})
-    (create-organization! {:actor owner
-                           :organization/id "abc"
-                           :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
-                           :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}
-                           :organization/owners []
-                           :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
-    (create-organization! {:actor owner
-                           :organization/id "csc"
-                           :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
-                           :organization/short-name {:fi "CSC" :en "CSC" :sv "CSC"}
-                           :organization/owners []
-                           :organization/review-emails []})
-    (create-organization! {:actor owner
-                           :organization/id "organization1"
-                           :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                           :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                           :organization/owners [{:userid organization-owner1}]
-                           :organization/review-emails []})
-    (create-organization! {:actor owner
-                           :organization/id "organization2"
-                           :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
-                           :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
-                           :organization/owners [{:userid organization-owner2}]
-                           :organization/review-emails []})))
+    (test-helpers/create-organization! {:actor owner :users users})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "hus"
+                                        :organization/name {:fi "Helsingin yliopistollinen sairaala" :en "Helsinki University Hospital" :sv "Helsingfors Universitetssjukhus"}
+                                        :organization/short-name {:fi "HUS" :en "HUS" :sv "HUS"}
+                                        :organization/owners [{:userid organization-owner1}]
+                                        :organization/review-emails []})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "thl"
+                                        :organization/name {:fi "Terveyden ja hyvinvoinnin laitos" :en "Finnish institute for health and welfare" :sv "Institutet för hälsa och välfärd"}
+                                        :organization/short-name {:fi "THL" :en "THL" :sv "THL"}
+                                        :organization/owners [{:userid organization-owner2}]
+                                        :organization/review-emails []})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "nbn"
+                                        :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                        :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                        :organization/owners [{:userid organization-owner2}]
+                                        :organization/review-emails []})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "abc"
+                                        :organization/name {:fi "ABC" :en "ABC" :sv "ABC"}
+                                        :organization/short-name {:fi "ABC" :en "ABC" :sv "ABC"}
+                                        :organization/owners []
+                                        :organization/review-emails [{:name {:fi "ABC Kirjaamo"} :email "kirjaamo@abc.efg"}]})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "csc"
+                                        :organization/name {:fi "CSC – TIETEEN TIETOTEKNIIKAN KESKUS OY" :en "CSC – IT CENTER FOR SCIENCE LTD." :sv "CSC – IT CENTER FOR SCIENCE LTD."}
+                                        :organization/short-name {:fi "CSC" :en "CSC" :sv "CSC"}
+                                        :organization/owners []
+                                        :organization/review-emails []})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "organization1"
+                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
+                                        :organization/owners [{:userid organization-owner1}]
+                                        :organization/review-emails []})
+    (test-helpers/create-organization! {:actor owner
+                                        :organization/id "organization2"
+                                        :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
+                                        :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
+                                        :organization/owners [{:userid organization-owner2}]
+                                        :organization/review-emails []})))
 
 (defn create-test-api-key! []
   (api-key/add-api-key! +test-api-key+ {:comment "test data"}))
@@ -1099,25 +1101,25 @@
   "Create an owner, two organization owners, and their organizations."
   []
   (create-test-api-key!)
-  (create-user! (+fake-user-data+ "owner") :owner)
-  (create-user! (+fake-user-data+ "organization-owner1"))
-  (create-user! (+fake-user-data+ "organization-owner2"))
-  (create-organization! {:actor "owner" :users +fake-users+})
-  (create-organization! {:actor "owner"
-                         :organization/id "organization1"
-                         :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
-                         :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
-                         :organization/owners [{:userid "organization-owner1"}]
-                         :organization/review-emails []})
-  (create-organization! {:actor "owner"
-                         :organization/id "organization2"
-                         :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
-                         :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
-                         :organization/owners [{:userid "organization-owner2"}]
-                         :organization/review-emails []}))
+  (test-helpers/create-user! (+fake-user-data+ "owner") :owner)
+  (test-helpers/create-user! (+fake-user-data+ "organization-owner1"))
+  (test-helpers/create-user! (+fake-user-data+ "organization-owner2"))
+  (test-helpers/create-organization! {:actor "owner" :users +fake-users+})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "organization1"
+                                      :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
+                                      :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}
+                                      :organization/owners [{:userid "organization-owner1"}]
+                                      :organization/review-emails []})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "organization2"
+                                      :organization/name {:fi "Organization 2" :en "Organization 2" :sv "Organization 2"}
+                                      :organization/short-name {:fi "ORG 2" :en "ORG 2" :sv "ORG 2"}
+                                      :organization/owners [{:userid "organization-owner2"}]
+                                      :organization/review-emails []}))
 
 (defn create-test-data! []
-  (assert-no-existing-data!)
+  (test-helpers/assert-no-existing-data!)
   (create-test-api-key!)
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
@@ -1125,7 +1127,7 @@
   (create-items! +fake-users+))
 
 (defn create-demo-data! []
-  (assert-no-existing-data!)
+  (test-helpers/assert-no-existing-data!)
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
