@@ -29,11 +29,12 @@
             "can't include invalid fields")
 
         (is (thrown? clojure.lang.ExceptionInfo
-                     (organizations/edit-organization! "owner"
-                                                       {:organization/id "test-org-1"
-                                                        :organization/short-name {:en "I" :fi "I" :sv "I"}
-                                                        :organization/name {:en "I" :fi "I" :sv "I"}
-                                                        :organization/invalid "should not work"}))
+                     (with-user "owner"
+                       (organizations/edit-organization!
+                        {:organization/id "test-org-1"
+                         :organization/short-name {:en "I" :fi "I" :sv "I"}
+                         :organization/name {:en "I" :fi "I" :sv "I"}
+                         :organization/invalid "should not work"})))
             "can't edit invalid fields in"))
 
       (testing "new organizations are enabled and not archived"
