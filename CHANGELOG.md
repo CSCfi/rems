@@ -19,7 +19,6 @@ Changes since v2.29
 - When continuing an old application, the applicant will be shown a warning about problematic fields. (#3045)
 
 ### Additions
-- Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
 - Mondo codes have been updated to version v2022-08-01. (#3031)
 - There is an experimental autosave mode that can be enabled. The application is automatically saved soon after the applicant makes a change.
   - Enable it with `:enable-autosave true`.
