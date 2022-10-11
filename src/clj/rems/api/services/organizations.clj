@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some find-first]]
             [rems.api.services.dependencies :as dependencies]
-            [rems.context :as context]
+            [rems.api.services.util]
+            [rems.auth.util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.organizations :as organizations]
@@ -57,23 +58,12 @@
      :errors [{:type :t.actions.errors/duplicate-id
                :organization/id (:organization/id org)}]}))
 
-(defn- can-edit-organization? [userid org]
-  (let [organization (organizations/getx-organization-by-id (:organization/id org))
-        org-owners (set (map :userid (:organization/owners organization)))]
-    (or (contains? context/*roles* :owner)
-        (contains? org-owners userid))))
-
-(defn edit-organization! [userid org]
-  (if (can-edit-organization? userid org)
-    (do
-      (organizations/update-organization! (:organization/id org)
-                                          #(merge % (dissoc org :organization/id)))
-      {:success true
-       :organization/id (:organization/id org)})
-    {:success false
-     :organization/id (:organization/id org)
-     :errors [{:type :t.actions.errors/missing-acl
-               :userid userid}]}))
+(defn edit-organization! [{:organization/keys [id] :as org}]
+  (rems.api.services.util/check-allowed-organization! org)
+  (organizations/update-organization! id (fn [organization] (->> (dissoc org :organization/id)
+                                                                 (merge organization))))
+  {:success true
+   :organization/id id})
 
 (defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
   (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))

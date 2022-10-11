@@ -59,7 +59,7 @@
       :roles #{:owner :organization-owner}
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse
-      (ok (organizations/edit-organization! (getx-user-id) command)))
+      (ok (organizations/edit-organization! command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive the organization"
