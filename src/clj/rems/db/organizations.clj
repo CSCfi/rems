@@ -44,9 +44,10 @@
        (mapv coerce-organization-raw)))
 
 (defn get-organization-by-id-raw [id]
-  (->> (db/get-organization-by-id {:id id})
-       (parse-organization)
-       (coerce-organization-raw)))
+  (when-some [organization (db/get-organization-by-id {:id id})]
+    (-> organization
+        (parse-organization)
+        (coerce-organization-raw))))
 
 (defn get-organizations []
   (->> (get-organizations-raw)
