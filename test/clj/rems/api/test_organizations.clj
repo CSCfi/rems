@@ -180,20 +180,14 @@
                             :organization/review-emails [{:email "test@organization3.test.org"
                                                           :name {:fi "Organisaatiot 3 API Test ORG Katselmoijat"
                                                                  :en "Organizations 3 API Test ORG Reviewers"}}]}]
-              (is (= {:success false
-                      :organization/id organization-id
-                      :errors [{:type "t.actions.errors/missing-acl"
-                                :userid org-owner1}]}
-                     (api-call :put "/api/organizations/edit"
-                               (assoc org-data :organization/name {:fi "Ei mene läpi"})
-                               api-key org-owner1)))
-              (is (= {:success false
-                      :organization/id organization-id
-                      :errors [{:type "t.actions.errors/missing-acl"
-                                :userid org-owner1}]}
-                     (api-call :put "/api/organizations/edit"
-                               (assoc org-data :organization/owners [{:userid org-owner1}])
-                               api-key org-owner1))))
+              (is (response-is-forbidden?
+                   (api-response :put "/api/organizations/edit"
+                                 (assoc org-data :organization/name {:fi "Ei mene läpi"})
+                                 api-key org-owner1)))
+              (is (response-is-forbidden?
+                   (api-response :put "/api/organizations/edit"
+                                 (assoc org-data :organization/owners [{:userid org-owner1}])
+                                 api-key org-owner1))))
             (is (= {:organization/id organization-id
                     :organization/name {:fi "Organisaatiot API Test ORG 3"
                                         :en "Organizations API Test ORG 3"}
