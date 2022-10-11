@@ -15,6 +15,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.organizations]
             [rems.db.test-data-users :refer :all]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
@@ -80,7 +81,7 @@
     (:organization/id result)))
 
 (defn ensure-default-organization! []
-  (when-not (organizations/get-organization-raw {:organization/id "default"})
+  (when-not (rems.db.organizations/get-organization-by-id-raw "default")
     (create-organization! {}))
   {:organization/id "default"})
 

@@ -1,6 +1,6 @@
 (ns rems.api.services.util
   (:require [clojure.test :refer [deftest is testing]]
-            [rems.api.services.organizations :as organizations]
+            [rems.db.organizations]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.util :refer [getx-user-id]]))
@@ -15,7 +15,8 @@
 (defn check-allowed-organization! [organization]
   (assert (:organization/id organization) {:error "invalid organization"
                                            :organization organization})
-  (when-not (may-edit-organization? (organizations/get-organization-raw organization))
+  (when-not (may-edit-organization? (rems.db.organizations/get-organization-by-id-raw
+                                     (:organization/id organization)))
     (throw-forbidden (str "no access to organization " (pr-str (:organization/id organization))))))
 
 (deftest test-may-edit-organization?

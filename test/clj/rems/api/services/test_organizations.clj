@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.services.test-organizations
   (:require [clojure.test :refer :all]
             [rems.api.services.organizations :as organizations]
+            [rems.db.organizations]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
@@ -10,7 +11,7 @@
 
 (defn- status-flags [id]
   (with-user "owner"
-    (-> (organizations/get-organization-raw {:organization/id id})
+    (-> (rems.db.organizations/get-organization-by-id-raw id)
         (select-keys [:enabled :archived]))))
 
 (deftest organization-enabled-archived-test
