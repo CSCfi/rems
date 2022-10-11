@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [medley.core :refer [assoc-some]]
             [clojure.test :refer :all]
+            [clojure.string]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.category :as category]
             [rems.api.services.command :as command]
@@ -216,7 +217,7 @@
    :actor actor
    :time (or time (time/now))})
 
-(defn fill-form! [{:keys [application-id actor field-value optional-fields attachment] :as command}]
+(defn fill-form! [{:keys [application-id actor field-value optional-fields attachment multiselect] :as command}]
   (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
@@ -236,7 +237,11 @@
                                                :table (repeat 2 (for [column (:field/columns field)]
                                                                   {:column (:key column) :value field-value}))
                                                :attachment (str attachment)
-                                               (:option :multiselect) (:key (first (:field/options field)))
+                                               :option (:key (first (:field/options field)))
+                                               :multiselect (or multiselect
+                                                                (->> (:field/options field)
+                                                                     (map :key)
+                                                                     (clojure.string/join " ")))
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]

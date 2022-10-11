@@ -17,9 +17,9 @@ Changes since v2.29
   - The non-standard endpoints have been been deprecated and will be removed later.
 - The text for saving has been changed "Alice saved a draft." -> "Alice updated the application.". This will be clearer in the future when autosave is enabled (#3045)
 - When continuing an old application, the applicant will be shown a warning about problematic fields. (#3045)
+- Data Use Ontology (DUO) is no longer shown in application UI if none of the resources contain DUO codes. (#3048)
 
 ### Additions
-- Application list in UI can now be configured to hide certain columns using config option `:application-list-hidden-columns`. (#2861)
 - Mondo codes have been updated to version v2022-08-01. (#3031)
 - There is an experimental autosave mode that can be enabled. The application is automatically saved soon after the applicant makes a change.
   - Enable it with `:enable-autosave true`.
@@ -37,6 +37,7 @@ Changes since v2.29
 - Application warning and error links were not functioning correctly for attachment fields. This is now fixed. (#2955)
 - DUO fields are no longer editable in the UI when application is not in editable state. (#2997)
 - Organization edit now requires user to be either owner or organization owner of the organization. (#2828)
+- Multiselect field is now correctly rendered in application pdf again. More than one selected value resulted in empty field value. (#3059)
 
 ## v2.29 "Länsisatamankatu" 2022-09-12
 
