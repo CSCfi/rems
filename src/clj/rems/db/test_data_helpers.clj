@@ -1,7 +1,7 @@
 (ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
             [medley.core :refer [assoc-some update-existing]]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
             [clojure.string]
             [rems.api.services.catalogue :as catalogue]
@@ -12,11 +12,11 @@
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
-            [rems.config :refer [env]]
+            [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.db.test-data-users :refer :all]
+            [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.testing-util :refer [with-user]])
