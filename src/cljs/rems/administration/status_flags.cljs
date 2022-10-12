@@ -14,50 +14,37 @@
        (:title item)
        (localized (:organization/name item)))))
 
-(defn- disable-button [item on-change]
-  [:button.btn.btn-secondary.button-min-width
-   {:type :button
-    :on-click #(on-change (assoc item :enabled false)
-                          [:span [text :t.administration/disable]
-                           " \"" [get-localized-title-for-anything item] "\""])}
-   (text :t.administration/disable)])
+;; XXX: consider rename to enabled-toggle-button
+(defn enabled-toggle
+  ([item on-change] (enabled-toggle {} item on-change))
+  ([opts item on-change]
+   (let [enabled? (:enabled item false)
+         label (if enabled?
+                 :t.administration/disable
+                 :t.administration/enable)]
+     [:button.btn.btn-primary.button-min-width
+      {:id (:id opts)
+       :type :button
+       :on-click #(on-change (update item :enabled not)
+                             [:span [text label]
+                              " \""  [get-localized-title-for-anything item] "\""])}
+      (text label)])))
 
-(defn- enable-button [item on-change]
-  [:button.btn.btn-primary.button-min-width
-   {:type :button
-    :on-click #(on-change (assoc item :enabled true)
-                          [:span [text :t.administration/enable]
-                           " \""  [get-localized-title-for-anything item] "\""])}
-   (text :t.administration/enable)])
-
-
-(defn enabled-toggle [item on-change] ; TODO consider naming enabled-toggle-button
-  (if (:enabled item)
-    [disable-button item on-change]
-    [enable-button item on-change]))
-
-
-(defn- archive-button [item on-change]
-  [:button.btn.btn-secondary.button-min-width
-   {:type :button
-    :on-click #(on-change (assoc item :archived true)
-                          [:span [text :t.administration/archive]
-                           " \"" [get-localized-title-for-anything item] "\""])}
-   (text :t.administration/archive)])
-
-(defn- unarchive-button [item on-change]
-  [:button.btn.btn-primary.button-min-width
-   {:type :button
-    :on-click #(on-change (assoc item :archived false)
-                          [:span [text :t.administration/unarchive]
-                           " \"" [get-localized-title-for-anything item] "\""])}
-   (text :t.administration/unarchive)])
-
-;; TODO consider naming archived-toggle-button
-(defn archived-toggle [item on-change]
-  (if (:archived item)
-    [unarchive-button item on-change]
-    [archive-button item on-change]))
+;; XXX: consider rename to archived-toggle-button
+(defn archived-toggle
+  ([item on-change] (archived-toggle {} item on-change))
+  ([opts item on-change]
+   (let [archived? (:archived item false)
+         label (if archived?
+                 :t.administration/unarchive
+                 :t.administration/archive)]
+     [:button.btn.btn-primary.button-min-width
+      {:id (:id opts)
+       :type :button
+       :on-click #(on-change (update item :archived not)
+                             [:span [text label]
+                              " \"" [get-localized-title-for-anything item] "\""])}
+      (text label)])))
 
 (rf/reg-event-fx
  ::set-display-archived?
