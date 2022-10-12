@@ -1,8 +1,9 @@
 (ns rems.api.services.organizations
   (:require [clojure.set :as set]
-            [medley.core :refer [assoc-some find-first remove-keys]]
+            [medley.core :refer [assoc-some find-first]]
             [rems.api.services.dependencies :as dependencies]
-            [rems.context :as context]
+            [rems.api.services.util]
+            [rems.auth.util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.organizations :as organizations]
@@ -41,44 +42,36 @@
                                      :archived archived))
        (organization-filters userid owner)))
 
-(defn get-organization-raw [org]
-  (->> (organizations/get-organizations-raw)
-       (find-first (comp #{(:organization/id org)} :organization/id))))
-
 (defn get-organization [userid org]
   (->> (get-organizations {:userid userid})
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
-(defn add-organization! [org]
-  (if-let [id (organizations/add-organization! org)]
+(defn add-organization! [cmd]
+  (if-let [id (organizations/add-organization! cmd)]
     {:success true
      :organization/id id}
     {:success false
      :errors [{:type :t.actions.errors/duplicate-id
-               :organization/id (:organization/id org)}]}))
+               :organization/id (:organization/id cmd)}]}))
 
-(defn edit-organization! [userid org]
-  (organizations/update-organization!
-   (:organization/id org)
-   (fn [db-organization]
-     (let [organization-owners (set (map :userid (:organization/owners db-organization)))
-           organization-owner? (contains? organization-owners userid)
-           owner? (contains? context/*roles* :owner)]
-       (merge db-organization
-              (cond-> org
-                true (dissoc :organization/id)
-                (not (or organization-owner? owner?)) (dissoc :organization/owners))))))
-  {:success true
-   :organization/id (:organization/id org)})
+(defn edit-organization! [cmd]
+  (let [id (:organization/id cmd)]
+    (rems.api.services.util/check-allowed-organization! cmd)
+    (organizations/update-organization! id (fn [organization] (->> (dissoc cmd :organization/id)
+                                                                   (merge organization))))
+    {:success true
+     :organization/id id}))
 
-(defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
-  (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
-  {:success true})
+(defn set-organization-enabled! [{:keys [enabled] :as cmd}]
+  (let [id (:organization/id cmd)]
+    (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
+    {:success true}))
 
-(defn set-organization-archived! [{:organization/keys [id] :keys [archived]}]
-  (or (dependencies/change-archive-status-error archived  {:organization/id id})
-      (do
-        (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
-        {:success true})))
+(defn set-organization-archived! [{:keys [archived] :as cmd}]
+  (let [id (:organization/id cmd)]
+    (or (dependencies/change-archive-status-error archived  {:organization/id id})
+        (do
+          (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
+          {:success true}))))
 
 (defn get-available-owners [] (users/get-users))

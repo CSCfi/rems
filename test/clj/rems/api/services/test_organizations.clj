@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.services.test-organizations
   (:require [clojure.test :refer :all]
             [rems.api.services.organizations :as organizations]
+            [rems.db.organizations]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
@@ -10,7 +11,7 @@
 
 (defn- status-flags [id]
   (with-user "owner"
-    (-> (organizations/get-organization-raw {:organization/id id})
+    (-> (rems.db.organizations/get-organization-by-id-raw id)
         (select-keys [:enabled :archived]))))
 
 (deftest organization-enabled-archived-test
@@ -28,11 +29,12 @@
             "can't include invalid fields")
 
         (is (thrown? clojure.lang.ExceptionInfo
-                     (organizations/edit-organization! "owner"
-                                                       {:organization/id "test-org-1"
-                                                        :organization/short-name {:en "I" :fi "I" :sv "I"}
-                                                        :organization/name {:en "I" :fi "I" :sv "I"}
-                                                        :organization/invalid "should not work"}))
+                     (with-user "owner"
+                       (organizations/edit-organization!
+                        {:organization/id "test-org-1"
+                         :organization/short-name {:en "I" :fi "I" :sv "I"}
+                         :organization/name {:en "I" :fi "I" :sv "I"}
+                         :organization/invalid "should not work"})))
             "can't edit invalid fields in"))
 
       (testing "new organizations are enabled and not archived"

@@ -2514,6 +2514,8 @@
              (slurp-fields :organization))))
 
     (testing "edit after creation"
+      (is (btu/visible? :enable-toggle)) ; should be visible for owner
+      (is (btu/visible? :archive-toggle)) ; should be visible for owner
       (btu/scroll-and-click :edit-organization)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :short-name-en))
@@ -2592,6 +2594,8 @@
                (slurp-fields :organization))))
 
       (testing "edit as organization owner 2"
+        (is (not (btu/visible? :enable-toggle))) ; only visible to owner user
+        (is (not (btu/visible? :archive-toggle))) ; only visible to owner user
         (btu/scroll-and-click :edit-organization)
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
@@ -2628,6 +2632,7 @@
 
           (remove-option "Owners (optional)" "Organization Owner 2")
           (btu/scroll-and-click :save)
+          (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:css ".alert-success"}))
           (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
 
@@ -2646,13 +2651,8 @@
                     "Name (EN)" "Review mail EN"
                     "Email" "review.email@example.com"
                     "Active" true}
-                   (slurp-fields :organization))))
-
-          (testing "edit organization again, owners field should be disabled"
-            (btu/scroll-and-click :edit-organization)
-            (btu/wait-page-loaded)
-            (is (btu/eventually-visible? :short-name-en))
-            (is (btu/disabled? {:id (get-field-id "Owners (optional)")}))))))))
+                   (slurp-fields :organization)))
+            (is (not (btu/visible? :edit-organization)))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"

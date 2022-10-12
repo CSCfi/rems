@@ -4,12 +4,12 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [document-title enrich-user info-field readonly-checkbox]]
+            [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -83,13 +83,18 @@
                                                                       (interpose [:br]))]
               [review-emails-field (:organization/review-emails organization)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
-   (let [id (:organization/id organization)]
+   (let [id (:organization/id organization)
+         org-owner? (->> @(rf/subscribe [:owned-organizations])
+                         (some (comp #{id} :organization/id)))
+         set-org-enabled #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])
+         set-org-archived #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
-      [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
-       [edit-button id]
-       [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])])
+      (when org-owner?
+        [edit-button id])
+      [roles/show-when #{:owner}
+       [status-flags/enabled-toggle {:id :enable-toggle} organization set-org-enabled]
+       [status-flags/archived-toggle {:id :archive-toggle} organization set-org-archived]]])])
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])

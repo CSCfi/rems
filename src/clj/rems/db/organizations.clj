@@ -43,6 +43,12 @@
        (mapv parse-organization)
        (mapv coerce-organization-raw)))
 
+(defn get-organization-by-id-raw [id]
+  (when-some [organization (db/get-organization-by-id {:id id})]
+    (-> organization
+        (parse-organization)
+        (coerce-organization-raw))))
+
 (defn get-organizations []
   (->> (get-organizations-raw)
        (mapv #(update % :organization/owners (partial mapv (comp users/get-user :userid))))
