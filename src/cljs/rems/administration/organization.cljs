@@ -6,6 +6,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.common.roles :as roles]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
@@ -60,39 +61,40 @@
            (interpose [:br]))]]))
 
 (defn organization-view [organization language]
-  (let [organization-id (:organization/id organization)
-        org-owner? (->> @(rf/subscribe [:owned-organizations])
-                        (some (comp #{organization-id} :organization/id)))]
-    [:div.spaced-vertically-3
-     [collapsible/component
-      {:id "organization"
-       :title (get-in organization [:organization/name language])
-       :always [:div
-                [inline-info-field (text :t.administration/id) (:organization/id organization)]
-                (doall (for [[langcode localization] (:organization/short-name organization)]
-                         ^{:key (str "short-name-" (name langcode))}
-                         [inline-info-field (str (text :t.administration/short-name)
-                                                 " (" (str/upper-case (name langcode)) ")")
-                          localization]))
-                (doall (for [[langcode localization] (:organization/name organization)]
-                         ^{:key (str "name-" (name langcode))}
-                         [inline-info-field (str (text :t.administration/title)
-                                                 " (" (str/upper-case (name langcode)) ")")
-                          localization]))
-                [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
-                                                                        (map enrich-user)
-                                                                        (map :display)
-                                                                        (interpose [:br]))]
-                [review-emails-field (:organization/review-emails organization)]
-                [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
-     (let [id (:organization/id organization)]
-       [:div.col.commands
-        [administration/back-button "/administration/organizations"]
-        (when org-owner?
-          [:<>
-           [edit-button id]
-           [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
-           [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]])])]))
+  [:div.spaced-vertically-3
+   [collapsible/component
+    {:id "organization"
+     :title (get-in organization [:organization/name language])
+     :always [:div
+              [inline-info-field (text :t.administration/id) (:organization/id organization)]
+              (doall (for [[langcode localization] (:organization/short-name organization)]
+                       ^{:key (str "short-name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/short-name)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
+              (doall (for [[langcode localization] (:organization/name organization)]
+                       ^{:key (str "name-" (name langcode))}
+                       [inline-info-field (str (text :t.administration/title)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        localization]))
+              [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
+                                                                      (map enrich-user)
+                                                                      (map :display)
+                                                                      (interpose [:br]))]
+              [review-emails-field (:organization/review-emails organization)]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
+   (let [id (:organization/id organization)
+         org-owner? (->> @(rf/subscribe [:owned-organizations])
+                         (some (comp #{id} :organization/id)))
+         set-org-enabled #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])
+         set-org-archived #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]
+     [:div.col.commands
+      [administration/back-button "/administration/organizations"]
+      (when org-owner?
+        [edit-button id])
+      [roles/show-when #{:owner}
+       [status-flags/enabled-toggle {:id :enable-toggle} organization set-org-enabled]
+       [status-flags/archived-toggle {:id :archive-toggle} organization set-org-archived]]])])
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])
