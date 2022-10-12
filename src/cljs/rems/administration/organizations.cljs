@@ -79,10 +79,14 @@
  ::organizations-table-rows
  (fn [_ _]
    [(rf/subscribe [::organizations])
-    (rf/subscribe [:language])])
- (fn [[organizations language] _]
-   (for [organization organizations]
-     {:key (:organization/id organization)
+    (rf/subscribe [:language])
+    (rf/subscribe [:owned-organizations])])
+ (fn [[organizations language owned-organizations] _]
+   (for [organization organizations
+         :let [id (:organization/id organization)
+               org-owner? (->> owned-organizations
+                               (some (comp #{id} :organization/id)))]]
+     {:key id
       :short-name {:value (get-in organization [:organization/short-name language])}
       :name {:value (get-in organization [:organization/name language])}
       :active (let [checked? (status-flags/active? organization)]
@@ -90,10 +94,11 @@
                       [readonly-checkbox {:value checked?}]]
                  :sort-value (if checked? 1 2)})
       :commands {:td [:td.commands
-                      [to-view-organization (:organization/id organization)]
-                      [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
-                       [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
-                       [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})))
+                      [to-view-organization id]
+                      (when org-owner?
+                        [:<>
+                         [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
+                         [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]])]}})))
 
 (defn- organizations-list []
   (let [organizations-table {:id ::organizations

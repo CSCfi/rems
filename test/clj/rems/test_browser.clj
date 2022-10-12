@@ -2494,9 +2494,17 @@
 
     (btu/context-assoc! :organization-id (str "test-organizations org id " (btu/get-seed))
                         :organization-name (str "test-organizations org name " (btu/get-seed)))
-    (create-organization)
+
+    (testing "view all organizations"
+      (go-to-admin "Organizations")
+      (is (every? #{"ViewDisableArchive"}
+                  (->> (slurp-table :organizations)
+                       (filter not-empty)
+                       (map #(get % "commands"))))
+          "owner can see all actions for all organizations"))
 
     (testing "view after creation"
+      (create-organization)
       (is (btu/eventually-visible? :organization))
       (is (= {"Id" (btu/context-getx :organization-id)
               "Short name (FI)" "SNFI"
@@ -2652,7 +2660,14 @@
                     "Email" "review.email@example.com"
                     "Active" true}
                    (slurp-fields :organization)))
-            (is (not (btu/visible? :edit-organization)))))))))
+            (is (not (btu/visible? :edit-organization)))
+
+            (go-to-admin "Organizations")
+            (is (= "View"
+                   (->> (slurp-table :organizations)
+                        (some #(when (= "SNEN" (get % "short-name"))
+                                 (get % "commands")))))
+                "organization actions should not be visible for non organization owner")))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
