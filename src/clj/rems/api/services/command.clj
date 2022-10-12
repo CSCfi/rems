@@ -1,6 +1,8 @@
 (ns rems.api.services.command
   (:require [clojure.java.jdbc :as jdbc]
+            [clojure.set :refer [difference]]
             [clojure.tools.logging :as log]
+            [rems.api.services.attachment :as attachment]
             [rems.api.services.blacklist :as blacklist]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
@@ -31,10 +33,25 @@
                                        :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
                                        :comment (:application/comment event)})))
 
+;; TODO should this process manager be in its own ns?
 (defn- delete-applications [new-events]
   (doseq [event new-events]
     (when (= :application.event/deleted (:event/type event))
       (applications/delete-application-and-reload-cache! (:application/id event))))
+  [])
+
+(defn- delete-orphan-attachments [application-id]
+  (let [application (applications/get-application-internal application-id)
+        attachments-in-use (rems.api.services.attachment/get-attachments-in-use application)
+        all-attachments (set (map :attachment/id (:application/attachments application)))]
+    (doseq [attachment-id (difference all-attachments attachments-in-use)]
+      (attachments/delete-attachment! attachment-id))))
+
+;; TODO should this process manager be in its own ns?
+(defn- delete-orphan-attachments-on-submit [new-events]
+  (doseq [event new-events]
+    (when (= :application.event/submitted (:event/type event))
+      (delete-orphan-attachments (:application/id event))))
   [])
 
 ;; Process managers react to events with side effects & new commands.
@@ -48,7 +65,8 @@
    (approver-bot/run-approver-bot new-events)
    (bona-fide-bot/run-bona-fide-bot new-events)
    (event-notification/queue-notifications! new-events)
-   (delete-applications new-events)))
+   (delete-applications new-events)
+   (delete-orphan-attachments-on-submit new-events)))
 
 (def ^:private command-injections
   (merge applications/fetcher-injections
