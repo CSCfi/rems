@@ -119,7 +119,8 @@
                                 [etaoin "0.4.6"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.12"]
-                                [com.icegreen/greenmail "1.6.7"]]
+                                [com.icegreen/greenmail "1.6.7"]
+                                [macroz/tangle "0.2.2"]]
 
                  :plugins [[lein-ancient "0.6.15"]]
 
