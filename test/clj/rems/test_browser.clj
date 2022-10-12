@@ -2514,6 +2514,8 @@
              (slurp-fields :organization))))
 
     (testing "edit after creation"
+      (is (btu/visible? :enable-toggle)) ; should be visible for owner
+      (is (btu/visible? :archive-toggle)) ; should be visible for owner
       (btu/scroll-and-click :edit-organization)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :short-name-en))
@@ -2592,6 +2594,8 @@
                (slurp-fields :organization))))
 
       (testing "edit as organization owner 2"
+        (is (not (btu/visible? :enable-toggle))) ; only visible to owner user
+        (is (not (btu/visible? :archive-toggle))) ; only visible to owner user
         (btu/scroll-and-click :edit-organization)
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
