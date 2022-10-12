@@ -2494,14 +2494,14 @@
 
     (btu/context-assoc! :organization-id (str "test-organizations org id " (btu/get-seed))
                         :organization-name (str "test-organizations org name " (btu/get-seed)))
-   
-   (testing "view all organizations"
-     (go-to-admin "Organizations")
-     (is (every? #{"ViewDisableArchive"}
-                 (->> (slurp-table :organizations)
-                      (filter not-empty)
-                      (map #(get % "commands"))))
-         "owner can see all actions for all organizations"))
+
+    (testing "view all organizations"
+      (go-to-admin "Organizations")
+      (is (every? #{"ViewDisableArchive"}
+                  (->> (slurp-table :organizations)
+                       (filter not-empty)
+                       (map #(get % "commands"))))
+          "owner can see all actions for all organizations"))
 
     (testing "view after creation"
       (create-organization)
@@ -2661,7 +2661,7 @@
                     "Active" true}
                    (slurp-fields :organization)))
             (is (not (btu/visible? :edit-organization)))
-            
+
             (go-to-admin "Organizations")
             (is (= "View"
                    (->> (slurp-table :organizations)
