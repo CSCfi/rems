@@ -46,29 +46,32 @@
   (->> (get-organizations {:userid userid})
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
-(defn add-organization! [org]
-  (if-let [id (organizations/add-organization! org)]
+(defn add-organization! [cmd]
+  (if-let [id (organizations/add-organization! cmd)]
     {:success true
      :organization/id id}
     {:success false
      :errors [{:type :t.actions.errors/duplicate-id
-               :organization/id (:organization/id org)}]}))
+               :organization/id (:organization/id cmd)}]}))
 
-(defn edit-organization! [{:organization/keys [id] :as org}]
-  (rems.api.services.util/check-allowed-organization! org)
-  (organizations/update-organization! id (fn [organization] (->> (dissoc org :organization/id)
-                                                                 (merge organization))))
-  {:success true
-   :organization/id id})
+(defn edit-organization! [cmd]
+  (let [id (:organization/id cmd)]
+    (rems.api.services.util/check-allowed-organization! cmd)
+    (organizations/update-organization! id (fn [organization] (->> (dissoc cmd :organization/id)
+                                                                   (merge organization))))
+    {:success true
+     :organization/id id}))
 
-(defn set-organization-enabled! [{:organization/keys [id] :keys [enabled]}]
-  (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
-  {:success true})
+(defn set-organization-enabled! [{:keys [enabled] :as cmd}]
+  (let [id (:organization/id cmd)]
+    (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
+    {:success true}))
 
-(defn set-organization-archived! [{:organization/keys [id] :keys [archived]}]
-  (or (dependencies/change-archive-status-error archived  {:organization/id id})
-      (do
-        (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
-        {:success true})))
+(defn set-organization-archived! [{:keys [archived] :as cmd}]
+  (let [id (:organization/id cmd)]
+    (or (dependencies/change-archive-status-error archived  {:organization/id id})
+        (do
+          (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
+          {:success true}))))
 
 (defn get-available-owners [] (users/get-users))
