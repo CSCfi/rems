@@ -7,7 +7,6 @@
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
-            [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
@@ -90,10 +89,10 @@
        [:div.col.commands
         [administration/back-button "/administration/organizations"]
         (when org-owner?
-          [edit-button id])
-        [roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match the API roles exactly
-         [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
-         [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]]])]))
+          [:<>
+           [edit-button id]
+           [status-flags/enabled-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])]
+           [status-flags/archived-toggle organization #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]])])]))
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])
