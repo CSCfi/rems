@@ -1,7 +1,8 @@
 (ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
-            [medley.core :refer [assoc-some]]
-            [clojure.test :refer :all]
+            [medley.core :refer [assoc-some update-existing]]
+            [clojure.test :refer [deftest is]]
+            [com.rpl.specter :refer [ALL must transform]]
             [clojure.string]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.category :as category]
@@ -11,16 +12,19 @@
             [rems.api.services.organizations :as organizations]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
-            [rems.config :refer [env]]
+            [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.organizations]
-            [rems.db.test-data-users :refer :all]
+            [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]))
+
+(defn select-config-langs [m]
+  (select-keys m (:languages rems.config/env)))
 
 ;;; helpers for generating test data
 
@@ -69,14 +73,25 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization! {:organization/id (or id "default")
-                                                 :organization/name (or name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"})
-                                                 :organization/short-name (or short-name {:fi "Oletus" :en "Default" :sv "Standard"})
-                                                 :organization/owners (or owners
-                                                                          (if users
-                                                                            [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
-                                                                            []))
-                                                 :organization/review-emails (or review-emails [])})]
+        result (organizations/add-organization!
+                {:organization/id (or id "default")
+                 :organization/name (select-config-langs
+                                     (or name {:fi "Oletusorganisaatio"
+                                               :en "The Default Organization"
+                                               :sv "Standardorganisationen"}))
+                 :organization/short-name (select-config-langs
+                                           (or short-name {:fi "Oletus"
+                                                           :en "Default"
+                                                           :sv "Standard"}))
+                 :organization/owners (or owners
+                                          (if users
+                                            [{:userid (users :organization-owner1)}
+                                             {:userid (users :organization-owner2)}]
+                                            []))
+                 :organization/review-emails (->> (or review-emails [])
+                                                  (mapv #(update-existing %
+                                                                          :name
+                                                                          select-config-langs)))})]
     (assert (:success result) {:command command :result result})
     (:organization/id result)))
 
@@ -90,58 +105,74 @@
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization (ensure-default-organization!))
-                                            :localizations
-                                            (transpose-localizations {:title title
-                                                                      :textcontent (merge link text)
-                                                                      :attachment-id attachment-id})}))]
+                 (licenses/create-license!
+                  {:licensetype (name (or type :text))
+                   :organization (or organization (ensure-default-organization!))
+                   :localizations (select-config-langs
+                                   (transpose-localizations {:title title
+                                                             :textcontent (merge link text)
+                                                             :attachment-id attachment-id}))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-attachment-license! [{:keys [actor organization]}]
-  (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "license-fi.txt"
-                                                           :type "text/plain"
-                                                           :data (.getBytes "Suomenkielinen lisenssi.")
-                                                           :start (time/now)}))
-        en-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "license-en.txt"
-                                                           :type "text/plain"
-                                                           :data (.getBytes "License in English.")
-                                                           :start (time/now)}))]
+  (let [langs (set (:languages rems.config/env))
+        fi-attachment (when (:fi langs)
+                        (:id (db/create-license-attachment!
+                              {:user (or actor "owner")
+                               :filename "license-fi.txt"
+                               :type "text/plain"
+                               :data (.getBytes "Suomenkielinen lisenssi.")
+                               :start (time/now)})))
+        en-attachment (when (:en langs)
+                        (:id (db/create-license-attachment!
+                              {:user (or actor "owner")
+                               :filename "license-en.txt"
+                               :type "text/plain"
+                               :data (.getBytes "License in English.")
+                               :start (time/now)})))]
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
                         :organization (or organization (ensure-default-organization!))
-                        :license/title {:fi "Liitelisenssi" :en "Attachment license"}
-                        :license/text {:fi "fi" :en "en"}
-                        :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
+                        :license/title (select-config-langs {:fi "Liitelisenssi"
+                                                             :en "Attachment license"})
+                        :license/text (select-config-langs {:fi "fi" :en "en"})
+                        :license/attachment-id (select-config-langs {:fi fi-attachment
+                                                                     :en en-attachment})}))))
 
 (defn create-form! [{:keys [actor organization]
                      :form/keys [internal-name external-title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (form/create-form! {:organization (or organization (ensure-default-organization!))
-                                     :form/internal-name (or internal-name "FORM")
-                                     :form/external-title (or external-title
-                                                              (into {}
-                                                                    (for [lang (:languages env)]
-                                                                      [lang (str (name lang) " Form")])))
-                                     :form/fields (or fields [])}))]
+                 (form/create-form!
+                  {:organization (or organization (ensure-default-organization!))
+                   :form/internal-name (or internal-name "FORM")
+                   :form/external-title (select-config-langs
+                                         (or external-title
+                                             (into {}
+                                                   (for [lang (:languages rems.config/env)]
+                                                     [lang (str (name lang) " Form")]))))
+                   :form/fields (->> (or fields [])
+                                     (mapv #(update-existing %
+                                                             :field/title
+                                                             select-config-langs)))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
                          :as command}]
   (let [actor (or actor (create-owner!))
-        duo-data (select-keys command [:resource/duo])
+        duo-data (->> (select-keys command [:resource/duo])
+                      (transform [:resource/duo (must :duo/codes) ALL (must :more-info)]
+                                 select-config-langs))
         result (with-user actor
-                 (resource/create-resource! (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                                    :organization (or organization (ensure-default-organization!))
-                                                    :licenses (or license-ids [])}
-                                                   duo-data)))]
+                 (resource/create-resource!
+                  (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                          :organization (or organization (ensure-default-organization!))
+                          :licenses (or license-ids [])}
+                         duo-data)))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -166,12 +197,14 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (category/create-category!
-                  (merge {:category/title (or title {:en "Category"
-                                                     :fi "Kategoria"
-                                                     :sv "Kategori"})
-                          :category/description (or description {:en "Category description"
-                                                                 :fi "Kategorian kuvaus"
-                                                                 :sv "Beskrivning av kategori"})}
+                  (merge {:category/title (select-config-langs
+                                           (or title {:en "Category"
+                                                      :fi "Kategoria"
+                                                      :sv "Kategori"}))
+                          :category/description (select-config-langs
+                                                 (or description {:en "Category description"
+                                                                  :fi "Kategorian kuvaus"
+                                                                  :sv "Beskrivning av kategori"}))}
                          (when (seq children)
                            {:category/children children}))))]
     (assert (:success result) {:command command :result result})
@@ -193,7 +226,7 @@
                                (create-form! {:organization organization}))
                        :organization (or organization (ensure-default-organization!))
                        :wfid (or workflow-id (create-workflow! {:organization organization}))
-                       :localizations (or localizations {})
+                       :localizations (select-config-langs (or localizations {}))
                        :enabled (:enabled command true)}
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
