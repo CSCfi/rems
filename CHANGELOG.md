@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.29
+Changes since v2.30
+
+## v2.30 "Kellosaarenranta" 2022-10-13
 
 ### Changes
 - Some API methods have been unified with the rest by using the command pattern: (#3036)
@@ -18,9 +20,9 @@ Changes since v2.29
 - The text for saving has been changed "Alice saved a draft." -> "Alice updated the application.". This will be clearer in the future when autosave is enabled (#3045)
 - When continuing an old application, the applicant will be shown a warning about problematic fields. (#3045)
 - Data Use Ontology (DUO) is no longer shown in application UI if none of the resources contain DUO codes. (#3048)
+- Mondo codes have been updated to version v2022-09-06. (#3031)
 
 ### Additions
-- Mondo codes have been updated to version v2022-08-01. (#3031)
 - There is an experimental autosave mode that can be enabled. The application is automatically saved soon after the applicant makes a change.
   - Enable it with `:enable-autosave true`.
   - You may also want to turn on save compaction at the same time with `:enable-save-compaction true` to show less save events in the event history.
