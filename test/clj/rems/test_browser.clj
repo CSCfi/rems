@@ -2497,10 +2497,12 @@
 
     (testing "view all organizations"
       (go-to-admin "Organizations")
-      (is (every? #{"ViewDisableArchive"}
+      (is (every? (fn [cmd] (or (= cmd "ViewDisableArchive")
+                                (= cmd "ViewDisableUnarchive")
+                                (= cmd "ViewEnableArchive")
+                                (= cmd "ViewEnableUnarchive")))
                   (->> (slurp-table :organizations)
-                       (filter not-empty)
-                       (map #(get % "commands"))))
+                       (keep (fn [row] (get row "commands")))))
           "owner can see all actions for all organizations"))
 
     (testing "view after creation"
