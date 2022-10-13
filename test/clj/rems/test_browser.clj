@@ -2577,8 +2577,9 @@
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-getx :organization-name) " EN")
                        "active" true
-                       "commands" "ViewDisableArchive"}}
-                    orgs))))
+                       "commands" "View"}}
+                    orgs)
+              "Organization owner cannot disable or archive organization")))
 
       (testing "view from list"
         (click-row-action [:organizations]
