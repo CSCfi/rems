@@ -1,5 +1,7 @@
 (ns rems.application.process-managers
-  "Miscellaneous process managers."
+  "Miscellaneous process managers.
+
+  NB: An event manager should return an empty sequence (or `nil`) if it doesn't create new events itself."
   (:require [clojure.set :refer [difference]]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.blacklist :as blacklist]
@@ -25,8 +27,7 @@
   [new-events]
   (doseq [event new-events]
     (when (= :application.event/deleted (:event/type event))
-      (applications/delete-application-and-reload-cache! (:application/id event))))
-  [])
+      (applications/delete-application-and-reload-cache! (:application/id event)))))
 
 (defn delete-orphan-attachments [application-id]
   (let [application (applications/get-application-internal application-id)
@@ -40,5 +41,4 @@
   [new-events]
   (doseq [event new-events]
     (when (= :application.event/submitted (:event/type event))
-      (delete-orphan-attachments (:application/id event))))
-  [])
+      (delete-orphan-attachments (:application/id event)))))
