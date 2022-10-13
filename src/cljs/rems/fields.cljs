@@ -93,22 +93,22 @@
 (defn field-wrapper
   "Common parts of a form field.
 
-  :field/id - number (required), field id
-  :form/id - number (required), form id
-  :field/title - string (required), field title to show to the user
-  :field/max-length - maximum number of characters (optional)
-  :field/optional - boolean, true if the field is not required
-  :field/value - string, the current value of the field
+  :field/id             - number (required), field id
+  :form/id              - number (required), form id
+  :field/title          - string (required), field title to show to the user
+  :field/max-length     - maximum number of characters (optional)
+  :field/optional       - boolean, true if the field is not required
+  :field/value          - string, the current value of the field
   :field/previous-value - string, the previously submitted value of the field
-  :field/info-text - text for collapsable info field
-  :readonly - boolean, true if the field should not be editable
-  :readonly-component - HTML, custom component for a readonly field
-  :diff - boolean, true if should show the diff between :value and :previous-value
-  :diff-component - HTML, custom component for rendering a diff
-  :validation - validation errors
-  :fieldset - boolean, true if the field should be wrapped in a fieldset
+  :field/info-text      - text for collapsable info field
+  :readonly             - boolean, true if the field should not be editable
+  :readonly-component   - HTML, custom component for a readonly field
+  :diff                 - boolean, true if should show the diff between :value and :previous-value
+  :diff-component       - HTML, custom component for rendering a diff
+  :validation           - validation errors
+  :fieldset             - boolean, true if the field should be wrapped in a fieldset
 
-  editor-component - HTML, form component for editing the field"
+  editor-component      - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [raw-title (localized (:field/title opts))
         title (linkify raw-title)
