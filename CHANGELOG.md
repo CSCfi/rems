@@ -37,6 +37,7 @@ Changes since v2.29
 - Application warning and error links were not functioning correctly for attachment fields. This is now fixed. (#2955)
 - DUO fields are no longer editable in the UI when application is not in editable state. (#2997)
 - Organization edit now requires user to be either owner or organization owner of the organization. (#2828)
+- Organization owner is no longer allowed to toggle enable/disable and archive organization actions. These are available only to owner user. (#2828)
 - Test/demo data creation now uses configured languages. Mismatch between configured languages and data localizations may cause issues in certain UI components. (#2334)
 - Multiselect field is now correctly rendered in application pdf again. More than one selected value resulted in empty field value. (#3059)
 
