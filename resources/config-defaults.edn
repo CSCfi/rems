@@ -322,8 +322,9 @@
  ;;               ;; This is a page that's a markdown file, localized into two languages.
  ;;               ;; The files are searched under :extra-pages-path (see below).
  ;;               {:id "about"
+ ;;                :filename "about.md" ; fallback file
  ;;                :translations {:fi {:title "Info"
- ;;                                    :filename "about-fi.md"}
+ ;;                                    :filename "about-fi.md"} ; specific localized file
  ;;                               :en {:title "About"
  ;;                                    :filename "about-en.md"}}}]
  ;;

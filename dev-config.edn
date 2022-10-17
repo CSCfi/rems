@@ -28,10 +28,10 @@
                                :sv {:title "Info"
                                     :filename "about-sv.md"}}}
                {:id "footer"
+                :filename "footer-en.md"
                 :translations {:fi {:title "Footer"
                                     :filename "footer-fi.md"}
-                               :en {:title "Footer"
-                                    :filename "footer-en.md"}
+                               :en {:title "Footer"}
                                :sv {:title "Footer"
                                     :filename "footer-sv.md"}}
                 :show-menu false
