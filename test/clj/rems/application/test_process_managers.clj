@@ -20,9 +20,15 @@
    :filename "test.txt"
    :size (.length testfile)})
 
-(defn upload-request [app-id file]
-  (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
-      (assoc :multipart-params {"file" file})))
+(defn upload-request [app-id username file]
+  (let [id (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
+               (assoc :multipart-params {"file" file})
+               (authenticate "42" username)
+               handler
+               read-ok-body
+               :id)]
+    (is (number? id))
+    id))
 
 (deftest test-run-delete-orphan-attachments
   (binding [command/*fail-on-process-manager-errors* true]
@@ -52,12 +58,7 @@
 
       (testing "create unrelated application"
         (let [unrelated-app-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
-              unrelated-attachment-id (-> (upload-request unrelated-app-id (assoc filecontent :filename "attachment1.txt"))
-                                          (authenticate "42" "alice")
-                                          handler
-                                          read-ok-body
-                                          :id)]
-          (is (number? unrelated-attachment-id))
+              unrelated-attachment-id (upload-request unrelated-app-id "alice" (assoc filecontent :filename "attachment1.txt"))]
 
           (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
                  (:application/attachments (applications/get-application-internal unrelated-app-id))
@@ -66,12 +67,7 @@
 
           (testing "in main application"
             (testing "upload attachment1"
-              (let [attachment-id1 (-> (upload-request app-id (assoc filecontent :filename "attachment1.txt"))
-                                       (authenticate "42" "alice")
-                                       handler
-                                       read-ok-body
-                                       :id)]
-                (is (number? attachment-id1))
+              (let [attachment-id1 (upload-request app-id "alice" (assoc filecontent :filename "attachment1.txt"))]
 
                 (testing "use attachment1 in a field"
                   (is (= {:success true
@@ -91,12 +87,7 @@
                       "attachment1 was saved"))
 
                 (testing "upload attachment2"
-                  (let [attachment-id2 (-> (upload-request app-id (assoc filecontent :filename "attachment2.txt"))
-                                           (authenticate "42" "alice")
-                                           handler
-                                           read-ok-body
-                                           :id)]
-                    (is (number? attachment-id2))
+                  (let [attachment-id2 (upload-request app-id "alice" (assoc filecontent :filename "attachment2.txt"))]
 
                     (testing "use attachment2 in a field"
                       (is (= {:success true}
@@ -115,12 +106,7 @@
                           "attachment1 and attachment2 are saved"))
 
                     (testing "upload attachment3"
-                      (let [attachment-id3 (-> (upload-request app-id (assoc filecontent :filename "attachment3.txt"))
-                                               (authenticate "42" "alice")
-                                               handler
-                                               read-ok-body
-                                               :id)]
-                        (is (number? attachment-id3))
+                      (let [_attachment-id3 (upload-request app-id "alice" (assoc filecontent :filename "attachment3.txt"))]
 
                         (testing "send application"
                           ;; NB: don't save again, so attachment3 shouldn't be in use
@@ -141,12 +127,8 @@
                               "attachment1 and attachment2 are saved, but not attachment3"))))
 
                     (testing "return application with handler attachment comment"
-                      (let [handler-attachment-id  (-> (upload-request app-id (assoc filecontent :filename "handler.txt"))
-                                                       (authenticate "42" "handler")
-                                                       handler
-                                                       read-ok-body
-                                                       :id)]
-                        (is (number? handler-attachment-id))
+                      (let [handler-attachment-id  (upload-request app-id "handler" (assoc filecontent :filename "handler.txt"))]
+
                         (is (= {:success true}
                                (-> (request :post "/api/applications/return")
                                    (authenticate "42" "handler")
@@ -163,12 +145,7 @@
                             "attachment1, attachment2 and handler attachment are saved")
 
                         (testing "replace attachment1 in a field"
-                          (let [attachment-id4 (-> (upload-request app-id (assoc filecontent :filename "attachment4.txt"))
-                                                   (authenticate "42" "alice")
-                                                   handler
-                                                   read-ok-body
-                                                   :id)]
-                            (is (number? attachment-id4))
+                          (let [attachment-id4 (upload-request app-id "alice" (assoc filecontent :filename "attachment4.txt"))]
 
                             (is (= {:success true}
                                    (-> (request :post (str "/api/applications/save-draft" ))
