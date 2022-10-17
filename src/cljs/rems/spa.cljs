@@ -328,7 +328,7 @@
 (defn footer []
   [:footer.footer
    [:div.container.d-flex.flex-row.justify-content-between.align-items-center
-    (nav/footer-extra-pages)
+    [nav/footer-extra-pages]
     [:div.footer-text (text :t/footer)]
     (when (config/dev-environment?)
       [dev-reload-button])]])

@@ -51,43 +51,38 @@
         text (get-in page [:translations language :title] (text :t/missing))]
     [nav-link url text]))
 
-(defn navbar-extra-pages []
+(defn- extra-pages-container [{:keys [context include?]}]
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
         language @(rf/subscribe [:language])]
     (when extra-pages
-      (doall (for [page extra-pages
-                   :when (:show-menu page true)]
-               ^{:key (str "navbar-extra-page-" (getx page :id))}
-               [extra-page-link page language])))))
+      (into [:<>]
+            (for [page (filter include? extra-pages)]
+              ^{:key (str context (getx page :id))}
+              [extra-page-link page language])))))
+
+(defn navbar-extra-pages []
+  [extra-pages-container {:context "navbar-extra-pages" :include? #(:show-menu % true)}])
 
 (defn footer-extra-pages []
-  (let [config @(rf/subscribe [:rems.config/config])
-        extra-pages (when config (config :extra-pages))
-        language @(rf/subscribe [:language])]
-    (when extra-pages
-      (doall (for [page extra-pages
-                   :when (:show-footer page false)]
-               ^{:key (str "footer-extra-page-" (getx page :id))}
-               [extra-page-link page language])))))
+  [extra-pages-container {:context "footer-extra-pages" :include? #(:show-footer % false)}])
 
 (defn navbar-items [e attrs identity]
-  ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
         catalogue-is-public (:catalogue-is-public config)]
-    [e attrs (into [:div.navbar-nav.mr-auto
-                    (when-not (:user identity)
-                      [nav-link "/" (text :t.navigation/home) :exact])
-                    (when (or (roles/is-logged-in? roles) catalogue-is-public)
-                      [nav-link "/catalogue" (text :t.navigation/catalogue)])
-                    (when (roles/show-applications? roles)
-                      [nav-link "/applications" (text :t.navigation/applications)])
-                    (when (roles/show-reviews? roles)
-                      [nav-link "/actions" (text :t.navigation/actions)])
-                    (when (roles/show-admin-pages? roles)
-                      [nav-link "/administration" (text :t.navigation/administration)])]
-                   (navbar-extra-pages))
+    [e attrs [:div.navbar-nav.mr-auto
+              (when-not (:user identity)
+                [nav-link "/" (text :t.navigation/home) :exact])
+              (when (or (roles/is-logged-in? roles) catalogue-is-public)
+                [nav-link "/catalogue" (text :t.navigation/catalogue)])
+              (when (roles/show-applications? roles)
+                [nav-link "/applications" (text :t.navigation/applications)])
+              (when (roles/show-reviews? roles)
+                [nav-link "/actions" (text :t.navigation/actions)])
+              (when (roles/show-admin-pages? roles)
+                [nav-link "/administration" (text :t.navigation/administration)])
+              [navbar-extra-pages]]
      [language-switcher]]))
 
 (defn navbar-normal [identity]
