@@ -1,6 +1,7 @@
 (ns rems.navbar
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.ajax]
             [rems.atoms :as atoms]
             [rems.common.roles :as roles]
             [rems.guide-util :refer [component-info example]]
@@ -15,10 +16,14 @@
   (str (:root-path context) dest))
 
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-link" (if active? " active" ""))
-               :data-toggle "collapse"
-               :data-target ".navbar-collapse.show"}
-   (url-dest path) title])
+  (let [url (url-dest path)]
+    [atoms/link
+     (merge {:class (str "nav-link" (if active? " active" ""))}
+            (when (rems.ajax/local-uri? {:uri url})
+              {:data-toggle "collapse"
+               :data-target ".navbar-collapse.show"}))
+     url
+     title]))
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
