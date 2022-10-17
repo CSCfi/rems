@@ -3,7 +3,7 @@
 
   Generates an architecture diagram.
 
-  NB: requires `graphviz` to be installed on the machine.
+  NB: requires `graphviz` and `clj-kondo` to be installed on the machine.
   NB: Work in progress. You should run `graph` manually currently."
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
