@@ -2991,4 +2991,14 @@
         (is (not (btu/visible? [{:css ".footer"} {:tag :a :fn/has-text "Link"}])))
         (btu/go (str (btu/get-server-url) "extra-pages/link"))
         (is (btu/eventually-visible? {:css "h1" :fn/has-text "Link"}))
-        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))
+
+    (testing "localizations"
+      ;; NB: testing only one other language as the mechanism is the same for all types
+      (btu/go (btu/get-server-url))
+      (change-language :fi)
+      (testing "fi"
+        (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Info"}]))
+        (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "Info"}])
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Info"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä."}))))))
