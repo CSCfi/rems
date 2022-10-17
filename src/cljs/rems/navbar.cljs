@@ -46,7 +46,8 @@
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
 (defn- extra-page-link [page language]
-  (let [url (or (page :url)
+  (let [url (or (get-in page [:translations language :url])
+                (page :url)
                 (str "/extra-pages/" (page :id)))
         text (get-in page [:translations language :title] (text :t/missing))]
     [nav-link url text]))

@@ -37,7 +37,15 @@
                                :sv {:title "Link"
                                     :filename "link-sv.md"}}
                 :show-menu false
-                :show-footer false}]
+                :show-footer false}
+               {:id "url"
+                :url "https://example.org/"
+                :translations {:fi {:title "Esimerkki"
+                                    :url "https://example.org/fi"}
+                               :en {:title "Example"}
+                               :sv {:title "Exempel"}}
+                :show-menu true
+                :show-footer true}]
  :extra-pages-path "./test-data/extra-pages"
  :attachment-max-size 10000
  :enable-pdf-api true
