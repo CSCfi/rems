@@ -1,11 +1,12 @@
 (ns rems.extra-pages
   (:require [markdown.core :as md]
+            [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch set-location!]]))
 
 ;;;; State
 
@@ -54,19 +55,28 @@
 
 (defn extra-pages []
   (let [loading? @(rf/subscribe [::loading?])
+        page-id @(rf/subscribe [::page-id])
         title @(rf/subscribe [::title])
         extra-page @(rf/subscribe [::content])
+        extra-pages (:extra-pages @(rf/subscribe [:rems.config/config]))
+        config-extra-page (find-first (comp #{page-id} :id) extra-pages)
         language @(rf/subscribe [:language])]
     [:div
      [document-title title]
      [flash-message/component :top]
      (if loading?
        [spinner/big]
+
        (if (= extra-page :not-found)
          (rf/dispatch [:set-active-page :not-found])
-         (let [content (get extra-page language)]
+         (if-let [content (get extra-page language)]
            [:div.document
             (if content
-              {:dangerouslySetInnerHTML {:__html
-                                         (md/md->html content)}}
-              (text :t/missing))])))]))
+              {:dangerouslySetInnerHTML {:__html (md/md->html content)}}
+              (text :t/missing))]
+
+           ;; if no file content for this page exists, we can try URL
+           (if-let [url (get-in config-extra-page [:translations language :url] (:url config-extra-page))]
+             (do (set-location! url)
+                 [spinner/big])
+             (rf/dispatch [:set-active-page :not-found])))))]))

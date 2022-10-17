@@ -38,6 +38,16 @@
                                     :filename "link-sv.md"}}
                 :show-menu false
                 :show-footer false}
+               {:id "mixed"
+                :translations {:fi {:title "Mixed"
+                                    :filename "mixed-fi.md"}
+                               :en {:url "https://example.org/en/mixed"}} ; missing sv
+                :show-menu false
+                :show-footer false}
+               {:id "unlocalized"
+                :url "https://example.org/unlocalized"
+                :show-menu false
+                :show-footer false}
                {:id "url"
                 :url "https://example.org/"
                 :translations {:fi {:title "Esimerkki"

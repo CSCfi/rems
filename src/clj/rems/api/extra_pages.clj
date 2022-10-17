@@ -1,6 +1,7 @@
 (ns rems.api.extra-pages
   (:require [clojure.java.io :as io]
             [compojure.api.sweet :refer :all]
+            [medley.core :refer [find-first]]
             [rems.api.util :as api-util]
             [rems.config :refer [env]]
             [rems.common.util :refer [index-by]]
@@ -9,23 +10,20 @@
   (:import (java.io FileNotFoundException)))
 
 (s/defschema ExtraPageResponse
-  {s/Keyword s/Str})
+  {s/Keyword (s/maybe s/Str)})
 
 (defn- get-extra-page [page-id]
-  (let [allowed-ids (index-by [:id] (filter #(not (:url %)) (:extra-pages env)))]
-    (when (contains? allowed-ids page-id)
-      (let [page (get allowed-ids page-id)
-            translations (:translations page)
+  (let [extra-pages (:extra-pages env)]
+    (when-let [page (find-first (comp #{page-id} :id) extra-pages)]
+      (let [translations (:translations page)
             extra-pages-path (:extra-pages-path env)]
         (assert extra-pages-path ":extra-pages-path undefined in config")
         (into {}
               (for [[lang {:keys [filename]}] translations
-                    :let [filename (or filename
-                                       (:filename page))
-                          file (io/file extra-pages-path filename)]]
-                (if (.isFile file)
-                  [lang (slurp file)]
-                  (throw (FileNotFoundException. (str "the file specified in extra-pages does not exist: " file))))))))))
+                    :let [filename (or filename (:filename page))]]
+                [lang (when filename
+                        (let [file (io/file extra-pages-path filename)]
+                          (when (.isFile file) (slurp file))))]))))))
 
 (def extra-pages-api
   (context "/extra-pages" []
