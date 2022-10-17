@@ -161,7 +161,30 @@
                                    (attachments/get-attachments-for-application app-id))
                                 "attachment1, attachment2, attachment4 and handler attachment are saved")
 
-                            (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
-                                   (:application/attachments (applications/get-application-internal unrelated-app-id))
-                                   (attachments/get-attachments-for-application unrelated-app-id))
-                                "unrelated attachment is still there")))))))))))))))
+                            (testing "upload attachment5"
+                              (let [_attachment-id5 (upload-request app-id "alice" "attachment5.txt")]
+
+                                (testing "send application again"
+                                  ;; NB: don't save again, so attachment5 shouldn't be in use
+
+                                  (is (= {:success true}
+                                         (-> (request :post "/api/applications/submit")
+                                             (authenticate "42" "alice")
+                                             (json-body {:application-id app-id})
+                                             handler
+                                             read-ok-body)))
+
+                                  ;; NB: attachment 5 should have been cleaned
+
+                                  (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"} ; still here because it's the old value
+                                          {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}
+                                          {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain"}
+                                          {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain"}]
+                                         (:application/attachments (applications/get-application-internal app-id))
+                                         (attachments/get-attachments-for-application app-id))
+                                      "attachment1, attachment2, attachment4 and handler attachment are saved")
+
+                                  (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
+                                         (:application/attachments (applications/get-application-internal unrelated-app-id))
+                                         (attachments/get-attachments-for-application unrelated-app-id))
+                                      "unrelated attachment is still there"))))))))))))))))))
