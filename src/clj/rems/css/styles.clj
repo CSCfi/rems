@@ -580,8 +580,7 @@
       [:a :a:hover {:color footer-text-color
                     :font-weight (button-navbar-font-weight)}]
       [:.dev-reload-button {:position :fixed
-                            :bottom 0
-                            :right (u/px 140)}]])
+                            :right (u/rem 1.5)}]])
 
    [:.jumbotron
     {:background-color "#fff"

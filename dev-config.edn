@@ -26,7 +26,25 @@
                                :en {:title "About"
                                     :filename "about-en.md"}
                                :sv {:title "Info"
-                                    :filename "about-sv.md"}}}]
+                                    :filename "about-sv.md"}}}
+               {:id "footer"
+                :translations {:fi {:title "Footer"
+                                    :filename "footer-fi.md"}
+                               :en {:title "Footer"
+                                    :filename "footer-en.md"}
+                               :sv {:title "Footer"
+                                    :filename "footer-sv.md"}}
+                :show-menu false
+                :show-footer true}
+               {:id "link"
+                :translations {:fi {:title "Link"
+                                    :filename "link-fi.md"}
+                               :en {:title "Link"
+                                    :filename "link-en.md"}
+                               :sv {:title "Link"
+                                    :filename "link-sv.md"}}
+                :show-menu false
+                :show-footer false}]
  :extra-pages-path "./test-data/extra-pages"
  :application-deadline-days 4
  :application-id-column :generated-and-assigned-external-id

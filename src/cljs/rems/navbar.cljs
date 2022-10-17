@@ -52,7 +52,20 @@
         extra-pages (when config (config :extra-pages))
         language @(rf/subscribe [:language])]
     (when extra-pages
-      (for [page extra-pages]
+      (for [page extra-pages
+            :when (:show-menu page true)]
+        (let [url (or (page :url)
+                      (str "/extra-pages/" (page :id)))
+              text (get-in page [:translations language :title] (text :t/missing))]
+          [nav-link url text])))))
+
+(defn footer-extra-pages []
+  (let [config @(rf/subscribe [:rems.config/config])
+        extra-pages (when config (config :extra-pages))
+        language @(rf/subscribe [:language])]
+    (when extra-pages
+      (for [page extra-pages
+            :when (:show-footer page false)]
         (let [url (or (page :url)
                       (str "/extra-pages/" (page :id)))
               text (get-in page [:translations language :title] (text :t/missing))]

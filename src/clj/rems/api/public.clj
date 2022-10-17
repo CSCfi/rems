@@ -14,6 +14,8 @@
 (s/defschema ExtraPage
   {:id s/Str
    (s/optional-key :url) s/Str
+   (s/optional-key :show-menu) s/Bool
+   (s/optional-key :show-footer) s/Bool
    :translations {s/Keyword {:title s/Str
                              (s/optional-key :filename) s/Str}}})
 
