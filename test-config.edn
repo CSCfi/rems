@@ -13,6 +13,32 @@
                          {:attribute "picture"}
                          {:attribute "organizations"}]
  :languages [:en :fi :sv]
+ :extra-pages [{:id "about"
+                :translations {:fi {:title "Info"
+                                    :filename "about-fi.md"}
+                               :en {:title "About"
+                                    :filename "about-en.md"}
+                               :sv {:title "Info"
+                                    :filename "about-sv.md"}}}
+               {:id "footer"
+                :translations {:fi {:title "Footer"
+                                    :filename "footer-fi.md"}
+                               :en {:title "Footer"
+                                    :filename "footer-en.md"}
+                               :sv {:title "Footer"
+                                    :filename "footer-sv.md"}}
+                :show-menu false
+                :show-footer true}
+               {:id "link"
+                :translations {:fi {:title "Link"
+                                    :filename "link-fi.md"}
+                               :en {:title "Link"
+                                    :filename "link-en.md"}
+                               :sv {:title "Link"
+                                    :filename "link-sv.md"}}
+                :show-menu false
+                :show-footer false}]
+ :extra-pages-path "./test-data/extra-pages"
  :attachment-max-size 10000
  :enable-pdf-api true
  :enable-permissions-api true

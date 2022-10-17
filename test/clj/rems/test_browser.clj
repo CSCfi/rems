@@ -2969,3 +2969,26 @@
                   "Bilaga (SV)" "E2E license with attachments (SV)"
                   "Aktiv" true}
                  (slurp-fields :license))))))))
+
+(deftest test-extra-pages
+  (btu/with-postmortem
+    (testing "without login"
+      (btu/go (btu/get-server-url))
+      (testing "extra page in menu"
+        (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "About"}]))
+        (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "About"}])
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "About"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy About page for REMS."})))
+
+      (testing "extra page in footer"
+        (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+        (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
+
+      (testing "extra page in link"
+        (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Link"}])))
+        (is (not (btu/visible? [{:css ".footer"} {:tag :a :fn/has-text "Link"}])))
+        (btu/go (str (btu/get-server-url) "extra-pages/link"))
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Link"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))))
