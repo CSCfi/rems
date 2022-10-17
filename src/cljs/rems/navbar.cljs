@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.ajax]
             [rems.atoms :as atoms]
+            [rems.common.util :refer [getx]]
             [rems.common.roles :as roles]
             [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
@@ -44,6 +45,12 @@
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
+(defn- extra-page-link [page language]
+  (let [url (or (page :url)
+                (str "/extra-pages/" (page :id)))
+        text (get-in page [:translations language :title] (text :t/missing))]
+    [nav-link url text]))
+
 (defn navbar-extra-pages []
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
@@ -51,11 +58,8 @@
     (when extra-pages
       (doall (for [page extra-pages
                    :when (:show-menu page true)]
-               (let [url (or (page :url)
-                             (str "/extra-pages/" (page :id)))
-                     text (get-in page [:translations language :title] (text :t/missing))]
-                 ^{:key (str "navbar-extra-page-" (page :id))}
-                 [nav-link url text]))))))
+               ^{:key (str "navbar-extra-page-" (getx page :id))}
+               [extra-page-link page language])))))
 
 (defn footer-extra-pages []
   (let [config @(rf/subscribe [:rems.config/config])
@@ -64,11 +68,8 @@
     (when extra-pages
       (doall (for [page extra-pages
                    :when (:show-footer page false)]
-               (let [url (or (page :url)
-                             (str "/extra-pages/" (page :id)))
-                     text (get-in page [:translations language :title] (text :t/missing))]
-                 ^{:key (str "footer-extra-page-" (page :id))}
-                 [nav-link url text]))))))
+               ^{:key (str "footer-extra-page-" (getx page :id))}
+               [extra-page-link page language])))))
 
 (defn navbar-items [e attrs identity]
   ;;TODO: get navigation options from subscription
