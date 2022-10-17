@@ -9,5 +9,5 @@
    (text :t.login/oidc-text)
    [:div.text-center
     [atoms/link {:class "btn btn-primary btn-lg login-btn"}
-     (nav/url-dest "/oidc-login")
+     "/oidc-login"
      (text :t.login/login)]]])

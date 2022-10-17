@@ -8,22 +8,14 @@
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]))
 
-;; TODO fetch as a subscription?
-(def context {:root-path ""})
-
-(defn url-dest
-  [dest]
-  (str (:root-path context) dest))
-
 (defn- nav-link-impl [path title & [active?]]
-  (let [url (url-dest path)]
-    [atoms/link
-     (merge {:class (str "nav-link" (if active? " active" ""))}
-            (when (rems.ajax/local-uri? {:uri url})
-              {:data-toggle "collapse"
-               :data-target ".navbar-collapse.show"}))
-     url
-     title]))
+  [atoms/link
+   (merge {:class (str "nav-link" (if active? " active" ""))}
+          (when (rems.ajax/local-uri? {:uri path})
+            {:data-toggle "collapse"
+             :data-target ".navbar-collapse.show"}))
+   path
+   title])
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
@@ -47,7 +39,7 @@
       [:span {:aria-label (text :t.navigation/profile)}
        [:i.fa.fa-user.mr-1]
        [:span.icon-description (:name user)]]]
-     [atoms/link {:id "logout" :class "nav-link"} (url-dest "/logout")
+     [atoms/link {:id "logout" :class "nav-link"} "/logout"
       [:span {:aria-label (text :t.navigation/logout)}
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
