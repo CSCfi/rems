@@ -2974,6 +2974,7 @@
   (btu/with-postmortem
     (testing "without login"
       (btu/go (btu/get-server-url))
+
       (testing "extra page in menu"
         (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "About"}]))
         (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "About"}])
@@ -2994,11 +2995,52 @@
         (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))
 
     (testing "localizations"
-      ;; NB: testing only one other language as the mechanism is the same for all types
       (btu/go (btu/get-server-url))
-      (change-language :fi)
+
       (testing "fi"
-        (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Info"}]))
-        (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "Info"}])
-        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Info"}))
-        (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä."}))))))
+        (change-language :fi)
+
+        (testing "markdown content"
+          (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+          (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+          (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin footer sivun tynkä."})))
+
+        (testing "link content"
+          (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))
+          (is (= "https://example.org/fi" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Esimerkki"}] :href))))
+
+        (testing "mixed markdown content"
+          (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Mixed"}))
+          (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä, jossa muilla kielillä käytetään linkkiä."}))))
+
+      (testing "fallback"
+        (btu/go (btu/get-server-url))
+
+        (testing "en"
+          (change-language :en)
+
+          (testing "markdown content"
+            (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+            (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+            (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
+
+          (testing "link content"
+            (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Example"}]))
+            (is (= "https://example.org/" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Example"}] :href))))
+
+          (testing "mixed link content"
+            (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Example Domain"}))))
+
+        (btu/go (btu/get-server-url))
+
+        (testing "sv"
+          (change-language :sv)
+
+          (testing "mixed missing content"
+            (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Sidan hittades inte"}))
+            (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."}))))))))
