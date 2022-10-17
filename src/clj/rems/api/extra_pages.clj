@@ -4,10 +4,9 @@
             [medley.core :refer [find-first]]
             [rems.api.util :as api-util]
             [rems.config :refer [env]]
-            [rems.common.util :refer [index-by]]
+            [rems.common.roles :as roles]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import (java.io FileNotFoundException)))
+            [schema.core :as s]))
 
 (s/defschema ExtraPageResponse
   {s/Keyword (s/maybe s/Str)})
@@ -15,15 +14,18 @@
 (defn- get-extra-page [page-id]
   (let [extra-pages (:extra-pages env)]
     (when-let [page (find-first (comp #{page-id} :id) extra-pages)]
-      (let [translations (:translations page)
-            extra-pages-path (:extra-pages-path env)]
-        (assert extra-pages-path ":extra-pages-path undefined in config")
-        (into {}
-              (for [[lang {:keys [filename]}] translations
-                    :let [filename (or filename (:filename page))]]
-                [lang (when filename
-                        (let [file (io/file extra-pages-path filename)]
-                          (when (.isFile file) (slurp file))))]))))))
+      (let [roles (:roles page)]
+        (when (or (nil? roles) ; default is unlimited
+                  (apply roles/has-roles? roles))
+          (let [translations (:translations page)
+                extra-pages-path (:extra-pages-path env)]
+            (assert extra-pages-path ":extra-pages-path undefined in config")
+            (into {}
+                  (for [[lang {:keys [filename]}] translations
+                        :let [filename (or filename (:filename page))]]
+                    [lang (when filename
+                            (let [file (io/file extra-pages-path filename)]
+                              (when (.isFile file) (slurp file))))]))))))))
 
 (def extra-pages-api
   (context "/extra-pages" []

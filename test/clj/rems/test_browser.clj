@@ -3007,8 +3007,13 @@
           (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin footer sivun tynkä."})))
 
         (testing "link content"
-          (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))
-          (is (= "https://example.org/fi" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Esimerkki"}] :href))))
+          (testing "roles"
+            (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}])))
+            (login-as "alice")
+            (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))
+            (is (= "https://example.org/fi" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Esimerkki"}] :href)))
+            (logout)
+            (is (btu/eventually-invisible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))))
 
         (testing "mixed markdown content"
           (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
@@ -3028,8 +3033,13 @@
             (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
 
           (testing "link content"
-            (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Example"}]))
-            (is (= "https://example.org/" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Example"}] :href))))
+            (testing "roles"
+              (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Example"}])))
+              (login-as "elsa")
+              (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Example"}]))
+              (is (= "https://example.org/" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Example"}] :href)))
+              (logout)
+              (is (btu/eventually-invisible? [:big-navbar {:tag :a :fn/has-text "Example"}]))))
 
           (testing "mixed link content"
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))

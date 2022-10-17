@@ -312,8 +312,9 @@
  ;;
  ;; Example: define two pages
  ;;
- ;; :extra-pages [;; This is a page that's hosted at an external URL
+ ;; :extra-pages [;; This is a page that's hosted at an external URL, only for logged-in users
  ;;               {:id "hello"
+ ;;                :roles [:logged-in] ; other roles are possible too such as :applicant :member :handler etc.
  ;;                :url "http://example.org/hello.html" ; fallback URL
  ;;                :translations {:fi {:title "Hei"
  ;;                                    :url "http://example.org/fi/hello.html"} ; specific localized URL

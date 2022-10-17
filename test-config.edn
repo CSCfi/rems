@@ -49,6 +49,7 @@
                 :show-menu false
                 :show-footer false}
                {:id "url"
+                :roles [:logged-in]
                 :url "https://example.org/"
                 :translations {:fi {:title "Esimerkki"
                                     :url "https://example.org/fi"}
