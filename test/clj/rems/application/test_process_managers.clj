@@ -159,7 +159,7 @@
                                     {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain"}]
                                    (:application/attachments (applications/get-application-internal app-id))
                                    (attachments/get-attachments-for-application app-id))
-                                "attachment1, attachment2 and attachment4 are saved")
+                                "attachment1, attachment2, attachment4 and handler attachment are saved")
 
                             (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
                                    (:application/attachments (applications/get-application-internal unrelated-app-id))
