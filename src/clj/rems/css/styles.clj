@@ -577,8 +577,8 @@
                :padding-bottom "1rem"
                :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
                :margin-top (u/em 1)}
-      [:a :a:hover {:color footer-text-color
-                    :font-weight (button-navbar-font-weight)}]
+      [:a :a:hover :.nav-link {:color footer-text-color
+                               :font-weight (button-navbar-font-weight)}]
       [:.dev-reload-button {:position :fixed
                             :right (u/rem 1.5)}]])
 
