@@ -576,10 +576,12 @@
                :padding-top "1rem"
                :padding-bottom "1rem"
                :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
-               :margin-top (u/em 1)}
+               :margin-top (u/em 1)
+               :position :relative}
       [:a :a:hover :.nav-link {:color footer-text-color
                                :font-weight (button-navbar-font-weight)}]
-      [:.dev-reload-button {:position :fixed
+      [:.dev-reload-button {:position :absolute
+                            :bottom (u/rem 1.5)
                             :right (u/rem 1.5)}]])
 
    [:.jumbotron
