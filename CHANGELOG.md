@@ -8,6 +8,14 @@ have notable changes.
 
 Changes since v2.30
 
+### Additions
+- Extra pages have been enhanced: (#2983, #2589, #3069)
+  - They can be shown in top menu, footer, both or not at all with `:show-menu` and `:show-footer`
+  - You can decide if you want the standard heading or not with `:heading`.
+  - If localization of the file or link is not required, you can define the attributes at top level.
+  - Who can see which extras can be tuned with `:roles` such as `:logged-in`, `:applicant` or `:handler`.
+  - See `config-defaults.edn` for more details.
+
 ## v2.30 "Kellosaarenranta" 2022-10-13
 
 ### Changes
