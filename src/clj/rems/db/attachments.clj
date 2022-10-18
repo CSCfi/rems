@@ -117,3 +117,6 @@
                                :filename (:filename attachment)
                                :type (:type attachment)
                                :data (:data attachment)}))))
+
+(defn delete-attachment! [attachment-id]
+  (db/delete-attachment! {:id attachment-id}))

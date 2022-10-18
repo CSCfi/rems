@@ -1,12 +1,11 @@
 (ns rems.api.services.command
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
-            [rems.api.services.blacklist :as blacklist]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.commands :as commands]
+            [rems.application.process-managers :as process-managers]
             [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
@@ -19,36 +18,19 @@
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
 
-;; TODO should this process manager be in its own ns?
-(defn- revokes-to-blacklist [new-events]
-  (doseq [event new-events
-          :when (= :application.event/revoked (:event/type event))
-          :let [application (applications/get-application-internal (:application/id event))]
-          user (application-util/applicant-and-members application)
-          resource (:application/resources application)]
-    (blacklist/add-user-to-blacklist! (:event/actor event)
-                                      {:blacklist/user {:userid (:userid user)}
-                                       :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
-                                       :comment (:application/comment event)})))
-
-(defn- delete-applications [new-events]
-  (doseq [event new-events]
-    (when (= :application.event/deleted (:event/type event))
-      (applications/delete-application-and-reload-cache! (:application/id event))))
-  [])
-
 ;; Process managers react to events with side effects & new commands.
 ;; See docs/architecture/002-event-side-effects.md
 (defn run-process-managers [new-events]
   (concat
-   (revokes-to-blacklist new-events)
+   (process-managers/revokes-to-blacklist new-events)
    (email/generate-event-emails! new-events)
    (entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
    (bona-fide-bot/run-bona-fide-bot new-events)
    (event-notification/queue-notifications! new-events)
-   (delete-applications new-events)))
+   (process-managers/delete-applications new-events)
+   (process-managers/delete-orphan-attachments-on-submit new-events)))
 
 (def ^:private command-injections
   (merge applications/fetcher-injections

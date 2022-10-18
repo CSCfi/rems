@@ -46,6 +46,11 @@
       (throw-forbidden))
     (attachments/save-attachment! file user-id application-id)))
 
+(defn get-attachments-in-use
+  "Returns the attachment ids actually in use (field answer or event)."
+  [application]
+  (keys (model/classify-attachments application)))
+
 (defn zip-attachments [application all?]
   (let [classes (model/classify-attachments application)
         out (ByteArrayOutputStream.)]

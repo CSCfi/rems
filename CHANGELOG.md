@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.30
 
+### Additions
+- Orphan attachments could sometimes be saved, though not in use. They are now removed when an application is submitted. (#3041)
+
 ## v2.30 "Kellosaarenranta" 2022-10-13
 
 ### Changes
