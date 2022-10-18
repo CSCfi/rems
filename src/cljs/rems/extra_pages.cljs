@@ -2,11 +2,11 @@
   (:require [markdown.core :as md]
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :refer [document-title] :as atoms]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch set-location!]]))
+            [rems.util :refer [fetch]]))
 
 ;;;; State
 
@@ -69,6 +69,7 @@
 
        (if (= extra-page :not-found)
          (rf/dispatch [:set-active-page :not-found])
+
          (if-let [content (get extra-page language)]
            [:div.document
             (if content
@@ -77,6 +78,5 @@
 
            ;; if no file content for this page exists, we can try URL
            (if-let [url (get-in config-extra-page [:translations language :url] (:url config-extra-page))]
-             (do (set-location! url)
-                 [spinner/big])
+             [atoms/link nil url url]
              (rf/dispatch [:set-active-page :not-found])))))]))
