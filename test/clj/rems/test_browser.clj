@@ -3043,7 +3043,7 @@
 
           (testing "mixed link content"
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
-            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Example Domain"}))))
+            (is (btu/eventually-visible? {:tag :a :fn/has-text "https://example.org/en/mixed"}))))
 
         (btu/go (btu/get-server-url))
 
