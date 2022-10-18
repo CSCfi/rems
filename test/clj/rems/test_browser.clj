@@ -3053,4 +3053,6 @@
           (testing "mixed missing content"
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
             (is (btu/eventually-visible? {:css "h1" :fn/has-text "Sidan hittades inte"}))
-            (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."}))))))))
+            (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
+
+      (change-language :en))))
