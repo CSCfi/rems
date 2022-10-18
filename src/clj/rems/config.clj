@@ -41,7 +41,7 @@
 (defn- parse-config [config]
   (-> config
       (update :email-retry-period #(Period/parse %))
-      (update :extra-pages (partial mapv #(update-existing % :roles set)))
+      (update-existing :extra-pages (partial mapv #(update-existing % :roles set)))
       (update :disable-commands (partial mapv keyword))))
 
 (deftest test-parse-config
