@@ -314,7 +314,7 @@
  ;;
  ;; :extra-pages [;; This is a page that's hosted at an external URL, only for logged-in users
  ;;               {:id "hello"
- ;;                :roles [:logged-in] ; other roles are possible too such as :applicant :member :handler etc.
+ ;;                :roles [:logged-in] ; only for this role
  ;;                :heading false ; don't show the heading, write any Markdown heading you like, defaults to true
  ;;                :url "http://example.org/hello.html" ; fallback URL
  ;;                :translations {:fi {:title "Hei"
@@ -333,6 +333,9 @@
  ;; Additional options (for any type):
  ;;   :show-menu true    ; show in top menu, defaults to true
  ;;   :show-footer false ; show in footer, defaults to false
+ ;;   :roles ; Can be used to configure which users see and can access the extra page.
+ ;;          ; The :logged-in, or more specific roles are possible.
+ ;;          ; The default is to show the page to everyone.
  ;;
  ;; NB: Pages not accessible through menus will be served in the corresponding
  ;; url `/extra-pages/<id>` and can be accessed through a link for example.
