@@ -336,6 +336,13 @@
  ;;
  ;; NB: Pages not accessible through menus will be served in the corresponding
  ;; url `/extra-pages/<id>` and can be accessed through a link for example.
+ ;;
+ ;; Assets such as images can also be hosted by REMS if included the theme directory.
+ ;; See `:theme-path`.
+ ;;
+ ;; For example with this Markdown you can include an image:
+ ;;   ![REMS Logo](/img/rems_logo_en.png)
+ ;;
 
  :extra-pages []
 
