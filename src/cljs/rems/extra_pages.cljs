@@ -78,5 +78,5 @@
 
            ;; if no file content for this page exists, we can try URL
            (if-let [url (get-in config-extra-page [:translations language :url] (:url config-extra-page))]
-             [atoms/link nil url url]
+             [:div.m-3 [atoms/link nil url url]]
              (rf/dispatch [:set-active-page :not-found])))))]))
