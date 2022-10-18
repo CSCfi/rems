@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.30
 
 ### Additions
+- Orphan attachments could sometimes be saved, though not in use. They are now removed when an application is submitted. (#3041)
 - Extra pages have been enhanced: (#2983, #2589, #3069)
   - They can be shown in top menu, footer, both or not at all with `:show-menu` and `:show-footer`
   - You can decide if you want the standard heading or not with `:heading`.

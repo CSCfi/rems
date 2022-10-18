@@ -329,6 +329,10 @@ WHERE appid = :application-id;
 DELETE FROM attachment
 WHERE appid = :application;
 
+-- :name delete-attachment! :!
+DELETE FROM attachment
+WHERE id = :id;
+
 -- :name create-license! :insert
 INSERT INTO license
 (organization, type)
