@@ -160,7 +160,7 @@
                " - ")
              (text :t.header/title))))
 
-(defn document-title [_title]
+(defn document-title [_title & [{:keys [heading?] :or {heading? true}}]]
   (let [on-update (fn [this]
                     (let [[_ title] (reagent/argv this)]
                       (set-document-title! title)))]
@@ -169,7 +169,8 @@
       :component-did-update on-update
       :display-name "document-title"
       :reagent-render (fn [title]
-                        [:h1 title])})))
+                        (when heading?
+                          [:h1 title]))})))
 
 (defn logo []
   [:div {:class "logo"}
@@ -181,7 +182,7 @@
 
 (defn expander
   "Displays an expandable block of content with animated chevron.
-   
+
    Pass a map of options with the following keys:
    * `id` unique id for expanded content
    * `content` content which is displayed in expanded state

@@ -62,7 +62,7 @@
         config-extra-page (find-first (comp #{page-id} :id) extra-pages)
         language @(rf/subscribe [:language])]
     [:div
-     [document-title title]
+     [document-title title {:heading? (get config-extra-page :heading true)}]
      [flash-message/component :top]
      (if loading?
        [spinner/big]

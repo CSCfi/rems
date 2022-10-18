@@ -3017,7 +3017,7 @@
 
         (testing "mixed markdown content"
           (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
-          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Mixed"}))
+          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Tämä otsikko on Markdown-tiedostosta"}))
           (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä, jossa muilla kielillä käytetään linkkiä."}))))
 
       (testing "fallback"

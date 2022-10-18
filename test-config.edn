@@ -39,6 +39,7 @@
                 :show-menu false
                 :show-footer false}
                {:id "mixed"
+                :heading false
                 :translations {:fi {:title "Mixed"
                                     :filename "mixed-fi.md"}
                                :en {:url "https://example.org/en/mixed"}} ; missing sv
