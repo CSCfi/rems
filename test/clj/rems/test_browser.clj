@@ -3055,4 +3055,6 @@
             (is (btu/eventually-visible? {:css "h1" :fn/has-text "Sidan hittades inte"}))
             (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
 
-      (change-language :en))))
+      (change-language :en)
+      (user-settings/delete-user-settings! "alice")
+      (user-settings/delete-user-settings! "elsa")))) ; clear language settings
