@@ -8,6 +8,7 @@
 (use-fixtures :once api-fixture)
 
 (deftest extra-pages-api-test
+  (test-data/create-test-api-key!)
   (test-data/create-test-users-and-roles!)
   (with-redefs [rems.config/env (assoc rems.config/env
                                        :extra-pages [{:id "test"
