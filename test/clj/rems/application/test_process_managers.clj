@@ -71,7 +71,7 @@
                           :warnings [{:type "t.form.validation/required"
                                       :form-id form-id
                                       :field-id "attachment2"}]}
-                         (-> (request :post (str "/api/applications/save-draft" ))
+                         (-> (request :post (str "/api/applications/save-draft"))
                              (authenticate "42" "alice")
                              (json-body {:application-id app-id
                                          :field-values [{:form form-id :field "attachment1" :value (str attachment-id1)}]})
@@ -88,7 +88,7 @@
 
                     (testing "use attachment2 in a field"
                       (is (= {:success true}
-                             (-> (request :post (str "/api/applications/save-draft" ))
+                             (-> (request :post (str "/api/applications/save-draft"))
                                  (authenticate "42" "alice")
                                  (json-body {:application-id app-id
                                              :field-values [{:form form-id :field "attachment1" :value (str attachment-id1)}
@@ -145,7 +145,7 @@
                           (let [attachment-id4 (upload-request app-id "alice" "attachment4.txt")]
 
                             (is (= {:success true}
-                                   (-> (request :post (str "/api/applications/save-draft" ))
+                                   (-> (request :post (str "/api/applications/save-draft"))
                                        (authenticate "42" "alice")
                                        (json-body {:application-id app-id
                                                    :field-values [{:form form-id :field "attachment1" :value (str attachment-id4)}
