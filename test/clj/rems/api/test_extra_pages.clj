@@ -27,7 +27,7 @@
                                                                      :sv {:url "https://example.org/sv"}}}
 
                                                      {:id "test-roles"
-                                                      :roles [:handler]
+                                                      :roles [:owner]
                                                       :filename "test-en.md"}]
                                        :extra-pages-path "./test-data/extra-pages/")]
     (testing "fetch existing extra-page"
@@ -51,7 +51,7 @@
 
       (testing "with the role"
         (let [response (-> (request :get "/api/extra-pages/test-roles")
-                           (authenticate "42" "handler")
+                           (authenticate "42" "owner")
                            handler
                            read-ok-body)]
           (is (= "This is a test.\n" (:en response))))))
