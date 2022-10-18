@@ -17,12 +17,12 @@
       (let [roles (:roles page)]
         (when (or (nil? roles) ; default is unlimited
                   (apply roles/has-roles? roles))
-          (let [translations (:translations page)
-                extra-pages-path (:extra-pages-path env)]
+          (let [extra-pages-path (:extra-pages-path env)]
             (assert extra-pages-path ":extra-pages-path undefined in config")
             (into {}
-                  (for [[lang {:keys [filename]}] translations
-                        :let [filename (or filename (:filename page))]]
+                  (for [lang (:languages env)
+                        :let [filename (or (get-in page [:translations lang :filename])
+                                           (:filename page))]]
                     [lang (when filename
                             (let [file (io/file extra-pages-path filename)]
                               (when (.isFile file) (slurp file))))]))))))))

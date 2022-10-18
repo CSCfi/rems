@@ -16,7 +16,7 @@
                                                       :translations {:fi {:title "Testi"
                                                                           :filename "test-fi.md"}
                                                                      :en {:title "Test"}
-                                                                     :de {:url "https://example.org/de"}}}
+                                                                     :sv {:url "https://example.org/sv"}}}
 
                                                      {:id "test2"
                                                       :url "https://example.org/"
@@ -24,7 +24,7 @@
                                                                           :filename "test-fi.md"}
                                                                      :en {:title "Test"
                                                                           :filename "test-en.md"}
-                                                                     :de {:url "https://example.org/de"}}}
+                                                                     :sv {:url "https://example.org/sv"}}}
 
                                                      {:id "test-roles"
                                                       :roles [:handler]
@@ -32,15 +32,15 @@
                                        :extra-pages-path "./test-data/extra-pages/")]
     (testing "fetch existing extra-page"
       (let [response (api-call :get "/api/extra-pages/test" {} "42" "alice")]
-        (is (= (set (keys response)) #{:en :fi :de}) "should return content in defined languages")
+        (is (= (set (keys response)) #{:en :fi :sv}) "should return content in defined languages")
         (is (= "This is a test.\n" (:en response)) "should have fallback")
         (is (= "Tämä on testi.\n" (:fi response)) "should have custom localization")
-        (is (= "This is a test.\n" (:de response)) "should have fallback though url is intended for front-end"))
+        (is (= "This is a test.\n" (:sv response)) "should have fallback though url is intended for front-end"))
 
       (let [response (api-call :get "/api/extra-pages/test2" {} "42" "alice")]
-        (is (= (set (keys response)) #{:en :fi :de}))
+        (is (= (set (keys response)) #{:en :fi :sv}))
         (testing "without fallback"
-          (is (nil? (:de response)) "should have no content as url is intended for front-end"))))
+          (is (nil? (:sv response)) "should have no content as url is intended for front-end"))))
 
     (testing "roles"
       (testing "without the role"
@@ -52,8 +52,9 @@
       (testing "with the role"
         (let [response (-> (request :get "/api/extra-pages/test-roles")
                            (authenticate "42" "handler")
-                           handler)]
-          (is (response-is-not-found? response)))))
+                           handler
+                           read-ok-body)]
+          (is (= "This is a test.\n" (:en response))))))
 
     (testing "try to fetch non-existing extra-page"
       (let [response (-> (request :get "/api/extra-pages/test-does-not-exist")
