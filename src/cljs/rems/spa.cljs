@@ -327,10 +327,11 @@
 
 (defn footer []
   [:footer.footer
-   [:div.container
+   [:div.container.d-flex.flex-row.justify-content-between.align-items-center
+    [:div.d-flex.flex-row [nav/footer-extra-pages]]
+    [:div.footer-text (text :t/footer)]
     (when (config/dev-environment?)
-      [dev-reload-button])
-    [:div.footer-text (text :t/footer)]]])
+      [dev-reload-button])]])
 
 (defn main-content [_page-id _grab-focus?]
   (let [on-update (fn [this]

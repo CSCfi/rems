@@ -13,6 +13,52 @@
                          {:attribute "picture"}
                          {:attribute "organizations"}]
  :languages [:en :fi :sv]
+ :extra-pages [{:id "about"
+                :translations {:fi {:title "Info"
+                                    :filename "about-fi.md"}
+                               :en {:title "About"
+                                    :filename "about-en.md"}
+                               :sv {:title "Info"
+                                    :filename "about-sv.md"}}}
+               {:id "footer"
+                :filename "footer-en.md"
+                :translations {:fi {:title "Footer"
+                                    :filename "footer-fi.md"}
+                               :en {:title "Footer"}
+                               :sv {:title "Footer"
+                                    :filename "footer-sv.md"}}
+                :show-menu false
+                :show-footer true}
+               {:id "link"
+                :translations {:fi {:title "Link"
+                                    :filename "link-fi.md"}
+                               :en {:title "Link"
+                                    :filename "link-en.md"}
+                               :sv {:title "Link"
+                                    :filename "link-sv.md"}}
+                :show-menu false
+                :show-footer false}
+               {:id "mixed"
+                :heading false
+                :translations {:fi {:title "Mixed"
+                                    :filename "mixed-fi.md"}
+                               :en {:url "https://example.org/en/mixed"}} ; missing sv
+                :show-menu false
+                :show-footer false}
+               {:id "unlocalized"
+                :url "https://example.org/unlocalized"
+                :show-menu false
+                :show-footer false}
+               {:id "url"
+                :roles [:logged-in]
+                :url "https://example.org/"
+                :translations {:fi {:title "Esimerkki"
+                                    :url "https://example.org/fi"}
+                               :en {:title "Example"}
+                               :sv {:title "Exempel"}}
+                :show-menu true
+                :show-footer true}]
+ :extra-pages-path "./test-data/extra-pages"
  :attachment-max-size 10000
  :enable-pdf-api true
  :enable-permissions-api true

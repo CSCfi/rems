@@ -2969,3 +2969,92 @@
                   "Bilaga (SV)" "E2E license with attachments (SV)"
                   "Aktiv" true}
                  (slurp-fields :license))))))))
+
+(deftest test-extra-pages
+  (btu/with-postmortem
+    (testing "without login"
+      (btu/go (btu/get-server-url))
+
+      (testing "extra page in menu"
+        (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "About"}]))
+        (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "About"}])
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "About"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy About page for REMS."})))
+
+      (testing "extra page in footer"
+        (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+        (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
+
+      (testing "extra page in link"
+        (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Link"}])))
+        (is (not (btu/visible? [{:css ".footer"} {:tag :a :fn/has-text "Link"}])))
+        (btu/go (str (btu/get-server-url) "extra-pages/link"))
+        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Link"}))
+        (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))
+
+    (testing "localizations"
+      (btu/go (btu/get-server-url))
+
+      (testing "fi"
+        (change-language :fi)
+
+        (testing "markdown content"
+          (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+          (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+          (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin footer sivun tynkä."})))
+
+        (testing "link content"
+          (testing "roles"
+            (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}])))
+            (login-as "alice")
+            (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))
+            (is (= "https://example.org/fi" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Esimerkki"}] :href)))
+            (logout)
+            (is (btu/eventually-invisible? [:big-navbar {:tag :a :fn/has-text "Esimerkki"}]))))
+
+        (testing "mixed markdown content"
+          (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Tämä otsikko on Markdown-tiedostosta"}))
+          (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä, jossa muilla kielillä käytetään linkkiä."}))))
+
+      (testing "fallback"
+        (btu/go (btu/get-server-url))
+
+        (testing "en"
+          (change-language :en)
+
+          (testing "markdown content"
+            (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
+            (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
+            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+            (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
+
+          (testing "link content"
+            (testing "roles"
+              (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Example"}])))
+              (login-as "elsa")
+              (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "Example"}]))
+              (is (= "https://example.org/" (btu/get-element-attr [:big-navbar {:tag :a :fn/has-text "Example"}] :href)))
+              (logout)
+              (is (btu/eventually-invisible? [:big-navbar {:tag :a :fn/has-text "Example"}]))))
+
+          (testing "mixed link content"
+            (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+            (is (btu/eventually-visible? {:tag :a :fn/has-text "https://example.org/en/mixed"}))))
+
+        (btu/go (btu/get-server-url))
+
+        (testing "sv"
+          (change-language :sv)
+
+          (testing "mixed missing content"
+            (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Sidan hittades inte"}))
+            (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
+
+      (change-language :en)
+      (user-settings/delete-user-settings! "alice")
+      (user-settings/delete-user-settings! "elsa")))) ; clear language settings

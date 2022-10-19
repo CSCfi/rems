@@ -9,5 +9,5 @@
    (text :t.login/fake-text)
    [:div.text-center
     [atoms/link {:class "btn btn-primary btn-lg login-btn"}
-     (nav/url-dest "/fake-login")
+     "/fake-login"
      (text :t.login/login)]]])

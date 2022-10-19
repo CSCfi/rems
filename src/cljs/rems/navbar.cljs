@@ -1,24 +1,22 @@
 (ns rems.navbar
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.ajax]
             [rems.atoms :as atoms]
+            [rems.common.util :refer [getx]]
             [rems.common.roles :as roles]
             [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]))
 
-;; TODO fetch as a subscription?
-(def context {:root-path ""})
-
-(defn url-dest
-  [dest]
-  (str (:root-path context) dest))
-
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-link" (if active? " active" ""))
-               :data-toggle "collapse"
-               :data-target ".navbar-collapse.show"}
-   (url-dest path) title])
+  [atoms/link
+   (merge {:class (str "nav-link" (if active? " active" ""))}
+          (when (rems.ajax/local-uri? {:uri path})
+            {:data-toggle "collapse"
+             :data-target ".navbar-collapse.show"}))
+   path
+   title])
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
@@ -42,39 +40,50 @@
       [:span {:aria-label (text :t.navigation/profile)}
        [:i.fa.fa-user.mr-1]
        [:span.icon-description (:name user)]]]
-     [atoms/link {:id "logout" :class "nav-link"} (url-dest "/logout")
+     [atoms/link {:id "logout" :class "nav-link"} "/logout"
       [:span {:aria-label (text :t.navigation/logout)}
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
-(defn navbar-extra-pages []
+(defn- extra-page-link [page language]
+  (let [url (or (get-in page [:translations language :url])
+                (page :url)
+                (str "/extra-pages/" (page :id)))
+        text (get-in page [:translations language :title] (text :t/missing))]
+    [nav-link url text]))
+
+(defn- extra-pages-container [{:keys [context include?]}]
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
         language @(rf/subscribe [:language])]
     (when extra-pages
-      (for [page extra-pages]
-        (let [url (or (page :url)
-                      (str "/extra-pages/" (page :id)))
-              text (get-in page [:translations language :title] (text :t/missing))]
-          [nav-link url text])))))
+      (into [:<>]
+            (for [page (filter include? extra-pages)]
+              ^{:key (str context (getx page :id))}
+              [extra-page-link page language])))))
+
+(defn navbar-extra-pages []
+  [extra-pages-container {:context "navbar-extra-pages" :include? #(:show-menu % true)}])
+
+(defn footer-extra-pages []
+  [extra-pages-container {:context "footer-extra-pages" :include? #(:show-footer % false)}])
 
 (defn navbar-items [e attrs identity]
-  ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
         catalogue-is-public (:catalogue-is-public config)]
-    [e attrs (into [:div.navbar-nav.mr-auto
-                    (when-not (:user identity)
-                      [nav-link "/" (text :t.navigation/home) :exact])
-                    (when (or (roles/is-logged-in? roles) catalogue-is-public)
-                      [nav-link "/catalogue" (text :t.navigation/catalogue)])
-                    (when (roles/show-applications? roles)
-                      [nav-link "/applications" (text :t.navigation/applications)])
-                    (when (roles/show-reviews? roles)
-                      [nav-link "/actions" (text :t.navigation/actions)])
-                    (when (roles/show-admin-pages? roles)
-                      [nav-link "/administration" (text :t.navigation/administration)])]
-                   (navbar-extra-pages))
+    [e attrs [:div.navbar-nav.mr-auto
+              (when-not (:user identity)
+                [nav-link "/" (text :t.navigation/home) :exact])
+              (when (or (roles/is-logged-in? roles) catalogue-is-public)
+                [nav-link "/catalogue" (text :t.navigation/catalogue)])
+              (when (roles/show-applications? roles)
+                [nav-link "/applications" (text :t.navigation/applications)])
+              (when (roles/show-reviews? roles)
+                [nav-link "/actions" (text :t.navigation/actions)])
+              (when (roles/show-admin-pages? roles)
+                [nav-link "/administration" (text :t.navigation/administration)])
+              [navbar-extra-pages]]
      [language-switcher]]))
 
 (defn navbar-normal [identity]

@@ -23,7 +23,7 @@
      (when-let [alternative-endpoint (:alternative-login-url config)]
        [:div.text-center.w-100.mt-4
         [atoms/link nil
-         (nav/url-dest alternative-endpoint)
+         alternative-endpoint
          (text :t.login/alternative)]])]))
 
 (defn guide []

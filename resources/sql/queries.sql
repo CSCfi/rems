@@ -52,7 +52,7 @@ WHERE 1=1
 /*~ (when-not (nil? (:enabled params)) */
   AND ci.enabled = :enabled
 /*~ ) ~*/
-;
+ORDER BY ci.id;
 
 -- :name set-catalogue-item-enabled! :!
 UPDATE catalogue_item

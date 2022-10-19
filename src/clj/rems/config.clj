@@ -6,6 +6,7 @@
             [cprop.core :refer [load-config]]
             [cprop.source :as source]
             [cprop.tools :refer [merge-maps]]
+            [medley.core :refer [update-existing]]
             [mount.core :refer [defstate]]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
@@ -40,6 +41,7 @@
 (defn- parse-config [config]
   (-> config
       (update :email-retry-period #(Period/parse %))
+      (update-existing :extra-pages (partial mapv #(update-existing % :roles set)))
       (update :disable-commands (partial mapv keyword))))
 
 (deftest test-parse-config

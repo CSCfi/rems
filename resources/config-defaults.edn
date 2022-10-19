@@ -312,18 +312,41 @@
  ;;
  ;; Example: define two pages
  ;;
- ;; :extra-pages [;; This is a page that's hosted at an external URL
+ ;; :extra-pages [;; This is a page that's hosted at an external URL, only for logged-in users
  ;;               {:id "hello"
- ;;                :url "http://example.org/hello.html"
- ;;                :translations {:fi {:title "Hei"}
+ ;;                :roles [:logged-in] ; only for this role
+ ;;                :heading false ; don't show the heading, write any Markdown heading you like, defaults to true
+ ;;                :url "http://example.org/hello.html" ; fallback URL
+ ;;                :translations {:fi {:title "Hei"
+ ;;                                    :url "http://example.org/fi/hello.html"} ; specific localized URL
  ;;                               :en {:title "Hello"}}}
+ ;;
  ;;               ;; This is a page that's a markdown file, localized into two languages.
  ;;               ;; The files are searched under :extra-pages-path (see below).
  ;;               {:id "about"
+ ;;                :filename "about.md" ; fallback file
  ;;                :translations {:fi {:title "Info"
- ;;                                    :filename "about-fi.md"}
+ ;;                                    :filename "about-fi.md"} ; specific localized file
  ;;                               :en {:title "About"
  ;;                                    :filename "about-en.md"}}}]
+ ;;
+ ;; Additional options (for any type):
+ ;;   :show-menu true    ; show in top menu, defaults to true
+ ;;   :show-footer false ; show in footer, defaults to false
+ ;;   :roles ; Can be used to configure which users see and can access the extra page.
+ ;;          ; The :logged-in, or more specific roles are possible.
+ ;;          ; The default is to show the page to everyone.
+ ;;
+ ;; NB: Pages not accessible through menus will be served in the corresponding
+ ;; url `/extra-pages/<id>` and can be accessed through a link for example.
+ ;;
+ ;; Assets such as images can also be hosted by REMS if included the theme directory.
+ ;; See `:theme-path`.
+ ;;
+ ;; For example with this Markdown you can include an image:
+ ;;   ![REMS Logo](/img/rems_logo_en.png)
+ ;;
+
  :extra-pages []
 
  ;; Path to the markdown files for the extra pages.
@@ -396,6 +419,6 @@
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
  :enable-save-compaction false ; whether to merge consecutive saves into one event (EXPERIMENTAL)
  :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
- ; which columns in applications list(s) should be hidden in UI
- ; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
+ ;; which columns in applications list(s) should be hidden in UI
+ ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
  :application-list-hidden-columns []}

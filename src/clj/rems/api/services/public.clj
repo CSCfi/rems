@@ -1,6 +1,7 @@
 (ns rems.api.services.public
   (:require [rems.config :refer [env]]
-            [rems.locales :as locales]))
+            [rems.locales :as locales]
+            [rems.common.roles :as roles]))
 
 (defn get-translations []
   locales/translations)
@@ -8,8 +9,16 @@
 (defn get-theme []
   (:theme env))
 
+(defn- filter-extra-pages [pages]
+  (filter (fn [page]
+            (let [roles (:roles page)]
+              (or (nil? roles) ; default is unlimited
+                  (apply roles/has-roles? roles))))
+          pages))
+
 (defn get-config []
-  (select-keys env [:alternative-login-url
+  (-> env
+      (select-keys [:alternative-login-url
                     :application-id-column
                     :authentication
                     :catalogue-is-public
@@ -29,7 +38,8 @@
                     :catalogue-tree-show-matching-parents
                     :enable-cart
                     :application-list-hidden-columns
-                    :enable-autosave]))
+                    :enable-autosave])
+      (update :extra-pages filter-extra-pages)))
 
 (defn get-config-full []
   (assoc env
