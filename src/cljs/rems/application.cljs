@@ -731,10 +731,11 @@
       (application-list/format-application-id config application)]
      [application-copy-notice application]]
     {:inline? true}]
-   [info-field
-    (text :t.applications/description)
-    (:application/description application)
-    {:inline? true}]
+   (when-not (str/blank? (:application/description application))
+     [info-field
+      (text :t.applications/description)
+      (:application/description application)
+      {:inline? true}])
    [info-field
     (text :t.applications/state)
     [:span#application-state
