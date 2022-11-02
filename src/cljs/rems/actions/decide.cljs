@@ -26,6 +26,7 @@
 
 (defn decide-action-button []
   [action-button {:id action-form-id
+                  :class "btn-primary"
                   :text (text :t.actions/decide)
                   :on-click #(rf/dispatch [::open-form])}])
 
