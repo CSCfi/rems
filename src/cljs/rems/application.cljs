@@ -1015,14 +1015,15 @@
   ;; print mode forces the collapsible open, so fetch the content proactively
   ;; TODO figure out a better solution
   (rf/dispatch [::previous-applications {:query (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")}])
-  [collapsible/component
-   {:id "previous-applications"
-    :title (text :t.form/previous-applications)
-    :collapse [:div.lg-fs70pct
-               [application-list/component {:applications ::previous-applications-except-current
-                                            :hidden-columns #{:created :handlers :todo :last-activity :applicant}
-                                            :default-sort-column :submitted
-                                            :default-sort-order :desc}]]}])
+  (when (seq @(rf/subscribe [::previous-applications-except-current]))
+    [collapsible/component
+     {:id "previous-applications"
+      :title (text :t.form/previous-applications)
+      :collapse [:div.lg-fs70pct
+                 [application-list/component {:applications ::previous-applications-except-current
+                                              :hidden-columns #{:created :handlers :todo :last-activity :applicant}
+                                              :default-sort-column :submitted
+                                              :default-sort-order :desc}]]}]))
 
 (rf/reg-sub ::duo-form
             :<- [::edit-application]
