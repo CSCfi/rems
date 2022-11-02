@@ -204,6 +204,7 @@
             warn-about-missing? true}}]]
   (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
     (flash-message/clear-message! :top-validation)
+    (flash-message/clear-message! :actions)
     (rf/dispatch [::set-validations errors warnings])
     (if-not success
       (flash-message/show-default-error! :top-validation
@@ -217,7 +218,7 @@
                                                {:focus? focus?
                                                 :content [[validations {:application application
                                                                         :warnings warnings}]]})
-          (when default-success? (flash-message/show-default-success! :top-validation description)))
+          (when default-success? (flash-message/show-default-success! :actions description)))
         (when on-success (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
