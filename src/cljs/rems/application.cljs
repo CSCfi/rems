@@ -782,8 +782,9 @@
   `:element-id`         - id of the element to generate unique ids
   `:attributes`         - user attributes to display
   `:application`        - application
-  `:group?`             - specifies if a group border is rendered"
-  [{:keys [element-id attributes application group?]}]
+  `:group?`             - specifies if a group border is rendered
+  `:simple?`            - specifies if we want to simplify by leaving out expansion and heading, defaults to false"
+  [{:keys [element-id attributes application group? simple?] :or {simple? false}}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         invited-user? (nil? user-id)
@@ -804,9 +805,10 @@
      {:id (str element-id "-info")
       :class (when group? "group")
       :always [:div
-               [:h3 title]
+               (when-not simple? [:h3 title])
                [user/username attributes]
                (when-not (or invited-user?
+                             simple?
                              (= :application.state/draft (:application/state application)))
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted?}] {:inline? true}])]
       :collapse [user/attributes attributes invited-user?]
@@ -820,7 +822,7 @@
                  [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
-(defn- applicants-details [application]
+(defn- applicants-details [application & [opts]]
   (let [applicant (:application/applicant application)
         members (:application/members application)
         invited-members (:application/invited-members application)]
@@ -829,7 +831,8 @@
            [member-info {:element-id "applicant"
                          :attributes applicant
                          :application application
-                         :group? true}]]
+                         :simple? (:simple? opts false)
+                         :group? (:group? opts (not (:simple? opts false)))}]]
           (concat
            (for [[index member] (map-indexed vector (sort-by :name members))]
              [member-info {:element-id (str "member" index)
@@ -859,8 +862,17 @@
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
         can-invite? (contains? permissions :application.command/invite-member)
+        ;; XXX: we could have the application model include this information more reliably
+        only-one-applicant? (and (not can-add?)
+                                 (not can-invite?)
+                                 (= 1
+                                    (count (concat [(:application/applicant application)]
+                                                   (:application/members application)
+                                                   (:application/invited-members application)))))
         component {:id "applicants-info"
-                   :title (text :t.applicant-info/applicants)
+                   :title (if only-one-applicant?
+                            (text :t.applicant-info/applicant)
+                            (text :t.applicant-info/applicants))
                    :footer [:div
                             [:div.commands
                              (when can-invite? [invite-member-action-button])
@@ -869,12 +881,18 @@
                              [invite-member-form application-id (partial reload! application-id)]
                              [add-member-form application-id (partial reload! application-id)]]]}]
     [collapsible/component
-     (if (is-handler? application userid)
-       (assoc component
-              :always (applicants-details application))
-       (assoc component
-              :collapse-hidden (applicants-short application)
-              :collapse (applicants-details application)))]))
+     (cond (is-handler? application userid)
+           (assoc component
+                  :always (applicants-details application))
+
+           only-one-applicant?
+           (assoc component
+                  :always (applicants-details application {:simple? true}))
+
+           :else
+           (assoc component
+                  :collapse-hidden (applicants-short application)
+                  :collapse (applicants-details application)))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group
