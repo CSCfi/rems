@@ -917,11 +917,15 @@
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
                                :application.command/copy-as-new [copy-as-new-button]])]
-    (concat (distinct (for [[command action] (partition 2 commands-and-actions)
-                            :when (contains? (:application/permissions application) command)]
-                        action))
-            (list [pdf-button (:application/id application)]
-                  [attachment-zip-button application]))))
+
+    (-> (for [[command action] (partition 2 commands-and-actions)
+              :when (contains? (:application/permissions application) command)]
+          action)
+
+        (concat [(when (:show-pdf-action config) [pdf-button (:application/id application)])
+                 (when (:show-attachment-zip-action config) [attachment-zip-button application])])
+
+        distinct)))
 
 
 (defn- actions-form [application config]
@@ -1132,7 +1136,8 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id userid]
      [:div.mt-3 [applicants-info application userid]]
-     [:div.mt-3 [applied-resources application userid language]]
+     (when (:show-resources-section config)
+       [:div.mt-3 [applied-resources application userid language]])
      (when (and (:enable-duo config)
                 (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
