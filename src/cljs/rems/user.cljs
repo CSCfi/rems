@@ -15,9 +15,9 @@
 
 (defn attributes
   "A div with a rems.atoms/info-field for every user attribute in the given attributes.
-   Accepts 
-    - attributes: map, user attributes
-    - invited-user? : boolean, if user is invited, shows different email string"
+
+   `attributes`    - map, user attributes
+   `invited-user?` - boolean, if user is invited, shows different email string"
   [attributes invited-user?]
   (let [language @(rf/subscribe [:language])
         organization-by-id @(rf/subscribe [:organization-by-id])
