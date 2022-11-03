@@ -945,6 +945,7 @@
         (concat [(when (:show-pdf-action config) [pdf-button (:application/id application)])
                  (when (:show-attachment-zip-action config) [attachment-zip-button application])])
 
+        (->> (remove nil?))
         distinct)))
 
 
