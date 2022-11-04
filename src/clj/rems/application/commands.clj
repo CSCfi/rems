@@ -1,5 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
+            [clojure.set]
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
@@ -78,6 +79,10 @@
          :member schema-base/User))
 (s/defschema RejectCommand
   CommandWithComment)
+(s/defschema RedactAttachmentsCommand
+  (assoc CommandWithComment
+         :redacted-attachments [CommandAttachment]
+         :public s/Bool))
 (s/defschema RemarkCommand
   (assoc CommandWithComment
          :public s/Bool))
@@ -132,6 +137,7 @@
    :application.command/invite-decider InviteDeciderCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/invite-reviewer InviteReviewerCommand
+   :application.command/redact-attachments RedactAttachmentsCommand
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
@@ -285,19 +291,21 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn- invalid-attachments-error [injections cmd]
-  (let [invalid-ids (for [att (:attachments cmd)
-                          :let [id (:attachment/id att)
-                                attachment ((getx injections :get-attachment-metadata) id)]
+(defn- invalid-attachments-error [cmd injections]
+  (let [attachments (concat (:attachments cmd) (:redacted-attachments cmd))
+        invalid-ids (for [id (set (map :attachment/id attachments))
+                          :let [attachment (-> (getx injections :get-attachment-metadata)
+                                               (apply [id]))]
                           :when (or (nil? attachment)
                                     (not= (:attachment/user attachment) (:actor cmd))
                                     (not= (:application/id attachment) (:application-id cmd)))]
                       id)]
     (when (seq invalid-ids)
-      {:errors [{:type :invalid-attachments :attachments invalid-ids}]})))
+      {:errors [{:type :invalid-attachments
+                 :attachments (sort invalid-ids)}]})))
 
 (defn- add-comment-and-attachments [cmd injections event]
-  (or (invalid-attachments-error injections cmd)
+  (or (invalid-attachments-error cmd injections)
       (ok (assoc-some event
                       :application/comment (:comment cmd)
                       :event/attachments (when-let [att (:attachments cmd)]
@@ -412,6 +420,33 @@
                                    (merge {:event/type :application.event/approved}
                                           (when-let [end (:entitlement-end cmd)]
                                             {:entitlement/end end})))))
+
+(defn- empty-redacted-attachments-error [cmd]
+  (when (empty? (:redacted-attachments cmd))
+    {:errors [{:type :empty-redacted-attachments}]}))
+
+(defn- find-original-attachment-event-ids
+  "Finds events from which the redacted attachments originate from,
+   and returns those events ids."
+  [redacted-attachments application]
+  (let [events (:application/events application)
+        redacted-ids (set (map :attachment/id redacted-attachments))]
+    (vec (for [event events
+               :let [event-attachment-ids (set (map :attachment/id (:event/attachments event)))]
+               :when (seq (clojure.set/intersection redacted-ids event-attachment-ids))]
+           (select-keys event [:event/id])))))
+
+(defmethod command-handler :application.command/redact-attachments
+  [cmd application injections]
+  (or (empty-redacted-attachments-error cmd)
+      (invalid-attachments-error cmd injections)
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/attachments-redacted
+                                    :event/redacted-attachments (vec (:redacted-attachments cmd))
+                                    :event/attachments-from (find-original-attachment-event-ids
+                                                             (:redacted-attachments cmd)
+                                                             application)
+                                    :application/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]

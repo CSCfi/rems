@@ -198,6 +198,10 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
+(defmethod application-base-view :application.event/attachments-redacted
+  [application _event]
+  application)
+
 (defmethod application-base-view :application.event/remarked
   [application _event]
   application)
