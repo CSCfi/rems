@@ -180,6 +180,7 @@
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
+                          :attachments-redacted "%1 tog bort bilagor."
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."

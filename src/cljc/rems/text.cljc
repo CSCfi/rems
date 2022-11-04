@@ -138,6 +138,7 @@
 (def ^:private event-types
   {:application.event/applicant-changed :t.applications.events/applicant-changed
    :application.event/approved :t.applications.events/approved
+   :application.event/attachments-redacted :t.applications.events/attachments-redacted
    :application.event/closed :t.applications.events/closed
    :application.event/review-requested :t.applications.events/review-requested
    :application.event/reviewed :t.applications.events/reviewed

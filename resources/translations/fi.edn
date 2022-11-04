@@ -180,6 +180,7 @@
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
+                          :attachments-redacted "%1 poisti liitetiedostoja."
                           :closed "%1 sulki hakemuksen."
                           :copied-from "Tämä hakemus on kopio vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."

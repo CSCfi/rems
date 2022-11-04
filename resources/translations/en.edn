@@ -189,6 +189,7 @@
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 changed the applicant to %2."
                           :approved "%1 approved the application."
+                          :attachments-redacted "%1 redacted attachments."
                           :closed "%1 closed the application."
                           :copied-from "This application is a copy of an old application."
                           :copied-to "%1 copied the application to a new application."
