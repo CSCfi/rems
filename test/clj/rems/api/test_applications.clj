@@ -8,6 +8,7 @@
             [rems.api.testing :refer :all]
             [rems.config]
             [rems.db.applications]
+            [rems.db.attachments]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -239,7 +240,8 @@
     (testing "getting application as handler"
       (let [application (get-application-for-user application-id handler-id)]
         (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
-        (is (= #{"application.command/request-review"
+        (is (= #{"application.command/redact-attachments"
+                 "application.command/request-review"
                  "application.command/request-decision"
                  "application.command/remark"
                  "application.command/reject"
@@ -264,7 +266,8 @@
         (testing "handler doesn't see hidden command"
           (let [application (get-application-for-user application-id handler-id)]
             (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
-            (is (= #{"application.command/request-review"
+            (is (= #{"application.command/redact-attachments"
+                     "application.command/request-review"
                      "application.command/request-decision"
                      "application.command/reject"
                      "application.command/approve"
@@ -885,6 +888,7 @@
                          api-key reviewer)))
         (testing ", reviewer is able to fetch application and can submit a review"
           (is (= ["see-everything"
+                  "application.command/redact-attachments"
                   "application.command/review"
                   "application.command/remark"]
                  (:application/permissions (get-application-for-user app-id reviewer)))))))
@@ -906,6 +910,7 @@
                          api-key decider)))
         (testing ", decider is able to fetch application and can submit a review"
           (is (= ["see-everything"
+                  "application.command/redact-attachments"
                   "application.command/reject"
                   "application.command/decide"
                   "application.command/remark"
@@ -1280,6 +1285,7 @@
                "application.command/close"
                "application.command/invite-reviewer"
                "application.command/invite-member"
+               "application.command/redact-attachments"
                "application.command/remark"
                "application.command/remove-member"
                "application.command/request-decision"
@@ -1297,6 +1303,7 @@
                                     :comment ""}))))
     (testing "decider's commands"
       (is (= #{"application.command/approve"
+               "application.command/redact-attachments"
                "application.command/reject"
                "application.command/remark"
                "see-everything"}
@@ -1614,6 +1621,12 @@
                          handler)]
         (is (response-is-forbidden? response))))))
 
+(defn- get-application-attachments [application-id user-id]
+  (->> (get-application-for-user application-id user-id)
+       :application/attachments
+       (sort-by :attachment/id)
+       (mapv :attachment/filename)))
+
 (deftest test-application-comment-attachments
   (let [api-key "42"
         applicant-id "alice"
@@ -1656,11 +1669,21 @@
                                                 :application-id application-id
                                                 :comment "see attachment"
                                                 :public true
-                                                :attachments [{:attachment/id attachment-id}]}))))))
+                                                :attachments [{:attachment/id attachment-id}]})))
+          (let [attachment (rems.db.attachments/get-attachment attachment-id)]
+            (is (= {:application/id application-id
+                    :attachment/filename "handler-public-remark.txt"
+                    :attachment/type "text/plain"}
+                   (select-keys attachment [:application/id :attachment/filename :attachment/type])))
+            (is (= (slurp testfile)
+                   (slurp (:attachment/data attachment))))))))
 
     (testing "applicant can see attachment"
       (let [app (get-application-for-user application-id applicant-id)
-            remark-event (last (:application/events app))
+            remark-event (->> (:application/events app)
+                              (filter (comp #{"application.event/remarked"}
+                                            :event/type))
+                              (last))
             attachment-id (:attachment/id (first (:event/attachments remark-event)))]
         (is (number? attachment-id))
         (testing "and fetch it"
@@ -1699,6 +1722,48 @@
           (testing ", applicant can't fetch attachment"
             (is (response-is-forbidden? (api-response :get (str "/api/applications/attachment/" attachment-id) nil
                                                       api-key applicant-id)))))))
+
+    (testing "reviewer uploads, redacts and replaces attachment from a remark"
+      (let [attachment-id (add-attachment reviewer-id (file "kissat-koiria-gfffögkfhjd.txt"))]
+        (is (= {:success true} (send-command reviewer-id
+                                             {:type :application.command/remark
+                                              :public false
+                                              :application-id application-id
+                                              :comment "looks interesting"
+                                              :attachments [{:attachment/id attachment-id}]})))
+        (is (= ["handler-public-remark.txt"
+                "reviewer-review.txt"
+                "kissat-koiria-gfffögkfhjd.txt"]
+               (get-application-attachments application-id reviewer-id)))
+        (let [replace-id (add-attachment reviewer-id (file "reviewer-private-remark.txt"))]
+          (is (= {:success true} (send-command reviewer-id
+                                               {:type :application.command/redact-attachments
+                                                :application-id application-id
+                                                :comment "accidental upload, redacting"
+                                                :public false
+                                                :redacted-attachments [{:attachment/id attachment-id}]
+                                                :attachments [{:attachment/id replace-id}]}))))
+        (let [attachment (rems.db.attachments/get-attachment attachment-id)]
+          (is (= {:application/id application-id
+                  :attachment/filename "redacted.txt"
+                  :attachment/type "text/plain"}
+                 (select-keys attachment [:application/id :attachment/filename :attachment/type])))
+          (is (= " "
+                 (slurp (:attachment/data attachment))))
+          (is (= ["handler-public-remark.txt"
+                  "reviewer-review.txt"
+                  "redacted.txt"
+                  "reviewer-private-remark.txt"]
+                 (get-application-attachments application-id reviewer-id))))))
+    (comment
+      ; manual testing
+      (send-command "handler"
+                    {:type :application.command/redact-attachments
+                     :application-id 15 ; Application 2022/16: application with DUO codes
+                     :comment "accidental upload, redacting and replacing"
+                     :public true
+                     :redacted-attachments [{:attachment/id 2}]
+                     :attachments [{:attachment/id 3}]}))
 
     (testing "handler makes a private remark"
       (let [attachment-id (add-attachment handler-id (file "handler-private-remark.txt"))]
@@ -1764,15 +1829,60 @@
                 "handler-approve.txt"
                 "handler-close.txt"
                 "handler-close (1).txt"]
-               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id applicant-id))))))
+               (get-application-attachments application-id applicant-id))))
       (testing "handler"
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
+                "redacted.txt"
+                "reviewer-private-remark.txt"
                 "handler-private-remark.txt"
                 "handler-approve.txt"
                 "handler-close.txt"
                 "handler-close (1).txt"]
-               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id handler-id)))))))))
+               (get-application-attachments application-id handler-id)))))
+
+    (testing "handler uploads, redacts and replaces an attachment from a remark"
+      (let [attachment-id (add-attachment handler-id (file "handler-closing-remark.txt"))]
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/remark
+                                              :public false
+                                              :application-id application-id
+                                              :comment "my notes on the closed application"
+                                              :attachments [{:attachment/id attachment-id}]})))
+        (is (= ["handler-public-remark.txt"
+                "reviewer-review.txt"
+                "redacted.txt"
+                "reviewer-private-remark.txt"
+                "handler-private-remark.txt"
+                "handler-approve.txt"
+                "handler-close.txt"
+                "handler-close (1).txt"
+                "handler-closing-remark.txt"]
+               (get-application-attachments application-id handler-id)))
+        ;; TODO: implement replace attachment functionality
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/redact-attachments
+                                              :application-id application-id
+                                              :comment "accidentally uploaded draft version of my notes"
+                                              :public false
+                                              :redacted-attachments [{:attachment/id attachment-id}]})))
+        (let [attachment (rems.db.attachments/get-attachment attachment-id)]
+          (is (= {:application/id application-id
+                  :attachment/filename "redacted.txt"
+                  :attachment/type "text/plain"}
+                 (select-keys attachment [:application/id :attachment/filename :attachment/type])))
+          (is (= " "
+                 (slurp (:attachment/data attachment)))))
+        (is (= ["handler-public-remark.txt"
+                "reviewer-review.txt"
+                "redacted.txt"
+                "reviewer-private-remark.txt"
+                "handler-private-remark.txt"
+                "handler-approve.txt"
+                "handler-close.txt"
+                "handler-close (1).txt"
+                "redacted.txt"]
+               (get-application-attachments application-id handler-id)))))))
 
 (deftest test-application-attachment-zip
   (let [api-key "42"

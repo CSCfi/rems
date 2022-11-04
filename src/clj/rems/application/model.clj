@@ -720,7 +720,8 @@
                                   :application.event/decider-joined
                                   :application.event/decision-requested})
 (deftest test-sensitive-events
-  (let [public-events #{:application.event/applicant-changed
+  (let [public-events #{:application.event/attachments-redacted
+                        :application.event/applicant-changed
                         :application.event/approved
                         :application.event/closed
                         :application.event/copied-from

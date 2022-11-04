@@ -55,7 +55,8 @@
           :application.command/uninvite-member
           ;; remarks can be made without a request, also on handled todos
           :application.command/remark
-          :application.command/send-expiration-notifications}
+          :application.command/send-expiration-notifications
+          :application.command/redact-attachments}
         all-commands (set (keys commands/command-schemas))]
 
     ;; This test is to make sure that as new commands are added,
