@@ -300,6 +300,7 @@
     {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/redact-attachments}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -331,6 +332,7 @@
     {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/redact-attachments}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -752,8 +754,8 @@
   (->> events
        (remove (comp sensitive-events
                      :event/type))
-       (remove #(and (= :application.event/remarked
-                        (:event/type %))
+       (remove #(and (some #{(:event/type %)} [:application.event/remarked
+                                               :application.event/attachments-redacted])
                      (not (:application/public %))))))
 
 (defn- censor-user [user]
