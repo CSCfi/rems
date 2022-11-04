@@ -451,14 +451,26 @@
      nil (filterv #(not= application-id (:application/id %)) data))))
 
 (rf/reg-event-db
- ::highlight-request-id
- (fn [db [_ request-id]]
-   (assoc db ::highlight-request-id request-id)))
+ ::highlight-request-ids
+ (fn [db [_ request-ids]]
+   (assoc db ::highlight-request-ids request-ids)))
 
 (rf/reg-sub
- ::highlight-request-id
+ ::highlight-request-ids
  (fn [db _]
-   (::highlight-request-id db)))
+   (::highlight-request-ids db)))
+
+;; TODO unify highlight mechanism?
+
+(rf/reg-event-db
+ ::highlight-event-ids
+ (fn [db [_ event-ids]]
+   (assoc db ::highlight-event-ids event-ids)))
+
+(rf/reg-sub
+ ::highlight-event-ids
+ (fn [db _]
+   (::highlight-event-ids db)))
 
 ;;;; UI components
 
@@ -636,9 +648,9 @@
                   :application.event/copied-to
                   [application-link (:application/copied-to event) (text :t.applications/application)]
 
-                  (when (not (empty? (:application/comment event)))
-                    (:application/comment event)))
+                  (not-empty (:application/comment event)))
         request-id (:application/request-id event)
+        attachments-from (:event/attachments-from event)
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event
@@ -647,11 +659,12 @@
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.col-form-label.event-description [:b event-text]
-       (when request-id
+       (when (or request-id attachments-from)
          [:div.float-right
           [:a {:href "#"
                :on-click (fn [e]
-                           (rf/dispatch [::highlight-request-id request-id])
+                           (rf/dispatch [::highlight-request-ids [request-id]])
+                           (rf/dispatch [::highlight-event-ids (map :event/id attachments-from)])
                            false)}
            " " (text :t.applications/highlight-related-events)]])]
       (when decision
@@ -749,13 +762,18 @@
             [:h3 (text :t.form/events)]]
            (render-events events)))])
 
-(defn- application-state [application config highlight-request-id userid]
+(defn- highlight [event {:keys [request-ids event-ids]}]
+  (let [request-id (:application/request-id event)
+        event-id (:event/id event)]
+    (assoc event :highlight (or (some #{request-id} request-ids) ; TODO: dont highlight self if only
+                                (some #{event-id} event-ids)))))
+
+(defn- application-state [{:keys [application config highlight-request-ids highlight-event-ids userid]}]
   (let [state (:application/state application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
-                    (map #(assoc % :highlight
-                                 (and highlight-request-id
-                                      (= (:application/request-id %) highlight-request-id))))
+                    (map #(highlight % {:request-ids highlight-request-ids
+                                        :event-ids highlight-event-ids}))
                     reverse)
         [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
@@ -1123,14 +1141,18 @@
                   (mapcat #(get-in % [:resource/duo :duo/codes])))]
     duos))
 
-(defn- render-application [{:keys [application config userid highlight-request-id language]}]
+(defn- render-application [{:keys [application config userid highlight-request-ids highlight-event-ids language]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config highlight-request-id userid]
+     [application-state {:application application
+                         :config config
+                         :highlight-request-ids highlight-request-ids
+                         :highlight-event-ids highlight-event-ids
+                         :userid userid}]
      [:div.mt-3 [applicants-info application userid]]
      [:div.mt-3 [applied-resources application userid language]]
      (when (and (:enable-duo config)
@@ -1160,7 +1182,8 @@
         application @(rf/subscribe [::application])
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
-        highlight-request-id @(rf/subscribe [::highlight-request-id])
+        highlight-request-ids @(rf/subscribe [::highlight-request-ids])
+        highlight-event-ids @(rf/subscribe [::highlight-event-ids])
         userid (:userid @(rf/subscribe [:user]))
         language @(rf/subscribe [:language])]
     [:div.container-fluid
@@ -1179,7 +1202,8 @@
        [render-application {:application application
                             :config config
                             :userid userid
-                            :highlight-request-id highlight-request-id
+                            :highlight-request-ids highlight-request-ids
+                            :highlight-event-ids highlight-event-ids
                             :language language}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
