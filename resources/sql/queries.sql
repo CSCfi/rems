@@ -309,6 +309,12 @@ UPDATE attachment
 SET (appId, userId, filename, type) = (:application, :user, :filename, :type)
 WHERE id = :id;
 
+-- :name redact-attachment! :!
+UPDATE attachment
+-- character \x20 (32) equals " " or \space
+SET (data, filename, type) = (E'\x20', 'redacted.txt', 'text/plain')
+WHERE id = :id;
+
 -- :name get-attachment :? :1
 SELECT id, appid, filename, userId, type, data FROM attachment
 WHERE id = :id;
