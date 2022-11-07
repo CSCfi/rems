@@ -1755,15 +1755,6 @@
                   "redacted.txt"
                   "reviewer-private-remark.txt"]
                  (get-application-attachments application-id reviewer-id))))))
-    (comment
-      ; manual testing
-      (send-command "handler"
-                    {:type :application.command/redact-attachments
-                     :application-id 15 ; Application 2022/16: application with DUO codes
-                     :comment "accidental upload, redacting and replacing"
-                     :public true
-                     :redacted-attachments [{:attachment/id 2}]
-                     :attachments [{:attachment/id 3}]}))
 
     (testing "handler makes a private remark"
       (let [attachment-id (add-attachment handler-id (file "handler-private-remark.txt"))]
