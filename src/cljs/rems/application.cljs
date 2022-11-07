@@ -1254,7 +1254,7 @@
                                         :application/applicant {:userid "developer"}}
                           :group? true}])
    (example "member-info: invited member, with remove button"
-            [member-info {:element-id "info4"
+            [member-info {:element-id "info5"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
