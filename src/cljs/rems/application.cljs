@@ -1262,8 +1262,22 @@
                                         :application/permissions #{:application.command/uninvite-member}}
                           :group? true}])
 
+   (example "member-info: not grouped"
+            [member-info {:element-id "info6"
+                          :group? false
+                          :attributes {:userid "developer@uu.id"
+                                       :email "developer@uu.id"
+                                       :name "Deve Loper"}}])
+
+   (example "member-info: simple"
+            [member-info {:element-id "info7"
+                          :simple? true
+                          :attributes {:userid "developer@uu.id"
+                                       :email "developer@uu.id"
+                                       :name "Deve Loper"}}])
+
    (component-info applicants-info)
-   (example "applicants-info"
+   (example "applicants-info: multiple applicants"
             [applicants-info {:application/id 42
                               :application/applicant {:userid "developer"
                                                       :email "developer@uu.id"
