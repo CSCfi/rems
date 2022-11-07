@@ -1832,7 +1832,7 @@
                 "handler-close (1).txt"]
                (get-application-attachments application-id handler-id)))))
 
-    (testing "handler uploads, redacts and replaces an attachment from a remark"
+    (testing "handler uploads and redacts an attachment from a remark"
       (let [attachment-id (add-attachment handler-id (file "handler-closing-remark.txt"))]
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/remark
@@ -1850,7 +1850,6 @@
                 "handler-close (1).txt"
                 "handler-closing-remark.txt"]
                (get-application-attachments application-id handler-id)))
-        ;; TODO: implement replace attachment functionality
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/redact-attachments
                                               :application-id application-id
