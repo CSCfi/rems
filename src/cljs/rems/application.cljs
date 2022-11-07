@@ -68,7 +68,7 @@
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
         blacklist (:application/blacklist application)]
-    (when (not (empty? blacklist))
+    (when (seq blacklist)
       [:div.alert.alert-danger
        (text :t.form/alert-blacklisted-users)
        (into [:ul]
