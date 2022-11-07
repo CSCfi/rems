@@ -1748,7 +1748,7 @@
                   :attachment/filename "redacted.txt"
                   :attachment/type "text/plain"}
                  (select-keys attachment [:application/id :attachment/filename :attachment/type])))
-          (is (= " "
+          (is (= ""
                  (slurp (:attachment/data attachment))))
           (is (= ["handler-public-remark.txt"
                   "reviewer-review.txt"
@@ -1862,7 +1862,7 @@
                   :attachment/filename "redacted.txt"
                   :attachment/type "text/plain"}
                  (select-keys attachment [:application/id :attachment/filename :attachment/type])))
-          (is (= " "
+          (is (= ""
                  (slurp (:attachment/data attachment)))))
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
