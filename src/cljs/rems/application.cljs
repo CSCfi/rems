@@ -1289,6 +1289,18 @@
                               :application/accepted-licenses {"developer" #{1}}
                               :application/permissions #{:application.command/add-member
                                                          :application.command/invite-member}}])
+
+   (example "applicants-info: only one applicant without permissions should show a simple singular block"
+            [applicants-info {:application/id 42
+                              :application/applicant {:userid "developer"
+                                                      :email "developer@uu.id"
+                                                      :name "Deve Loper"}
+                              :application/members #{}
+                              :application/invited-members #{}
+                              :application/licenses [{:license/id 1}]
+                              :application/accepted-licenses {"developer" #{1}}
+                              :application/permissions #{}}])
+
    (component-info disabled-items-warning)
    (example "no disabled items"
             [disabled-items-warning {}])
