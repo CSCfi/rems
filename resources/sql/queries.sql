@@ -311,8 +311,7 @@ WHERE id = :id;
 
 -- :name redact-attachment! :!
 UPDATE attachment
--- character \x20 (32) equals " " or \space
-SET (data, filename, type) = (E'\x20', 'redacted.txt', 'text/plain')
+SET (data, filename, type) = (decode('', 'hex'), 'redacted.txt', 'text/plain')
 WHERE id = :id;
 
 -- :name get-attachment :? :1
