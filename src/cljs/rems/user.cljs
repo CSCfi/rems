@@ -68,11 +68,11 @@
                          :researcher-status-by "so"
                          :nickname "The Dev"}
              false])
-   (example "invited memeber set of attributes, true invited-user status"
-            [attributes {:userid "invited@memeber.com"
-                         :email "invited@memeber.com"
+   (example "invited member set of attributes, true invited-user status"
+            [attributes {:userid "invited@member.com"
+                         :email "invited@member.com"
                          :name "Invited Mamber"
-                         :notification-email "invited@memeber.com"
+                         :notification-email "invited@member.com"
                          :organizations []}
              true])
    (example "invalid value for researcher status, no invited-user status"
