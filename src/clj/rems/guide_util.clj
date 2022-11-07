@@ -31,7 +31,18 @@
   "Does the content look like static hiccup markup?"
   [x]
   (and (vector? x)
-       (keyword? (first x))))
+       (keyword? (first x))
+       (not= :<> (first x))
+       (not= :code (first x))))
+
+(defn- clean-block
+  "Remove a wrapping `[:<> ...]` element from source.
+
+  This can be used to prevent the code from looking like static hiccup markup."
+  [x]
+  (if (contains? #{:<> :code} (first x))
+    (second x)
+    x))
 
 (defmacro example
   "Render an example of a component use into the guide.
@@ -54,5 +65,5 @@
                   (for [block content]
                     (if (static-hiccup? block)
                       block
-                      [:pre (with-out-str (write block :dispatch code-dispatch))])))]
+                      [:pre (with-out-str (write (clean-block block) :dispatch code-dispatch))])))]
     `[render-example ~title ~src (do ~@content)]))
