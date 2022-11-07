@@ -1302,11 +1302,16 @@
                               :application/permissions #{}}])
 
    (component-info disabled-items-warning)
+   (example "should be hidden for an applicant"
+            [disabled-items-warning {:application/state :application.state/submitted
+                                     :application/resources [{:catalogue-item/enabled false :catalogue-item/archived false
+                                                              :catalogue-item/title {:en "Disabled catalogue item"}}]}])
    (example "no disabled items"
-            [disabled-items-warning {}])
+            [disabled-items-warning {:application/permissions #{:see-everything}}])
    (example "two disabled items"
             [disabled-items-warning
-             {:application/state :application.state/submitted
+             {:application/permissions #{:see-everything}
+              :application/state :application.state/submitted
               :application/resources [{:catalogue-item/enabled true :catalogue-item/archived true
                                        :catalogue-item/title {:en "Catalogue item 1"}}
                                       {:catalogue-item/enabled false :catalogue-item/archived false
@@ -1317,12 +1322,20 @@
    (example "no blacklist"
             [blacklist-warning {}])
    (example "three entries"
-            [blacklist-warning {:application/blacklisted-users [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:12"}}
-                                                                {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}]}])
+            [blacklist-warning {:application/resources [{:resource/ext-id "urn:11"
+                                                         :catalogue-item/title {:fi "11"
+                                                                                :sv "11"
+                                                                                :en "11"}}
+                                                        {:resource/ext-id "urn:12"
+                                                         :catalogue-item/title {:fi "12"
+                                                                                :sv "12"
+                                                                                :en "12"}}]
+                                :application/blacklist [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                        {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:12"}}
+                                                        {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:11"}}]}])
 
    (component-info license-field)
    (example "link license"
@@ -1369,6 +1382,16 @@
              false])
 
    (component-info actions-form)
+   (example "no actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{}}
+             {}])
+
+   (example "some actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{:application.command/save-draft}}
+             {:show-pdf-action true}])
+
    (example "all actions available"
             [actions-form {:application/id 123
                            :application/permissions #{:application.command/save-draft
@@ -1388,7 +1411,7 @@
                            :application/attachments [{:attachment/filename "foo.txt"} {:attachment/filename "bar.txt"}]}])
 
    (component-info render-application)
-   (example "application, partially filled, as applicant"
+   (example "application, partially filled, as applicant, one unsupported field"
             [render-application
              {:application {:application/id 17
                             :application/applicant {:userid "applicant"}
@@ -1442,9 +1465,7 @@
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
-                                                    :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 {"fld1" "abc"}}
-                                 :accepted-licenses #{4}}}])
+                                                    :license/text {:en lipsum}}]}}])
    (example "application, approved"
             [render-application
              {:application {:application/id 17
@@ -1461,9 +1482,7 @@
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
-                                                    :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 {"fld1" "abc"}}
-                                 :accepted-licenses #{4}}}])
+                                                    :license/text {:en lipsum}}]}}])
 
    (component-info event-view)
    (example "simple event"
