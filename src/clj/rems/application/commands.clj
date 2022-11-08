@@ -296,9 +296,12 @@
         invalid-ids (for [id (set (map :attachment/id attachments))
                           :let [attachment (-> (getx injections :get-attachment-metadata)
                                                (apply [id]))]
-                          :when (or (nil? attachment)
+                          :when (do
+                                  #_(println "\n" #'invalid-attachments-error
+                                           "\n" (:attachment/filename attachment) (:attachment/user attachment) (:actor cmd))
+                                  (or (nil? attachment)
                                     (not= (:attachment/user attachment) (:actor cmd))
-                                    (not= (:application/id attachment) (:application-id cmd)))]
+                                    (not= (:application/id attachment) (:application-id cmd))))]
                       id)]
     (when (seq invalid-ids)
       {:errors [{:type :invalid-attachments
