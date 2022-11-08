@@ -11,7 +11,7 @@ Changes since v2.30
 ### Changes
 - The location of the success message of a submit has been changed from the top of the page to the Actions block. (#2836)
   This is more consistent with the other actions that provide feedback in the same location. (#2836)
-- The applicaiton Applicants block has a simple version for the case of a single applicant. (#2836)
+- The application Applicants block has a simple version for the case of a single applicant. (#2836)
 - The Decide action button has been changed to primary action, as it usually is for a person in the `:decider` role. (#2836)
 
 ### Additions
