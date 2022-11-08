@@ -2146,6 +2146,16 @@
                      attachment-id-2 {:application/id (:application/id application)
                                       :attachment/id attachment-id-2
                                       :attachment/user handler-user-id}}}]
+    (is (= {:errors [{:type :empty-redacted-attachments}]}
+           (fail-command application
+                         {:type :application.command/redact-attachments
+                          :actor handler-user-id
+                          :comment "should fail"
+                          :public false
+                          :redacted-attachments []
+                          :attachments [{:attachment/id attachment-id-2}]}
+                         injections))
+        "cannot redact if redacted-attachments is empty")
     (testing "handler can redact attachment"
       (let [remarked (ok-command application
                                  {:type :application.command/remark
