@@ -8,7 +8,16 @@ have notable changes.
 
 Changes since v2.30
 
+### Changes
+- The location of the success message of a submit has been changed from the top of the page to the Actions block. (#2836)
+  This is more consistent with the other actions that provide feedback in the same location. (#2836)
+- The applicaiton Applicants block has a simple version for the case of a single applicant. (#2836)
+- The Decide action button has been changed to primary action, as it usually is for a person in the `:decider` role. (#2836)
+
 ### Additions
+- Visibility of the PDF and ZIP download actions can now be configured with `:show-pdf-action` and `:show-attachment-zip-action` (#3001)
+- The Resources block can be hidden from the application view. This can be useful if there are few catalogue items. (#3000)
+- The application title field, in the application state block is now shown only if the application description is not blank. (#2836)
 - Orphan attachments could sometimes be saved, though not in use. They are now removed when an application is submitted. (#3041)
 - Extra pages have been enhanced: (#2983, #2589, #3069)
   - They can be shown in top menu, footer, both or not at all with `:show-menu` and `:show-footer`
@@ -16,6 +25,11 @@ Changes since v2.30
   - If localization of the file or link is not required, you can define the attributes at top level.
   - Who can see which extras can be tuned with `:roles` such as `:logged-in`, `:applicant` or `:handler`.
   - See `config-defaults.edn` for more details.
+
+### Fixes
+- The previous applications block is now shown only if there are some. (#2836)
+- The application Actions block is now successfully hidden, if there are no actions available (#2836)
+- The component guide page had accumulated some small errors that are now fixed. (#2836)
 
 ## v2.30 "Kellosaarenranta" 2022-10-13
 
