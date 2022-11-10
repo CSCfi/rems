@@ -50,7 +50,7 @@
                  [org.webjars.npm/axe-core "4.0.2"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
                  [org.webjars.npm/popper.js "1.16.1"]
-                 [org.webjars/bootstrap "5.2.2"]
+                 [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
                  [org.webjars/font-awesome "6.2.0"]
                  [org.webjars/jquery "3.6.1"]
                  [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
