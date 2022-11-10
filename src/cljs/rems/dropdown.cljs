@@ -1,6 +1,5 @@
 (ns rems.dropdown
-  (:require [reagent.core :as r]
-            ["react-select" :default Select]
+  (:require ["react-select" :default Select]
             ["react-select/async" :default AsyncSelect]
             [clojure.string :as str]
             [medley.core :refer [assoc-some]]
