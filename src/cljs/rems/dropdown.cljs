@@ -156,6 +156,6 @@
                                :item-label :name
                                :items (take 2 example-items)
                                :multi? true
-                               :on-change (on-change example-items)
+                               :on-change on-change
                                :on-load-options (fn [{:keys [_ on-data]}]
                                                   (js/setTimeout #(on-data example-items) 500))}])]))
