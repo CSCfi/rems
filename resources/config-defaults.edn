@@ -421,4 +421,8 @@
  :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
- :application-list-hidden-columns []}
+ :application-list-hidden-columns []
+
+ :show-resources-section true ; should resources section be shown in the application UI
+ :show-attachment-zip-action true ; should the attachment download be shown in the application actions UI
+ :show-pdf-action true} ; should PDF button be shown in the application actions UI

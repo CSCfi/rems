@@ -103,20 +103,23 @@
   [:div
    (component-info item-view)
    (example "item-view, single"
-            [:table.rems-table.cart
-             [:tbody
-              [item-view {:localizations {:en {:title "Item title"}}} nil true]]])
+            [:code
+             [:table.rems-table.cart
+              [:tbody
+               [item-view {:localizations {:en {:title "Item title"}}} nil true]]]])
    (example "item-view, one of many has no apply button"
-            [:table.rems-table.cart
-             [:tbody
-              [item-view {:localizations {:en {:title "Item title"}}} nil false]]])
+            [:code
+             [:table.rems-table.cart
+              [:tbody
+               [item-view {:localizations {:en {:title "Item title"}}} nil false]]]])
 
    (component-info bundle-view)
    (example "bundle-view"
-            [:table.rems-table.cart
-             [bundle-view [{:localizations {:en {:title "Item title 1"}}}
-                           {:localizations {:en {:title "Item title 2"}}}
-                           {:localizations {:en {:title "Item title 3"}}}] nil]])
+            [:code
+             [:table.rems-table.cart
+              [bundle-view [{:localizations {:en {:title "Item title 1"}}}
+                            {:localizations {:en {:title "Item title 2"}}}
+                            {:localizations {:en {:title "Item title 3"}}}] nil]]])
 
    (component-info cart-list)
    (example "cart-list empty"

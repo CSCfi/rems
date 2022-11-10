@@ -68,7 +68,7 @@
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
         blacklist (:application/blacklist application)]
-    (when (not (empty? blacklist))
+    (when (seq blacklist)
       [:div.alert.alert-danger
        (text :t.form/alert-blacklisted-users)
        (into [:ul]
@@ -204,6 +204,7 @@
             warn-about-missing? true}}]]
   (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
     (flash-message/clear-message! :top-validation)
+    (flash-message/clear-message! :actions)
     (rf/dispatch [::set-validations errors warnings])
     (if-not success
       (flash-message/show-default-error! :top-validation
@@ -217,7 +218,7 @@
                                                {:focus? focus?
                                                 :content [[validations {:application application
                                                                         :warnings warnings}]]})
-          (when default-success? (flash-message/show-default-success! :top-validation description)))
+          (when default-success? (flash-message/show-default-success! :actions description)))
         (when on-success (on-success))))))
 
 (defn- duo-codes-to-api [duo-codes]
@@ -731,10 +732,11 @@
       (application-list/format-application-id config application)]
      [application-copy-notice application]]
     {:inline? true}]
-   [info-field
-    (text :t.applications/description)
-    (:application/description application)
-    {:inline? true}]
+   (when-not (str/blank? (:application/description application))
+     [info-field
+      (text :t.applications/description)
+      (:application/description application)
+      {:inline? true}])
    [info-field
     (text :t.applications/state)
     [:span#application-state
@@ -780,8 +782,9 @@
   `:element-id`         - id of the element to generate unique ids
   `:attributes`         - user attributes to display
   `:application`        - application
-  `:group?`             - specifies if a group border is rendered"
-  [{:keys [element-id attributes application group?]}]
+  `:group?`             - specifies if a group border is rendered
+  `:simple?`            - specifies if we want to simplify by leaving out expansion and heading, defaults to false"
+  [{:keys [element-id attributes application group? simple?] :or {simple? false}}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         invited-user? (nil? user-id)
@@ -802,9 +805,10 @@
      {:id (str element-id "-info")
       :class (when group? "group")
       :always [:div
-               [:h3 title]
+               (when-not simple? [:h3 title])
                [user/username attributes]
                (when-not (or invited-user?
+                             simple?
                              (= :application.state/draft (:application/state application)))
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted?}] {:inline? true}])]
       :collapse [user/attributes attributes invited-user?]
@@ -818,7 +822,7 @@
                  [change-applicant-form element-id attributes application-id (partial reload! application-id)]
                  [remove-member-form element-id attributes application-id (partial reload! application-id)]])}]))
 
-(defn- applicants-details [application]
+(defn- applicants-details [application & [opts]]
   (let [applicant (:application/applicant application)
         members (:application/members application)
         invited-members (:application/invited-members application)]
@@ -827,7 +831,8 @@
            [member-info {:element-id "applicant"
                          :attributes applicant
                          :application application
-                         :group? true}]]
+                         :simple? (:simple? opts false)
+                         :group? (:group? opts (not (:simple? opts false)))}]]
           (concat
            (for [[index member] (map-indexed vector (sort-by :name members))]
              [member-info {:element-id (str "member" index)
@@ -857,8 +862,17 @@
         permissions (:application/permissions application)
         can-add? (contains? permissions :application.command/add-member)
         can-invite? (contains? permissions :application.command/invite-member)
+        ;; XXX: we could have the application model include this information more reliably
+        only-one-applicant? (and (not can-add?)
+                                 (not can-invite?)
+                                 (= 1
+                                    (count (concat [(:application/applicant application)]
+                                                   (:application/members application)
+                                                   (:application/invited-members application)))))
         component {:id "applicants-info"
-                   :title (text :t.applicant-info/applicants)
+                   :title (if only-one-applicant?
+                            (text :t.applicant-info/applicant)
+                            (text :t.applicant-info/applicants))
                    :footer [:div
                             [:div.commands
                              (when can-invite? [invite-member-action-button])
@@ -867,12 +881,18 @@
                              [invite-member-form application-id (partial reload! application-id)]
                              [add-member-form application-id (partial reload! application-id)]]]}]
     [collapsible/component
-     (if (is-handler? application userid)
-       (assoc component
-              :always (applicants-details application))
-       (assoc component
-              :collapse-hidden (applicants-short application)
-              :collapse (applicants-details application)))]))
+     (cond (is-handler? application userid)
+           (assoc component
+                  :always (applicants-details application))
+
+           only-one-applicant?
+           (assoc component
+                  :always (applicants-details application {:simple? true}))
+
+           :else
+           (assoc component
+                  :collapse-hidden (applicants-short application)
+                  :collapse (applicants-details application)))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group
@@ -917,11 +937,16 @@
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
                                :application.command/copy-as-new [copy-as-new-button]])]
-    (concat (distinct (for [[command action] (partition 2 commands-and-actions)
-                            :when (contains? (:application/permissions application) command)]
-                        action))
-            (list [pdf-button (:application/id application)]
-                  [attachment-zip-button application]))))
+
+    (-> (for [[command action] (partition 2 commands-and-actions)
+              :when (contains? (:application/permissions application) command)]
+          action)
+
+        (concat [(when (:show-pdf-action config) [pdf-button (:application/id application)])
+                 (when (:show-attachment-zip-action config) [attachment-zip-button application])])
+
+        (->> (remove nil?))
+        distinct)))
 
 
 (defn- actions-form [application config]
@@ -1011,14 +1036,15 @@
   ;; print mode forces the collapsible open, so fetch the content proactively
   ;; TODO figure out a better solution
   (rf/dispatch [::previous-applications {:query (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")}])
-  [collapsible/component
-   {:id "previous-applications"
-    :title (text :t.form/previous-applications)
-    :collapse [:div.lg-fs70pct
-               [application-list/component {:applications ::previous-applications-except-current
-                                            :hidden-columns #{:created :handlers :todo :last-activity :applicant}
-                                            :default-sort-column :submitted
-                                            :default-sort-order :desc}]]}])
+  (when (seq @(rf/subscribe [::previous-applications-except-current]))
+    [collapsible/component
+     {:id "previous-applications"
+      :title (text :t.form/previous-applications)
+      :collapse [:div.lg-fs70pct
+                 [application-list/component {:applications ::previous-applications-except-current
+                                              :hidden-columns #{:created :handlers :todo :last-activity :applicant}
+                                              :default-sort-column :submitted
+                                              :default-sort-order :desc}]]}]))
 
 (rf/reg-sub ::duo-form
             :<- [::edit-application]
@@ -1132,7 +1158,8 @@
     [:div.col-lg-8
      [application-state application config highlight-request-id userid]
      [:div.mt-3 [applicants-info application userid]]
-     [:div.mt-3 [applied-resources application userid language]]
+     (when (:show-resources-section config)
+       [:div.mt-3 [applied-resources application userid language]])
      (when (and (:enable-duo config)
                 (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
@@ -1227,7 +1254,7 @@
                                         :application/applicant {:userid "developer"}}
                           :group? true}])
    (example "member-info: invited member, with remove button"
-            [member-info {:element-id "info4"
+            [member-info {:element-id "info5"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
@@ -1235,8 +1262,22 @@
                                         :application/permissions #{:application.command/uninvite-member}}
                           :group? true}])
 
+   (example "member-info: not grouped"
+            [member-info {:element-id "info6"
+                          :group? false
+                          :attributes {:userid "developer@uu.id"
+                                       :email "developer@uu.id"
+                                       :name "Deve Loper"}}])
+
+   (example "member-info: simple"
+            [member-info {:element-id "info7"
+                          :simple? true
+                          :attributes {:userid "developer@uu.id"
+                                       :email "developer@uu.id"
+                                       :name "Deve Loper"}}])
+
    (component-info applicants-info)
-   (example "applicants-info"
+   (example "applicants-info: multiple applicants"
             [applicants-info {:application/id 42
                               :application/applicant {:userid "developer"
                                                       :email "developer@uu.id"
@@ -1248,12 +1289,29 @@
                               :application/accepted-licenses {"developer" #{1}}
                               :application/permissions #{:application.command/add-member
                                                          :application.command/invite-member}}])
+
+   (example "applicants-info: only one applicant without permissions should show a simple singular block"
+            [applicants-info {:application/id 42
+                              :application/applicant {:userid "developer"
+                                                      :email "developer@uu.id"
+                                                      :name "Deve Loper"}
+                              :application/members #{}
+                              :application/invited-members #{}
+                              :application/licenses [{:license/id 1}]
+                              :application/accepted-licenses {"developer" #{1}}
+                              :application/permissions #{}}])
+
    (component-info disabled-items-warning)
+   (example "should be hidden for an applicant"
+            [disabled-items-warning {:application/state :application.state/submitted
+                                     :application/resources [{:catalogue-item/enabled false :catalogue-item/archived false
+                                                              :catalogue-item/title {:en "Disabled catalogue item"}}]}])
    (example "no disabled items"
-            [disabled-items-warning {}])
+            [disabled-items-warning {:application/permissions #{:see-everything}}])
    (example "two disabled items"
             [disabled-items-warning
-             {:application/state :application.state/submitted
+             {:application/permissions #{:see-everything}
+              :application/state :application.state/submitted
               :application/resources [{:catalogue-item/enabled true :catalogue-item/archived true
                                        :catalogue-item/title {:en "Catalogue item 1"}}
                                       {:catalogue-item/enabled false :catalogue-item/archived false
@@ -1264,12 +1322,20 @@
    (example "no blacklist"
             [blacklist-warning {}])
    (example "three entries"
-            [blacklist-warning {:application/blacklisted-users [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:12"}}
-                                                                {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
-                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}]}])
+            [blacklist-warning {:application/resources [{:resource/ext-id "urn:11"
+                                                         :catalogue-item/title {:fi "11"
+                                                                                :sv "11"
+                                                                                :en "11"}}
+                                                        {:resource/ext-id "urn:12"
+                                                         :catalogue-item/title {:fi "12"
+                                                                                :sv "12"
+                                                                                :en "12"}}]
+                                :application/blacklist [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                        {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:12"}}
+                                                        {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
+                                                         :blacklist/resource {:resource/ext-id "urn:11"}}]}])
 
    (component-info license-field)
    (example "link license"
@@ -1316,6 +1382,16 @@
              false])
 
    (component-info actions-form)
+   (example "no actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{}}
+             {}])
+
+   (example "some actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{:application.command/save-draft}}
+             {:show-pdf-action true}])
+
    (example "all actions available"
             [actions-form {:application/id 123
                            :application/permissions #{:application.command/save-draft
@@ -1335,7 +1411,7 @@
                            :application/attachments [{:attachment/filename "foo.txt"} {:attachment/filename "bar.txt"}]}])
 
    (component-info render-application)
-   (example "application, partially filled, as applicant"
+   (example "application, partially filled, as applicant, one unsupported field"
             [render-application
              {:application {:application/id 17
                             :application/applicant {:userid "applicant"}
@@ -1389,9 +1465,7 @@
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
-                                                    :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 {"fld1" "abc"}}
-                                 :accepted-licenses #{4}}}])
+                                                    :license/text {:en lipsum}}]}}])
    (example "application, approved"
             [render-application
              {:application {:application/id 17
@@ -1408,9 +1482,7 @@
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
-                                                    :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 {"fld1" "abc"}}
-                                 :accepted-licenses #{4}}}])
+                                                    :license/text {:en lipsum}}]}}])
 
    (component-info event-view)
    (example "simple event"

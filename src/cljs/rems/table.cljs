@@ -403,7 +403,7 @@
 
 (defn guide []
   [:div
-  ;;  (namespace-info rems.table)
+   (namespace-info rems.table)
    (component-info table)
 
    (example "empty table"
@@ -421,7 +421,7 @@
                     :rows [::empty-table-rows]
                     :default-sort-column :first-name}])
 
-   (example "setup example data"
+   (example "static table with three rows"
             (defn- example-commands [text]
               {:td [:td.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]]})
 
@@ -439,9 +439,8 @@
                 :last-name {:value "Herring"}
                 :commands (example-commands "Henry")}])
 
-            (rf/reg-sub ::example-table-rows (fn [_ _] example-data)))
+            (rf/reg-sub ::example-table-rows (fn [_ _] example-data))
 
-   (example "static table with three rows"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
                                        :title "First name"
@@ -454,8 +453,10 @@
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [table example1]))
+
    (example "table with selectable rows"
             [:p "The table components supports selection of rows. You can provide a callback for when the set of selected rows changes."]
+
             [:div [:p "You have " (count @example-selected-rows) " rows selected."]]
             [table {:id ::example-selectable
                     :columns [{:key :first-name
@@ -473,6 +474,7 @@
                     :default-sort-column :first-name
                     :selectable? true
                     :on-select #(reset! example-selected-rows %)}])
+
    (example "sortable and filterable table"
             [:p "Filtering and search can be added by using the " [:code "rems.table/search"] " component"]
             (let [example2 {:id ::example2
@@ -488,11 +490,13 @@
               [:div
                [search example2]
                [table example2]]))
+
    (example "richer example data"
             [:p "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
              "Also, filtering ignores the word \"Team\"."
              "Also, the score has special styling."
              "Eagles have special styling. :value is used for sorting & filtering but :td for rendering."]
+
             (def example-data-rich
               [{:key 1
                 :team {:display-value "Team Hawks"
@@ -509,6 +513,7 @@
                 :points {:value 0}}])
 
             (rf/reg-sub ::example-rich-table-rows (fn [_ _] example-data-rich))
+
             [:p "Now the data can be used like so"]
             (let [example3 {:id ::example3
                             :columns [{:key :team

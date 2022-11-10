@@ -442,7 +442,7 @@
                    :rows [::empty-tree-rows]
                    :default-sort-column :first-name}])
 
-   (example "setup example data"
+   (example "static tree with a three level hierarchy"
             (defn- example-commands [text]
               [:div.commands.w-100 [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]])
 
@@ -472,9 +472,8 @@
                                                     :commands (example-commands "Org Owners")}]}]}]
                 :commands (example-commands "Users")}])
 
-            (rf/reg-sub ::example-tree-rows (fn [_ _] example-data)))
+            (rf/reg-sub ::example-tree-rows (fn [_ _] example-data))
 
-   (example "static tree with a three level hierarchy"
             [tree {:id ::example1
                    :columns [{:key :name
                               :title "Name"
@@ -488,7 +487,9 @@
                    :default-sort-column :title}])
 
    (example "sortable and filterable tree"
+
             [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
+
             (let [example2 {:id ::example2
                             :show-matching-parents? true
                             :columns [{:key :name

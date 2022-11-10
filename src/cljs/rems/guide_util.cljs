@@ -9,7 +9,7 @@
                    (apply str (drop 2 line)))))
 
 (defn- link-to-source [meta]
-  (let [file (common-util/normalize-file-path (:file meta))
+  (let [file (common-util/normalize-file-path (str "src/cljs/" (:file meta)))
         link-text (str file ":" (:line meta) ":" (:column meta))
         path (str file "#L" (:line meta))
         href (if-let [{:keys [revision]} git/+version+]
