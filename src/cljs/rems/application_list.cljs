@@ -257,13 +257,12 @@
    (component-info list)
    (example "empty list"
             [list {:id ::example1
-                   :applications ::no-applications
-                   :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
-   (example "applications, default order"
+                   :applications ::no-applications}])
+   (example "applications, default order, limited columns"
             [list {:id ::example2
                    :applications ::example-applications
                    :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
-   (example "applications, descending date, all columns"
+   (example "applications, sort descending date, all columns"
             [list {:id ::example3
                    :applications ::example-applications
                    :default-sort-column :created

@@ -1,6 +1,6 @@
 (ns rems.dropdown
-  (:require [reagent.core :as r]
-            ["react-select" :rename {Async AsyncSelect} :default Select]
+  (:require ["react-select" :default Select]
+            ["react-select/async" :default AsyncSelect]
             [clojure.string :as str]
             [medley.core :refer [assoc-some]]
             [rems.guide-util :refer [component-info example]]
@@ -91,35 +91,37 @@
 
 (defn guide
   []
-  (let [on-change (fn [items] (println "items" items))
-        items [{:id 1 :name "Alice"}
-               {:id 2 :name "Bob"}
-               {:id 3 :name "Carl"}
-               {:id 4 :name "Own"}
-               {:id 5 :name "Deve"}]]
+  (let [on-change (fn [items] (println "items" items))]
     [:div
      (component-info dropdown)
      (example "dropdown menu, single-choice, empty"
-              [dropdown {:items items
+
+              (def example-items [{:id 1 :name "Alice"}
+                                  {:id 2 :name "Bob"}
+                                  {:id 3 :name "Carl"}
+                                  {:id 4 :name "Own"}
+                                  {:id 5 :name "Deve"}])
+
+              [dropdown {:items example-items
                          :item-key :id
                          :item-label :name
                          :on-change on-change}])
      (example "dropdown menu, single-choice, selected item Bob"
-              [dropdown {:items items
+              [dropdown {:items example-items
                          :item-key :id
                          :item-label :name
                          :item-selected? #(= "Bob" (:name %))
                          :on-change on-change}])
 
      (example "dropdown menu, multi-choice, several values selected"
-              [dropdown {:items items
+              [dropdown {:items example-items
                          :item-key :id
                          :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
                          :on-change on-change}])
      (example "disabled dropdown menu, multi-choice, several values selected"
-              [dropdown {:items items
+              [dropdown {:items example-items
                          :item-key :id
                          :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
@@ -127,32 +129,33 @@
                          :disabled? true
                          :on-change on-change}])
      (example "dropdown menu, multi-choice, several values selected, hide selected"
-              [dropdown {:items items
+              [dropdown {:items example-items
                          :item-key :id
                          :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
                          :hide-selected? false
                          :on-change on-change}])
+
      (component-info async-dropdown)
      (example "async dropdown menu, single choice, empty"
               [async-dropdown {:item-key :id
                                :item-label :name
                                :on-change on-change
                                :on-load-options (fn [{:keys [_ on-data]}]
-                                                  (js/setTimeout #(on-data items) 500))}])
+                                                  (js/setTimeout #(on-data example-items) 500))}])
      (example "async dropdown menu, multi-choice, empty"
               [async-dropdown {:item-key :id
                                :item-label :name
                                :multi? true
                                :on-change on-change
                                :on-load-options (fn [{:keys [_ on-data]}]
-                                                  (js/setTimeout #(on-data items) 500))}])
+                                                  (js/setTimeout #(on-data example-items) 500))}])
      (example "async dropdown menu, multi-choice, several values selected"
               [async-dropdown {:item-key :id
                                :item-label :name
-                               :items (take 2 items)
+                               :items (take 2 example-items)
                                :multi? true
-                               :on-change (on-change items)
+                               :on-change on-change
                                :on-load-options (fn [{:keys [_ on-data]}]
-                                                  (js/setTimeout #(on-data items) 500))}])]))
+                                                  (js/setTimeout #(on-data example-items) 500))}])]))

@@ -15,9 +15,9 @@
 
 (defn attributes
   "A div with a rems.atoms/info-field for every user attribute in the given attributes.
-   Accepts 
-    - attributes: map, user attributes
-    - invited-user? : boolean, if user is invited, shows different email string"
+
+   `attributes`    - map, user attributes
+   `invited-user?` - boolean, if user is invited, shows different email string"
   [attributes invited-user?]
   (let [language @(rf/subscribe [:language])
         organization-by-id @(rf/subscribe [:organization-by-id])
@@ -68,11 +68,11 @@
                          :researcher-status-by "so"
                          :nickname "The Dev"}
              false])
-   (example "invited memeber set of attributes, true invited-user status"
-            [attributes {:userid "invited@memeber.com"
-                         :email "invited@memeber.com"
+   (example "invited member set of attributes, true invited-user status"
+            [attributes {:userid "invited@member.com"
+                         :email "invited@member.com"
                          :name "Invited Mamber"
-                         :notification-email "invited@memeber.com"
+                         :notification-email "invited@member.com"
                          :organizations []}
              true])
    (example "invalid value for researcher status, no invited-user status"

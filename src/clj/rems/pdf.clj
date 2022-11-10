@@ -6,6 +6,7 @@
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.text :refer [localized localize-decision localize-event localize-state localize-time text text-format with-language]]
             [rems.util :refer [getx]])
@@ -216,7 +217,8 @@
   [{}
    (render-header application)
    (render-applicants application)
-   (render-resources application)
+   (when (:show-resources-section env)
+     (render-resources application))
    (render-duos application)
    (render-licenses application)
    (render-fields application)

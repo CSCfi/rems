@@ -38,7 +38,10 @@
                     :catalogue-tree-show-matching-parents
                     :enable-cart
                     :application-list-hidden-columns
-                    :enable-autosave])
+                    :enable-autosave
+                    :show-resources-section
+                    :show-attachment-zip-action
+                    :show-pdf-action])
       (update :extra-pages filter-extra-pages)))
 
 (defn get-config-full []
