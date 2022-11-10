@@ -35,8 +35,11 @@
        (not= :<> (first x))
        (not= :code (first x))))
 
+;; XXX: if we always use the last element as the example, we don't actually need this
 (defn- clean-block
-  "Remove a wrapping `[:<> ...]` element from source.
+  "Remove a wrapping element from source.
+
+  `:code` and `:<>` both work as wrappers.
 
   This can be used to prevent the code from looking like static hiccup markup."
   [x]
@@ -54,16 +57,26 @@
            [my-component \"hello\"])
 
   Static content can be added between code blocks with regular static hiccup markup.
+  Also code such as definitions works. The last definition is used as the example.
 
-  (example \"simple use\"
-           [:p \"This is a very simple use case with no data\"]
-           [my-component \"hello\" []]
-           [:p \"Which can be written also like this\"]
-           [my-component \"hello\"])"
+  (example \"definition use\"
+           [:p \"This is a very simple use case with simple data\"]
+           (def data [1 2 3])
+           [my-component \"hello\" data])
+
+  Code can be wrapped to [:code ...] or [:<> ...] to appear as real code,
+  and evaluated, unlike static hiccup. This is useful if you need to wrap
+  the example in static hiccup because it needs a specific context.
+
+  (example \"wrapped use\"
+           [:code
+            [:div.wrapper [my-component \"hello\"]]])
+  "
   [title & content]
   (let [src (into [:div]
                   (for [block content]
                     (if (static-hiccup? block)
                       block
                       [:pre (with-out-str (write (clean-block block) :dispatch code-dispatch))])))]
-    `[render-example ~title ~src (do ~@content)]))
+    `(do ~@(butlast content)
+         [render-example ~title ~src ~(last content)])))
