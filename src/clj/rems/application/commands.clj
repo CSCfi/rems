@@ -293,8 +293,7 @@
 
 (defn- user-can-edit-attachment [cmd application attachment]
   (or (application-util/is-handler? application (:actor cmd))
-      (= (:attachment/user attachment)
-         (:actor cmd))))
+      (= (:attachment/user attachment) (:actor cmd))))
 
 (defn- invalid-attachments-error [cmd application injections]
   (let [attachments (concat (:attachments cmd) (:redacted-attachments cmd))
