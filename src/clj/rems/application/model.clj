@@ -673,6 +673,17 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
+(defn- mask-redacted-attachments [attachments events]
+  (let [redacted-ids (->> events
+                          (filter (comp #{:application.event/attachments-redacted} :event/type))
+                          (mapcat :application/redacted-attachments)
+                          (map :attachment/id)
+                          set)]
+    (->> attachments
+         (map #(if (some #{(:attachment/id %)} redacted-ids)
+                 (assoc % :attachment/filename "redacted")
+                 %)))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -697,6 +708,7 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+      (update :application/attachments mask-redacted-attachments (:application/events application))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)

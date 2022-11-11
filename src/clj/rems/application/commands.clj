@@ -445,10 +445,10 @@
   (or (empty-redacted-attachments-error cmd)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
-                                    :event/redacted-attachments (vec (:redacted-attachments cmd))
-                                    :event/attachments-from (find-original-attachment-event-ids
-                                                             (:redacted-attachments cmd)
-                                                             application)
+                                    :application/redacted-attachments (vec (:redacted-attachments cmd))
+                                    :application/attachments-from (find-original-attachment-event-ids
+                                                                   (:redacted-attachments cmd)
+                                                                   application)
                                     :application/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject

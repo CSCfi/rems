@@ -311,7 +311,7 @@ WHERE id = :id;
 
 -- :name redact-attachment! :!
 UPDATE attachment
-SET (data, filename, type) = (decode('', 'hex'), 'redacted.txt', 'text/plain')
+SET data = decode('', 'hex')
 WHERE id = :id;
 
 -- :name get-attachment :? :1

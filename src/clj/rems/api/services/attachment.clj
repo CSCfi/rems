@@ -55,19 +55,19 @@
   (let [classes (model/classify-attachments application)
         out (ByteArrayOutputStream.)]
     (with-open [zip (ZipOutputStream. out)]
-      (doseq [metadata (getx application :application/attachments)]
-        (let [id (getx metadata :attachment/id)
-              attachment (attachments/get-attachment id)]
-          (when (or all? (contains? (get classes id) :field/value))
-            ;; we deduplicate filenames when uploading, but here's a
-            ;; failsafe in case we have duplicate filenames in old
-            ;; applications
-            (try
-              (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
-              (.write zip (getx attachment :attachment/data))
-              (.closeEntry zip)
-              (catch ZipException e
-                (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e)))))))
+      (doseq [metadata (getx application :application/attachments)
+              :let [id (getx metadata :attachment/id)
+                    attachment (attachments/get-attachment id)]
+              :when (or all? (contains? (get classes id) :field/value))]
+        ;; we deduplicate filenames when uploading, but here's a
+        ;; failsafe in case we have duplicate filenames in old
+        ;; applications
+        (try
+          (.putNextEntry zip (ZipEntry. (getx metadata :attachment/filename)))
+          (.write zip (getx attachment :attachment/data))
+          (.closeEntry zip)
+          (catch ZipException e
+            (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e)))))
     (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient
         (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
         (content-type "application/zip"))))

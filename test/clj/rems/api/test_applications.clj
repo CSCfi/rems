@@ -1865,13 +1865,13 @@
                                                   :redacted-attachments [{:attachment/id attachment-id}]
                                                   :attachments [{:attachment/id replace-id}]})))
             (is (= {:application/id application-id
-                    :attachment/filename "redacted.txt"
+                    :attachment/filename "reviewer-public-remark.txt" ; filename is preserved in db
                     :attachment/type "text/plain"
                     :attachment/data ""}
                    (-> (rems.db.attachments/get-attachment attachment-id)
                        (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                        (update :attachment/data slurp))))
-            (is (= ["redacted.txt"
+            (is (= ["redacted"
                     "reviewer-public-remark (1).txt"]
                    (get-application-attachments application-id reviewer-id)))
             (testing ", handler redacts reviewers attachment"
@@ -1882,14 +1882,14 @@
                                                     :public true
                                                     :redacted-attachments [{:attachment/id replace-id}]})))
               (is (= {:application/id application-id
-                      :attachment/filename "redacted.txt"
+                      :attachment/filename "reviewer-public-remark (1).txt" ; filename is preserved in db
                       :attachment/type "text/plain"
                       :attachment/data ""}
                      (-> (rems.db.attachments/get-attachment replace-id)
                          (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                          (update :attachment/data slurp))))
-              (is (= ["redacted.txt"
-                      "redacted.txt"]
+              (is (= ["redacted"
+                      "redacted"]
                      (get-application-attachments application-id reviewer-id))))))))
     (testing "decider attaches file to public remark"
       (let [attachment-id (add-attachment decider-id (file "decider-public-remark.txt"))]
@@ -1899,8 +1899,8 @@
                                               :application-id application-id
                                               :comment "looks interesting"
                                               :attachments [{:attachment/id attachment-id}]})))
-        (is (= ["redacted.txt"
-                "redacted.txt"
+        (is (= ["redacted"
+                "redacted"
                 "decider-public-remark.txt"]
                (get-application-attachments application-id decider-id)))
         (testing ", reviewer attempts to redact deciders attachment but fails"
@@ -1923,15 +1923,15 @@
                                                   :redacted-attachments [{:attachment/id attachment-id}]
                                                   :attachments [{:attachment/id replace-id}]})))
             (is (= {:application/id application-id
-                    :attachment/filename "redacted.txt"
+                    :attachment/filename "decider-public-remark.txt" ; filename is preserved in db
                     :attachment/type "text/plain"
                     :attachment/data ""}
                    (-> (rems.db.attachments/get-attachment attachment-id)
                        (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                        (update :attachment/data slurp))))
-            (is (= ["redacted.txt"
-                    "redacted.txt"
-                    "redacted.txt"
+            (is (= ["redacted"
+                    "redacted"
+                    "redacted"
                     "decider-public-remark (1).txt"]
                    (get-application-attachments application-id decider-id)))
             (testing ", handler redacts deciders attachment"
@@ -1943,16 +1943,16 @@
                                                     :redacted-attachments [{:attachment/id replace-id}]
                                                     :attachments []})))
               (is (= {:application/id application-id
-                      :attachment/filename "redacted.txt"
+                      :attachment/filename "decider-public-remark (1).txt" ; filename is preserved in db
                       :attachment/type "text/plain"
                       :attachment/data ""}
                      (-> (rems.db.attachments/get-attachment replace-id)
                          (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                          (update :attachment/data slurp))))
-              (is (= ["redacted.txt"
-                      "redacted.txt"
-                      "redacted.txt"
-                      "redacted.txt"]
+              (is (= ["redacted"
+                      "redacted"
+                      "redacted"
+                      "redacted"]
                      (get-application-attachments application-id reviewer-id))))))))
     (testing "handler attaches file to private remark"
       (let [attachment-id (add-attachment handler-id (file "handler-secret-notes.txt"))]
@@ -1992,17 +1992,17 @@
                                 :redacted-attachments [{:attachment/id attachment-id}]}))))))
     (testing ":application/attachments"
       (testing "applicant"
-        (is (= ["redacted.txt"
-                "redacted.txt"
-                "redacted.txt"
-                "redacted.txt"]
+        (is (= ["redacted"
+                "redacted"
+                "redacted"
+                "redacted"]
                (get-application-attachments application-id applicant-id))))
       (testing "handler"
-        (is (= ["redacted.txt"
-                "redacted.txt"
-                "redacted.txt"
-                "redacted.txt"
-                "redacted.txt"]
+        (is (= ["redacted"
+                "redacted"
+                "redacted"
+                "redacted"
+                "redacted"]
                (get-application-attachments application-id handler-id)))))))
 
 (deftest test-application-attachment-zip
@@ -2104,7 +2104,40 @@
                                                   api-key "malice"))))
       (testing "fetch zip for nonexisting application"
         (is (response-is-not-found? (api-response :get "/api/applications/99999999/attachments" nil
-                                                  api-key "malice")))))))
+                                                  api-key "malice"))))
+      (testing "remark with attachments and redact attachment"
+        (let [black-comment-id (add-attachment handler-id (file "black.txt"))]
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/remark
+                                                :public true
+                                                :application-id app-id
+                                                :comment "see attachment"
+                                                :attachments [{:attachment/id black-comment-id}]})))
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/redact-attachments
+                                                :public true
+                                                :application-id app-id
+                                                :comment "redacting black comment"
+                                                :redacted-attachments [{:attachment/id black-comment-id}]
+                                                :attachments []})))
+          (testing ", then fetch zip as applicant, handler and reporter"
+            (is (= {"blue.txt" (slurp testfile)
+                    "red.txt" (slurp testfile)
+                    "green.txt" (slurp testfile)
+                    "blue (1).txt" (slurp testfile)
+                    "yellow.txt" (slurp testfile)
+                    "redacted" ""} ; filename is masked and file contents are emptied
+                   (fetch-zip applicant-id "?all=true")
+                   (fetch-zip applicant-id)
+                   (fetch-zip handler-id)
+                   (fetch-zip reporter-id))))
+          (testing ", then fetch zip with all=false as applicant, handler and reporter"
+            (is (= {"blue.txt" (slurp testfile)
+                    "red.txt" (slurp testfile)
+                    "green.txt" (slurp testfile)}
+                   (fetch-zip applicant-id "?all=false")
+                   (fetch-zip handler-id "?all=false")
+                   (fetch-zip reporter-id "?all=false")))))))))
 
 
 (deftest test-application-api-license-attachments

@@ -651,7 +651,7 @@
 
                   (not-empty (:application/comment event)))
         request-id (:application/request-id event)
-        attachments-from (:event/attachments-from event)
+        attachments-from (:application/attachments-from event)
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event

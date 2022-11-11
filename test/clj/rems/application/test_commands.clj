@@ -2191,8 +2191,8 @@
                 :event/time test-time
                 :event/actor handler-user-id
                 :event/attachments [{:attachment/id attachment-id-2}]
-                :event/redacted-attachments [{:attachment/id attachment-id-1}]
-                :event/attachments-from [{:event/id 2}]
+                :application/redacted-attachments [{:attachment/id attachment-id-1}]
+                :application/attachments-from [{:event/id 2}]
                 :application/id app-id
                 :application/comment "accidental upload, redacting"
                 :application/public false}
