@@ -1665,29 +1665,19 @@
                                             :reviewers [reviewer-id]
                                             :comment "please"}))))
 
-    (testing "handler uploads file and attaches it to a public remark"
+    (testing "handler uploads an attachment"
       (let [attachment-id (add-attachment handler-id (file "handler-public-remark.txt"))]
         (is (number? attachment-id))
-        (is (= {:success true} (send-command handler-id
-                                             {:type :application.command/remark
-                                              :application-id application-id
-                                              :comment "see attachment"
-                                              :public true
-                                              :attachments [{:attachment/id attachment-id}]})))
-        (let [attachment (rems.db.attachments/get-attachment attachment-id)]
-          (is (= {:application/id application-id
-                  :attachment/filename "handler-public-remark.txt"
-                  :attachment/type "text/plain"}
-                 (select-keys attachment [:application/id :attachment/filename :attachment/type])))
-          (is (= (slurp testfile)
-                 (slurp (:attachment/data attachment)))))))
+        (testing ", and attaches it to a public remark"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/remark
+                                                :application-id application-id
+                                                :comment "see attachment"
+                                                :public true
+                                                :attachments [{:attachment/id attachment-id}]}))))))
 
     (testing "applicant can see attachment"
-      (let [app (get-application-for-user application-id applicant-id)
-            remark-event (->> (:application/events app)
-                              (filter (comp #{"application.event/remarked"}
-                                            :event/type))
-                              (last))
+      (let [remark-event (get-last-event application-id applicant-id)
             attachment-id (:attachment/id (first (:event/attachments remark-event)))]
         (is (number? attachment-id))
         (testing "and fetch it"
