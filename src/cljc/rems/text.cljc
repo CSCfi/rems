@@ -222,6 +222,10 @@
         :application.event/resources-changed
         (str/join ", " (mapv #(localized (:catalogue-item/title %))
                              (:application/resources event)))
+        
+        :application.event/attachments-redacted
+        (when (seq (:event/attachments event))
+          (text :t.applications/redacted-attachments-replaced))
 
         nil))
      (case event-type

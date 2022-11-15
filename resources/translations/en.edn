@@ -189,7 +189,7 @@
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 changed the applicant to %2."
                           :approved "%1 approved the application."
-                          :attachments-redacted "%1 redacted attachments."
+                          :attachments-redacted "%1 redacted attachments. %2"
                           :closed "%1 closed the application."
                           :copied-from "This application is a copy of an old application."
                           :copied-to "%1 copied the application to a new application."
@@ -240,6 +240,7 @@
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
+                 :redacted-attachments-replaced "New attachments replace the redacted attachments."
                  :resource "Resource"
                  :state "State"
                  :states {:approved "Approved"
