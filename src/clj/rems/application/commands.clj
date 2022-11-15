@@ -291,22 +291,33 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn- user-can-edit-attachment [cmd application attachment]
+(defn- user-can-redact-attachment? [cmd application attachment]
   (or (application-util/is-handler? application (:actor cmd))
       (= (:attachment/user attachment) (:actor cmd))))
 
-(defn- invalid-attachments-error [cmd application injections]
-  (let [attachments (concat (:attachments cmd) (:redacted-attachments cmd))
-        invalid-ids (for [id (set (map :attachment/id attachments))
+(defn- invalid-attachments-error
+  "Checks that attachments are not nil, attachment user is command actor,
+   and attachment application id matches command application id. Redacted
+   attachments are checked similarly, but application handlers are allowed
+   to redact all attachments."
+  [cmd application injections]
+  (let [invalid-ids (for [id (set (map :attachment/id (:attachments cmd)))
                           :let [attachment (-> (getx injections :get-attachment-metadata)
                                                (apply [id]))]
                           :when (or (nil? attachment)
-                                    (not (user-can-edit-attachment cmd application attachment))
+                                    (not= (:attachment/user attachment) (:actor cmd))
                                     (not= (:application/id attachment) (:application-id cmd)))]
-                      id)]
-    (when (seq invalid-ids)
+                      id)
+        invalid-redact-ids (for [id (set (map :attachment/id (:redacted-attachments cmd)))
+                                 :let [attachment (-> (getx injections :get-attachment-metadata)
+                                                      (apply [id]))]
+                                 :when (or (nil? attachment)
+                                           (not (user-can-redact-attachment? cmd application attachment))
+                                           (not= (:application/id attachment) (:application-id cmd)))]
+                             id)]
+    (when-some [ids (seq (concat invalid-ids invalid-redact-ids))]
       {:errors [{:type :invalid-attachments
-                 :attachments (sort invalid-ids)}]})))
+                 :attachments (sort (set ids))}]})))
 
 (defn- add-comment-and-attachments [cmd application injections event]
   (or (invalid-attachments-error cmd application injections)
