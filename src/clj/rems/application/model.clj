@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
@@ -673,16 +673,18 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
-(defn- mask-redacted-attachments [attachments events]
-  (let [redacted-ids (->> events
-                          (filter (comp #{:application.event/attachments-redacted} :event/type))
-                          (mapcat :application/redacted-attachments)
-                          (map :attachment/id)
-                          set)]
-    (->> attachments
-         (map #(if (some #{(:attachment/id %)} redacted-ids)
-                 (assoc % :attachment/filename "redacted")
-                 %)))))
+(defn- get-redacted-attachment-ids [application]
+  (->> (:application/events application)
+       (filter (comp #{:application.event/attachments-redacted} :event/type))
+       (mapcat :application/redacted-attachments)
+       (map :attachment/id)
+       set))
+
+(defn- mask-redacted-attachments [attachments redacted-ids]
+  (for [attachment attachments
+        :let [redacted? (some #{(:attachment/id attachment)} redacted-ids)]]
+    (assoc-some attachment :attachment/filename (when redacted?
+                                                  "redacted"))))
 
 (defn enrich-with-injections
   [application {:keys [blacklisted?
@@ -708,7 +710,7 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-      (update :application/attachments mask-redacted-attachments (:application/events application))
+      (update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)

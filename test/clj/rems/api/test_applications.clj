@@ -1621,11 +1621,16 @@
                          handler)]
         (is (response-is-forbidden? response))))))
 
-(defn- get-application-attachments [application-id user-id]
+(defn- get-attachments [application-id user-id]
   (->> (get-application-for-user application-id user-id)
        :application/attachments
        (sort-by :attachment/id)
        (mapv :attachment/filename)))
+
+(defn- get-last-event [application-id user-id]
+  (-> (get-application-for-user application-id user-id)
+      :application/events
+      last))
 
 (deftest test-application-comment-attachments
   (let [api-key "42"
@@ -1786,7 +1791,7 @@
                 "handler-approve.txt"
                 "handler-close.txt"
                 "handler-close (1).txt"]
-               (get-application-attachments application-id applicant-id))))
+               (get-attachments application-id applicant-id))))
       (testing "handler"
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
@@ -1794,7 +1799,7 @@
                 "handler-approve.txt"
                 "handler-close.txt"
                 "handler-close (1).txt"]
-               (get-application-attachments application-id handler-id)))))))
+               (get-attachments application-id handler-id)))))))
 
 (deftest test-application-redact-attachments
   (let [api-key "42"
@@ -1844,11 +1849,10 @@
                                               :comment "looks interesting"
                                               :attachments [{:attachment/id attachment-id}]})))
         (is (= ["reviewer-public-remark.txt"]
-               (get-application-attachments application-id reviewer-id)))
+               (get-attachments application-id reviewer-id)))
         (testing ", decider attempts to redact reviewers attachment but fails"
           (is (= {:success false
-                  :errors [{:type "invalid-attachments"
-                            :attachments [attachment-id]}]}
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
                  (send-command decider-id
                                {:type :application.command/redact-attachments
                                 :application-id application-id
@@ -1856,7 +1860,8 @@
                                 :public false
                                 :redacted-attachments [{:attachment/id attachment-id}]}))))
         (testing ", reviewer redacts and replaces the earlier attachment"
-          (let [replace-id (add-attachment reviewer-id (file "reviewer-public-remark.txt"))]
+          (let [remark-event (get-last-event application-id applicant-id)
+                replace-id (add-attachment reviewer-id (file "reviewer-public-remark.txt"))]
             (is (= {:success true} (send-command reviewer-id
                                                  {:type :application.command/redact-attachments
                                                   :application-id application-id
@@ -1873,7 +1878,12 @@
                        (update :attachment/data slurp))))
             (is (= ["redacted"
                     "reviewer-public-remark (1).txt"]
-                   (get-application-attachments application-id reviewer-id)))
+                   (get-attachments application-id reviewer-id)))
+            (is (= {:event/type "application.event/attachments-redacted"
+                    :application/attachments-from [{:event/id (:event/id remark-event)}]}
+                   (-> (get-last-event application-id applicant-id)
+                       (select-keys [:application/attachments-from :event/type])))
+                "redacted event contains event id from which redacted attachment originates")
             (testing ", handler redacts reviewers attachment"
               (is (= {:success true} (send-command reviewer-id
                                                    {:type :application.command/redact-attachments
@@ -1890,7 +1900,7 @@
                          (update :attachment/data slurp))))
               (is (= ["redacted"
                       "redacted"]
-                     (get-application-attachments application-id reviewer-id))))))))
+                     (get-attachments application-id reviewer-id))))))))
     (testing "decider attaches file to public remark"
       (let [attachment-id (add-attachment decider-id (file "decider-public-remark.txt"))]
         (is (= {:success true} (send-command decider-id
@@ -1902,11 +1912,10 @@
         (is (= ["redacted"
                 "redacted"
                 "decider-public-remark.txt"]
-               (get-application-attachments application-id decider-id)))
+               (get-attachments application-id decider-id)))
         (testing ", reviewer attempts to redact deciders attachment but fails"
           (is (= {:success false
-                  :errors [{:type "invalid-attachments"
-                            :attachments [attachment-id]}]}
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
                  (send-command reviewer-id
                                {:type :application.command/redact-attachments
                                 :application-id application-id
@@ -1914,7 +1923,8 @@
                                 :public false
                                 :redacted-attachments [{:attachment/id attachment-id}]}))))
         (testing ", decider uploads attachment and redacts and replaces the earlier attachment"
-          (let [replace-id (add-attachment decider-id (file "decider-public-remark.txt"))]
+          (let [remark-event (get-last-event application-id applicant-id)
+                replace-id (add-attachment decider-id (file "decider-public-remark.txt"))]
             (is (= {:success true} (send-command decider-id
                                                  {:type :application.command/redact-attachments
                                                   :application-id application-id
@@ -1933,7 +1943,12 @@
                     "redacted"
                     "redacted"
                     "decider-public-remark (1).txt"]
-                   (get-application-attachments application-id decider-id)))
+                   (get-attachments application-id decider-id)))
+            (is (= {:event/type "application.event/attachments-redacted"
+                    :application/attachments-from [{:event/id (:event/id remark-event)}]}
+                   (-> (get-last-event application-id applicant-id)
+                       (select-keys [:application/attachments-from :event/type])))
+                "redacted event contains event id from which redacted attachment originates")
             (testing ", handler redacts deciders attachment"
               (is (= {:success true} (send-command handler-id
                                                    {:type :application.command/redact-attachments
@@ -1953,7 +1968,7 @@
                       "redacted"
                       "redacted"
                       "redacted"]
-                     (get-application-attachments application-id reviewer-id))))))))
+                     (get-attachments application-id reviewer-id))))))))
     (testing "handler attaches file to private remark"
       (let [attachment-id (add-attachment handler-id (file "handler-secret-notes.txt"))]
         (is (= {:success true} (send-command handler-id
@@ -1964,8 +1979,7 @@
                                               :attachments [{:attachment/id attachment-id}]})))
         (testing ", reviewer attempts to redact handlers attachment but fails"
           (is (= {:success false
-                  :errors [{:type "invalid-attachments"
-                            :attachments [attachment-id]}]}
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
                  (send-command reviewer-id
                                {:type :application.command/redact-attachments
                                 :application-id application-id
@@ -1974,8 +1988,7 @@
                                 :redacted-attachments [{:attachment/id attachment-id}]}))))
         (testing ", decider attempts to redact handlers attachment but fails"
           (is (= {:success false
-                  :errors [{:type "invalid-attachments"
-                            :attachments [attachment-id]}]}
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
                  (send-command decider-id
                                {:type :application.command/redact-attachments
                                 :application-id application-id
@@ -1983,27 +1996,33 @@
                                 :public false
                                 :redacted-attachments [{:attachment/id attachment-id}]}))))
         (testing ", handler finally redacts the private attachment"
-          (is (= {:success true}
-                 (send-command handler-id
-                               {:type :application.command/redact-attachments
-                                :application-id application-id
-                                :comment "redacting private attachment"
-                                :public false
-                                :redacted-attachments [{:attachment/id attachment-id}]}))))))
+          (let [remarked-event (get-last-event application-id handler-id)]
+            (is (= {:success true}
+                   (send-command handler-id
+                                 {:type :application.command/redact-attachments
+                                  :application-id application-id
+                                  :comment "redacting private attachment"
+                                  :public false
+                                  :redacted-attachments [{:attachment/id attachment-id}]})))
+            (is (= {:event/type "application.event/attachments-redacted"
+                    :application/attachments-from [{:event/id (:event/id remarked-event)}]}
+                   (-> (get-last-event application-id handler-id)
+                       (select-keys [:application/attachments-from :event/type])))
+                "redacted event contains event id from which redacted attachment originates")))))
     (testing ":application/attachments"
       (testing "applicant"
         (is (= ["redacted"
                 "redacted"
                 "redacted"
                 "redacted"]
-               (get-application-attachments application-id applicant-id))))
+               (get-attachments application-id applicant-id))))
       (testing "handler"
         (is (= ["redacted"
                 "redacted"
                 "redacted"
                 "redacted"
                 "redacted"]
-               (get-application-attachments application-id handler-id)))))))
+               (get-attachments application-id handler-id)))))))
 
 (deftest test-application-attachment-zip
   (let [api-key "42"
