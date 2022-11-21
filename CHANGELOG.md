@@ -16,7 +16,7 @@ Changes since v2.30
 
 ### Additions
 - Visibility of the PDF and ZIP download actions can now be configured with `:show-pdf-action` and `:show-attachment-zip-action` (#3001)
-- The Resources block can be hidden from the application view. This can be useful if there are few catalogue items. (#3000)
+- The Resources block can be hidden from the application view with `:show-resources-section`. This can be useful if there are few catalogue items. (#3000)
 - The application title field, in the application state block is now shown only if the application description is not blank. (#2836)
 - Orphan attachments could sometimes be saved, though not in use. They are now removed when an application is submitted. (#3041)
 - Extra pages have been enhanced: (#2983, #2589, #3069)
