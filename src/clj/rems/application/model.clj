@@ -754,11 +754,8 @@
 
 (defn- hide-sensitive-events [events]
   (->> events
-       (remove (comp sensitive-events
-                     :event/type))
-       (remove #(and (some #{(:event/type %)} [:application.event/remarked
-                                               :application.event/attachments-redacted])
-                     (not (:application/public %))))))
+       (remove (comp sensitive-events :event/type))
+       (filter :application/public)))
 
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))
