@@ -673,19 +673,6 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
-(defn- get-redacted-attachment-ids [application]
-  (->> (:application/events application)
-       (filter (comp #{:application.event/attachments-redacted} :event/type))
-       (mapcat :application/redacted-attachments)
-       (map :attachment/id)
-       set))
-
-(defn- mask-redacted-attachments [attachments redacted-ids]
-  (for [attachment attachments
-        :let [redacted? (some #{(:attachment/id attachment)} redacted-ids)]]
-    (assoc-some attachment :attachment/filename (when redacted?
-                                                  "redacted"))))
-
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -710,7 +697,7 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-      (update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
+      ;(update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
@@ -881,6 +868,23 @@
       (user-is-applicant-or-member permissions)
       (not= #{:everyone-else} permissions))))
 
+(defn- get-redacted-attachment-ids [application]
+  (->> (:application/events application)
+       (filter (comp #{:application.event/attachments-redacted} :event/type))
+       (mapcat :application/redacted-attachments)
+       (map :attachment/id)
+       set))
+
+(defn- mask-redacted-attachments [application]
+  (let [redacted-ids (get-redacted-attachment-ids application)]
+    (-> application
+        (update :application/attachments
+                #(for [attachment %
+                       :let [id (:attachment/id attachment)
+                             redacted? (contains? (set redacted-ids) id)]]
+                   (assoc-some attachment :attachment/filename (when redacted?
+                                                                 "redacted")))))))
+
 (defn apply-user-permissions [application userid]
   (let [see-application? (see-application? application userid)
         roles (permissions/user-roles application userid)
@@ -894,6 +898,7 @@
           (hide-non-public-information)
           (apply-privacy roles)
           (hide-attachments)
+          (mask-redacted-attachments)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
