@@ -170,6 +170,7 @@
                  :applicant "Hakija"
                  :application "Hakemus"
                  :applications "Hakemukset"
+                 :attachment-filename-redacted "Liitetiedosto poistettu"
                  :continue-existing-application "Jatka hakemusta"
                  :copied-from "kopioitu hakemuksesta"
                  :copied-to "kopioitu hakemukseksi"

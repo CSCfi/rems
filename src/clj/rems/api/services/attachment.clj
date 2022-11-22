@@ -1,6 +1,7 @@
 (ns rems.api.services.attachment
   (:require [clojure.set :as set]
             [clojure.tools.logging :as log]
+            [medley.core :refer [assoc-some find-first]]
             [rems.application.commands :as commands]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -16,10 +17,6 @@
       (header "Content-Disposition" (str "attachment;filename=" (pr-str (:attachment/filename attachment))))
       (content-type (:attachment/type attachment))))
 
-(defn- contains-attachment? [application attachment-id]
-  (some #(= attachment-id (:attachment/id %))
-        (:application/attachments application)))
-
 (defn get-application-attachment [user-id attachment-id]
   (let [attachment (attachments/get-attachment attachment-id)]
     (cond
@@ -29,12 +26,15 @@
       (= user-id (:attachment/user attachment))
       attachment
 
-      (contains-attachment? (applications/get-application-for-user user-id (:application/id attachment))
-                            attachment-id)
-      attachment
-
       :else
-      (throw-forbidden))))
+      (let [application (applications/get-application-for-user user-id (:application/id attachment))
+            application-attachment (->> (:application/attachments application)
+                                        (find-first #(= attachment-id (:attachment/id %))))
+            redacted? (= :filename/redacted (:attachment/filename application-attachment))]
+        (if (some? application-attachment) ; user can see the attachment
+          (assoc-some attachment :attachment/filename (when redacted?
+                                                        "redacted"))
+          (throw-forbidden))))))
 
 (defn add-application-attachment [user-id application-id file]
   (attachments/check-size file)

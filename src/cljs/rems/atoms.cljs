@@ -122,13 +122,16 @@
        (into [:div style] values)])))
 
 (defn download-button
-  [title url]
-  [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
-   {:href url
-    :target :_blank
-    :title title
-    :style {:max-width "25em"}}
-   [file-download] " " title])
+  ([title url] (download-button {} title url))
+  ([{:keys [disabled?]} title url]
+   [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
+                :href url
+                :target :_blank
+                :title title
+                :style {:max-width "25em"}}
+         disabled? (-> (dissoc :href :target)
+                       (update :class conj :disabled)))
+    [file-download] " " title]))
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
@@ -139,8 +142,13 @@
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
   (when attachment
-    [:div.field
-     [download-button (:attachment/filename attachment) (str "/applications/attachment/" (:attachment/id attachment))]]))
+    (let [redacted? (= :filename/redacted (:attachment/filename attachment))
+          filename (if redacted?
+                     (text :t.applications/attachment-filename-redacted)
+                     (:attachment/filename attachment))
+          url (str "/applications/attachment/" (:attachment/id attachment))]
+      [:div.field
+       [download-button {:disabled? redacted?} filename url]])))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)

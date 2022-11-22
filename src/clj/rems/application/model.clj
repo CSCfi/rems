@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
@@ -755,7 +755,7 @@
 (defn- hide-sensitive-events [events]
   (->> events
        (remove (comp sensitive-events :event/type))
-       (filter :application/public)))
+       (remove (comp false? :application/public)))) ; :application/public might not be set
 
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))
@@ -873,14 +873,11 @@
        set))
 
 (defn- mask-redacted-attachments [application]
-  (let [redacted-ids (get-redacted-attachment-ids application)]
-    (-> application
-        (update :application/attachments
-                #(for [attachment %
-                       :let [id (:attachment/id attachment)
-                             redacted? (contains? (set redacted-ids) id)]]
-                   (assoc-some attachment :attachment/filename (when redacted?
-                                                                 "redacted")))))))
+  (let [redacted-ids (get-redacted-attachment-ids application)
+        redacted? #(contains? redacted-ids (:attachment/id %))]
+    (->> application
+         (transform [:application/attachments ALL redacted?]
+                    #(assoc % :attachment/filename :filename/redacted)))))
 
 (defn apply-user-permissions [application userid]
   (let [see-application? (see-application? application userid)

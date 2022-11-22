@@ -1826,9 +1826,9 @@
                                             :comment "please"}))))
     (testing "invite decider"
       (is (= {:success true} (send-command handler-id
-                                           {:type :application.command/request-review
+                                           {:type :application.command/request-decision
                                             :application-id application-id
-                                            :reviewers [decider-id]
+                                            :deciders [decider-id]
                                             :comment "please"}))))
     (testing "reviewer attaches file to public remark"
       (let [attachment-id (add-attachment reviewer-id (file "reviewer-public-remark.txt"))]
@@ -1866,7 +1866,7 @@
                    (-> (rems.db.attachments/get-attachment attachment-id)
                        (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                        (update :attachment/data slurp))))
-            (is (= ["redacted"
+            (is (= ["filename/redacted"
                     "reviewer-public-remark (1).txt"]
                    (get-attachments application-id reviewer-id)))
             (is (= {:event/type "application.event/attachments-redacted"
@@ -1888,8 +1888,8 @@
                      (-> (rems.db.attachments/get-attachment replace-id)
                          (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                          (update :attachment/data slurp))))
-              (is (= ["redacted"
-                      "redacted"]
+              (is (= ["filename/redacted"
+                      "filename/redacted"]
                      (get-attachments application-id reviewer-id))))))))
     (testing "decider attaches file to public remark"
       (let [attachment-id (add-attachment decider-id (file "decider-public-remark.txt"))]
@@ -1899,8 +1899,8 @@
                                               :application-id application-id
                                               :comment "looks interesting"
                                               :attachments [{:attachment/id attachment-id}]})))
-        (is (= ["redacted"
-                "redacted"
+        (is (= ["filename/redacted"
+                "filename/redacted"
                 "decider-public-remark.txt"]
                (get-attachments application-id decider-id)))
         (testing ", reviewer attempts to redact deciders attachment but fails"
@@ -1929,9 +1929,9 @@
                    (-> (rems.db.attachments/get-attachment attachment-id)
                        (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                        (update :attachment/data slurp))))
-            (is (= ["redacted"
-                    "redacted"
-                    "redacted"
+            (is (= ["filename/redacted"
+                    "filename/redacted"
+                    "filename/redacted"
                     "decider-public-remark (1).txt"]
                    (get-attachments application-id decider-id)))
             (is (= {:event/type "application.event/attachments-redacted"
@@ -1954,10 +1954,10 @@
                      (-> (rems.db.attachments/get-attachment replace-id)
                          (select-keys [:application/id :attachment/filename :attachment/type :attachment/data])
                          (update :attachment/data slurp))))
-              (is (= ["redacted"
-                      "redacted"
-                      "redacted"
-                      "redacted"]
+              (is (= ["filename/redacted"
+                      "filename/redacted"
+                      "filename/redacted"
+                      "filename/redacted"]
                      (get-attachments application-id reviewer-id))))))))
     (testing "handler attaches file to private remark"
       (let [attachment-id (add-attachment handler-id (file "handler-secret-notes.txt"))]
@@ -2001,17 +2001,17 @@
                 "redacted event contains event id from which redacted attachment originates")))))
     (testing ":application/attachments"
       (testing "applicant"
-        (is (= ["redacted"
-                "redacted"
-                "redacted"
-                "redacted"]
+        (is (= ["filename/redacted"
+                "filename/redacted"
+                "filename/redacted"
+                "filename/redacted"]
                (get-attachments application-id applicant-id))))
       (testing "handler"
-        (is (= ["redacted"
-                "redacted"
-                "redacted"
-                "redacted"
-                "redacted"]
+        (is (= ["filename/redacted"
+                "filename/redacted"
+                "filename/redacted"
+                "filename/redacted"
+                "filename/redacted"]
                (get-attachments application-id handler-id)))))))
 
 (deftest test-application-attachment-zip

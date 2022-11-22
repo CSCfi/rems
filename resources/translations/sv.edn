@@ -170,6 +170,7 @@
                  :applicant "Sökande"
                  :application "Ansökan"
                  :applications "Ansökningar"
+                 :attachment-filename-redacted "Bilagan borttagen"
                  :continue-existing-application "Återuppta ansökan"
                  :copied-from "Kopierat från ansökan"
                  :copied-to "Kopierat till ansökan"
