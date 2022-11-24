@@ -1870,9 +1870,10 @@
                     "reviewer-public-remark (1).txt"]
                    (get-attachments application-id reviewer-id)))
             (is (= {:event/type "application.event/attachments-redacted"
-                    :application/attachments-from [{:event/id (:event/id remark-event)}]}
+                    :application/redacted-attachments [{:attachment/id attachment-id
+                                                        :event/id (:event/id remark-event)}]}
                    (-> (get-last-event application-id applicant-id)
-                       (select-keys [:application/attachments-from :event/type])))
+                       (select-keys [:application/redacted-attachments :event/type])))
                 "redacted event contains event id from which redacted attachment originates")
             (testing ", handler redacts reviewers attachment"
               (is (= {:success true} (send-command reviewer-id
@@ -1935,9 +1936,10 @@
                     "decider-public-remark (1).txt"]
                    (get-attachments application-id decider-id)))
             (is (= {:event/type "application.event/attachments-redacted"
-                    :application/attachments-from [{:event/id (:event/id remark-event)}]}
+                    :application/redacted-attachments [{:attachment/id attachment-id
+                                                    :event/id (:event/id remark-event)}]}
                    (-> (get-last-event application-id applicant-id)
-                       (select-keys [:application/attachments-from :event/type])))
+                       (select-keys [:application/redacted-attachments :event/type])))
                 "redacted event contains event id from which redacted attachment originates")
             (testing ", handler redacts deciders attachment"
               (is (= {:success true} (send-command handler-id
@@ -1995,9 +1997,10 @@
                                   :public false
                                   :redacted-attachments [{:attachment/id attachment-id}]})))
             (is (= {:event/type "application.event/attachments-redacted"
-                    :application/attachments-from [{:event/id (:event/id remarked-event)}]}
+                    :application/redacted-attachments [{:attachment/id attachment-id
+                                                        :event/id (:event/id remarked-event)}]}
                    (-> (get-last-event application-id handler-id)
-                       (select-keys [:application/attachments-from :event/type])))
+                       (select-keys [:application/redacted-attachments :event/type])))
                 "redacted event contains event id from which redacted attachment originates")))))
     (testing ":application/attachments"
       (testing "applicant"

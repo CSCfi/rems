@@ -171,12 +171,48 @@
                                   :validation nil
                                   :attachment-status {}})))
 
+(defn- find-highlightable-event-ids
+  "Given event and all events, finds set of related events that can be visually
+   highlighted. Event type is used to map and filter related events."
+  [event events]
+  (case (:event/type event)
+    ;; TODO: find also the reverse, events whose attachments have been redacted?
+    :application.event/attachments-redacted
+    (-> (set (map :event/id (:application/redacted-attachments event)))
+        (conj (:event/id event)))
+
+    (:application.event/decided
+     :application.event/reviewed
+     :application.event/decision-requested
+     :application.event/review-requested
+     :application.event/reviewer-joined
+     :application.event/decider-joined)
+    (let [highlightable-events (set (for [highlightable-event events
+                                          :when (= (:application/request-id highlightable-event)
+                                                   (:application/request-id event))]
+                                      (:event/id highlightable-event)))]
+      (when (< 1 (count highlightable-events))
+        highlightable-events))
+
+    nil))
+
+;; XXX: updating events once after application fetch reduces the amount of work during rendering
+(defn- update-events-highlightables
+  "Updates events with event ids that are related to the event so that they can
+   be highlighted within the UI."
+  [db]
+  (let [set-highlightables (fn [events event]
+                             (->> (find-highlightable-event-ids event events)
+                                  (assoc event :highlight-event-ids)))]
+    (update-in db [::application :data :application/events]
+               #(map (partial set-highlightables %) %))))
 
 (rf/reg-event-fx
  ::fetch-application-result
  (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      {:db (cond-> (update db ::application fetcher/finished application)
+            true (update-events-highlightables)
             (or initial-fetch? full-reload?) (initialize-edit-application))})))
 
 (rf/reg-event-db
@@ -452,18 +488,6 @@
      nil (filterv #(not= application-id (:application/id %)) data))))
 
 (rf/reg-event-db
- ::highlight-request-ids
- (fn [db [_ request-ids]]
-   (assoc db ::highlight-request-ids request-ids)))
-
-(rf/reg-sub
- ::highlight-request-ids
- (fn [db _]
-   (::highlight-request-ids db)))
-
-;; TODO unify highlight mechanism?
-
-(rf/reg-event-db
  ::highlight-event-ids
  (fn [db [_ event-ids]]
    (assoc db ::highlight-event-ids event-ids)))
@@ -650,8 +674,6 @@
                   [application-link (:application/copied-to event) (text :t.applications/application)]
 
                   (not-empty (:application/comment event)))
-        request-id (:application/request-id event)
-        attachments-from (:application/attachments-from event)
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event
@@ -660,12 +682,11 @@
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.col-form-label.event-description [:b event-text]
-       (when (or request-id attachments-from)
+       (when-let [highlight-event-ids (seq (:highlight-event-ids event))]
          [:div.float-right
           [:a {:href "#"
                :on-click (fn [e]
-                           (rf/dispatch [::highlight-request-ids [request-id]])
-                           (rf/dispatch [::highlight-event-ids (map :event/id attachments-from)])
+                           (rf/dispatch [::highlight-event-ids highlight-event-ids])
                            false)}
            " " (text :t.applications/highlight-related-events)]])]
       (when decision
@@ -764,19 +785,12 @@
             [:h3 (text :t.form/events)]]
            (render-events events)))])
 
-(defn- highlight [event {:keys [request-ids event-ids]}]
-  (let [request-id (:application/request-id event)
-        event-id (:event/id event)]
-    (assoc event :highlight (or (some #{request-id} request-ids) ; TODO: dont highlight self if only
-                                (some #{event-id} event-ids)))))
-
-(defn- application-state [{:keys [application config highlight-request-ids highlight-event-ids userid]}]
+(defn- application-state [{:keys [application config highlight-event-ids userid]}]
   (let [state (:application/state application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
-                    (map #(highlight % {:request-ids highlight-request-ids
-                                        :event-ids highlight-event-ids}))
-                    reverse)
+                    (reverse)
+                    (map #(assoc % :highlight (contains? (set highlight-event-ids) (:event/id %)))))
         [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
      {:id "header"
@@ -1167,7 +1181,7 @@
                   (mapcat #(get-in % [:resource/duo :duo/codes])))]
     duos))
 
-(defn- render-application [{:keys [application config userid highlight-request-ids highlight-event-ids language]}]
+(defn- render-application [{:keys [application config userid highlight-event-ids language]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
@@ -1176,7 +1190,6 @@
     [:div.col-lg-8
      [application-state {:application application
                          :config config
-                         :highlight-request-ids highlight-request-ids
                          :highlight-event-ids highlight-event-ids
                          :userid userid}]
      [:div.mt-3 [applicants-info application userid]]
@@ -1209,7 +1222,6 @@
         application @(rf/subscribe [::application])
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
-        highlight-request-ids @(rf/subscribe [::highlight-request-ids])
         highlight-event-ids @(rf/subscribe [::highlight-event-ids])
         userid (:userid @(rf/subscribe [:user]))
         language @(rf/subscribe [:language])]
@@ -1229,7 +1241,6 @@
        [render-application {:application application
                             :config config
                             :userid userid
-                            :highlight-request-ids highlight-request-ids
                             :highlight-event-ids highlight-event-ids
                             :language language}])
      ;; Located after the application to avoid re-rendering the application

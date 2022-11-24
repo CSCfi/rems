@@ -442,24 +442,23 @@
 
 (defn- find-original-attachment-event-ids
   "Finds events from which the redacted attachments originate from,
-   and returns those events ids."
-  [redacted-attachments application]
-  (let [events (:application/events application)
-        redacted-ids (set (map :attachment/id redacted-attachments))]
-    (vec (for [event events
-               :let [event-attachment-ids (set (map :attachment/id (:event/attachments event)))]
-               :when (seq (clojure.set/intersection redacted-ids event-attachment-ids))]
-           (select-keys event [:event/id])))))
+   and returns those events id."
+  [cmd application]
+  (vec (for [event (:application/events application)
+             :let [event-attachment-ids (set (map :attachment/id (:event/attachments event)))]
+             redacted-id (map :attachment/id (:redacted-attachments cmd))
+             :when (contains? event-attachment-ids redacted-id)]
+         (merge (select-keys event [:event/id])
+                {:attachment/id redacted-id}))))
 
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
   (or (empty-redacted-attachments-error cmd)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
-                                    :application/redacted-attachments (vec (:redacted-attachments cmd))
-                                    :application/attachments-from (find-original-attachment-event-ids
-                                                                   (:redacted-attachments cmd)
-                                                                   application)
+                                    :application/redacted-attachments (find-original-attachment-event-ids
+                                                                       cmd
+                                                                       application)
                                     :application/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject
