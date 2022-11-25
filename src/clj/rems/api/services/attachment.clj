@@ -63,7 +63,9 @@
         ;; failsafe in case we have duplicate filenames in old
         ;; applications
         (try
-          (.putNextEntry zip (ZipEntry. (getx metadata :attachment/filename)))
+          (.putNextEntry zip (ZipEntry. (let [filename (getx metadata :attachment/filename)]
+                                          (if (= :filename/redacted filename)
+                                            "redacted" filename))))
           (.write zip (getx attachment :attachment/data))
           (.closeEntry zip)
           (catch ZipException e
