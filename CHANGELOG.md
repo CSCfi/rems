@@ -31,6 +31,7 @@ Changes since v2.30
 - The application Actions block is now successfully hidden, if there are no actions available (#2836)
 - The component guide page had accumulated some small errors that are now fixed. (#2836)
 - The component guide links to component source code works again. (#3080)
+- Saving application no longer crashes when a resource requires DUO:0000024 (MOR) code. This could occur when applicant had not entered a value for the date restriction field. (#3086)
 
 ## v2.30 "Kellosaarenranta" 2022-10-13
 
