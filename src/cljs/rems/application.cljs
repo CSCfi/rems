@@ -171,41 +171,42 @@
                                   :validation nil
                                   :attachment-status {}})))
 
-(defn- find-highlightable-event-ids
-  "Given event and all events, finds set of related events that can be visually
-   highlighted. Event type is used to map and filter related events."
-  [event events]
-  (case (:event/type event)
-    ;; TODO: find also the reverse, events whose attachments have been redacted?
-    :application.event/attachments-redacted
-    (-> (set (map :event/id (:application/redacted-attachments event)))
-        (conj (:event/id event)))
+(defn- set-highlightables-by-request-id [events]
+  (let [related-events (->> events
+                            (filter :application/request-id)
+                            (group-by :application/request-id)
+                            (filter (comp #(< 1 %) count second))
+                            (into {}))]
+    (for [event events
+          :let [request-id (:application/request-id event)
+                highlightable-event-ids (->> (get related-events request-id)
+                                             (map :event/id))]]
+      (update event :highlight-event-ids #(set (concat (or % [])
+                                                       highlightable-event-ids))))))
 
-    (:application.event/decided
-     :application.event/reviewed
-     :application.event/decision-requested
-     :application.event/review-requested
-     :application.event/reviewer-joined
-     :application.event/decider-joined)
-    (let [highlightable-events (set (for [highlightable-event events
-                                          :when (= (:application/request-id highlightable-event)
-                                                   (:application/request-id event))]
-                                      (:event/id highlightable-event)))]
-      (when (< 1 (count highlightable-events))
-        highlightable-events))
-
-    nil))
+(defn- set-highlightables-by-redacted-attachments [events]
+  (let [related-events (->> events
+                            (filter #(= :application.event/attachments-redacted
+                                        (:event/type %)))
+                            (mapcat (fn [event]
+                                      (->> (map :event/id (:application/redacted-attachments event))
+                                           (interleave (repeat (:event/id event))))))
+                            (partition 2))] ; pairs of [event redacted-event]
+    (for [event events
+          :let [event-id (:event/id event)
+                highlightable-event-ids (->> related-events
+                                             (find-first #(contains? (set %) event-id)))]]
+      (update event :highlight-event-ids #(set (concat (or % [])
+                                                       highlightable-event-ids))))))
 
 ;; XXX: updating events once after application fetch reduces the amount of work during rendering
 (defn- update-events-highlightables
   "Updates events with event ids that are related to the event so that they can
    be highlighted within the UI."
   [db]
-  (let [set-highlightables (fn [events event]
-                             (->> (find-highlightable-event-ids event events)
-                                  (assoc event :highlight-event-ids)))]
-    (update-in db [::application :data :application/events]
-               #(map (partial set-highlightables %) %))))
+  (update-in db [::application :data :application/events]
+             (comp set-highlightables-by-request-id
+                   set-highlightables-by-redacted-attachments)))
 
 (rf/reg-event-fx
  ::fetch-application-result
