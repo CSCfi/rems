@@ -1937,7 +1937,7 @@
                    (get-attachments application-id decider-id)))
             (is (= {:event/type "application.event/attachments-redacted"
                     :application/redacted-attachments [{:attachment/id attachment-id
-                                                    :event/id (:event/id remark-event)}]}
+                                                        :event/id (:event/id remark-event)}]}
                    (-> (get-last-event application-id applicant-id)
                        (select-keys [:application/redacted-attachments :event/type])))
                 "redacted event contains event id from which redacted attachment originates")
