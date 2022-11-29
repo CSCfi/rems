@@ -1,4 +1,4 @@
-(ns rems.standalone
+(ns rems.main
   "Run the REMS app in an embedded http server."
   (:require [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
