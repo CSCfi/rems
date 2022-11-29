@@ -106,7 +106,7 @@ jobs:
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
-      - run: lein uberjar
+      - run: lein with-profile $profile uberjar # fix a bug in leiningen 2.9.9-2.9.10, fix in 2.9.11
       - store_artifacts:
           path: target/uberjar/rems.jar
       - persist_to_workspace:
