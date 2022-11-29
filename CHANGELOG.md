@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.30
+Changes since v2.31
+
+## v2.31 "Harmajankatu" 2022-11-29
 
 ### Changes
 - The location of the success message of a submit has been changed from the top of the page to the Actions block. (#2836)
