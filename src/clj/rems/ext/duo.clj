@@ -223,9 +223,11 @@
        ;;  results of studies until a specific date."
       "DUO:0000024" (let [required-dt (map-restrictions dataset-code :date)
                           dt (map-restrictions query-code :date)]
-                      (if (or (time/equal? dt required-dt)
-                              (not (time/before? dt required-dt)))
-                        :duo/compatible :duo/not-compatible))
+                      (if (nil? dt)
+                        :duo/not-compatible ; when autosaving, nil is initially expected
+                        (if (or (time/equal? dt required-dt)
+                                (not (time/before? dt required-dt)))
+                          :duo/compatible :duo/not-compatible)))
 
       (if (seq (:restrictions dataset-code))
         :duo/needs-manual-validation

@@ -2434,7 +2434,8 @@
       ;; - MONDO:0005105 - melanoma
       ;;   - MONDO:0006486 - uveal melanoma
       (let [res1 (test-helpers/create-resource! {:resource-ext-id ext1
-                                                 :resource/duo {:duo/codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
+                                                 :resource/duo {:duo/codes [{:id "DUO:0000016"}
+                                                                            {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}]}})
             res2 (test-helpers/create-resource! {:resource-ext-id ext2
                                                  :resource/duo {:duo/codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "csc rems"}]}]}
                                                                             {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0005105"}]}]}]}})
@@ -2447,10 +2448,16 @@
                                {:type :application.command/save-draft
                                 :application-id app-id
                                 :field-values []
-                                :duo-codes [{:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
+                                :duo-codes [{:id "DUO:0000024" :restrictions []}
+                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
                                             {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0045024"
                                                                                                       :label "cancer or benign tumor"}]}]}]})))
-          (is (= {:duo/codes [{:id "DUO:0000027"
+          (is (= {:duo/codes [{:id "DUO:0000024"
+                               :restrictions []
+                               :description {:en "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."}
+                               :label {:en "publication moratorium"}
+                               :shorthand "MOR"}
+                              {:id "DUO:0000027"
                                :restrictions [{:type "project" :values [{:value "project id"}]}]
                                :description {:en "This data use modifier indicates that use is limited to use within an approved project."}
                                :label {:en "project specific restriction"}
@@ -2462,10 +2469,15 @@
                                :label {:en "disease specific research"}
                                :shorthand "DS"}]
                   :duo/matches [{:resource/id res1
+                                 :duo/id "DUO:0000016"
+                                 :duo/label {:en "genetic studies only"}
+                                 :duo/shorthand "GSO"
+                                 :duo/validation {:errors [] :validity "duo/not-found"}}
+                                {:resource/id res1
                                  :duo/id "DUO:0000024"
                                  :duo/label {:en "publication moratorium"}
                                  :duo/shorthand "MOR"
-                                 :duo/validation {:errors [] :validity "duo/not-found"}}
+                                 :duo/validation {:errors [] :validity "duo/not-compatible"}}
                                 {:resource/id res2
                                  :duo/id "DUO:0000027"
                                  :duo/label {:en "project specific restriction"}
@@ -2492,10 +2504,16 @@
                                {:type :application.command/save-draft
                                 :application-id app-id
                                 :field-values []
-                                :duo-codes [{:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
+                                :duo-codes [{:id "DUO:0000016" :restrictions []}
+                                            {:id "DUO:0000024" :restrictions [{:type :date :values [{:value "2022-02-16"}]}]}
                                             {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "project id"}]}]}
                                             {:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0006486"}]}]}]})))
-          (is (= {:duo/codes [{:id "DUO:0000024"
+          (is (= {:duo/codes [{:id "DUO:0000016"
+                               :restrictions []
+                               :description {:en "This data use modifier indicates that use is limited to genetic studies only (i.e., studies that include genotype research alone or both genotype and phenotype research, but not phenotype research exclusively)"}
+                               :label {:en "genetic studies only"}
+                               :shorthand "GSO"}
+                              {:id "DUO:0000024"
                                :restrictions [{:type "date" :values [{:value "2022-02-16"}]}]
                                :description {:en "This data use modifier indicates that requestor agrees not to publish results of studies until a specific date."}
                                :label {:en "publication moratorium"}
@@ -2512,6 +2530,11 @@
                                :label {:en "disease specific research"}
                                :shorthand "DS"}]
                   :duo/matches [{:resource/id res1
+                                 :duo/id "DUO:0000016"
+                                 :duo/label {:en "genetic studies only"}
+                                 :duo/shorthand "GSO"
+                                 :duo/validation {:errors [] :validity "duo/compatible"}}
+                                {:resource/id res1
                                  :duo/id "DUO:0000024"
                                  :duo/label {:en "publication moratorium"}
                                  :duo/shorthand "MOR"
