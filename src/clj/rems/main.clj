@@ -1,5 +1,6 @@
 (ns rems.main
-  "Run the REMS app in an embedded http server."
+  "Run REMS CLI functions including the embedded HTTP server. Available CLI functions
+   are described in more detail by rems.main/-main docstring."
   (:require [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
