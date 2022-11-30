@@ -1,4 +1,4 @@
-(ns rems.db.test-data
+(ns rems.service.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
             [clojure.string :as str]
