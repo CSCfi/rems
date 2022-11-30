@@ -28,7 +28,7 @@ read-only to guarantee that our GETs are pure.
 ## Strict ordering of commands via locking
 
 Our application commands are processed roughly in the following way
-(implementation: `rems.api.services.command/command!`):
+(implementation: `rems.service.command/command!`):
 
 1. get all events for application from the `application_event` table
    - NB! we have caching for `get-all-applications` but not for `get-unrestricted-application`, which is used here
