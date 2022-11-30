@@ -1,5 +1,7 @@
 (ns rems.service.test-data
-  "Populating the database with nice test data."
+  "Generate and populate database with usable test data. Contains multiple high-level
+   test data helper functions. Separate functions are provided to generate complete
+   test and demo data, which create the same data, but with different users."
   (:require [clj-time.core :as time]
             [clojure.string :as str]
             [clojure.test :refer :all]
