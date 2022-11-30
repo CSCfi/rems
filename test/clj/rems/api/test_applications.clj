@@ -11,7 +11,7 @@
             [rems.db.attachments]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.json]

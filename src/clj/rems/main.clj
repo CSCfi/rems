@@ -18,7 +18,7 @@
             [rems.db.core :as db]
             [rems.db.fix-userid]
             [rems.db.roles :as roles]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]

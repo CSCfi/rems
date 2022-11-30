@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.application.search :as search]
             [rems.db.applications :as applications]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
 

@@ -3,7 +3,7 @@
             [rems.api.testing :refer :all]
             [rems.testing-util :refer [with-fake-login-users]]
             [rems.db.roles :as roles]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]

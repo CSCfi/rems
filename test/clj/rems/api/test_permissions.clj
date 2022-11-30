@@ -4,7 +4,7 @@
             [buddy.core.keys :as buddy-keys]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.config]
             [rems.ga4gh :as ga4gh]

@@ -3,7 +3,7 @@
             [rems.service.invitation :as invitation]
             [rems.api.testing :refer :all]
             [rems.db.applications]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.json]
             [rems.testing-util :refer [with-user]]

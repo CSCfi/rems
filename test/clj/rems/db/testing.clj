@@ -11,7 +11,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.user-mappings :as user-mappings]
             [rems.locales])
   (:import [org.joda.time Duration ReadableInstant]))

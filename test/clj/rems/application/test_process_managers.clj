@@ -5,7 +5,7 @@
             [rems.api.testing :refer :all]
             [rems.db.attachments :as attachments]
             [rems.db.applications :as applications]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))

@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-extra-pages
   (:require [clojure.test :refer :all]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
