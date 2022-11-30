@@ -70,7 +70,7 @@
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; also run tests from src files
   :resource-paths ["resources" "target/shadow"]
   :target-path "target/%s/"
-  :main rems.standalone
+  :main rems.main
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljfmt "0.6.7"]
