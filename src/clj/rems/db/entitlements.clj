@@ -6,7 +6,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
-            [rems.api.services.ega :as ega]
+            [rems.service.ega :as ega]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]

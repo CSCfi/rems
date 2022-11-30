@@ -4,7 +4,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
-            [rems.api.services.dependencies :as dependencies]
+            [rems.service.dependencies :as dependencies]
             [rems.application.search]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]

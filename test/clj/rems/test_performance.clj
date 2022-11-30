@@ -3,7 +3,7 @@
             [criterium.core :as criterium]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
-            [rems.api.services.todos :as todos]
+            [rems.service.todos :as todos]
             [rems.db.applications :as applications]
             [rems.db.events :as events])
   (:import [java.util Locale]))

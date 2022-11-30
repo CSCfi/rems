@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.services.catalogue :as catalogue]
+            [rems.service.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
             [rems.db.core :as db]

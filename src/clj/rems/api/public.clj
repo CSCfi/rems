@@ -1,7 +1,7 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util] ; required for route :roles
-            [rems.api.services.public :as public]
+            [rems.service.public :as public]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

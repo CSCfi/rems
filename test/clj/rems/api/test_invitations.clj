@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-invitations
   (:require [clojure.test :refer :all]
-            [rems.api.services.invitation :as invitation]
+            [rems.service.invitation :as invitation]
             [rems.api.testing :refer :all]
             [rems.db.applications]
             [rems.db.test-data :as test-data]

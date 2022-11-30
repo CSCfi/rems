@@ -3,8 +3,8 @@
 
   NB: An event manager should return an empty sequence (or `nil`) if it doesn't create new events itself."
   (:require [clojure.set :refer [difference]]
-            [rems.api.services.attachment :as attachment]
-            [rems.api.services.blacklist :as blacklist]
+            [rems.service.attachment :as attachment]
+            [rems.service.blacklist :as blacklist]
             [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]))

@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
-            [rems.api.services.licenses :as licenses]
-            [rems.api.services.workflow :as workflows]
+            [rems.service.licenses :as licenses]
+            [rems.service.workflow :as workflows]
             [rems.api.testing :refer :all]
             [rems.common.util :refer [replace-key]]
             [rems.db.applications :as applications]

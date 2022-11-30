@@ -9,7 +9,7 @@
             [luminus.repl-server :as repl]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
-            [rems.api.services.ega :as ega]
+            [rems.service.ega :as ega]
             [rems.application.search :as search]
             [rems.common.git :as git]
             [rems.config :refer [env]]

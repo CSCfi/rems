@@ -1,7 +1,7 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.services.workflow :as workflow]
+            [rems.service.workflow :as workflow]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.application.events :as events]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
