@@ -1,8 +1,8 @@
-(ns rems.api.services.form
+(ns rems.service.form
   (:require [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util :as util]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.db.core :as db]

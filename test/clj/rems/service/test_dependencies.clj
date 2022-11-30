@@ -1,6 +1,6 @@
-(ns ^:integration rems.api.services.test-dependencies
+(ns ^:integration rems.service.test-dependencies
   (:require [clojure.test :refer :all]
-            [rems.api.services.dependencies :as dependencies]
+            [rems.service.dependencies :as dependencies]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture test-db-fixture rollback-db-fixture]]))

@@ -1,6 +1,6 @@
-(ns ^:integration rems.api.services.test-organizations
+(ns ^:integration rems.service.test-organizations
   (:require [clojure.test :refer :all]
-            [rems.api.services.organizations :as organizations]
+            [rems.service.organizations :as organizations]
             [rems.db.organizations]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]

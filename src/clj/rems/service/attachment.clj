@@ -1,4 +1,4 @@
-(ns rems.api.services.attachment
+(ns rems.service.attachment
   (:require [clojure.set :as set]
             [clojure.tools.logging :as log]
             [medley.core :refer [assoc-some find-first]]

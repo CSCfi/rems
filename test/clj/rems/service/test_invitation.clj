@@ -1,6 +1,6 @@
-(ns ^:integration rems.api.services.test-invitation
+(ns ^:integration rems.service.test-invitation
   (:require [clojure.test :refer :all]
-            [rems.api.services.invitation :as invitation]
+            [rems.service.invitation :as invitation]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.email.core :as email]

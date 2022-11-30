@@ -1,4 +1,4 @@
-(ns rems.api.services.util
+(ns rems.service.util
   (:require [clojure.test :refer [deftest is testing]]
             [rems.db.organizations]
             [rems.auth.util :refer [throw-forbidden]]

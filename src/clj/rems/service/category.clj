@@ -1,7 +1,7 @@
-(ns rems.api.services.category
+(ns rems.service.category
   (:require [medley.core :refer [update-existing-in]]
             [rems.db.category :as category]
-            [rems.api.services.dependencies :as dependencies]))
+            [rems.service.dependencies :as dependencies]))
 
 (defn join-categories [m ks]
   (update-existing-in m ks category/enrich-categories))

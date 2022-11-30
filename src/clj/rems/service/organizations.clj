@@ -1,8 +1,8 @@
-(ns rems.api.services.organizations
+(ns rems.service.organizations
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some find-first]]
-            [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util]
             [rems.auth.util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -56,7 +56,7 @@
 
 (defn edit-organization! [cmd]
   (let [id (:organization/id cmd)]
-    (rems.api.services.util/check-allowed-organization! cmd)
+    (rems.service.util/check-allowed-organization! cmd)
     (organizations/update-organization! id (fn [organization] (->> (dissoc cmd :organization/id)
                                                                    (merge organization))))
     {:success true

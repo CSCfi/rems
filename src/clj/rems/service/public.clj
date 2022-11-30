@@ -1,4 +1,4 @@
-(ns rems.api.services.public
+(ns rems.service.public
   (:require [rems.config :refer [env]]
             [rems.locales :as locales]
             [rems.common.roles :as roles]))
