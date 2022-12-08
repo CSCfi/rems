@@ -65,7 +65,8 @@
         (try
           (.putNextEntry zip (ZipEntry. (let [filename (getx metadata :attachment/filename)]
                                           (if (= :filename/redacted filename)
-                                            "redacted" filename))))
+                                            "redacted"
+                                            filename))))
           (.write zip (getx attachment :attachment/data))
           (.closeEntry zip)
           (catch ZipException e
