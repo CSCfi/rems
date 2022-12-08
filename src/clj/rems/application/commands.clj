@@ -440,9 +440,9 @@
   (when (empty? (:redacted-attachments cmd))
     {:errors [{:type :empty-redacted-attachments}]}))
 
-(defn- find-original-attachment-event-ids
+(defn- find-redacted-attachments
   "Finds events from which the redacted attachments originate from,
-   and returns those events id."
+   and returns those events id with the redacted attachment id."
   [cmd application]
   (vec (for [event (:application/events application)
              :let [event-attachment-ids (set (map :attachment/id (:event/attachments event)))]
@@ -456,7 +456,7 @@
   (or (empty-redacted-attachments-error cmd)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
-                                    :application/redacted-attachments (find-original-attachment-event-ids
+                                    :application/redacted-attachments (find-redacted-attachments
                                                                        cmd
                                                                        application)
                                     :application/public (:public cmd)})))
