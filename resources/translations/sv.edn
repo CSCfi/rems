@@ -170,6 +170,7 @@
                  :applicant "Sökande"
                  :application "Ansökan"
                  :applications "Ansökningar"
+                 :attachment-filename-redacted "Bilagan borttagen"
                  :continue-existing-application "Återuppta ansökan"
                  :copied-from "Kopierat från ansökan"
                  :copied-to "Kopierat till ansökan"
@@ -180,6 +181,7 @@
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
+                          :attachments-redacted "%1 tog bort bilagor. %2"
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."
@@ -223,6 +225,7 @@
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"
+                 :redacted-attachments-replaced "Nya bilagor byts ut gamla bilagor."
                  :resource "Resurs"
                  :state "Status"
                  :states {:approved "Godkänd"

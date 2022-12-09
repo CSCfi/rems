@@ -198,6 +198,10 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
+(defmethod application-base-view :application.event/attachments-redacted
+  [application _event]
+  application)
+
 (defmethod application-base-view :application.event/remarked
   [application _event]
   application)
@@ -296,6 +300,7 @@
     {:permission :application.command/invite-decider}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/redact-attachments}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -327,6 +332,7 @@
     {:permission :application.command/delete}
     {:permission :application.command/invite-member}
     {:permission :application.command/invite-reviewer}
+    {:permission :application.command/redact-attachments}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-decision}
@@ -691,6 +697,7 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+      ;(update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
@@ -714,7 +721,8 @@
                                   :application.event/decider-joined
                                   :application.event/decision-requested})
 (deftest test-sensitive-events
-  (let [public-events #{:application.event/applicant-changed
+  (let [public-events #{:application.event/attachments-redacted
+                        :application.event/applicant-changed
                         :application.event/approved
                         :application.event/closed
                         :application.event/copied-from
@@ -746,11 +754,8 @@
 
 (defn- hide-sensitive-events [events]
   (->> events
-       (remove (comp sensitive-events
-                     :event/type))
-       (remove #(and (= :application.event/remarked
-                        (:event/type %))
-                     (not (:application/public %))))))
+       (remove (comp sensitive-events :event/type))
+       (remove (comp false? :application/public)))) ; :application/public might not be set
 
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))
@@ -860,6 +865,20 @@
       (user-is-applicant-or-member permissions)
       (not= #{:everyone-else} permissions))))
 
+(defn- get-redacted-attachment-ids [application]
+  (->> (:application/events application)
+       (filter (comp #{:application.event/attachments-redacted} :event/type))
+       (mapcat :application/redacted-attachments)
+       (map :attachment/id)
+       set))
+
+(defn- mask-redacted-attachments [application]
+  (let [redacted-ids (get-redacted-attachment-ids application)
+        redacted? #(contains? redacted-ids (:attachment/id %))]
+    (->> application
+         (transform [:application/attachments ALL redacted?]
+                    #(assoc % :attachment/filename :filename/redacted)))))
+
 (defn apply-user-permissions [application userid]
   (let [see-application? (see-application? application userid)
         roles (permissions/user-roles application userid)
@@ -873,6 +892,7 @@
           (hide-non-public-information)
           (apply-privacy roles)
           (hide-attachments)
+          (mask-redacted-attachments)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

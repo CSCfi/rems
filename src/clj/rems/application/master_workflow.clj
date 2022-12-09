@@ -41,6 +41,7 @@
     :application.command/add-member
     :application.command/assign-external-id
     :application.command/change-resources
+    :application.command/redact-attachments
     :application.command/remove-member
     :application.command/invite-decider
     :application.command/invite-member
@@ -76,16 +77,20 @@
   {:applicant non-submittable-application-commands
    :handler (conj handler-all-commands :see-everything)
    :reviewer #{:see-everything
+               :application.command/redact-attachments
                :application.command/remark
                :application.command/review}
    :past-reviewer #{:see-everything
+                    :application.command/redact-attachments
                     :application.command/remark}
    :decider #{:see-everything
+              :application.command/redact-attachments
               :application.command/remark
               :application.command/decide
               :application.command/approve
               :application.command/reject}
    :past-decider #{:see-everything
+                   :application.command/redact-attachments
                    :application.command/remark}})
 
 (def ^:private returned-permissions
@@ -93,12 +98,14 @@
                     :application.command/close)
    :handler (conj handler-returned-commands :see-everything)
    :decider #{:see-everything
+              :application.command/redact-attachments
               :application.command/remark
               :application.command/decide}})
 
 (def ^:private approved-permissions
   {:applicant non-submittable-application-commands
    :handler #{:see-everything
+              :application.command/redact-attachments
               :application.command/remark
               :application.command/add-member
               :application.command/change-resources
@@ -108,6 +115,7 @@
               :application.command/close
               :application.command/revoke}
    :decider #{:see-everything
+              :application.command/redact-attachments
               :application.command/remark
               :application.command/decide}})
 
@@ -115,6 +123,7 @@
   {:applicant #{:application.command/copy-as-new}
    :member #{:application.command/copy-as-new}
    :handler #{:see-everything
+              :application.command/redact-attachments
               :application.command/remark}
    :reviewer #{:see-everything}
    :past-reviewer #{:see-everything}

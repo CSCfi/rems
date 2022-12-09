@@ -3,7 +3,7 @@
             [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [find-first update-existing]]
+            [medley.core :refer [find-first filter-vals update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -171,12 +171,53 @@
                                   :validation nil
                                   :attachment-status {}})))
 
+(defn- set-highlightables-by-request-id
+  "Given set of events, for each event find all events that share the
+   same :application/request-id and add them into event :highlight-event-ids."
+  [events]
+  (let [related-events (->> events
+                            (filter :application/request-id)
+                            (group-by :application/request-id)
+                            (filter-vals (comp #(> % 1) count)))]
+    (for [event events
+          :let [request-id (:application/request-id event)
+                highlightable-event-ids (->> (get related-events request-id)
+                                             (map :event/id)
+                                             (set))]]
+      (update event :highlight-event-ids into highlightable-event-ids))))
+
+(defn- set-highlightables-by-redacted-attachments
+  "Given set of events, for each event of type :application.event/attachments-redacted
+   find all related events whose attachments were redacted and add them into event
+   :highlight-event-ids. For each related event, add :application.event/attachments-redacted
+   event into :highlight-event-ids."
+  [events]
+  (let [related-events (for [event events
+                             :when (= :application.event/attachments-redacted
+                                      (:event/type event))
+                             redacted-attachment (:application/redacted-attachments event)]
+                         #{(:event/id redacted-attachment) (:event/id event)})]
+    (for [event events
+          :let [event-id (:event/id event)
+                highlightable-event-ids (->> related-events
+                                             (filter #(contains? % event-id))
+                                             (reduce into #{}))]]
+      (update event :highlight-event-ids into highlightable-event-ids))))
+
+(defn- update-events-highlightables
+  "Updates events with event ids that are related to the event so that they can
+   be highlighted within the UI."
+  [db]
+  (update-in db [::application :data :application/events]
+             (comp set-highlightables-by-request-id
+                   set-highlightables-by-redacted-attachments)))
 
 (rf/reg-event-fx
  ::fetch-application-result
  (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      {:db (cond-> (update db ::application fetcher/finished application)
+            true (update-events-highlightables)
             (or initial-fetch? full-reload?) (initialize-edit-application))})))
 
 (rf/reg-event-db
@@ -452,14 +493,14 @@
      nil (filterv #(not= application-id (:application/id %)) data))))
 
 (rf/reg-event-db
- ::highlight-request-id
- (fn [db [_ request-id]]
-   (assoc db ::highlight-request-id request-id)))
+ ::highlight-event-ids
+ (fn [db [_ event-ids]]
+   (assoc db ::highlight-event-ids event-ids)))
 
 (rf/reg-sub
- ::highlight-request-id
+ ::highlight-event-ids
  (fn [db _]
-   (::highlight-request-id db)))
+   (::highlight-event-ids db)))
 
 ;;;; UI components
 
@@ -637,9 +678,7 @@
                   :application.event/copied-to
                   [application-link (:application/copied-to event) (text :t.applications/application)]
 
-                  (when (not (empty? (:application/comment event)))
-                    (:application/comment event)))
-        request-id (:application/request-id event)
+                  (not-empty (:application/comment event)))
         attachments (:event/attachments event)
         time (localize-time (:event/time event))]
     [:div.row.event
@@ -648,11 +687,11 @@
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.col-form-label.event-description [:b event-text]
-       (when request-id
+       (when-let [highlight-event-ids (seq (:highlight-event-ids event))]
          [:div.float-right
           [:a {:href "#"
                :on-click (fn [e]
-                           (rf/dispatch [::highlight-request-id request-id])
+                           (rf/dispatch [::highlight-event-ids highlight-event-ids])
                            false)}
            " " (text :t.applications/highlight-related-events)]])]
       (when decision
@@ -751,14 +790,12 @@
             [:h3 (text :t.form/events)]]
            (render-events events)))])
 
-(defn- application-state [application config highlight-request-id userid]
+(defn- application-state [{:keys [application config highlight-event-ids userid]}]
   (let [state (:application/state application)
         events (->> (events-with-attachments application)
                     (sort-by :event/time)
-                    (map #(assoc % :highlight
-                                 (and highlight-request-id
-                                      (= (:application/request-id %) highlight-request-id))))
-                    reverse)
+                    (reverse)
+                    (map #(assoc % :highlight (contains? (set highlight-event-ids) (:event/id %)))))
         [events-show-always events-collapse] (split-at 3 events)]
     [collapsible/component
      {:id "header"
@@ -1149,14 +1186,17 @@
                   (mapcat #(get-in % [:resource/duo :duo/codes])))]
     duos))
 
-(defn- render-application [{:keys [application config userid highlight-request-id language]}]
+(defn- render-application [{:keys [application config userid highlight-event-ids language]}]
   [:<>
    [disabled-items-warning application]
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
-     [application-state application config highlight-request-id userid]
+     [application-state {:application application
+                         :config config
+                         :highlight-event-ids highlight-event-ids
+                         :userid userid}]
      [:div.mt-3 [applicants-info application userid]]
      (when (:show-resources-section config)
        [:div.mt-3 [applied-resources application userid language]])
@@ -1187,7 +1227,7 @@
         application @(rf/subscribe [::application])
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
-        highlight-request-id @(rf/subscribe [::highlight-request-id])
+        highlight-event-ids @(rf/subscribe [::highlight-event-ids])
         userid (:userid @(rf/subscribe [:user]))
         language @(rf/subscribe [:language])]
     [:div.container-fluid
@@ -1206,7 +1246,7 @@
        [render-application {:application application
                             :config config
                             :userid userid
-                            :highlight-request-id highlight-request-id
+                            :highlight-event-ids highlight-event-ids
                             :language language}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.

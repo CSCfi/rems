@@ -42,3 +42,12 @@
   (doseq [event new-events]
     (when (= :application.event/submitted (:event/type event))
       (delete-orphan-attachments (:application/id event)))))
+
+(defn clear-redacted-attachments
+  "`:application.event/attachments-redacted` causes a side-effect that clears
+   contents of the redacted attachments in database."
+  [new-events]
+  (doseq [event new-events
+          :when (= :application.event/attachments-redacted (:event/type event))
+          attachment (:application/redacted-attachments event)]
+    (attachments/redact-attachment! (:attachment/id attachment))))

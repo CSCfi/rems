@@ -30,7 +30,8 @@
    (bona-fide-bot/run-bona-fide-bot new-events)
    (event-notification/queue-notifications! new-events)
    (process-managers/delete-applications new-events)
-   (process-managers/delete-orphan-attachments-on-submit new-events)))
+   (process-managers/delete-orphan-attachments-on-submit new-events)
+   (process-managers/clear-redacted-attachments new-events)))
 
 (def ^:private command-injections
   (merge applications/fetcher-injections

@@ -117,6 +117,12 @@
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
                               :email s/Str}))
+(s/defschema AttachmentsRedactedEvent
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/attachments-redacted)
+         :application/redacted-attachments [(merge EventAttachment
+                                                   {:event/id schema-base/EventId})]
+         :application/public s/Bool))
 (s/defschema ApplicantChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/applicant-changed)
@@ -170,7 +176,8 @@
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas
-  {:application.event/applicant-changed ApplicantChangedEvent
+  {:application.event/attachments-redacted AttachmentsRedactedEvent
+   :application.event/applicant-changed ApplicantChangedEvent
    :application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
    :application.event/review-requested ReviewRequestedEvent

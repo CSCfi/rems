@@ -197,7 +197,7 @@
 
 (s/defschema ApplicationAttachment
   {:attachment/id s/Int
-   :attachment/filename s/Str
+   :attachment/filename (s/cond-pre s/Str (s/enum :filename/redacted))
    :attachment/type s/Str})
 
 (s/defschema BlacklistEntry

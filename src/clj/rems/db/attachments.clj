@@ -1,9 +1,7 @@
 (ns rems.db.attachments
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.common.application-util :refer [form-fields-editable?]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
   (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
@@ -110,6 +108,13 @@
   {:id (:attachment/id attachment)
    :success true})
 
+(defn redact-attachment!
+  "Updates the attachment by zeroing the file data."
+  [attachment-id]
+  (db/redact-attachment! {:id attachment-id})
+  {:id attachment-id
+   :success true})
+
 (defn copy-attachment! [new-application-id attachment-id]
   (let [attachment (db/get-attachment {:id attachment-id})]
     (:id (db/save-attachment! {:application new-application-id
@@ -120,3 +125,4 @@
 
 (defn delete-attachment! [attachment-id]
   (db/delete-attachment! {:id attachment-id}))
+

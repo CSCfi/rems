@@ -138,6 +138,7 @@
 (def ^:private event-types
   {:application.event/applicant-changed :t.applications.events/applicant-changed
    :application.event/approved :t.applications.events/approved
+   :application.event/attachments-redacted :t.applications.events/attachments-redacted
    :application.event/closed :t.applications.events/closed
    :application.event/review-requested :t.applications.events/review-requested
    :application.event/reviewed :t.applications.events/reviewed
@@ -222,6 +223,10 @@
         (str/join ", " (mapv #(localized (:catalogue-item/title %))
                              (:application/resources event)))
 
+        :application.event/attachments-redacted
+        (when (seq (:event/attachments event))
+          (text :t.applications/redacted-attachments-replaced))
+
         nil))
      (case event-type
        :application.event/approved
@@ -229,3 +234,11 @@
          (str " " (text-format :t.applications/entitlement-end (localize-utc-date end))))
 
        nil))))
+
+(defn localize-attachment
+  "If attachment is redacted, return localized text for redacted attachment.
+   Otherwise return value of :attachment/filename."
+  [attachment]
+  (if (= :filename/redacted (:attachment/filename attachment))
+    (text :t.applications/attachment-filename-redacted)
+    (:attachment/filename attachment)))
