@@ -4,7 +4,7 @@
             [reagent.core :as reagent]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text localized]]
+            [rems.text :refer [text localized localize-attachment]]
             [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
@@ -121,34 +121,30 @@
        [:label title]
        (into [:div style] values)])))
 
-(defn download-button
-  ([title url] (download-button {} title url))
-  ([{:keys [disabled?]} title url]
-   [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
-                :href url
-                :target :_blank
-                :title title
-                :style {:max-width "25em"}}
-         disabled? (-> (dissoc :href :target)
-                       (update :class conj :disabled)))
-    [file-download] " " title]))
+(defn download-button [{:keys [disabled? title url]}]
+  [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
+               :href url
+               :target :_blank
+               :title title
+               :style {:max-width "25em"}}
+        disabled? (-> (dissoc :href :target)
+                      (update :class conj :disabled)))
+   [file-download] " " title])
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
-  [download-button title (str "/api/licenses/attachments/" id)])
+  [download-button {:title title
+                    :url (str "/api/licenses/attachments/" id)}])
 
 (defn attachment-link
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
   (when attachment
-    (let [redacted? (= :filename/redacted (:attachment/filename attachment))
-          filename (if redacted?
-                     (text :t.applications/attachment-filename-redacted)
-                     (:attachment/filename attachment))
-          url (str "/applications/attachment/" (:attachment/id attachment))]
-      [:div.field
-       [download-button {:disabled? redacted?} filename url]])))
+    [:div.field
+     [download-button {:disabled? (= :filename/redacted (:attachment/filename attachment))
+                       :title (localize-attachment attachment)
+                       :url (str "/applications/attachment/" (:attachment/id attachment))}]]))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)

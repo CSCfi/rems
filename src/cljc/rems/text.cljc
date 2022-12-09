@@ -234,3 +234,11 @@
          (str " " (text-format :t.applications/entitlement-end (localize-utc-date end))))
 
        nil))))
+
+(defn localize-attachment
+  "If attachment is redacted, return localized text for redacted attachment.
+   Otherwise return value of :attachment/filename."
+  [attachment]
+  (if (= :filename/redacted (:attachment/filename attachment))
+    (text :t.applications/attachment-filename-redacted)
+    (:attachment/filename attachment)))

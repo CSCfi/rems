@@ -8,7 +8,7 @@
             [rems.common.util :refer [build-index]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.text :refer [localized localize-decision localize-event localize-state localize-time text text-format with-language]]
+            [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-time text text-format with-language]]
             [rems.util :refer [getx]])
   (:import [java.io ByteArrayOutputStream]))
 
@@ -125,7 +125,7 @@
 (defn- attachment-filenames [application]
   (->> (:application/attachments application)
        (build-index {:keys [:attachment/id]
-                     :value-fn :attachment/filename})))
+                     :value-fn localize-attachment})))
 
 (defn- field-value [filenames field]
   (let [value (:field/value field)]
