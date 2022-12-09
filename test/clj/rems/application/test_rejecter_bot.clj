@@ -1,7 +1,7 @@
 (ns ^:integration rems.application.test-rejecter-bot
   (:require [clojure.test :refer :all]
-            [rems.api.services.blacklist :as blacklist]
-            [rems.api.services.command :as command]
+            [rems.service.blacklist :as blacklist]
+            [rems.service.command :as command]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
@@ -10,7 +10,7 @@
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
-;; These tests are integration tests via rems.api.service.command
+;; These tests are integration tests via rems.service.command
 ;; since we'd need to mock get-application to unit-test
 ;; run-rejecter-bot.
 

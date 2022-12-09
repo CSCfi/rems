@@ -67,7 +67,7 @@
                                                 (json-body {:boing "3"})
                                                 handler))))
             (testing "> status 500"
-              (with-redefs [rems.api.services.command/command! (fn [_] (throw (Error. "BOOM")))]
+              (with-redefs [rems.service.command/command! (fn [_] (throw (Error. "BOOM")))]
                 (is (response-is-server-error? (-> (request :post "/api/applications/submit")
                                                    (authenticate "42" "alice")
                                                    (json-body {:application-id 3})

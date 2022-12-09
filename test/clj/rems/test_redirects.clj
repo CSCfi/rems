@@ -1,7 +1,7 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
-            [rems.api.services.attachment :as attachment]
-            [rems.api.services.licenses :as licenses]
+            [rems.service.attachment :as attachment]
+            [rems.service.licenses :as licenses]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]

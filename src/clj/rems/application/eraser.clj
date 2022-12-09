@@ -2,7 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [clj-time.core :as time]
             [mount.core :as mount]
-            [rems.api.services.command :as command]
+            [rems.service.command :as command]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]

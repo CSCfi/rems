@@ -5,7 +5,7 @@
             [rems.application.commands :as commands]
             [rems.application.eraser :as eraser]
             [rems.application.expirer-bot :as expirer-bot]
-            [rems.api.services.command :as command]
+            [rems.service.command :as command]
             [rems.config :refer [env]]
             [rems.locales]
             [rems.db.applications :as applications]

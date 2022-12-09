@@ -1,7 +1,7 @@
-(ns ^:integration rems.api.services.test-resources
+(ns ^:integration rems.service.test-resources
   (:require [clojure.test :refer :all]
-            [rems.api.services.licenses :as licenses]
-            [rems.api.services.resource :as resources]
+            [rems.service.licenses :as licenses]
+            [rems.service.resource :as resources]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))

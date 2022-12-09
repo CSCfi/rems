@@ -1,7 +1,7 @@
 (ns rems.api.catalogue
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.services.catalogue :as catalogue]
+            [rems.service.catalogue :as catalogue]
             [rems.api.util] ; required for route :roles
             [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
             [rems.config :refer [env]]

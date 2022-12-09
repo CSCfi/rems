@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [medley.core :refer [dissoc-in]]
             [rems.config]
-            [rems.api.services.command :as command]
+            [rems.service.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
             [rems.db.events]
             [rems.db.test-data :as test-data]

@@ -1,6 +1,6 @@
 (ns rems.api.invitations
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.services.invitation :as invitation]
+            [rems.service.invitation :as invitation]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]

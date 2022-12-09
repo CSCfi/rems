@@ -1,6 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.services.form :as form]
+            [rems.service.form :as form]
             [rems.api.schema :as schema]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]

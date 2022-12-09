@@ -686,7 +686,7 @@
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest test-form-missing-languages
-  (let [id (with-redefs [rems.api.services.form/validation-error (constantly nil)] ;; disable validation
+  (let [id (with-redefs [rems.service.form/validation-error (constantly nil)] ;; disable validation
              (test-helpers/create-form! {:form/internal-name "invalid form"
                                          :form/external-title {:en "Invalid Form EN" :fi ""}
                                          :form/fields [{:field/id "fld1"

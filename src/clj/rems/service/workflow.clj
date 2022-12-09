@@ -1,6 +1,6 @@
-(ns rems.api.services.workflow
-  (:require [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util :as util]
+(ns rems.service.workflow
+  (:require [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]

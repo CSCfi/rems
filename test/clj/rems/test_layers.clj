@@ -29,7 +29,6 @@
 (defn rename-ns [s]
   ;; TODO implement these namespace renames
   (-> s
-      (str/replace "rems.api.services" "rems.service")
       (str/replace "rems.db.test-data" "rems.service.test-data")))
 
 (defn ok-transition? [from to]

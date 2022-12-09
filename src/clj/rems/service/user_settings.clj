@@ -1,4 +1,4 @@
-(ns rems.api.services.user-settings
+(ns rems.service.user-settings
   (:require [rems.db.user-settings :as user-settings]))
 
 (def UserSettings user-settings/UserSettings)

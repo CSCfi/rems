@@ -1,4 +1,4 @@
-(ns rems.api.services.dependencies
+(ns rems.service.dependencies
   "Tracking dependencies between catalogue items, resources, forms, workflows and licenses."
   (:require [rems.common.util :refer [build-index]]
             [rems.db.catalogue :as catalogue]

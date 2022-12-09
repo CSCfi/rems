@@ -1,6 +1,6 @@
 
 (ns rems.db.fix-userid
-  (:require rems.api.services.dependencies
+  (:require rems.service.dependencies
             [rems.db.api-key]
             [rems.db.applications]
             [rems.db.attachments]

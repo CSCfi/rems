@@ -1,6 +1,6 @@
-(ns ^:integration rems.api.services.test-workflow
+(ns ^:integration rems.service.test-workflow
   (:require [clojure.test :refer :all]
-            [rems.api.services.workflow :as workflow]
+            [rems.service.workflow :as workflow]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))

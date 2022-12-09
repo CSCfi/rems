@@ -1,7 +1,7 @@
 (ns rems.layout
   (:require [clojure.string :as str]
             [hiccup.page :refer [html5 include-css include-js]]
-            [rems.api.services.public :as public]
+            [rems.service.public :as public]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]

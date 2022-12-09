@@ -1,4 +1,4 @@
-(ns rems.api.services.todos
+(ns rems.service.todos
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [rems.application.commands :as commands]

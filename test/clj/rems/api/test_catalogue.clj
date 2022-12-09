@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-catalogue
   (:require [clojure.test :refer :all]
-            [rems.api.services.catalogue :as catalogue]
+            [rems.service.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.category :as category]
             [rems.db.test-data :as test-data]

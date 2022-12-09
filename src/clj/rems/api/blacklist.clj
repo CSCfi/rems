@@ -2,8 +2,8 @@
   (:require [clojure.tools.logging :as log]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.services.command :as command]
-            [rems.api.services.blacklist :as blacklist]
+            [rems.service.command :as command]
+            [rems.service.blacklist :as blacklist]
             [rems.api.util :refer [unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]

@@ -1,4 +1,4 @@
-(ns rems.api.services.ega
+(ns rems.service.ega
   "Service for interfacing with EGA Permission API."
   (:require [clj-time.core :as time-core]
             [clojure.string :as str]

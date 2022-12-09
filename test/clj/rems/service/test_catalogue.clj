@@ -1,10 +1,10 @@
-(ns ^:integration rems.api.services.test-catalogue
+(ns ^:integration rems.service.test-catalogue
   (:require [clojure.test :refer :all]
-            [rems.api.services.catalogue :as catalogue]
-            [rems.api.services.form :as form]
-            [rems.api.services.licenses :as licenses]
-            [rems.api.services.resource :as resource]
-            [rems.api.services.workflow :as workflow]
+            [rems.service.catalogue :as catalogue]
+            [rems.service.form :as form]
+            [rems.service.licenses :as licenses]
+            [rems.service.resource :as resource]
+            [rems.service.workflow :as workflow]
             [rems.db.core :as db]
             [rems.db.category :as category]
             [rems.db.test-data-helpers :as test-helpers]

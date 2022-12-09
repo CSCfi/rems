@@ -1,5 +1,5 @@
-(ns rems.api.services.invitation
-  (:require [rems.api.services.util :as util]
+(ns rems.service.invitation
+  (:require [rems.service.util :as util]
             [rems.db.applications :as applications]
             [rems.db.invitation :as invitation]
             [rems.db.users :as users]

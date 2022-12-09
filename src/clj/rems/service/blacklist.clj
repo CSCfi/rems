@@ -1,4 +1,4 @@
-(ns rems.api.services.blacklist
+(ns rems.service.blacklist
   (:require [clj-time.core :as time]
             [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]

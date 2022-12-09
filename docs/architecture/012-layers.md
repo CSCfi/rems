@@ -70,7 +70,7 @@ so it must handle any dependencies etc:
 A service will typically call multiple different DB layer namespaces
 to implement the functionality.
 
-The Service layer lives in the `rems.api.services.*` namespaces.
+The Service layer lives in the `rems.service.*` namespaces.
 
 Historical note: the service layer was created in PR #1487 (and
 expanded subsequent PRs like #1490 #1491 #1495 #1854) to avoid
@@ -100,11 +100,11 @@ on `rems.db.core` to perform the queries they need.
 What to do about circular dependencies between services?
 
 For example after #2261, `rems.api.blacklist` calls
-`rems.api.services.command` and `rems.api.services.blacklist`. This is
+`rems.service.command` and `rems.service.blacklist`. This is
 because `services.command` already calls `services.blacklist`, so we
 can't have `services.blacklist` call `services.command`.
 
-NB: For the data dependencies we have `rems.api.services.dependencies`.
+NB: For the data dependencies we have `rems.service.dependencies`.
 
 ### Namespaces that don't obey these rules
 

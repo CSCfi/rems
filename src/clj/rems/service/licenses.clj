@@ -1,8 +1,8 @@
-(ns rems.api.services.licenses
+(ns rems.service.licenses
   "Serving licenses for API."
   (:require [clj-time.core :as time]
-            [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util :as util]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]

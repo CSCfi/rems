@@ -1,7 +1,7 @@
-(ns rems.api.services.catalogue
+(ns rems.service.catalogue
   (:require [medley.core :refer [assoc-some]]
-            [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util :as util]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]

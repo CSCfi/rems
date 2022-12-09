@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.schema-base :as schema-base]
-            [rems.api.services.category :as category]
+            [rems.service.category :as category]
             [rems.api.util :refer [not-found-json-response]]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [ring.util.http-response :refer :all]

@@ -1,7 +1,7 @@
-(ns rems.api.services.resource
+(ns rems.service.resource
   (:require [com.rpl.specter :refer [ALL transform]]
-            [rems.api.services.dependencies :as dependencies]
-            [rems.api.services.util :as util]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]

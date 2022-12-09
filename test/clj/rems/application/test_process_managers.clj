@@ -1,7 +1,7 @@
 (ns ^:integration rems.application.test-process-managers
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]
-            [rems.api.services.command :as command]
+            [rems.service.command :as command]
             [rems.api.testing :refer :all]
             [rems.db.attachments :as attachments]
             [rems.db.applications :as applications]

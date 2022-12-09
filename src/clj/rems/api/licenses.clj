@@ -1,8 +1,8 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.services.attachment :as attachment]
-            [rems.api.services.licenses :as licenses]
+            [rems.service.attachment :as attachment]
+            [rems.service.licenses :as licenses]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
