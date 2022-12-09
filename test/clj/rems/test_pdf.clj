@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]

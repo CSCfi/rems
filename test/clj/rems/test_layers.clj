@@ -26,10 +26,10 @@
            (str/starts-with? s "rems.service.")
            (str/starts-with? s "rems.api"))))
 
+;; use for future namespace renaming needs
 (defn rename-ns [s]
-  ;; TODO implement these namespace renames
   (-> s
-      (str/replace "rems.db.test-data" "rems.service.test-data")))
+      #_(str/replace "rems.db.test-data" "rems.service.test-data")))
 
 (defn ok-transition? [from to]
   (case [(:layer from) (:layer to)]
@@ -49,7 +49,7 @@
                         :namespace-definitions
                         (mapv (comp str :name))
                         ;;(concat ["rems.cli"]) ; consider implementing `rems.cli` ns
-                        (mapv rename-ns)
+                        #_(mapv rename-ns)
                         (filter interesting-ns?)
                         (mapv #(merge {:name %}
                                       (cond (str/starts-with? % "rems.ext.") {:layer :ext}
@@ -63,7 +63,7 @@
                               :namespace-usages
                               (map (juxt (comp str :from) (comp str :to)))
                               distinct
-                              (map (fn [[from to]] [(rename-ns from) (rename-ns to)]))
+                              #_(map (fn [[from to]] [(rename-ns from) (rename-ns to)]))
                               (filterv (fn [[from to]]
                                          (and (interesting-ns? from)
                                               (interesting-ns? to))))

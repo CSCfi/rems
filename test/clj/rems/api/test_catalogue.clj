@@ -3,7 +3,7 @@
             [rems.service.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.category :as category]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.testing-util :refer [with-user]]

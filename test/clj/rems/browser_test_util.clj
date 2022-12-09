@@ -15,7 +15,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.json :as json]
             [rems.main]
             [rems.util :refer [ensure-empty-directory!]]
@@ -171,7 +171,7 @@
   (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
   (test-helpers/create-workflow! nil) ;;master workflow
   ;; Forms, workflows etc.
-  ;; These should match the rems.db.test-data closely enough
+  ;; These should match the rems.service.test-data closely enough
   ;; so that one can use also development mode and dev db
   ;; with the tests
   (let [link (test-helpers/create-license! {:actor "owner"

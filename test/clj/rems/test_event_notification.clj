@@ -6,7 +6,7 @@
             [rems.service.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
             [rems.db.events]
-            [rems.db.test-data :as test-data]
+            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
