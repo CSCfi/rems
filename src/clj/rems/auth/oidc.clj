@@ -90,15 +90,15 @@
     (users/add-user-raw! userid user)
     user))
 
-(defn- get-user-attributes [id-data user-info]
+(defn- get-user-attributes [id-data researcher-status]
   ;; TODO all attributes could support :rename
   (let [userid (or (find-user id-data) (get-new-userid id-data))
-        _ (assert userid (when (:log-authentication-details env) {:id-data id-data :user-info user-info}))
+        _ (assert userid (when (:log-authentication-details env) {:id-data id-data :researcher-status researcher-status}))
         identity-base {:userid userid
                        :name (some (comp id-data keyword) (:oidc-name-attributes env))
                        :email (some (comp id-data keyword) (:oidc-email-attributes env))}
         extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
-        user-info-attributes (select-keys user-info [:researcher-status-by])]
+        user-info-attributes (select-keys researcher-status [:researcher-status-by])]
     (merge identity-base extra-attributes user-info-attributes)))
 
 ;; XXX: consider joining with rems.db.users/invalid-user?
@@ -112,8 +112,8 @@
                      :args errors
                      :user user}))))
 
-(defn find-or-create-user! [id-data user-info]
-  (let [user (get-user-attributes id-data user-info)
+(defn find-or-create-user! [id-data researcher-status]
+  (let [user (get-user-attributes id-data researcher-status)
         _ (validate-user! user)
         user (upsert-user! user)]
     (save-user-mappings! id-data (:userid user))
@@ -162,9 +162,10 @@
                 user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
                             (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
                                 :body
-                                json/parse-string
-                                ga4gh/passport->researcher-status-by))
-                user (find-or-create-user! id-data user-info)]
+                                json/parse-string))
+                researcher-status (ga4gh/passport->researcher-status-by user-info)
+                id-data (merge id-data user-info)
+                user (find-or-create-user! id-data researcher-status)]
             (when (:log-authentication-details env)
               (log/info "logged in" id-data user-info user))
             (-> (redirect "/redirect")
