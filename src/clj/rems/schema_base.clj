@@ -16,6 +16,8 @@
 
 (def FormId s/Int)
 
+(def EventId s/Int) ; used both optionally and as required
+
 (s/defschema OrganizationId {:organization/id s/Str})
 
 (s/defschema Language
@@ -49,7 +51,7 @@
     :description "A string for most fields, or [[{\"column\": string, \"value\": string}]] for table fields"}))
 
 (s/defschema EventBase
-  {(s/optional-key :event/id) s/Int
+  {(s/optional-key :event/id) EventId
    :event/type s/Keyword
    :event/time DateTime
    :event/actor UserId

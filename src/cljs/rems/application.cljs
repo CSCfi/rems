@@ -3,7 +3,7 @@
             [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [find-first update-existing]]
+            [medley.core :refer [find-first filter-vals update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -171,35 +171,39 @@
                                   :validation nil
                                   :attachment-status {}})))
 
-(defn- set-highlightables-by-request-id [events]
+(defn- set-highlightables-by-request-id
+  "Given set of events, for each event find all events that share the
+   same :application/request-id and add them into event :highlight-event-ids."
+  [events]
   (let [related-events (->> events
                             (filter :application/request-id)
                             (group-by :application/request-id)
-                            (filter (comp #(< 1 %) count second))
-                            (into {}))]
+                            (filter-vals (comp #(> % 1) count)))]
     (for [event events
           :let [request-id (:application/request-id event)
                 highlightable-event-ids (->> (get related-events request-id)
-                                             (map :event/id))]]
-      (update event :highlight-event-ids #(set (concat (or % [])
-                                                       highlightable-event-ids))))))
+                                             (map :event/id)
+                                             (set))]]
+      (update event :highlight-event-ids into highlightable-event-ids))))
 
-(defn- set-highlightables-by-redacted-attachments [events]
-  (let [related-events (->> events
-                            (filter #(= :application.event/attachments-redacted
-                                        (:event/type %)))
-                            (mapcat (fn [event]
-                                      (->> (map :event/id (:application/redacted-attachments event))
-                                           (interleave (repeat (:event/id event))))))
-                            (partition 2))] ; pairs of [event redacted-event]
+(defn- set-highlightables-by-redacted-attachments
+  "Given set of events, for each event of type :application.event/attachments-redacted
+   find all related events whose attachments were redacted and add them into event
+   :highlight-event-ids. For each related event, add :application.event/attachments-redacted
+   event into :highlight-event-ids."
+  [events]
+  (let [related-events (for [event events
+                             :when (= :application.event/attachments-redacted
+                                      (:event/type event))
+                             redacted-attachment (:application/redacted-attachments event)]
+                         #{(:event/id redacted-attachment) (:event/id event)})]
     (for [event events
           :let [event-id (:event/id event)
                 highlightable-event-ids (->> related-events
-                                             (find-first #(contains? (set %) event-id)))]]
-      (update event :highlight-event-ids #(set (concat (or % [])
-                                                       highlightable-event-ids))))))
+                                             (filter #(contains? % event-id))
+                                             (reduce into #{}))]]
+      (update event :highlight-event-ids into highlightable-event-ids))))
 
-;; XXX: updating events once after application fetch reduces the amount of work during rendering
 (defn- update-events-highlightables
   "Updates events with event ids that are related to the event so that they can
    be highlighted within the UI."
