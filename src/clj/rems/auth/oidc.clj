@@ -27,9 +27,9 @@
 (defn logout-url []
   "/oidc-logout")
 
-(defn- get-userid-attributes [id-data]
+(defn- get-userid-attributes [user-data]
   (for [{:keys [attribute rename]} (getx env :oidc-userid-attributes)
-        :let [value (get id-data (keyword attribute))]
+        :let [value (get user-data (keyword attribute))]
         :when value]
     [(or rename attribute) value]))
 
@@ -44,11 +44,11 @@
                                    :name "Alice Applicant"})))))
 
 (defn- get-new-userid
-  "Returns a new userid for a user based on the given `id-data` identity data.
+  "Returns a new userid for a user based on the given `user-data` identity data.
 
   The userid will actually be the first valid attribute value from the identity data."
-  [id-data]
-  (first (keep second (get-userid-attributes id-data))))
+  [user-data]
+  (first (keep second (get-userid-attributes user-data))))
 
 (deftest test-get-new-userid
   (with-redefs [env {:oidc-userid-attributes [{:attribute "atr"}]}]
@@ -69,16 +69,16 @@
     (is (= "123" (get-new-userid {:elixirId "elixir-alice" :sub "123"}))
         "user data should use names before rename")))
 
-(defn save-user-mappings! [id-data userid]
-  (let [attrs (get-userid-attributes id-data)]
+(defn save-user-mappings! [user-data userid]
+  (let [attrs (get-userid-attributes user-data)]
     (doseq [[attr value] attrs
             :when (not= value userid)]
       (user-mappings/create-user-mapping! {:userid userid
                                            :ext-id-attribute attr
                                            :ext-id-value value}))))
 
-(defn- find-user [id-data]
-  (let [userid-attrs (get-userid-attributes id-data)
+(defn- find-user [user-data]
+  (let [userid-attrs (get-userid-attributes user-data)
         user-mapping-match (fn [[attribute value]]
                              (let [mappings (user-mappings/get-user-mappings {:ext-id-attribute attribute :ext-id-value value})]
                                (:userid (first mappings))))] ; should be at most one by kv search
@@ -90,15 +90,15 @@
     (users/add-user-raw! userid user)
     user))
 
-(defn- get-user-attributes [id-data researcher-status]
+(defn- get-user-attributes [user-data]
   ;; TODO all attributes could support :rename
-  (let [userid (or (find-user id-data) (get-new-userid id-data))
-        _ (assert userid (when (:log-authentication-details env) {:id-data id-data :researcher-status researcher-status}))
+  (let [userid (or (find-user user-data) (get-new-userid user-data))
+        _ (assert userid (when (:log-authentication-details env) {:user-data user-data}))
         identity-base {:userid userid
-                       :name (some (comp id-data keyword) (:oidc-name-attributes env))
-                       :email (some (comp id-data keyword) (:oidc-email-attributes env))}
-        extra-attributes (select-keys id-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
-        user-info-attributes (select-keys researcher-status [:researcher-status-by])]
+                       :name (some (comp user-data keyword) (:oidc-name-attributes env))
+                       :email (some (comp user-data keyword) (:oidc-email-attributes env))}
+        extra-attributes (select-keys user-data (map (comp keyword :attribute) (:oidc-extra-attributes env)))
+        user-info-attributes (select-keys user-data [:researcher-status-by])]
     (merge identity-base extra-attributes user-info-attributes)))
 
 ;; XXX: consider joining with rems.db.users/invalid-user?
@@ -112,11 +112,11 @@
                      :args errors
                      :user user}))))
 
-(defn find-or-create-user! [id-data researcher-status]
-  (let [user (get-user-attributes id-data researcher-status)
+(defn find-or-create-user! [user-data]
+  (let [user (get-user-attributes user-data)
         _ (validate-user! user)
         user (upsert-user! user)]
-    (save-user-mappings! id-data (:userid user))
+    (save-user-mappings! user-data (:userid user))
     user))
 
 (defn oidc-callback [request]
@@ -164,10 +164,10 @@
                                 :body
                                 json/parse-string))
                 researcher-status (ga4gh/passport->researcher-status-by user-info)
-                id-data (merge id-data user-info)
-                user (find-or-create-user! id-data researcher-status)]
+                user-data (merge id-data user-info researcher-status)
+                user (find-or-create-user! user-data)]
             (when (:log-authentication-details env)
-              (log/info "logged in" id-data user-info user))
+              (log/info "logged in" user-data user))
             (-> (redirect "/redirect")
                 (assoc :session (:session request))
                 (assoc-in [:session :access-token] access-token)
