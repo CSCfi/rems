@@ -43,7 +43,7 @@
           (for [[k v] other-attributes]
             (let [title (or (localized (get-in extra-attributes [(name k) :name]))
                             k)]
-              [info-field title v {:inline? true}])))))
+              [info-field title (str v) {:inline? true}])))))
 
 (defn guide []
   [:div
