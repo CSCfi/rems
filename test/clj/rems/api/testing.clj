@@ -123,6 +123,10 @@
   (assert-schema-errors response)
   (= 413 (:status response)))
 
+(defn response-is-not-implemented? [response]
+  (assert-schema-errors response)
+  (= 501 (:status response)))
+
 (defn logged-in? [response]
   (str/includes? (get-in response [:headers "x-rems-roles"])
                  "logged-in"))
