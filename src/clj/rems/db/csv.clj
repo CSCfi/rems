@@ -5,7 +5,6 @@
             [com.rpl.specter :refer [ALL select]]
             [medley.core :refer [find-first]]
             [rems.config :refer [env]]
-            [rems.db.user-settings :as user-settings]
             [rems.text :as text]))
 
 (def ^:private crlf "\r\n")
@@ -104,15 +103,3 @@
 (defn applications-filename []
   (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))
 
-;; Export entitlements
-
-(defn- entitlement-to-row [entitlement]
-  [(:resid entitlement)
-   (:catappid entitlement)
-   (:userid entitlement)
-   (text/localize-time (:start entitlement))])
-
-;; TODO: Consider quoting strings to unify with exporting of applications.
-(defn entitlements-to-csv [entitlements]
-  (print-to-csv :column-names ["resource" "application" "user" "start"]
-                :rows (mapv entitlement-to-row entitlements)))

@@ -35,7 +35,7 @@
 
 (defn- export-entitlements-button []
   [:a.btn.btn-secondary
-   {:href "/entitlements.csv"}
+   {:href "/api/entitlements/csv"}
    (text :t.actions/export-entitlements)])
 
 ;; TODO not implemented

@@ -1,9 +1,10 @@
 (ns rems.api.entitlements
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.util] ; required for route :roles
-            [rems.db.entitlements :as entitlements]
+            [rems.api.util]
+            [rems.service.entitlements :refer [get-entitlements-for-api get-entitlements-for-csv-export]]
             [ring.util.http-response :refer :all]
+            [ring.util.response :as response]
             [schema.core :as s]))
 
 (s/defschema GetEntitlementsResponse
@@ -20,4 +21,14 @@
                      {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}
                      {expired :- (describe s/Bool "whether to include expired entitlements") false}]
       :return GetEntitlementsResponse
-      (ok (entitlements/get-entitlements-for-api user resource expired)))))
+      (ok (get-entitlements-for-api {:user-id user
+                                     :resource-ext-id resource
+                                     :expired expired})))
+
+    (GET "/csv" []
+      :summary "Return entitlements as CSV"
+      :roles #{:handler :reporter}
+      :produces ["text/csv"]
+      :responses {200 {:schema s/Str}}
+      (-> (ok (get-entitlements-for-csv-export))
+          (response/content-type "text/csv")))))
