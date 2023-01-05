@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.31
 
+**NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/csv instead.**
+
+### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
 
 ## v2.31 "Harmajankatu" 2022-11-29
