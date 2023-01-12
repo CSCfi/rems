@@ -99,28 +99,59 @@
   [:span.readonly-checkbox
    [checkbox (dissoc opts :on-change)]])
 
+(defn- format-field-values
+  "Formats field `value` for display.
+
+  A simple and crude version until something better is needed."
+  [value]
+  (cond (string? value)
+        value
+
+        (keyword? value)
+        (name value)
+
+        (boolean? value)
+        [readonly-checkbox {:checked value}]
+
+        (map? value)
+        (->> value
+             (mapv (fn [[k v]] [(format-field-values k) ": " (format-field-values v)])) ; first level
+             (interpose ", ")
+             (mapcat identity) ; flatten only first level, preserve any values as is
+             (into [:<>]))
+
+        (sequential? value)
+        (->> value
+             (mapv format-field-values)
+             (interpose ", ")
+             (into [:<>]))
+
+        :else (str value)))
+
 (defn info-field
   "A component that shows a readonly field with title and value.
 
   Used for e.g. displaying applicant attributes.
 
+  The `value` can be a simple primitive or a collection. Uses a simple approach that can
+  be extended if needed. Deeply nested data structures would be difficult to fit,
+  so they are not supported.
+
   Additional options:
   `:inline?` - puts the label and value on the same row
   `:box?`    - wrap the value into a field value box (default true)"
   [title value & [{:keys [inline? box?] :or {box? true} :as _opts}]]
-  (let [values (if (list? value) value (list value))
-        formatted-values (mapv str values)
+  (let [formatted-value (format-field-values value)
         style (cond box? {:class "form-control"}
                     :else {:style {:padding-left 0}})]
     (if inline?
       [:div.container-fluid
        [:div.form-group.row
         [:label.col-sm-3.col-form-label title]
-        (into [:div.col-sm-9 style]
-              formatted-values)]]
+        [:div.col-sm-9 style formatted-value]]]
       [:div.form-group
        [:label title]
-       (into [:div style] formatted-values)])))
+       [:div style formatted-value]])))
 
 (defn download-button [{:keys [disabled? title url]}]
   [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
