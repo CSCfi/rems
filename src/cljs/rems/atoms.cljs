@@ -109,6 +109,7 @@
   `:box?`    - wrap the value into a field value box (default true)"
   [title value & [{:keys [inline? box?] :or {box? true} :as _opts}]]
   (let [values (if (list? value) value (list value))
+        formatted-values (mapv str values)
         style (cond box? {:class "form-control"}
                     :else {:style {:padding-left 0}})]
     (if inline?
@@ -116,10 +117,10 @@
        [:div.form-group.row
         [:label.col-sm-3.col-form-label title]
         (into [:div.col-sm-9 style]
-              values)]]
+              formatted-values)]]
       [:div.form-group
        [:label title]
-       (into [:div style] values)])))
+       (into [:div style] formatted-values)])))
 
 (defn download-button [{:keys [disabled? title url]}]
   [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
