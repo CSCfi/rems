@@ -120,6 +120,11 @@
              (mapcat identity) ; flatten only first level, preserve any values as is
              (into [:<>]))
 
+        (and (vector? value)
+             (or (keyword? (first value))
+                 (fn? (first value))))
+        value ; hiccup
+
         (sequential? value)
         (->> value
              (mapv format-field-values)
