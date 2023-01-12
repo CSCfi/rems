@@ -103,7 +103,7 @@
   "Formats field `value` for display.
 
   A simple and crude version until something better is needed."
-  [value]
+  [value multiline?]
   (cond (string? value)
         value
 
@@ -115,8 +115,8 @@
 
         (map? value)
         (->> value
-             (mapv (fn [[k v]] [(format-field-values k) ": " (format-field-values v)])) ; first level
-             (interpose ", ")
+             (mapv (fn [[k v]] [(format-field-values k multiline?) ": " (format-field-values v multiline?)])) ; first level
+             (interpose (if multiline? "\n" ", "))
              (mapcat identity) ; flatten only first level, preserve any values as is
              (into [:<>]))
 
@@ -127,8 +127,8 @@
 
         (sequential? value)
         (->> value
-             (mapv format-field-values)
-             (interpose ", ")
+             (mapv #(format-field-values % multiline?))
+             (interpose (if multiline? "\n" ", "))
              (into [:<>]))
 
         :else (str value)))
@@ -145,8 +145,8 @@
   Additional options:
   `:inline?` - puts the label and value on the same row
   `:box?`    - wrap the value into a field value box (default true)"
-  [title value & [{:keys [inline? box?] :or {box? true} :as _opts}]]
-  (let [formatted-value (format-field-values value)
+  [title value & [{:keys [inline? box? multiline?] :or {box? true} :as _opts}]]
+  (let [formatted-value (format-field-values value multiline?)
         style (cond box? {:class "form-control"}
                     :else {:style {:padding-left 0}})]
     (if inline?
@@ -285,6 +285,8 @@
                 [info-field "Users" "Bob Tester"])
        (example "info-field with array"
                 [info-field "Users" ["Bob Tester" "Jane Coder"]])
+       (example "info-field with array, multline"
+                [info-field "Users" ["Bob Tester" "Jane Coder"] {:multiline? true}])
        (example "info-field with boolean"
                 [info-field "Users" false])
        (example "info-field with map"
