@@ -43,7 +43,8 @@
 (defn- fake-login [session username]
   (let [id-data (get-fake-id-data username)
         user-info (get-fake-user-info username)
-        user (oidc/find-or-create-user! id-data user-info)]
+        user-data (merge id-data user-info)
+        user (oidc/find-or-create-user! user-data)]
     (-> (redirect "/redirect")
         (assoc :session session)
         (assoc-in [:session :access-token] (str "access-token-" username))
