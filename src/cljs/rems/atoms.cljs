@@ -224,6 +224,7 @@
        (component-info failure-symbol)
        (example "failure symbol"
                 [failure-symbol])
+
        (component-info flash-message)
        (example "flash-message with info"
                 [flash-message {:status :info
@@ -232,6 +233,7 @@
        (example "flash-message with error"
                 [flash-message {:status :danger
                                 :content "You fail"}])
+
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
                 [readonly-checkbox {:value false}])
@@ -241,13 +243,23 @@
                 [checkbox {:value @state :on-change on-change}])
        (example "checkbox with id and class"
                 [checkbox {:id :special :class :text-danger :value @state :on-change on-change}])
+
        (component-info info-field)
-       (example "info-field with data"
-                [info-field "Name" "Bob Tester"])
+       (example "info-field with text"
+                [info-field "Users" "Bob Tester"])
+       (example "info-field with array"
+                [info-field "Users" ["Bob Tester" "Jane Coder"]])
+       (example "info-field with boolean"
+                [info-field "Users" false])
+       (example "info-field with map"
+                [info-field "Users" {"Bob Tester" false "Jane Coder" true}])
+       (example "info-field with nested data is unsupported but shows somehow"
+                [info-field "Users" [{"Bob Tester" false "Jane Coder" {:type :coder :missing nil}}]])
        (example "info-field without box around value"
-                [info-field "Name" "Bob Tester" {:box? false}])
+                [info-field "Users" "Bob Tester" {:box? false}])
        (example "info-field inline"
-                [info-field "Name" "Bob Tester" {:inline? true}])
+                [info-field "Users" ["Bob Tester" "Jane Coder"] {:inline? true}])
+
        (component-info attachment-link)
        (example "attachment-link"
                 [attachment-link {:attachment/id 1
@@ -255,6 +267,7 @@
        (example "attachment-link, long filename"
                 [attachment-link {:attachment/id 123
                                   :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])
+
        (component-info expander)
        (example "expander"
                 [expander {:id "guide-expander-id"
