@@ -111,7 +111,7 @@
         (name value)
 
         (boolean? value)
-        [readonly-checkbox {:checked value}]
+        [readonly-checkbox {:value value}]
 
         (map? value)
         (->> value
