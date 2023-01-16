@@ -386,7 +386,7 @@
  :application-expiration nil
 
  ;; enable /api/applications/:id/experimental/pdf
- ;; PDF API (experimental)
+ ;; PDF API (experimental). DEPRECATED, will disappear
  :enable-pdf-api false
 
  ;; enable /api/permissions/:user

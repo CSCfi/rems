@@ -297,7 +297,7 @@
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/experimental/pdf" request
-      :summary "PDF export of application (EXPERIMENTAL)"
+      :summary "PDF export of application (EXPERIMENTAL). DEPRECATED, will disappear, use /:application-id/pdf instead"
       :roles #{:logged-in :api-key}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {}
