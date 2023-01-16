@@ -77,10 +77,12 @@
                        [inline-info-field (str (text :t.administration/title)
                                                " (" (str/upper-case (name langcode)) ")")
                         localization]))
-              [inline-info-field (text :t.administration/owners) (->> (:organization/owners organization)
-                                                                      (map enrich-user)
-                                                                      (map :display)
-                                                                      (interpose [:br]))]
+              [inline-info-field
+               (text :t.administration/owners)
+               (->> (:organization/owners organization)
+                    (map enrich-user)
+                    (map :display))
+               {:multiline? true}]
               [review-emails-field (:organization/review-emails organization)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
    (let [id (:organization/id organization)

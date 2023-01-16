@@ -28,6 +28,7 @@
         other-attributes (dissoc attributes :name :userid :email :organizations :notification-email :researcher-status-by)
         extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))]
     (into [:div.user-attributes
+           ;; basic, important attributes
            (when-let [user-id (:userid attributes)]
              [info-field (text :t.applicant-info/username) user-id {:inline? true}])
            (when-let [mail (:notification-email attributes)]
@@ -40,10 +41,12 @@
              [info-field (text :t.applicant-info/organization) (str/join ", " (map organization-name-if-known organizations)) {:inline? true}])
            (when (#{"so" "system"} (:researcher-status-by attributes))
              [info-field (text :t.applicant-info/researcher-status) [readonly-checkbox {:value true}] {:inline? true}])]
+
+          ;; other attributes
           (for [[k v] other-attributes]
             (let [title (or (localized (get-in extra-attributes [(name k) :name]))
                             k)]
-              [info-field title (str v) {:inline? true}])))))
+              [info-field title v {:inline? true}])))))
 
 (defn guide []
   [:div

@@ -99,27 +99,64 @@
   [:span.readonly-checkbox
    [checkbox (dissoc opts :on-change)]])
 
+(defn- format-field-values
+  "Formats field `value` for display.
+
+  A simple and crude version until something better is needed."
+  [value multiline?]
+  (cond (string? value)
+        value
+
+        (keyword? value)
+        (name value)
+
+        (boolean? value)
+        [readonly-checkbox {:value value}]
+
+        (map? value)
+        (->> value
+             (mapv (fn [[k v]] [(format-field-values k multiline?) ": " (format-field-values v multiline?)])) ; first level
+             (interpose (if multiline? "\n" ", "))
+             (mapcat identity) ; flatten only first level, preserve any values as is
+             (into [:<>]))
+
+        (and (vector? value)
+             (or (keyword? (first value))
+                 (fn? (first value))))
+        value ; hiccup
+
+        (sequential? value)
+        (->> value
+             (mapv #(format-field-values % multiline?))
+             (interpose (if multiline? "\n" ", "))
+             (into [:<>]))
+
+        :else (str value)))
+
 (defn info-field
   "A component that shows a readonly field with title and value.
 
   Used for e.g. displaying applicant attributes.
 
+  The `value` can be a simple primitive or a collection. Uses a simple approach that can
+  be extended if needed. Deeply nested data structures would be difficult to fit,
+  so they are not supported.
+
   Additional options:
   `:inline?` - puts the label and value on the same row
   `:box?`    - wrap the value into a field value box (default true)"
-  [title value & [{:keys [inline? box?] :or {box? true} :as _opts}]]
-  (let [values (if (list? value) value (list value))
+  [title value & [{:keys [inline? box? multiline?] :or {box? true} :as _opts}]]
+  (let [formatted-value (format-field-values value multiline?)
         style (cond box? {:class "form-control"}
                     :else {:style {:padding-left 0}})]
     (if inline?
       [:div.container-fluid
        [:div.form-group.row
         [:label.col-sm-3.col-form-label title]
-        (into [:div.col-sm-9 style]
-              values)]]
+        [:div.col-sm-9 style formatted-value]]]
       [:div.form-group
        [:label title]
-       (into [:div style] values)])))
+       [:div style formatted-value]])))
 
 (defn download-button [{:keys [disabled? title url]}]
   [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
@@ -223,6 +260,7 @@
        (component-info failure-symbol)
        (example "failure symbol"
                 [failure-symbol])
+
        (component-info flash-message)
        (example "flash-message with info"
                 [flash-message {:status :info
@@ -231,6 +269,7 @@
        (example "flash-message with error"
                 [flash-message {:status :danger
                                 :content "You fail"}])
+
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
                 [readonly-checkbox {:value false}])
@@ -240,13 +279,25 @@
                 [checkbox {:value @state :on-change on-change}])
        (example "checkbox with id and class"
                 [checkbox {:id :special :class :text-danger :value @state :on-change on-change}])
+
        (component-info info-field)
-       (example "info-field with data"
-                [info-field "Name" "Bob Tester"])
+       (example "info-field with text"
+                [info-field "Users" "Bob Tester"])
+       (example "info-field with array"
+                [info-field "Users" ["Bob Tester" "Jane Coder"]])
+       (example "info-field with array, multline"
+                [info-field "Users" ["Bob Tester" "Jane Coder"] {:multiline? true}])
+       (example "info-field with boolean"
+                [info-field "Users" false])
+       (example "info-field with map"
+                [info-field "Users" {"Bob Tester" false "Jane Coder" true}])
+       (example "info-field with nested data is unsupported but shows somehow"
+                [info-field "Users" [{"Bob Tester" false "Jane Coder" {:type :coder :missing nil}}]])
        (example "info-field without box around value"
-                [info-field "Name" "Bob Tester" {:box? false}])
+                [info-field "Users" "Bob Tester" {:box? false}])
        (example "info-field inline"
-                [info-field "Name" "Bob Tester" {:inline? true}])
+                [info-field "Users" ["Bob Tester" "Jane Coder"] {:inline? true}])
+
        (component-info attachment-link)
        (example "attachment-link"
                 [attachment-link {:attachment/id 1
@@ -254,6 +305,7 @@
        (example "attachment-link, long filename"
                 [attachment-link {:attachment/id 123
                                   :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])
+
        (component-info expander)
        (example "expander"
                 [expander {:id "guide-expander-id"
