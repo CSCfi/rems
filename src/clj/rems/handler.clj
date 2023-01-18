@@ -62,7 +62,7 @@
     (redirect "/img/favicon.ico"))
 
   (GET "/entitlements.csv" [] ; DEPRECATED: legacy url redirect 
-    (redirect "/api/entitlements/csv")))
+    (redirect "/api/entitlements/export-csv")))
 
 (defroutes attachment-routes
   (GET "/applications/attachment/:attachment-id" [attachment-id]
