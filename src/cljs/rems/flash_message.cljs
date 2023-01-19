@@ -53,8 +53,12 @@
   (show-success! location
                  [:div#status-success.flash-message-title description ": " [text :t.form/success]]))
 
-(defn show-quiet-success! [location description & [opts]]
-  (let [message {:status :success
+(defn show-quiet-success!
+  "Show a quiet success notification that doesn't by default steal focus."
+  [location description & [opts]]
+  (let [opts (merge {:focus? false}
+                    opts)
+        message {:status :success
                  :location location
                  :content (into [:<>
                                  [:div#status-success.flash-message-title description]]
