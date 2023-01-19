@@ -77,7 +77,8 @@
    (text :t.administration/copy-as-new)])
 
 (defn- errors-symbol []
-  [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)}])
+  [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)
+                                  :title (text :t.administration/has-errors)}])
 
 (rf/reg-sub
  ::forms-table-rows
