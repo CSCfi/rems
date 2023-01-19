@@ -8,7 +8,7 @@ have notable changes.
 
 Changes since v2.31
 
-**NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/csv instead.**
+**NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/export-csv instead.**
 **NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**
 
 ### Changes
