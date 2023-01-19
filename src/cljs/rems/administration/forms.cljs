@@ -125,7 +125,7 @@
                                 :sortable? false
                                 :filterable? false}]
                      :rows [::forms-table-rows]
-                     :default-sort-column :title}]
+                     :default-sort-column :internal-name}]
     [:div.mt-3
      [table/search forms-table]
      [table/table forms-table]]))
