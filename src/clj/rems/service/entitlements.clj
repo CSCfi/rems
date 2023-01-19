@@ -1,6 +1,5 @@
 (ns rems.service.entitlements
   (:require [clj-time.core :as time]
-            [clojure.set]
             [rems.db.core :as db]
             [rems.db.csv :refer [print-to-csv]]
             [rems.db.users :refer [join-user]]))
