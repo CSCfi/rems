@@ -9,9 +9,11 @@ have notable changes.
 Changes since v2.31
 
 **NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/csv instead.**
+**NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**
 
-### Additions
+### Changes
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
+- User attributes are now formatted better (a boolean becomes a checkbox, etc.) (#3103)
 
 ## v2.31 "Harmajankatu" 2022-11-29
 
