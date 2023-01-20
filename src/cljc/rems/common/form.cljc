@@ -144,11 +144,12 @@
 
 ;;; Visibility
 
+(defn field-depends-on-field [field]
+  (get-in field [:field/visibility :visibility/field :field/id]))
+
 (defn field-visible? [field field-values]
   (let [visibility (:field/visibility field)
-        values (->> visibility
-                    :visibility/field
-                    :field/id
+        values (->> (field-depends-on-field field)
                     (get field-values)
                     ;; NB! by happy coincidence unparse-multiselect-values also for option fields
                     parse-multiselect-values)]
