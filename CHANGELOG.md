@@ -10,6 +10,8 @@ Changes since v2.31
 
 **NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**
 
+### Changes
+- Application editing performance is improved. (#3106)
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
 - User attributes are now formatted better (a boolean becomes a checkbox, etc.) (#3103)
 
