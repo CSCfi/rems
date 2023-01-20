@@ -457,7 +457,7 @@
 (rf/reg-event-db
  ::toggle-diff
  (fn [db [_ form-id field-id]]
-   (update-in db [::edit-application :show-diff field-id] not))) ; BUG: field-id is not unique
+   (update-in db [::edit-application :show-diff form-id field-id] not)))
 
 (rf/reg-event-db
  ::set-duo-codes
@@ -587,7 +587,7 @@
 (rf/reg-sub
  ::get-field-diff
  (fn [db [_ form-id field-id]]
-   (get-in db [::edit-application :show-diff field-id]))) ;; BUG: field-id is not unique
+   (get-in db [::edit-application :show-diff form-id field-id])))
 
 (rf/reg-sub
  ::field-validations
