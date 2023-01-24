@@ -155,18 +155,19 @@
         (testing "export entitlements csv"
           (let [api "/api/entitlements/export-csv"]
             (doseq [user #{"handler" "reporter"}
-                    :let [get-entitlements-csv (fn [{:keys [separator] :as query-params}]
+                    :let [get-entitlements-csv (fn [& {:keys [separator] :as query-params}]
                                                  (-> (api-response :get api nil api-key user query-params)
-                                                     (read-ok-csv {:separator separator})))]]
+                                                     (read-ok-csv {:separator (or separator ",")})))]]
               (testing (str "as " user)
                 (is (= [["resource" "application" "user" "start"]
                         ["urn:nbn:fi:lb-201403262" (str app-id) "alice" "2010-01-01T00:00:00.000Z"]
                         ["urn:nbn:fi:lb-201403262" (str expired-app-id) "alice" "2010-01-01T00:00:00.000Z"]
                         ["urn:nbn:fi:lb-201403262" (str malice-app-id) "malice" "2010-01-01T00:00:00.000Z"]]
-                       (get-entitlements-csv {:separator ";" :resource "urn:nbn:fi:lb-201403262"})))
+                       (get-entitlements-csv {:separator ";" :resource "urn:nbn:fi:lb-201403262"})
+                       (get-entitlements-csv))) ; backwards compatibility
                 (is (= [["resource" "application" "user" "start"]
                         ["urn:nbn:fi:lb-201403262" (str app-id) "alice" "2010-01-01T00:00:00.000Z"]]
-                       (get-entitlements-csv {:separator "," :user "alice" :expired false})))
+                       (get-entitlements-csv {:separator "\t" :user "alice" :expired false})))
                 (is (= [["resource" "application" "user" "start"]
                         ["urn:nbn:fi:lb-201403262" (str malice-app-id) "malice" "2010-01-01T00:00:00.000Z"]]
                        (get-entitlements-csv {:user "malice"})))))
@@ -176,7 +177,8 @@
                   (is (response-is-forbidden?
                        (api-response :get api nil api-key user))))))
             (testing "redirect /entitlements.csv"
-              (let [response (api-response :get "/entitlements.csv" nil api-key "handler")]
-                (assert-response-is-redirect response)
-                (is (str/ends-with? (get-redirect-location response) api))))))))))
+              (let [response (-> (api-response :get "/entitlements.csv" nil api-key "handler")
+                                 (assert-response-is-redirect))]
+                (is (-> (get-redirect-location response)
+                        (str/ends-with? api)))))))))))
 

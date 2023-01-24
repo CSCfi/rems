@@ -43,5 +43,5 @@
         [column-names columns] (get-entitlement-csv-format)]
     (print-to-csv {:column-names column-names ; XXX: consider localizing columns
                    :rows (mapv (apply juxt columns) entitlements)
-                   :separator (or separator ",")})))
+                   :separator separator})))
 

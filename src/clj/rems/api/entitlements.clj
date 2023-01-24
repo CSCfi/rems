@@ -41,7 +41,7 @@
       :query-params [{user :- (describe s/Str "return entitlements for this user (optional), ignored if the user doesn't have appropriate privileges") nil}
                      {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}
                      {expired :- (describe s/Bool "whether to include expired entitlements") true}
-                     {separator :- (describe (s/enum "," ";") "which separator to use in returned csv (optional)") nil}]
+                     {separator :- (describe s/Str "which separator to use in returned csv (optional)") ","}]
       :produces ["text/csv"]
       :return s/Str
       (let [entitlements (get-entitlements-for-csv-export {:user-id (getx-query-user user)
