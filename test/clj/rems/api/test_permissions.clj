@@ -23,7 +23,17 @@
                     :kid "2011-04-29"
                     :e "AQAB"
                     :kty "RSA"}]}
-           data))))
+           data)))
+  (testing ":enable-permissions-api false"
+    (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api false)]
+      (let [response (api-response :get "/api/jwk")]
+        (is (response-is-not-implemented? response))
+        (is (empty? (:body response))))))
+  (testing ":ga4gh-visa-public-key not configured"
+    (with-redefs [rems.config/env (dissoc rems.config/env :ga4gh-visa-public-key)]
+      (let [response (api-response :get "/api/jwk")]
+        (is (response-is-server-error? response))
+        (is (empty? (:body response)))))))
 
 (defn- validate-visa [visa]
   (s/validate ga4gh/VisaClaim visa))
@@ -55,6 +65,13 @@
     (test-helpers/command! {:type :application.command/approve
                             :application-id application
                             :actor "handler"}))
+
+  (testing ":enable-permissions-api false"
+    (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api false)]
+      (is (-> (request :get "/api/permissions/alice")
+              (authenticate test-data/+test-api-key+ "owner")
+              handler
+              (response-is-not-implemented?)))))
 
   (testing "all for alice as alice"
     (let [data (-> (request :get "/api/permissions/alice")
@@ -107,13 +124,3 @@
           body (read-body response)]
       (is (= "forbidden" body)))))
 
-(deftest permissions-test-api-disabled
-  (test-data/create-test-api-key!)
-  (test-data/create-test-users-and-roles!)
-  (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api false)]
-    (testing "when permissions api is disabled"
-      (let [response (-> (request :get "/api/permissions/alice")
-                         (authenticate test-data/+test-api-key+ "owner")
-                         handler)
-            body (read-body response)]
-        (is (= "permissions api not implemented" body))))))

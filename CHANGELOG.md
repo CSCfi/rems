@@ -8,12 +8,20 @@ have notable changes.
 
 Changes since v2.31
 
+**NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/export-csv instead.**
 **NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**
 
 ### Changes
 - Application editing performance is improved. (#3106)
+- Show form errors column only when some form has errors. (#3107)
+
+### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
 - User attributes are now formatted better (a boolean becomes a checkbox, etc.) (#3103)
+
+### Fixes
+- Autosaving does not cause the focus to jump anymore (#3112)
+- Fix form table default sort order to be internal name (was title). (#3107)
 
 ## v2.31 "Harmajankatu" 2022-11-29
 

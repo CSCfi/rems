@@ -1,7 +1,7 @@
 (ns rems.handler
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [compojure.core :refer [GET defroutes routes wrap-routes]]
+            [compojure.core :refer [GET defroutes routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
@@ -16,11 +16,9 @@
             [rems.db.catalogue :as catalogue]
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
-            [rems.entitlements :as entitlements]
             [rems.layout :as layout]
             [rems.middleware :refer [wrap-cacheable wrap-base]]
             [rems.util :refer [getx-user-id never-match-route]]
-            [ring.middleware.resource :refer [resource-request]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type file-response not-found bad-request redirect]])
@@ -61,7 +59,10 @@
     (redirect "/redirect"))
 
   (GET "/favicon.ico" []
-    (redirect "/img/favicon.ico")))
+    (redirect "/img/favicon.ico"))
+
+  (GET "/entitlements.csv" [] ; DEPRECATED: legacy url redirect 
+    (redirect "/api/entitlements/export-csv")))
 
 (defroutes attachment-routes
   (GET "/applications/attachment/:attachment-id" [attachment-id]
@@ -126,9 +127,7 @@
    home-route
    (wrap-login-redirect
     (routes attachment-routes
-            redirects
-            ;; TODO /entitlements.csv should be an API
-            entitlements/entitlements-routes))
+            redirects))
    (auth/auth-routes)
    #'api-routes
    ;; TODO should we disable logging of resource requests?

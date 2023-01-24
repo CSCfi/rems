@@ -75,7 +75,10 @@
               (s/optional-key :sortable?) s/Bool
               ;; Whether this column is used in filtering.
               ;; Defaults to true.
-              (s/optional-key :filterable?) s/Bool}]
+              (s/optional-key :filterable?) s/Bool
+
+              ;; Whether to show this column, a function from all `rows` to a boolean
+              (s/optional-key :when-rows) s/Any}]
    ;; The query vector for a re-frame subscription which returns
    ;; the data to show in this table. The subscription must return
    ;; data which confirms to the `rems.table/Rows` schema.
@@ -121,7 +124,7 @@
        {:sort-order (or (:default-sort-order table)
                         :asc)
         :sort-column (or (:default-sort-column table)
-                         (-> table :columns first :key))})))
+                         (-> table :columns first :key))}))) ; NB: first column is possibly not visible
 
 (rf/reg-event-db
  ::set-filtering
@@ -172,6 +175,21 @@
        (into {})))
 
 (rf/reg-sub
+ ::columns
+ (fn [_ [_ table]]
+   (:columns table)))
+
+(rf/reg-sub
+ ::filtered-columns
+ (fn [[_ table] _]
+   [(rf/subscribe [::columns table])
+    (rf/subscribe [::rows table])]) ; use original rows so columns don't come and go based on filtering
+ (fn [[columns rows] _]
+   (for [column columns
+         :when ((:when-rows column identity) rows)]
+     column)))
+
+(rf/reg-sub
  ::rows
  (fn [[_ table] _]
    [(rf/subscribe (:rows table))])
@@ -218,10 +236,11 @@
  ::sorted-and-filtered-rows
  (fn [[_ table] _]
    [(rf/subscribe [::sorted-rows table])
-    (rf/subscribe [::filtering table])])
- (fn [[rows filtering] [_ table]]
+    (rf/subscribe [::filtering table])
+    (rf/subscribe [::filtered-columns table])])
+ (fn [[rows filtering columns] [_ _table]]
    (let [search-terms (parse-search-terms (:filters filtering))
-         columns (->> (:columns table)
+         columns (->> columns
                       (filter filterable?))]
      (->> rows
           (map (fn [row]
@@ -325,9 +344,10 @@
                         (on-change))}]]))
 
 (defn- table-header [table]
-  (let [sorting @(rf/subscribe [::sorting table])]
+  (let [sorting @(rf/subscribe [::sorting table])
+        columns @(rf/subscribe [::filtered-columns table])]
     (into [:tr (when (:selectable? table) [selection-toggle-all table])]
-          (for [column (:columns table)]
+          (for [column columns]
             [:th
              (when (sortable? column)
                {:class "pointer"
@@ -338,7 +358,7 @@
                (when (= (:key column) (:sort-column sorting))
                  [sort-symbol (:sort-order sorting)]))]))))
 
-(defn- table-row [row table]
+(defn- table-row [row table columns]
   (into [:tr {:data-row (:key row)
               :class (when (:selectable? table)
                        [:clickable
@@ -354,7 +374,7 @@
            [:td.selection
             [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
                        :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
-        (for [column (:columns table)]
+        (for [column columns]
           (let [cell (get row (:key column))]
             (assert cell {:error "the row is missing a column"
                           :column (:key column)
@@ -371,6 +391,7 @@
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table]) ; TODO refactor to use ::displayed-rows
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
+        columns @(rf/subscribe [::filtered-columns table])
         ;; When showing all rows, table-row is responsible for filtering displayed rows,
         ;; but with truncation the visible rows need to be filtered before truncation.
         rows (if (< max-rows (count rows))
@@ -383,10 +404,10 @@
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row (take max-rows rows)]
-         ^{:key (:key row)} [table-row row table])]
+         ^{:key (:key row)} [table-row row table columns])]
       (when (< max-rows (count rows))
         [:tfoot
-         [:tr [:td {:col-span (+ (count (:columns table))
+         [:tr [:td {:col-span (+ (count columns)
                                  (if (:selectable? table) 1 0))
                     :style {:text-align :center}}
                [:button.btn.btn-primary {:type :button
@@ -518,6 +539,9 @@
             (let [example3 {:id ::example3
                             :columns [{:key :team
                                        :title "Team"}
+                                      {:key :not-shown
+                                       :title "Not shown"
+                                       :when-rows (constantly false)}
                                       {:key :points
                                        :title "Points"}]
                             :rows [::example-rich-table-rows]}]
