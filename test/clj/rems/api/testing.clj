@@ -60,8 +60,6 @@
                            :errors errors
                            :body body})))))))
 
-
-
 (defn assert-response-is-ok [response]
   (assert response)
   (assert-schema-errors response)
@@ -95,10 +93,6 @@
   (assert-schema-errors response)
   (= 200 (:status response)))
 
-(defn response-is-server-error? [response]
-  (assert-schema-errors response)
-  (= 500 (:status response)))
-
 (defn response-is-bad-request? [response]
   (assert-schema-errors response)
   (= 400 (:status response)))
@@ -122,6 +116,14 @@
 (defn response-is-payload-too-large? [response]
   (assert-schema-errors response)
   (= 413 (:status response)))
+
+(defn response-is-server-error? [response]
+  (assert-schema-errors response)
+  (= 500 (:status response)))
+
+(defn response-is-not-implemented? [response]
+  (assert-schema-errors response)
+  (= 501 (:status response)))
 
 (defn logged-in? [response]
   (str/includes? (get-in response [:headers "x-rems-roles"])
@@ -148,8 +150,11 @@
     (instance? java.io.File val) (slurp val)
     :else val))
 
+(defn get-content-type [response]
+  (get-in response [:headers "Content-Type"]))
+
 (defn read-body [{body :body :as response}]
-  (let [content-type (get-in response [:headers "Content-Type"])]
+  (let [content-type (get-content-type response)]
     (cond
       (.startsWith content-type "application/json") ;; might be "application/json; charset=utf-8"
       (json/parse-string (ensure-string body))
@@ -168,8 +173,8 @@
   {:body (read-body response)
    :status (:status response)})
 
-(defn api-response [method api & [body api-key user-id]]
-  (cond-> (request method api)
+(defn api-response [method api & [body api-key user-id query-params]]
+  (cond-> (request method api query-params)
     api-key (assoc-in [:headers "x-rems-api-key"] api-key)
     user-id (assoc-in [:headers "x-rems-user-id"] user-id)
     body (json-body body)
@@ -182,6 +187,9 @@
 (defn assert-success [body]
   (assert (:success body) (pr-str body))
   body)
+
+(defn get-redirect-location [response]
+  (get-in response [:headers "Location"]))
 
 ;;; Fake login without API key
 

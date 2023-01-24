@@ -37,6 +37,7 @@
            [rems.auth ForbiddenException UnauthorizedException]
            rems.DataException
            rems.InvalidRequestException
+           rems.NotImplementedException
            rems.PayloadTooLargeException
            rems.UnsupportedMediaTypeException
            rems.TryAgainException))
@@ -100,6 +101,12 @@
   [exception _ex-data _request]
   (log/error exception (.getMessage exception))
   (-> (unsupported-media-type)
+      (response/content-type "application/json")))
+
+(defn not-implemented-handler
+  [exception _ex-data _request]
+  (log/error exception (.getMessage exception))
+  (-> (not-implemented)
       (response/content-type "application/json")))
 
 (defn with-logging
@@ -170,6 +177,7 @@
                              DataException data-exception-handler
                              PayloadTooLargeException payload-too-large-handler
                              UnsupportedMediaTypeException unsupported-media-type-handler
+                             NotImplementedException not-implemented-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
                              ::ex/request-validation (with-logging ex/request-validation-handler)

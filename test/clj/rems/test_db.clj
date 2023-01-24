@@ -1,12 +1,10 @@
 (ns ^:integration rems.test-db
   "Namespace for tests that use an actual database."
-  (:require [clojure.string :refer [split-lines]]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
@@ -64,52 +62,6 @@
   (is (= #{:logged-in} (roles/get-roles "simo")))
   (is (= #{:logged-in} (roles/get-roles "juho"))) ;; default role
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
-
-(deftest test-get-entitlements-for-export
-  (test-helpers/create-user! {:userid "handler" :email "handler@test.com" :name "Handler"})
-  (test-helpers/create-user! {:userid "jack" :email "jack@test.com" :name "Jack"})
-  (test-helpers/create-user! {:userid "jill" :email "jill@test.com" :name "Jill"})
-  (let [wf (test-helpers/create-workflow! {:handlers ["handler"]})
-        form-id (test-helpers/create-form! {})
-        res1 (test-helpers/create-resource! {:resource-ext-id "resource1"})
-        res2 (test-helpers/create-resource! {:resource-ext-id "resource2"})
-        item1 (test-helpers/create-catalogue-item! {:form-id form-id :resource-id res1 :workflow-id wf})
-        item2 (test-helpers/create-catalogue-item! {:form-id form-id :resource-id res2 :workflow-id wf})
-        jack-app (test-helpers/create-application! {:actor "jack" :catalogue-item-ids [item1]})
-        jill-app (test-helpers/create-application! {:actor "jill" :catalogue-item-ids [item1 item2]})]
-    (test-helpers/command! {:type :application.command/submit
-                            :application-id jack-app
-                            :actor "jack"})
-    (test-helpers/command! {:type :application.command/approve
-                            :application-id jack-app
-                            :actor "handler"
-                            :comment ""})
-    (test-helpers/command! {:type :application.command/submit
-                            :application-id jill-app
-                            :actor "jill"})
-    (test-helpers/command! {:type :application.command/approve
-                            :application-id jill-app
-                            :actor "handler"
-                            :comment ""})
-
-    (binding [context/*roles* #{:handler}]
-      (let [lines (split-lines (entitlements/get-entitlements-for-export))]
-        (is (= 4 (count lines))) ;; header + 3 resources
-        (is (some #(and (.contains % "resource1")
-                        (.contains % "jill")
-                        (.contains % (str jill-app)))
-                  lines))
-        (is (some #(and (.contains % "resource2")
-                        (.contains % "jill")
-                        (.contains % (str jill-app)))
-                  lines))
-        (is (some #(and (.contains % "resource1")
-                        (.contains % "jack")
-                        (.contains % (str jack-app)))
-                  lines))))
-    (binding [context/*roles* #{:applicant}]
-      (is (thrown? ForbiddenException
-                   (entitlements/get-entitlements-for-export))))))
 
 (deftest test-create-demo-data!
   ;; just a smoke test, check that create-demo-data doesn't fail

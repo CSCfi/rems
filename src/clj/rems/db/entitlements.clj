@@ -6,52 +6,14 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
-            [rems.service.ega :as ega]
-            [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.csv :as csv]
             [rems.db.outbox :as outbox]
-            [rems.db.users :as users]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
-            [rems.common.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [getx-user-id]]))
-
-;; TODO move Entitlement schema here from rems.api?
-
-(defn- entitlement-to-api [{:keys [resid catappid start end mail userid]}]
-  {:resource resid
-   :user (users/get-user userid)
-   :application-id catappid
-   :start start
-   :end end
-   :mail mail})
-
-(defn get-entitlements-for-api [user-or-nil resource-or-nil expired?]
-  (mapv entitlement-to-api
-        (db/get-entitlements {:user (if (has-roles? :handler :owner :organization-owner :reporter)
-                                      user-or-nil
-                                      (getx-user-id))
-                              :resource-ext-id resource-or-nil
-                              :active-at (when-not expired?
-                                           (time/now))})))
-
-(defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
-  (ga4gh/entitlements->passport (db/get-entitlements {:user user
-                                                      :resource-ext-id resource-or-nil
-                                                      :active-at (when-not expired?
-                                                                   (time/now))})))
-
-(defn get-entitlements-for-export
-  "Returns a CSV string representing entitlements"
-  []
-  (when-not (has-roles? :handler)
-    (throw-forbidden))
-  (let [ents (db/get-entitlements)]
-    (csv/entitlements-to-csv ents)))
+            [rems.service.ega :as ega]))
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
