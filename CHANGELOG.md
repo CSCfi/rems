@@ -14,6 +14,8 @@ Changes since v2.31
 
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
 - User attributes are now formatted better (a boolean becomes a checkbox, etc.) (#3103)
+- Show form errors column only when some form has errors. (#3107)
+- Fix form table default sort order to be internal name (was title). (#3107)
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
