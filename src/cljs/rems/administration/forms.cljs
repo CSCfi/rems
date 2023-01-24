@@ -77,7 +77,8 @@
    (text :t.administration/copy-as-new)])
 
 (defn- errors-symbol []
-  [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)}])
+  [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)
+                                  :title (text :t.administration/has-errors)}])
 
 (rf/reg-sub
  ::forms-table-rows
@@ -94,11 +95,12 @@
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
-           :errors (if (empty? (:form/errors form))
-                     {:value ""
-                      :sort-value 1}
-                     {:td [:td [errors-symbol]]
-                      :sort-value 2})
+           :errors (if-some [errors (seq (:form/errors form))]
+                     {:value errors
+                      :td [:td [errors-symbol]]
+                      :sort-value 2}
+                     {:value nil
+                      :sort-value 1})
            :commands {:td [:td.commands
                            [to-view-form form]
                            [roles/show-when roles/+admin-write-roles+
@@ -118,13 +120,14 @@
                                 :title (text :t.administration/active)
                                 :filterable? false}
                                {:key :errors
+                                :when-rows (fn [rows] (some (comp seq :value :errors) rows))
                                 :title (text :t.administration/has-errors)
                                 :filterable? false}
                                {:key :commands
                                 :sortable? false
                                 :filterable? false}]
                      :rows [::forms-table-rows]
-                     :default-sort-column :title}]
+                     :default-sort-column :internal-name}]
     [:div.mt-3
      [table/search forms-table]
      [table/table forms-table]]))
