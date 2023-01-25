@@ -12,6 +12,7 @@ Changes since v2.31
 **NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**
 
 ### Changes
+- Application editing performance is improved. (#3106)
 - Show form errors column only when some form has errors. (#3107)
 
 ### Additions

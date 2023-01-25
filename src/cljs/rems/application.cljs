@@ -456,8 +456,8 @@
 
 (rf/reg-event-db
  ::toggle-diff
- (fn [db [_ field-id]]
-   (update-in db [::edit-application :show-diff field-id] not)))
+ (fn [db [_ form-id field-id]]
+   (update-in db [::edit-application :show-diff form-id field-id] not)))
 
 (rf/reg-event-db
  ::set-duo-codes
@@ -579,15 +579,87 @@
                    :text (text :t.form/copy-as-new)
                    :on-click #(rf/dispatch [::copy-as-new-application])}])
 
+(rf/reg-sub
+ ::get-field-value
+ (fn [db [_ form-id field-id]]
+   (get-in db [::edit-application :field-values form-id field-id])))
+
+(rf/reg-sub
+ ::get-field-diff
+ (fn [db [_ form-id field-id]]
+   (get-in db [::edit-application :show-diff form-id field-id])))
+
+(rf/reg-sub
+ ::field-validations
+ (fn [db _]
+   (let [validations (get-in db [::edit-application :validation])]
+     (index-by [:form-id :field-id]
+               (some seq [(:errors validations) (:warnings validations)])))))
+
+(rf/reg-sub
+ ::get-field-validation
+ :<- [::field-validations]
+ (fn [field-validations [_ form-id field-id]]
+   (get-in field-validations [form-id field-id])))
+
+(rf/reg-sub
+ ::get-field-attachment-status
+ (fn [db [_ form-id field-id]]
+   (get-in db [::edit-application :attachment-status form-id field-id])))
+
+(rf/reg-sub
+ ::application-attachments-by-id
+ :<- [::application]
+ (fn [application _]
+   (index-by [:attachment/id] (:application/attachments application))))
+
+(rf/reg-sub
+ ::get-attachment-by-id
+ :<- [::application-attachments-by-id]
+ (fn [attachments-by-id [_ attachment-id]]
+   (attachments-by-id attachment-id)))
+
+(defn- field-container
+  "A container component for field that isolates the pure render component
+  from re-frame state. Only depends on relevant fields, not the whole application
+  to limit re-rendering and improve performance."
+  [field]
+  (let [form-id (:form/id field)
+        field-id (:field/id field)
+        field-value @(rf/subscribe [::get-field-value form-id field-id])
+        attachments-by-ids (fn [ids]
+                             (mapv (fn [id]
+                                     @(rf/subscribe [::get-attachment-by-id id]))
+                                   ids))
+        depended-field-id (form/field-depends-on-field field)
+        depended-value (when depended-field-id
+                         {depended-field-id @(rf/subscribe [::get-field-value form-id depended-field-id])})]
+
+    (when (and (form/field-visible? field depended-value)
+               (not (:field/private field))) ; private fields will have empty value anyway
+      [fields/field (merge field
+                           {:field/value field-value
+                            :diff @(rf/subscribe [::get-field-diff form-id field-id])
+                            :validation @(rf/subscribe [::get-field-validation form-id field-id])
+                            :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                            :on-toggle-diff #(rf/dispatch [::toggle-diff form-id field-id])}
+                           (when (= :attachment (:field/type field))
+                             {:field/attachments (->> field-value
+                                                      form/parse-attachment-ids
+                                                      attachments-by-ids
+                                                      ;; The field value can contain an id that's not in attachments when a new attachment has been
+                                                      ;; uploaded, but the application hasn't yet been refetched.
+                                                      (remove nil?))
+                              :field/previous-attachments (when-let [prev (:field/previous-value field)]
+                                                            (->> prev
+                                                                 form/parse-attachment-ids
+                                                                 attachments-by-ids))
+                              :field/attachment-status @(rf/subscribe [::get-field-attachment-status form-id field-id])
+                              :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                              :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))])))
+
 (defn- application-fields [application]
-  (let [edit-application @(rf/subscribe [::edit-application])
-        field-values (:field-values edit-application)
-        show-diff (:show-diff edit-application)
-        validations (:validation edit-application)
-        field-validations (index-by [:form-id :field-id]
-                                    (some seq [(:errors validations) (:warnings validations)]))
-        attachments (index-by [:attachment/id] (:application/attachments application))
-        language @(rf/subscribe [:language])]
+  (let [language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
                 :let [form-id (:form/id form)]
@@ -598,34 +670,11 @@
              {:class "mb-3"
               :title (or (get-in form [:form/external-title language]) (text :t.form/application))
               :always (into [:div.fields]
-                            (for [field (:form/fields form)
-                                  :let [field-id (:field/id field)]
-                                  :when (and (form/field-visible? field (get field-values form-id))
-                                             (not (:field/private field)))] ; private fields will have empty value anyway
-                              [fields/field (merge field
-                                                   {:form/id form-id
-                                                    :field/value (get-in field-values [form-id field-id])
-
-                                                    :diff (get show-diff field-id)
-                                                    :validation (get-in field-validations [form-id field-id])
-                                                    :readonly @(rf/subscribe [::readonly?])
-                                                    :app-id (:application/id application)
-                                                    :on-change #(rf/dispatch [::set-field-value form-id field-id %])
-                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])}
-                                                   (when (= :attachment (:field/type field))
-                                                     {:field/attachments (->> (get-in field-values [form-id field-id])
-                                                                              form/parse-attachment-ids
-                                                                              (mapv attachments)
-                                                                              ;; The field value can contain an id that's not in attachments when a new attachment has been
-                                                                              ;; uploaded, but the application hasn't yet been refetched.
-                                                                              (remove nil?))
-                                                      :field/previous-attachments (when-let [prev (:field/previous-value field)]
-                                                                                    (->> prev
-                                                                                         form/parse-attachment-ids
-                                                                                         (mapv attachments)))
-                                                      :field/attachment-status (get-in edit-application [:attachment-status form-id field-id])
-                                                      :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                                                      :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))]))}]))))
+                            (for [field (:form/fields form)]
+                              [field-container (merge field
+                                                      {:form/id form-id
+                                                       :readonly @(rf/subscribe [::readonly?])
+                                                       :app-id (:application/id application)})]))}]))))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
