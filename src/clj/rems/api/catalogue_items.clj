@@ -5,8 +5,8 @@
             [rems.service.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
-            [rems.db.core :as db]
             [rems.schema-base :as schema-base]
+            [rems.util :refer [apply-filters]]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -72,7 +72,7 @@
                      {disabled :- (describe s/Bool "whether to include disabled items") false}
                      {expired :- (describe s/Bool "whether to include expired items") false}]
       :return GetCatalogueItemsResponse
-      (ok (db/apply-filters
+      (ok (apply-filters
            (merge (when-not expired {:expired false})
                   (when-not disabled {:enabled true})
                   (when-not archived {:archived false}))

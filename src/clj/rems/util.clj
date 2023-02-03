@@ -1,6 +1,6 @@
 (ns rems.util
   (:require [clojure.java.io :as io]
-            [clojure.test :refer [deftest is]]
+            [clojure.set :refer [superset?]]
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
             [rems.context :as context])
@@ -110,3 +110,11 @@
   [dir]
   (.mkdirs dir)
   (delete-directory-contents-recursively dir))
+
+(defn contains-all-kv-pairs? [supermap map]
+  (superset? (set supermap) (set map)))
+
+(defn apply-filters [filters coll]
+  (let [filters (or filters {})]
+    (filter #(contains-all-kv-pairs? % filters) coll)))
+

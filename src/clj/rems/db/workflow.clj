@@ -3,6 +3,7 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
+            [rems.util :refer [apply-filters]]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [medley.core :refer [update-existing-in]]))
@@ -43,7 +44,7 @@
 (defn get-workflows [filters]
   (->> (db/get-workflows)
        (map enrich-and-format-workflow)
-       (db/apply-filters filters)))
+       (apply-filters filters)))
 
 (defn get-all-workflow-roles [userid]
   (when (some #(contains? (set (map :userid (get-in % [:workflow :handlers]))) userid)

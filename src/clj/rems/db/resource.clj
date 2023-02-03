@@ -4,6 +4,7 @@
             [rems.ext.duo :as duo]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
+            [rems.util :refer [apply-filters]]
             [schema.coerce :as coerce]
             [schema.core :as s])
   (:import [rems InvalidRequestException]))
@@ -37,7 +38,7 @@
 
 (defn get-resources [filters]
   (->> (db/get-resources (select-keys filters [:resid]))
-       (db/apply-filters (dissoc filters :resid)) ; other filters
+       (apply-filters (dissoc filters :resid)) ; other filters
        (map format-resource)
        (map coerce-ResourceDb)))
 

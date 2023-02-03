@@ -8,7 +8,8 @@
             [rems.db.core :as db]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
-            [rems.db.users :as users]))
+            [rems.db.users :as users]
+            [rems.util :refer [apply-filters]]))
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
@@ -37,9 +38,9 @@
 
 (defn get-organizations [& [{:keys [userid owner enabled archived]}]]
   (->> (organizations/get-organizations)
-       (db/apply-filters (assoc-some {}
-                                     :enabled enabled
-                                     :archived archived))
+       (apply-filters (assoc-some {}
+                                  :enabled enabled
+                                  :archived archived))
        (organization-filters userid owner)))
 
 (defn get-organization [userid org]

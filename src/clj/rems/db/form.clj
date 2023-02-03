@@ -8,6 +8,7 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
+            [rems.util :refer [apply-filters]]
             [schema.coerce :as coerce]
             [schema.core :as s])
   (:import rems.InvalidRequestException))
@@ -53,7 +54,7 @@
 (defn get-form-templates [filters]
   (->> (db/get-form-templates)
        (map parse-db-row)
-       (db/apply-filters filters)
+       (apply-filters filters)
        (map add-validation-errors)))
 
 (defn get-form-template [id]

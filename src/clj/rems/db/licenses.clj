@@ -1,7 +1,8 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [medley.core :refer [distinct-by]]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.util :refer [apply-filters]]))
 
 (defn- format-license [license]
   {:id (:id license)
@@ -49,7 +50,7 @@
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
   (->> (db/get-all-licenses)
-       (db/apply-filters filters)
+       (apply-filters filters)
        (format-licenses)
        (localize-licenses)))
 
