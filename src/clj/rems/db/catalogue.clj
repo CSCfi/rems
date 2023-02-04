@@ -72,9 +72,9 @@
    (get-localized-catalogue-items {}))
   ([query-params]
    (->> (db/get-catalogue-items query-params)
-        (map localize-catalogue-item)
-        (map db/assoc-expired)
-        (map join-catalogue-item-data))))
+        (mapv localize-catalogue-item)
+        (mapv assoc-expired)
+        (mapv join-catalogue-item-data))))
 
 (defn get-localized-catalogue-item
   ([id]
