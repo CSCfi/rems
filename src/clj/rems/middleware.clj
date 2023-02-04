@@ -8,6 +8,8 @@
             [medley.core :refer [update-existing]]
             [mount.core :as mount]
             [rems.auth.auth :as auth]
+            [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
+            [rems.common.util :refer [assoc-some-in]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -127,10 +129,12 @@
   "Sets context/*lang*"
   [handler]
   (fn [request]
-    (binding [context/*lang* (or (when context/*user*
+    (binding [context/*lang* (or (some-> request :cookies (get "rems-user-preferred-language") :value keyword)
+                                 (when context/*user*
                                    (:language (user-settings/get-user-settings (getx-user-id))))
                                  (:default-language env))]
-      (handler request))))
+      ;; ensure the cookie is set for future requests
+      (assoc-some-in (handler request) [:cookies "rems-user-preferred-language"] (some-> context/*lang* name)))))
 
 (defn on-unauthorized-error [request]
   (error-page
