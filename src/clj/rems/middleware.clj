@@ -67,7 +67,8 @@
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)
+    (binding [context/*request* (assoc request :request-id (random-uuid))
+              context/*root-path* (calculate-root-path request)
               context/*roles* (set/union
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
