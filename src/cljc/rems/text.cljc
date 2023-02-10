@@ -36,21 +36,27 @@
                  [k :t/missing (failsafe-fallback k args)]
                  (vec args)))))
 
-(defn text
+(defn text-no-fallback
   "Return the tempura translation for a given key. Additional fallback
-  keys can be given."
+  keys can be given but there is no default fallback text."
   [& ks]
-  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (context/*tempura* (vec ks))
      :cljs (let [translations (rf/subscribe [:translations])
                  language (rf/subscribe [:language])]
              (try
                (tr {:dict @translations}
                    [@language]
-                   (conj (vec ks) (text-format :t/missing (vec ks))))
+                   (vec ks))
                (catch js/Object e
                  ;; fail gracefully if the re-frame state is incomplete
                  (.error js/console e)
                  (str (vec ks)))))))
+
+(defn text
+  "Return the tempura translation for a given key. Additional fallback
+  keys can be given."
+  [& ks]
+  (apply text-no-fallback (conj (vec ks) (text-format :t/missing (vec ks)))))
 
 (defn localized [m]
   (let [lang #?(:clj context/*lang*
