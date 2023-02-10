@@ -514,4 +514,14 @@
       (is (= {:to-user "applicant"
               :subject "Your application 2001/3, \"Application title\" has been submitted"
               :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
+             (email-to "applicant" mails)))))
+
+  (with-redefs [rems.config/env (assoc rems.config/env :enable-handler-emails false)]
+    (let [mails (emails created-events submit-event)]
+      (is (= #{"applicant"} (email-recipients mails))
+          "applicant gets the email but handler messages are not sent")
+      (is (= {:to-user "applicant"
+              :subject "Your application 2001/3, \"Application title\" has been submitted"
+              :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
              (email-to "applicant" mails))))))
+

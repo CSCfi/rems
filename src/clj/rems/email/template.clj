@@ -35,7 +35,8 @@
        (str/join ", ")))
 
 (defn- handlers [application]
-  (get-in application [:application/workflow :workflow.dynamic/handlers]))
+  (when (:enable-handler-emails env)
+    (get-in application [:application/workflow :workflow.dynamic/handlers])))
 
 (defn- other-handlers [event application]
   (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
