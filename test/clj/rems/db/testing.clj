@@ -6,6 +6,7 @@
             [mount.core :as mount]
             [rems.service.dependencies :as dependencies]
             [rems.application.search]
+            [rems.cache]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -29,7 +30,7 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
-  (applications/empty-injections-cache!)
+  (rems.cache/empty-injections-cache!)
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   (f)
   (mount/stop))

@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.core.cache.wrapped :as cache]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
@@ -11,6 +10,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.cache]
             [rems.common.util :refer [conj-set keep-keys]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
@@ -66,35 +66,16 @@
 
 ;;; Fetching applications (for API)
 
-(def ^:private form-template-cache (cache/ttl-cache-factory {}))
-(def ^:private catalogue-item-cache (cache/ttl-cache-factory {}))
-(def ^:private license-cache (cache/ttl-cache-factory {}))
-(def ^:private user-cache (cache/ttl-cache-factory {}))
-(def ^:private users-with-role-cache (cache/ttl-cache-factory {}))
-(def ^:private workflow-cache (cache/ttl-cache-factory {}))
-(def ^:private blacklist-cache (cache/ttl-cache-factory {}))
-
-(defn empty-injections-cache! []
-  (swap! form-template-cache empty)
-  (swap! catalogue-item-cache empty)
-  (swap! license-cache empty)
-  (swap! user-cache empty)
-  (swap! users-with-role-cache empty)
-  (swap! workflow-cache empty)
-  (swap! blacklist-cache empty))
-
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
-                                                                                                                          :expand-resource-data? true})))
+   :get-form-template (rems.cache/cached form/get-form-template)
+   :get-catalogue-item (fn [id] ((rems.cache/cached catalogue/get-localized-catalogue-item) id {:expand-names? true :expand-resource-data? true}))
    :get-config (fn [] env)
-   :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
-   :get-user #(cache/lookup-or-miss user-cache % users/get-user)
-   :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
-   :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
-   :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                  (blacklist/blacklisted? userid resource)))
+   :get-license (rems.cache/cached licenses/get-license)
+   :get-user (rems.cache/cached users/get-user)
+   :get-users-with-role (rems.cache/cached users/get-users-with-role)
+   :get-workflow (rems.cache/cached workflow/get-workflow)
+   :blacklisted? (fn [userid resource] ((rems.cache/cached blacklist/blacklisted?) userid resource))
    ;; TODO: no caching for these, but they're only used by command handlers currently
    :get-attachment-metadata attachments/get-attachment-metadata
    :get-catalogue-item-licenses get-catalogue-item-licenses})
@@ -107,14 +88,6 @@
     (if (empty? events)
       nil ; application not found
       (model/build-application-view events fetcher-injections))))
-
-(defn get-application
-  "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
-  [application-id]
-  (when-let [application (get-application-internal application-id)]
-    (-> application
-        (model/hide-non-public-information)
-        (model/apply-privacy-by-roles #{:reporter})))) ;; to populate required :field/private attributes
 
 (defn get-application-for-user
   "Returns the part of application state which the specified user
@@ -156,6 +129,13 @@
             a union of roles from all applications."}
   all-applications-cache
   :start (events-cache/new))
+
+(comment
+  (require '[clj-memory-meter.core :as mm])
+  (mm/measure (-> @all-applications-cache :state ::enriched-apps first))
+  (count (-> @all-applications-cache :state ::enriched-apps))
+  (mm/measure (-> @all-applications-cache :state ::enriched-apps))
+  (mm/measure (-> @all-applications-cache :state)))
 
 (defn- group-apps-by-user [apps]
   (->> apps
@@ -275,7 +255,7 @@
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")
-  (empty-injections-cache!)
+  (rems.cache/empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!)
@@ -285,6 +265,19 @@
 (mount/defstate all-applications-cache-reloader
   :start (scheduler/start! "all-applications-cache-reloader" reload-cache! (Duration/standardHours 1))
   :stop (scheduler/stop! all-applications-cache-reloader))
+
+(defn- get-application-cached
+  [application-id]
+  (refresh-all-applications-cache!)
+  (get-in @all-applications-cache [:state ::enriched-apps application-id]))
+
+(defn get-application
+  "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
+  [application-id]
+  (when-let [application (get-application-internal application-id)]
+    (-> application
+        (model/hide-non-public-information)
+        (model/apply-privacy #{:reporter})))) ;; to populate required :field/private attributes
 
 (defn delete-application!
   [app-id]
