@@ -13,6 +13,7 @@
             [rems.flash-message :as flash-message]
             [rems.guide-util :refer [example]]
             [rems.language-switcher :as language-switcher]
+            [rems.modal :as modal]
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.profile :as profile]
@@ -134,4 +135,5 @@
     [dropdown/guide]
     [phase/guide]
     [atoms/guide]
-    [user/guide]]])
+    [user/guide]
+    [modal/guide]]])

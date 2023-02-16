@@ -83,6 +83,7 @@
                      (logo-preloads))
                [:body
                 [:div#app app-content]
+                [:div#modal-root {:aria-modal true}] ; render target for react portal
                 (include-js "/assets/font-awesome/js/fontawesome.js")
                 (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
                 (include-js "/assets/jquery/jquery.min.js")
