@@ -14,6 +14,7 @@ Changes since v2.31
 ### Changes
 - Application editing performance is improved. (#3106)
 - Show form errors column only when some form has errors. (#3107)
+- Latest event is now shown in the minimized application state. (#3119)
 
 ### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
