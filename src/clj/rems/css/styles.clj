@@ -46,13 +46,13 @@
   (list
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
-                         {:border-bottom "none"}])
+                         {:border-bottom :none}])
    (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
                         [:.lg-fs70pct {:font-size (u/percent 70)}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
-                        [:.commands {:white-space "nowrap"}])
+                        [:div.commands {:flex-wrap :nowrap}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
@@ -189,7 +189,7 @@
                   :background-color (theme-getx :table-bgcolor :color1)
                   :box-shadow (theme-getx :table-shadow)
                   :color (theme-getx :table-text-color)}
-    [:th {:white-space "nowrap"
+    [:th {:white-space :nowrap
           :color (theme-getx :table-heading-color)
           :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
@@ -378,7 +378,7 @@
      {:left (u/em 0)}]]
    [:#main-content {:display :flex
                     :flex-direction :column
-                    :flex-wrap :no-wrap
+                    :flex-wrap :nowrap
                     :min-height (u/px 300)
                     :max-width content-width
                     :flex-grow 1
