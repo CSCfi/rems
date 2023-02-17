@@ -44,6 +44,7 @@
 
 (defn catalogueitemdata->json [data]
   (-> (select-keys data [:categories])
+      (update :categories (fn [categories] (->> categories (mapv #(select-keys % [:category/id])))))
       validate-catalogueitemdata
       json/generate-string))
 
