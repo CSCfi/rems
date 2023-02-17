@@ -22,7 +22,9 @@
             [rems.css.style-utils :refer [theme-getx get-logo-image get-navbar-logo get-logo-name-sm]]
             [ring.util.response :as response]))
 
-(def content-width (u/px 1200))
+(def content-max-width (u/px 2560))
+(def application-page-max-width (u/px 1800))
+(def navbar-max-width (u/px 1200))
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
@@ -380,7 +382,7 @@
                     :flex-direction :column
                     :flex-wrap :nowrap
                     :min-height (u/px 300)
-                    :max-width content-width
+                    :max-width content-max-width
                     :flex-grow 1
                     ;; Height of navigation + logo, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
@@ -521,7 +523,7 @@
 
    ;; Navbar
    [:.navbar-wrapper
-    {:max-width content-width}]
+    {:max-width navbar-max-width}]
    [:.navbar
     {:font-size (u/px 19)
      :letter-spacing (u/rem 0.015)
@@ -788,9 +790,9 @@
    [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
 
    ;; application page
-   ;; working around garden minifier bug that causes 1800.0px to lose the px (1800px works fine)
-   ;; https://github.com/noprompt/garden/issues/120
-   [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
+
+   [:.page-application {:max-width (u/px application-page-max-width)}]
+
    [:#actions {:position :sticky
                :top "85px"}]
    [:.reload-indicator {:position :fixed

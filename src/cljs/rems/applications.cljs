@@ -27,7 +27,7 @@
 
 (defn applications-page []
   (let [identity @(rf/subscribe [:identity])]
-    [:<>
+    [:div
      [document-title (text :t.applications/applications)]
      [flash-message/component :top]
      (if (not @(rf/subscribe [::my-applications :initialized?]))
