@@ -602,7 +602,6 @@
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
-   (media-queries)
    [:.example-page {:margin (u/rem 2)}]
    [(s/> :.example-page :h1) {:margin "4rem 0"}]
    [(s/> :.example-page :h2) {:margin-top (u/rem 8)
@@ -872,6 +871,9 @@
                          :-o-transition "transform 0.2s ease-in-out"
                          :transition "transform 0.2s ease-in-out"}]
    [:.rotate-180 {:transform "rotate(180deg)"}]
+
+   ;; Media queries must be almost last so they override
+   (media-queries)
 
    ;; These must be last as the parsing fails when the first non-standard element is met
    (form-placeholder-styles)))
