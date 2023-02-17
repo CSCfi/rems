@@ -2005,7 +2005,7 @@
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Edit form"}))
           (is (btu/visible? {:id (field-selector 0 :info-text-sv) :fn/has-class :is-invalid}))
-        ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
+          ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
           (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
@@ -2900,7 +2900,7 @@
           (fill-license-fields {:title "E2E license with external links"
                                 :external-links {:en "http://www.google.com"
                                                  :fi "http://www.google.fi"}})
-          ; test save button not active
+          ;; test save button not active
           (btu/screenshot "saving-disabled-external-links-en.png")
           (is (btu/disabled? :save))
           (fill-license-fields {:external-links {:sv "http://www.google.sv"}})
