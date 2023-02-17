@@ -402,6 +402,7 @@
     [:&:hover
      :&:focus
      :&:active:hover
+     "&:not(:disabled):not(.disabled):active"
      {:background-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
       :border-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
       :color (theme-getx :primary-button-hover-color :primary-button-color)
@@ -411,22 +412,18 @@
      :color (theme-getx :primary-button-color)
      :outline-color :transparent}]
    [:.btn-secondary
-    ;; Only override bootstrap's default if the key is defined in the theme
     [:&:hover
      :&:focus
      :&:active:hover
-     (into {}
-           (filter val
-                   {:background-color (theme-getx :secondary-button-hover-bgcolor)
-                    :border-color (theme-getx :secondary-button-hover-bgcolor)
-                    :color (theme-getx :secondary-button-hover-color)
-                    :outline-color :transparent}))]
-    (into {}
-          (filter val
-                  {:background-color (theme-getx :secondary-button-bgcolor)
-                   :border-color (theme-getx :secondary-button-bgcolor)
-                   :color (theme-getx :secondary-button-color)
-                   :outline-color :transparent}))]
+     "&:not(:disabled):not(.disabled):active"
+     {:background-color (theme-getx :secondary-button-hover-bgcolor :secondary-button-bgcolor :color4)
+      :border-color (theme-getx :secondary-button-hover-bgcolor :secondary-button-bgcolor :color4)
+      :color (theme-getx :secondary-button-hover-color :secondary-button-color :color4)
+      :outline-color :transparent}]
+    {:background-color (theme-getx :secondary-button-bgcolor :color4)
+     :border-color (theme-getx :secondary-button-bgcolor :color4)
+     :color (theme-getx :secondary-button-color)
+     :outline-color :transparent}]
    [:.btn-primary.disabled :.btn-primary:disabled ; same color as bootstrap's default for .btn-secondary.disabled
     {:color "#fff"
      :background-color "#6c757d"
