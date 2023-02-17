@@ -349,9 +349,10 @@
     (into [:tr (when (:selectable? table) [selection-toggle-all table])]
           (for [column columns]
             [:th
-             (when (sortable? column)
-               {:class "pointer"
-                :on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
+             (merge
+              {:class (str (some-> column :key name) (when (sortable? column) " pointer"))}
+              (when (sortable? column)
+                {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])}))
              (:title column)
              " "
              (when (sortable? column)
