@@ -2483,11 +2483,11 @@
                               :email "organization-owner2@example.com"
                               :organizations [{:organization/id "Default"}]})
   (test-helpers/create-organization! {:actor "owner"
-                                      :organization/id "organization-owner2-dummy-organization"
+                                      :organization/id (str "organization-owner2-dummy-organization-" (btu/get-seed))
                                       :organization/short-name {:en "dummy-en" :fi "dummy-fi" :sv "dummy-sv"}
-                                      :organization/name {:en (str "dummy-organization-" " en")
-                                                          :fi (str "dummy-organization-" " fi")
-                                                          :sv (str "dummy-organization-" " sv")}
+                                      :organization/name {:en (str "dummy-organization-" (btu/get-seed) " en")
+                                                          :fi (str "dummy-organization-" (btu/get-seed) " fi")
+                                                          :sv (str "dummy-organization-" (btu/get-seed) " sv")}
                                       :organization/owners [{:userid "organization-owner2"}]})
 
   (btu/with-postmortem
