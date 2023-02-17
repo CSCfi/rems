@@ -36,12 +36,10 @@
                      :validation-errors "Var vänlig kontrollera följande:"
                      :validation-warnings "Vänligen kontrollera följande innan du skickar in:"
                      :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
-            :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
             :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
-            :load-application-states "Ladda status för ansökningarna"
             :member "Deltagare"
             :member-email "E-postadress"
             :member-name "Namn"
@@ -67,8 +65,6 @@
             :return "Sänd tillbaka till sökande"
             :review "Granska"
             :revoke "Återkalla rättigheter"
-            :show-publications "Visa publikationer" ; VAI Visa publiceringar?
-            :show-throughput-times "Visa behandlingstider"
             :todo-applications "Aktiva ansökningar"}
   :administration {:active "Aktiv"
                    :add "Lägg till"

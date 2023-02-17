@@ -641,7 +641,6 @@
     [:ins {:background-color "#acf2bd"}]
     [:del {:background-color "#fdb8c0"}]]
    [:form.inline
-    :.form-actions.inline
     {:display :inline-block}
     [:.btn-link
      {:border :none
@@ -654,12 +653,9 @@
    [:.commands {:text-align "right"
                 :padding "0 1rem"
                 :cursor :auto}]
-   [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
-   [".children-inline-blocks > *" {:display :inline-block}]
 
-   [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
    [".btn-opens-more::after" {:content "'...'"}]

@@ -38,12 +38,10 @@
                      :validation-errors "Check the following errors:"
                      :validation-warnings "Check the following before submit:"
                      :entitlement-end-not-in-future "The expiration date for access rights must be in the future."}
-            :export-entitlements "Export entitlements as CSV"
             :generate-ega-api-key-in-profile "Generate one at the Profile page."
             :handled-applications "Processed applications"
             :invite-member "Invite member"
             :licenses-selection "Add terms of use"
-            :load-application-states "Load application states"
             :member "Member"
             :member-email "Email"
             :member-name "Name"
@@ -69,8 +67,6 @@
             :return "Return to applicant"
             :review "Review"
             :revoke "Revoke entitlement"
-            :show-publications "Show publications"
-            :show-throughput-times "Show throughput times"
             :todo-applications "Open applications"}
   :administration {:active "Active"
                    :add "Add"
