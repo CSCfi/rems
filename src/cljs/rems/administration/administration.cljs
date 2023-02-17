@@ -1,6 +1,7 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.common.roles :as roles]
             [rems.guide-util :refer [component-info example]]
             [rems.navbar :as navbar]
             [rems.text :refer [text]]))
@@ -19,15 +20,17 @@
      (text :t.administration/back)]))
 
 (defn navigator []
-  [:div#administration-menu.navbar.mb-4.mr-auto.ml-auto
+  [:div#administration-menu.navbar.mt-2.mb-4.mx-auto
    [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items)]
    [navbar/nav-link "/administration/resources" (text :t.administration/resources)]
    [navbar/nav-link "/administration/forms" (text :t.administration/forms)]
    [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]
    [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
-   [navbar/nav-link "/administration/reports" (text :t.administration/reports)]
+   [navbar/nav-link "/administration/organizations" (text :t.administration/organizations)]
+   [:div.mx-4]
    [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]
-   [navbar/nav-link "/administration/organizations" (text :t.administration/organizations)]])
+   [roles/show-when #{:owner :reporter}
+    [navbar/nav-link "/administration/reports" (text :t.administration/reports)]]])
 
 (defn guide []
   [:div

@@ -533,7 +533,14 @@
      {:background-color :inherit}]]
    [:#administration-menu
     [:.nav-link
-     {:padding ".5rem 0"}]]
+     {:padding ".5rem 0"}]
+    {:display :flex
+     :flex-direction :row
+     :align-items :center
+     :justify-content :center
+     :gap [[(u/rem 0) (u/rem 1)]]
+     :flex-wrap :wrap
+     :max-width navbar-max-width}]
    [:.navbar-top-bar {:width (u/percent 100)
                       :height (u/px 4)
                       :display :flex
