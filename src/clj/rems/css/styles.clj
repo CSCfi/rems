@@ -184,7 +184,7 @@
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
    [:.table-border {:padding 0
-                    :margin "1em 0"
+                    :margin "1rem 0"
                     :border (theme-getx :table-border)
                     :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
@@ -197,8 +197,8 @@
     [:th
      :td
      {:text-align "left"
-      :padding "0.5em 1em"}]
-    [:.selection {:width (u/rem 0.5)
+      :padding "0.5rem 1rem"}]
+    [:.selection {:width (u/rem 2)
                   :padding-right 0}]
     [:td:before
      {:color (theme-getx :table-text-color)}]
