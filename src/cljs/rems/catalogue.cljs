@@ -77,14 +77,14 @@
      (map (fn [item]
             {:key (:id item)
              :name {:value (get-localized-title item language)}
-             :commands {:td [:td.commands
-                             [catalogue-item-more-info item language config]
-                             (when logged-in?
-                               (if (:enable-cart config)
-                                 (if (contains? cart-item-ids (:id item))
-                                   [cart/remove-from-cart-button item language]
-                                   [cart/add-to-cart-button item language])
-                                 (apply-button item language)))]}})
+             :commands {:display-value [:div.commands.justify-content-end
+                                        [catalogue-item-more-info item language config]
+                                        (when logged-in?
+                                          (if (:enable-cart config)
+                                            (if (contains? cart-item-ids (:id item))
+                                              [cart/remove-from-cart-button item language]
+                                              [cart/add-to-cart-button item language])
+                                            (apply-button item language)))]}})
           catalogue))))
 
 (defn draft-application-list []
@@ -139,7 +139,7 @@
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
                               :content #(when-not (:category/id %)
-                                          [:div.commands.w-100
+                                          [:div.commands.w-100.justify-content-end
                                            [catalogue-item-more-info % language config]
                                            (when logged-in?
                                              (if (:enable-cart config)

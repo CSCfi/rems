@@ -128,7 +128,7 @@
            :last-activity (let [value (:application/last-activity app)]
                             {:value value
                              :display-value (localize-time value)})
-           :view {:td [:td.view [view-button app]]}})
+           :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
 
 

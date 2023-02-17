@@ -36,3 +36,11 @@
    (defn show-when [roles & body]
      (clojure.core/when (apply has-roles? roles)
        (into [:<>] body))))
+
+#?(:cljs
+   (defn can-modify-organization-item? [item]
+     (let [owner? (has-roles? :owner)
+           org-owner? (->> @(rf/subscribe [:owned-organizations])
+                           (some (comp #{(-> item :organization :organization/id)} :organization/id)))]
+       (or owner?
+           org-owner?))))

@@ -43,6 +43,7 @@
             :member "Deltagare"
             :member-email "E-postadress"
             :member-name "Namn"
+            :modify "Ändra"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
             :reject "Avslå"
             :remark "Gör anteckning"

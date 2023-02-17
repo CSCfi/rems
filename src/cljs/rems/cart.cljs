@@ -62,8 +62,9 @@
   [:tr.cart-item
    [:td.title (get-localized-title item language)]
    [:td.commands
-    [remove-from-cart-button item language]
-    (when apply-button? [apply-button [item] language])]])
+    [:div.commands.justify-content-end
+     [remove-from-cart-button item language]
+     (when apply-button? [apply-button [item] language])]]])
 
 (defn- bundle-view [items language]
   (let [many-items? (< 1 (count items))]

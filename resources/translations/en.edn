@@ -45,6 +45,7 @@
             :member "Member"
             :member-email "Email"
             :member-name "Name"
+            :modify "Modify"
             :name-and-email-required "Name and email are required."
             :reject "Reject"
             :remark "Remark"

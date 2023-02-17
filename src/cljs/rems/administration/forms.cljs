@@ -71,14 +71,27 @@
    (str "/administration/forms/" (:form/id form))
    (text :t.administration/view)])
 
-(defn- copy-as-new-form [form]
-  [atoms/link {:class "btn btn-primary"}
-   (str "/administration/forms/create/" (:form/id form))
-   (text :t.administration/copy-as-new)])
+(defn- copy-as-new-action [form]
+  {:label (text :t.administration/copy-as-new)
+   :url (str "/administration/forms/create/" (:form/id form))})
 
 (defn- errors-symbol []
   [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)
                                   :title (text :t.administration/has-errors)}])
+
+(defn- modify-form-dropdown [form]
+  [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
+   (when (roles/can-modify-organization-item? form)
+     (form/edit-action (:form/id form)))
+
+   (when (apply roles/has-roles? roles/+admin-write-roles+)
+     (copy-as-new-action form)) ; anyone can copy
+
+   (when (roles/can-modify-organization-item? form)
+     (list
+      (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])} form)
+      (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])} form)))])
 
 (rf/reg-sub
  ::forms-table-rows
@@ -101,13 +114,10 @@
                       :sort-value 2}
                      {:value nil
                       :sort-value 1})
-           :commands {:td [:td.commands
-                           [to-view-form form]
-                           [roles/show-when roles/+admin-write-roles+
-                            [form/edit-button (:form/id form)]
-                            [copy-as-new-form form]
-                            [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
-                            [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]]}})
+           :commands {:td [:td
+                           [:div.commands.flex-nowrap
+                            [to-view-form form]
+                            [modify-form-dropdown form]]]}})
         forms)))
 
 (defn- forms-list []
@@ -140,6 +150,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
-            [to-create-form]
+            [atoms/commands [to-create-form]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-forms])]]
            [forms-list]])))

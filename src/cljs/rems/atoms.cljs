@@ -281,6 +281,43 @@
   (assoc action
          :label [text :t.administration/edit]))
 
+(defn commands
+  "Creates a standard commands group with left alignment."
+  [& commands]
+  (into [:div.commands.justify-content-start.mb-3] commands))
+
+(defn commands-group-button
+  "Displays a group of commands in a dropdown button.
+
+  If there is just one, replaces the dropdown button with
+  the actual command.
+
+  The individual commands must follow the `action` format,
+  and can be used in both link or button variant depending
+  on the number of commands."
+  [{:keys [label]} & actions]
+  (let [actions (for [action-or-list actions ; flatten first level
+                      action (if (list? action-or-list) action-or-list [action-or-list])
+                      :when (not (nil? action))]
+                  action)]
+    (case (count actions)
+      ;; nothing
+      0 nil
+
+      ;; if only one, display it as a button directly
+      1 [action-button (first actions)]
+
+      ;; group actions as links in a popup of a button
+      [:div.btn-group
+       [:button#modify-dropdown.btn.btn-secondary.dropdown-toggle
+        {:data-toggle :dropdown}
+        label]
+       [:div.dropdown-menu.dropdown-menu-right
+        (into [:div.d-flex.flex-column]
+              (for [action actions]
+                [:div.dropdown-item
+                 [action-link action]]))]])))
+
 (defn guide []
   (let [state (reagent/atom false)
         on-change #(swap! state not)]

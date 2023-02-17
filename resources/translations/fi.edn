@@ -43,6 +43,7 @@
             :member "Jäsen"
             :member-email "Sähköposti"
             :member-name "Nimi"
+            :modify "Muokkaa"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
             :reject "Hylkää"
             :remark "Kirjaa huomio"

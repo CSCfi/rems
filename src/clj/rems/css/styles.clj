@@ -188,6 +188,7 @@
                     :border (theme-getx :table-border)
                     :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
+                  :word-break :break-word
                   :background-color (theme-getx :table-bgcolor :color1)
                   :box-shadow (theme-getx :table-shadow)
                   :color (theme-getx :table-text-color)}
@@ -196,6 +197,9 @@
           :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
      :td
+     ["&:last-child:not(:first-child)"
+      "&:last-child:not(:first-child)"
+      {:padding-left 0}]
      {:text-align "left"
       :padding "0.5rem 1rem"}]
     [:.selection {:width (u/rem 2)
@@ -212,9 +216,6 @@
                    :background-color (theme-getx :table-hover-bgcolor :color2)}]
         {:background-color (theme-getx :table-stripe-color :table-bgcolor)}
         [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]])]
-
-    [:td.commands:last-child {:text-align "right"
-                              :padding-right (u/rem 1)}]
 
     (for [i (range 10)]
       [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
@@ -384,11 +385,13 @@
                     :min-height (u/px 300)
                     :max-width content-max-width
                     :flex-grow 1
+                    :align-items :center
                     ;; Height of navigation + logo, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
                     :padding-top (u/px 212)
-                    :margin-top (u/px -212)}]
+                    :margin-top (u/px -212)}
+    ["&>*" {:min-width (u/px 512)}]]
    [:#main-content.page-actions {:max-width (u/percent 100)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
@@ -647,14 +650,21 @@
      (s/descendant :.language-switcher :form)
      :form)
     {:margin-left (u/rem 0.5)}]
-   [:.commands {:text-align "right"
-                :padding "0 1rem"
-                :cursor :auto}]
+   [:div.commands {:cursor :auto
+                   :display :flex
+                   :flex-direction :row
+                   :flex-wrap :wrap
+                   :gap (u/rem 0.5)
+                   :align-items :center
+                   :justify-content :flex-end}]
+   [:td [:div.commands {:justify-content :flex-start}]]
+   [:th.organization {:white-space :normal
+                      :min-width (u/rem 5.5)}]
+   [:th.active {:white-space :normal
+                :min-width (u/rem 5.5)}]
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
 
-    (s/> :.commands "*:not(:first-child)")
-    {:margin-left (u/em 0.5)}]
    [".btn-opens-more::after" {:content "'...'"}]
 
    [:#action-commands {:display "flex"

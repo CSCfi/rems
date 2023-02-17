@@ -1187,7 +1187,7 @@
                    "title" (str (btu/context-getx :license-name) " EN")
                    "type" "link"
                    "active" true
-                   "commands" "ViewDisableArchive"}}
+                   "commands" "View\nModify"}}
                 (slurp-rows :licenses)))
       (click-row-action [:licenses]
                         {:fn/text (str (btu/context-getx :license-name) " EN")}
@@ -1380,7 +1380,8 @@
   (btu/fill-human :catalogue-search item-name)
   (btu/wait-page-loaded)
   (btu/screenshot "about-to-enable-catalogue-item.png")
-  (btu/scroll-and-click {:tag :button :fn/text "Enable"})
+  (btu/scroll-and-click :modify-dropdown)
+  (btu/scroll-and-click {:tag :a :fn/text "Enable"})
   (btu/wait-page-loaded)
   (btu/screenshot "enabled-catalogue-item.png")
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
@@ -1968,7 +1969,7 @@
     (testing "edit form"
       (change-language :en)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
-      (btu/scroll-and-click {:fn/has-class :edit-form})
+      (btu/scroll-and-click :edit-form)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
       (testing "add description field"
@@ -1985,7 +1986,7 @@
         (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))
 
         (testing "check that error message is present on field empty"
-          (btu/scroll-and-click {:fn/has-class :edit-form})
+          (btu/scroll-and-click :edit-form)
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
@@ -2335,7 +2336,7 @@
               "Active" true}
              (slurp-fields :workflow))))
     (testing "edit workflow"
-      (btu/scroll-and-click {:fn/has-class :edit-workflow})
+      (btu/scroll-and-click :edit-workflow)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3.png")
@@ -2497,10 +2498,7 @@
 
     (testing "view all organizations"
       (go-to-admin "Organizations")
-      (is (every? (fn [cmd] (or (= cmd "ViewDisableArchive")
-                                (= cmd "ViewDisableUnarchive")
-                                (= cmd "ViewEnableArchive")
-                                (= cmd "ViewEnableUnarchive")))
+      (is (every? #(= "View\nModify" %)
                   (->> (slurp-table :organizations)
                        (keep (fn [row] (get row "commands")))))
           "owner can see all actions for all organizations"))
@@ -2579,7 +2577,7 @@
           (is (some #{{"short-name" "SNEN2"
                        "name" (str (btu/context-getx :organization-name) " EN")
                        "active" true
-                       "commands" "View"}}
+                       "commands" "View\nEdit"}}
                     orgs)
               "Organization owner cannot disable or archive organization")))
 
@@ -2835,7 +2833,7 @@
     (testing "catalogue tree"
       (btu/screenshot "before-opening.png")
 
-      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
@@ -2866,7 +2864,7 @@
 
       (btu/screenshot "after-opening-category.png")
 
-      (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More infoAdd to cart"}}
+      (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
 
@@ -2876,14 +2874,14 @@
 
       (btu/screenshot "after-adding-to-cart.png")
 
-      (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cartApply"}]
+      (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cart\nApply"}]
              (slurp-table {:css ".rems-table.cart"})))
 
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
       (btu/screenshot "after-closing.png")
 
-      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More infoRemove from cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More info\nRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
 

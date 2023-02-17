@@ -30,6 +30,17 @@
                               " \""  [get-localized-title-for-anything item] "\""])}
       (text label)])))
 
+(defn enabled-toggle-action [{:keys [id on-change]} item]
+  (let [enabled? (:enabled item false)
+        label (if enabled?
+                :t.administration/disable
+                :t.administration/enable)]
+    {:id (or id "toggle-enabled")
+     :on-click #(on-change (update item :enabled not)
+                           [:span [text label]
+                            " \""  [get-localized-title-for-anything item] "\""])
+     :label [text label]}))
+
 ;; XXX: consider rename to archived-toggle-button
 (defn archived-toggle
   ([item on-change] (archived-toggle {} item on-change))
@@ -45,6 +56,17 @@
                              [:span [text label]
                               " \"" [get-localized-title-for-anything item] "\""])}
       (text label)])))
+
+(defn archived-toggle-action [{:keys [id on-change]} item]
+  (let [archived? (:archived item false)
+        label (if archived?
+                :t.administration/unarchive
+                :t.administration/archive)]
+    {:id (or id "toggle-archived")
+     :on-click #(on-change (update item :archived not)
+                           [:span [text label]
+                            " \"" [get-localized-title-for-anything item] "\""])
+     :label [text label]}))
 
 (rf/reg-event-fx
  ::set-display-archived?
