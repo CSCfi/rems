@@ -15,7 +15,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::selected-items (or (::selected-items db) #{}))
+   {:db (assoc db ::selected-items-ids (or (::selected-items-ids db) #{}))
     :dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]
                  [:rems.administration.administration/remember-current-page]]}))
@@ -64,14 +64,25 @@
    {}))
 
 (rf/reg-event-db
- ::set-selected-items
+ ::set-selected-items-ids
  (fn [db [_ items]]
-   (assoc db ::selected-items items)))
+   (assoc db ::selected-items-ids items)))
 
 (rf/reg-sub
- ::selected-items
+ ::selected-items-ids
  (fn [db _]
-   (::selected-items db)))
+   (::selected-items-ids db)))
+
+(defn- items-by-ids [items ids]
+  (filter (comp ids :id) items))
+
+(rf/reg-sub
+ ::selected-catalogue-items
+ (fn [_ _]
+   [(rf/subscribe [::catalogue])
+    (rf/subscribe [::selected-items-ids])])
+ (fn [[catalogue selected-item-ids] _]
+   (items-by-ids catalogue selected-item-ids)))
 
 (defn- create-catalogue-item-button []
   [atoms/link {:class "btn btn-primary" :id :create-catalogue-item}
@@ -167,13 +178,10 @@
                          :rows [::catalogue-table-rows]
                          :default-sort-column :name
                          :selectable? true
-                         :on-select #(rf/dispatch [::set-selected-items %])}]
+                         :on-select #(rf/dispatch [::set-selected-items-ids %])}]
     [:div.mt-3
      [table/search catalogue-table]
      [table/table catalogue-table]]))
-
-(defn- items-by-ids [items ids]
-  (filter (comp ids :id) items))
 
 (defn catalogue-items-page []
   (into [:div
@@ -185,8 +193,8 @@
           [[roles/show-when roles/+admin-write-roles+
             [:div.commands.text-left.pl-0
              [create-catalogue-item-button]
-             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]
-             [categories-button]]
+             [categories-button]
+             [change-form-button @(rf/subscribe [::selected-catalogue-items])]]
             [status-flags/status-flags-intro #(do (rf/dispatch [::fetch-catalogue])
                                                   (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]]
            [catalogue-list]])))
