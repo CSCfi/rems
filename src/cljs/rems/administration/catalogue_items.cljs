@@ -177,7 +177,8 @@
                                     :sortable? false
                                     :filterable? false}]
                          :rows [::catalogue-table-rows]
-                         :default-sort-column :name
+                         :default-sort-column :created
+                         :default-sort-order :desc
                          :selectable? true
                          :on-select #(rf/dispatch [::set-selected-items-ids %])}]
     [:div.mt-3
