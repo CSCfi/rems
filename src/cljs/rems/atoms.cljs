@@ -1,6 +1,7 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
+            [medley.core :refer [remove-vals]]
             [reagent.core :as reagent]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
@@ -15,9 +16,16 @@
   [:i {:class "fa fa-file-download"
        :aria-label (text :t.link/download-file)}])
 
-(defn link [opts uri title]
-  [:a (merge opts {:href uri})
-   title])
+(defn link
+  ([opts]
+   (link (dissoc opts :label :href)
+         (:href opts)
+         (:label opts)))
+  ([opts href label]
+   [:a (->> {:href href}
+            (merge opts)
+            (remove-vals nil?))
+    label]))
 
 (defn image [opts src]
   [:img (merge opts {:src src})])
@@ -248,6 +256,30 @@
                          :ref focus-when-collapse-opened
                          :tab-index "-1"}
           content]]))))
+
+(defn action-button
+  "Takes an `action` description and creates a button that triggers it."
+  [action]
+  [link {:id (:id action)
+         :label (:label action)
+         :href (:url action)
+         :on-click (:on-click action)
+         :class "btn btn-secondary"}])
+
+(defn action-link
+  "Takes an `action` description and creates a link that triggers it."
+  [action]
+  [link {:id (:id action)
+         :label (:label action)
+         :href (:url action)
+         :on-click (:on-click action)
+         :class "btn btn-link"}])
+
+(defn edit-action
+  "Standard edit action helper."
+  [action]
+  (assoc action
+         :label [text :t.administration/edit]))
 
 (defn guide []
   (let [state (reagent/atom false)
