@@ -119,6 +119,5 @@
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
             [to-create-workflow]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
-            [status-flags/disabled-and-archived-explanation]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-workflows])]]
            [workflows-list]])))

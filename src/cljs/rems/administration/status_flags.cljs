@@ -62,7 +62,7 @@
         on-change (fn []
                     (rf/dispatch [::set-display-archived? (not display-archived?)])
                     (when on-change (on-change)))]
-    [:div.form-check.form-check-inline.pointer {:style {:float "right"}}
+    [:div.form-check.form-check-inline.pointer
      [checkbox {:id :display-archived
                 :class :form-check-input
                 :value display-archived?
@@ -71,7 +71,12 @@
       (text :t.administration/display-archived)]]))
 
 (defn disabled-and-archived-explanation []
-  [:p.mt-1 (text :t.administration/disabled-and-archived-explanation)])
+  [:p (text :t.administration/disabled-and-archived-explanation)])
+
+(defn status-flags-intro [on-change]
+  [:div.mt-1.d-flex.flex-row.align-items-start {:style {:gap "2rem"}}
+   [disabled-and-archived-explanation]
+   [display-archived-toggle on-change]])
 
 (defn active? [item]
   (and (:enabled item)

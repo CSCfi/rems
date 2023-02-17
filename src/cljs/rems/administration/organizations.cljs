@@ -123,6 +123,5 @@
           [[roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
             [roles/show-when #{:owner}
              [to-create-organization]]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
-            [status-flags/disabled-and-archived-explanation]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-organizations])]]
            [organizations-list]])))

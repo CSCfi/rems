@@ -141,6 +141,5 @@
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
             [to-create-form]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
-            [status-flags/disabled-and-archived-explanation]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-forms])]]
            [forms-list]])))

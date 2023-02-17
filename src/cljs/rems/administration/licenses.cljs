@@ -120,6 +120,5 @@
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
             [to-create-license]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-licenses])]
-            [status-flags/disabled-and-archived-explanation]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-licenses])]]
            [licenses-list]])))
