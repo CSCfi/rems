@@ -43,7 +43,7 @@
               ;; The default is derived from :value.
               (s/optional-key :sort-value) s/Any
               ;; Lowercase string for use in filtering.
-              ;; The default is derived from :value.
+              ;; The default is derived from :value or :display-value.
               (s/optional-key :filter-value) s/Str
               ;; Simple value for rendering in the UI as-is.
               ;; The default is derived from :value.
@@ -165,10 +165,11 @@
                                                          (str/lower-case val)
                                                          val))))
                      (assoc-if-missing :display-value (comp str :value))
-                     (assoc-if-missing :filter-value (fn [opts]
-                                                       (if (string? (:display-value opts))
-                                                         (str/lower-case (:display-value opts))
-                                                         "")))
+                     (assoc-if-missing :filter-value (fn [{:keys [value display-value]}]
+                                                       (str/lower-case
+                                                        (cond value (str value)
+                                                              (string? display-value) display-value
+                                                              :else ""))))
                      (assoc-if-missing :td (fn [opts]
                                              [:td {:class (name column)}
                                               (:display-value opts)]))))]))
