@@ -46,7 +46,7 @@
 (defn- catalogue-item-more-info [item language config]
   (let [link (catalogue-item-more-info-url item language config)]
     (when link
-      [:a.btn.btn-secondary
+      [:a.btn.btn-link
        {:href link
         :target :_blank
         :aria-label (str (text :t.catalogue/more-info)
@@ -54,7 +54,7 @@
                          (get-localized-title item language)
                          ", "
                          (text :t.link/opens-in-new-window))}
-       [external-link] " " (text :t.catalogue/more-info)])))
+       (text :t.catalogue/more-info) " " [external-link]])))
 
 (defn- apply-button [item language]
   [atoms/link {:class "btn btn-primary apply-for-catalogue-item"
