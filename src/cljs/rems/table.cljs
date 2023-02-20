@@ -366,9 +366,7 @@
                        [:clickable
                         (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
-              :style {:display (if (::display-row? row)
-                                 "table-row"
-                                 "none")}
+              :style (when-not (::display-row? row) {:display "none"})
               :on-click (when (:selectable? table)
                           #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
                              (rf/dispatch [::toggle-row-selection table (:key row)])))}
