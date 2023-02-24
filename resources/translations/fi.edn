@@ -254,10 +254,10 @@
          :remove "Poista korista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
-              :intro [:p "Allaolevien resurssien käyttöoikeudet ovat haettavissa."]
+              :intro ""
               :more-info "Lisätietoja"
               :continue-existing-application "Jatka hakemusta"
-              :continue-existing-application-intro [:div.intro [:p "Keskeneräiset hakemukset:"]]
+              :continue-existing-application-intro ""
               :apply-resources "Hae uusia käyttöoikeuksia"}
   :collapse {:hide "Piilota"
              :show "Näytä"

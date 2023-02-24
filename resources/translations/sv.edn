@@ -254,10 +254,10 @@
          :remove "Ta bort från korgen"}
   :catalogue {:catalogue "Katalog"
               :header "Katalog"
-              :intro [:p "Användningsrätt kan ansökas till resurserna nedan."]
+              :intro ""
               :more-info "Läs mer"
               :continue-existing-application "Återuppta ansökan"
-              :continue-existing-application-intro [:div.intro [:p "Utkast till ansökningar:"]]
+              :continue-existing-application-intro ""
               :apply-resources "Ansök om resurser"}
   :collapse {:hide "Dölj"
              :show "Visa"

@@ -275,10 +275,10 @@
          :remove "Remove from cart"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
-              :intro [:p "Access to the following resources can be applied for."]
+              :intro ""
               :more-info "More info"
               :continue-existing-application "Continue application"
-              :continue-existing-application-intro [:div.intro [:p "Unfinished applications:"]]
+              :continue-existing-application-intro ""
               :apply-resources "Apply for access"}
   :collapse {:hide "Hide"
              :show "Show"
