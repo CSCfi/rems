@@ -44,13 +44,16 @@
   ;; or event id, and do nothing if it isn't due yet.
   ;;
   ;; This can be done per target url or globally.
-  (doseq [entry (outbox/get-due-entries :event-notification)]
-    (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
-                            (get-in entry [:outbox/event-notification :body]))]
-      (let [entry (outbox/attempt-failed! entry error)]
-        (when-not (:outbox/next-attempt entry)
-          (log/warn "all attempts to send event notification id " (:outbox/id entry) "failed")))
-      (outbox/attempt-succeeded! (:outbox/id entry)))))
+  (log/debug "Trying to send notifications")
+  (let [due-notifications (outbox/get-due-entries :event-notification)]
+    (log/debug (str "Notifications due: " (count due-notifications)))
+    (doseq [entry due-notifications]
+      (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
+                              (get-in entry [:outbox/event-notification :body]))]
+        (let [entry (outbox/attempt-failed! entry error)]
+          (when-not (:outbox/next-attempt entry)
+            (log/warn "all attempts to send event notification id " (:outbox/id entry) "failed")))
+        (outbox/attempt-succeeded! (:outbox/id entry))))))
 
 (mount/defstate event-notification-poller
   :start (scheduler/start! "event-notification-poller" process-outbox! (.toStandardDuration (time/seconds 10)))
