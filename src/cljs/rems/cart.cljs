@@ -81,11 +81,11 @@
 (defn cart-list
   "List of shopping cart items"
   [items language]
-  [:div
+  [:div.mt-5
    (text :t.cart/intro)
    [:div.outer-cart.mb-3
     [:div.inner-cart
-     [:div.cart-title {:role "status"
+     [:div.cart-title.pt-3.h5 {:role "status"
                        :aria-live "polite"
                        :aria-atomic true}
       [:i.fa.fa-shopping-cart]

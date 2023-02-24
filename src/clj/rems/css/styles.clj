@@ -206,7 +206,7 @@
                   :padding-right 0}]
     [:td:before
      {:color (theme-getx :table-text-color)}]
-    [:tr {:margin "0 1rem"}
+    [:tr
      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
@@ -225,12 +225,11 @@
       [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
 
    [:.rems-table.cart {:box-shadow :none}]
-   [:.inner-cart {:margin (u/em 1)}]
-   [:.outer-cart {:border [[(u/px 1) :solid (theme-getx :color1)]]
+   [:.inner-cart {:margin [[(u/rem 1) 0]]}]
+   [:.outer-cart {:margin [[(u/rem 1) 0]]
+                  :border [[(u/px 1) :solid (theme-getx :color1)]]
                   :border-radius (u/rem 0.4)}]
-   [:.cart-title {:margin-left (u/em 1)
-                  :margin-right (u/em 1)
-                  :font-weight "bold"}]
+   [:.cart-title {:margin (u/rem 1)}]
    [:.fa-shopping-cart {:margin-right (u/em 0.5)}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
@@ -662,6 +661,8 @@
                       :min-width (u/rem 5.5)}]
    [:th.active {:white-space :normal
                 :min-width (u/rem 5.5)}]
+   [:td.more-info {:display :flex
+                   :justify-content :flex-end}]
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
 
@@ -790,7 +791,7 @@
                              (-> (theme-getx :color1)
                                  (c/saturate -50)
                                  (c/lighten 33)))}]
-   [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
+   [:h2 {:margin [[(u/rem 3) 0 (u/rem 2) 0]]}]
 
    ;; application page
 
@@ -883,6 +884,11 @@
                          :-o-transition "transform 0.2s ease-in-out"
                          :transition "transform 0.2s ease-in-out"}]
    [:.rotate-180 {:transform "rotate(180deg)"}]
+
+   [:.mt-2rem {:margin-top (u/rem 2)}]
+   [:.gap-1 {:gap (u/rem 0.5)}]
+   [:.gap-2 {:gap (u/rem 1)}]
+   [:.gap-3 {:gap (u/rem 1.5)}]
 
    ;; Media queries must be almost last so they override
    (media-queries)
