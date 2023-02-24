@@ -835,11 +835,13 @@
         ordinary-category {:category/id (test-helpers/create-category! {:actor owner
                                                                         :category/title {:en "Ordinary"
                                                                                          :fi "Tavalliset"
-                                                                                         :sv "Vanliga"}})}
+                                                                                         :sv "Vanliga"}
+                                                                        :category/description false})}
         technical-category {:category/id (test-helpers/create-category! {:actor owner
                                                                          :category/title {:en "Technical"
                                                                                           :fi "Tekniset"
-                                                                                          :sv "Teknisk"}})}
+                                                                                          :sv "Teknisk"}
+                                                                         :category/description false})}
 
         special-category {:category/id (test-helpers/create-category! {:actor owner
                                                                        :category/title {:en "Special"
