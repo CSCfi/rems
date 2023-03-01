@@ -18,6 +18,10 @@ Changes since v2.31
 ### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
 - User attributes are now formatted better (a boolean becomes a checkbox, etc.) (#3103)
+- Most handler, reviewer, decider emails can be disabled with `:enable-handler-emails false`. (#3116)
+  This does not include the invitation emails, which will always be sent, to be able to invite users.
+  This also does not include any reminder emails that you can separately enable if you wish.
+- Any individual email can be disabled by setting its translation to empty string `""` (#3117).
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)

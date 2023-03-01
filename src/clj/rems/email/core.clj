@@ -108,7 +108,7 @@
                      ;; postal turns extra keys into headers
                      "Auto-Submitted" "auto-generated")
         to-error (validate-address (:to email))]
-    (when (:to email)
+    (when (and (:body email) (:to email))
       (log/info "sending email:" (pr-str email))
       (cond
         to-error

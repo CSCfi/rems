@@ -36,11 +36,29 @@
                  [k :t/missing (failsafe-fallback k args)]
                  (vec args)))))
 
+(defn text-no-fallback
+  "Return the tempura translation for a given key. Additional fallback
+  keys can be given but there is no default fallback text."
+  [& ks]
+  #?(:clj (context/*tempura* (vec ks))
+     :cljs (let [translations (rf/subscribe [:translations])
+                 language (rf/subscribe [:language])]
+             (try
+               (tr {:dict @translations}
+                   [@language]
+                   (vec ks))
+               (catch js/Object e
+                 ;; fail gracefully if the re-frame state is incomplete
+                 (.error js/console e)
+                 (str (vec ks)))))))
+
 (defn text
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (apply text-no-fallback (conj (vec ks) (text-format :t/missing (vec ks))))
+     ;; NB: we can't call the text-no-fallback here as in CLJS
+     ;; we can both call this as function or use as a React component
      :cljs (let [translations (rf/subscribe [:translations])
                  language (rf/subscribe [:language])]
              (try

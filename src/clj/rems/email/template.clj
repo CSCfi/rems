@@ -5,7 +5,7 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.user-settings :as user-settings]
-            [rems.text :refer [localize-utc-date text text-format with-language]]
+            [rems.text :refer [localize-utc-date text text-no-fallback text-format with-language]]
             [rems.util :as util]))
 
 ;;; Mapping events to emails
@@ -35,7 +35,8 @@
        (str/join ", ")))
 
 (defn- handlers [application]
-  (get-in application [:application/workflow :workflow.dynamic/handlers]))
+  (when (:enable-handler-emails env)
+    (get-in application [:application/workflow :workflow.dynamic/handlers])))
 
 (defn- other-handlers [event application]
   (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
@@ -48,27 +49,30 @@
 
 (defn- emails-to-recipients [recipients event application subject-text body-text]
   (vec
-   (for [recipient recipients]
-     (with-language (:language (user-settings/get-user-settings (:userid recipient)))
-       (fn []
-         {:to-user (:userid recipient)
-          :subject (text-format subject-text
-                                (application-util/get-member-name recipient)
-                                (application-util/get-member-name (:event/actor-attributes event))
-                                (format-application-for-email application)
-                                (application-util/get-applicant-name application)
-                                (resources-for-email application)
-                                (link-to-application (:application/id event)))
-          :body (str
-                 (text-format body-text
-                              (application-util/get-member-name recipient)
-                              (application-util/get-member-name (:event/actor-attributes event))
-                              (format-application-for-email application)
-                              (application-util/get-applicant-name application)
-                              (resources-for-email application)
-                              (link-to-application (:application/id event)))
-                 (text :t.email/regards)
-                 (text :t.email/footer))})))))
+   (for [recipient recipients
+         :let [email (with-language (:language (user-settings/get-user-settings (:userid recipient)))
+                       (fn []
+                         (when (and body-text (not (str/blank? (text-no-fallback body-text))))
+                           {:to-user (:userid recipient)
+                            :subject (text-format subject-text
+                                                  (application-util/get-member-name recipient)
+                                                  (application-util/get-member-name (:event/actor-attributes event))
+                                                  (format-application-for-email application)
+                                                  (application-util/get-applicant-name application)
+                                                  (resources-for-email application)
+                                                  (link-to-application (:application/id event)))
+                            :body (str
+                                   (text-format body-text
+                                                (application-util/get-member-name recipient)
+                                                (application-util/get-member-name (:event/actor-attributes event))
+                                                (format-application-for-email application)
+                                                (application-util/get-applicant-name application)
+                                                (resources-for-email application)
+                                                (link-to-application (:application/id event)))
+                                   (text :t.email/regards)
+                                   (text :t.email/footer))})))]
+         :when email]
+     email)))
 
 (defmethod event-to-emails :application.event/approved [event application]
   (concat (emails-to-recipients (application-util/applicant-and-members application)

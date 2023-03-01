@@ -23,6 +23,11 @@
                   rems.db.users/get-user (constantly {:email "user@example.com"})
                   rems.db.user-settings/get-user-settings (constantly {})]
 
+      (testing "don't send if there is no body (mail toggled off)"
+        (is (nil? (send-email! {:to "foo@example.com" :subject "ding" :body nil})))
+        (is (= nil @message-atom))
+        (reset! message-atom nil))
+
       (testing "mail to email address"
         (is (nil? (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})))
         (is (= {:to "foo@example.com"
