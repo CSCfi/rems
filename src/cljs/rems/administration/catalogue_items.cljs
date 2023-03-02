@@ -175,7 +175,8 @@
                                     :filterable? false}
                                    {:key :commands
                                     :sortable? false
-                                    :filterable? false}]
+                                    :filterable? false
+                                    :aria-label (text :t.actions/commands)}]
                          :rows [::catalogue-table-rows]
                          :default-sort-column :created
                          :default-sort-order :desc

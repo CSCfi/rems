@@ -135,7 +135,8 @@
                                 :filterable? false}
                                {:key :commands
                                 :sortable? false
-                                :filterable? false}]
+                                :filterable? false
+                                :aria-label (text :t.actions/commands)}]
                      :rows [::forms-table-rows]
                      :default-sort-column :internal-name}]
     [:div.mt-3

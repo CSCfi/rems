@@ -121,7 +121,8 @@
                                         :filterable? false}
                                        {:key :commands
                                         :sortable? false
-                                        :filterable? false}]
+                                        :filterable? false
+                                        :aria-label (text :t.actions/commands)}]
                              :rows [::organizations-table-rows]
                              :default-sort-column :name}]
     [:div.mt-3

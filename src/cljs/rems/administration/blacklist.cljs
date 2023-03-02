@@ -236,7 +236,8 @@
                                :title (text :t.administration/comment)}
                               {:key :commands
                                :sortable? false
-                               :filterable? false}]
+                               :filterable? false
+                               :aria-label (text :t.actions/commands)}]
                     :rows [::blacklist]
                     :default-sort-column :resource}]
     [:div.mt-3

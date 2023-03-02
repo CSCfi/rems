@@ -70,6 +70,9 @@
               :key ColumnKey
               ;; Title to show at the top of the column.
               (s/optional-key :title) s/Str
+              ;; ARIA label to show at the top of the column.
+              ;; Defaults to `:title`.
+              (s/optional-key :aria-label) s/Str
               ;; Whether this column can be sorted.
               ;; Defaults to true.
               (s/optional-key :sortable?) s/Bool
@@ -354,7 +357,8 @@
               {:class (str (some-> column :key name) (when (sortable? column) " pointer"))}
               (when (sortable? column)
                 {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])}))
-             (:title column)
+             (or (:title column)
+                 [:span.sr-only (:aria-label column)])
              " "
              (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))
@@ -490,7 +494,8 @@
                                :filterable? false}
                               {:key :commands
                                :sortable? false
-                               :filterable? false}]
+                               :filterable? false
+                               :aria-label (text :t.actions/commands)}]
                     :rows [::example-table-rows]
                     :default-sort-column :first-name
                     :selectable? true

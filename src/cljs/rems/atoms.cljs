@@ -9,12 +9,12 @@
             [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
-  [:i {:class "fa fa-external-link-alt"
-       :aria-label (text :t.link/opens-in-new-window)}])
+  [:i {:class "fa fa-external-link-alt"}
+   [:span.sr-only (text :t.link/opens-in-new-window)]])
 
 (defn file-download []
-  [:i {:class "fa fa-file-download"
-       :aria-label (text :t.link/download-file)}])
+  [:i {:class "fa fa-file-download"}
+   [:span.sr-only (text :t.link/download-file)]])
 
 (defn link
   ([opts]
@@ -34,8 +34,7 @@
   (let [[class label] (case sort-order
                         :asc ["fa-arrow-up" :t.table/ascending-order]
                         :desc ["fa-arrow-down" :t.table/descending-order])]
-    [:i.fa {:class class
-            :aria-label (text label)}]))
+    [:i.fa {:class class}]))
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])

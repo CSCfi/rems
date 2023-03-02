@@ -80,7 +80,8 @@
                                      :title (text :t.administration/description)}
                                     {:key :commands
                                      :sortable? false
-                                     :filterable? false}]
+                                     :filterable? false
+                                     :aria-label (text :t.actions/commands)}]
                           :rows [::categories-table-rows]
                           :default-sort-column :display-order}]
     [:div.mt-3

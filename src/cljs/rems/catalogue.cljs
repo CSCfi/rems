@@ -106,7 +106,8 @@
                               :title (text :t.catalogue/header)}
                              {:key :commands
                               :sortable? false
-                              :filterable? false}]
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
                    :rows [::catalogue-table-rows]
                    :default-sort-column :name}]
     [:div.mt-2rem
@@ -147,6 +148,7 @@
                                                  [cart/remove-from-cart-button % language]
                                                  [cart/add-to-cart-button % language])
                                                (apply-button % language)))])
+                              :aria-label (text :t.actions/commands)
                               :sortable? false
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))

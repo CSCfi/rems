@@ -84,6 +84,9 @@
               :key ColumnKey
               ;; Title to show at the top of the column.
               (s/optional-key :title) s/Str
+              ;; ARIA label title to show at the top of the column.
+              ;; Defaults to `:title`.
+              (s/optional-key :aria-label) s/Str
               ;; Optional function (row -> value) to calculate the value to show
               ;; Defaults to the (presumable keyword) value of the `:key` prop.
               (s/optional-key :value) s/Any
@@ -391,7 +394,8 @@
              (when (sortable? column)
                {:class "pointer"
                 :on-click #(rf/dispatch [::toggle-sorting tree (:key column)])})
-             (:title column)
+             (or (:title column)
+                 [:span.sr-only (:aria-label column)])
              " "
              (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))

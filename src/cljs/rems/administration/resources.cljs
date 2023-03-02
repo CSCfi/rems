@@ -107,7 +107,8 @@
                                     :filterable? false}
                                    {:key :commands
                                     :sortable? false
-                                    :filterable? false}]
+                                    :filterable? false
+                                    :aria-label (text :t.actions/commands)}]
                          :rows [::resources-table-rows]
                          :default-sort-column :title}]
     [:div.mt-3

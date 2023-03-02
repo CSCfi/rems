@@ -160,7 +160,8 @@
                       :title (text :t.applications/last-activity)}
                      {:key :view
                       :sortable? false
-                      :filterable? false}]
+                      :filterable? false
+                      :aria-label (text :t.actions/commands)}]
         application-table {:id id
                            :columns (filter #(visible-columns (:key %)) all-columns)
                            :rows [::table-rows applications]
