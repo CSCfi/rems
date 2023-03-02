@@ -186,7 +186,7 @@
 
  ;; UI theme variables.
  :theme {:color1 "#eee"
-         :color2 "#999"
+         :color2 "#fff"
          :color3 "#000"
          :color4 "#000"
 
