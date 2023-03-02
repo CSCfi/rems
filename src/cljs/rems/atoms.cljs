@@ -22,10 +22,11 @@
          (:href opts)
          (:label opts)))
   ([opts href label]
-   [:a (->> {:href href}
-            (merge opts)
-            (remove-vals nil?))
-    label]))
+   (when-not (str/blank? label)
+     [:a (->> {:href href}
+              (merge opts)
+              (remove-vals nil?))
+      label])))
 
 (defn image [opts src]
   [:img (merge opts {:src src})])
