@@ -49,9 +49,10 @@
 (defn login-as [username]
   (btu/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
   (btu/go (btu/get-server-url))
-  (btu/screenshot "landing-page.png")
+  (btu/screenshot "landing-page")
+  (btu/gather-axe-results "landing-page")
   (btu/scroll-and-click {:css ".login-btn"})
-  (btu/screenshot "login-page.png")
+
   (when (btu/visible? :show-special-users) ; sometimes the user is in the hidden part
     (btu/scroll-and-click :show-special-users))
   (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text username}])
@@ -60,7 +61,8 @@
   ;; in the original test in the error, not a line in this util with
   ;; no info of where it was called from.
   (btu/wait-visible :logout)
-  (btu/screenshot "logged-in.png"))
+  (btu/screenshot "logged-in")
+  (btu/gather-axe-results "logged-in"))
 
 (defn logout []
   (btu/scroll-and-click :logout)
@@ -76,19 +78,22 @@
   (click-navigation-menu "Catalogue")
   (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
   (btu/wait-page-loaded)
-  (btu/screenshot "catalogue-page.png"))
+  (btu/screenshot "catalogue-page")
+  (btu/gather-axe-results "catalogue-page"))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (btu/wait-visible {:tag :h1 :fn/text "Applications"})
   (btu/wait-page-loaded)
-  (btu/screenshot "applications-page.png"))
+  (btu/screenshot "applications-page")
+  (btu/gather-axe-results "applications-page"))
 
 (defn go-to-application [application-id]
   (btu/go (str (btu/get-server-url) "application/" application-id))
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
-  (btu/screenshot "application-page.png"))
+  (btu/screenshot "application-page")
+  (btu/gather-axe-results "application-page"))
 
 (defn click-administration-menu [link-text]
   (btu/scroll-and-click [:administration-menu {:tag :a :fn/text link-text}]))
@@ -100,7 +105,7 @@
   (click-administration-menu link-text)
   (btu/wait-visible {:tag :h1 :fn/text link-text})
   (btu/wait-page-loaded)
-  (btu/screenshot (str "administration-page-" (str/replace link-text " " "-") ".png")))
+  (btu/screenshot (str "administration-page-" (str/replace link-text " " "-"))))
 
 (defn go-to-categories []
   (go-to-admin "Catalogue items")
@@ -139,7 +144,8 @@
                          {:css ".apply-for-catalogue-items"}])
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
-  (btu/screenshot "application-page.png"))
+  (btu/screenshot "application-page")
+  (btu/gather-axe-results "application-page"))
 
 ;;; application page
 
@@ -412,16 +418,14 @@
 (deftest test-new-application
   (btu/with-postmortem
     (login-as "alice")
-    (btu/gather-axe-results)
 
     (testing "create application"
       (go-to-catalogue)
       (add-to-cart "Default workflow")
       (add-to-cart "Default workflow with private form")
       ;; (add-to-cart "Default workflow with DUO codes")
-      (btu/gather-axe-results)
+      (btu/gather-axe-results "application-page-added-to-cart")
       (click-cart-apply)
-      (btu/gather-axe-results)
 
       (btu/context-assoc! :application-id (get-application-id))
 
@@ -565,7 +569,7 @@
         (fill-form-field "Text field" "Test")
 
         (accept-licenses)
-        (btu/gather-axe-results)
+        (btu/gather-axe-results "accepted-licenses")
 
         (testing "attachment download"
           (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
@@ -574,7 +578,7 @@
                  (slurp (first (btu/downloaded-files "test.txt"))))))
 
         (send-application)
-        (btu/gather-axe-results)
+        (btu/gather-axe-results "sent-application")
 
         (btu/scroll-and-click :header-collapse-more-link) ; show application state details
         (is (btu/eventually-visible? :header-collapse))
@@ -595,7 +599,6 @@
 
             (testing "see application on applications page"
               (go-to-applications)
-              (btu/gather-axe-results)
 
               (is (= {:id (btu/context-getx :application-id)
                       :resource "Default workflow, Default workflow with private form"
@@ -646,7 +649,7 @@
                                      {:css ".btn-primary"}])
               (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
               (btu/wait-page-loaded)
-              (btu/gather-axe-results)
+              (btu/gather-axe-results "application-page-again")
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
@@ -815,7 +818,7 @@
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
       (Thread/sleep 500) ;; figure out what to wait for
-      (btu/screenshot "after-opening-applicant-info.png")
+      (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
               "Username" "alice"
@@ -1165,11 +1168,11 @@
       (btu/fill-human :localizations-fi-link "https://www.csc.fi/etusivu")
       (btu/fill-human :localizations-sv-title (str (btu/context-getx :license-name) " SV"))
       (btu/fill-human :localizations-sv-link "https://www.csc.fi/home")
-      (btu/screenshot "about-to-create-license.png")
+      (btu/screenshot "about-to-create-license")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "created-license.png")
+      (btu/screenshot "created-license")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-getx :license-name) " EN")
@@ -1227,11 +1230,11 @@
       (select-option "License" (str (btu/context-getx :license-name) " EN"))
       ;; (select-duo-code "DUO:0000026")
       ;; (fill-form-field "Approved user(s)" "developers developers developers")
-      (btu/screenshot "about-to-create-resource.png")
+      (btu/screenshot "about-to-create-resource")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "created-resource.png")
+      (btu/screenshot "created-resource")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Resource" (btu/context-getx :resid)
@@ -1257,11 +1260,11 @@
       (fill-form-field "FI" (str (btu/context-getx :form-name) " FI"))
       (fill-form-field "SV" (str (btu/context-getx :form-name) " SV"))
       ;; TODO: create fields
-      (btu/screenshot "about-to-create-form.png")
+      (btu/screenshot "about-to-create-form")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "created-form.png")
+      (btu/screenshot "created-form")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Name" (btu/context-getx :form-name)
@@ -1286,11 +1289,11 @@
       ;; Default workflow is already checked
       (select-option "Handlers" "handler")
       ;; No form
-      (btu/screenshot "about-to-create-workflow.png")
+      (btu/screenshot "about-to-create-workflow")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "created-workflow.png")
+      (btu/screenshot "created-workflow")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-getx :workflow-name)
@@ -1342,11 +1345,11 @@
       (when-let [form-name (btu/context-getx :form-name)]
         (select-option "Form" form-name))
       (select-option "Categories" (btu/context-getx :category-name))
-      (btu/screenshot "about-to-create-catalogue-item.png")
+      (btu/screenshot "about-to-create-catalogue-item")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "created-catalogue-item.png")
+      (btu/screenshot "created-catalogue-item")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" (str (btu/context-getx :organization-name) " EN")
               "Title (EN)" (btu/context-getx :catalogue-item-name)
@@ -1379,11 +1382,11 @@
   ;; incidentally test search while we're at it
   (btu/fill-human :catalogue-search item-name)
   (btu/wait-page-loaded)
-  (btu/screenshot "about-to-enable-catalogue-item.png")
   (btu/scroll-and-click :modify-dropdown)
+  (btu/screenshot "about-to-enable-catalogue-item")
   (btu/scroll-and-click {:tag :a :fn/text "Enable"})
   (btu/wait-page-loaded)
-  (btu/screenshot "enabled-catalogue-item.png")
+  (btu/screenshot "enabled-catalogue-item")
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
@@ -1454,7 +1457,7 @@
     (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
     (btu/wait-page-loaded)
     (is (btu/eventually-visible? {:id :title-en :fn/has-text "test-edit-catalogue-item EN"}))
-    (btu/screenshot "test-edit-catalogue-item-1.png")
+    (btu/screenshot "test-edit-catalogue-item-1")
     (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
@@ -1468,7 +1471,7 @@
             "Resource" "test-edit-catalogue-item resource"}
            (slurp-fields :catalogue-item-editor)))
     (btu/fill-human :infourl-en "http://google.com")
-    (btu/screenshot "test-edit-catalogue-item-2.png")
+    (btu/screenshot "test-edit-catalogue-item-2")
     (btu/scroll-and-click :save)
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
     (btu/wait-page-loaded)
@@ -2320,12 +2323,12 @@
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
       (select-option "Licenses" "General Terms of Use")
-      (btu/screenshot "test-workflow-create-edit-1.png")
+      (btu/screenshot "test-workflow-create-edit-1")
       (btu/scroll-and-click :save))
     (testing "view workflow"
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "test-workflow-create-edit-2.png")
+      (btu/screenshot "test-workflow-create-edit-2")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "NBN"
               "Title" (btu/context-getx :workflow-title)
@@ -2339,7 +2342,7 @@
       (btu/scroll-and-click :edit-workflow)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "test-workflow-create-edit-3.png")
+      (btu/screenshot "test-workflow-create-edit-3")
       (select-option "Organization" "Default")
       (fill-form-field "Title" " v2") ;; fill-form-field appends text to existing value
       (is (btu/disabled? :type-default)) ;; can't change type
@@ -2347,12 +2350,12 @@
       (select-option "Handlers" "reporter")
       (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
       (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
-      (btu/screenshot "test-workflow-create-edit-4.png")
+      (btu/screenshot "test-workflow-create-edit-4")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
       (btu/wait-page-loaded)
-      (btu/screenshot "test-workflow-create-edit-5.png")
+      (btu/screenshot "test-workflow-create-edit-5")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "The Default Organization"
               "Title" (str (btu/context-getx :workflow-title) " v2")
@@ -2380,7 +2383,7 @@
       (is (= [] (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
-      (btu/screenshot "test-blacklist-1.png")
+      (btu/screenshot "test-blacklist-1")
       (btu/scroll-and-click :blacklist-add)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
@@ -2689,8 +2692,8 @@
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (is (btu/eventually-visible? :small-navbar))
-    (btu/gather-axe-results)
-    (btu/screenshot "small-navbar.png")
+    (btu/screenshot "small-navbar")
+    (btu/gather-axe-results "small-navbar")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Applications"}))
@@ -2831,7 +2834,7 @@
   (btu/with-postmortem
     (login-as "alice")
     (testing "catalogue tree"
-      (btu/screenshot "before-opening.png")
+      (btu/screenshot "before-opening")
 
       (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
                       (slurp-rows :catalogue-tree)))
@@ -2854,32 +2857,32 @@
       (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
       (btu/wait-page-loaded)
 
-      (btu/screenshot "after-reloading.png")
+      (btu/screenshot "after-reloading")
 
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :root-category-name)}])
 
-      (btu/screenshot "after-opening-root-category.png")
+      (btu/screenshot "after-opening-root-category")
 
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
-      (btu/screenshot "after-opening-category.png")
+      (btu/screenshot "after-opening-category")
 
       (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
 
-      (btu/gather-axe-results)
+      (btu/gather-axe-results "after-opening-category")
 
       (click-row-action [:catalogue-tree] {:fn/text (btu/context-getx :catalogue-item-name)} {:css ".add-to-cart"})
 
-      (btu/screenshot "after-adding-to-cart.png")
+      (btu/screenshot "after-adding-to-cart")
 
       (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cart\nApply"}]
              (slurp-table {:css ".rems-table.cart"})))
 
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
-      (btu/screenshot "after-closing.png")
+      (btu/screenshot "after-closing")
 
       (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More info\nRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
@@ -2894,19 +2897,19 @@
           (go-to-admin "Licenses")
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
           (btu/scroll-and-click :create-license)
-          (btu/screenshot "before-filling-external-links-en.png")
+          (btu/screenshot "before-filling-external-links-en")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Create license"}))
           (select-option "Organization" "NBN")
           (fill-license-fields {:title "E2E license with external links"
                                 :external-links {:en "http://www.google.com"
                                                  :fi "http://www.google.fi"}})
           ;; test save button not active
-          (btu/screenshot "saving-disabled-external-links-en.png")
+          (btu/screenshot "saving-disabled-external-links-en")
           (is (btu/disabled? :save))
           (fill-license-fields {:external-links {:sv "http://www.google.sv"}})
           (is (not (btu/disabled? :save)))
           (btu/scroll-and-click :save)
-          (btu/screenshot "after-saving-external-links-en.png")
+          (btu/screenshot "after-saving-external-links-en")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
           (is (= {"Organization" "NBN"
                   "Title (EN)" "E2E license with external links (EN)"
@@ -2923,16 +2926,16 @@
         (with-language :fi
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Lisenssit"}))
           (btu/scroll-and-click :create-license)
-          (btu/screenshot "before-filling-inline-text-fi.png")
+          (btu/screenshot "before-filling-inline-text-fi")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Uusi lisenssi"}))
           (select-option "Organisaatio" "NBN")
           (fill-license-fields {:inline-text "Inline text lorem ipsum"})
-          (btu/screenshot "saving-disabled-inline-text-fi.png")
+          (btu/screenshot "saving-disabled-inline-text-fi")
           (is (btu/disabled? :save))
           (fill-license-fields {:title "E2E license with inline text"})
           (is (not (btu/disabled? :save)))
           (btu/scroll-and-click :save)
-          (btu/screenshot "after-saving-inline-text-fi.png")
+          (btu/screenshot "after-saving-inline-text-fi")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Lisenssi"}))
           (is (= {"Organisaatio" "NBN"
                   "Nimi (EN)" "E2E license with inline text (EN)"
@@ -2949,13 +2952,13 @@
         (with-language :sv
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenser"}))
           (btu/scroll-and-click :create-license)
-          (btu/screenshot "before-filling-attachments-sv.png")
+          (btu/screenshot "before-filling-attachments-sv")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Ny licens"}))
           (select-option "Organisation" "NBN")
           (fill-license-fields {:title "E2E license with attachments"
                                 :attachments true})
           (btu/scroll-and-click :save)
-          (btu/screenshot "after-saving-attachments-sv.png")
+          (btu/screenshot "after-saving-attachments-sv")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Licens"}))
           (is (= {"Organisation" "NBN"
                   "Namn (EN)" "E2E license with attachments (EN)"

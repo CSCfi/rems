@@ -7,10 +7,11 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
-            [medley.core :refer [assoc-some]]
+            [medley.core :refer [assoc-some indexed]]
             [rems.api.testing :refer [standalone-fixture]]
-            [rems.common.util :refer [conj-vec getx]]
+            [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config]
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
@@ -278,13 +279,58 @@
 ;;; etaoin exported
 
 (defn screenshot [filename]
+  (let [driver (get-driver)
+        full-filename (format "%03d-%s-%s%s"
+                              (get-sequence-number)
+                              (get-current-test-name)
+                              filename
+                              ".png")
+        file (io/file (:reporting-dir @test-context) full-filename)
+        window-size (et/get-window-size driver)
+        empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+
+        without-extra-height (if (and empty-space
+                                      (pos? empty-space))
+                               (+ (- (:height window-size) empty-space) 100) ; with some margin
+                               (:height window-size))
+        need-to-adjust? (< 0 without-extra-height (:height window-size))]
+
+    ;; adjust window to correct size
+    (when need-to-adjust?
+      (et/set-window-size driver {:width (:width window-size)
+                                  :height without-extra-height}))
+
+    (et/screenshot driver file)
+
+    ;; restore (big) size
+    (when need-to-adjust?
+      (et/set-window-size driver window-size))))
+
+(defn screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
                               (get-sequence-number)
                               (get-current-test-name)
                               filename)
         file (io/file (:reporting-dir @test-context) full-filename)]
-    (et/screenshot (get-driver)
-                   file)))
+    (et/screenshot-element (get-driver)
+                           q
+                           file)))
+
+(defn screenshot-ancestor
+  "Like `screenshot-element` but take a screenshot of an ancestor to give context."
+  [filename q]
+  (screenshot-element filename [q {:xpath "./../../.."}]))
+
+
+(defn dump-content [content filename]
+  (when (seq content)
+    (let [full-filename (format "%03d-%s-%s%s"
+                                (get-sequence-number)
+                                (get-current-test-name)
+                                filename
+                                ".txt")
+          file (io/file (:reporting-dir @test-context) full-filename)]
+      (spit file (json/generate-string-pretty content)))))
 
 (defmacro with-postmortem [& args]
   `(et/with-postmortem (get-driver)
@@ -504,11 +550,40 @@
     .then(callback);")]
     result))
 
+(defn format-accessibility-report [data]
+  (doseq [k [:violations]
+          :let [content (->> data
+                             (mapcat #(get % k))
+                             distinct
+                             (sort-by :impact))]]
+    content))
+
 (defn gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
-  and appends them to the test context for summary reporting."
-  []
-  (context-update! :axe conj-vec (check-axe)))
+  and appends them to the test context for summary reporting.
+
+  Produces a single screenshot `accessibility-violations` with
+  all the violations marked with a border.
+
+  The violations will also be dumped into a text file under the same `name`."
+  [name]
+  (let [results (check-axe)]
+    (when-let [violations (seq (:violations results))]
+      (let [targets (select [ALL :nodes ALL :target ALL] violations)
+            originals (doall (for [target targets]
+                               [target (js-execute (str "var x = document.querySelector('" target "'); return x && x.style && x.style.outline; "))]))]
+        (doseq [target targets]
+          (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"3px dashed red\";")))
+
+        (screenshot (str name "-accessibility-violations"))
+        (dump-content violations (str name "-accessibility-violations"))
+
+        ;; let's restore the results just in case further
+        ;; tests would be affected
+        (doseq [[target original] originals]
+          (when original
+            (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"" original "\";"))))))
+    (context-update! :axe conj-vec results)))
 
 (defn accessibility-report-fixture
   "Runs the tests and finally stores the gathered accessibility

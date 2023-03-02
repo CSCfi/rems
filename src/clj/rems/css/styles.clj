@@ -383,14 +383,15 @@
                     :flex-wrap :nowrap
                     :min-height (u/px 300)
                     :max-width content-max-width
-                    :flex-grow 1
                     :align-items :center
                     ;; Height of navigation + logo, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
                     :padding-top (u/px 212)
-                    :margin-top (u/px -212)}
+                    :margin-top (u/px -212)
+                    :margin-bottom (u/rem 1)}
     ["&>*" {:min-width (u/px 512)}]]
+   [:#empty-space {:flex-grow 1}]
    [:#main-content.page-actions {:max-width (u/percent 100)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
@@ -584,7 +585,6 @@
                :padding-top "1rem"
                :padding-bottom "1rem"
                :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
-               :margin-top (u/em 1)
                :position :relative}
       [:a :a:hover :.nav-link {:color footer-text-color
                                :font-weight (button-navbar-font-weight)}]
