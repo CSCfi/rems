@@ -38,7 +38,7 @@
 
 (defn edit-action [workflow-id]
   (atoms/edit-action
-   {:id "edit-workflow"
+   {:class "edit-workflow"
     :url (str "/administration/workflows/edit/" workflow-id)}))
 
 (defn edit-button [workflow-id]

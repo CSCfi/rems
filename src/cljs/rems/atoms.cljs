@@ -264,7 +264,7 @@
          :label (:label action)
          :href (:url action)
          :on-click (:on-click action)
-         :class "btn btn-secondary"}])
+         :class (str "btn btn-secondary " (:class action))}])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
@@ -273,7 +273,7 @@
          :label (:label action)
          :href (:url action)
          :on-click (:on-click action)
-         :class "btn btn-link"}])
+         :class (str "btn btn-link " (:class action))}])
 
 (defn edit-action
   "Standard edit action helper."
@@ -309,7 +309,7 @@
 
       ;; group actions as links in a popup of a button
       [:div.btn-group
-       [:button#modify-dropdown.btn.btn-secondary.dropdown-toggle
+       [:button.modify-dropdown.btn.btn-secondary.dropdown-toggle
         {:data-toggle :dropdown}
         label]
        [:div.dropdown-menu.dropdown-menu-right

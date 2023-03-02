@@ -35,7 +35,7 @@
    [profile/maybe-ega-api-key-warning]
    [:div.spaced-sections
     [collapsible/component
-     {:id "todo-applications"
+     {:id "todo-applications-collapse"
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
@@ -47,7 +47,7 @@
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]
     [collapsible/component
-     {:id "handled-applications"
+     {:id "handled-applications-collapse"
       :on-open #(rf/dispatch [::handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>

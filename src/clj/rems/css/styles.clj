@@ -378,6 +378,7 @@
     [:&:active
      :&:focus
      {:left (u/em 0)}]]
+   ["a:not(.nav-link):not(.btn)" {:text-decoration :underline}]
    [:#main-content {:display :flex
                     :flex-direction :column
                     :flex-wrap :nowrap

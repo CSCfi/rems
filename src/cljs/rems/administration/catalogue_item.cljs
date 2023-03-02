@@ -38,7 +38,7 @@
 
 (defn edit-action [catalogue-item-id]
   (atoms/edit-action
-   {:id "edit-catalogue-item"
+   {:class "edit-catalogue-item"
     :url (str "/administration/catalogue-items/edit/" catalogue-item-id)}))
 
 (defn edit-button [catalogue-item-id]

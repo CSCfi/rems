@@ -8,7 +8,7 @@
 (defn search-field [{:keys [id on-search searching? info]}]
   (let [input-value (r/atom "")
         input-element (atom nil)
-        collapse-id "application-search-tips-collapse"]
+        collapse-id (str "application-search-tips-collapse-" id)]
     (fn [{:keys [id on-search searching? info]}]
       [:<>
        [:div.search-field.mt-3

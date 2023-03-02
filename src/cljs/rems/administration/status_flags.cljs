@@ -35,7 +35,7 @@
         label (if enabled?
                 :t.administration/disable
                 :t.administration/enable)]
-    {:id (or id "toggle-enabled")
+    {:id id
      :on-click #(on-change (update item :enabled not)
                            [:span [text label]
                             " \""  [get-localized-title-for-anything item] "\""])
@@ -62,7 +62,7 @@
         label (if archived?
                 :t.administration/unarchive
                 :t.administration/archive)]
-    {:id (or id "toggle-archived")
+    {:id id
      :on-click #(on-change (update item :archived not)
                            [:span [text label]
                             " \"" [get-localized-title-for-anything item] "\""])

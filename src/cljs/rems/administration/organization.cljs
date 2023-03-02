@@ -37,7 +37,7 @@
 
 (defn edit-action [organization-id]
   (atoms/edit-action
-   {:id "edit-organization"
+   {:class "edit-organization"
     :url (str "/administration/organizations/edit/" organization-id)}))
 
 (defn edit-button [organization-id]

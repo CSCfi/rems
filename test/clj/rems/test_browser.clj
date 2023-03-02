@@ -1382,8 +1382,8 @@
   ;; incidentally test search while we're at it
   (btu/fill-human :catalogue-search item-name)
   (btu/wait-page-loaded)
-  (btu/scroll-and-click :modify-dropdown)
   (btu/screenshot "about-to-enable-catalogue-item")
+  (btu/scroll-and-click {:css ".modify-dropdown"})
   (btu/scroll-and-click {:tag :a :fn/text "Enable"})
   (btu/wait-page-loaded)
   (btu/screenshot "enabled-catalogue-item")
@@ -1972,7 +1972,7 @@
     (testing "edit form"
       (change-language :en)
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
-      (btu/scroll-and-click :edit-form)
+      (btu/scroll-and-click {:css ".edit-form"})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
       (testing "add description field"
@@ -1989,7 +1989,7 @@
         (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))
 
         (testing "check that error message is present on field empty"
-          (btu/scroll-and-click :edit-form)
+          (btu/scroll-and-click {:css ".edit-form"})
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
 
@@ -2339,7 +2339,7 @@
               "Active" true}
              (slurp-fields :workflow))))
     (testing "edit workflow"
-      (btu/scroll-and-click :edit-workflow)
+      (btu/scroll-and-click {:css ".edit-workflow"})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3")
@@ -2527,7 +2527,7 @@
     (testing "edit after creation"
       (is (btu/visible? :enable-toggle)) ; should be visible for owner
       (is (btu/visible? :archive-toggle)) ; should be visible for owner
-      (btu/scroll-and-click :edit-organization)
+      (btu/scroll-and-click {:css ".edit-organization"})
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :short-name-en))
       (select-option "Owners" "Organization owner 2")
@@ -2608,7 +2608,7 @@
       (testing "edit as organization owner 2"
         (is (not (btu/visible? :enable-toggle))) ; only visible to owner user
         (is (not (btu/visible? :archive-toggle))) ; only visible to owner user
-        (btu/scroll-and-click :edit-organization)
+        (btu/scroll-and-click {:css ".edit-organization"})
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
         (btu/clear :short-name-en)
@@ -2638,7 +2638,7 @@
                   "Active" true}
                  (slurp-fields :organization))))
         (testing "edit again, remove self as organization owner"
-          (btu/scroll-and-click :edit-organization)
+          (btu/scroll-and-click {:css ".edit-organization"})
           (btu/wait-page-loaded)
           (is (btu/eventually-visible? :short-name-en))
 
@@ -2664,7 +2664,7 @@
                     "Email" "review.email@example.com"
                     "Active" true}
                    (slurp-fields :organization)))
-            (is (not (btu/visible? :edit-organization)))
+            (is (not (btu/visible? {:css ".edit-organization"})))
 
             (go-to-admin "Organizations")
             (is (= "View"
@@ -2722,7 +2722,7 @@
       (click-row-action [:categories]
                         {:fn/text (btu/context-getx :category-name)}
                         (select-button-by-label "View"))
-      (btu/scroll-and-click :edit)
+      (btu/scroll-and-click {:css ".edit-category"})
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
       (btu/fill-human :title-en (str (btu/context-getx :category-name) " Edited"))
@@ -2769,7 +2769,7 @@
       (click-row-action [:categories]
                         {:fn/text (str (btu/context-getx :category-name) " Edited")}
                         (select-button-by-label "View"))
-      (btu/scroll-and-click :edit)
+      (btu/scroll-and-click {:css ".edit-category"})
       (btu/wait-visible :categories-dropdown)
       (select-option "Subcategories" (str (btu/context-getx :category-name) " Ancestor"))
       (btu/scroll-and-click :save)

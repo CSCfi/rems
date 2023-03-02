@@ -52,7 +52,7 @@
 
 (defn edit-action [form-id]
   (atoms/edit-action
-   {:id "edit-form"
+   {:class "edit-form"
     :on-click (fn []
                 (rf/dispatch [:rems.spa/user-triggered-navigation])
                 (rf/dispatch [::edit-form form-id]))}))
