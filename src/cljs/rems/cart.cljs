@@ -86,8 +86,8 @@
    [:div.outer-cart.mb-3
     [:div.inner-cart
      [:div.cart-title.pt-3.h5 {:role "status"
-                       :aria-live "polite"
-                       :aria-atomic true}
+                               :aria-live "polite"
+                               :aria-atomic true}
       [:i.fa.fa-shopping-cart]
       [:span (text-format :t.cart/header (count items))]]
      (into [:table.rems-table.cart]
