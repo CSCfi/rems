@@ -414,166 +414,135 @@
     (is (false? @allocated-new-ids?) "should not allocate new IDs")))
 
 (deftest test-save-draft
-  (let [application (apply-events nil [dummy-created-event])]
-    (testing "saves a draft"
-      (is (= {:event/type :application.event/draft-saved
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-             (ok-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-                         injections))))
-    (testing "saves a draft"
-      (is (= {:event/type :application.event/draft-saved
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-             (ok-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-                         injections))))
-
-    (testing "saves a draft even when validations fail"
-      (is (= {:warnings [{:field-id "1" :form-id 1 :type :t.form.validation/invalid-value}]
-              :events [{:event/type :application.event/draft-saved
-                        :event/time test-time
-                        :event/actor applicant-user-id
-                        :application/id app-id
-                        :application/field-values [{:form 1 :field "1" :value "nonexistent_option"}]}]}
-             (ok-command-with-warnings
-              application
-              {:type :application.command/save-draft
-               :actor applicant-user-id
-               :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
-              injections))))
-
-    (testing "validation of conditional fields"
-      (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
-            application (apply-events nil [created])]
-        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
-                :events [{:event/type :application.event/draft-saved
-                          :event/time test-time
-                          :event/actor applicant-user-id
-                          :application/id app-id
-                          :application/field-values [{:form 7 :field "7" :value "y"}
-                                                     {:form 7 :field "8" :value "invalid_email"}]}]}
-               (ok-command-with-warnings
-                application
-                {:type :application.command/save-draft
-                 :actor applicant-user-id
-                 :field-values [{:form 7 :field "7" :value "y"}
-                                {:form 7 :field "8" :value "invalid_email"}]}
-                injections))
-            "visible field should not accept invalid values")
-        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
-                :events [{:event/type :application.event/draft-saved
-                          :event/time test-time
-                          :event/actor applicant-user-id
-                          :application/id app-id
-                          :application/field-values [{:form 7 :field "7" :value "n"}]}]} ; invisible field value is not stored
-               (ok-command-with-warnings
-                application
-                {:type :application.command/save-draft
-                 :actor applicant-user-id
-                 :field-values [{:form 7 :field "7" :value "n"}
-                                {:form 7 :field "8" :value "invalid_email"}]}
-                injections))
-            "invisible should not accept invalid values")
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 7, :field "7", :value "y"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 7 :field "7" :value "y"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-                           injections))
-            "answers to visible fields should get stored")
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 7, :field "7", :value "n"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 7 :field "7" :value "n"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-                           injections))
-            "answers to invisible fields should get dropped")))
-
-    (testing "only the applicant can save a draft"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/save-draft
-                            :actor "somebody"
-                            :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}
-                           injections)
-             (fail-command application
-                           {:type :application.command/save-draft
-                            :actor handler-user-id
-                            :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}
-                           injections))))
-    (testing "draft cannot be updated after submitting"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])]
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application
-                             {:type :application.command/save-draft
-                              :actor applicant-user-id
-                              :field-values [{:form 1 :field "1" :value "bar"}]}
-                             injections)))))
-    (testing "draft can be updated after returning it to applicant"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}
-                                       {:event/type :application.event/returned
-                                        :event/time test-time
-                                        :event/actor handler-user-id
-                                        :application/id app-id
-                                        :application/comment ""}])]
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 1 :field "1" :value "bar"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "bar"}]}
-                           injections)))))))
-
-(deftest test-accept-licenses
-  (let [application (apply-events nil [dummy-created-event])]
-    (is (= {:event/type :application.event/licenses-accepted
+  (testing "saves a draft"
+    (is (= {:event/type :application.event/draft-saved
             :event/time test-time
             :event/actor applicant-user-id
             :application/id app-id
-            :application/accepted-licenses #{1 2}}
-           (ok-command application
-                       {:type :application.command/accept-licenses
+            :application/field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
                         :actor applicant-user-id
-                        :accepted-licenses [1 2]}
-                       injections)))))
+                        :field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+                       (build-application-view [dummy-created-event])))))
+  (testing "saves a draft"
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+                       (build-application-view [dummy-created-event])))))
+
+  (testing "saves a draft even when validations fail"
+    (is (= {:warnings [{:field-id "1" :form-id 1 :type :t.form.validation/invalid-value}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 1 :field "1" :value "nonexistent_option"}]}]}
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
+                                     (build-application-view [dummy-created-event])))))
+
+  (testing "validation of conditional fields"
+    (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 7 :field "7" :value "y"}
+                                                 {:form 7 :field "8" :value "invalid_email"}]}]}
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 7 :field "7" :value "y"}
+                                                     {:form 7 :field "8" :value "invalid_email"}]}
+                                     (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "visible field should not accept invalid values")
+    (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 7 :field "7" :value "n"}]}]} ; invisible field value is not stored
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 7 :field "7" :value "n"}
+                                                     {:form 7 :field "8" :value "invalid_email"}]}
+                                     (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "invisible should not accept invalid values")
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 7, :field "7", :value "y"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 7 :field "7" :value "y"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+                       (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "answers to visible fields should get stored")
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 7, :field "7", :value "n"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 7 :field "7" :value "n"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+                       (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "answers to invisible fields should get dropped"))
+
+  (testing "only the applicant can save a draft"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/save-draft
+                          :actor "somebody"
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
+                         (build-application-view [dummy-created-event]))
+           (fail-command {:type :application.command/save-draft
+                          :actor handler-user-id
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
+                         (build-application-view [dummy-created-event])))))
+  (testing "draft cannot be updated after submitting"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/save-draft
+                          :actor applicant-user-id
+                          :field-values [{:form 1 :field "1" :value "bar"}]}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "draft can be updated after returning it to applicant"
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 1 :field "1" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 1 :field "1" :value "bar"}]}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event]))))))
+
+(deftest test-accept-licenses
+  (is (= {:event/type :application.event/licenses-accepted
+          :event/time test-time
+          :event/actor applicant-user-id
+          :application/id app-id
+          :application/accepted-licenses #{1 2}}
+         (ok-command {:type :application.command/accept-licenses
+                      :actor applicant-user-id
+                      :accepted-licenses [1 2]}
+                     (build-application-view [dummy-created-event])))))
 
 (deftest test-add-licenses
   (let [application (apply-events nil [dummy-created-event
