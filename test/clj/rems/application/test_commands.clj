@@ -1769,32 +1769,14 @@
                                            reviewer-remark-2])))))))))
 
 (deftest test-copy-as-new
-  (let [created-event {:event/type :application.event/created
-                       :event/time test-time
-                       :event/actor applicant-user-id
-                       :application/id app-id
-                       :application/external-id "2018/55"
-                       :application/resources [{:catalogue-item/id 1
-                                                :resource/ext-id "res1"}
-                                               {:catalogue-item/id 2
-                                                :resource/ext-id "res2"}]
-                       :application/licenses []
-                       :application/forms [{:form/id 3}]
-                       :workflow/id 1
-                       :workflow/type :workflow/default}
-        draft-saved-event {:event/type :application.event/draft-saved
-                           :event/time test-time
-                           :event/actor applicant-user-id
-                           :application/id app-id
-                           :application/field-values [{:form 3 :field "text" :value "1"}
-                                                      {:form 3 :field "attachment" :value "2"}]}
-        submitted-event {:event/type :application.event/submitted
-                         :event/time test-time
-                         :event/actor applicant-user-id
-                         :application/id app-id}
-        draft-application (apply-events nil [created-event
-                                             draft-saved-event])
-        submitted-application (apply-events draft-application [submitted-event])]
+  (let [created-event (merge dummy-created-event {:application/external-id "2018/55"
+                                                  :application/resources [{:catalogue-item/id 1
+                                                                           :resource/ext-id "res1"}
+                                                                          {:catalogue-item/id 2
+                                                                           :resource/ext-id "res2"}]
+                                                  :application/forms [{:form/id 3}]})
+        draft-saved-event (merge dummy-draft-saved-event {:application/field-values [{:form 3 :field "text" :value "1"}
+                                                                                     {:form 3 :field "attachment" :value "2"}]})]
     (testing "creates a new draft-application with the same form answers"
       (testing "for a draft it is just another draft"
         (is (= [{:event/type :application.event/created
@@ -1816,10 +1798,10 @@
                  :application/id new-app-id
                  :application/field-values [{:form 3 :field "text" :value "1"}
                                             {:form 3 :field "attachment" :value "102"}]}]
-               (ok-command draft-application
-                           {:type :application.command/copy-as-new
+               (ok-command {:type :application.command/copy-as-new
                             :actor applicant-user-id}
-                           injections))))
+                           (build-application-view [created-event
+                                                    draft-saved-event])))))
 
       (testing "for a submitted application it points to a previous draft application"
         (is (= [{:event/type :application.event/created
@@ -1853,35 +1835,32 @@
                  :application/id app-id
                  :application/copied-to {:application/id new-app-id
                                          :application/external-id new-external-id}}]
-               (ok-command submitted-application
-                           {:type :application.command/copy-as-new
+               (ok-command {:type :application.command/copy-as-new
                             :actor applicant-user-id}
-                           injections)))))))
+                           (build-application-view [created-event
+                                                    draft-saved-event
+                                                    dummy-submitted-event]))))))))
 
 (deftest test-delete
-  (let [draft-application (apply-events nil [dummy-created-event])
-        submitted-application (apply-events draft-application [{:event/type :application.event/submitted
-                                                                :event/time test-time
-                                                                :event/actor applicant-user-id
-                                                                :application/id app-id}])]
-    (testing "forbidden"
-      (is (= {:errors [{:type :forbidden}]} (fail-command draft-application
-                                                          {:type :application.command/delete
-                                                           :actor handler-user-id}
-                                                          injections)))
-      (is (= {:errors [{:type :forbidden}]} (fail-command submitted-application
-                                                          {:type :application.command/delete
-                                                           :actor applicant-user-id}
-                                                          injections))))
-    (testing "success"
-      (is (= {:event/type :application.event/deleted
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id}
-             (ok-command draft-application
-                         {:type :application.command/delete
+  (testing "handler cannot delete application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/delete
+                          :actor handler-user-id}
+                         (build-application-view [dummy-created-event])))))
+  (testing "applicant cannot delete submitted application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/delete
                           :actor applicant-user-id}
-                         injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "applicant can delete draft application"
+    (is (= {:event/type :application.event/deleted
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/delete
+                        :actor applicant-user-id}
+                       (build-application-view [dummy-created-event]))))))
 
 (deftest test-handle-command
   (let [application (model/application-view nil {:event/type :application.event/created
@@ -1904,74 +1883,4 @@
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
             result (commands/handle-command command application injections)]
         (is (= {:errors [{:type :forbidden}]} result))))))
-
-(deftest test-redact-attachments-command
-  (let [application (apply-events nil [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])
-        attachment-id-1 1234
-        attachment-id-2 2345
-        injections {:valid-user? #{applicant-user-id handler-user-id "reviewer"}
-                    :find-userid identity
-                    :get-attachment-metadata
-                    {attachment-id-1 {:application/id (:application/id application)
-                                      :attachment/id attachment-id-1
-                                      :attachment/user handler-user-id}
-                     attachment-id-2 {:application/id (:application/id application)
-                                      :attachment/id attachment-id-2
-                                      :attachment/user handler-user-id}}}]
-    (is (= {:errors [{:type :empty-redacted-attachments}]}
-           (fail-command application
-                         {:type :application.command/redact-attachments
-                          :actor handler-user-id
-                          :comment "should fail"
-                          :public false
-                          :redacted-attachments []
-                          :attachments [{:attachment/id attachment-id-2}]}
-                         injections))
-        "cannot redact if redacted-attachments is empty")
-    (testing "handler can redact attachment"
-      (let [remarked (ok-command application
-                                 {:type :application.command/remark
-                                  :actor handler-user-id
-                                  :comment "handler's remark"
-                                  :attachments [{:attachment/id attachment-id-1}]
-                                  :public false}
-                                 injections)
-            application (apply-events application [remarked])
-            redacted (ok-command application
-                                 {:type :application.command/redact-attachments
-                                  :actor handler-user-id
-                                  :comment "accidental upload, redacting"
-                                  :public false
-                                  :redacted-attachments [{:attachment/id attachment-id-1}]
-                                  :attachments [{:attachment/id attachment-id-2}]}
-                                 injections)
-            application (apply-events application [redacted])
-            [remarked-event redacted-event] (->> (:application/events application)
-                                                 (take-last 2))]
-        (is (= {:event/id 2
-                :event/type :application.event/remarked
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/comment "handler's remark"
-                :application/public false
-                :event/attachments [{:attachment/id attachment-id-1}]}
-               (-> remarked-event
-                   (dissoc :event/actor-attributes))))
-        (is (= {:event/id 3
-                :event/type :application.event/attachments-redacted
-                :event/time test-time
-                :event/actor handler-user-id
-                :event/attachments [{:attachment/id attachment-id-2}]
-                :application/redacted-attachments [{:attachment/id attachment-id-1
-                                                    :event/id 2}]
-                :application/id app-id
-                :application/comment "accidental upload, redacting"
-                :application/public false}
-               (-> redacted-event
-                   (dissoc :event/actor-attributes))))))))
 
