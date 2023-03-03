@@ -1242,114 +1242,80 @@
 
 (deftest test-accept-invitation
   (testing "invited member"
-    (let [member-invited (apply-events nil
-                                       [dummy-created-event
-                                        {:event/type :application.event/member-invited
-                                         :event/time test-time
-                                         :event/actor applicant-user-id
-                                         :application/id app-id
-                                         :application/member {:name "Some Body" :email "somebody@applicants.com"}
-                                         :invitation/token "very-secure"}])
-          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}
-                      :find-userid identity}]
+    (testing "can join draft"
+      (is (= {:event/type :application.event/member-joined
+              :event/time test-time
+              :event/actor "somebody"
+              :application/id app-id
+              :invitation/token "very-secure"}
+             (ok-command {:type :application.command/accept-invitation
+                          :actor "somebody"
+                          :token "very-secure"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event])))))
 
-      (testing "can join draft"
-        (is (= {:event/type :application.event/member-joined
-                :event/time test-time
-                :event/actor "somebody"
-                :application/id app-id
-                :invitation/token "very-secure"}
-               (ok-command member-invited
-                           {:type :application.command/accept-invitation
+    (testing "can't join if they are already a member"
+      (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
+             (fail-command {:type :application.command/accept-invitation
                             :actor "somebody"
                             :token "very-secure"}
-                           injections))))
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-member-added-event])))))
 
-      (testing "can't join if they are already a member"
-        (let [application (apply-events member-invited
-                                        [{:event/type :application.event/member-added
-                                          :event/time test-time
-                                          :event/actor applicant-user-id
-                                          :application/id app-id
-                                          :application/member {:userid "somebody"}}])]
-          (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
-                                :actor "somebody"
-                                :token "very-secure"}
-                               injections)))))
+    (testing "can't use invalid token"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "wrong-token"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event])))))
 
-      (testing "can't use invalid token"
-        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command member-invited
-                             {:type :application.command/accept-invitation
-                              :actor "somebody"
-                              :token "wrong-token"}
-                             injections))))
+    (testing "can't use token twice"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody2"
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-member-joined-event])))))
 
-      (testing "can't use token twice"
-        (let [application (apply-events member-invited
-                                        [{:event/type :application.event/member-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :invitation/token "very-secure"}])]
-          (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
-                                :actor "somebody2"
-                                :token "very-secure"}
-                               injections)))))
+    (testing "can join submitted application"
+      (is (= {:event/type :application.event/member-joined
+              :event/actor "somebody"
+              :event/time test-time
+              :application/id app-id
+              :invitation/token "very-secure"}
+             (ok-command {:type :application.command/accept-invitation
+                          :actor "somebody"
+                          :token "very-secure"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event
+                                                  dummy-submitted-event])))))
 
-      (let [submitted (apply-events member-invited
-                                    [{:event/type :application.event/submitted
-                                      :event/time test-time
-                                      :event/actor applicant-user-id
-                                      :application/id app-id}])]
-        (testing "can join submitted application"
-          (is (= {:event/type :application.event/member-joined
-                  :event/actor "somebody"
-                  :event/time test-time
-                  :application/id app-id
-                  :invitation/token "very-secure"}
-                 (ok-command member-invited
-                             {:type :application.command/accept-invitation
-                              :actor "somebody"
-                              :token "very-secure"}
-                             injections))))
-
-        (let [closed (apply-events submitted
-                                   [{:event/type :application.event/closed
-                                     :event/time test-time
-                                     :event/actor applicant-user-id
-                                     :application/id app-id
-                                     :application/comment ""}])]
-          (testing "can't join a closed application"
-            (is (= {:errors [{:type :forbidden}]}
-                   (fail-command closed
-                                 {:type :application.command/accept-invitation
-                                  :actor "somebody"
-                                  :token "very-secure"}
-                                 injections))))))))
+    (testing "can't join a closed application"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-submitted-event
+                                                    dummy-closed-event]))))))
   (testing "invited reviewer"
-    (let [reviewer-invited (apply-events nil
-                                         [dummy-created-event
-                                          {:event/type :application.event/submitted
-                                           :event/time test-time
-                                           :event/actor applicant-user-id
-                                           :application/id app-id}
-                                          {:event/type :application.event/reviewer-invited
-                                           :event/time test-time
-                                           :event/actor handler-user-id
-                                           :application/id app-id
-                                           :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
-                                           :invitation/token "very-secure"}])]
+    (let [reviewer-invited-event {:event/type :application.event/reviewer-invited
+                                  :event/time test-time
+                                  :event/actor handler-user-id
+                                  :application/id app-id
+                                  :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
+                                  :invitation/token "very-secure"}]
       (testing "can join submitted application"
-        (let [event (ok-command reviewer-invited
-                                {:type :application.command/accept-invitation
+        (let [event (ok-command {:type :application.command/accept-invitation
                                  :actor "somebody"
                                  :token "very-secure"}
-                                injections)]
+                                (build-application-view [dummy-created-event
+                                                         dummy-submitted-event
+                                                         reviewer-invited-event]))]
           (is (= {:event/type :application.event/reviewer-joined
                   :event/time test-time
                   :event/actor "somebody"
@@ -1360,44 +1326,41 @@
           (is (instance? UUID (:application/request-id event)))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command reviewer-invited
-                             {:type :application.command/accept-invitation
+               (fail-command {:type :application.command/accept-invitation
                               :actor "somebody"
                               :token "wrong-token"}
-                             injections))))
+                             (build-application-view [dummy-created-event
+                                                      dummy-submitted-event
+                                                      reviewer-invited-event])))))
       (testing "can't use token twice"
-        (let [application (apply-events reviewer-invited
-                                        [{:event/type :application.event/reviewer-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :application/request-id (UUID/randomUUID)
-                                          :invitation/token "very-secure"}])]
+        (let [reviewer-joined-event {:event/type :application.event/reviewer-joined
+                                     :event/time test-time
+                                     :event/actor "somebody"
+                                     :application/id app-id
+                                     :application/request-id (UUID/randomUUID)
+                                     :invitation/token "very-secure"}]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
+                 (fail-command {:type :application.command/accept-invitation
                                 :actor "somebody2"
                                 :token "very-secure"}
-                               injections)))))))
+                               (build-application-view [dummy-created-event
+                                                        dummy-submitted-event
+                                                        reviewer-invited-event
+                                                        reviewer-joined-event]))))))))
   (testing "invited decider"
-    (let [decider-invited (apply-events nil
-                                        [dummy-created-event
-                                         {:event/type :application.event/submitted
-                                          :event/time test-time
-                                          :event/actor applicant-user-id
-                                          :application/id app-id}
-                                         {:event/type :application.event/decider-invited
-                                          :event/time test-time
-                                          :event/actor handler-user-id
-                                          :application/id app-id
-                                          :application/decider {:name "Some Body" :email "somebody@applicants.com"}
-                                          :invitation/token "very-secure"}])]
+    (let [decider-invited-event {:event/type :application.event/decider-invited
+                                 :event/time test-time
+                                 :event/actor handler-user-id
+                                 :application/id app-id
+                                 :application/decider {:name "Some Body" :email "somebody@applicants.com"}
+                                 :invitation/token "very-secure"}]
       (testing "can join submitted application"
-        (let [event (ok-command decider-invited
-                                {:type :application.command/accept-invitation
+        (let [event (ok-command {:type :application.command/accept-invitation
                                  :actor "somebody"
                                  :token "very-secure"}
-                                injections)]
+                                (build-application-view [dummy-created-event
+                                                         dummy-submitted-event
+                                                         decider-invited-event]))]
           (is (= {:event/type :application.event/decider-joined
                   :event/time test-time
                   :event/actor "somebody"
@@ -1408,25 +1371,27 @@
           (is (instance? UUID (:application/request-id event)))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command decider-invited
-                             {:type :application.command/accept-invitation
+               (fail-command {:type :application.command/accept-invitation
                               :actor "somebody"
                               :token "wrong-token"}
-                             injections))))
+                             (build-application-view [dummy-created-event
+                                                      dummy-submitted-event
+                                                      decider-invited-event])))))
       (testing "can't use token twice"
-        (let [application (apply-events decider-invited
-                                        [{:event/type :application.event/decider-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :application/request-id (UUID/randomUUID)
-                                          :invitation/token "very-secure"}])]
+        (let [decider-joined-event {:event/type :application.event/decider-joined
+                                    :event/time test-time
+                                    :event/actor "somebody"
+                                    :application/id app-id
+                                    :application/request-id (UUID/randomUUID)
+                                    :invitation/token "very-secure"}]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
+                 (fail-command {:type :application.command/accept-invitation
                                 :actor "somebody2"
                                 :token "very-secure"}
-                               injections))))))))
+                               (build-application-view [dummy-created-event
+                                                        dummy-submitted-event
+                                                        decider-invited-event
+                                                        decider-joined-event])))))))))
 
 (deftest test-remove-member
   (let [application (apply-events nil
