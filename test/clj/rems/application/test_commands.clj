@@ -545,30 +545,25 @@
                      (build-application-view [dummy-created-event])))))
 
 (deftest test-add-licenses
-  (let [application (apply-events nil [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])]
-    (is (= {:event/type :application.event/licenses-added
-            :event/time test-time
-            :event/actor handler-user-id
-            :application/id app-id
-            :application/comment "comment"
-            :application/licenses [{:license/id 1} {:license/id 2}]}
-           (ok-command application
-                       {:type :application.command/add-licenses
+  (is (= {:event/type :application.event/licenses-added
+          :event/time test-time
+          :event/actor handler-user-id
+          :application/id app-id
+          :application/comment "comment"
+          :application/licenses [{:license/id 1} {:license/id 2}]}
+         (ok-command {:type :application.command/add-licenses
+                      :actor handler-user-id
+                      :comment "comment"
+                      :licenses [1 2]}
+                     (build-application-view [dummy-created-event
+                                              dummy-submitted-event]))))
+  (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
+         (fail-command {:type :application.command/add-licenses
                         :actor handler-user-id
                         :comment "comment"
-                        :licenses [1 2]}
-                       injections)))
-    (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
-           (fail-command application
-                         {:type :application.command/add-licenses
-                          :actor handler-user-id
-                          :comment "comment"
-                          :licenses []}
-                         injections)))))
+                        :licenses []}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
 
 (deftest test-change-resources
   (let [cat-1 1
