@@ -295,10 +295,9 @@
             :application/forms [{:form/id 1}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1]}))))
   (testing "multiple resources"
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id
@@ -314,10 +313,9 @@
             :application/forms [{:form/id 1}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1 2]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1 2]}))))
 
   (testing "no forms"
     (is (= {:event/type :application.event/created
@@ -331,46 +329,36 @@
             :application/forms []
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [6]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [6]}))))
 
   (testing "error: invalid actor"
     (is (= {:errors [{:userid "does-not-exist", :type :t.form.validation/invalid-user}]}
-           (fail-command nil {:type :application.command/create
-                              :actor "does-not-exist"
-                              :catalogue-item-ids [1]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor "does-not-exist"
+                          :catalogue-item-ids [1]}))))
 
   (testing "error: zero catalogue items"
     (is (= {:errors [{:type :must-not-be-empty
                       :key :catalogue-item-ids}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids []}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids []}))))
 
   (testing "error: non-existing catalogue items"
     (is (= {:errors [{:type :invalid-catalogue-item
                       :catalogue-item-id 999999}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [999999]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [999999]}))))
 
   (testing "error: disabled catalogue item"
     (is (= {:errors [{:type :disabled-catalogue-item
-                      :catalogue-item-id 2}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [1 2]}
-                         (assoc injections
-                                :get-catalogue-item
-                                (fn [id]
-                                  (merge (dummy-get-catalogue-item id)
-                                         (when (= id 2)
-                                           {:enabled false}))))))))
+                      :catalogue-item-id 7}]}
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 7]}))))
 
   (testing "catalogue items with different forms"
     (is (= {:event/type :application.event/created
@@ -388,10 +376,9 @@
             :application/forms [{:form/id 1} {:form/id 2}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1 3]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1 3]}))))
 
   (testing "workflow form, multiple catalogue items with different forms, workflow has duplicated catalogue item form"
     (is (= {:event/type :application.event/created
@@ -406,28 +393,25 @@
             :application/forms [{:form/id 1} {:form/id 3} {:form/id 4} {:form/id 2}] ; wf forms first, then catalogue item forms
             :workflow/id 2
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [4 5]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [4 5]}))))
 
   (testing "error: catalogue items with different workflows"
     (is (= {:errors [{:type :unbundlable-catalogue-items
                       :catalogue-item-ids [1 4]}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [1 4]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 4]}))))
 
   (testing "cannot execute the create command for an existing application"
     (reset! allocated-new-ids? false)
-    (let [application (apply-events nil [dummy-created-event])]
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application {:type :application.command/create
-                                        :actor applicant-user-id
-                                        :catalogue-item-ids [1]}
-                           injections)))
-      (is (false? @allocated-new-ids?) "should not allocate new IDs"))))
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1]}
+                         (build-application-view [dummy-created-event]))))
+    (is (false? @allocated-new-ids?) "should not allocate new IDs")))
 
 (deftest test-save-draft
   (let [application (apply-events nil [dummy-created-event])]
