@@ -7,17 +7,17 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
-            [rems.service.form :as form]
-            [rems.service.organizations :as organizations]
+            [rems.config]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.db.users :as users]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
+            [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.testing-util :refer [with-user]]
-            [rems.config])
+            [rems.service.form :as form]
+            [rems.service.organizations :as organizations]
+            [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -63,156 +63,173 @@
                                                          :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
+(def label-field
+  {:field/type :label
+   :field/optional false
+   :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
+                 :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}})
+(def description-field
+  {:field/type :description
+   :field/optional false
+   :field/title {:en "Application title field"
+                 :fi "Hakemuksen otsikko -kenttä"
+                 :sv "Ansökningens rubrikfält"}})
+(def text-field
+  {:field/type :text
+   :field/optional false
+   :field/title {:en "Text field"
+                 :fi "Tekstikenttä"
+                 :sv "Textfält"}
+   :field/info-text {:en "Explanation of how to fill in text field"
+                     :fi "Selitys tekstikentän täyttämisestä"
+                     :sv "Förklaring till hur man fyller i textfält"}
+   :field/placeholder {:en "Placeholder text"
+                       :fi "Täyteteksti"
+                       :sv "Textexempel"}})
+(def texta-field
+  {:field/type :texta
+   :field/optional false
+   :field/title {:en "Text area"
+                 :fi "Tekstialue"
+                 :sv "Textområde"}
+   :field/info-text {:en "Explanation of how to fill in text field"
+                     :fi "Selitys tekstikentän täyttämisestä"
+                     :sv "Förklaring till hur man fyller i textfält"}
+   :field/placeholder {:en "Placeholder text"
+                       :fi "Täyteteksti"
+                       :sv "Textexempel"}})
+(def header-field
+  {:field/type :header
+   :field/optional false
+   :field/title {:en "Header"
+                 :fi "Otsikko"
+                 :sv "Titel"}})
+(def date-field
+  {:field/type :date
+   :field/optional false
+   :field/title {:en "Date field"
+                 :fi "Päivämääräkenttä"
+                 :sv "Datumfält"}})
+(def email-field
+  {:field/type :email
+   :field/optional false
+   :field/title {:en "Email field"
+                 :fi "Sähköpostikenttä"
+                 :sv "E-postaddressfält"}})
+(def attachment-field
+  {:field/type :attachment
+   :field/optional false
+   :field/title {:en "Attachment"
+                 :fi "Liitetiedosto"
+                 :sv "Bilaga"}})
+(def multiselect-field
+  {:field/type :multiselect
+   :field/optional false
+   :field/title {:en "Multi-select list"
+                 :fi "Monivalintalista"
+                 :sv "Lista med flerval"}
+   :field/options [{:key "Option1"
+                    :label {:en "First option"
+                            :fi "Ensimmäinen vaihtoehto"
+                            :sv "Första alternativ"}}
+                   {:key "Option2"
+                    :label {:en "Second option"
+                            :fi "Toinen vaihtoehto"
+                            :sv "Andra alternativ"}}
+                   {:key "Option3"
+                    :label {:en "Third option"
+                            :fi "Kolmas vaihtoehto"
+                            :sv "Tredje alternativ"}}]})
+(def table-field
+  {:field/type :table
+   :field/optional false
+   :field/title {:en "Table"
+                 :fi "Taulukko"
+                 :sv "Tabell"}
+   :field/columns [{:key "col1"
+                    :label {:en "First"
+                            :fi "Ensimmäinen"
+                            :sv "Första"}}
+                   {:key "col2"
+                    :label {:en "Second"
+                            :fi "Toinen"
+                            :sv "Andra"}}]})
+(def option-field
+  {:field/type :option
+   :field/optional false
+   :field/title {:en "Option list"
+                 :fi "Valintalista"
+                 :sv "Lista"}
+   :field/options [{:key "Option1"
+                    :label {:en "First option"
+                            :fi "Ensimmäinen vaihtoehto"
+                            :sv "Första alternativ"}}
+                   {:key "Option2"
+                    :label {:en "Second option"
+                            :fi "Toinen vaihtoehto"
+                            :sv "Andra alternativ"}}
+                   {:key "Option3"
+                    :label {:en "Third option"
+                            :fi "Kolmas vaihtoehto"
+                            :sv "Tredje alternativ"}}]})
+(def phone-number-field
+  {:field/type :phone-number
+   :field/optional false
+   :field/title {:en "Phone number"
+                 :fi "Puhelinnumero"
+                 :sv "Telefonnummer"}})
+(def ip-address-field
+  {:field/type :ip-address
+   :field/optional false
+   :field/title {:en "IP address"
+                 :fi "IP-osoite"
+                 :sv "IP-adress"}})
+
+(def conditional-field-example
+  [(-> option-field (merge {:field/id "option"
+                            :field/title {:en "Option list. Choose the first option to reveal a new field."
+                                          :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
+                                          :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
+                            :field/optional true}))
+   (-> text-field (merge {:field/title {:en "Conditional field. Shown only if first option is selected above."
+                                        :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
+                                        :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
+                          :field/visibility {:visibility/type :only-if
+                                             :visibility/field {:field/id "option"}
+                                             :visibility/values ["Option1"]}}))])
+
+(def max-length-field-example
+  [(-> label-field (merge {:field/title {:en "The following field types can have a max length."
+                                         :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
+                                         :sv "De nästa fälttyperna kan ha bengränsat längd."}}))
+                ;; fields which support maxlength
+   (-> text-field (merge {:field/title {:en "Text field with max length"
+                                        :fi "Tekstikenttä pituusrajalla"
+                                        :sv "Textfält med begränsat längd"}
+                          :field/optional true
+                          :field/max-length 10}))
+   (-> texta-field (merge {:field/title {:en "Text area with max length"
+                                         :fi "Tekstialue pituusrajalla"
+                                         :sv "Textområdet med begränsat längd"}
+                           :field/optional true
+                           :field/max-length 100}))])
+
 (def all-field-types-example
-  [{:field/type :label
-    :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
-                  :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}
-    :field/optional false}
-
-   {:field/type :description
-    :field/title {:en "Application title field"
-                  :fi "Hakemuksen otsikko -kenttä"
-                  :sv "Ansökningens rubrikfält"}
-    :field/optional false}
-
-   {:field/type :text
-    :field/title {:en "Text field"
-                  :fi "Tekstikenttä"
-                  :sv "Textfält"}
-    :field/optional false
-    :field/info-text {:en "Explanation of how to fill in text field"
-                      :fi "Selitys tekstikentän täyttämisestä"
-                      :sv "Förklaring till hur man fyller i textfält"}
-    :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"
-                        :sv "Textexempel"}}
-
-   {:field/type :texta
-    :field/title {:en "Text area"
-                  :fi "Tekstialue"
-                  :sv "Textområde"}
-    :field/optional false
-    :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"
-                        :sv "Textexempel"}}
-
-   {:field/type :header
-    :field/title {:en "Header"
-                  :fi "Otsikko"
-                  :sv "Titel"}
-    :field/optional false}
-
-   {:field/type :date
-    :field/title {:en "Date field"
-                  :fi "Päivämääräkenttä"
-                  :sv "Datumfält"}
-    :field/optional true}
-
-   {:field/type :email
-    :field/title {:en "Email field"
-                  :fi "Sähköpostikenttä"
-                  :sv "E-postaddressfält"}
-    :field/optional true}
-
-   {:field/type :attachment
-    :field/title {:en "Attachment"
-                  :fi "Liitetiedosto"
-                  :sv "Bilaga"}
-    :field/optional true}
-
-   {:field/type :option
-    :field/title {:en "Option list. Choose the first option to reveal a new field."
-                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
-                  :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
-    :field/optional true
-    :field/id "option"
-    :field/options [{:key "Option1"
-                     :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"
-                             :sv "Första alternativ"}}
-                    {:key "Option2"
-                     :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"
-                             :sv "Andra alternativ"}}
-                    {:key "Option3"
-                     :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"
-                             :sv "Tredje alternativ"}}]}
-
-   {:field/type :text
-    :field/title {:en "Conditional field. Shown only if first option is selected above."
-                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
-                  :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
-    :field/optional false
-    :field/visibility {:visibility/type :only-if
-                       :visibility/field {:field/id "option"}
-                       :visibility/values ["Option1"]}}
-
-   {:field/type :multiselect
-    :field/title {:en "Multi-select list"
-                  :fi "Monivalintalista"
-                  :sv "Lista med flerval"}
-    :field/optional true
-    :field/options [{:key "Option1"
-                     :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"
-                             :sv "Första alternativ"}}
-                    {:key "Option2"
-                     :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"
-                             :sv "Andra alternativ"}}
-                    {:key "Option3"
-                     :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"
-                             :sv "Tredje alternativ"}}]}
-
-   {:field/type :table
-    :field/title {:en "Table"
-                  :fi "Taulukko"
-                  :sv "Tabell"}
-    :field/optional true
-    :field/columns [{:key "col1"
-                     :label {:en "First"
-                             :fi "Ensimmäinen"
-                             :sv "Första"}}
-                    {:key "col2"
-                     :label {:en "Second"
-                             :fi "Toinen"
-                             :sv "Andra"}}]}
-
-   {:field/type :label
-    :field/title {:en "The following field types can have a max length."
-                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
-                  :sv "De nästa fälttyperna kan ha bengränsat längd."}
-    :field/optional false}
-
-   ;; fields which support maxlength
-   {:field/type :text
-    :field/title {:en "Text field with max length"
-                  :fi "Tekstikenttä pituusrajalla"
-                  :sv "Textfält med begränsat längd"}
-    :field/optional true
-    :field/max-length 10}
-
-   {:field/type :texta
-    :field/title {:en "Text area with max length"
-                  :fi "Tekstialue pituusrajalla"
-                  :sv "Textområdet med begränsat längd"}
-    :field/optional true
-    :field/max-length 100}
-
-   {:field/type :phone-number
-    :field/title {:en "Phone number"
-                  :fi "Puhelinnumero"
-                  :sv "Telefonnummer"}
-    :field/optional true}
-
-   {:field/type :ip-address
-    :field/title {:en "IP address"
-                  :fi "IP-osoite"
-                  :sv "IP-adress"}
-    :field/optional true}])
+  (concat [label-field
+           description-field
+           text-field
+           texta-field
+           header-field
+           (-> date-field (merge {:field/optional true}))
+           (-> email-field (merge {:field/optional true}))
+           (-> attachment-field (merge {:field/optional true}))]
+          conditional-field-example ; array of fields
+          [(-> multiselect-field (merge {:field/optional true}))
+           (-> table-field (merge {:field/optional true}))]
+          max-length-field-example ; array of fields
+          [(-> phone-number-field (merge {:field/optional true}))
+           (-> ip-address-field (merge {:field/optional true}))]))
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))
