@@ -1089,184 +1089,156 @@
                                                                    decision-requested-event])))))))
 
 (deftest test-add-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "somebody"}}])]
-    (testing "handler can add members"
+  (testing "handler can add members"
+    (let [member-added-event (ok-command {:type :application.command/add-member
+                                          :actor handler-user-id
+                                          :member {:userid "member1"}}
+                                         (build-application-view [dummy-created-event
+                                                                  dummy-submitted-event
+                                                                  dummy-member-added-event]))]
       (is (= {:event/type :application.event/member-added
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
               :application/member {:userid "member1"}}
-             (ok-command application
-                         {:type :application.command/add-member
-                          :actor handler-user-id
+             member-added-event))
+      (testing "added members can see the application"
+        (is (-> (build-application-view [dummy-created-event
+                                         dummy-submitted-event
+                                         dummy-member-added-event
+                                         member-added-event])
+                (model/see-application? "somebody"))))))
+  (testing "only handler can add members"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/add-member
+                          :actor applicant-user-id
                           :member {:userid "member1"}}
-                         injections))))
-    (testing "only handler can add members"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor applicant-user-id
-                            :member {:userid "member1"}}
-                           injections)
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor "member1"
-                            :member {:userid "member2"}}
-                           injections))))
-    (testing "only valid users can be added"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "does-not-exist"}]}
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor handler-user-id
-                            :member {:userid "does-not-exist"}}
-                           injections))))
-    (testing "added members can see the application"
-      (is (-> (apply-commands application
-                              [{:type :application.command/add-member
-                                :actor handler-user-id
-                                :member {:userid "member1"}}]
-                              injections)
-              (model/see-application? "member1"))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))
+           (fail-command {:type :application.command/add-member
+                          :actor "member1"
+                          :member {:userid "member2"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "only valid users can be added"
+    (is (= {:errors [{:type :t.form.validation/invalid-user :userid "does-not-exist"}]}
+           (fail-command {:type :application.command/add-member
+                          :actor handler-user-id
+                          :member {:userid "does-not-exist"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))))))
 
 (deftest test-invite-member
-  (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
-                    :find-userid identity
-                    :secure-token (constantly "very-secure")}]
-    (testing "applicant can invite members"
-      (is (= {:event/type :application.event/member-invited
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:name "Member Applicant 1"
-                                   :email "member1@applicants.com"}
-              :invitation/token "very-secure"}
-             (ok-command application
-                         {:type :application.command/invite-member
+  (testing "applicant can invite members"
+    (is (= {:event/type :application.event/member-invited
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-member
+                        :actor applicant-user-id
+                        :member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}}
+                       (build-application-view [dummy-created-event])))))
+  (testing "other users cannot invite members"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-member
+                          :actor "member1"
+                          :member {:name "Member Applicant 1"
+                                   :email "member1@applicants.com"}}
+                         (build-application-view [dummy-created-event])))))
+  (testing "applicant can't invite members to submitted application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-member
                           :actor applicant-user-id
                           :member {:name "Member Applicant 1"
                                    :email "member1@applicants.com"}}
-                         injections))))
-    (testing "other users cannot invite members"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-member
-                            :actor "member1"
-                            :member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}}
-                           injections))))
-    (let [submitted (apply-events application
-                                  [{:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-      (testing "applicant can't invite members to submitted application"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command submitted
-                             {:type :application.command/invite-member
-                              :actor applicant-user-id
-                              :member {:name "Member Applicant 1"
-                                       :email "member1@applicants.com"}}
-                             injections))))
-      (testing "handler can invite members to submitted application"
-        (is (= {:event/type :application.event/member-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-member
-                            :actor handler-user-id
-                            :member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}}
-                           injections)))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "handler can invite members to submitted application"
+    (is (= {:event/type :application.event/member-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-member
+                        :actor handler-user-id
+                        :member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event]))))))
 
 (deftest test-invite-reviewer-decider
-  (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
-                    :find-userid identity
-                    :secure-token (constantly "very-secure")}]
-    (testing "applicant can't invite reviewer for draft"
+  (testing "applicant can't invite reviewer for draft"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-reviewer
+                          :actor applicant-user-id
+                          :reviewer {:name "A Reviewer"
+                                     :email "reviewer@applicants.com"}}
+                         (build-application-view [dummy-created-event])))))
+  (testing "applicant can't invite decider for draft"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-decider
+                          :actor applicant-user-id
+                          :decider {:name "A Decider"
+                                    :email "decider@applicants.com"}}
+                         (build-application-view [dummy-created-event])))))
+  (testing "handler can invite reviewer for submitted"
+    (is (= {:event/type :application.event/reviewer-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/reviewer {:name "A Reviewer"
+                                   :email "reviewer@applicants.com"}
+            :application/comment "please review"
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-reviewer
+                        :actor handler-user-id
+                        :comment "please review"
+                        :reviewer {:name "A Reviewer"
+                                   :email "reviewer@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "handler can invite decider for submitted"
+    (is (= {:event/type :application.event/decider-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/decider {:name "A Decider"
+                                  :email "decider@applicants.com"}
+            :application/comment "please decide"
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-decider
+                        :actor handler-user-id
+                        :comment "please decide"
+                        :decider {:name "A Decider"
+                                  :email "decider@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (doseq [user [applicant-user-id "member1"]]
+    (testing (str user " users cannot invite reviewer for submitted")
       (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-reviewer
-                            :actor applicant-user-id
+             (fail-command {:type :application.command/invite-reviewer
+                            :actor user
                             :reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}}
-                           injections))))
-    (testing "applicant can't invite decider for draft"
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))
+    (testing (str user " users cannot invite decider for submitted")
       (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-decider
-                            :actor applicant-user-id
+             (fail-command {:type :application.command/invite-decider
+                            :actor user
                             :decider {:name "A Decider"
                                       :email "decider@applicants.com"}}
-                           injections))))
-    (let [submitted (apply-events application [{:event/type :application.event/submitted
-                                                :event/time test-time
-                                                :event/actor applicant-user-id
-                                                :application/id app-id}])]
-      (testing "handler can invite reviewer for submitted"
-        (is (= {:event/type :application.event/reviewer-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/reviewer {:name "A Reviewer"
-                                       :email "reviewer@applicants.com"}
-                :application/comment "please review"
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-reviewer
-                            :actor handler-user-id
-                            :comment "please review"
-                            :reviewer {:name "A Reviewer"
-                                       :email "reviewer@applicants.com"}}
-                           injections))))
-      (testing "handler can invite decider for submitted"
-        (is (= {:event/type :application.event/decider-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/decider {:name "A Decider"
-                                      :email "decider@applicants.com"}
-                :application/comment "please decide"
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-decider
-                            :actor handler-user-id
-                            :comment "please decide"
-                            :decider {:name "A Decider"
-                                      :email "decider@applicants.com"}}
-                           injections))))
-      (doseq [user [applicant-user-id "member1"]]
-        (testing (str user " users cannot invite reviewer for submitted")
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command submitted
-                               {:type :application.command/invite-reviewer
-                                :actor user
-                                :reviewer {:name "A Reviewer"
-                                           :email "reviewer@applicants.com"}}
-                               injections))))
-        (testing (str user " users cannot invite decider for submitted")
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command submitted
-                               {:type :application.command/invite-decider
-                                :actor user
-                                :decider {:name "A Decider"
-                                          :email "decider@applicants.com"}}
-                               injections))))))))
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))))
 
 (deftest test-accept-invitation
   (testing "invited member"
