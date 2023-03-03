@@ -203,7 +203,6 @@
   [(-> label-field (merge {:field/title {:en "The following field types can have a max length."
                                          :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
                                          :sv "De nästa fälttyperna kan ha bengränsat längd."}}))
-                ;; fields which support maxlength
    (-> text-field (merge {:field/title {:en "Text field with max length"
                                         :fi "Tekstikenttä pituusrajalla"
                                         :sv "Textfält med begränsat längd"}
@@ -372,24 +371,24 @@
 
 ;; XXX: can this be removed?
 #_(defn- create-member-applications! [catid applicant approver members]
-  (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid1
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}}))
-  (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid2
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}})
-    (test-helpers/command! {:type :application.command/submit
-                            :application-id appid2
-                            :actor applicant})
-    (doseq [member members]
-      (test-helpers/command! {:type :application.command/add-member
+    (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
+      (test-helpers/command! {:type :application.command/invite-member
+                              :application-id appid1
+                              :actor applicant
+                              :member {:name "John Smith" :email "john.smith@example.org"}}))
+    (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
+      (test-helpers/command! {:type :application.command/invite-member
                               :application-id appid2
-                              :actor approver
-                              :member member}))))
+                              :actor applicant
+                              :member {:name "John Smith" :email "john.smith@example.org"}})
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id appid2
+                              :actor applicant})
+      (doseq [member members]
+        (test-helpers/command! {:type :application.command/add-member
+                                :application-id appid2
+                                :actor approver
+                                :member member}))))
 
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
