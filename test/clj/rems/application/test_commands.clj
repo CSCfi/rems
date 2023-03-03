@@ -1394,179 +1394,158 @@
                                                         decider-joined-event])))))))))
 
 (deftest test-remove-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}
-                    :find-userid identity}]
-    (testing "applicant can remove members"
-      (is (= {:event/type :application.event/member-removed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:userid "somebody"}
-              :application/comment "some comment"}
-             (ok-command application
-                         {:type :application.command/remove-member
+  (testing "applicant can remove members"
+    (is (= {:event/type :application.event/member-removed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:userid "somebody"}
+            :application/comment "some comment"}
+           (ok-command {:type :application.command/remove-member
+                        :actor applicant-user-id
+                        :member {:userid "somebody"}
+                        :comment "some comment"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "handler can remove members"
+    (is (= {:event/type :application.event/member-removed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            ;; NB no comment
+            :application/member {:userid "somebody"}}
+           (ok-command {:type :application.command/remove-member
+                        :actor handler-user-id
+                        :member {:userid "somebody"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "applicant cannot be removed"
+    (is (= {:errors [{:type :cannot-remove-applicant}]}
+           (fail-command {:type :application.command/remove-member
                           :actor applicant-user-id
-                          :member {:userid "somebody"}
-                          :comment "some comment"}
-                         injections))))
-    (testing "handler can remove members"
-      (is (= {:event/type :application.event/member-removed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              ;; NB no comment
-              :application/member {:userid "somebody"}}
-             (ok-command application
-                         {:type :application.command/remove-member
+                          :member {:userid applicant-user-id}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))
+           (fail-command {:type :application.command/remove-member
                           :actor handler-user-id
-                          :member {:userid "somebody"}}
-                         injections))))
-    (testing "applicant cannot be removed"
-      (is (= {:errors [{:type :cannot-remove-applicant}]}
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor applicant-user-id
-                            :member {:userid applicant-user-id}}
-                           injections)
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor handler-user-id
-                            :member {:userid applicant-user-id}}
-                           injections))))
-    (testing "non-members cannot be removed"
-      (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor handler-user-id
-                            :member {:userid "notamember"}}
-                           injections))))
-    (testing "removed members cannot see the application"
-      (is (-> application
-              (model/see-application? "somebody")))
-      (is (not (-> application
-                   (apply-commands [{:type :application.command/remove-member
-                                     :actor applicant-user-id
-                                     :member {:userid "somebody"}}]
-                                   injections)
-                   (model/see-application? "somebody")))))))
-
+                          :member {:userid applicant-user-id}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "non-members cannot be removed"
+    (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
+           (fail-command {:type :application.command/remove-member
+                          :actor handler-user-id
+                          :member {:userid "notamember"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "removed members cannot see the application"
+    (let [member-added-application (build-application-view [dummy-created-event
+                                                            dummy-submitted-event
+                                                            dummy-member-added-event])]
+      (is (model/see-application? member-added-application "somebody"))
+      (let [member-removed-event (ok-command {:type :application.command/remove-member
+                                              :actor applicant-user-id
+                                              :member {:userid "somebody"}}
+                                             member-added-application)]
+        (is (not (-> (build-application-view [dummy-created-event
+                                              dummy-submitted-event
+                                              dummy-member-added-event
+                                              member-removed-event])
+                     (model/see-application? "somebody"))))))))
 
 (deftest test-uninvite-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/member-invited
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:name "Some Body" :email "some@body.com"}
-                                    :invitation/token "123456"}
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])
-        injections {:valid-user? #{applicant-user-id handler-user-id}
-                    :find-userid identity}]
-    (testing "uninvite member by applicant"
-      (is (= {:event/type :application.event/member-uninvited
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}}
-             (ok-command application
-                         {:type :application.command/uninvite-member
-                          :actor applicant-user-id
-                          :member {:name "Some Body" :email "some@body.com"}}
-                         injections))))
-    (testing "uninvite member by handler"
-      (is (= {:event/type :application.event/member-uninvited
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}
-              :application/comment ""}
-             (ok-command application
-                         {:type :application.command/uninvite-member
+  (testing "uninvite member by applicant"
+    (is (= {:event/type :application.event/member-uninvited
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:name "Some Body" :email "somebody@applicants.com"}}
+           (ok-command {:type :application.command/uninvite-member
+                        :actor applicant-user-id
+                        :member {:name "Some Body" :email "somebody@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-member-invited-event
+                                                dummy-submitted-event])))))
+  (testing "uninvite member by handler"
+    (is (= {:event/type :application.event/member-uninvited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:name "Some Body" :email "somebody@applicants.com"}
+            :application/comment ""}
+           (ok-command {:type :application.command/uninvite-member
+                        :actor handler-user-id
+                        :member {:name "Some Body" :email "somebody@applicants.com"}
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-member-invited-event
+                                                dummy-submitted-event])))))
+  (testing "only invited members can be uninvited"
+    (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
+           (fail-command {:type :application.command/uninvite-member
                           :actor handler-user-id
-                          :member {:name "Some Body" :email "some@body.com"}
+                          :member {:name "Not Member" :email "not@member.com"}
                           :comment ""}
-                         injections))))
-    (testing "only invited members can be uninvited"
-      (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
-             (fail-command application
-                           {:type :application.command/uninvite-member
-                            :actor handler-user-id
-                            :member {:name "Not Member" :email "not@member.com"}
-                            :comment ""}
-                           injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event
+                                                  dummy-submitted-event]))))))
 
 (deftest test-change-applicant
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "member1"}}])]
-    (testing "handler can promote existing member"
-      (is (= {:event/type :application.event/applicant-changed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/applicant {:userid "member1"}
-              :application/comment ""}
-             (ok-command application
-                         {:type :application.command/change-applicant
-                          :actor handler-user-id
-                          :member {:userid "member1"}
+  (testing "handler can promote existing member"
+    (is (= {:event/type :application.event/applicant-changed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/applicant {:userid "somebody"}
+            :application/comment ""}
+           (ok-command {:type :application.command/change-applicant
+                        :actor handler-user-id
+                        :member {:userid "somebody"}
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "applicant can't promote"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor applicant-user-id
+                          :member {:userid "somebody"}
                           :comment ""}
-                         injections))))
-    (testing "applicant can't promote"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor applicant-user-id
-                            :member {:userid "member1"}
-                            :comment ""}
-                           injections))))
-    (testing "member can't promote themself"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor "member1"
-                            :member {:userid "member1"}
-                            :comment ""}
-                           injections))))
-    (testing "handler can't promote non-member"
-      (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor handler-user-id
-                            :member {:userid "unknown"}
-                            :comment ""}
-                           injections))))
-    (testing "handler can't promote current applicant"
-      (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor handler-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
-                           injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "member can't promote themself"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor "somebody"
+                          :member {:userid "somebody"}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "handler can't promote non-member"
+    (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor handler-user-id
+                          :member {:userid "unknown"}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "handler can't promote current applicant"
+    (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor handler-user-id
+                          :member {:userid applicant-user-id}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))))))
 
 (deftest test-review
   (let [reviewer "reviewer"
