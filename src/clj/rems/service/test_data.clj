@@ -630,7 +630,6 @@
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
-
         ;; Create licenses
         license1 (test-helpers/create-license! {:actor owner
                                                 :license/type :link
@@ -726,30 +725,6 @@
                                                                                      :organization {:organization/id "hus"}
                                                                                      :actor owner
                                                                                      :license-ids [license2 extra-license attachment-license]})
-        duo-resource-1 (when (:enable-duo rems.config/env)
-                         (test-helpers/create-resource! {:resource-ext-id "Eyelid melanoma samples"
-                                                         :organization {:organization/id "nbn"}
-                                                         :actor owner
-                                                         :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                                       :values [{:id "MONDO:0000928"}]}]}
-                                                                                    {:id "DUO:0000015"}
-                                                                                    {:id "DUO:0000019"}
-                                                                                    {:id "DUO:0000027"
-                                                                                     :restrictions [{:type :project
-                                                                                                     :values [{:value "project name here"}]}]
-                                                                                     :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
-        duo-resource-2 (when (:enable-duo rems.config/env)
-                         (test-helpers/create-resource! {:resource-ext-id "Spinal cord melanoma samples"
-                                                         :organization {:organization/id "nbn"}
-                                                         :actor owner
-                                                         :resource/duo {:duo/codes [{:id "DUO:0000007"
-                                                                                     :restrictions [{:type :mondo
-                                                                                                     :values [{:id "MONDO:0001893"}]}]}
-                                                                                    {:id "DUO:0000019"}
-                                                                                    {:id "DUO:0000027"
-                                                                                     :restrictions [{:type :project
-                                                                                                     :values [{:value "project name here"}]}]
-                                                                                     :more-info {:en "This DUO code is optional but recommended"}}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (workflow/edit-workflow! {:id (:organization-owner workflows)
@@ -952,7 +927,7 @@
                                           :organization {:organization/id "organization1"}
                                           :workflow-id (:organization-owner workflows)
                                           :categories [special-category]})
-
+    ;; forms with public and private fields, and catalogue items and applications using them
     (let [applicant (users :applicant1)
           handler (users :approver2)
           reviewer (users :reviewer)
@@ -983,52 +958,75 @@
                               :actor handler
                               :reviewers [reviewer]
                               :comment "please have a look"}))
-
-    (when (:enable-duo rems.config/env)
-      (let [applicant (users :applicant1)
-            handler (users :approver2)
-            reviewer (users :reviewer)
-            cat-id (test-helpers/create-catalogue-item! {:actor owner
-                                                         :title {:en "Apply for eyelid melanoma dataset (EN)"
-                                                                 :fi "Apply for eyelid melanoma dataset (FI)"
-                                                                 :sv "Apply for eyelid melanoma dataset (SV)"}
-                                                         :resource-id duo-resource-1
+    ;; applications with DUO fields
+    (let [applicant (users :applicant1)
+          handler (users :approver2)
+          reviewer (users :reviewer)
+          duo-resource-1 (test-helpers/create-resource!
+                          {:resource-ext-id "Eyelid melanoma samples"
+                           :organization {:organization/id "nbn"}
+                           :actor owner
+                           :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                         :values [{:id "MONDO:0000928"}]}]}
+                                                      {:id "DUO:0000015"}
+                                                      {:id "DUO:0000019"}
+                                                      {:id "DUO:0000027"
+                                                       :restrictions [{:type :project
+                                                                       :values [{:value "project name here"}]}]
+                                                       :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}})
+          duo-resource-2 (test-helpers/create-resource!
+                          {:resource-ext-id "Spinal cord melanoma samples"
+                           :organization {:organization/id "nbn"}
+                           :actor owner
+                           :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                                       :restrictions [{:type :mondo
+                                                                       :values [{:id "MONDO:0001893"}]}]}
+                                                      {:id "DUO:0000019"}
+                                                      {:id "DUO:0000027"
+                                                       :restrictions [{:type :project
+                                                                       :values [{:value "project name here"}]}]
+                                                       :more-info {:en "This DUO code is optional but recommended"}}]}})
+          cat-id (test-helpers/create-catalogue-item! {:actor owner
+                                                       :title {:en "Apply for eyelid melanoma dataset (EN)"
+                                                               :fi "Apply for eyelid melanoma dataset (FI)"
+                                                               :sv "Apply for eyelid melanoma dataset (SV)"}
+                                                       :resource-id duo-resource-1
+                                                       :form-id form
+                                                       :organization {:organization/id "nbn"}
+                                                       :workflow-id (:default workflows)
+                                                       :categories [special-category]})
+          cat-id-2 (test-helpers/create-catalogue-item! {:actor owner
+                                                         :title {:en "Apply for spinal cord melanoma dataset (EN)"
+                                                                 :fi "Apply for spinal cord melanoma dataset (FI)"
+                                                                 :sv "Apply for spinal cord melanoma dataset (SV)"}
+                                                         :resource-id duo-resource-2
                                                          :form-id form
                                                          :organization {:organization/id "nbn"}
                                                          :workflow-id (:default workflows)
                                                          :categories [special-category]})
-            cat-id-2 (test-helpers/create-catalogue-item! {:actor owner
-                                                           :title {:en "Apply for spinal cord melanoma dataset (EN)"
-                                                                   :fi "Apply for spinal cord melanoma dataset (FI)"
-                                                                   :sv "Apply for spinal cord melanoma dataset (SV)"}
-                                                           :resource-id duo-resource-2
-                                                           :form-id form
-                                                           :organization {:organization/id "nbn"}
-                                                           :workflow-id (:default workflows)
-                                                           :categories [special-category]})
-            app-id (test-helpers/create-draft! applicant [cat-id-2] "draft application with DUO codes")
-            app-id-2 (test-helpers/create-draft! applicant [cat-id] "application with DUO codes")]
-        (test-helpers/command! {:type :application.command/save-draft
-                                :application-id app-id
-                                :actor applicant
-                                :field-values []
-                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
-        (test-helpers/command! {:type :application.command/save-draft
-                                :application-id app-id-2
-                                :actor applicant
-                                :field-values []
-                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
-                                            {:id "DUO:0000015"}
-                                            {:id "DUO:0000019"}
-                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
-        (test-helpers/command! {:type :application.command/submit
-                                :application-id app-id-2
-                                :actor applicant})
-        (test-helpers/command! {:type :application.command/request-review
-                                :application-id app-id-2
-                                :actor handler
-                                :reviewers [reviewer]
-                                :comment "please have a look"})))))
+          app-id (test-helpers/create-draft! applicant [cat-id-2] "draft application with DUO codes")
+          app-id-2 (test-helpers/create-draft! applicant [cat-id] "application with DUO codes")]
+      (test-helpers/command! {:type :application.command/save-draft
+                              :application-id app-id
+                              :actor applicant
+                              :field-values []
+                              :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
+      (test-helpers/command! {:type :application.command/save-draft
+                              :application-id app-id-2
+                              :actor applicant
+                              :field-values []
+                              :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
+                                          {:id "DUO:0000015"}
+                                          {:id "DUO:0000019"}
+                                          {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id-2
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id-2
+                              :actor handler
+                              :reviewers [reviewer]
+                              :comment "please have a look"}))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
