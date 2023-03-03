@@ -687,56 +687,41 @@
                          (build-application-view [dummy-created-event]))))))
 
 (deftest test-submit
-  (let [injections {:valid-user? #{applicant-user-id "non-applicant"}
-                    :get-form-template dummy-get-form-template}
-        created-event {:event/type :application.event/created
-                       :event/time test-time
-                       :event/actor applicant-user-id
-                       :application/id app-id
-                       :application/external-id "2000/123"
-                       :application/resources [{:catalogue-item/id 1
-                                                :resource/ext-id "res1"}
-                                               {:catalogue-item/id 2
-                                                :resource/ext-id "res2"}]
-                       :application/licenses [{:license/id 1}]
-                       :application/forms [{:form/id 1}]
-                       :workflow/id 1
-                       :workflow/type :workflow/default}
-        draft-saved-event {:event/type :application.event/draft-saved
-                           :event/time test-time
-                           :event/actor applicant-user-id
-                           :application/id app-id
-                           :application/field-values []}
-        licenses-accepted-event {:event/type :application.event/licenses-accepted
-                                 :event/time test-time
-                                 :event/actor applicant-user-id
-                                 :application/id app-id
-                                 :application/accepted-licenses #{1}}
-        submit-command {:type :application.command/submit
-                        :actor applicant-user-id}
-        application-no-licenses (apply-events nil [created-event draft-saved-event])
-        application (apply-events application-no-licenses [licenses-accepted-event])
-        created-event2 (assoc created-event :application/forms [{:form/id 1} {:form/id 2}])
-        draft-saved-event2 (update draft-saved-event :application/field-values conj {:form 2 :field "1" :value "baz"})
-        application2 (apply-events nil [created-event2 draft-saved-event2 licenses-accepted-event])]
-
+  (let [created-event (merge dummy-created-event {:application/resources [{:catalogue-item/id 1
+                                                                           :resource/ext-id "res1"}
+                                                                          {:catalogue-item/id 2
+                                                                           :resource/ext-id "res2"}]
+                                                  :application/licenses [{:license/id 1}]})]
     (testing "cannot submit a valid form if licenses are not accepted"
       (is (= {:errors [{:type :t.actions.errors/licenses-not-accepted}]}
-             (fail-command application-no-licenses submit-command injections))))
+             (fail-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event])))))
 
     (testing "can submit a valid form when licenses are accepted"
       (is (= {:event/type :application.event/submitted
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id}
-             (ok-command application submit-command injections))))
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (build-application-view [created-event
+                                                  dummy-draft-saved-event
+                                                  dummy-licenses-accepted-event])))))
 
     (testing "can submit two valid forms when licenses are accepted"
       (is (= {:event/type :application.event/submitted
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id}
-             (ok-command application2 submit-command injections))))
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (let [forms {:application/forms [{:form/id 1} {:form/id 2}]}
+                               fields {:application/field-values [{:form 2 :field "1" :value "baz"}]}]
+                           (build-application-view [(merge dummy-created-event forms)
+                                                    (merge dummy-draft-saved-event fields)
+                                                    dummy-licenses-accepted-event]))))))
 
     (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
@@ -744,72 +729,100 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
-                                                                                      {:form 1 :field "2" :value "present"}])])
-                   (ok-command submit-command injections)))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value ""}
+                                                                                                               {:form 1 :field "2" :value "present"}]})])))
             "submit succeeds even if application is inconsistent and contains an answer for an invisible field")
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
-                                                                                      {:form 1 :field "2" :value ""}])])
-                   (ok-command submit-command injections)))))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value ""}
+                                                                                                               {:form 1 :field "2" :value ""}]})])))))
       (testing "1st field is given, 2nd field is required and visible but empty"
         (is (= {:errors [{:type :t.form.validation/required
                           :form-id 1
                           :field-id "2"}]}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                      {:form 1 :field "2" :value ""}])])
-                   (fail-command submit-command injections)))))
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [created-event
+                                                      dummy-draft-saved-event
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value ""}]})])))))
       (testing "1st field is given, 2nd field is given"
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (ok-command submit-command injections)))))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event])))))
 
       (testing "cannot submit if one of two forms has required fields"
-        (is (= {:errors [{:field-id "1" :type :t.form.validation/required :form-id 2}]}
-               (-> application2
-                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                       {:form 1 :field "2" :value "bar"}
-                                                                                       {:form 2 :field "1" :value ""}])])
-                   (fail-command submit-command injections))))
-        (is (= {:errors [{:field-id "2" :type :t.form.validation/required :form-id 1}]}
-               (-> application2
-                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                       {:form 1 :field "2" :value ""}
-                                                                                       {:form 2 :field "1" :value "baz"}])])
-                   (fail-command submit-command injections))))))
+        (is (= {:errors [{:type :t.form.validation/required
+                          :form-id 2
+                          :field-id "1"}]}
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [(merge created-event {:application/forms [{:form/id (:form/id (dummy-forms 1))}
+                                                                                                {:form/id (:form/id (dummy-forms 2))}]})
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value "bar"}
+                                                                                                                 {:form 2 :field "1" :value ""}]})]))))
+        (is (= {:errors [{:type :t.form.validation/required
+                          :form-id 1
+                          :field-id "2"}]}
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [(merge created-event {:application/forms [{:form/id (:form/id (dummy-forms 1))}
+                                                                                                {:form/id (:form/id (dummy-forms 2))}]})
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value ""}
+                                                                                                                 {:form 2 :field "1" :value "baz"}]})]))))))
 
     (testing "can submit draft even if catalogue item is disabled"
-      (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
-        (is (= {:event/type :application.event/submitted
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id}
-               (ok-command disabled submit-command injections)))))
+      (is (= {:event/type :application.event/submitted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (build-application-view [(merge-with into created-event {:application/resources [{:catalogue-item/id 7
+                                                                                                           :resource/ext-id "res-disabled"}]})
+                                                  dummy-draft-saved-event
+                                                  dummy-licenses-accepted-event])))))
 
     (testing "non-applicant cannot submit"
-      (let [application (apply-events application [(assoc licenses-accepted-event :event/actor "non-applicant")])]
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application
-                             (assoc submit-command :actor "non-applicant")
-                             injections)))))
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/submit
+                            :actor "somebody"}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-licenses-accepted-event {:event/actor "somebody"})])))))
 
     (testing "cannot submit twice"
       (is (= {:errors [{:type :forbidden}]}
-             (-> application
-                 (apply-events [{:event/type :application.event/submitted
-                                 :event/time test-time
-                                 :event/actor applicant-user-id
-                                 :application/id app-id}])
-                 (fail-command submit-command injections)))))))
+             (fail-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    dummy-submitted-event])))))))
 
 (deftest test-return-resubmit
   (testing "return"
