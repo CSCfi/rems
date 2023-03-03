@@ -11,23 +11,16 @@
            [java.util UUID]
            [org.joda.time DateTime]))
 
-(def ^:private test-time (DateTime. 1000))
-(def ^:private app-id 123)
-(def ^:private new-app-id 456)
-(def ^:private new-external-id "2019/66")
-(def ^:private applicant-user-id "applicant")
-(def ^:private handler-user-id "assistant")
-(def ^:private dummy-created-event {:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/external-id "2000/123"
-                                    :application/resources []
-                                    :application/licenses []
-                                    :application/forms [{:form/id 1}]
-                                    :workflow/id 1
-                                    :workflow/type :workflow/default})
-(def ^:private dummy-licenses
+(def test-time (DateTime. 1000))
+(def app-id 123)
+(def new-app-id 456)
+(def new-external-id "2019/66")
+(def applicant-user-id "applicant")
+(def handler-user-id "assistant")
+(def decider-user-id "decider")
+(def reviewer-user-id "reviewer")
+
+(def dummy-licenses
   {1 {:id 1
       :licensetype "link"
       :localizations {:en {:title "en title"
@@ -49,73 +42,70 @@
                       :fi {:title "fi title"
                            :textcontent "fi link"}}}})
 
-(defn- dummy-get-workflow [id]
-  (getx {1 {:workflow {:type :workflow/default
-                       :handlers [{:userid handler-user-id
-                                   :name "user"
-                                   :email "user@example.com"}]}}
-         2 {:workflow {:type :workflow/default
-                       :handlers [{:userid handler-user-id
-                                   :name "user"
-                                   :email "user@example.com"}]
-                       :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
-        id))
-(defn- dummy-get-form-template [id]
-  (getx {1 {:form/id 1
-            :form/fields [{:field/id "1"
-                           :field/optional true
-                           :field/type :option
-                           :field/options [{:key "foo" :label "Foo"}
-                                           {:key "bar" :label "Bar"}]}
-                          {:field/id "2"
-                           :field/optional false
-                           :field/visibility {:visibility/type :only-if
-                                              :visibility/field {:field/id "1"}
-                                              :visibility/values ["foo"]}}]}
-         2 {:form/id 2
-            :form/fields [{:field/id "1"
-                           :field/type :text
-                           :field/optional false}]}
-         3 {:form/id 3
-            :form/fields [{:field/id "text"
-                           :field/type :text}
-                          {:field/id "attachment"
-                           :field/type :attachment}]}
-         4 {:form/id 4
-            :form/fields [{:field/id "text"
-                           :field/type :text}]}
-         7 {:form/id 7
-            :form/fields [{:field/id "7"
-                           :field/type :option
-                           :field/optional true
-                           :field/options [{:key "y" :label "y"}
-                                           {:key "n" :label "n"}]}
-                          {:field/id "8"
-                           :field/type :email
-                           :field/optional false
-                           :field/visibility {:visibility/type :only-if
-                                              :visibility/field {:field/id "7"}
-                                              :visibility/values ["y"]}}]}}
-        id))
+(defn dummy-get-workflow [id]
+  (get {1 {:workflow {:type :workflow/default
+                      :handlers [{:userid handler-user-id
+                                  :name "user"
+                                  :email "user@example.com"}]}}
+        2 {:workflow {:type :workflow/default
+                      :handlers [{:userid handler-user-id
+                                  :name "user"
+                                  :email "user@example.com"}]
+                      :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
+       id))
 
-(defn- dummy-get-catalogue-item [id]
+(def dummy-forms
+  {1 {:form/id 1
+      :form/fields [{:field/id "1"
+                     :field/optional true
+                     :field/type :option
+                     :field/options [{:key "foo" :label "Foo"}
+                                     {:key "bar" :label "Bar"}]}
+                    {:field/id "2"
+                     :field/optional false
+                     :field/visibility {:visibility/type :only-if
+                                        :visibility/field {:field/id "1"}
+                                        :visibility/values ["foo"]}}]}
+   2 {:form/id 2
+      :form/fields [{:field/id "1"
+                     :field/type :text
+                     :field/optional false}]}
+   3 {:form/id 3
+      :form/fields [{:field/id "text"
+                     :field/type :text}
+                    {:field/id "attachment"
+                     :field/type :attachment}]}
+   4 {:form/id 4
+      :form/fields [{:field/id "text"
+                     :field/type :text}]}
+   7 {:form/id 7
+      :form/fields [{:field/id "7"
+                     :field/type :option
+                     :field/optional true
+                     :field/options [{:key "y" :label "y"}
+                                     {:key "n" :label "n"}]}
+                    {:field/id "8"
+                     :field/type :email
+                     :field/optional false
+                     :field/visibility {:visibility/type :only-if
+                                        :visibility/field {:field/id "7"}
+                                        :visibility/values ["y"]}}]}})
+
+(defn dummy-get-catalogue-item [id]
   (when (< id 10000)
-    (merge {:enabled true :archived false :expired false
-            :id id :wfid 1 :formid 1}
-           (getx {1 {:resid "res1"}
-                  2 {:resid "res2"}
-                  3 {:resid "res3"
-                     :formid 2}
-                  4 {:resid "res4"
-                     :wfid 2}
-                  5 {:resid "res5"
-                     :formid 2
-                     :wfid 2}
-                  6 {:resid "res5"
-                     :formid nil}}
-                 id))))
+    (some->> id
+             (getx {1 {:resid "res1"}
+                    2 {:resid "res2"}
+                    3 {:resid "res3" :formid 2}
+                    4 {:resid "res4" :wfid 2}
+                    5 {:resid "res5" :formid 2 :wfid 2}
+                    6 {:resid "res5" :formid nil}
+                    7 {:resid "res-disabled" :enabled false}
+                    42 nil})
+             (merge {:enabled true :archived false :expired false
+                     :id id :wfid 1 :formid 1}))))
 
-(defn- dummy-get-catalogue-item-licenses [id]
+(defn dummy-get-catalogue-item-licenses [id]
   (getx {1 [{:license/id 1}]
          2 [{:license/id 2}]
          3 [{:license/id 1}
@@ -125,45 +115,63 @@
          5 []
          6 []} id))
 
-(defn- dummy-get-config []
-  {})
-
-(def ^:private dummy-valid-user? #{applicant-user-id handler-user-id "somebody" "somebody2" "member1" "member2"})
-
-(def allocated-new-ids? (atom false))
-(def ^:private injections
-  {:blacklisted? (constantly false)
-   :get-workflow dummy-get-workflow
-   :get-form-template dummy-get-form-template
+(def application-injections
+  {:get-attachments-for-application {app-id [{:attachment/id 1
+                                              :attachment/user handler-user-id}
+                                             {:attachment/id 3
+                                              :attachment/user reviewer-user-id}
+                                             {:attachment/id 5
+                                              :attachment/user decider-user-id}]}
+   :get-form-template (fn [id] (getx dummy-forms id))
    :get-catalogue-item dummy-get-catalogue-item
-   :get-catalogue-item-licenses dummy-get-catalogue-item-licenses
-   :get-config dummy-get-config
+   :get-config (constantly {})
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
    :get-users-with-role (constantly nil)
-   :get-attachments-for-application (constantly nil)
-   :allocate-application-ids! (fn [_time]
-                                (reset! allocated-new-ids? true)
-                                {:application/id new-app-id
-                                 :application/external-id new-external-id})
-   :copy-attachment! (fn [_new-app-id attachment-id]
-                       (+ attachment-id 100))
-   :valid-user? dummy-valid-user?
-   :find-userid identity})
+   :get-workflow dummy-get-workflow
+   :blacklisted? (constantly false)
+   :get-attachment-metadata {1 {:application/id app-id
+                                :attachment/id 1
+                                :attachment/user handler-user-id}
+                             2 {:application/id (inc app-id)
+                                :attachment/id 2
+                                :attachment/user handler-user-id}
+                             3 {:application/id app-id
+                                :attachment/id 3
+                                :attachment/user reviewer-user-id}
+                             4 {:application/id app-id
+                                :attachment/id 4
+                                :attachment/user handler-user-id}
+                             5 {:application/id app-id
+                                :attachment/id 5
+                                :attachment/user decider-user-id}}
+   :get-catalogue-item-licenses dummy-get-catalogue-item-licenses})
 
-(defn- patch-event-ids [events]
+(def allocated-new-ids? (atom false))
+
+(def command-injections
+  (merge application-injections
+         {:secure-token (constantly "very-secure")
+          :allocate-application-ids! (fn [_time]
+                                       (reset! allocated-new-ids? true)
+                                       {:application/id new-app-id
+                                        :application/external-id new-external-id})
+          :copy-attachment! (fn [_new-app-id attachment-id]
+                              (+ attachment-id 100))
+          :valid-user? #{applicant-user-id handler-user-id decider-user-id reviewer-user-id "somebody" "somebody2" "member1" "member2" "reviewer2" "reviewer3"}
+          :find-userid identity}))
+
+(defn patch-event-ids [events]
   (->> events
        (map-indexed (fn [idx event] (assoc event :event/id idx)))))
 
-;; XXX: could rework tests to use model/build-application-view instead of this
-(defn apply-events [application events]
-  (events/validate-events events)
-  (-> (reduce model/application-view application events)
-      (model/enrich-with-injections injections)
-      ; event ids are normally generated by db, but not available here
-      (update :application/events (comp vec patch-event-ids)))) ; vector preserves correct order for (conj) of events
+(defn build-application-view [events & [injections]]
+  (-> events
+      (patch-event-ids) ; event ids are normally generated by db, but not available here
+      (events/validate-events)
+      (model/build-application-view (or injections application-injections))))
 
-(defn- set-command-defaults [cmd]
+(defn set-command-defaults [cmd]
   (cond-> cmd
     true
     (assoc :time test-time)
@@ -171,17 +179,17 @@
     (not= :application.command/create (:type cmd))
     (assoc :application-id app-id)))
 
-(defn- fail-command
-  [application cmd injections]
+(defn fail-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (:errors result) {:cmd cmd :result result})
     result))
 
-(defn- ok-command
-  [application cmd injections]
+(defn ok-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (not (:errors result)) {:cmd cmd :result result})
     (let [events (:events result)]
       (events/validate-events events)
@@ -190,28 +198,87 @@
         (first events)
         events))))
 
-(defn- ok-command-with-warnings
-  [application cmd injections]
+(defn apply-ok-commands
+  "Given set of application events, apply cmds successively by calling build-application-view
+   and ok-command."
+  [events cmds & [injections]]
+  (let [injections (or injections command-injections)]
+    (loop [cmds cmds
+           events events]
+      (if (empty? cmds)
+        events
+        (let [application (build-application-view events injections)
+              event (ok-command (first cmds) application injections)]
+          (recur (rest cmds)
+                 (conj events event)))))))
+
+(defn ok-command-with-warnings [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (not (:errors result)) {:cmd cmd :result result})
     (let [events (:events result)]
       (events/validate-events events)
       {:warnings (:warnings result)
        :events events})))
 
-(defn- apply-command
-  ([application cmd]
-   (apply-command application cmd nil))
-  ([application cmd injections]
-   (apply-events application [(ok-command application cmd injections)])))
+;;; dummy events
 
-(defn- apply-commands
-  ([application commands]
-   (apply-commands application commands nil))
-  ([application commands injections]
-   (reduce (fn [app cmd] (apply-command app cmd injections))
-           application commands)))
+(def dummy-created-event {:event/type :application.event/created
+                          :event/time test-time
+                          :event/actor applicant-user-id
+                          :application/id app-id
+                          :application/external-id "2000/123"
+                          :application/resources []
+                          :application/licenses []
+                          :application/forms [{:form/id 1}]
+                          :workflow/id 1
+                          :workflow/type :workflow/default})
+(def dummy-submitted-event {:event/type :application.event/submitted
+                            :event/time test-time
+                            :event/actor applicant-user-id
+                            :application/id app-id})
+(def dummy-closed-event {:event/type :application.event/closed
+                         :event/time test-time
+                         :event/actor applicant-user-id
+                         :application/id app-id
+                         :application/comment ""})
+(def dummy-returned-event {:event/type :application.event/returned
+                           :event/time test-time
+                           :event/actor handler-user-id
+                           :application/id app-id
+                           :application/comment ""})
+(def dummy-approved-event {:event/type :application.event/approved
+                           :event/time test-time
+                           :event/actor handler-user-id
+                           :application/comment "This is good"
+                           :application/id app-id})
+(def dummy-draft-saved-event {:event/type :application.event/draft-saved
+                              :event/time test-time
+                              :event/actor applicant-user-id
+                              :application/id app-id
+                              :application/field-values []})
+(def dummy-licenses-accepted-event {:event/type :application.event/licenses-accepted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id
+                                    :application/accepted-licenses #{1}})
+(def dummy-member-added-event {:event/type :application.event/member-added
+                               :event/time test-time
+                               :event/actor applicant-user-id
+                               :application/id app-id
+                               :application/member {:userid "somebody"}})
+(def dummy-member-invited-event {:event/type :application.event/member-invited
+                                 :event/time test-time
+                                 :event/actor applicant-user-id
+                                 :application/id app-id
+                                 :application/member {:name "Some Body" :email "somebody@applicants.com"}
+                                 :invitation/token "very-secure"})
+(def dummy-member-joined-event {:event/type :application.event/member-joined
+                                :event/time test-time
+                                :event/actor "somebody"
+                                :application/id app-id
+                                :invitation/token "very-secure"})
 
 ;;; Tests
 
