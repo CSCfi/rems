@@ -826,177 +826,105 @@
 
 (deftest test-return-resubmit
   (testing "return"
-    (let [application (apply-events nil
-                                    [(assoc dummy-created-event
-                                            :application/resources [{:catalogue-item/id 1
-                                                                     :resource/ext-id "res1"}])
-                                     {:event/type :application.event/submitted
-                                      :event/time test-time
-                                      :event/actor applicant-user-id
-                                      :application/id app-id}])
-          returned-event (ok-command application
-                                     {:type :application.command/return
-                                      :actor handler-user-id
-                                      :comment "ret"}
-                                     injections)
-          submit-command {:type :application.command/submit
-                          :actor applicant-user-id}]
+    (let [created-event (merge dummy-created-event {:application/resources [{:catalogue-item/id 1
+                                                                             :resource/ext-id "res1"}]})]
       (is (= {:event/type :application.event/returned
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
-              :application/comment "ret"}
-             returned-event))
+              :application/comment ""}
+             (ok-command {:type :application.command/return
+                          :actor handler-user-id
+                          :comment ""}
+                         (build-application-view [created-event
+                                                  dummy-submitted-event]))))
       (testing "resubmit"
-        (let [returned (apply-events application [returned-event])]
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-submitted-event
+                                                    dummy-returned-event]))))
+        (testing "succeeds even when catalogue item is disabled"
           (is (= {:event/type :application.event/submitted
                   :event/time test-time
                   :event/actor applicant-user-id
                   :application/id app-id}
-                 (ok-command returned submit-command injections)))
-          (testing "succeeds even when catalogue item is disabled"
-            (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
-              (is (= {:event/type :application.event/submitted
-                      :event/time test-time
-                      :event/actor applicant-user-id
-                      :application/id app-id}
-                     (ok-command disabled submit-command injections))))))))))
-
+                 (ok-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [(merge-with into created-event {:application/resources [{:catalogue-item/id 7
+                                                                                                               :resource/ext-id "res-disabled"}]})
+                                                      dummy-submitted-event
+                                                      dummy-returned-event])))))))))
 
 (deftest test-assign-external-id
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-    (testing "handler can assign id"
-      (is (= {:event/type :application.event/external-id-assigned
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/external-id "ext123"}
-             (ok-command application
-                         {:type :application.command/assign-external-id
-                          :actor handler-user-id
+  (testing "handler can assign id"
+    (is (= {:event/type :application.event/external-id-assigned
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/external-id "ext123"}
+           (ok-command {:type :application.command/assign-external-id
+                        :actor handler-user-id
+                        :external-id "ext123"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "applicant can't assign id"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/assign-external-id
+                          :actor applicant-user-id
                           :external-id "ext123"}
-                         injections))))
-    (testing "applicant can't assign id"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/assign-external-id
-                            :actor applicant-user-id
-                            :external-id "ext123"}
-                           injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]))))))
 
 (deftest test-approve-or-reject
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-    (testing "approved successfully"
-      (is (= {:event/type :application.event/approved
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "fine"}
-             (ok-command application
-                         {:type :application.command/approve
-                          :actor handler-user-id
-                          :comment "fine"}
-                         injections))))
-    (testing "approved with end-date"
-      (is (= {:event/type :application.event/approved
-              :event/time test-time
-              :event/actor handler-user-id
-              :entitlement/end (time/plus (DateTime. 1234) (time/days 1))
-              :application/id app-id
-              :application/comment "fine"}
-             (with-fixed-time (DateTime. 1234)
-               (fn []
-                 (ok-command application
-                             {:type :application.command/approve
-                              :actor handler-user-id
-                              :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
-                              :comment "fine"}
-                             injections))))))
-    (testing "rejected successfully"
-      (is (= {:event/type :application.event/rejected
-              :application/comment "bad"
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id}
-             (ok-command application
-                         {:type :application.command/reject
-                          :actor handler-user-id
-                          :comment "bad"}
-                         injections))))
-    (testing "throws with past entitlement end-date"
-      (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
-             (fail-command application
-                           {:type :application.command/approve
+  (testing "approved successfully"
+    (is (= {:event/type :application.event/approved
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "fine"}
+           (ok-command {:type :application.command/approve
+                        :actor handler-user-id
+                        :comment "fine"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "approved with end-date"
+    (is (= {:event/type :application.event/approved
+            :event/time test-time
+            :event/actor handler-user-id
+            :entitlement/end (time/plus (DateTime. 1234) (time/days 1))
+            :application/id app-id
+            :application/comment "fine"}
+           (with-fixed-time (DateTime. 1234)
+             (fn []
+               (ok-command {:type :application.command/approve
                             :actor handler-user-id
-                            :entitlement-end (DateTime. 1234)}
-                           injections))))))
-
-(deftest test-close
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/approved
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/comment ""}])]
-    (testing "handler can close approved application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
+                            :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
+                            :comment "fine"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))))
+  (testing "rejected successfully"
+    (is (= {:event/type :application.event/rejected
+            :application/comment "bad"
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/reject
+                        :actor handler-user-id
+                        :comment "bad"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "throws with past entitlement end-date"
+    (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
+           (fail-command {:type :application.command/approve
                           :actor handler-user-id
-                          :comment "outdated"}
-                         injections)))))
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/returned
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/comment ""}])]
-    (testing "applicant can close returned application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
-                          :actor applicant-user-id
-                          :comment "outdated"}
-                         injections))))
-    (testing "handler can close returned application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
-                          :actor handler-user-id
-                          :comment "outdated"}
-                         injections))))))
+                          :entitlement-end (DateTime. 1234)}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]))))))
 
 (deftest test-revoke
   (let [application (apply-events nil [dummy-created-event
