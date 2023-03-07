@@ -39,6 +39,7 @@
 (defn context-get [k] (get @test-context k))
 (defn context-getx [k] (getx @test-context k))
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
+(defn context-dissoc! [& args] (swap! test-context #(apply dissoc % args)))
 (defn context-update! [& args] (swap! test-context #(apply update % args)))
 
 (defn- ensure-empty-directories! []
@@ -592,6 +593,7 @@
   NB: the individual tests must call `gather-axe-results` in each
   interesting spot to have a sensible report to write."
   [f]
+  (context-dissoc! :axe)
   (try
     (f)
     (finally
