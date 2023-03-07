@@ -347,7 +347,7 @@
     (btu/wait-visible {:id (str id "-error")})
     (btu/get-element-text {:id (str id "-error")})))
 
-(defn fill-license-fields [{:keys [title external-links inline-text attachments]}]
+(defn fill-license-fields [{:keys [title external-links inline-text attachments attachment-load-text]}]
   (when title
     (btu/fill-human :localizations-en-title (str title " (EN)"))
     (btu/fill-human :localizations-fi-title (str title " (FI)"))
@@ -368,11 +368,11 @@
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :attachment-en) ; inputs are hidden
     (btu/upload-file :upload-license-button-en "test-data/test.txt")
-    (btu/wait-predicate #(= (set ["test.txt"]) (set (get-attachments))))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (set (get-attachments))}))
     (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
-    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt"]) (set (get-attachments))))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (get-attachments)}))
     (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
-    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt" "test-sv.txt"]) (set (get-attachments))))))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text) (str "test-sv.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (get-attachments)}))))
 
 ;; TODO: return to DUO tests once features are complete
 ;; (defn get-duo-codes [s]
@@ -486,11 +486,11 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["test.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["Download file\ntest.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\ntest-sv.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
 
         (testing "uploading oversized attachment should display error"
@@ -851,23 +851,26 @@
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
       (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
-      (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-attachments))))
+      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+                              (get-attachments))
+                          #(do {:attachments (get-attachments)})))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-      (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                              (get-attachments)))
+      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\nrems_logo_en.png"]
+                              (get-attachments))
+                          #(do {:attachments (get-attachments)}))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
-      (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-attachments))))
+      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+                              (get-attachments))
+                          #(do {:attachments (get-attachments)})))
     (testing "approve"
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
     (testing "event visible in eventlog"
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
-      (is (= ["test.txt" "test-fi.txt"]
+      (is (= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
              (get-attachments {:css "div.event a.attachment-link"}))))
 
     (testing "event via api"
@@ -1181,9 +1184,9 @@
               "Title (FI)" (str (btu/context-getx :license-name) " FI")
               "Title (SV)" (str (btu/context-getx :license-name) " SV")
               "Type" "link"
-              "External link (EN)" "https://www.csc.fi/home"
-              "External link (FI)" "https://www.csc.fi/etusivu"
-              "External link (SV)" "https://www.csc.fi/home"
+              "External link (EN)" "https://www.csc.fi/home \nOpens in a new window"
+              "External link (FI)" "https://www.csc.fi/etusivu \nOpens in a new window"
+              "External link (SV)" "https://www.csc.fi/home \nOpens in a new window"
               "Active" true}
              (slurp-fields :license)))
       (go-to-admin "Licenses")
@@ -1203,9 +1206,9 @@
               "Title (FI)" (str (btu/context-getx :license-name) " FI")
               "Title (SV)" (str (btu/context-getx :license-name) " SV")
               "Type" "link"
-              "External link (EN)" "https://www.csc.fi/home"
-              "External link (FI)" "https://www.csc.fi/etusivu"
-              "External link (SV)" "https://www.csc.fi/home"
+              "External link (EN)" "https://www.csc.fi/home \nOpens in a new window"
+              "External link (FI)" "https://www.csc.fi/etusivu \nOpens in a new window"
+              "External link (SV)" "https://www.csc.fi/home \nOpens in a new window"
               "Active" true}
              (slurp-fields :license))))))
 
@@ -1481,7 +1484,7 @@
             "Title (EN)" "test-edit-catalogue-item EN"
             "Title (FI)" "test-edit-catalogue-item FI"
             "Title (SV)" "test-edit-catalogue-item SV"
-            "More info (EN)" "http://google.com"
+            "More info (EN)" "http://google.com \nOpens in a new window"
             "More info (FI)" ""
             "More info (SV)" ""
             "Form" "test-edit-catalogue-item form"
@@ -1521,7 +1524,7 @@
                 "Title (EN)" "test-edit-catalogue-item EN"
                 "Title (FI)" "test-edit-catalogue-item FI"
                 "Title (SV)" "test-edit-catalogue-item SV"
-                "More info (EN)" "http://google.com"
+                "More info (EN)" "http://google.com \nOpens in a new window"
                 "More info (FI)" ""
                 "More info (SV)" ""
                 "Form" "test-edit-catalogue-item form"
@@ -2838,7 +2841,7 @@
     (testing "catalogue tree"
       (btu/screenshot "before-opening")
 
-      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nOpens in a new window\nAdd to cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item yet")
 
@@ -2869,7 +2872,7 @@
 
       (btu/screenshot "after-opening-category")
 
-      (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nAdd to cart"}}
+      (is (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nOpens in a new window\nAdd to cart"}}
                 (slurp-rows :catalogue-tree))
           "can open the category and see the item")
 
@@ -2886,7 +2889,7 @@
 
       (btu/screenshot "after-closing")
 
-      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More info\nRemove from cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More info\nOpens in a new window\nRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
 
@@ -2918,9 +2921,9 @@
                   "Title (FI)" "E2E license with external links (FI)"
                   "Title (SV)" "E2E license with external links (SV)"
                   "Type" "link"
-                  "External link (EN)" "http://www.google.com"
-                  "External link (FI)" "http://www.google.fi"
-                  "External link (SV)" "http://www.google.sv"
+                  "External link (EN)" "http://www.google.com \nOpens in a new window"
+                  "External link (FI)" "http://www.google.fi \nOpens in a new window"
+                  "External link (SV)" "http://www.google.sv \nOpens in a new window"
                   "Active" true}
                  (slurp-fields :license)))))
       (testing "inline text"
@@ -2958,7 +2961,8 @@
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Ny licens"}))
           (select-option "Organisation" "NBN")
           (fill-license-fields {:title "E2E license with attachments"
-                                :attachments true})
+                                :attachments true
+                                :attachment-load-text "\nLadda ner fil"})
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-attachments-sv")
           (is (btu/eventually-visible? {:tag :h1 :fn/text "Licens"}))
@@ -2967,9 +2971,9 @@
                   "Namn (FI)" "E2E license with attachments (FI)"
                   "Namn (SV)" "E2E license with attachments (SV)"
                   "Typ" "attachment"
-                  "Bilaga (EN)" "E2E license with attachments (EN)"
-                  "Bilaga (FI)" "E2E license with attachments (FI)"
-                  "Bilaga (SV)" "E2E license with attachments (SV)"
+                  "Bilaga (EN)" "Ladda ner fil\nE2E license with attachments (EN)"
+                  "Bilaga (FI)" "Ladda ner fil\nE2E license with attachments (FI)"
+                  "Bilaga (SV)" "Ladda ner fil\nE2E license with attachments (SV)"
                   "Aktiv" true}
                  (slurp-fields :license))))))))
 

@@ -337,6 +337,14 @@
           file (io/file (:reporting-dir @test-context) full-filename)]
       (spit file (json/generate-string-pretty content)))))
 
+(defn wait-predicate [pred & [explainer]]
+  (try (et/wait-predicate pred) ; does not need driver
+       (catch clojure.lang.ExceptionInfo ex
+         (throw (ex-info "timed out in wait-predicate"
+                         (merge (ex-data ex)
+                                (when explainer
+                                  {:explanation (explainer)}))
+                         ex)))))
 
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
@@ -365,7 +373,6 @@
 (def click (wrap-etaoin et/click))
 (def visible? (wrap-etaoin et/visible?))
 (def displayed-el? (wrap-etaoin et/displayed-el?))
-(def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
 (def has-class? (wrap-etaoin et/has-class?))
 (def has-class-el? (wrap-etaoin et/has-class-el?))
