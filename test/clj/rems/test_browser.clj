@@ -1762,7 +1762,8 @@
                         (remove str/blank?))
                    ["Table column 0 (EN)"
                     "Table column 1 (EN)"
-                    "Table column 2 (EN)"]))))
+                    "Table column 2 (EN)"
+                    "Actions"]))))
 
         (testing "create date field"
           (create-context-field! :create-form-field/date)
