@@ -125,9 +125,11 @@
    and `(change-language :en)`."
   [language & body]
   `(do
-     (change-language ~language)
-     ~@body
-     (change-language :en)))
+     (try
+       (change-language ~language)
+       ~@body
+       (finally
+         (change-language :en)))))
 
 ;;; catalogue page
 
