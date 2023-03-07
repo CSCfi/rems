@@ -4,6 +4,7 @@
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
+            [clojure.stacktrace]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
@@ -279,13 +280,16 @@
 
 ;;; etaoin exported
 
+(defn- get-file-base
+  "Get the base name for the util generated files."
+  []
+  (format "%03d-%s-"
+          (get-sequence-number)
+          (get-current-test-name)))
+
 (defn screenshot [filename]
   (let [driver (get-driver)
-        full-filename (format "%03d-%s-%s%s"
-                              (get-sequence-number)
-                              (get-current-test-name)
-                              filename
-                              ".png")
+        full-filename (str (get-file-base) filename ".png")
         file (io/file (:reporting-dir @test-context) full-filename)
         window-size (et/get-window-size driver)
         empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
@@ -333,10 +337,6 @@
           file (io/file (:reporting-dir @test-context) full-filename)]
       (spit file (json/generate-string-pretty content)))))
 
-(defmacro with-postmortem [& args]
-  `(et/with-postmortem (get-driver)
-     {:dir (:reporting-dir @test-context)}
-     ~@args))
 
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
@@ -622,3 +622,34 @@
       "var args = arguments;
        var callback = args[args.length - 1];
        return window.rems.config.fetch_config_BANG_(callback);")))
+
+(defn postmortem-handler
+  "Simplified version of `etaoin.api/postmortem-handler`"
+  [ex]
+  (let [driver (get-driver)
+        dir (:reporting-dir @test-context)]
+
+    (io/make-parents dir)
+
+    (screenshot (str "error-screenshot"))
+
+    (spit (io/file dir (str (get-file-base) "error-stacktrace.txt"))
+          (with-out-str (clojure.stacktrace/print-stack-trace ex)))
+
+    (spit (io/file dir (str (get-file-base) "error-page.html"))
+          (et/get-source driver))
+
+    (when (et/supports-logs? driver)
+      (#'et/dump-logs (et/get-logs driver)
+                      (io/file dir (str (get-file-base) "error-logs.json"))))))
+
+(defmacro with-postmortem
+  "A custom `etaoin.api/with-postmortem` that saves
+  everything in sequentially named files."
+  [& body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (rems.browser-test-util/postmortem-handler e#)
+       (throw e#))))
+
