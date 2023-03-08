@@ -807,15 +807,10 @@
 
    ;; application list
    [:.rems-table
-    [:.application-description
-     :.application-applicant
-     {:overflow :hidden
-      :text-overflow :ellipsis
-      :white-space :nowrap
-      :max-width "30em"}
-
-     :.application-description {:max-width "30em"}
-     :.application-applicant {:max-width "10em"}]]
+    [:.resource {:max-width (u/rem 30)}]
+    [:.description {:min-width (u/rem 6)
+                    :max-width (u/rem 30)}]
+    [:.applicant {:max-width (u/rem 10)}]]
    [:.search-field {:display :flex
                     :flex-wrap :nowrap
                     :align-items :center}

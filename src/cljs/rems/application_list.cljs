@@ -92,11 +92,11 @@
                                                 :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
                                                              (:application/generated-external-id app)]}
            :description {:value (:application/description app)
-                         :td [:td.description (format-description app)]}
+                         :display-value (format-description app)}
            :resource {:value (format-catalogue-items app)}
            :applicant (let [applicant (application-util/get-applicant-name app)]
                         {:value applicant
-                         :td [:td.applicant (format-applicant applicant)]})
+                         :display-value (format-applicant applicant)})
            :handlers (let [handlers (->> (get-in app [:application/workflow :workflow.dynamic/handlers])
                                          (filter :handler/active?)
                                          (map application-util/get-member-name)
