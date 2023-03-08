@@ -380,4 +380,40 @@
                 [expander {:id "guide-expander-id"
                            :title "Expander block with animated chevron"
                            :expanded? false
-                           :content [:p "Expanded content"]}])])))
+                           :content [:p "Expanded content"]}])
+
+
+       (component-info action-link)
+       (example "example command as link"
+
+                (def example-command {:id "example-command"
+                                      :class "example-command"
+                                      :label "Example"
+                                      :url "http://example.com/command"
+                                      :on-click #(js/alert "click example")})
+
+                [action-link example-command])
+       (component-info action-button)
+       (example "example command as button" [action-button example-command])
+
+       (component-info commands)
+       (example "empty commands" [commands])
+       (example "with commands"
+
+                (def another-command {:id "another-command"
+                                      :class "another-command"
+                                      :label "Another"
+                                      :url "http://example.com/another"
+                                      :on-click #(js/alert "click another")})
+
+                [commands [action-button example-command another-command]])
+
+       (component-info commands-group-button)
+       (example "empty group" [commands-group-button])
+       (example "one command is directly shown"
+                [commands-group-button {:label "Group"}
+                 example-command])
+       (example "with more commands"
+                [commands-group-button {:label "Group"}
+                 example-command
+                 another-command])])))
