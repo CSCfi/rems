@@ -397,6 +397,10 @@
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
            :font-weight (button-navbar-font-weight)}]
+   ;; override Bootstrap blue active color with its hover color
+   [".dropdown-item.active"
+    ".dropdown-item:active"
+    {:background-color "#e9ecef"}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
