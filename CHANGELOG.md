@@ -14,6 +14,20 @@ Changes since v2.31
 ### Changes
 - Application editing performance is improved. (#3106)
 - Show form errors column only when some form has errors. (#3107)
+- Administration menu has been fine-tuned. Reports also shows only if
+  the user can access it.
+- The administration pages can now scale wider than before.
+- The administration tables use a dropdown button for the modification actions.
+  This allows more space for the table contents as there will be less buttons visible.
+  Some of the buttons are only visible if the user has the permission. (#2814)
+- The catalogue items page (in administration) is now sorted by the item creation time by default.
+  Newly created items will now appear at the top instead of somewhere in the alphabetical order.
+  The sort can still be changed by clicking on the column headers.
+- The catalogue page margins have been adjusted to be more consistent. Also some of the default
+  texts have been removed. They can still be added by extra translations.
+- Catalogue "more info" is now styled as a link instead of a button.
+- Actions page columns have been tuned, e.g. description, resource and applicant, so that they wrap nicely. (#3121, #3122)
+- Accessibility tooling has been upgraded, the report improved, and serious issues fixed.
 
 ### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)
@@ -22,10 +36,13 @@ Changes since v2.31
   This does not include the invitation emails, which will always be sent, to be able to invite users.
   This also does not include any reminder emails that you can separately enable if you wish.
 - Any individual email can be disabled by setting its translation to empty string `""` (#3117).
+- The debug log level prints details of when the scheduled pollers run, e.g. email and event notification.
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
 - Fix form table default sort order to be internal name (was title). (#3107)
+- Editing form of a catalogue item could fail due to categories.
+- While clicking a button, link or menu item, a wrong color was sometimes displayed.
 
 ## v2.31 "Harmajankatu" 2022-11-29
 
