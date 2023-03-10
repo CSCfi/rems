@@ -813,6 +813,7 @@
 
 (defn- application-state-details [application config events]
   [:<>
+   [:h3.mt-3 (text :t.applications/details)]
    [info-field
     (text :t.applications/application)
     [:<>
@@ -836,7 +837,7 @@
     {:inline? true}]
    (when (seq events)
      (into [:<>
-            [:h3 (text :t.form/events)]]
+            [:h3.mt-3 (text :t.form/events)]]
            (render-events events)))])
 
 (defn- application-state [{:keys [application config highlight-event-ids userid]}]
@@ -855,6 +856,9 @@
                (when (is-handler? application userid)
                  (->> events-show-always
                       (application-state-details application config)))]
+      :collapse-hidden (when (and (not (is-handler? application userid))
+                                  (seq events))
+                         [:div.mt-3.mb-3 (render-events [(first events)])])
       :collapse (if (is-handler? application userid)
                   (when (seq events-collapse)
                     (into [:div]
