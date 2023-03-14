@@ -747,8 +747,8 @@
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
-      (when-let [attachments (seq attachments)]
-        [fields/attachment-row attachments])]]))
+      (when-some [attachments (seq (:event/attachments event))]
+        [fields/attachment-row attachments {:compact true}])]]))
 
 (defn- render-events [events]
   (for [e events]

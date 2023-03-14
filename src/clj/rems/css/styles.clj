@@ -873,6 +873,9 @@
                          :transition "transform 0.2s ease-in-out"}]
    [:.rotate-180 {:transform "rotate(180deg)"}]
 
+   [:.border-dashed {:border-style :dashed
+                     :border-width "2px"}]
+
    ;; These must be last as the parsing fails when the first non-standard element is met
    (form-placeholder-styles)))
 

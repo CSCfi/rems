@@ -370,22 +370,24 @@
   [:div.form-group
    (into [:<>]
          (for [attachment attachments]
-           [:div.flex-row.d-flex.flex-wrap.mb-2
+           [:div.flex-row.d-flex.mb-2
             [attachment-link attachment]
-            [:button.btn.btn-outline-secondary.mr-2
+            [:button.btn.btn-outline-secondary.ml-2
              {:class (str "remove-attachment-" id)
               :type :button
-              :on-click (fn [event]
-                          (on-remove-attachment (:attachment/id attachment)))}
+              :on-click #(on-remove-attachment (:attachment/id attachment))}
              [close-symbol]
              " "
              (text :t.form/attachment-remove)]]))
    [upload-button (str "upload-" id) status on-attach]])
 
-(defn attachment-row [attachments]
-  (into [:div.flex-row.d-flex.flex-wrap]
-        (for [att attachments]
-          [attachment-link att])))
+(defn attachment-row [attachments & [opts]]
+  (into [:div.attachment-row.flex-row.d-flex.flex-wrap]
+        (for [attachment attachments]
+          [:div (when (:compact opts)
+                  {:class ["mt-1" "mr-1"]
+                   :style {:max-width "25rem"}})
+           [attachment-link attachment]])))
 
 (defn attachment-field
   [{:keys [on-attach on-remove-attachment] :as opts}]

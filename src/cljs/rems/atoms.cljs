@@ -1,6 +1,7 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
+            [medley.core :refer [assoc-some]]
             [reagent.core :as reagent]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
@@ -158,15 +159,17 @@
        [:label title]
        [:div style formatted-value]])))
 
-(defn download-button [{:keys [disabled? title url]}]
-  [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
-               :href url
-               :target :_blank
-               :title title
-               :style {:max-width "25em"}}
-        disabled? (-> (dissoc :href :target)
-                      (update :class conj :disabled)))
-   [file-download] " " title])
+(defn download-button [{:keys [disabled? title url id]}]
+  (let [props (-> {:class ["btn" "btn-outline-secondary" "text-truncate" "mw-100"]
+                   :title title}
+                  (assoc-some :id id))]
+    (if disabled?
+      [:a (merge-with conj props {:aria-disabled true :role "link" :class "border-dashed"})
+       [close-symbol]
+       [:span.ml-1 title]]
+      [:a (merge props {:href url :target "_blank"})
+       [file-download]
+       [:span.ml-1 title]])))
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
@@ -177,11 +180,9 @@
 (defn attachment-link
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
-  (when attachment
-    [:div.field
-     [download-button {:disabled? (= :filename/redacted (:attachment/filename attachment))
-                       :title (localize-attachment attachment)
-                       :url (str "/applications/attachment/" (:attachment/id attachment))}]]))
+  [download-button {:disabled? (= :filename/redacted (:attachment/filename attachment))
+                    :title (localize-attachment attachment)
+                    :url (str "/applications/attachment/" (:attachment/id attachment))}])
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
