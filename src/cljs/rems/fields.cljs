@@ -6,7 +6,7 @@
             [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
             [rems.common.util :refer [assoc-not-present build-index getx]]
             [rems.flash-message]
@@ -338,7 +338,7 @@
               :type "file"
               :id upload-id
               :name upload-id
-              :accept attachment-types/allowed-extensions-string
+              :accept attachment-util/allowed-extensions-string
               :on-change (fn [event]
                            (let [filecontent (aget (.. event -target -files) 0)
                                  form-data (doto (js/FormData.)
@@ -360,9 +360,9 @@
         nil)]
      [info-collapse
       {:info-id info-id
-       :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
+       :aria-label-text (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)
        :content [:div
-                 [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]
+                 [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
                  [:p (text-format :t.form/attachment-max-size
                                   (format-file-size (:attachment-max-size config)))]]}]]))
 

@@ -1,7 +1,7 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [enrich-user textarea]]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -132,7 +132,7 @@
                                 (flash-message/show-default-error! :actions description
                                                                    [:div
                                                                     [:p [text :t.form/invalid-attachment]]
-                                                                    [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
+                                                                    [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
                                 ((flash-message/default-error-handler :actions description) response)))})
      {})))
 

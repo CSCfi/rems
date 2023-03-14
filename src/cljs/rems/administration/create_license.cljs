@@ -5,7 +5,7 @@
             [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field radio-button-group]]
             [rems.atoms :as atoms :refer [failure-symbol file-download document-title]]
             [rems.collapsible :as collapsible]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
@@ -152,7 +152,7 @@
   (into [:div.form-group.field
          [:label.administration-field-label
           (text :t.create-license/license-attachment)]
-         (let [allowed-extensions (->> attachment-types/allowed-extensions-string
+         (let [allowed-extensions (->> attachment-util/allowed-extensions-string
                                        (text-format :t.form/upload-extensions))
                config @(rf/subscribe [:rems.config/config])]
            [:div.mb-3
@@ -175,7 +175,7 @@
                [:input {:style {:display "none"}
                         :type "file"
                         :id input-id
-                        :accept attachment-types/allowed-extensions-string
+                        :accept attachment-util/allowed-extensions-string
                         :on-change (set-attachment-event language)}]
                [:button.btn.btn-secondary {:type :button
                                            :on-click #(.click (.getElementById js/document input-id))}

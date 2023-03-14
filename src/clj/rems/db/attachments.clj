@@ -1,7 +1,7 @@
 (ns rems.db.attachments
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
   (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
@@ -13,7 +13,7 @@
 
 (defn check-allowed-attachment
   [filename]
-  (when-not (attachment-types/allowed-extension? filename)
+  (when-not (attachment-util/allowed-extension? filename)
     (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
 
 (defn get-attachment [attachment-id]

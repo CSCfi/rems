@@ -28,7 +28,7 @@
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
@@ -428,7 +428,7 @@
                                      (flash-message/show-default-error! :actions description
                                                                         [:div
                                                                          [:p [text :t.form/invalid-attachment]]
-                                                                         [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
+                                                                         [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
 
                                      :else ((flash-message/default-error-handler :actions description) response)))})))
   {})
