@@ -17,12 +17,12 @@
 ;; See docs/architecture/010-transactions.md
 (defn- hikaricp-settings []
   ;; HikariConfig wants an actual String, no support for parameterized queries...
-  {:connection-init-sql
-   (str/join [(when (:database-lock-timeout env)
-                (str "SET lock_timeout TO '" (:database-lock-timeout env) "';"))
-              (when (:database-idle-in-transaction-session-timeout env)
-                (str "SET idle_in_transaction_session_timeout TO '" (:database-idle-in-transaction-session-timeout env) "';"))])})
-
+  (merge {:connection-init-sql
+          (str/join [(when (:database-lock-timeout env)
+                       (str "SET lock_timeout TO '" (:database-lock-timeout env) "';"))
+                     (when (:database-idle-in-transaction-session-timeout env)
+                       (str "SET idle_in_transaction_session_timeout TO '" (:database-idle-in-transaction-session-timeout env) "';"))])}
+         (:hikaricp-extra-params env)))
 
 (defstate ^:dynamic *db*
   :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge (hikaricp-settings)

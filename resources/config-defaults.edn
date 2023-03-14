@@ -36,6 +36,11 @@
  ;; Value for PostgreSQL idle_in_transaction_session_timeout
  :database-idle-in-transaction-session-timeout "20s"
 
+ ;; Extra parameters to override database connection pool settings on startup.
+ ;; A useful debugging parameter could be :leak-detection-threshold for example.
+ ;; For all possible configuration options, see https://github.com/brettwooldridge/HikariCP
+ :hikaricp-extra-params {}
+
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
