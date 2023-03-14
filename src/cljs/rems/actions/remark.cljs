@@ -1,7 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field
-                                             button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field button-wrapper command! comment-public-field]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "remark")
@@ -42,8 +41,9 @@
                      :on-click on-send}]]
    [:div
     [comment-field {:field-key action-form-id
-                    :label (text :t.form/add-remark)
-                    :public-checkbox? true}]
+                    :label (text :t.form/add-remark)}]
+    [comment-public-field {:field-key action-form-id
+                           :label (text :t.actions/remark-public)}]
     [action-attachment {:field-key action-form-id
                         :application-id application-id}]]])
 

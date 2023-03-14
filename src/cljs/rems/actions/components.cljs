@@ -34,46 +34,38 @@
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
-(defn comment-field-view [{:keys [id label comment on-comment]}]
-  (let [id (str "comment-" id)]
+(rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
+(rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
+
+(defn comment-field [{:keys [field-key label]}]
+  (let [id (str "comment-" field-key)]
     [:div.form-group
      [:label {:for id} label]
      [textarea {:id id
                 :min-rows 4
                 :max-rows 4
                 :name id
-                :placeholder (text :t.actions/comment)
-                :value comment
-                :on-change #(on-comment (.. % -target -value))}]]))
+                :value @(rf/subscribe [::comment field-key])
+                :on-change (fn [event]
+                             (let [value (.. event -target -value)]
+                               (rf/dispatch [::set-comment field-key value])))}]]))
 
-(defn public-checkbox-view [{:keys [id public on-set-public]}]
-  (let [id (str "public-" id)]
+(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key] false)))
+(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
+
+(defn comment-public-field [{:keys [field-key label]}]
+  (let [id (str "comment-public-" field-key)]
     [:div.form-group
      [:div.form-check
       [:input.form-check-input {:type "checkbox"
                                 :id id
                                 :name id
-                                :checked public
-                                :on-change #(on-set-public (.. % -target -checked))}]
+                                :checked @(rf/subscribe [::comment-public field-key])
+                                :on-change (fn [event]
+                                             (let [checked (.. event -target -checked)]
+                                               (rf/dispatch [::set-comment-public field-key checked])))}]
       [:label.form-check-label {:for id}
-       (text :t.actions/remark-public)]]]))
-
-(rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
-(rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
-
-(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key])))
-(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
-
-(defn comment-field [{:keys [field-key label public-checkbox?]}]
-  [:<>
-   [comment-field-view {:id field-key
-                        :label label
-                        :comment @(rf/subscribe [::comment field-key])
-                        :on-comment #(rf/dispatch [::set-comment field-key %])}]
-   (when public-checkbox?
-     [public-checkbox-view {:id field-key
-                            :public @(rf/subscribe [::comment-public field-key])
-                            :on-set-public #(rf/dispatch [::set-comment-public field-key %])}])])
+       label]]]))
 
 (rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))
 (rf/reg-event-db ::set-name (fn [db [_ field-key value]] (assoc-in db [::name field-key] value)))
