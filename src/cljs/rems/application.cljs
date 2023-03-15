@@ -1,9 +1,10 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [clojure.set :refer [union]]
+            [com.rpl.specter :refer [ALL transform]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [find-first filter-vals update-existing]]
+            [medley.core :refer [assoc-some find-first filter-vals update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -18,6 +19,7 @@
             [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
+            [rems.actions.redact-attachments :refer [redact-attachments-action-button redact-attachments-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-link request-decision-form]]
@@ -1002,11 +1004,23 @@
     [request-decision-action-link]
     [invite-decider-action-link]]])
 
+(rf/reg-sub ::application-redactable-attachments
+            :<- [::application]
+            :<- [:user]
+            (fn [[application user] _]
+              (for [attachment (:application/attachments application)
+                    :when (application-util/can-redact? attachment (:userid user) application)]
+                attachment)))
+
 (defn- action-buttons [application config]
   (let [commands-and-actions (concat
                               (when-not (:enable-autosave config)
                                 ;; no explicit command for :application.command/save-draft when autosave
                                 [:application.command/save-draft [save-button]])
+
+                              (when (seq @(rf/subscribe [::application-redactable-attachments]))
+                                ;; no reason to render if user cannot redact anything
+                                [:application.command/redact-attachments [redact-attachments-action-button]])
 
                               [:application.command/submit [submit-button]
                                :application.command/return [return-action-button]
@@ -1038,7 +1052,6 @@
         (->> (remove nil?))
         distinct)))
 
-
 (defn- actions-form [application config]
   (let [app-id (:application/id application)
         ;; The :see-everything permission is used to determine whether the user
@@ -1064,6 +1077,8 @@
                   [invite-reviewer-form app-id reload]
                   [review-form app-id reload]
                   [remark-form app-id reload]
+                  (let [attachments @(rf/subscribe [::application-redactable-attachments])]
+                    [redact-attachments-form app-id attachments reload])
                   [close-form app-id show-comment-field? reload]
                   [revoke-form app-id reload]
                   [decide-form app-id reload]
