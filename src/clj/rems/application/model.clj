@@ -1,7 +1,7 @@
 (ns rems.application.model
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL select transform]]
+            [com.rpl.specter :refer [ALL transform select setval]]
             [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
@@ -673,6 +673,15 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
+(defn- enrich-attachments [application get-user]
+  (let [redacted-ids (set (for [event (:application/events application)
+                                attachment (:application/redacted-attachments event)]
+                            (:attachment/id attachment)))
+        redacted? #(contains? redacted-ids (:attachment/id %))]
+    (->> application
+         (transform [:application/attachments ALL :attachment/user] get-user)
+         (setval [:application/attachments ALL redacted? :attachment/redacted] true))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -697,18 +706,17 @@
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-      ;(update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
       (enrich-user-attributes get-user)
-      (enrich-blacklist blacklisted?) ;; uses enriched users
+      (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config)))
+      (enrich-disable-commands get-config)
+      (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
-
 
 ;;;; Authorization
 
@@ -779,7 +787,8 @@
       ;; blacklist, so this is unnecessary. Keeping it here for
       ;; completeness anyway.
       (update :application/blacklist (partial mapv #(update % :blacklist/user censor-user)))
-      (update :application/events (partial mapv censor-users-in-event))))
+      (update :application/events (partial mapv censor-users-in-event))
+      (update :application/attachments (partial mapv #(update % :attachment/user censor-user)))))
 
 (defn- hide-sensitive-information [application]
   (-> application

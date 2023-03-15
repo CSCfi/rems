@@ -47,8 +47,9 @@
 
 (defn get-attachments-for-application [application-id]
   (vec
-   (for [{:keys [id filename type]} (db/get-attachments-for-application {:application-id application-id})]
+   (for [{:keys [id filename type userid]} (db/get-attachments-for-application {:application-id application-id})]
      {:attachment/id id
+      :attachment/user userid
       :attachment/filename filename
       :attachment/type type})))
 

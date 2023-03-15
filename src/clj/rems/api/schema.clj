@@ -198,7 +198,9 @@
 (s/defschema ApplicationAttachment
   {:attachment/id s/Int
    :attachment/filename (s/cond-pre s/Str (s/enum :filename/redacted))
-   :attachment/type s/Str})
+   :attachment/type s/Str
+   (s/optional-key :attachment/user) schema-base/UserWithAttributes
+   (s/optional-key :attachment/redacted) s/Bool})
 
 (s/defschema BlacklistEntry
   {:blacklist/user schema-base/UserWithAttributes
