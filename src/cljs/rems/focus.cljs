@@ -19,7 +19,7 @@
    (on-element-appear selector f 100))
   ([selector f tries]
    (when (pos? tries)
-     (if-let [element (.querySelector js/document selector)]
+     (if-some [element (first (js/$ (str selector ":visible")))] ; https://api.jquery.com/visible-selector/
        (f element)
        (js/setTimeout #(on-element-appear selector f (dec tries))
                       10)))))
