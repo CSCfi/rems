@@ -428,15 +428,11 @@
   (when (empty? (:redacted-attachments cmd))
     {:errors [{:type :empty-redacted-attachments}]}))
 
-(defn- invalid-redacted-attachment [attachment cmd application]
-  (or (nil? attachment)
-      (not (application-util/can-redact? attachment (:actor cmd) application))))
-
 (defn- invalid-redacted-attachments-error [cmd application]
   (let [attachments (index-by [:attachment/id] (:application/attachments application))
-        invalid-ids (for [attachment (:redacted-attachments cmd)
-                          :let [id (:attachment/id attachment)]
-                          :when (invalid-redacted-attachment (get attachments id) cmd application)]
+        invalid-ids (for [id (map :attachment/id (:redacted-attachments cmd))
+                          :let [attachment (get attachments id)]
+                          :when (not (application-util/can-redact? attachment (:actor cmd) application))]
                       id)]
     (when (seq invalid-ids)
       {:errors [{:type :invalid-redact-attachments
@@ -446,12 +442,12 @@
   "Finds events from which the redacted attachments originate from,
    and returns those events id with the redacted attachment id."
   [cmd application]
-  (vec (for [event (:application/events application)
-             :let [event-attachment-ids (set (map :attachment/id (:event/attachments event)))]
-             redacted-id (map :attachment/id (:redacted-attachments cmd))
-             :when (contains? event-attachment-ids redacted-id)]
-         (merge (select-keys event [:event/id])
-                {:attachment/id redacted-id}))))
+  (vec (for [attachment (:redacted-attachments cmd)
+             event (:application/events application)
+             :let [ids (map :attachment/id (:event/attachments event))]
+             :when (contains? (set ids) (:attachment/id attachment))]
+         {:event/id (:event/id event)
+          :attachment/id (:attachment/id attachment)})))
 
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
