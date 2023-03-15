@@ -3,6 +3,7 @@
             [komponentit.autosize :as autosize]
             [medley.core :refer [remove-vals]]
             [reagent.core :as reagent]
+            [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text localized localize-attachment]]
@@ -23,10 +24,13 @@
          (:label opts)))
   ([opts href label]
    (when-not (str/blank? label)
-     [:a (->> {:href href}
-              (merge opts)
-              (remove-vals nil?))
-      label])))
+     (let [button? (not (str/includes? (str (reagent.impl.util/class-names (:class opts)))
+                                       "btn-link"))]
+       [:a (->> {:href href}
+                (merge (when button? {:role :button}))
+                (merge opts)
+                (remove-vals nil?))
+        label]))))
 
 (defn image [opts src]
   [:img (merge opts {:src src})])
