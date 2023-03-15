@@ -366,8 +366,10 @@
                  [:p (text-format :t.form/attachment-max-size
                                   (format-file-size (:attachment-max-size config)))]]}]]))
 
-(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
+(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label]}]
   [:div.form-group
+   (when label
+     [:label label])
    (into [:<>]
          (for [attachment attachments]
            [:div.flex-row.d-flex.mb-2

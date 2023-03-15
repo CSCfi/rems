@@ -1,6 +1,6 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [enrich-user textarea]]
+            [rems.atoms :refer [attachment-link enrich-user textarea]]
             [rems.common.attachment-util :as attachment-util]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
@@ -33,6 +33,32 @@
     :data-target (str "#" (action-collapse-id id))
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
+
+(rf/reg-sub ::select-attachments (fn [db [_ field-key]]
+                                   (vec (for [kv (get-in db [::select-attachments field-key])
+                                              :when (val kv)]
+                                          {:attachment/id (key kv)}))))
+(rf/reg-sub ::select-attachments-id (fn [db [_ field-key id]] (get-in db [::select-attachments field-key id] false)))
+(rf/reg-event-db ::init-select-attachments (fn [db [_ field-key]] (assoc-in db [::select-attachments field-key] {})))
+(rf/reg-event-db ::set-select-attachments (fn [db [_ field-key id selected]] (assoc-in db [::select-attachments field-key id] selected)))
+
+(defn select-attachments-field [{:keys [attachments field-key label]}]
+  (let [field-id (str "select-attachments-" field-key)]
+    (into
+     [:div.form-group {:id field-id}
+      [:label {:for field-id} label]]
+     (for [attachment (sort-by :attachment/id > attachments)
+           :let [id (:attachment/id attachment)]]
+       [:div.form-check.mb-2
+        [:div.d-flex.align-items-center
+         [:input.form-check-input {:type :checkbox
+                                   :id (str field-id "-field-" id)
+                                   :name (str field-id "-field-" id)
+                                   :checked @(rf/subscribe [::select-attachments-id field-key id])
+                                   :on-change #(rf/dispatch [::set-select-attachments field-key id (.. % -target -checked)])}]
+         [attachment-link attachment {:id (str field-id "-field-" id "-attachment")}]]
+        (when-some [user (get-in attachment [:attachment/user :name])]
+          [:b user])]))))
 
 (rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
 (rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
@@ -128,8 +154,9 @@
                                 ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment [{:keys [application-id field-key]}]
+(defn action-attachment [{:keys [application-id field-key label]}]
   [fields/multi-attachment-view {:id field-key
+                                 :label label
                                  :attachments @(rf/subscribe [::attachments-with-filenames field-key])
                                  :on-attach #(rf/dispatch [::save-attachment application-id field-key %])
                                  :on-remove-attachment #(rf/dispatch [::remove-attachment field-key %])}])
