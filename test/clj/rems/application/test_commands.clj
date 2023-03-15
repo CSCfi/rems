@@ -53,7 +53,11 @@
                       :handlers [{:userid handler-user-id
                                   :name "user"
                                   :email "user@example.com"}]
-                      :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
+                      :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}
+        3 {:workflow {:type :workflow/decider
+                      :handlers [{:userid handler-user-id
+                                  :name "user"
+                                  :email "user@example.com"}]}}}
        id))
 
 (def dummy-forms
@@ -1843,4 +1847,196 @@
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
             result (commands/handle-command command application command-injections)]
         (is (= {:errors [{:type :forbidden}]} result))))))
+
+(deftest test-redact-attachments-command
+  (let [handler-remark {:type :application.command/remark
+                        :actor handler-user-id
+                        :comment "handler's remark"
+                        :attachments [{:attachment/id 1}]
+                        :public false}
+        request-review {:type :application.command/request-review
+                        :actor handler-user-id
+                        :reviewers [reviewer-user-id]
+                        :comment ""}
+        reviewer-remark {:type :application.command/remark
+                         :actor reviewer-user-id
+                         :comment "reviewer's remark"
+                         :attachments [{:attachment/id 3}]
+                         :public false}
+        request-decider {:type :application.command/request-decision
+                         :actor handler-user-id
+                         :deciders [decider-user-id]
+                         :comment ""}
+        decider-remark {:type :application.command/remark
+                        :actor decider-user-id
+                        :comment "decider's remark"
+                        :attachments [{:attachment/id 5}]
+                        :public false}]
+    (testing "fail when draft application"
+      ;; XXX: this error should be :forbidden but currently permissions are checked
+      ;; after command validation, see rems.application.commands/handle-command
+      (is (= {:errors [{:type :empty-redacted-attachments}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor handler-user-id
+                            :comment "should fail"
+                            :public false
+                            :redacted-attachments []
+                            :attachments []}
+                           (build-application-view [dummy-created-event])))))
+    (testing "fail if redacted attachments is empty"
+      (is (= {:errors [{:type :empty-redacted-attachments}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor handler-user-id
+                            :comment "should fail"
+                            :public false
+                            :redacted-attachments []
+                            :attachments []}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))
+    (testing "fail if replacing attachments dont exist"
+      (is (= {:errors [{:type :invalid-attachments
+                        :attachments [999]}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor handler-user-id
+                            :comment "should fail"
+                            :public false
+                            :redacted-attachments [{:attachment/id 1}]
+                            :attachments [{:attachment/id 999}]}
+                           (build-application-view
+                            (apply-ok-commands [dummy-created-event
+                                                dummy-submitted-event]
+                                               [handler-remark
+                                                request-review
+                                                reviewer-remark
+                                                request-decider
+                                                decider-remark]))))))
+    (testing "handler can redact"
+      (is (= {:event/type :application.event/attachments-redacted
+              :event/time test-time
+              :event/actor handler-user-id
+              :event/attachments [{:attachment/id 4}]
+              :application/redacted-attachments [{:attachment/id 1 :event/id 2}
+                                                 {:attachment/id 3 :event/id 4}
+                                                 {:attachment/id 5 :event/id 6}]
+              :application/id app-id
+              :application/comment "i've got the power"
+              :application/public false}
+             (ok-command {:type :application.command/redact-attachments
+                          :actor handler-user-id
+                          :comment "i've got the power"
+                          :public false
+                          :redacted-attachments [{:attachment/id 1}
+                                                 {:attachment/id 3}
+                                                 {:attachment/id 5}]
+                          :attachments [{:attachment/id 4}]}
+                         (build-application-view
+                          (apply-ok-commands [dummy-created-event
+                                              dummy-submitted-event]
+                                             [handler-remark
+                                              request-review
+                                              reviewer-remark
+                                              request-decider
+                                              decider-remark]))))))
+    (testing "fails when handler redacts decider attachment in decider workflow"
+      (is (= {:errors [{:type :invalid-redact-attachments
+                        :attachments [5]}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor handler-user-id
+                            :comment ""
+                            :public false
+                            :redacted-attachments [{:attachment/id 5}]
+                            :attachments []}
+                           (build-application-view
+                            (apply-ok-commands
+                             [(merge dummy-created-event {:workflow/id 3 :workflow/type :workflow/decider})
+                              dummy-submitted-event]
+                             [handler-remark
+                              request-review
+                              reviewer-remark
+                              request-decider
+                              decider-remark]))))))
+    (testing "reviewer can redact"
+      (is (= {:event/type :application.event/attachments-redacted
+              :event/time test-time
+              :event/actor reviewer-user-id
+              :event/attachments []
+              :application/redacted-attachments [{:attachment/id 3 :event/id 4}]
+              :application/id app-id
+              :application/comment "accidental upload"
+              :application/public false}
+             (ok-command {:type :application.command/redact-attachments
+                          :actor reviewer-user-id
+                          :comment "accidental upload"
+                          :public false
+                          :redacted-attachments [{:attachment/id 3}]
+                          :attachments []}
+                         (build-application-view
+                          (apply-ok-commands [dummy-created-event
+                                              dummy-submitted-event]
+                                             [handler-remark
+                                              request-review
+                                              reviewer-remark
+                                              request-decider
+                                              decider-remark]))))))
+    (testing "fails when reviewer redacts other users attachments"
+      (is (= {:errors [{:type :invalid-redact-attachments
+                        :attachments [1 5]}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor reviewer-user-id
+                            :comment ""
+                            :public false
+                            :redacted-attachments [{:attachment/id 1}
+                                                   {:attachment/id 3}
+                                                   {:attachment/id 5}]
+                            :attachments []}
+                           (build-application-view
+                            (apply-ok-commands [dummy-created-event
+                                                dummy-submitted-event]
+                                               [handler-remark
+                                                request-review
+                                                reviewer-remark
+                                                request-decider
+                                                decider-remark]))))))
+    (testing "decider can redact"
+      (is (= {:event/type :application.event/attachments-redacted
+              :event/time test-time
+              :event/actor decider-user-id
+              :event/attachments []
+              :application/redacted-attachments [{:attachment/id 5 :event/id 6}]
+              :application/id app-id
+              :application/comment ""
+              :application/public false}
+             (ok-command {:type :application.command/redact-attachments
+                          :actor decider-user-id
+                          :comment ""
+                          :public false
+                          :redacted-attachments [{:attachment/id 5}]
+                          :attachments []}
+                         (build-application-view
+                          (apply-ok-commands [dummy-created-event
+                                              dummy-submitted-event]
+                                             [handler-remark
+                                              request-review
+                                              reviewer-remark
+                                              request-decider
+                                              decider-remark]))))))
+    (testing "fails when decider redacts other users attachments"
+      (is (= {:errors [{:type :invalid-redact-attachments
+                        :attachments [1 3]}]}
+             (fail-command {:type :application.command/redact-attachments
+                            :actor decider-user-id
+                            :comment ""
+                            :public false
+                            :redacted-attachments [{:attachment/id 1}
+                                                   {:attachment/id 3}
+                                                   {:attachment/id 5}]
+                            :attachments []}
+                           (build-application-view
+                            (apply-ok-commands [dummy-created-event
+                                                dummy-submitted-event]
+                                               [handler-remark
+                                                request-review
+                                                reviewer-remark
+                                                request-decider
+                                                decider-remark]))))))))
 
