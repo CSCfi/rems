@@ -12,6 +12,7 @@
             [rems.service.organizations :as organizations]
             [rems.service.resource :as resource]
             [rems.service.workflow :as workflow]
+            [rems.common.util :refer [fix-filename]]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -308,6 +309,17 @@
                        :application-id app-id
                        :actor actor})
     app-id))
+
+(defn create-attachment! [{:keys [actor application-id filename filetype data]}]
+  (let [previous-attachments (db/get-attachments-for-application {:application-id application-id})
+        filename (->> (mapv :filename previous-attachments)
+                      (fix-filename (or filename "attachment.pdf")))
+        attachment (db/save-attachment! {:application application-id
+                                         :user actor
+                                         :filename filename
+                                         :type (or filetype "application/pdf")
+                                         :data (.getBytes (or data ""))})]
+    (:id attachment)))
 
 (defn assert-no-existing-data! []
   (assert (empty? (db/get-organizations {}))
