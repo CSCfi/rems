@@ -587,7 +587,7 @@
                      :application/forms [{:form/fields [{:field/type :attachment
                                                          :field/value "5" :field/previous-value "5,1,15"}]}
                                          {:form/fields [{:field/type :text
-                                                         :field/value "2" :field/previous-vaule "2"}
+                                                         :field/value "2" :field/previous-value "2"}
                                                         {:field/type :attachment
                                                          :field/value "9,11,13"}]}]}]
     (is (= {1 #{:event/attachments :field/previous-value}
@@ -885,29 +885,25 @@
       (contains? roles :member)))
 
 (defn see-application? [application userid]
-  (let [permissions (permissions/user-roles application userid)]
+  (let [roles (permissions/user-roles application userid)]
     (if (= :application.state/draft (:application/state application))
-      (user-is-applicant-or-member permissions)
-      (not= #{:everyone-else} permissions))))
+      (user-is-applicant-or-member roles)
+      (not= #{:everyone-else} roles))))
 
-(defn- get-redacted-attachment-ids [application]
-  (->> (:application/events application)
-       (filter (comp #{:application.event/attachments-redacted} :event/type))
-       (mapcat :application/redacted-attachments)
-       (map :attachment/id)
-       set))
+(defn- see-redacted-filename? [attachment userid roles]
+  (or (= userid (get-in attachment [:attachment/user :userid]))
+      (contains? roles :handler)))
 
-(defn- mask-redacted-attachments [application]
-  (let [redacted-ids (get-redacted-attachment-ids application)
-        redacted? #(contains? redacted-ids (:attachment/id %))]
-    (->> application
-         (transform [:application/attachments ALL redacted?]
-                    #(assoc % :attachment/filename :filename/redacted)))))
+(defn- redact-attachment-filenames [attachments userid roles]
+  (let [apply-mask #(and (:attachment/redacted %)
+                         (not (see-redacted-filename? % userid roles)))]
+    (->> attachments
+         (setval [ALL apply-mask :attachment/filename] :filename/redacted))))
 
 (defn apply-user-permissions [application userid]
-  (let [see-application? (see-application? application userid)
-        roles (permissions/user-roles application userid)
+  (let [roles (permissions/user-roles application userid)
         permissions (permissions/user-permissions application userid)
+        see-application? (see-application? application userid)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
       (-> (if see-everything?
@@ -917,7 +913,7 @@
           (hide-non-public-information)
           (apply-privacy roles)
           (hide-attachments)
-          (mask-redacted-attachments)
+          (update :application/attachments redact-attachment-filenames userid roles)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
