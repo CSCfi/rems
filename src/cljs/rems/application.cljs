@@ -122,7 +122,11 @@
  (fn [{:keys [db]} [_ id]]
    {:db (-> db
             (assoc ::application-id (parse-int id))
-            (dissoc ::application ::edit-application))
+            (dissoc ::application
+                    ::edit-application
+                    ::duo-codes
+                    ::autosaving
+                    ::highlight-event-ids))
     :dispatch-n (if (-> db :config :enable-duo)
                   [[::fetch-application id true] [::duo-codes]]
                   [[::fetch-application id true]])}))
@@ -316,7 +320,6 @@
    {:db (-> db
             (assoc-in [::edit-application :validation :errors] nil)
             (assoc-in [::edit-application :validation :warnings] nil))}))
-
 
 (rf/reg-event-db ::set-autosaving (fn [db [_ value]] (assoc db ::autosaving value)))
 (rf/reg-sub ::autosaving (fn [db _] (::autosaving db)))
