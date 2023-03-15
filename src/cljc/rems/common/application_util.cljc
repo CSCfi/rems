@@ -30,6 +30,22 @@
 (defn is-handler? [application userid]
   (contains? (workflow-handlers application) userid))
 
+(defn is-reviewer?
+  "Is userid current or past reviewer in application?"
+  [application userid]
+  (let [all-reviewers (->> (concat (:application/reviewers application)
+                                   (:application/past-reviewers application))
+                           (map :userid))]
+    (contains? (set all-reviewers) userid)))
+
+(defn is-decider?
+  "Is userid current or past decider in application?"
+  [application userid]
+  (let [all-deciders (->> (concat (:application/deciders application)
+                                  (:application/past-deciders application))
+                          (map :userid))]
+    (contains? (set all-deciders) userid)))
+
 (defn- parse-int-maybe [x]
   (if (re-matches #"\d+" x)
     (util/parse-int x)
@@ -57,4 +73,25 @@
          (sort (mapv parse-sortable-external-id ["2020/10" "2020/1" "2020/11" "2020/12" "2020/2"]))))
   (is (= [["ABC/" 2000 "." 1] ["ABC/" 2000 "." 2] ["ABC/" 2000 "." 3] ["ABC/" 2002 "." 0] ["ABC/" 2002 "." 2]  ["ABC/" 2302 "." 0]]
          (sort (mapv parse-sortable-external-id ["ABC/2000.1" "ABC/2002.0" "ABC/2002.2"  "ABC/2302.0" "ABC/2000.2" "ABC/2000.3"])))))
+
+(defn can-redact? [attachment userid application]
+  (let [attachment-userid (get-in attachment [:attachment/user :userid])
+        handler? (is-handler? application userid)
+        wf-type (get-in application [:application/workflow :workflow/type])]
+    (cond
+      (:attachment/redacted attachment)
+      false
+
+      (= userid attachment-userid)
+      true
+
+      (is-reviewer? application attachment-userid)
+      handler?
+
+      (is-decider? application attachment-userid)
+      (and handler?
+           (not= :workflow/decider wf-type))
+
+      :else
+      false)))
 

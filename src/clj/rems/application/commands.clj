@@ -4,6 +4,7 @@
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
+            [rems.common.util :refer [index-by]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
@@ -291,36 +292,23 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn- user-can-redact-attachment? [cmd application attachment]
-  (or (application-util/is-handler? application (:actor cmd))
-      (= (:attachment/user attachment) (:actor cmd))))
+(defn- invalid-attachment? [attachment cmd]
+  (or (nil? attachment)
+      (not= (:application/id attachment) (:application-id cmd))
+      (not= (:attachment/user attachment) (:actor cmd))))
 
-(defn- invalid-attachments-error
-  "Checks that attachments are not nil, attachment user is command actor,
-   and attachment application id matches command application id. Redacted
-   attachments are checked similarly, but application handlers are allowed
-   to redact all attachments."
-  [cmd application injections]
-  (let [invalid-ids (for [id (set (map :attachment/id (:attachments cmd)))
-                          :let [attachment (-> (getx injections :get-attachment-metadata)
-                                               (apply [id]))]
-                          :when (or (nil? attachment)
-                                    (not= (:attachment/user attachment) (:actor cmd))
-                                    (not= (:application/id attachment) (:application-id cmd)))]
-                      id)
-        invalid-redact-ids (for [id (set (map :attachment/id (:redacted-attachments cmd)))
-                                 :let [attachment (-> (getx injections :get-attachment-metadata)
-                                                      (apply [id]))]
-                                 :when (or (nil? attachment)
-                                           (not (user-can-redact-attachment? cmd application attachment))
-                                           (not= (:application/id attachment) (:application-id cmd)))]
-                             id)]
-    (when-some [ids (seq (concat invalid-ids invalid-redact-ids))]
+(defn- invalid-attachments-error [cmd injections]
+  (let [invalid-ids (for [att (:attachments cmd)
+                          :let [id (:attachment/id att)
+                                get-attachment-metadata (getx injections :get-attachment-metadata)]
+                          :when (invalid-attachment? (get-attachment-metadata id) cmd)]
+                      id)]
+    (when (seq invalid-ids)
       {:errors [{:type :invalid-attachments
-                 :attachments (sort (set ids))}]})))
+                 :attachments (sort invalid-ids)}]})))
 
-(defn- add-comment-and-attachments [cmd application injections event]
-  (or (invalid-attachments-error cmd application injections)
+(defn- add-comment-and-attachments [cmd _application injections event]
+  (or (invalid-attachments-error cmd injections)
       (ok (assoc-some event
                       :application/comment (:comment cmd)
                       :event/attachments (when-let [att (:attachments cmd)]
@@ -440,6 +428,20 @@
   (when (empty? (:redacted-attachments cmd))
     {:errors [{:type :empty-redacted-attachments}]}))
 
+(defn- invalid-redacted-attachment [attachment cmd application]
+  (or (nil? attachment)
+      (not (application-util/can-redact? attachment (:actor cmd) application))))
+
+(defn- invalid-redacted-attachments-error [cmd application]
+  (let [attachments (index-by [:attachment/id] (:application/attachments application))
+        invalid-ids (for [attachment (:redacted-attachments cmd)
+                          :let [id (:attachment/id attachment)]
+                          :when (invalid-redacted-attachment (get attachments id) cmd application)]
+                      id)]
+    (when (seq invalid-ids)
+      {:errors [{:type :invalid-redact-attachments
+                 :attachments (sort invalid-ids)}]})))
+
 (defn- find-redacted-attachments
   "Finds events from which the redacted attachments originate from,
    and returns those events id with the redacted attachment id."
@@ -454,6 +456,7 @@
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
   (or (empty-redacted-attachments-error cmd)
+      (invalid-redacted-attachments-error cmd application)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
                                     :application/redacted-attachments (find-redacted-attachments
