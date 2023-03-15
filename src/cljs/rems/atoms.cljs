@@ -180,7 +180,7 @@
 (defn attachment-link
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
-  [download-button {:disabled? (= :filename/redacted (:attachment/filename attachment))
+  [download-button {:disabled? (:attachment/redacted attachment)
                     :title (localize-attachment attachment)
                     :url (str "/applications/attachment/" (:attachment/id attachment))}])
 
