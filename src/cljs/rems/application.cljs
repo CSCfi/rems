@@ -740,9 +740,10 @@
                "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
-      [:div.col-form-label.event-description [:b event-text]
-       (when-let [highlight-event-ids (seq (:highlight-event-ids event))]
-         [:div.float-right
+      [:div.event-description.d-flex.justify-content-between.col-form-label
+       [:b.col.pl-0 event-text]
+       (when-some [highlight-event-ids (seq (:highlight-event-ids event))]
+         [:div.d-inline-flex.align-items-start
           [:a {:href "#"
                :on-click (fn [e]
                            (rf/dispatch [::highlight-event-ids highlight-event-ids])
