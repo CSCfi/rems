@@ -784,7 +784,10 @@
       (when comment
         [:div.form-control.event-comment comment])
       (when-some [attachments (seq @(rf/subscribe [::get-attachments-by-event-id event-id]))]
-        [fields/attachment-row attachments {:compact true}])]]))
+        (into [:<>]
+              (->> attachments
+                   (partition-all 3)
+                   (map fields/attachment-row))))]]))
 
 (defn- render-events [events]
   (for [e events]

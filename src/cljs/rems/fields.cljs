@@ -383,13 +383,10 @@
              (text :t.form/attachment-remove)]]))
    [upload-button (str "upload-" id) status on-attach]])
 
-(defn attachment-row [attachments & [opts]]
-  (into [:div.attachment-row.flex-row.d-flex.flex-wrap]
+(defn attachment-row [attachments]
+  (into [:div.attachment-row.py-2]
         (for [attachment attachments]
-          [:div (when (:compact opts)
-                  {:class ["mt-1" "mr-1"]
-                   :style {:max-width "25rem"}})
-           [attachment-link attachment]])))
+          [attachment-link attachment])))
 
 (defn attachment-field
   [{:keys [on-attach on-remove-attachment] :as opts}]

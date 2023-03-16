@@ -159,17 +159,16 @@
        [:label title]
        [:div style formatted-value]])))
 
-(defn download-button [{:keys [disabled? title url id]}]
-  (let [props (-> {:class ["btn" "btn-outline-secondary" "text-truncate" "mw-100"]
-                   :title title}
-                  (assoc-some :id id))]
-    (if disabled?
-      [:a (merge-with conj props {:aria-disabled true :role "link" :class "border-dashed"})
-       [close-symbol]
-       [:span.ml-1 title]]
-      [:a (merge props {:href url :target "_blank"})
-       [file-download]
-       [:span.ml-1 title]])))
+(defn download-button [{:keys [disabled? title url]}]
+  [:a.attachment-link.btn.btn-outline-secondary.text-truncate
+   (cond-> {:href url
+            :target "_blank"
+            :role "link"}
+     disabled? (assoc :aria-disabled true))
+   (if disabled?
+     [close-symbol]
+     [file-download])
+   [:span.ml-1 title]])
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
