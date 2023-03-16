@@ -227,7 +227,7 @@
        :enabled true
        :archived false}})
 
-;; no attachments here for now
+;; XXX: no attachments here for now
 (defn ^:private get-attachments-for-application [id]
   [])
 
@@ -1320,7 +1320,11 @@
                                                               :name "Handler"
                                                               :email "handler@example.com"
                                                               :secret "secret"
-                                                              :handler/active? true}]}}
+                                                              :handler/active? true}]}
+          :application/reviewers []
+          :application/past-reviewers []
+          :application/deciders []
+          :application/past-deciders []}
          (model/enrich-with-injections approved-application injections))))
 
 (deftest test-enrich-event
