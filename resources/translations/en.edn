@@ -24,7 +24,6 @@
             :clear "Clear"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
-            :comment "Comment"
             :decide "Decide"
             :delete "Delete draft"
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]

@@ -24,7 +24,6 @@
             :clear "Tyhjennä"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voi enää muokata tai lähettää."]]
-            :comment "Kommentti"
             :decide "Päätä"
             :delete "Poista luonnos"
             :delete-intro [:div.intro [:p "Haluatko pysyvästi poistaa tämän hakemusluonnoksen?"]]
