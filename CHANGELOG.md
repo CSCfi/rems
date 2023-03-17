@@ -23,6 +23,9 @@ Changes since v2.31
   This does not include the invitation emails, which will always be sent, to be able to invite users.
   This also does not include any reminder emails that you can separately enable if you wish.
 - Any individual email can be disabled by setting its translation to empty string `""` (#3117).
+- Handler, reviewer and decider can now redact application attachments. (#2491)
+  Redacted attachment exists in REMS like any other attachment, but it's file contents are permanently removed, and filename is shown to other non-handler users as redacted.
+  Form attachments cannot be redacted, non-handler users may redact only their own attachments, and in decider workflow handler is not allowed to redact decider attachments.
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
