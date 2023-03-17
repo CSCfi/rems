@@ -874,15 +874,15 @@
       (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-application-event-attachments))))
+                              (get-attachments :actions-approve-reject))))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                              (get-application-event-attachments)))
+                              (get-attachments :actions-approve-reject)))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-application-event-attachments))))
+                              (get-attachments :actions-approve-reject))))
     (testing "approve"
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
@@ -890,7 +890,7 @@
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
       (is (= ["test.txt" "test-fi.txt"]
-             (get-attachments {:css "div.event a.attachment-link"}))))
+             (get-application-event-attachments))))
 
     (testing "event via api"
       ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
