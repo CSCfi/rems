@@ -2591,7 +2591,7 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :organization))
       (btu/fill-human :resid (str "resource for " (btu/context-getx :organization-name)))
-      (select-option "Organization" (btu/context-getx :organization-name) {:fields-only false})
+      (select-option "Organization" (btu/context-getx :organization-name))
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"})))
 
