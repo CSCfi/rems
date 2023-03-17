@@ -318,11 +318,21 @@
 (defn get-application-id []
   (last (str/split (btu/get-url) #"/")))
 
-(defn get-attachments
-  ([]
-   (get-attachments {:css "a.attachment-link"}))
-  ([selector]
-   (mapv btu/get-element-text-el (btu/query-all selector))))
+(defn get-application-event-attachments []
+  (->> (btu/query-all {:css ".page-application .event .attachment-link"})
+       (mapv btu/get-element-text-el)))
+
+(defn get-application-form-attachments []
+  (->> (btu/query-all {:css ".page-application .fields .attachment-link"})
+       (mapv btu/get-element-text-el)))
+
+(defn get-application-attachments []
+  (into (get-application-event-attachments)
+        (get-application-form-attachments)))
+
+(defn get-attachments [selector]
+  (->> (btu/query-all [selector {:css ".attachment-link"}])
+       (mapv btu/get-element-text-el)))
 
 (defn get-validation-summary []
   (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top-validation ul li"})))
@@ -358,11 +368,11 @@
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :attachment-en) ; inputs are hidden
     (btu/upload-file :upload-license-button-en "test-data/test.txt")
-    (btu/wait-predicate #(= (set ["test.txt"]) (set (get-attachments))))
+    (btu/wait-predicate #(= ["test.txt"] (get-attachments {:css ".page-create-license"})))
     (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
-    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt"]) (set (get-attachments))))
+    (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-attachments {:css ".page-create-license"})))
     (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
-    (btu/wait-predicate #(= (set ["test.txt" "test-fi.txt" "test-sv.txt"]) (set (get-attachments))))))
+    (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-attachments {:css ".page-create-license"})))))
 
 ;; TODO: return to DUO tests once features are complete
 ;; (defn get-duo-codes [s]
@@ -478,11 +488,11 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["test.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["test.txt"] (get-application-attachments)))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["test.txt" "test-fi.txt"] (get-application-attachments)))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-attachments)))
+          (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "test-sv.txt"] (get-application-attachments)))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
 
         (testing "uploading oversized attachment should display error"
@@ -845,15 +855,15 @@
       (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-attachments))))
+                              (get-application-event-attachments))))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                              (get-attachments)))
+                              (get-application-event-attachments)))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
       (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-attachments))))
+                              (get-application-event-attachments))))
     (testing "approve"
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
