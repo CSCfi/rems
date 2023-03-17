@@ -11,7 +11,7 @@
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx]]
-            [rems.config]
+            [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
@@ -545,3 +545,6 @@
       "var args = arguments;
        var callback = args[args.length - 1];
        return window.rems.config.fetch_config_BANG_(callback);")))
+
+(defn autosave-enabled? []
+  (get env :enable-autosave false))

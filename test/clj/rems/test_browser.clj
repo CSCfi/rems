@@ -415,6 +415,10 @@
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
 
+(defn wait-for-autosave-success []
+  (btu/wait-visible {:css ".alert-info" :fn/has-text "Saving"})
+  (btu/wait-visible {:id :status-success :fn/has-text "Application is saved."}))
+
 ;;; tests
 
 (deftest test-new-application
@@ -515,6 +519,8 @@
         ;; check that answers to conditional fields are retained even if they're temporarily invisible
         (select-option "Option list" "Second option")
         (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
+        (when (btu/autosave-enabled?)
+          (wait-for-autosave-success)) ; when testing locally, if autosave is enabled, select test fails due to race condition
         (select-option "Option list" "First option")
         (btu/wait-predicate #(btu/field-visible? "Conditional field"))
         (is (= "Conditional" (btu/value-of (keyword conditional-field-id))))
@@ -540,21 +546,22 @@
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
-        (testing "save draft succesfully, but show validation warnings"
-          (fill-form-field "Email field" "user")
-          (btu/scroll-and-click :save)
-          (is (btu/eventually-visible? :status-warning))
-          (is (= ["Field \"Text field\" is required."
-                  "Invalid email address."]
-                 (get-validation-summary)))
-          (is (= "Invalid email address."
-                 (get-validation-for-field "Email field"))))
+        (btu/with-client-config {:enable-autosave false} ; when testing locally
+          (testing "save draft succesfully, but show validation warnings"
+            (fill-form-field "Email field" "user")
+            (btu/scroll-and-click :save)
+            (is (btu/eventually-visible? :status-warning))
+            (is (= ["Field \"Text field\" is required."
+                    "Invalid email address."]
+                   (get-validation-summary)))
+            (is (= "Invalid email address."
+                   (get-validation-for-field "Email field")))))
 
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
           (fill-form-field "Simple text field" "Private field answer")
-          (is (btu/eventually-visible? [{:id :status-success :fn/has-text "Application is saved."}]))
+          (wait-for-autosave-success)
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
                  (get-validation-summary))))
@@ -822,7 +829,7 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
-      (Thread/sleep 500) ;; figure out what to wait for
+      (Thread/sleep 500) ; XXX: figure out what to wait for
       (btu/screenshot "after-opening-applicant-info.png")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
