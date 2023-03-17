@@ -509,21 +509,21 @@
                                     "Allowed maximum size of an attachment: 0.9 KB."])]
                    (get-error-summary)))))
 
-        (is (not (btu/field-visible? "Conditional field"))
-            "Conditional field is not visible before selecting option")
-
-        (select-option "Option list" "First option")
-        (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-        (fill-form-field "Conditional field" "Conditional")
-
-        ;; check that answers to conditional fields are retained even if they're temporarily invisible
-        (select-option "Option list" "Second option")
-        (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-        (when (btu/autosave-enabled?)
-          (wait-for-autosave-success)) ; when testing locally, if autosave is enabled, select test fails due to race condition
-        (select-option "Option list" "First option")
-        (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-        (is (= "Conditional" (btu/value-of (keyword conditional-field-id))))
+        (testing "answers to conditional fields are retained"
+          (is (not (btu/field-visible? "Conditional field"))
+              "Conditional field is not visible before selecting option")
+          (select-option "Option list" "First option")
+          (btu/wait-predicate #(btu/field-visible? "Conditional field"))
+          (fill-form-field "Conditional field" "Conditional")
+          (select-option "Option list" "Second option")
+          (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
+          ;; XXX: conditional field check sometimes fails due to rendering latency
+          (if (btu/autosave-enabled?)
+            (wait-for-autosave-success)
+            (Thread/sleep 1000))
+          (select-option "Option list" "First option")
+          (btu/wait-predicate #(btu/field-visible? "Conditional field"))
+          (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
 
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
@@ -621,10 +621,22 @@
             (testing "attachments"
               (is (= [{:attachment/id (first (btu/context-getx :attachment-ids))
                        :attachment/filename "test.txt"
-                       :attachment/type "text/plain"}
+                       :attachment/type "text/plain"
+                       :attachment/user {:email "alice@example.com",
+                                         :name "Alice Applicant",
+                                         :nickname "In Wonderland",
+                                         :organizations [{:organization/id "default"}],
+                                         :researcher-status-by "so",
+                                         :userid "alice"}}
                       {:attachment/id (second (btu/context-getx :attachment-ids))
                        :attachment/filename "test-fi.txt"
-                       :attachment/type "text/plain"}]
+                       :attachment/type "text/plain"
+                       :attachment/user {:email "alice@example.com",
+                                         :name "Alice Applicant",
+                                         :nickname "In Wonderland",
+                                         :organizations [{:organization/id "default"}],
+                                         :researcher-status-by "so",
+                                         :userid "alice"}}]
                      (:application/attachments application))))
             (testing "applicant information"
               (is (= "alice" (get-in application [:application/applicant :userid])))
