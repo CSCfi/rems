@@ -13,6 +13,7 @@
             [clojure.set :refer [intersection]]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [etaoin.keys]
             [medley.core :refer [find-first]]
             [rems.service.catalogue :as catalogue]
             [rems.service.form :as forms]
@@ -273,13 +274,10 @@
     (btu/wait-visible-el field)
     field))
 
-(defn select-option [label option & [opts]]
-  (let [fields-selector (when (:field-only opts) {:css ".fields"})
-        id (-> (filterv some? [fields-selector
-                               {:tag :label :fn/has-text label}])
-               (btu/get-element-attr :for))]
+(defn select-option [label option]
+  (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
     (btu/wait-visible {:id id})
-    (btu/fill {:id id} (str option "\n"))))
+    (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
 
 (defn remove-option [label option & [opts]]
   (let [value-class "dropdown-select__multi-value"
@@ -1136,7 +1134,7 @@
     (btu/fill-human :name-en (str (btu/context-getx :organization-name) " EN"))
     (btu/fill-human :name-fi (str (btu/context-getx :organization-name) " FI"))
     (btu/fill-human :name-sv (str (btu/context-getx :organization-name) " SV"))
-    (select-option "Owners" "Organization owner 1" {:fields-only false})
+    (select-option "Owners" "Organization owner 1")
     (btu/scroll-and-click :add-review-email)
     (btu/scroll-and-click :add-review-email)
 
@@ -2450,7 +2448,7 @@
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :label :fn/text "Form"}))
-      (select-option "Form" (btu/context-getx :form-title) {:fields-only false})
+      (select-option "Form" (btu/context-getx :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
