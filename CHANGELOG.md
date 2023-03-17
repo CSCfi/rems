@@ -14,6 +14,7 @@ Changes since v2.31
 ### Changes
 - Application editing performance is improved. (#3106)
 - Show form errors column only when some form has errors. (#3107)
+- Latest event is now shown in the minimized application state. (#3119)
 - Administration menu has been fine-tuned. Reports also shows only if
   the user can access it.
 - The administration pages can now scale wider than before.

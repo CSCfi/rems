@@ -180,6 +180,7 @@
                  ;; TODO: Once the terms have stabilized, convert db and the
                  ;;   code to match the term in UI.
                  :description "Title"
+                 :details "Details"
                  :duos {:validation {:missing-duo-codes "Data Use Ontology codes are specified in resources but missing from application:"}}
                  :empty "No applications."
                  ;; %1 - date
