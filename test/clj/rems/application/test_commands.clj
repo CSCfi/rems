@@ -200,20 +200,6 @@
         (first events)
         events))))
 
-(defn apply-ok-commands
-  "Given set of application events, apply cmds successively by calling build-application-view
-   and ok-command."
-  [events cmds & [injections]]
-  (let [injections (or injections command-injections)]
-    (loop [cmds cmds
-           events events]
-      (if (empty? cmds)
-        events
-        (let [application (build-application-view events injections)
-              event (ok-command (first cmds) application injections)]
-          (recur (rest cmds)
-                 (conj events event)))))))
-
 (defn ok-command-with-warnings [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
         result (->> (or injections command-injections)
@@ -231,7 +217,8 @@
                           :event/actor applicant-user-id
                           :application/id app-id
                           :application/external-id "2000/123"
-                          :application/resources []
+                          :application/resources [{:catalogue-item/id 1
+                                                   :resource/ext-id "res1"}]
                           :application/licenses []
                           :application/forms [{:form/id 1}]
                           :workflow/id 1
@@ -1840,17 +1827,13 @@
                        (build-application-view [dummy-created-event]))))))
 
 (deftest test-handle-command
-  (let [application (model/application-view nil {:event/type :application.event/created
-                                                 :event/actor "applicant"
-                                                 :workflow/type :workflow/default})
+  (let [application (build-application-view [dummy-created-event])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []
-                 :actor "applicant"}
-        injections {:valid-user? #{"applicant"}
-                    :find-userid identity}]
+                 :actor applicant-user-id}]
     (testing "executes command when user is authorized"
-      (is (not (:errors (commands/handle-command command application injections)))))
+      (is (not (:errors (commands/handle-command command application command-injections)))))
     (testing "fails when command fails validation"
       (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (commands/handle-command (assoc command :time 3) application {}))))
@@ -1858,6 +1841,6 @@
       ;; the permission checks should happen before executing the command handler
       ;; and only depend on the roles and permissions
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
-            result (commands/handle-command command application injections)]
+            result (commands/handle-command command application command-injections)]
         (is (= {:errors [{:type :forbidden}]} result))))))
 
