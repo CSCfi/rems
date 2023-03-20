@@ -854,40 +854,40 @@
                                                     dummy-submitted-event])))))))
 
 (deftest test-return-resubmit
-  (testing "return"
-    (let [created-event (merge dummy-created-event {:application/resources [{:catalogue-item/id 1
-                                                                             :resource/ext-id "res1"}]})]
-      (is (= {:event/type :application.event/returned
+  (testing "handler can return application"
+    (is (= {:event/type :application.event/returned
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment ""}
+           (ok-command {:type :application.command/return
+                        :actor handler-user-id
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "applicant can resubmit returned application"
+    (is (= {:event/type :application.event/submitted
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/submit
+                        :actor applicant-user-id}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event])))))
+  (testing "applicant can resubmit even when catalogue item is disabled"
+    (let [created-event (-> dummy-created-event
+                            (update :application/resources conj {:catalogue-item/id 7
+                                                                 :resource/ext-id "res-disabled"}))]
+      (is (= {:event/type :application.event/submitted
               :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment ""}
-             (ok-command {:type :application.command/return
-                          :actor handler-user-id
-                          :comment ""}
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
                          (build-application-view [created-event
-                                                  dummy-submitted-event]))))
-      (testing "resubmit"
-        (is (= {:event/type :application.event/submitted
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id}
-               (ok-command {:type :application.command/submit
-                            :actor applicant-user-id}
-                           (build-application-view [created-event
-                                                    dummy-submitted-event
-                                                    dummy-returned-event]))))
-        (testing "succeeds even when catalogue item is disabled"
-          (is (= {:event/type :application.event/submitted
-                  :event/time test-time
-                  :event/actor applicant-user-id
-                  :application/id app-id}
-                 (ok-command {:type :application.command/submit
-                              :actor applicant-user-id}
-                             (build-application-view [(merge-with into created-event {:application/resources [{:catalogue-item/id 7
-                                                                                                               :resource/ext-id "res-disabled"}]})
-                                                      dummy-submitted-event
-                                                      dummy-returned-event])))))))))
+                                                  dummy-submitted-event
+                                                  dummy-returned-event])))))))
 
 (deftest test-assign-external-id
   (testing "handler can assign id"
