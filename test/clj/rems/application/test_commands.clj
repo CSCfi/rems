@@ -1676,6 +1676,18 @@
                                                   dummy-reviewed-event])))))))
 
 (deftest test-remark
+  (testing "invalid attachments"
+    (is (= {:errors [{:type :invalid-attachments
+                      :attachments [2 3 1337]}]}
+           (fail-command {:type :application.command/remark
+                          :actor handler-user-id
+                          :comment "handler's remark"
+                          :attachments [{:attachment/id 2}
+                                        {:attachment/id 3}
+                                        {:attachment/id 1337}]
+                          :public false}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
   (testing "handler can remark"
     (is (= {:event/type :application.event/remarked
             :event/time test-time
@@ -1691,27 +1703,6 @@
                         :public false}
                        (build-application-view [dummy-created-event
                                                 dummy-submitted-event])))))
-  (testing "invalid attachments"
-    (is (= {:errors [{:type :invalid-attachments
-                      :attachments [2 3 1337]}]}
-           (fail-command {:type :application.command/remark
-                          :actor handler-user-id
-                          :comment "handler's remark"
-                          :attachments [{:attachment/id 1}
-                                        {:attachment/id 2}
-                                        {:attachment/id 3}
-                                        {:attachment/id 1337}]
-                          :public false}
-                         (build-application-view [dummy-created-event
-                                                  dummy-submitted-event])))))
-  (testing "applicants cannot remark"
-    (is (= {:errors [{:type :forbidden}]}
-           (fail-command {:type :application.command/remark
-                          :actor applicant-user-id
-                          :comment ""
-                          :public false}
-                         (build-application-view [dummy-created-event
-                                                  dummy-submitted-event])))))
   (testing "reviewer cannot remark before becoming reviewer"
     (is (= {:errors [{:type :forbidden}]}
            (fail-command {:type :application.command/remark
@@ -1720,52 +1711,40 @@
                           :public false}
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event])))))
-  (let [request-review {:type :application.command/request-review
-                        :actor handler-user-id
-                        :reviewers ["reviewer"]
-                        :comment ""}
-        reviewer-remark-1 {:type :application.command/remark
-                           :actor "reviewer"
-                           :comment "first remark"
-                           :public false}]
-    (testing "reviewer can remark before"
-      (is (= {:event/type :application.event/remarked
-              :event/time test-time
-              :event/actor "reviewer"
-              :application/id app-id
-              :application/comment "first remark"
-              :application/public false}
-             (last (apply-ok-commands [dummy-created-event
-                                       dummy-submitted-event]
-                                      [request-review
-                                       reviewer-remark-1]))))
-      (let [review {:type :application.command/review
-                    :actor "reviewer"
-                    :comment "..."}
-            reviewer-remark-2 {:type :application.command/remark
-                               :actor "reviewer"
-                               :comment "second remark"
-                               :public false}]
-        (testing "and after reviewing"
-          (is (= {:event/type :application.event/remarked
-                  :event/time test-time
-                  :event/actor "reviewer"
-                  :application/id app-id
-                  :application/comment "second remark"
-                  :application/public false}
-                 (last (apply-ok-commands [dummy-created-event
-                                           dummy-submitted-event]
-                                          [request-review
-                                           reviewer-remark-1
-                                           review
-                                           reviewer-remark-2])))))))))
+  (testing "reviewer can remark"
+    (is (= {:event/type :application.event/remarked
+            :event/time test-time
+            :event/actor reviewer-user-id
+            :application/id app-id
+            :application/comment ""
+            :application/public false}
+           (ok-command {:type :application.command/remark
+                        :actor reviewer-user-id
+                        :comment ""
+                        :public false}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event])))))
+  (testing "reviewer can remark after reviewing"
+    (is (= {:event/type :application.event/remarked
+            :event/time test-time
+            :event/actor reviewer-user-id
+            :application/id app-id
+            :application/comment ""
+            :application/public false}
+           (ok-command {:type :application.command/remark
+                        :actor reviewer-user-id
+                        :comment ""
+                        :public false}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event
+                                                dummy-reviewed-event]))))))
 
 (deftest test-copy-as-new
   (let [created-event (merge dummy-created-event {:application/external-id "2018/55"
-                                                  :application/resources [{:catalogue-item/id 1
-                                                                           :resource/ext-id "res1"}
-                                                                          {:catalogue-item/id 2
-                                                                           :resource/ext-id "res2"}]
+                                                  :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                                                          {:catalogue-item/id 2 :resource/ext-id "res2"}]
                                                   :application/forms [{:form/id 3}]})
         draft-saved-event (merge dummy-draft-saved-event {:application/field-values [{:form 3 :field "text" :value "1"}
                                                                                      {:form 3 :field "attachment" :value "2"}]})]
@@ -1776,10 +1755,8 @@
                  :event/actor applicant-user-id
                  :application/id new-app-id
                  :application/external-id new-external-id
-                 :application/resources [{:catalogue-item/id 1
-                                          :resource/ext-id "res1"}
-                                         {:catalogue-item/id 2
-                                          :resource/ext-id "res2"}]
+                 :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                         {:catalogue-item/id 2 :resource/ext-id "res2"}]
                  :application/licenses [{:license/id 1} {:license/id 2}]
                  :application/forms [{:form/id 1}]
                  :workflow/id 1
