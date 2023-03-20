@@ -366,26 +366,6 @@
                             :actor approver
                             :comment "Looking good"})))
 
-(defn- create-member-applications! [catid applicant approver members]
-  (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid1
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}}))
-  (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid2
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}})
-    (test-helpers/command! {:type :application.command/submit
-                            :application-id appid2
-                            :actor applicant})
-    (doseq [member members]
-      (test-helpers/command! {:type :application.command/add-member
-                              :application-id appid2
-                              :actor approver
-                              :member member}))))
-
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
@@ -627,7 +607,7 @@
                                    :comment ""})))))
     (log/info "Performance test applications created")))
 
-(defn- create-items! [users]
+(defn- create-items! [users users-data]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
 
@@ -976,8 +956,8 @@
                                           :organization {:organization/id "organization1"}
                                           :workflow-id (:organization-owner workflows)
                                           :categories [special-category]})
-
     (let [applicant (users :applicant1)
+          member (users :applicant2)
           handler (users :approver2)
           reviewer (users :reviewer)
           catid-1 (test-helpers/create-catalogue-item! {:actor owner
@@ -999,6 +979,9 @@
                                                         :workflow-id (:default workflows)
                                                         :categories [ordinary-category]})
           app-id (test-helpers/create-draft! applicant [catid-1 catid-2] "two-form draft application")]
+      (test-helpers/invite-and-accept-member! {:actor applicant
+                                               :application-id app-id
+                                               :member (get users-data member)})
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})
@@ -1010,6 +993,7 @@
 
     (when (:enable-duo rems.config/env)
       (let [applicant (users :applicant1)
+            member (users :applicant2)
             handler (users :approver2)
             reviewer (users :reviewer)
             cat-id (test-helpers/create-catalogue-item! {:actor owner
@@ -1037,6 +1021,9 @@
                                 :actor applicant
                                 :field-values []
                                 :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
+        (test-helpers/invite-and-accept-member! {:actor applicant
+                                                 :application-id app-id
+                                                 :member (get users-data member)})
         (test-helpers/command! {:type :application.command/save-draft
                                 :application-id app-id-2
                                 :actor applicant
@@ -1055,6 +1042,7 @@
                                 :comment "please have a look"})))
     ; create application to demo attachment redaction feature
     (let [applicant (:applicant1 users)
+          member (:applicant2 users)
           decider (:approver1 users)
           handler (:approver2 users)
           reviewer (:reviewer users)
@@ -1087,6 +1075,9 @@
                                                        :workflow-id (:decider2 workflows)
                                                        :categories [special-category]})
           app-id (test-helpers/create-draft! applicant [cat-id] "redacted attachments")]
+      (test-helpers/invite-and-accept-member! {:actor applicant
+                                               :application-id app-id
+                                               :member (get users-data member)})
       (test-helpers/fill-form! {:application-id app-id
                                 :actor applicant
                                 :field-value "lots of attachments"
@@ -1224,7 +1215,7 @@
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)
-  (create-items! +fake-users+))
+  (create-items! +fake-users+ +fake-user-data+))
 
 (defn create-demo-data! []
   (test-helpers/assert-no-existing-data!)
@@ -1235,7 +1226,7 @@
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)
-    (create-items! users)))
+    (create-items! users user-data)))
 
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)

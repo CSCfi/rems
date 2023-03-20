@@ -328,3 +328,16 @@
           "You have existing applications, refusing to continue. An empty database is needed.")
   (assert (empty? (db/get-catalogue-items {}))
           "You have existing catalogue items, refusing to continue. An empty database is needed."))
+
+(defn invite-and-accept-member! [{:keys [actor application-id member]}]
+  (command! {:type :application.command/invite-member
+             :actor actor
+             :application-id application-id
+             :member (select-keys member [:email :name])})
+  (command! {:type :application.command/accept-invitation
+             :actor (:userid member)
+             :application-id application-id
+             :token (-> (rems.db.applications/get-application-internal application-id)
+                        :application/events
+                        last
+                        :invitation/token)}))
