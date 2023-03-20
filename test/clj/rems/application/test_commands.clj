@@ -19,6 +19,7 @@
 (def handler-user-id "assistant")
 (def decider-user-id "decider")
 (def reviewer-user-id "reviewer")
+(def review-request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49"))
 
 (def dummy-licenses
   {1 {:id 1
@@ -279,6 +280,19 @@
                                 :event/actor "somebody"
                                 :application/id app-id
                                 :invitation/token "very-secure"})
+(def dummy-review-requested-event {:event/type :application.event/review-requested
+                                   :event/time test-time
+                                   :event/actor handler-user-id
+                                   :application/id app-id
+                                   :application/request-id review-request-id
+                                   :application/reviewers [reviewer-user-id]
+                                   :application/comment ""})
+(def dummy-reviewed-event {:event/type :application.event/reviewed
+                           :event/time test-time
+                           :event/actor reviewer-user-id
+                           :application/id app-id
+                           :application/request-id review-request-id
+                           :application/comment ""})
 
 ;;; Tests
 
@@ -1581,107 +1595,85 @@
                           :comment ""}
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event])))))
-  (let [request-review-1 {:type :application.command/request-review
-                          :actor handler-user-id
-                          :reviewers ["reviewer" "reviewer2"]
-                          :comment ""}
-        ;; Make a new request that should partly override previous
-        request-review-2 {:type :application.command/request-review
-                          :actor handler-user-id
-                          :reviewers ["reviewer"]
-                          :comment ""}
-        [review-requested-event-1
-         review-requested-event-2] (take-last 2 (apply-ok-commands [dummy-created-event
-                                                                    dummy-submitted-event]
-                                                                   [request-review-1
-                                                                    request-review-2]))]
-    (testing "review requested successfully"
-      (is (instance? UUID (:application/request-id review-requested-event-1)))
+  (testing "can request review"
+    (let [review-requested-event (ok-command {:type :application.command/request-review
+                                              :actor handler-user-id
+                                              :reviewers ["reviewer" "reviewer2"]
+                                              :comment ""}
+                                             (build-application-view [dummy-created-event
+                                                                      dummy-submitted-event]))]
       (is (= {:event/type :application.event/review-requested
-              :application/request-id (:application/request-id review-requested-event-1)
+              :application/request-id (:application/request-id review-requested-event)
               :application/reviewers ["reviewer" "reviewer2"]
               :application/comment ""
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id}
-             review-requested-event-1))
-      (is (instance? UUID (:application/request-id review-requested-event-2)))
+             review-requested-event))))
+  (testing "second review request partly overrides previous request"
+    (let [review-requested-event (ok-command {:type :application.command/request-review
+                                              :actor handler-user-id
+                                              :reviewers ["reviewer2"]
+                                              :comment ""}
+                                             (build-application-view [dummy-created-event
+                                                                      dummy-submitted-event
+                                                                      dummy-review-requested-event]))]
       (is (= {:event/type :application.event/review-requested
-              :application/request-id (:application/request-id review-requested-event-2)
-              :application/reviewers ["reviewer"]
+              :application/request-id (:application/request-id review-requested-event)
+              :application/reviewers ["reviewer2"]
               :application/comment ""
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id}
-             review-requested-event-2)))
-    (testing "only the requested reviewer can review"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command {:type :application.command/review
-                            :actor "reviewer3"
-                            :comment "..."}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event
-                                                    review-requested-event-1
-                                                    review-requested-event-2])))))
-    (testing "reviews are linked to different requests"
-      (is (= (:application/request-id review-requested-event-2)
-             (:application/request-id
-              (ok-command {:type :application.command/review
-                           :actor "reviewer"
-                           :comment "..."}
-                          (build-application-view [dummy-created-event
-                                                   dummy-submitted-event
-                                                   review-requested-event-1
-                                                   review-requested-event-2])))))
-      (is (= (:application/request-id review-requested-event-1)
-             (:application/request-id
-              (ok-command {:type :application.command/review
-                           :actor "reviewer2"
-                           :comment "..."}
-                          (build-application-view [dummy-created-event
-                                                   dummy-submitted-event
-                                                   review-requested-event-1
-                                                   review-requested-event-2]))))))
-    (let [review-requested-event-3 (ok-command {:type :application.command/review
-                                                :actor "reviewer"
-                                                :comment "..."}
-                                               (build-application-view [dummy-created-event
-                                                                        dummy-submitted-event
-                                                                        review-requested-event-1
-                                                                        review-requested-event-2]))]
-      (testing "reviewed succesfully"
-        (is (= {:event/type :application.event/reviewed
-                :event/time test-time
-                :event/actor "reviewer"
-                :application/id app-id
-                :application/request-id (:application/request-id review-requested-event-2)
-                :application/comment "..."}
-               review-requested-event-3)))
-      (testing "cannot review twice"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command {:type :application.command/review
-                              :actor "reviewer"
-                              :comment "..."}
-                             (build-application-view [dummy-created-event
-                                                      dummy-submitted-event
-                                                      review-requested-event-1
-                                                      review-requested-event-2
-                                                      review-requested-event-3])))))
-      (testing "other reviewer can still review"
-        (is (= {:event/type :application.event/reviewed
-                :event/time test-time
-                :event/actor "reviewer2"
-                :application/id app-id
-                :application/request-id (:application/request-id review-requested-event-1)
-                :application/comment "..."}
-               (ok-command {:type :application.command/review
-                            :actor "reviewer2"
-                            :comment "..."}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event
-                                                    review-requested-event-1
-                                                    review-requested-event-2
-                                                    review-requested-event-3]))))))))
+             review-requested-event))))
+  (testing "only the requested reviewer can review"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/review
+                          :actor "reviewer3"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event])))))
+  (testing "review succeeds"
+    (is (= {:event/type :application.event/reviewed
+            :event/time test-time
+            :event/actor "reviewer"
+            :application/id app-id
+            :application/request-id review-request-id
+            :application/comment "..."}
+           (ok-command {:type :application.command/review
+                        :actor "reviewer"
+                        :comment "..."}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event])))))
+  (testing "cannot review twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/review
+                          :actor "reviewer"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event
+                                                  dummy-reviewed-event])))))
+  (testing "second reviewer can review after first reviewer"
+    (let [review-request-id-2 (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")]
+      (is (= {:event/type :application.event/reviewed
+              :event/time test-time
+              :event/actor "reviewer2"
+              :application/id app-id
+              :application/request-id review-request-id-2
+              :application/comment "..."}
+             (ok-command {:type :application.command/review
+                          :actor "reviewer2"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event
+                                                  (merge dummy-review-requested-event
+                                                         {:application/request-id review-request-id-2
+                                                          :application/reviewers ["reviewer2"]})
+                                                  dummy-reviewed-event])))))))
 
 (deftest test-remark
   (testing "handler can remark"
