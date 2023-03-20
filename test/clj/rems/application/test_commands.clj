@@ -19,7 +19,8 @@
 (def handler-user-id "assistant")
 (def decider-user-id "decider")
 (def reviewer-user-id "reviewer")
-(def review-request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49"))
+(def review-request-id (UUID/randomUUID))
+(def decision-request-id (UUID/randomUUID))
 
 (def dummy-licenses
   {1 {:id 1
@@ -293,6 +294,20 @@
                            :application/id app-id
                            :application/request-id review-request-id
                            :application/comment ""})
+(def dummy-decision-requested-event {:event/type :application.event/decision-requested
+                                     :event/time test-time
+                                     :event/actor handler-user-id
+                                     :application/id app-id
+                                     :application/request-id decision-request-id
+                                     :application/deciders [decider-user-id]
+                                     :application/comment ""})
+(def dummy-decided-event {:event/type :application.event/decided
+                          :event/time test-time
+                          :event/actor decider-user-id
+                          :application/id app-id
+                          :application/request-id decision-request-id
+                          :application/decision :approved
+                          :application/comment ""})
 
 ;;; Tests
 
@@ -1017,90 +1032,90 @@
                           :comment "pls"}
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event])))))
-  (let [request-decision {:type :application.command/request-decision
-                          :actor handler-user-id
-                          :deciders [decider-user-id]
-                          :comment ""}
-        decision-requested-event (ok-command request-decision
-                                             (build-application-view [dummy-created-event
-                                                                      dummy-submitted-event]))
-        request-id (:application/request-id decision-requested-event)]
-    (testing "decision requested successfully"
-      (is (instance? UUID request-id))
+  (testing "decision requested successfully"
+    (let [decision-requested-event (ok-command {:type :application.command/request-decision
+                                                :actor handler-user-id
+                                                :deciders [decider-user-id]
+                                                :comment ""}
+                                               (build-application-view [dummy-created-event
+                                                                        dummy-submitted-event]))]
+      (is (instance? UUID (:application/request-id decision-requested-event)))
       (is (= {:event/type :application.event/decision-requested
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
-              :application/request-id request-id
+              :application/request-id (:application/request-id decision-requested-event)
               :application/deciders [decider-user-id]
               :application/comment ""}
-             decision-requested-event)))
-    (testing "only the requested user can decide"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command {:type :application.command/decide
-                            :actor handler-user-id
-                            :decision :approved
-                            :comment ""}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event
-                                                    decision-requested-event])))))
-    (let [approve-cmd {:type :application.command/decide
-                       :actor decider-user-id
-                       :decision :approved
-                       :comment ""}
-          approved-event (ok-command approve-cmd
-                                     (build-application-view [dummy-created-event
-                                                              dummy-submitted-event
-                                                              decision-requested-event]))]
-      (testing "decided approved successfully"
-        (is (= {:event/type :application.event/decided
-                :event/time test-time
-                :event/actor decider-user-id
-                :application/id app-id
-                :application/request-id request-id
-                :application/decision :approved
-                :application/comment ""}
-               approved-event)))
-      (testing "cannot approve twice"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command approve-cmd
-                             (build-application-view [dummy-created-event
-                                                      dummy-submitted-event
-                                                      decision-requested-event
-                                                      approved-event]))))))
-    (let [reject-cmd {:type :application.command/decide
-                      :actor decider-user-id
-                      :decision :rejected
-                      :comment ""}
-          rejected-event (ok-command reject-cmd
-                                     (build-application-view [dummy-created-event
-                                                              dummy-submitted-event
-                                                              decision-requested-event]))]
-      (testing "decided rejected successfully"
-        (is (= {:event/type :application.event/decided
-                :event/time test-time
-                :event/actor decider-user-id
-                :application/id app-id
-                :application/request-id request-id
-                :application/decision :rejected
-                :application/comment ""}
-               rejected-event)))
-      (testing "cannot reject twice"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command reject-cmd
-                             (build-application-view [dummy-created-event
-                                                      dummy-submitted-event
-                                                      decision-requested-event
-                                                      rejected-event]))))))
-    (testing "other decisions are not possible"
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
-                            (fail-command {:type :application.command/decide
-                                           :actor decider-user-id
-                                           :decision :foobar
-                                           :comment ""}
-                                          (build-application-view [dummy-created-event
-                                                                   dummy-submitted-event
-                                                                   decision-requested-event])))))))
+             decision-requested-event))))
+  (testing "only the requested user can decide"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor handler-user-id
+                          :decision :approved
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event])))))
+  (testing "decided approved successfully"
+    (is (= {:event/type :application.event/decided
+            :event/time test-time
+            :event/actor decider-user-id
+            :application/id app-id
+            :application/request-id decision-request-id
+            :application/decision :approved
+            :application/comment ""}
+           (ok-command {:type :application.command/decide
+                        :actor decider-user-id
+                        :decision :approved
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-decision-requested-event])))))
+  (testing "cannot decide approve twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor decider-user-id
+                          :decision :approved
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event
+                                                  dummy-decided-event])))))
+  (testing "decided rejected successfully"
+    (is (= {:event/type :application.event/decided
+            :event/time test-time
+            :event/actor decider-user-id
+            :application/id app-id
+            :application/request-id decision-request-id
+            :application/decision :rejected
+            :application/comment ""}
+           (ok-command {:type :application.command/decide
+                        :actor decider-user-id
+                        :decision :rejected
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-decision-requested-event])))))
+  (testing "cannot decide reject twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor decider-user-id
+                          :decision :rejected
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event
+                                                  (merge dummy-decided-event {:application/decision :rejected})])))))
+  (testing "other decisions are not possible"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
+                          (fail-command {:type :application.command/decide
+                                         :actor decider-user-id
+                                         :decision :foobar
+                                         :comment ""}
+                                        (build-application-view [dummy-created-event
+                                                                 dummy-submitted-event
+                                                                 dummy-decision-requested-event]))))))
 
 (deftest test-add-member
   (testing "handler can add members"
@@ -1657,7 +1672,7 @@
                                                   dummy-review-requested-event
                                                   dummy-reviewed-event])))))
   (testing "second reviewer can review after first reviewer"
-    (let [review-request-id-2 (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")]
+    (let [review-request-id-2 (UUID/randomUUID)]
       (is (= {:event/type :application.event/reviewed
               :event/time test-time
               :event/actor "reviewer2"
