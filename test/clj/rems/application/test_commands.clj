@@ -1119,24 +1119,21 @@
 
 (deftest test-add-member
   (testing "handler can add members"
-    (let [member-added-event (ok-command {:type :application.command/add-member
-                                          :actor handler-user-id
-                                          :member {:userid "member1"}}
-                                         (build-application-view [dummy-created-event
-                                                                  dummy-submitted-event
-                                                                  dummy-member-added-event]))]
-      (is (= {:event/type :application.event/member-added
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/member {:userid "member1"}}
-             member-added-event))
-      (testing "added members can see the application"
-        (is (-> (build-application-view [dummy-created-event
-                                         dummy-submitted-event
-                                         dummy-member-added-event
-                                         member-added-event])
-                (model/see-application? "somebody"))))))
+    (is (= {:event/type :application.event/member-added
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:userid "member1"}}
+           (ok-command {:type :application.command/add-member
+                        :actor handler-user-id
+                        :member {:userid "member1"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "added members can see the application"
+    (is (-> (build-application-view [dummy-created-event
+                                     dummy-submitted-event
+                                     dummy-member-added-event])
+            (model/see-application? "somebody"))))
   (testing "only handler can add members"
     (is (= {:errors [{:type :forbidden}]}
            (fail-command {:type :application.command/add-member
@@ -1205,21 +1202,34 @@
                                                 dummy-submitted-event]))))))
 
 (deftest test-invite-reviewer-decider
-  (testing "applicant can't invite reviewer for draft"
-    (is (= {:errors [{:type :forbidden}]}
-           (fail-command {:type :application.command/invite-reviewer
-                          :actor applicant-user-id
-                          :reviewer {:name "A Reviewer"
-                                     :email "reviewer@applicants.com"}}
-                         (build-application-view [dummy-created-event])))))
-  (testing "applicant can't invite decider for draft"
-    (is (= {:errors [{:type :forbidden}]}
-           (fail-command {:type :application.command/invite-decider
-                          :actor applicant-user-id
-                          :decider {:name "A Decider"
-                                    :email "decider@applicants.com"}}
-                         (build-application-view [dummy-created-event])))))
-  (testing "handler can invite reviewer for submitted"
+  (doseq [user #{applicant-user-id "member1"}]
+    (testing (str user " cannot invite reviewer or decider to draft application")
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/invite-reviewer
+                            :actor user
+                            :reviewer {:name "A Reviewer"
+                                       :email "reviewer@applicants.com"}}
+                           (build-application-view [dummy-created-event]))
+             (fail-command {:type :application.command/invite-decider
+                            :actor user
+                            :decider {:name "A Decider"
+                                      :email "decider@applicants.com"}}
+                           (build-application-view [dummy-created-event])))))
+    (testing (str user " cannot invite reviewer or decider to submitted application")
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/invite-reviewer
+                            :actor user
+                            :reviewer {:name "A Reviewer"
+                                       :email "reviewer@applicants.com"}}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event]))
+             (fail-command {:type :application.command/invite-decider
+                            :actor user
+                            :decider {:name "A Decider"
+                                      :email "decider@applicants.com"}}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event]))))))
+  (testing "handler can invite reviewer to submitted application"
     (is (= {:event/type :application.event/reviewer-invited
             :event/time test-time
             :event/actor handler-user-id
@@ -1235,7 +1245,7 @@
                                    :email "reviewer@applicants.com"}}
                        (build-application-view [dummy-created-event
                                                 dummy-submitted-event])))))
-  (testing "handler can invite decider for submitted"
+  (testing "handler can invite decider to submitted application"
     (is (= {:event/type :application.event/decider-invited
             :event/time test-time
             :event/actor handler-user-id
@@ -1250,24 +1260,7 @@
                         :decider {:name "A Decider"
                                   :email "decider@applicants.com"}}
                        (build-application-view [dummy-created-event
-                                                dummy-submitted-event])))))
-  (doseq [user [applicant-user-id "member1"]]
-    (testing (str user " users cannot invite reviewer for submitted")
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command {:type :application.command/invite-reviewer
-                            :actor user
-                            :reviewer {:name "A Reviewer"
-                                       :email "reviewer@applicants.com"}}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event])))))
-    (testing (str user " users cannot invite decider for submitted")
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command {:type :application.command/invite-decider
-                            :actor user
-                            :decider {:name "A Decider"
-                                      :email "decider@applicants.com"}}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event])))))))
+                                                dummy-submitted-event]))))))
 
 (deftest test-accept-invitation
   (testing "invited member"
