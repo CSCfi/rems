@@ -184,14 +184,13 @@
                                                            :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
                                                       (if first-column? ; wrap open chevron?
                                                         [:div.d-flex.flex-row.w-100.align-items-baseline
-                                                         {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
+                                                         {:class [(str "pad-depth-" (:depth row 0))
                                                                   (when (:expanded? row) "expanded")]}
 
-                                                         (when first-column?
-                                                           (when (seq children)
-                                                             (if (:expanded? row)
-                                                               [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
-                                                               [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
+                                                         (when (seq children)
+                                                           (if (:expanded? row)
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down]))
 
                                                          content]
 
