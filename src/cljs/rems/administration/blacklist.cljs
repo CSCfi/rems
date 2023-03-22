@@ -205,8 +205,7 @@
       :added-by {:value (rems.common.application-util/get-member-name added-by)}
       :added-at {:value added-at :display-value (localize-time added-at)}
       :comment {:value comment}
-      :commands {:td [:td.commands
-                      [remove-button resource user]]}})))
+      :commands {:display-value [:div.commands.flex-nowrap [remove-button resource user]]}})))
 
 (rf/reg-event-db
  ::fetch-result

@@ -105,19 +105,17 @@
            :internal-name {:value (get-in form [:form/internal-name])}
            :external-title {:value (get-in form [:form/external-title language])}
            :active (let [checked? (status-flags/active? form)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
            :errors (if-some [errors (seq (:form/errors form))]
                      {:value errors
-                      :td [:td [errors-symbol]]
+                      :display-value [errors-symbol]
                       :sort-value 2}
                      {:value nil
                       :sort-value 1})
-           :commands {:td [:td
-                           [:div.commands.flex-nowrap
-                            [to-view-form form]
-                            [modify-form-dropdown form]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-form form]
+                                      [modify-form-dropdown form]]}})
         forms)))
 
 (defn- forms-list []

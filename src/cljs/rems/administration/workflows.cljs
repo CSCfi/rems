@@ -89,13 +89,11 @@
            :organization {:value (get-in workflow [:organization :organization/short-name language])}
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td
-                           [:div.commands.flex-nowrap
-                            [to-view-workflow (:id workflow)]
-                            [modify-workflow-dropdown workflow]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-workflow (:id workflow)]
+                                      [modify-workflow-dropdown workflow]]}})
         workflows)))
 
 (defn- workflows-list []

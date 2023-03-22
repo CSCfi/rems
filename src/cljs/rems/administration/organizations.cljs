@@ -103,8 +103,7 @@
       :short-name {:value (get-in organization [:organization/short-name language])}
       :name {:value (get-in organization [:organization/name language])}
       :active (let [checked? (status-flags/active? organization)]
-                {:td [:td.active
-                      [readonly-checkbox {:value checked?}]]
+                {:display-value [readonly-checkbox {:value checked?}]
                  :sort-value (if checked? 1 2)})
       :commands {:display-value [:div.commands.flex-nowrap
                                  [to-view-organization (:organization/id organization)]

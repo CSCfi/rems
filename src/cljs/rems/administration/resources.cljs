@@ -87,13 +87,11 @@
            :organization {:value (get-in resource [:organization :organization/short-name language])}
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td
-                           [:div.commands.flex-nowrap
-                            [to-view-resource (:id resource)]
-                            [modify-resource-dropdown resource]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-resource (:id resource)]
+                                      [modify-resource-dropdown resource]]}})
         resources)))
 
 (defn- resources-list []
