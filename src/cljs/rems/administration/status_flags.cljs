@@ -36,6 +36,7 @@
                 :t.administration/disable
                 :t.administration/enable)]
     {:id id
+     :class "toggle-enabled"
      :on-click #(on-change (update item :enabled not)
                            [:span [text label]
                             " \""  [get-localized-title-for-anything item] "\""])
@@ -63,6 +64,7 @@
                 :t.administration/unarchive
                 :t.administration/archive)]
     {:id id
+     :class "toggle-archived"
      :on-click #(on-change (update item :archived not)
                            [:span [text label]
                             " \"" [get-localized-title-for-anything item] "\""])
