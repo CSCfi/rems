@@ -558,14 +558,6 @@
     .then(callback);")]
     result))
 
-(defn format-accessibility-report [data]
-  (doseq [k [:violations]
-          :let [content (->> data
-                             (mapcat #(get % k))
-                             distinct
-                             (sort-by :impact))]]
-    content))
-
 (defn gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
   and appends them to the test context for summary reporting.
