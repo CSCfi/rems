@@ -198,7 +198,6 @@
     [:th
      :td
      ["&:last-child:not(:first-child)"
-      "&:last-child:not(:first-child)"
       {:padding-left 0}]
      {:text-align "left"
       :padding "0.5rem 1rem"}]
