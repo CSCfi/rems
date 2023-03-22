@@ -911,6 +911,7 @@
       (btu/fill-human :email-invite-decider "user@example.com")
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/screenshot "decider-invited")
       (logout))
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
@@ -932,7 +933,8 @@
         (btu/wait-page-loaded)
         ;; NB: this differs a bit from `login-as` and we should keep them the same
         (btu/wait-visible :logout)
-        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))))
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
+        (btu/screenshot "decider-joined")))
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
@@ -945,9 +947,11 @@
       (btu/scroll-and-click :decide-action-button)
       (is (btu/eventually-visible? :comment-decide))
       (btu/fill-human :comment-decide "ok")
+      (btu/screenshot "about-to-decide")
       (btu/scroll-and-click :decide-approve)
       (btu/wait-page-loaded)
-      (is (btu/eventually-visible? {:css ".alert-success"})))
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/screenshot "decided"))
     (testing "check decision event"
       ;; checking has sometimes failed because
       ;; the comment was typoed so let's not compare it
