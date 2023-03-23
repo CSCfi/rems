@@ -7,17 +7,17 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
-            [rems.service.form :as form]
-            [rems.service.organizations :as organizations]
+            [rems.config]
             [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.db.users :as users]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
+            [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.testing-util :refer [with-user]]
-            [rems.config])
+            [rems.service.form :as form]
+            [rems.service.organizations :as organizations]
+            [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -63,156 +63,172 @@
                                                          :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
+(def label-field
+  {:field/type :label
+   :field/optional false
+   :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
+                 :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}})
+(def description-field
+  {:field/type :description
+   :field/optional false
+   :field/title {:en "Application title field"
+                 :fi "Hakemuksen otsikko -kenttä"
+                 :sv "Ansökningens rubrikfält"}})
+(def text-field
+  {:field/type :text
+   :field/optional false
+   :field/title {:en "Text field"
+                 :fi "Tekstikenttä"
+                 :sv "Textfält"}
+   :field/info-text {:en "Explanation of how to fill in text field"
+                     :fi "Selitys tekstikentän täyttämisestä"
+                     :sv "Förklaring till hur man fyller i textfält"}
+   :field/placeholder {:en "Placeholder text"
+                       :fi "Täyteteksti"
+                       :sv "Textexempel"}})
+(def texta-field
+  {:field/type :texta
+   :field/optional false
+   :field/title {:en "Text area"
+                 :fi "Tekstialue"
+                 :sv "Textområde"}
+   :field/info-text {:en "Explanation of how to fill in text field"
+                     :fi "Selitys tekstikentän täyttämisestä"
+                     :sv "Förklaring till hur man fyller i textfält"}
+   :field/placeholder {:en "Placeholder text"
+                       :fi "Täyteteksti"
+                       :sv "Textexempel"}})
+(def header-field
+  {:field/type :header
+   :field/optional false
+   :field/title {:en "Header"
+                 :fi "Otsikko"
+                 :sv "Titel"}})
+(def date-field
+  {:field/type :date
+   :field/optional false
+   :field/title {:en "Date field"
+                 :fi "Päivämääräkenttä"
+                 :sv "Datumfält"}})
+(def email-field
+  {:field/type :email
+   :field/optional false
+   :field/title {:en "Email field"
+                 :fi "Sähköpostikenttä"
+                 :sv "E-postaddressfält"}})
+(def attachment-field
+  {:field/type :attachment
+   :field/optional false
+   :field/title {:en "Attachment"
+                 :fi "Liitetiedosto"
+                 :sv "Bilaga"}})
+(def multiselect-field
+  {:field/type :multiselect
+   :field/optional false
+   :field/title {:en "Multi-select list"
+                 :fi "Monivalintalista"
+                 :sv "Lista med flerval"}
+   :field/options [{:key "Option1"
+                    :label {:en "First option"
+                            :fi "Ensimmäinen vaihtoehto"
+                            :sv "Första alternativ"}}
+                   {:key "Option2"
+                    :label {:en "Second option"
+                            :fi "Toinen vaihtoehto"
+                            :sv "Andra alternativ"}}
+                   {:key "Option3"
+                    :label {:en "Third option"
+                            :fi "Kolmas vaihtoehto"
+                            :sv "Tredje alternativ"}}]})
+(def table-field
+  {:field/type :table
+   :field/optional false
+   :field/title {:en "Table"
+                 :fi "Taulukko"
+                 :sv "Tabell"}
+   :field/columns [{:key "col1"
+                    :label {:en "First"
+                            :fi "Ensimmäinen"
+                            :sv "Första"}}
+                   {:key "col2"
+                    :label {:en "Second"
+                            :fi "Toinen"
+                            :sv "Andra"}}]})
+(def option-field
+  {:field/type :option
+   :field/optional false
+   :field/title {:en "Option list"
+                 :fi "Valintalista"
+                 :sv "Lista"}
+   :field/options [{:key "Option1"
+                    :label {:en "First option"
+                            :fi "Ensimmäinen vaihtoehto"
+                            :sv "Första alternativ"}}
+                   {:key "Option2"
+                    :label {:en "Second option"
+                            :fi "Toinen vaihtoehto"
+                            :sv "Andra alternativ"}}
+                   {:key "Option3"
+                    :label {:en "Third option"
+                            :fi "Kolmas vaihtoehto"
+                            :sv "Tredje alternativ"}}]})
+(def phone-number-field
+  {:field/type :phone-number
+   :field/optional false
+   :field/title {:en "Phone number"
+                 :fi "Puhelinnumero"
+                 :sv "Telefonnummer"}})
+(def ip-address-field
+  {:field/type :ip-address
+   :field/optional false
+   :field/title {:en "IP address"
+                 :fi "IP-osoite"
+                 :sv "IP-adress"}})
+
+(def conditional-field-example
+  [(merge option-field {:field/id "option"
+                        :field/title {:en "Option list. Choose the first option to reveal a new field."
+                                      :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
+                                      :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
+                        :field/optional true})
+   (merge text-field {:field/title {:en "Conditional field. Shown only if first option is selected above."
+                                    :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
+                                    :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
+                      :field/visibility {:visibility/type :only-if
+                                         :visibility/field {:field/id "option"}
+                                         :visibility/values ["Option1"]}})])
+
+(def max-length-field-example
+  [(merge label-field {:field/title {:en "The following field types can have a max length."
+                                     :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
+                                     :sv "De nästa fälttyperna kan ha bengränsat längd."}})
+   (merge text-field {:field/title {:en "Text field with max length"
+                                    :fi "Tekstikenttä pituusrajalla"
+                                    :sv "Textfält med begränsat längd"}
+                      :field/optional true
+                      :field/max-length 10})
+   (merge texta-field {:field/title {:en "Text area with max length"
+                                     :fi "Tekstialue pituusrajalla"
+                                     :sv "Textområdet med begränsat längd"}
+                       :field/optional true
+                       :field/max-length 100})])
+
 (def all-field-types-example
-  [{:field/type :label
-    :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
-                  :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}
-    :field/optional false}
-
-   {:field/type :description
-    :field/title {:en "Application title field"
-                  :fi "Hakemuksen otsikko -kenttä"
-                  :sv "Ansökningens rubrikfält"}
-    :field/optional false}
-
-   {:field/type :text
-    :field/title {:en "Text field"
-                  :fi "Tekstikenttä"
-                  :sv "Textfält"}
-    :field/optional false
-    :field/info-text {:en "Explanation of how to fill in text field"
-                      :fi "Selitys tekstikentän täyttämisestä"
-                      :sv "Förklaring till hur man fyller i textfält"}
-    :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"
-                        :sv "Textexempel"}}
-
-   {:field/type :texta
-    :field/title {:en "Text area"
-                  :fi "Tekstialue"
-                  :sv "Textområde"}
-    :field/optional false
-    :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"
-                        :sv "Textexempel"}}
-
-   {:field/type :header
-    :field/title {:en "Header"
-                  :fi "Otsikko"
-                  :sv "Titel"}
-    :field/optional false}
-
-   {:field/type :date
-    :field/title {:en "Date field"
-                  :fi "Päivämääräkenttä"
-                  :sv "Datumfält"}
-    :field/optional true}
-
-   {:field/type :email
-    :field/title {:en "Email field"
-                  :fi "Sähköpostikenttä"
-                  :sv "E-postaddressfält"}
-    :field/optional true}
-
-   {:field/type :attachment
-    :field/title {:en "Attachment"
-                  :fi "Liitetiedosto"
-                  :sv "Bilaga"}
-    :field/optional true}
-
-   {:field/type :option
-    :field/title {:en "Option list. Choose the first option to reveal a new field."
-                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
-                  :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
-    :field/optional true
-    :field/id "option"
-    :field/options [{:key "Option1"
-                     :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"
-                             :sv "Första alternativ"}}
-                    {:key "Option2"
-                     :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"
-                             :sv "Andra alternativ"}}
-                    {:key "Option3"
-                     :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"
-                             :sv "Tredje alternativ"}}]}
-
-   {:field/type :text
-    :field/title {:en "Conditional field. Shown only if first option is selected above."
-                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
-                  :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
-    :field/optional false
-    :field/visibility {:visibility/type :only-if
-                       :visibility/field {:field/id "option"}
-                       :visibility/values ["Option1"]}}
-
-   {:field/type :multiselect
-    :field/title {:en "Multi-select list"
-                  :fi "Monivalintalista"
-                  :sv "Lista med flerval"}
-    :field/optional true
-    :field/options [{:key "Option1"
-                     :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"
-                             :sv "Första alternativ"}}
-                    {:key "Option2"
-                     :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"
-                             :sv "Andra alternativ"}}
-                    {:key "Option3"
-                     :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"
-                             :sv "Tredje alternativ"}}]}
-
-   {:field/type :table
-    :field/title {:en "Table"
-                  :fi "Taulukko"
-                  :sv "Tabell"}
-    :field/optional true
-    :field/columns [{:key "col1"
-                     :label {:en "First"
-                             :fi "Ensimmäinen"
-                             :sv "Första"}}
-                    {:key "col2"
-                     :label {:en "Second"
-                             :fi "Toinen"
-                             :sv "Andra"}}]}
-
-   {:field/type :label
-    :field/title {:en "The following field types can have a max length."
-                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
-                  :sv "De nästa fälttyperna kan ha bengränsat längd."}
-    :field/optional false}
-
-   ;; fields which support maxlength
-   {:field/type :text
-    :field/title {:en "Text field with max length"
-                  :fi "Tekstikenttä pituusrajalla"
-                  :sv "Textfält med begränsat längd"}
-    :field/optional true
-    :field/max-length 10}
-
-   {:field/type :texta
-    :field/title {:en "Text area with max length"
-                  :fi "Tekstialue pituusrajalla"
-                  :sv "Textområdet med begränsat längd"}
-    :field/optional true
-    :field/max-length 100}
-
-   {:field/type :phone-number
-    :field/title {:en "Phone number"
-                  :fi "Puhelinnumero"
-                  :sv "Telefonnummer"}
-    :field/optional true}
-
-   {:field/type :ip-address
-    :field/title {:en "IP address"
-                  :fi "IP-osoite"
-                  :sv "IP-adress"}
-    :field/optional true}])
+  (concat [label-field
+           description-field
+           text-field
+           texta-field
+           header-field
+           (assoc date-field :field/optional true)
+           (assoc email-field :field/optional true)
+           (assoc attachment-field :field/optional true)]
+          conditional-field-example ; array of fields
+          [(assoc multiselect-field :field/optional true)
+           (assoc table-field :field/optional true)]
+          max-length-field-example ; array of fields
+          [(assoc phone-number-field :field/optional true)
+           (assoc ip-address-field :field/optional true)]))
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))
@@ -220,7 +236,7 @@
       "a new field has been added to schema but not to this test data"))
 
 (defn create-all-field-types-example-form!
-  "Creates a bilingual form with all supported field types. Returns the form ID."
+  "Creates a multilingual form with all supported field types. Returns the form ID."
   [actor organization internal-name external-title]
   (test-helpers/create-form! {:actor actor
                               :organization organization
@@ -294,11 +310,7 @@
                                                                                                                        :fi "Työvuon lomake"
                                                                                                                        :sv "Blankett för arbetsflöde"}
                                                                                                  :organization {:organization/id "nbn"}
-                                                                                                 :form/fields [{:field/type :description
-                                                                                                                :field/title {:fi "Kuvaus"
-                                                                                                                              :en "Description"
-                                                                                                                              :sv "Rubrik"}
-                                                                                                                :field/optional false}]})}]})
+                                                                                                 :form/fields [description-field]})}]})
         ega (test-helpers/create-workflow! {:actor owner
                                             :organization {:organization/id "csc"}
                                             :title "EGA workflow, a variant of default"
@@ -323,11 +335,9 @@
                                                                :fi "Lomake"
                                                                :sv "Blankett"}
                                          :organization {:organization/id "default"}
-                                         :form/fields [{:field/type :email
-                                                        :field/title {:fi "Suosittelijan sähköpostiosoite"
-                                                                      :en "Referer's email address"
-                                                                      :sv "sv"}
-                                                        :field/optional false}]})
+                                         :form/fields [(assoc email-field :field/title {:fi "Suosittelijan sähköpostiosoite"
+                                                                                        :en "Referer's email address"
+                                                                                        :sv "sv"})]})
         wf (test-helpers/create-workflow! {:actor owner
                                            :organization {:organization/id "default"}
                                            :title "Bona Fide workflow"
@@ -529,23 +539,18 @@
                                             :form/external-title {:en "Performance tests EN"
                                                                   :fi "Performance tests FI"
                                                                   :sv "Performance tests SV"}
-                                            :form/fields [{:field/title {:en "Project name"
-                                                                         :fi "Projektin nimi"
-                                                                         :sv "Projektets namn"}
-                                                           :field/optional false
-                                                           :field/type :description
-                                                           :field/placeholder {:en "Project"
-                                                                               :fi "Projekti"
-                                                                               :sv "Projekt"}}
-
-                                                          {:field/title {:en "Project description"
-                                                                         :fi "Projektin kuvaus"
-                                                                         :sv "Projektets beskrivning"}
-                                                           :field/optional false
-                                                           :field/type :texta
-                                                           :field/placeholder {:en "The purpose of the project is to..."
-                                                                               :fi "Projektin tarkoitus on..."
-                                                                               :sv "Det här projekt..."}}]})
+                                            :form/fields [(merge description-field {:field/title {:en "Project name"
+                                                                                                  :fi "Projektin nimi"
+                                                                                                  :sv "Projektets namn"}
+                                                                                    :field/placeholder {:en "Project"
+                                                                                                        :fi "Projekti"
+                                                                                                        :sv "Projekt"}})
+                                                          (merge texta-field {:field/title {:en "Project description"
+                                                                                            :fi "Projektin kuvaus"
+                                                                                            :sv "Projektets beskrivning"}
+                                                                              :field/placeholder {:en "The purpose of the project is to..."
+                                                                                                  :fi "Projektin tarkoitus on..."
+                                                                                                  :sv "Det här projekt..."}})]})
         form (form/get-form-template form-id)
         category {:category/id (test-helpers/create-category! {:actor owner
                                                                :category/title {:en "Performance"
@@ -623,7 +628,6 @@
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
-
         ;; Create licenses
         license1 (test-helpers/create-license! {:actor owner
                                                 :license/type :link
@@ -719,30 +723,6 @@
                                                                                      :organization {:organization/id "hus"}
                                                                                      :actor owner
                                                                                      :license-ids [license2 extra-license attachment-license]})
-        duo-resource-1 (when (:enable-duo rems.config/env)
-                         (test-helpers/create-resource! {:resource-ext-id "Eyelid melanoma samples"
-                                                         :organization {:organization/id "nbn"}
-                                                         :actor owner
-                                                         :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
-                                                                                                                       :values [{:id "MONDO:0000928"}]}]}
-                                                                                    {:id "DUO:0000015"}
-                                                                                    {:id "DUO:0000019"}
-                                                                                    {:id "DUO:0000027"
-                                                                                     :restrictions [{:type :project
-                                                                                                     :values [{:value "project name here"}]}]
-                                                                                     :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}}))
-        duo-resource-2 (when (:enable-duo rems.config/env)
-                         (test-helpers/create-resource! {:resource-ext-id "Spinal cord melanoma samples"
-                                                         :organization {:organization/id "nbn"}
-                                                         :actor owner
-                                                         :resource/duo {:duo/codes [{:id "DUO:0000007"
-                                                                                     :restrictions [{:type :mondo
-                                                                                                     :values [{:id "MONDO:0001893"}]}]}
-                                                                                    {:id "DUO:0000019"}
-                                                                                    {:id "DUO:0000027"
-                                                                                     :restrictions [{:type :project
-                                                                                                     :values [{:value "project name here"}]}]
-                                                                                     :more-info {:en "This DUO code is optional but recommended"}}]}}))
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (workflow/edit-workflow! {:id (:organization-owner workflows)
@@ -758,19 +738,12 @@
                                                                         :form/external-title {:en "Form"
                                                                                               :fi "Lomake"
                                                                                               :sv "Blankett"}
-                                                                        :form/fields [{:field/title {:en "Simple text field"
-                                                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                                                     :sv "Textfält"}
-                                                                                       :field/optional false
-                                                                                       :field/type :text
-                                                                                       :field/max-length 100}
-                                                                                      {:field/title {:en "Private text field"
-                                                                                                     :fi "Yksityinen tekstikenttä"
-                                                                                                     :sv "Privat textfält"}
-                                                                                       :field/optional false
-                                                                                       :field/type :text
-                                                                                       :field/max-length 100
-                                                                                       :field/privacy :private}]})
+                                                                        :form/fields [(assoc text-field :field/max-length 100)
+                                                                                      (merge text-field {:field/title {:en "Private text field"
+                                                                                                                       :fi "Yksityinen tekstikenttä"
+                                                                                                                       :sv "Privat textfält"}
+                                                                                                         :field/max-length 100
+                                                                                                         :field/privacy :private})]})
 
         form-private-nbn (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "nbn"}
@@ -778,13 +751,8 @@
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [{:field/title {:en "Simple text field"
-                                                                                  :fi "Yksinkertainen tekstikenttä"
-                                                                                  :sv "Textfält"}
-                                                                    :field/optional false
-                                                                    :field/type :text
-                                                                    :field/max-length 100
-                                                                    :field/privacy :private}]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
 
         form-private-thl (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "thl"}
@@ -792,26 +760,16 @@
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [{:field/title {:en "Simple text field"
-                                                                                  :fi "Yksinkertainen tekstikenttä"
-                                                                                  :sv "Textfält"}
-                                                                    :field/optional false
-                                                                    :field/type :text
-                                                                    :field/max-length 100
-                                                                    :field/privacy :private}]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
         form-private-hus (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "hus"}
                                                      :form/internal-name "Simple form"
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [{:field/title {:en "Simple text field"
-                                                                                  :fi "Yksinkertainen tekstikenttä"
-                                                                                  :sv "Textfält"}
-                                                                    :field/optional false
-                                                                    :field/type :text
-                                                                    :field/max-length 100
-                                                                    :field/privacy :private}]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
         form-organization-owner (create-all-field-types-example-form! organization-owner1
                                                                       {:organization/id "organization1"}
                                                                       "Owned by organization owner"
@@ -825,11 +783,9 @@
                                              :form/external-title {:en "EGA Form"
                                                                    :fi "EGA Lomake"
                                                                    :sv "EGA Blankett"}
-                                             :form/fields [{:field/title {:en "Description"
-                                                                          :fi "Kuvaus"
-                                                                          :sv "Text"}
-                                                            :field/optional false
-                                                            :field/type :text}]})
+                                             :form/fields [(assoc text-field :field/title {:en "Description"
+                                                                                           :fi "Kuvaus"
+                                                                                           :sv "Text"})]})
 
         ;; Create categories
         ordinary-category {:category/id (test-helpers/create-category! {:actor owner
@@ -969,7 +925,7 @@
                                           :organization {:organization/id "organization1"}
                                           :workflow-id (:organization-owner workflows)
                                           :categories [special-category]})
-
+    ;; forms with public and private fields, and catalogue items and applications using them
     (let [applicant (users :applicant1)
           handler (users :approver2)
           reviewer (users :reviewer)
@@ -1000,52 +956,75 @@
                               :actor handler
                               :reviewers [reviewer]
                               :comment "please have a look"}))
-
-    (when (:enable-duo rems.config/env)
-      (let [applicant (users :applicant1)
-            handler (users :approver2)
-            reviewer (users :reviewer)
-            cat-id (test-helpers/create-catalogue-item! {:actor owner
-                                                         :title {:en "Apply for eyelid melanoma dataset (EN)"
-                                                                 :fi "Apply for eyelid melanoma dataset (FI)"
-                                                                 :sv "Apply for eyelid melanoma dataset (SV)"}
-                                                         :resource-id duo-resource-1
+    ;; applications with DUO fields
+    (let [applicant (users :applicant1)
+          handler (users :approver2)
+          reviewer (users :reviewer)
+          duo-resource-1 (test-helpers/create-resource!
+                          {:resource-ext-id "Eyelid melanoma samples"
+                           :organization {:organization/id "nbn"}
+                           :actor owner
+                           :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+                                                                                         :values [{:id "MONDO:0000928"}]}]}
+                                                      {:id "DUO:0000015"}
+                                                      {:id "DUO:0000019"}
+                                                      {:id "DUO:0000027"
+                                                       :restrictions [{:type :project
+                                                                       :values [{:value "project name here"}]}]
+                                                       :more-info {:en "List of approved projects can be found at http://www.google.fi"}}]}})
+          duo-resource-2 (test-helpers/create-resource!
+                          {:resource-ext-id "Spinal cord melanoma samples"
+                           :organization {:organization/id "nbn"}
+                           :actor owner
+                           :resource/duo {:duo/codes [{:id "DUO:0000007"
+                                                       :restrictions [{:type :mondo
+                                                                       :values [{:id "MONDO:0001893"}]}]}
+                                                      {:id "DUO:0000019"}
+                                                      {:id "DUO:0000027"
+                                                       :restrictions [{:type :project
+                                                                       :values [{:value "project name here"}]}]
+                                                       :more-info {:en "This DUO code is optional but recommended"}}]}})
+          cat-id (test-helpers/create-catalogue-item! {:actor owner
+                                                       :title {:en "Apply for eyelid melanoma dataset (EN)"
+                                                               :fi "Apply for eyelid melanoma dataset (FI)"
+                                                               :sv "Apply for eyelid melanoma dataset (SV)"}
+                                                       :resource-id duo-resource-1
+                                                       :form-id form
+                                                       :organization {:organization/id "nbn"}
+                                                       :workflow-id (:default workflows)
+                                                       :categories [special-category]})
+          cat-id-2 (test-helpers/create-catalogue-item! {:actor owner
+                                                         :title {:en "Apply for spinal cord melanoma dataset (EN)"
+                                                                 :fi "Apply for spinal cord melanoma dataset (FI)"
+                                                                 :sv "Apply for spinal cord melanoma dataset (SV)"}
+                                                         :resource-id duo-resource-2
                                                          :form-id form
                                                          :organization {:organization/id "nbn"}
                                                          :workflow-id (:default workflows)
                                                          :categories [special-category]})
-            cat-id-2 (test-helpers/create-catalogue-item! {:actor owner
-                                                           :title {:en "Apply for spinal cord melanoma dataset (EN)"
-                                                                   :fi "Apply for spinal cord melanoma dataset (FI)"
-                                                                   :sv "Apply for spinal cord melanoma dataset (SV)"}
-                                                           :resource-id duo-resource-2
-                                                           :form-id form
-                                                           :organization {:organization/id "nbn"}
-                                                           :workflow-id (:default workflows)
-                                                           :categories [special-category]})
-            app-id (test-helpers/create-draft! applicant [cat-id-2] "draft application with DUO codes")
-            app-id-2 (test-helpers/create-draft! applicant [cat-id] "application with DUO codes")]
-        (test-helpers/command! {:type :application.command/save-draft
-                                :application-id app-id
-                                :actor applicant
-                                :field-values []
-                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
-        (test-helpers/command! {:type :application.command/save-draft
-                                :application-id app-id-2
-                                :actor applicant
-                                :field-values []
-                                :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
-                                            {:id "DUO:0000015"}
-                                            {:id "DUO:0000019"}
-                                            {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
-        (test-helpers/command! {:type :application.command/submit
-                                :application-id app-id-2
-                                :actor applicant})
-        (test-helpers/command! {:type :application.command/request-review
-                                :application-id app-id-2
-                                :actor handler
-                                :reviewers [reviewer]
-                                :comment "please have a look"})))))
+          app-id (test-helpers/create-draft! applicant [cat-id-2] "draft application with DUO codes")
+          app-id-2 (test-helpers/create-draft! applicant [cat-id] "application with DUO codes")]
+      (test-helpers/command! {:type :application.command/save-draft
+                              :application-id app-id
+                              :actor applicant
+                              :field-values []
+                              :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}]})
+      (test-helpers/command! {:type :application.command/save-draft
+                              :application-id app-id-2
+                              :actor applicant
+                              :field-values []
+                              :duo-codes [{:id "DUO:0000007" :restrictions [{:type :mondo :values [{:id "MONDO:0000928"}]}]}
+                                          {:id "DUO:0000015"}
+                                          {:id "DUO:0000019"}
+                                          {:id "DUO:0000027" :restrictions [{:type :project :values [{:value "my project"}]}]}]})
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id-2
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id-2
+                              :actor handler
+                              :reviewers [reviewer]
+                              :comment "please have a look"}))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
