@@ -10,7 +10,7 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
-            [medley.core :refer [assoc-some indexed]]
+            [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config]
