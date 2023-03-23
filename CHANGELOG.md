@@ -23,6 +23,7 @@ Changes since v2.31
   This does not include the invitation emails, which will always be sent, to be able to invite users.
   This also does not include any reminder emails that you can separately enable if you wish.
 - Any individual email can be disabled by setting its translation to empty string `""` (#3117).
+- Database connection pool can be configured, see `:hikaricp-extra-params` in `config-defaults.edn`.
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
