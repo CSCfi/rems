@@ -187,32 +187,32 @@
                  :sv "IP-adress"}})
 
 (def conditional-field-example
-  [(-> option-field (merge {:field/id "option"
-                            :field/title {:en "Option list. Choose the first option to reveal a new field."
-                                          :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
-                                          :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
-                            :field/optional true}))
-   (-> text-field (merge {:field/title {:en "Conditional field. Shown only if first option is selected above."
-                                        :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
-                                        :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
-                          :field/visibility {:visibility/type :only-if
-                                             :visibility/field {:field/id "option"}
-                                             :visibility/values ["Option1"]}}))])
+  [(merge option-field {:field/id "option"
+                        :field/title {:en "Option list. Choose the first option to reveal a new field."
+                                      :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
+                                      :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
+                        :field/optional true})
+   (merge text-field {:field/title {:en "Conditional field. Shown only if first option is selected above."
+                                    :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
+                                    :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
+                      :field/visibility {:visibility/type :only-if
+                                         :visibility/field {:field/id "option"}
+                                         :visibility/values ["Option1"]}})])
 
 (def max-length-field-example
-  [(-> label-field (merge {:field/title {:en "The following field types can have a max length."
-                                         :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
-                                         :sv "De nästa fälttyperna kan ha bengränsat längd."}}))
-   (-> text-field (merge {:field/title {:en "Text field with max length"
-                                        :fi "Tekstikenttä pituusrajalla"
-                                        :sv "Textfält med begränsat längd"}
-                          :field/optional true
-                          :field/max-length 10}))
-   (-> texta-field (merge {:field/title {:en "Text area with max length"
-                                         :fi "Tekstialue pituusrajalla"
-                                         :sv "Textområdet med begränsat längd"}
-                           :field/optional true
-                           :field/max-length 100}))])
+  [(merge label-field {:field/title {:en "The following field types can have a max length."
+                                     :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
+                                     :sv "De nästa fälttyperna kan ha bengränsat längd."}})
+   (merge text-field {:field/title {:en "Text field with max length"
+                                    :fi "Tekstikenttä pituusrajalla"
+                                    :sv "Textfält med begränsat längd"}
+                      :field/optional true
+                      :field/max-length 10})
+   (merge texta-field {:field/title {:en "Text area with max length"
+                                     :fi "Tekstialue pituusrajalla"
+                                     :sv "Textområdet med begränsat längd"}
+                       :field/optional true
+                       :field/max-length 100})])
 
 (def all-field-types-example
   (concat [label-field
@@ -220,15 +220,15 @@
            text-field
            texta-field
            header-field
-           (-> date-field (merge {:field/optional true}))
-           (-> email-field (merge {:field/optional true}))
-           (-> attachment-field (merge {:field/optional true}))]
+           (assoc date-field :field/optional true)
+           (assoc email-field :field/optional true)
+           (assoc attachment-field :field/optional true)]
           conditional-field-example ; array of fields
-          [(-> multiselect-field (merge {:field/optional true}))
-           (-> table-field (merge {:field/optional true}))]
+          [(assoc multiselect-field :field/optional true)
+           (assoc table-field :field/optional true)]
           max-length-field-example ; array of fields
-          [(-> phone-number-field (merge {:field/optional true}))
-           (-> ip-address-field (merge {:field/optional true}))]))
+          [(assoc phone-number-field :field/optional true)
+           (assoc ip-address-field :field/optional true)]))
 
 (deftest test-all-field-types-example
   (is (= (:vs (:field/type schema/FieldTemplate))
@@ -236,7 +236,7 @@
       "a new field has been added to schema but not to this test data"))
 
 (defn create-all-field-types-example-form!
-  "Creates a bilingual form with all supported field types. Returns the form ID."
+  "Creates a multilingual form with all supported field types. Returns the form ID."
   [actor organization internal-name external-title]
   (test-helpers/create-form! {:actor actor
                               :organization organization
@@ -335,9 +335,9 @@
                                                                :fi "Lomake"
                                                                :sv "Blankett"}
                                          :organization {:organization/id "default"}
-                                         :form/fields [(-> email-field (merge {:field/title {:fi "Suosittelijan sähköpostiosoite"
-                                                                                             :en "Referer's email address"
-                                                                                             :sv "sv"}}))]})
+                                         :form/fields [(assoc email-field :field/title {:fi "Suosittelijan sähköpostiosoite"
+                                                                                        :en "Referer's email address"
+                                                                                        :sv "sv"})]})
         wf (test-helpers/create-workflow! {:actor owner
                                            :organization {:organization/id "default"}
                                            :title "Bona Fide workflow"
@@ -369,26 +369,25 @@
                             :actor approver
                             :comment "Looking good"})))
 
-;; XXX: can this be removed?
-#_(defn- create-member-applications! [catid applicant approver members]
-    (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
-      (test-helpers/command! {:type :application.command/invite-member
-                              :application-id appid1
-                              :actor applicant
-                              :member {:name "John Smith" :email "john.smith@example.org"}}))
-    (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
-      (test-helpers/command! {:type :application.command/invite-member
+(defn- create-member-applications! [catid applicant approver members]
+  (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
+    (test-helpers/command! {:type :application.command/invite-member
+                            :application-id appid1
+                            :actor applicant
+                            :member {:name "John Smith" :email "john.smith@example.org"}}))
+  (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
+    (test-helpers/command! {:type :application.command/invite-member
+                            :application-id appid2
+                            :actor applicant
+                            :member {:name "John Smith" :email "john.smith@example.org"}})
+    (test-helpers/command! {:type :application.command/submit
+                            :application-id appid2
+                            :actor applicant})
+    (doseq [member members]
+      (test-helpers/command! {:type :application.command/add-member
                               :application-id appid2
-                              :actor applicant
-                              :member {:name "John Smith" :email "john.smith@example.org"}})
-      (test-helpers/command! {:type :application.command/submit
-                              :application-id appid2
-                              :actor applicant})
-      (doseq [member members]
-        (test-helpers/command! {:type :application.command/add-member
-                                :application-id appid2
-                                :actor approver
-                                :member member}))))
+                              :actor approver
+                              :member member}))))
 
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
@@ -540,18 +539,18 @@
                                             :form/external-title {:en "Performance tests EN"
                                                                   :fi "Performance tests FI"
                                                                   :sv "Performance tests SV"}
-                                            :form/fields [(-> description-field (merge {:field/title {:en "Project name"
-                                                                                                      :fi "Projektin nimi"
-                                                                                                      :sv "Projektets namn"}
-                                                                                        :field/placeholder {:en "Project"
-                                                                                                            :fi "Projekti"
-                                                                                                            :sv "Projekt"}}))
-                                                          (-> texta-field (merge {:field/title {:en "Project description"
-                                                                                                :fi "Projektin kuvaus"
-                                                                                                :sv "Projektets beskrivning"}
-                                                                                  :field/placeholder {:en "The purpose of the project is to..."
-                                                                                                      :fi "Projektin tarkoitus on..."
-                                                                                                      :sv "Det här projekt..."}}))]})
+                                            :form/fields [(merge description-field {:field/title {:en "Project name"
+                                                                                                  :fi "Projektin nimi"
+                                                                                                  :sv "Projektets namn"}
+                                                                                    :field/placeholder {:en "Project"
+                                                                                                        :fi "Projekti"
+                                                                                                        :sv "Projekt"}})
+                                                          (merge texta-field {:field/title {:en "Project description"
+                                                                                            :fi "Projektin kuvaus"
+                                                                                            :sv "Projektets beskrivning"}
+                                                                              :field/placeholder {:en "The purpose of the project is to..."
+                                                                                                  :fi "Projektin tarkoitus on..."
+                                                                                                  :sv "Det här projekt..."}})]})
         form (form/get-form-template form-id)
         category {:category/id (test-helpers/create-category! {:actor owner
                                                                :category/title {:en "Performance"
@@ -739,12 +738,12 @@
                                                                         :form/external-title {:en "Form"
                                                                                               :fi "Lomake"
                                                                                               :sv "Blankett"}
-                                                                        :form/fields [(-> text-field (merge {:field/max-length 100}))
-                                                                                      (-> text-field (merge {:field/title {:en "Private text field"
-                                                                                                                           :fi "Yksityinen tekstikenttä"
-                                                                                                                           :sv "Privat textfält"}
-                                                                                                             :field/max-length 100
-                                                                                                             :field/privacy :private}))]})
+                                                                        :form/fields [(assoc text-field :field/max-length 100)
+                                                                                      (merge text-field {:field/title {:en "Private text field"
+                                                                                                                       :fi "Yksityinen tekstikenttä"
+                                                                                                                       :sv "Privat textfält"}
+                                                                                                         :field/max-length 100
+                                                                                                         :field/privacy :private})]})
 
         form-private-nbn (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "nbn"}
@@ -752,8 +751,8 @@
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [(-> text-field (merge {:field/max-length 100
-                                                                                          :field/privacy :private}))]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
 
         form-private-thl (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "thl"}
@@ -761,16 +760,16 @@
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [(-> text-field (merge {:field/max-length 100
-                                                                                          :field/privacy :private}))]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
         form-private-hus (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "hus"}
                                                      :form/internal-name "Simple form"
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [(-> text-field (merge {:field/max-length 100
-                                                                                          :field/privacy :private}))]})
+                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                                                      :field/privacy :private})]})
         form-organization-owner (create-all-field-types-example-form! organization-owner1
                                                                       {:organization/id "organization1"}
                                                                       "Owned by organization owner"
@@ -784,9 +783,9 @@
                                              :form/external-title {:en "EGA Form"
                                                                    :fi "EGA Lomake"
                                                                    :sv "EGA Blankett"}
-                                             :form/fields [(-> text-field (merge {:field/title {:en "Description"
-                                                                                                :fi "Kuvaus"
-                                                                                                :sv "Text"}}))]})
+                                             :form/fields [(assoc text-field :field/title {:en "Description"
+                                                                                           :fi "Kuvaus"
+                                                                                           :sv "Text"})]})
 
         ;; Create categories
         ordinary-category {:category/id (test-helpers/create-category! {:actor owner
