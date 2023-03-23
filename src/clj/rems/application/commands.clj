@@ -1,7 +1,7 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.set]
-            [medley.core :refer [assoc-some distinct-by find-first update-existing]]
+            [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.form-validation :as form-validation]

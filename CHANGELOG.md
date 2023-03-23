@@ -37,6 +37,7 @@ Changes since v2.31
   This does not include the invitation emails, which will always be sent, to be able to invite users.
   This also does not include any reminder emails that you can separately enable if you wish.
 - Any individual email can be disabled by setting its translation to empty string `""` (#3117).
+- Database connection pool can be configured, see `:hikaricp-extra-params` in `config-defaults.edn`.
 - The debug log level prints details of when the scheduled pollers run, e.g. email and event notification.
 
 ### Fixes
