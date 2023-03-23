@@ -432,7 +432,8 @@
   (let [attachments (index-by [:attachment/id] (:application/attachments application))
         invalid-ids (for [id (map :attachment/id (:redacted-attachments cmd))
                           :let [attachment (get attachments id)]
-                          :when (not (application-util/can-redact? attachment (:actor cmd) application))]
+                          :when (or (nil? attachment)
+                                    (not (application-util/can-redact? attachment (:actor cmd) application)))]
                       id)]
     (when (seq invalid-ids)
       {:errors [{:type :invalid-redact-attachments
