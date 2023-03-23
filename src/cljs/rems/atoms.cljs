@@ -410,7 +410,9 @@
                                       :url "http://example.com/another"
                                       :on-click #(js/alert "click another")})
 
-                [commands [action-button example-command another-command]])
+                [commands
+                 [action-button example-command]
+                 [action-button another-command]])
 
        (component-info commands-group-button)
        (example "empty group" [commands-group-button])
