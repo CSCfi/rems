@@ -11,23 +11,18 @@
            [java.util UUID]
            [org.joda.time DateTime]))
 
-(def ^:private test-time (DateTime. 1000))
-(def ^:private app-id 123)
-(def ^:private new-app-id 456)
-(def ^:private new-external-id "2019/66")
-(def ^:private applicant-user-id "applicant")
-(def ^:private handler-user-id "assistant")
-(def ^:private dummy-created-event {:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/external-id "2000/123"
-                                    :application/resources []
-                                    :application/licenses []
-                                    :application/forms [{:form/id 1}]
-                                    :workflow/id 1
-                                    :workflow/type :workflow/default})
-(def ^:private dummy-licenses
+(def test-time (DateTime. 1000))
+(def app-id 123)
+(def new-app-id 456)
+(def new-external-id "2019/66")
+(def applicant-user-id "applicant")
+(def handler-user-id "assistant")
+(def decider-user-id "decider")
+(def reviewer-user-id "reviewer")
+(def review-request-id (UUID/randomUUID))
+(def decision-request-id (UUID/randomUUID))
+
+(def dummy-licenses
   {1 {:id 1
       :licensetype "link"
       :localizations {:en {:title "en title"
@@ -49,73 +44,70 @@
                       :fi {:title "fi title"
                            :textcontent "fi link"}}}})
 
-(defn- dummy-get-workflow [id]
-  (getx {1 {:workflow {:type :workflow/default
-                       :handlers [{:userid handler-user-id
-                                   :name "user"
-                                   :email "user@example.com"}]}}
-         2 {:workflow {:type :workflow/default
-                       :handlers [{:userid handler-user-id
-                                   :name "user"
-                                   :email "user@example.com"}]
-                       :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
-        id))
-(defn- dummy-get-form-template [id]
-  (getx {1 {:form/id 1
-            :form/fields [{:field/id "1"
-                           :field/optional true
-                           :field/type :option
-                           :field/options [{:key "foo" :label "Foo"}
-                                           {:key "bar" :label "Bar"}]}
-                          {:field/id "2"
-                           :field/optional false
-                           :field/visibility {:visibility/type :only-if
-                                              :visibility/field {:field/id "1"}
-                                              :visibility/values ["foo"]}}]}
-         2 {:form/id 2
-            :form/fields [{:field/id "1"
-                           :field/type :text
-                           :field/optional false}]}
-         3 {:form/id 3
-            :form/fields [{:field/id "text"
-                           :field/type :text}
-                          {:field/id "attachment"
-                           :field/type :attachment}]}
-         4 {:form/id 4
-            :form/fields [{:field/id "text"
-                           :field/type :text}]}
-         7 {:form/id 7
-            :form/fields [{:field/id "7"
-                           :field/type :option
-                           :field/optional true
-                           :field/options [{:key "y" :label "y"}
-                                           {:key "n" :label "n"}]}
-                          {:field/id "8"
-                           :field/type :email
-                           :field/optional false
-                           :field/visibility {:visibility/type :only-if
-                                              :visibility/field {:field/id "7"}
-                                              :visibility/values ["y"]}}]}}
-        id))
+(defn dummy-get-workflow [id]
+  (get {1 {:workflow {:type :workflow/default
+                      :handlers [{:userid handler-user-id
+                                  :name "user"
+                                  :email "user@example.com"}]}}
+        2 {:workflow {:type :workflow/default
+                      :handlers [{:userid handler-user-id
+                                  :name "user"
+                                  :email "user@example.com"}]
+                      :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}}
+       id))
 
-(defn- dummy-get-catalogue-item [id]
+(def dummy-forms
+  {1 {:form/id 1
+      :form/fields [{:field/id "1"
+                     :field/optional true
+                     :field/type :option
+                     :field/options [{:key "foo" :label "Foo"}
+                                     {:key "bar" :label "Bar"}]}
+                    {:field/id "2"
+                     :field/optional false
+                     :field/visibility {:visibility/type :only-if
+                                        :visibility/field {:field/id "1"}
+                                        :visibility/values ["foo"]}}]}
+   2 {:form/id 2
+      :form/fields [{:field/id "1"
+                     :field/type :text
+                     :field/optional false}]}
+   3 {:form/id 3
+      :form/fields [{:field/id "text"
+                     :field/type :text}
+                    {:field/id "attachment"
+                     :field/type :attachment}]}
+   4 {:form/id 4
+      :form/fields [{:field/id "text"
+                     :field/type :text}]}
+   7 {:form/id 7
+      :form/fields [{:field/id "7"
+                     :field/type :option
+                     :field/optional true
+                     :field/options [{:key "y" :label "y"}
+                                     {:key "n" :label "n"}]}
+                    {:field/id "8"
+                     :field/type :email
+                     :field/optional false
+                     :field/visibility {:visibility/type :only-if
+                                        :visibility/field {:field/id "7"}
+                                        :visibility/values ["y"]}}]}})
+
+(defn dummy-get-catalogue-item [id]
   (when (< id 10000)
-    (merge {:enabled true :archived false :expired false
-            :id id :wfid 1 :formid 1}
-           (getx {1 {:resid "res1"}
-                  2 {:resid "res2"}
-                  3 {:resid "res3"
-                     :formid 2}
-                  4 {:resid "res4"
-                     :wfid 2}
-                  5 {:resid "res5"
-                     :formid 2
-                     :wfid 2}
-                  6 {:resid "res5"
-                     :formid nil}}
-                 id))))
+    (some->> id
+             (getx {1 {:resid "res1"}
+                    2 {:resid "res2"}
+                    3 {:resid "res3" :formid 2}
+                    4 {:resid "res4" :wfid 2}
+                    5 {:resid "res5" :formid 2 :wfid 2}
+                    6 {:resid "res5" :formid nil}
+                    7 {:resid "res-disabled" :enabled false}
+                    42 nil})
+             (merge {:enabled true :archived false :expired false
+                     :id id :wfid 1 :formid 1}))))
 
-(defn- dummy-get-catalogue-item-licenses [id]
+(defn dummy-get-catalogue-item-licenses [id]
   (getx {1 [{:license/id 1}]
          2 [{:license/id 2}]
          3 [{:license/id 1}
@@ -125,45 +117,63 @@
          5 []
          6 []} id))
 
-(defn- dummy-get-config []
-  {})
-
-(def ^:private dummy-valid-user? #{applicant-user-id handler-user-id "somebody" "somebody2" "member1" "member2"})
-
-(def allocated-new-ids? (atom false))
-(def ^:private injections
-  {:blacklisted? (constantly false)
-   :get-workflow dummy-get-workflow
-   :get-form-template dummy-get-form-template
+(def application-injections
+  {:get-attachments-for-application {app-id [{:attachment/id 1
+                                              :attachment/user handler-user-id}
+                                             {:attachment/id 3
+                                              :attachment/user reviewer-user-id}
+                                             {:attachment/id 5
+                                              :attachment/user decider-user-id}]}
+   :get-form-template (fn [id] (getx dummy-forms id))
    :get-catalogue-item dummy-get-catalogue-item
-   :get-catalogue-item-licenses dummy-get-catalogue-item-licenses
-   :get-config dummy-get-config
+   :get-config (constantly {})
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
    :get-users-with-role (constantly nil)
-   :get-attachments-for-application (constantly nil)
-   :allocate-application-ids! (fn [_time]
-                                (reset! allocated-new-ids? true)
-                                {:application/id new-app-id
-                                 :application/external-id new-external-id})
-   :copy-attachment! (fn [_new-app-id attachment-id]
-                       (+ attachment-id 100))
-   :valid-user? dummy-valid-user?
-   :find-userid identity})
+   :get-workflow dummy-get-workflow
+   :blacklisted? (constantly false)
+   :get-attachment-metadata {1 {:application/id app-id
+                                :attachment/id 1
+                                :attachment/user handler-user-id}
+                             2 {:application/id (inc app-id)
+                                :attachment/id 2
+                                :attachment/user handler-user-id}
+                             3 {:application/id app-id
+                                :attachment/id 3
+                                :attachment/user reviewer-user-id}
+                             4 {:application/id app-id
+                                :attachment/id 4
+                                :attachment/user handler-user-id}
+                             5 {:application/id app-id
+                                :attachment/id 5
+                                :attachment/user decider-user-id}}
+   :get-catalogue-item-licenses dummy-get-catalogue-item-licenses})
 
-(defn- patch-event-ids [events]
+(def allocated-new-ids? (atom false))
+
+(def command-injections
+  (merge application-injections
+         {:secure-token (constantly "very-secure")
+          :allocate-application-ids! (fn [_time]
+                                       (reset! allocated-new-ids? true)
+                                       {:application/id new-app-id
+                                        :application/external-id new-external-id})
+          :copy-attachment! (fn [_new-app-id attachment-id]
+                              (+ attachment-id 100))
+          :valid-user? #{applicant-user-id handler-user-id decider-user-id reviewer-user-id "somebody" "somebody2" "member1" "member2" "reviewer2" "reviewer3"}
+          :find-userid identity}))
+
+(defn patch-event-ids [events]
   (->> events
        (map-indexed (fn [idx event] (assoc event :event/id idx)))))
 
-;; XXX: could rework tests to use model/build-application-view instead of this
-(defn apply-events [application events]
-  (events/validate-events events)
-  (-> (reduce model/application-view application events)
-      (model/enrich-with-injections injections)
-      ; event ids are normally generated by db, but not available here
-      (update :application/events (comp vec patch-event-ids)))) ; vector preserves correct order for (conj) of events
+(defn build-application-view [events & [injections]]
+  (-> events
+      (patch-event-ids) ; event ids are normally generated by db, but not available here
+      (events/validate-events)
+      (model/build-application-view (or injections application-injections))))
 
-(defn- set-command-defaults [cmd]
+(defn set-command-defaults [cmd]
   (cond-> cmd
     true
     (assoc :time test-time)
@@ -171,17 +181,17 @@
     (not= :application.command/create (:type cmd))
     (assoc :application-id app-id)))
 
-(defn- fail-command
-  [application cmd injections]
+(defn fail-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (:errors result) {:cmd cmd :result result})
     result))
 
-(defn- ok-command
-  [application cmd injections]
+(defn ok-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (not (:errors result)) {:cmd cmd :result result})
     (let [events (:events result)]
       (events/validate-events events)
@@ -190,28 +200,101 @@
         (first events)
         events))))
 
-(defn- ok-command-with-warnings
-  [application cmd injections]
+(defn ok-command-with-warnings [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
-        result (commands/handle-command cmd application injections)]
+        result (->> (or injections command-injections)
+                    (commands/handle-command cmd application))]
     (assert-ex (not (:errors result)) {:cmd cmd :result result})
     (let [events (:events result)]
       (events/validate-events events)
       {:warnings (:warnings result)
        :events events})))
 
-(defn- apply-command
-  ([application cmd]
-   (apply-command application cmd nil))
-  ([application cmd injections]
-   (apply-events application [(ok-command application cmd injections)])))
+;;; dummy events
 
-(defn- apply-commands
-  ([application commands]
-   (apply-commands application commands nil))
-  ([application commands injections]
-   (reduce (fn [app cmd] (apply-command app cmd injections))
-           application commands)))
+(def dummy-created-event {:event/type :application.event/created
+                          :event/time test-time
+                          :event/actor applicant-user-id
+                          :application/id app-id
+                          :application/external-id "2000/123"
+                          :application/resources [{:catalogue-item/id 1
+                                                   :resource/ext-id "res1"}]
+                          :application/licenses []
+                          :application/forms [{:form/id 1}]
+                          :workflow/id 1
+                          :workflow/type :workflow/default})
+(def dummy-submitted-event {:event/type :application.event/submitted
+                            :event/time test-time
+                            :event/actor applicant-user-id
+                            :application/id app-id})
+(def dummy-closed-event {:event/type :application.event/closed
+                         :event/time test-time
+                         :event/actor applicant-user-id
+                         :application/id app-id
+                         :application/comment ""})
+(def dummy-returned-event {:event/type :application.event/returned
+                           :event/time test-time
+                           :event/actor handler-user-id
+                           :application/id app-id
+                           :application/comment ""})
+(def dummy-approved-event {:event/type :application.event/approved
+                           :event/time test-time
+                           :event/actor handler-user-id
+                           :application/comment "This is good"
+                           :application/id app-id})
+(def dummy-draft-saved-event {:event/type :application.event/draft-saved
+                              :event/time test-time
+                              :event/actor applicant-user-id
+                              :application/id app-id
+                              :application/field-values []})
+(def dummy-licenses-accepted-event {:event/type :application.event/licenses-accepted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id
+                                    :application/accepted-licenses #{1}})
+(def dummy-member-added-event {:event/type :application.event/member-added
+                               :event/time test-time
+                               :event/actor applicant-user-id
+                               :application/id app-id
+                               :application/member {:userid "somebody"}})
+(def dummy-member-invited-event {:event/type :application.event/member-invited
+                                 :event/time test-time
+                                 :event/actor applicant-user-id
+                                 :application/id app-id
+                                 :application/member {:name "Some Body" :email "somebody@applicants.com"}
+                                 :invitation/token "very-secure"})
+(def dummy-member-joined-event {:event/type :application.event/member-joined
+                                :event/time test-time
+                                :event/actor "somebody"
+                                :application/id app-id
+                                :invitation/token "very-secure"})
+(def dummy-review-requested-event {:event/type :application.event/review-requested
+                                   :event/time test-time
+                                   :event/actor handler-user-id
+                                   :application/id app-id
+                                   :application/request-id review-request-id
+                                   :application/reviewers [reviewer-user-id]
+                                   :application/comment ""})
+(def dummy-reviewed-event {:event/type :application.event/reviewed
+                           :event/time test-time
+                           :event/actor reviewer-user-id
+                           :application/id app-id
+                           :application/request-id review-request-id
+                           :application/comment ""})
+(def dummy-decision-requested-event {:event/type :application.event/decision-requested
+                                     :event/time test-time
+                                     :event/actor handler-user-id
+                                     :application/id app-id
+                                     :application/request-id decision-request-id
+                                     :application/deciders [decider-user-id]
+                                     :application/comment ""})
+(def dummy-decided-event {:event/type :application.event/decided
+                          :event/time test-time
+                          :event/actor decider-user-id
+                          :application/id app-id
+                          :application/request-id decision-request-id
+                          :application/decision :approved
+                          :application/comment ""})
 
 ;;; Tests
 
@@ -228,10 +311,9 @@
             :application/forms [{:form/id 1}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1]}))))
   (testing "multiple resources"
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id
@@ -247,10 +329,9 @@
             :application/forms [{:form/id 1}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1 2]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1 2]}))))
 
   (testing "no forms"
     (is (= {:event/type :application.event/created
@@ -264,46 +345,36 @@
             :application/forms []
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [6]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [6]}))))
 
   (testing "error: invalid actor"
     (is (= {:errors [{:userid "does-not-exist", :type :t.form.validation/invalid-user}]}
-           (fail-command nil {:type :application.command/create
-                              :actor "does-not-exist"
-                              :catalogue-item-ids [1]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor "does-not-exist"
+                          :catalogue-item-ids [1]}))))
 
   (testing "error: zero catalogue items"
     (is (= {:errors [{:type :must-not-be-empty
                       :key :catalogue-item-ids}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids []}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids []}))))
 
   (testing "error: non-existing catalogue items"
     (is (= {:errors [{:type :invalid-catalogue-item
                       :catalogue-item-id 999999}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [999999]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [999999]}))))
 
   (testing "error: disabled catalogue item"
     (is (= {:errors [{:type :disabled-catalogue-item
-                      :catalogue-item-id 2}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [1 2]}
-                         (assoc injections
-                                :get-catalogue-item
-                                (fn [id]
-                                  (merge (dummy-get-catalogue-item id)
-                                         (when (= id 2)
-                                           {:enabled false}))))))))
+                      :catalogue-item-id 7}]}
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 7]}))))
 
   (testing "catalogue items with different forms"
     (is (= {:event/type :application.event/created
@@ -321,10 +392,9 @@
             :application/forms [{:form/id 1} {:form/id 2}]
             :workflow/id 1
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [1 3]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1 3]}))))
 
   (testing "workflow form, multiple catalogue items with different forms, workflow has duplicated catalogue item form"
     (is (= {:event/type :application.event/created
@@ -339,480 +409,335 @@
             :application/forms [{:form/id 1} {:form/id 3} {:form/id 4} {:form/id 2}] ; wf forms first, then catalogue item forms
             :workflow/id 2
             :workflow/type :workflow/default}
-           (ok-command nil {:type :application.command/create
-                            :actor applicant-user-id
-                            :catalogue-item-ids [4 5]}
-                       injections))))
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [4 5]}))))
 
   (testing "error: catalogue items with different workflows"
     (is (= {:errors [{:type :unbundlable-catalogue-items
                       :catalogue-item-ids [1 4]}]}
-           (fail-command nil {:type :application.command/create
-                              :actor applicant-user-id
-                              :catalogue-item-ids [1 4]}
-                         injections))))
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 4]}))))
 
   (testing "cannot execute the create command for an existing application"
     (reset! allocated-new-ids? false)
-    (let [application (apply-events nil [dummy-created-event])]
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application {:type :application.command/create
-                                        :actor applicant-user-id
-                                        :catalogue-item-ids [1]}
-                           injections)))
-      (is (false? @allocated-new-ids?) "should not allocate new IDs"))))
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1]}
+                         (build-application-view [dummy-created-event]))))
+    (is (false? @allocated-new-ids?) "should not allocate new IDs")))
 
 (deftest test-save-draft
-  (let [application (apply-events nil [dummy-created-event])]
-    (testing "saves a draft"
-      (is (= {:event/type :application.event/draft-saved
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-             (ok-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-                         injections))))
-    (testing "saves a draft"
-      (is (= {:event/type :application.event/draft-saved
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-             (ok-command application
-                         {:type :application.command/save-draft
-                          :actor applicant-user-id
-                          :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}
-                         injections))))
-
-    (testing "saves a draft even when validations fail"
-      (is (= {:warnings [{:field-id "1" :form-id 1 :type :t.form.validation/invalid-value}]
-              :events [{:event/type :application.event/draft-saved
-                        :event/time test-time
-                        :event/actor applicant-user-id
-                        :application/id app-id
-                        :application/field-values [{:form 1 :field "1" :value "nonexistent_option"}]}]}
-             (ok-command-with-warnings
-              application
-              {:type :application.command/save-draft
-               :actor applicant-user-id
-               :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
-              injections))))
-
-    (testing "validation of conditional fields"
-      (let [created (assoc dummy-created-event :application/forms [{:form/id 7}])
-            application (apply-events nil [created])]
-        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
-                :events [{:event/type :application.event/draft-saved
-                          :event/time test-time
-                          :event/actor applicant-user-id
-                          :application/id app-id
-                          :application/field-values [{:form 7 :field "7" :value "y"}
-                                                     {:form 7 :field "8" :value "invalid_email"}]}]}
-               (ok-command-with-warnings
-                application
-                {:type :application.command/save-draft
-                 :actor applicant-user-id
-                 :field-values [{:form 7 :field "7" :value "y"}
-                                {:form 7 :field "8" :value "invalid_email"}]}
-                injections))
-            "visible field should not accept invalid values")
-        (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
-                :events [{:event/type :application.event/draft-saved
-                          :event/time test-time
-                          :event/actor applicant-user-id
-                          :application/id app-id
-                          :application/field-values [{:form 7 :field "7" :value "n"}]}]} ; invisible field value is not stored
-               (ok-command-with-warnings
-                application
-                {:type :application.command/save-draft
-                 :actor applicant-user-id
-                 :field-values [{:form 7 :field "7" :value "n"}
-                                {:form 7 :field "8" :value "invalid_email"}]}
-                injections))
-            "invisible should not accept invalid values")
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 7, :field "7", :value "y"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 7 :field "7" :value "y"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-                           injections))
-            "answers to visible fields should get stored")
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 7, :field "7", :value "n"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 7 :field "7" :value "n"}
-                                           {:form 7 :field "8" :value "valid@example.com"}]}
-                           injections))
-            "answers to invisible fields should get dropped")))
-
-    (testing "only the applicant can save a draft"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/save-draft
-                            :actor "somebody"
-                            :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}
-                           injections)
-             (fail-command application
-                           {:type :application.command/save-draft
-                            :actor handler-user-id
-                            :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}
-                           injections))))
-    (testing "draft cannot be updated after submitting"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])]
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application
-                             {:type :application.command/save-draft
-                              :actor applicant-user-id
-                              :field-values [{:form 1 :field "1" :value "bar"}]}
-                             injections)))))
-    (testing "draft can be updated after returning it to applicant"
-      (let [application (apply-events application
-                                      [{:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}
-                                       {:event/type :application.event/returned
-                                        :event/time test-time
-                                        :event/actor handler-user-id
-                                        :application/id app-id
-                                        :application/comment ""}])]
-        (is (= {:event/type :application.event/draft-saved
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id
-                :application/field-values [{:form 1 :field "1" :value "bar"}]}
-               (ok-command application
-                           {:type :application.command/save-draft
-                            :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "bar"}]}
-                           injections)))))))
-
-(deftest test-accept-licenses
-  (let [application (apply-events nil [dummy-created-event])]
-    (is (= {:event/type :application.event/licenses-accepted
+  (testing "saves a draft"
+    (is (= {:event/type :application.event/draft-saved
             :event/time test-time
             :event/actor applicant-user-id
             :application/id app-id
-            :application/accepted-licenses #{1 2}}
-           (ok-command application
-                       {:type :application.command/accept-licenses
+            :application/field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
                         :actor applicant-user-id
-                        :accepted-licenses [1 2]}
-                       injections)))))
+                        :field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+                       (build-application-view [dummy-created-event])))))
+  (testing "saves a draft"
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 1 :field "1" :value "foo"}
+                                       {:form 1 :field "2" :value "bar"}]}
+                       (build-application-view [dummy-created-event])))))
+
+  (testing "saves a draft even when validations fail"
+    (is (= {:warnings [{:field-id "1" :form-id 1 :type :t.form.validation/invalid-value}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 1 :field "1" :value "nonexistent_option"}]}]}
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 1 :field "1" :value "nonexistent_option"}]}
+                                     (build-application-view [dummy-created-event])))))
+
+  (testing "validation of conditional fields"
+    (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 7 :field "7" :value "y"}
+                                                 {:form 7 :field "8" :value "invalid_email"}]}]}
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 7 :field "7" :value "y"}
+                                                     {:form 7 :field "8" :value "invalid_email"}]}
+                                     (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "visible field should not accept invalid values")
+    (is (= {:warnings [{:field-id "8" :form-id 7 :type :t.form.validation/invalid-email}]
+            :events [{:event/type :application.event/draft-saved
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id
+                      :application/field-values [{:form 7 :field "7" :value "n"}]}]} ; invisible field value is not stored
+           (ok-command-with-warnings {:type :application.command/save-draft
+                                      :actor applicant-user-id
+                                      :field-values [{:form 7 :field "7" :value "n"}
+                                                     {:form 7 :field "8" :value "invalid_email"}]}
+                                     (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "invisible should not accept invalid values")
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 7, :field "7", :value "y"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 7 :field "7" :value "y"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+                       (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "answers to visible fields should get stored")
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 7, :field "7", :value "n"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 7 :field "7" :value "n"}
+                                       {:form 7 :field "8" :value "valid@example.com"}]}
+                       (build-application-view [(merge dummy-created-event {:application/forms [{:form/id 7}]})])))
+        "answers to invisible fields should get dropped"))
+
+  (testing "only the applicant can save a draft"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/save-draft
+                          :actor "somebody"
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
+                         (build-application-view [dummy-created-event]))
+           (fail-command {:type :application.command/save-draft
+                          :actor handler-user-id
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
+                         (build-application-view [dummy-created-event])))))
+  (testing "draft cannot be updated after submitting"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/save-draft
+                          :actor applicant-user-id
+                          :field-values [{:form 1 :field "1" :value "bar"}]}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "draft can be updated after returning it to applicant"
+    (is (= {:event/type :application.event/draft-saved
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/field-values [{:form 1 :field "1" :value "bar"}]}
+           (ok-command {:type :application.command/save-draft
+                        :actor applicant-user-id
+                        :field-values [{:form 1 :field "1" :value "bar"}]}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event]))))))
+
+(deftest test-accept-licenses
+  (is (= {:event/type :application.event/licenses-accepted
+          :event/time test-time
+          :event/actor applicant-user-id
+          :application/id app-id
+          :application/accepted-licenses #{1 2}}
+         (ok-command {:type :application.command/accept-licenses
+                      :actor applicant-user-id
+                      :accepted-licenses [1 2]}
+                     (build-application-view [dummy-created-event])))))
 
 (deftest test-add-licenses
-  (let [application (apply-events nil [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])]
-    (is (= {:event/type :application.event/licenses-added
-            :event/time test-time
-            :event/actor handler-user-id
-            :application/id app-id
-            :application/comment "comment"
-            :application/licenses [{:license/id 1} {:license/id 2}]}
-           (ok-command application
-                       {:type :application.command/add-licenses
+  (is (= {:event/type :application.event/licenses-added
+          :event/time test-time
+          :event/actor handler-user-id
+          :application/id app-id
+          :application/comment "comment"
+          :application/licenses [{:license/id 1} {:license/id 2}]}
+         (ok-command {:type :application.command/add-licenses
+                      :actor handler-user-id
+                      :comment "comment"
+                      :licenses [1 2]}
+                     (build-application-view [dummy-created-event
+                                              dummy-submitted-event]))))
+  (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
+         (fail-command {:type :application.command/add-licenses
                         :actor handler-user-id
                         :comment "comment"
-                        :licenses [1 2]}
-                       injections)))
-    (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
-           (fail-command application
-                         {:type :application.command/add-licenses
-                          :actor handler-user-id
-                          :comment "comment"
-                          :licenses []}
-                         injections)))))
+                        :licenses []}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
 
 (deftest test-change-resources
-  (let [cat-1 1
-        cat-2-other-license 2
-        cat-3-other-workflow 3
-        cat-4-other-form 4
-        form-1 1
-        form-2 2
-        form-3 3
-        wf-1 1
-        wf-2 2
-        license-1 1
-        license-2 2
-        application (apply-events nil [dummy-created-event])
-        submitted-application (apply-events application
-                                            [{:event/type :application.event/submitted
-                                              :event/time test-time
-                                              :event/actor applicant-user-id
-                                              :application/id app-id}])
-        approved-application (apply-events submitted-application
-                                           [{:event/type :application.event/approved
-                                             :event/time test-time
-                                             :event/actor handler-user-id
-                                             :application/comment "This is good"
-                                             :application/id app-id}])
-        ;; TODO: we could remove this and use the common injections for all tests in this file, same for other local injections
-        injections {:get-workflow {wf-1 {:workflow {:forms [{:form/id form-3}]}}
-                                   wf-2 {}}
-                    :get-catalogue-item
-                    {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
-                     cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
-                     cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
-                     cat-4-other-form {:id cat-4-other-form :resid "res4" :formid form-2 :wfid wf-1}}
-                    :get-catalogue-item-licenses
-                    {cat-1 [{:license/id license-1}]
-                     cat-2-other-license [{:license/id license-2}]
-                     cat-3-other-workflow [{:license/id license-1}]
-                     cat-4-other-form [{:license/id license-1}]}
-                    :valid-user? (:valid-user? injections)}]
+  (testing "applicant can add resources with different form to draft application"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 1} ; workflow form must persist
+                                {:form/id 2}]
+            :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                    {:catalogue-item/id 2 :resource/ext-id "res2"}
+                                    {:catalogue-item/id 3 :resource/ext-id "res3"}]
+            :application/licenses [{:license/id 1}
+                                   {:license/id 2}
+                                   {:license/id 3}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [1 2 3]}
+                       (build-application-view [dummy-created-event])))))
 
-    (testing "applicant can add resources to a draft application"
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/forms [{:form/id 3} ; workflow form must persist
-                                  {:form/id 1}]
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
-              :application/licenses [{:license/id license-1}
-                                     {:license/id license-2}]}
-             (ok-command application
-                         {:type :application.command/change-resources
+  (testing "applicant can replace resources of a draft application"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 1}]
+            :application/resources [{:catalogue-item/id 2 :resource/ext-id "res2"}]
+            :application/licenses [{:license/id 2}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [2]}
+                       (build-application-view [dummy-created-event])))))
+
+  (testing "applicant cannot add resources to a submitted application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-resources
                           :actor applicant-user-id
-                          :catalogue-item-ids [cat-1 cat-2-other-license]}
-                         injections))))
+                          :catalogue-item-ids [1 2]}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
 
-    (testing "applicant cannot add resources to a submitted application"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command submitted-application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-2-other-license]}
-                           injections))))
-
-    (testing "applicant cannot add resources with different workflow"
-      (is (= {:errors [{:type :unbundlable-catalogue-items
-                        :catalogue-item-ids [cat-1 cat-3-other-workflow]}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-3-other-workflow]}
-                           injections))))
-
-    (testing "applicant can add resources with different form"
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-              :application/licenses [{:license/id license-1}]}
-             (ok-command application
-                         {:type :application.command/change-resources
+  (testing "applicant cannot add resources with different workflow"
+    (is (= {:errors [{:type :unbundlable-catalogue-items
+                      :catalogue-item-ids [1 4]}]}
+           (fail-command {:type :application.command/change-resources
                           :actor applicant-user-id
-                          :catalogue-item-ids [cat-1 cat-4-other-form]}
-                         injections))))
+                          :catalogue-item-ids [1 4]}
+                         (build-application-view [dummy-created-event])))))
 
-    (testing "applicant can replace resources"
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/forms [{:form/id 3} {:form/id 1}]
-              :application/resources [{:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
-              :application/licenses [{:license/id license-2}]}
-             (ok-command application
-                         {:type :application.command/change-resources
+  (testing "applicant cannot replace resources with different workflow"
+    (is (= {:errors [{:type :changes-original-workflow :workflow/id 1 :ids [2]}]}
+           (fail-command {:type :application.command/change-resources
                           :actor applicant-user-id
-                          :catalogue-item-ids [cat-2-other-license]}
-                         injections))))
+                          :catalogue-item-ids [4]}
+                         (build-application-view [dummy-created-event])))))
 
-    (testing "applicant cannot replace resources with different workflow"
-      (is (= {:errors [{:type :changes-original-workflow :workflow/id wf-1 :ids [wf-2]}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [cat-3-other-workflow]}
-                           injections))))
+  (testing "applicant can replace resources with different form"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 2}]
+            :application/resources [{:catalogue-item/id 3 :resource/ext-id "res3"}]
+            :application/licenses [{:license/id 1}
+                                   {:license/id 2}
+                                   {:license/id 3}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [3]}
+                       (build-application-view [dummy-created-event])))))
 
-    (testing "applicant can replace resources with different form"
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/forms [{:form/id 3} {:form/id 2}]
-              :application/resources [{:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-              :application/licenses [{:license/id license-1}]}
-             (ok-command application
-                         {:type :application.command/change-resources
-                          :actor applicant-user-id
-                          :catalogue-item-ids [cat-4-other-form]}
-                         injections))))
-
-    (testing "handler can add resources to a submitted application"
+  (doseq [[state events] [["submitted" [dummy-created-event dummy-submitted-event]]
+                          ["approved" [dummy-created-event dummy-submitted-event dummy-approved-event]]]]
+    (testing (str "handler can add resources to " state "application")
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
-              :application/forms [{:form/id 3} {:form/id 1}]
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
-              :application/licenses [{:license/id license-1}
-                                     {:license/id license-2}]}
-             (ok-command submitted-application
-                         {:type :application.command/change-resources
+              :application/forms [{:form/id 1}]
+              :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                      {:catalogue-item/id 2 :resource/ext-id "res2"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}]}
+             (ok-command {:type :application.command/change-resources
                           :actor handler-user-id
                           :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2-other-license]}
-                         injections)))
-
+                          :catalogue-item-ids [1 2]}
+                         (build-application-view events))))
       (testing "- even with a different workflow or form"
         (is (= {:event/type :application.event/resources-changed
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
-                :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
-                :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                        {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
-                                        {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-                :application/licenses [{:license/id license-1}]}
-               (ok-command submitted-application
-                           {:type :application.command/change-resources
+                :application/forms [{:form/id 1} {:form/id 2}]
+                :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                        {:catalogue-item/id 3 :resource/ext-id "res3"}
+                                        {:catalogue-item/id 4 :resource/ext-id "res4"}]
+                :application/licenses [{:license/id 1}
+                                       {:license/id 2}
+                                       {:license/id 3}]}
+               (ok-command {:type :application.command/change-resources
                             :actor handler-user-id
                             :comment "Changed these for you"
-                            :catalogue-item-ids [cat-1 cat-3-other-workflow cat-4-other-form]}
-                           injections)))))
+                            :catalogue-item-ids [1 3 4]}
+                           (build-application-view events)))))))
 
-    (testing "handler can add resources to an approved application"
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "Changed these for you"
-              :application/forms [{:form/id 3} {:form/id 1}]
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
-              :application/licenses [{:license/id license-1}
-                                     {:license/id license-2}]}
-             (ok-command approved-application
-                         {:type :application.command/change-resources
-                          :actor handler-user-id
-                          :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2-other-license]}
-                         injections)))
+  (testing "the catalogue item must exist"
+    (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
+           (fail-command {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [42]}
+                         (build-application-view [dummy-created-event])))))
 
-      (testing "- even with different workflow or form"
-        (is (= {:event/type :application.event/resources-changed
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/comment "Changed these for you"
-                :application/forms [{:form/id 3} {:form/id 1} {:form/id 2}]
-                :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                        {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
-                                        {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-                :application/licenses [{:license/id license-1}]}
-               (ok-command approved-application
-                           {:type :application.command/change-resources
-                            :actor handler-user-id
-                            :comment "Changed these for you"
-                            :catalogue-item-ids [cat-1 cat-3-other-workflow cat-4-other-form]}
-                           injections)))))
-
-    (testing "the catalogue item must exist"
-      (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [42]}
-                           injections))))
-
-    (testing "there must be at least one catalogue item"
-      (is (= {:errors [{:type :must-not-be-empty :key :catalogue-item-ids}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids []}
-                           injections))))))
+  (testing "there must be at least one catalogue item"
+    (is (= {:errors [{:type :must-not-be-empty :key :catalogue-item-ids}]}
+           (fail-command {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids []}
+                         (build-application-view [dummy-created-event]))))))
 
 (deftest test-submit
-  (let [injections {:valid-user? #{applicant-user-id "non-applicant"}
-                    :get-form-template dummy-get-form-template}
-        created-event {:event/type :application.event/created
-                       :event/time test-time
-                       :event/actor applicant-user-id
-                       :application/id app-id
-                       :application/external-id "2000/123"
-                       :application/resources [{:catalogue-item/id 1
-                                                :resource/ext-id "res1"}
-                                               {:catalogue-item/id 2
-                                                :resource/ext-id "res2"}]
-                       :application/licenses [{:license/id 1}]
-                       :application/forms [{:form/id 1}]
-                       :workflow/id 1
-                       :workflow/type :workflow/default}
-        draft-saved-event {:event/type :application.event/draft-saved
-                           :event/time test-time
-                           :event/actor applicant-user-id
-                           :application/id app-id
-                           :application/field-values []}
-        licenses-accepted-event {:event/type :application.event/licenses-accepted
-                                 :event/time test-time
-                                 :event/actor applicant-user-id
-                                 :application/id app-id
-                                 :application/accepted-licenses #{1}}
-        submit-command {:type :application.command/submit
-                        :actor applicant-user-id}
-        application-no-licenses (apply-events nil [created-event draft-saved-event])
-        application (apply-events application-no-licenses [licenses-accepted-event])
-        created-event2 (assoc created-event :application/forms [{:form/id 1} {:form/id 2}])
-        draft-saved-event2 (update draft-saved-event :application/field-values conj {:form 2 :field "1" :value "baz"})
-        application2 (apply-events nil [created-event2 draft-saved-event2 licenses-accepted-event])]
-
+  (let [created-event (merge dummy-created-event {:application/resources [{:catalogue-item/id 1
+                                                                           :resource/ext-id "res1"}
+                                                                          {:catalogue-item/id 2
+                                                                           :resource/ext-id "res2"}]
+                                                  :application/licenses [{:license/id 1}]})]
     (testing "cannot submit a valid form if licenses are not accepted"
       (is (= {:errors [{:type :t.actions.errors/licenses-not-accepted}]}
-             (fail-command application-no-licenses submit-command injections))))
+             (fail-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event])))))
 
     (testing "can submit a valid form when licenses are accepted"
       (is (= {:event/type :application.event/submitted
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id}
-             (ok-command application submit-command injections))))
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (build-application-view [created-event
+                                                  dummy-draft-saved-event
+                                                  dummy-licenses-accepted-event])))))
 
     (testing "can submit two valid forms when licenses are accepted"
       (is (= {:event/type :application.event/submitted
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id}
-             (ok-command application2 submit-command injections))))
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (let [forms {:application/forms [{:form/id 1} {:form/id 2}]}
+                               fields {:application/field-values [{:form 2 :field "1" :value "baz"}]}]
+                           (build-application-view [(merge dummy-created-event forms)
+                                                    (merge dummy-draft-saved-event fields)
+                                                    dummy-licenses-accepted-event]))))))
 
     (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
@@ -820,675 +745,586 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
-                                                                                      {:form 1 :field "2" :value "present"}])])
-                   (ok-command submit-command injections)))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value ""}
+                                                                                                               {:form 1 :field "2" :value "present"}]})])))
             "submit succeeds even if application is inconsistent and contains an answer for an invisible field")
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
-                                                                                      {:form 1 :field "2" :value ""}])])
-                   (ok-command submit-command injections)))))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value ""}
+                                                                                                               {:form 1 :field "2" :value ""}]})])))))
       (testing "1st field is given, 2nd field is required and visible but empty"
         (is (= {:errors [{:type :t.form.validation/required
                           :form-id 1
                           :field-id "2"}]}
-               (-> application
-                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                      {:form 1 :field "2" :value ""}])])
-                   (fail-command submit-command injections)))))
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [created-event
+                                                      dummy-draft-saved-event
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value ""}]})])))))
       (testing "1st field is given, 2nd field is given"
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id}
-               (-> application
-                   (ok-command submit-command injections)))))
+               (ok-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event])))))
 
       (testing "cannot submit if one of two forms has required fields"
-        (is (= {:errors [{:field-id "1" :type :t.form.validation/required :form-id 2}]}
-               (-> application2
-                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                       {:form 1 :field "2" :value "bar"}
-                                                                                       {:form 2 :field "1" :value ""}])])
-                   (fail-command submit-command injections))))
-        (is (= {:errors [{:field-id "2" :type :t.form.validation/required :form-id 1}]}
-               (-> application2
-                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                                       {:form 1 :field "2" :value ""}
-                                                                                       {:form 2 :field "1" :value "baz"}])])
-                   (fail-command submit-command injections))))))
+        (is (= {:errors [{:type :t.form.validation/required
+                          :form-id 2
+                          :field-id "1"}]}
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [(merge created-event {:application/forms [{:form/id (:form/id (dummy-forms 1))}
+                                                                                                {:form/id (:form/id (dummy-forms 2))}]})
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value "bar"}
+                                                                                                                 {:form 2 :field "1" :value ""}]})]))))
+        (is (= {:errors [{:type :t.form.validation/required
+                          :form-id 1
+                          :field-id "2"}]}
+               (fail-command {:type :application.command/submit
+                              :actor applicant-user-id}
+                             (build-application-view [(merge created-event {:application/forms [{:form/id (:form/id (dummy-forms 1))}
+                                                                                                {:form/id (:form/id (dummy-forms 2))}]})
+                                                      dummy-licenses-accepted-event
+                                                      (merge dummy-draft-saved-event {:application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                                                 {:form 1 :field "2" :value ""}
+                                                                                                                 {:form 2 :field "1" :value "baz"}]})]))))))
 
     (testing "can submit draft even if catalogue item is disabled"
-      (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
-        (is (= {:event/type :application.event/submitted
-                :event/time test-time
-                :event/actor applicant-user-id
-                :application/id app-id}
-               (ok-command disabled submit-command injections)))))
+      (is (= {:event/type :application.event/submitted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (build-application-view [(merge-with into created-event {:application/resources [{:catalogue-item/id 7
+                                                                                                           :resource/ext-id "res-disabled"}]})
+                                                  dummy-draft-saved-event
+                                                  dummy-licenses-accepted-event])))))
 
     (testing "non-applicant cannot submit"
-      (let [application (apply-events application [(assoc licenses-accepted-event :event/actor "non-applicant")])]
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application
-                             (assoc submit-command :actor "non-applicant")
-                             injections)))))
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/submit
+                            :actor "somebody"}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    (merge dummy-licenses-accepted-event {:event/actor "somebody"})])))))
 
     (testing "cannot submit twice"
       (is (= {:errors [{:type :forbidden}]}
-             (-> application
-                 (apply-events [{:event/type :application.event/submitted
-                                 :event/time test-time
-                                 :event/actor applicant-user-id
-                                 :application/id app-id}])
-                 (fail-command submit-command injections)))))))
+             (fail-command {:type :application.command/submit
+                            :actor applicant-user-id}
+                           (build-application-view [created-event
+                                                    dummy-draft-saved-event
+                                                    dummy-licenses-accepted-event
+                                                    dummy-submitted-event])))))))
 
 (deftest test-return-resubmit
-  (testing "return"
-    (let [application (apply-events nil
-                                    [(assoc dummy-created-event
-                                            :application/resources [{:catalogue-item/id 1
-                                                                     :resource/ext-id "res1"}])
-                                     {:event/type :application.event/submitted
-                                      :event/time test-time
-                                      :event/actor applicant-user-id
-                                      :application/id app-id}])
-          returned-event (ok-command application
-                                     {:type :application.command/return
-                                      :actor handler-user-id
-                                      :comment "ret"}
-                                     injections)
-          submit-command {:type :application.command/submit
-                          :actor applicant-user-id}]
-      (is (= {:event/type :application.event/returned
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "ret"}
-             returned-event))
-      (testing "resubmit"
-        (let [returned (apply-events application [returned-event])]
-          (is (= {:event/type :application.event/submitted
-                  :event/time test-time
-                  :event/actor applicant-user-id
-                  :application/id app-id}
-                 (ok-command returned submit-command injections)))
-          (testing "succeeds even when catalogue item is disabled"
-            (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
-              (is (= {:event/type :application.event/submitted
-                      :event/time test-time
-                      :event/actor applicant-user-id
-                      :application/id app-id}
-                     (ok-command disabled submit-command injections))))))))))
-
-
-(deftest test-assign-external-id
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-    (testing "handler can assign id"
-      (is (= {:event/type :application.event/external-id-assigned
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/external-id "ext123"}
-             (ok-command application
-                         {:type :application.command/assign-external-id
-                          :actor handler-user-id
-                          :external-id "ext123"}
-                         injections))))
-    (testing "applicant can't assign id"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/assign-external-id
-                            :actor applicant-user-id
-                            :external-id "ext123"}
-                           injections))))))
-
-(deftest test-approve-or-reject
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-    (testing "approved successfully"
-      (is (= {:event/type :application.event/approved
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "fine"}
-             (ok-command application
-                         {:type :application.command/approve
-                          :actor handler-user-id
-                          :comment "fine"}
-                         injections))))
-    (testing "approved with end-date"
-      (is (= {:event/type :application.event/approved
-              :event/time test-time
-              :event/actor handler-user-id
-              :entitlement/end (time/plus (DateTime. 1234) (time/days 1))
-              :application/id app-id
-              :application/comment "fine"}
-             (with-fixed-time (DateTime. 1234)
-               (fn []
-                 (ok-command application
-                             {:type :application.command/approve
-                              :actor handler-user-id
-                              :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
-                              :comment "fine"}
-                             injections))))))
-    (testing "rejected successfully"
-      (is (= {:event/type :application.event/rejected
-              :application/comment "bad"
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id}
-             (ok-command application
-                         {:type :application.command/reject
-                          :actor handler-user-id
-                          :comment "bad"}
-                         injections))))
-    (testing "throws with past entitlement end-date"
-      (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
-             (fail-command application
-                           {:type :application.command/approve
-                            :actor handler-user-id
-                            :entitlement-end (DateTime. 1234)}
-                           injections))))))
-
-(deftest test-close
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/approved
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/comment ""}])]
-    (testing "handler can close approved application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
-                          :actor handler-user-id
-                          :comment "outdated"}
-                         injections)))))
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/returned
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/comment ""}])]
-    (testing "applicant can close returned application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
-                          :actor applicant-user-id
-                          :comment "outdated"}
-                         injections))))
-    (testing "handler can close returned application"
-      (is (= {:event/type :application.event/closed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/comment "outdated"}
-             (ok-command application
-                         {:type :application.command/close
-                          :actor handler-user-id
-                          :comment "outdated"}
-                         injections))))))
-
-(deftest test-revoke
-  (let [application (apply-events nil [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}
-                                       {:event/type :application.event/approved
-                                        :event/time test-time
-                                        :event/actor handler-user-id
-                                        :application/id app-id
-                                        :application/comment ""}])]
-    (is (= {:event/type :application.event/revoked
+  (testing "handler can return application"
+    (is (= {:event/type :application.event/returned
             :event/time test-time
             :event/actor handler-user-id
             :application/id app-id
-            :application/comment "license violated"}
-           (ok-command application
-                       {:type :application.command/revoke
+            :application/comment ""}
+           (ok-command {:type :application.command/return
                         :actor handler-user-id
-                        :comment "license violated"}
-                       injections)))))
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "applicant can resubmit returned application"
+    (is (= {:event/type :application.event/submitted
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/submit
+                        :actor applicant-user-id}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event])))))
+  (testing "applicant can resubmit even when catalogue item is disabled"
+    (let [created-event (-> dummy-created-event
+                            (update :application/resources conj {:catalogue-item/id 7
+                                                                 :resource/ext-id "res-disabled"}))]
+      (is (= {:event/type :application.event/submitted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command {:type :application.command/submit
+                          :actor applicant-user-id}
+                         (build-application-view [created-event
+                                                  dummy-submitted-event
+                                                  dummy-returned-event])))))))
+
+(deftest test-assign-external-id
+  (testing "handler can assign id"
+    (is (= {:event/type :application.event/external-id-assigned
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/external-id "ext123"}
+           (ok-command {:type :application.command/assign-external-id
+                        :actor handler-user-id
+                        :external-id "ext123"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "applicant can't assign id"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/assign-external-id
+                          :actor applicant-user-id
+                          :external-id "ext123"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]))))))
+
+(deftest test-approve-or-reject
+  (testing "approved successfully"
+    (is (= {:event/type :application.event/approved
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "fine"}
+           (ok-command {:type :application.command/approve
+                        :actor handler-user-id
+                        :comment "fine"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "approved with end-date"
+    (is (= {:event/type :application.event/approved
+            :event/time test-time
+            :event/actor handler-user-id
+            :entitlement/end (time/plus (DateTime. 1234) (time/days 1))
+            :application/id app-id
+            :application/comment "fine"}
+           (with-fixed-time (DateTime. 1234)
+             (fn []
+               (ok-command {:type :application.command/approve
+                            :actor handler-user-id
+                            :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
+                            :comment "fine"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))))
+  (testing "rejected successfully"
+    (is (= {:event/type :application.event/rejected
+            :application/comment "bad"
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/reject
+                        :actor handler-user-id
+                        :comment "bad"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "throws with past entitlement end-date"
+    (is (= {:errors [{:type :t.actions.errors/entitlement-end-not-in-future}]}
+           (fail-command {:type :application.command/approve
+                          :actor handler-user-id
+                          :entitlement-end (DateTime. 1234)}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]))))))
+
+(deftest test-close
+  (testing "handler can close approved application"
+    (is (= {:event/type :application.event/closed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "outdated"}
+           (ok-command {:type :application.command/close
+                        :actor handler-user-id
+                        :comment "outdated"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-approved-event])))))
+  (testing "applicant can close returned application"
+    (is (= {:event/type :application.event/closed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/comment "outdated"}
+           (ok-command {:type :application.command/close
+                        :actor applicant-user-id
+                        :comment "outdated"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event])))))
+  (testing "handler can close returned application"
+    (is (= {:event/type :application.event/closed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "outdated"}
+           (ok-command {:type :application.command/close
+                        :actor handler-user-id
+                        :comment "outdated"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-returned-event]))))))
+
+(deftest test-revoke
+  (is (= {:event/type :application.event/revoked
+          :event/time test-time
+          :event/actor handler-user-id
+          :application/id app-id
+          :application/comment "license violated"}
+         (ok-command {:type :application.command/revoke
+                      :actor handler-user-id
+                      :comment "license violated"}
+                     (build-application-view [dummy-created-event
+                                              dummy-submitted-event
+                                              dummy-approved-event])))))
 
 (deftest test-decision
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])
-        injections {:valid-user? #{handler-user-id "deity" "deity3"}
-                    :find-userid identity}]
-    (testing "required :valid-user? injection"
-      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (fail-command application
-                           {:type :application.command/request-decision
-                            :actor handler-user-id
-                            :deciders ["deity"]
-                            :comment "pls"}
-                           {}))))
-    (testing "decider must be a valid user"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
-             (fail-command application
-                           {:type :application.command/request-decision
-                            :actor handler-user-id
-                            :deciders ["deity2"]
-                            :comment "pls"}
-                           injections))))
-    (testing "deciding before ::request-decision should fail"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/decide
-                            :actor "deity"
-                            :decision :approved
-                            :comment "pls"}
-                           injections))))
-    (let [event (ok-command application
-                            {:type :application.command/request-decision
-                             :actor handler-user-id
-                             :deciders ["deity"]
-                             :comment ""}
-                            injections)
-          request-id (:application/request-id event)
-          requested (apply-events application [event])]
-      (testing "decision requested successfully"
-        (is (instance? UUID request-id))
-        (is (= {:event/type :application.event/decision-requested
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/request-id request-id
-                :application/deciders ["deity"]
-                :application/comment ""}
-               event)))
-      (testing "only the requested user can decide"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command requested
-                             {:type :application.command/decide
-                              :actor "deity3"
-                              :decision :approved
-                              :comment ""}
-                             injections))))
-      (let [event (ok-command requested
-                              {:type :application.command/decide
-                               :actor "deity"
-                               :decision :approved
-                               :comment ""}
-                              injections)
-            approved (apply-events requested [event])]
-        (testing "decided approved successfully"
-          (is (= {:event/type :application.event/decided
-                  :event/time test-time
-                  :event/actor "deity"
-                  :application/id app-id
-                  :application/request-id request-id
-                  :application/decision :approved
-                  :application/comment ""}
-                 event)))
-        (testing "cannot approve twice"
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command approved
-                               {:type :application.command/decide
-                                :actor "deity"
-                                :decision :approved
-                                :comment ""}
-                               injections)))))
-      (let [event (ok-command requested
-                              {:type :application.command/decide
-                               :actor "deity"
-                               :decision :rejected
-                               :comment ""}
-                              injections)
-            rejected (apply-events requested [event])]
-        (testing "decided rejected successfully"
-          (is (= {:event/type :application.event/decided
-                  :event/time test-time
-                  :event/actor "deity"
-                  :application/id app-id
-                  :application/request-id request-id
-                  :application/decision :rejected
-                  :application/comment ""}
-                 event)))
-        (testing "cannot reject twice"
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command rejected
-                               {:type :application.command/decide
-                                :actor "deity"
-                                :decision :rejected
-                                :comment ""}
-                               injections)))))
-      (testing "other decisions are not possible"
-        (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
-                              (fail-command requested
-                                            {:type :application.command/decide
-                                             :actor "deity"
-                                             :decision :foobar
-                                             :comment ""}
-                                            injections)))))))
-
-(deftest test-add-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "somebody"}}])]
-    (testing "handler can add members"
-      (is (= {:event/type :application.event/member-added
+  (testing "required :valid-user? injection"
+    (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
+           (fail-command {:type :application.command/request-decision
+                          :actor handler-user-id
+                          :deciders [decider-user-id]
+                          :comment "pls"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])
+                         (dissoc command-injections :valid-user?)))))
+  (testing "decider must be a valid user"
+    (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity"}]}
+           (fail-command {:type :application.command/request-decision
+                          :actor handler-user-id
+                          :deciders ["deity"]
+                          :comment "pls"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "deciding before ::request-decision should fail"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor decider-user-id
+                          :decision :approved
+                          :comment "pls"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "decision requested successfully"
+    (let [decision-requested-event (ok-command {:type :application.command/request-decision
+                                                :actor handler-user-id
+                                                :deciders [decider-user-id]
+                                                :comment ""}
+                                               (build-application-view [dummy-created-event
+                                                                        dummy-submitted-event]))]
+      (is (instance? UUID (:application/request-id decision-requested-event)))
+      (is (= {:event/type :application.event/decision-requested
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
-              :application/member {:userid "member1"}}
-             (ok-command application
-                         {:type :application.command/add-member
+              :application/request-id (:application/request-id decision-requested-event)
+              :application/deciders [decider-user-id]
+              :application/comment ""}
+             decision-requested-event))))
+  (testing "only the requested user can decide"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
                           :actor handler-user-id
+                          :decision :approved
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event])))))
+  (testing "decided approved successfully"
+    (is (= {:event/type :application.event/decided
+            :event/time test-time
+            :event/actor decider-user-id
+            :application/id app-id
+            :application/request-id decision-request-id
+            :application/decision :approved
+            :application/comment ""}
+           (ok-command {:type :application.command/decide
+                        :actor decider-user-id
+                        :decision :approved
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-decision-requested-event])))))
+  (testing "cannot decide approve twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor decider-user-id
+                          :decision :approved
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event
+                                                  dummy-decided-event])))))
+  (testing "decided rejected successfully"
+    (is (= {:event/type :application.event/decided
+            :event/time test-time
+            :event/actor decider-user-id
+            :application/id app-id
+            :application/request-id decision-request-id
+            :application/decision :rejected
+            :application/comment ""}
+           (ok-command {:type :application.command/decide
+                        :actor decider-user-id
+                        :decision :rejected
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-decision-requested-event])))))
+  (testing "cannot decide reject twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/decide
+                          :actor decider-user-id
+                          :decision :rejected
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-decision-requested-event
+                                                  (merge dummy-decided-event {:application/decision :rejected})])))))
+  (testing "other decisions are not possible"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
+                          (fail-command {:type :application.command/decide
+                                         :actor decider-user-id
+                                         :decision :foobar
+                                         :comment ""}
+                                        (build-application-view [dummy-created-event
+                                                                 dummy-submitted-event
+                                                                 dummy-decision-requested-event]))))))
+
+(deftest test-add-member
+  (testing "handler can add members"
+    (is (= {:event/type :application.event/member-added
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:userid "member1"}}
+           (ok-command {:type :application.command/add-member
+                        :actor handler-user-id
+                        :member {:userid "member1"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "added members can see the application"
+    (is (-> (build-application-view [dummy-created-event
+                                     dummy-submitted-event
+                                     dummy-member-added-event])
+            (model/see-application? "somebody"))))
+  (testing "only handler can add members"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/add-member
+                          :actor applicant-user-id
                           :member {:userid "member1"}}
-                         injections))))
-    (testing "only handler can add members"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor applicant-user-id
-                            :member {:userid "member1"}}
-                           injections)
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor "member1"
-                            :member {:userid "member2"}}
-                           injections))))
-    (testing "only valid users can be added"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "does-not-exist"}]}
-             (fail-command application
-                           {:type :application.command/add-member
-                            :actor handler-user-id
-                            :member {:userid "does-not-exist"}}
-                           injections))))
-    (testing "added members can see the application"
-      (is (-> (apply-commands application
-                              [{:type :application.command/add-member
-                                :actor handler-user-id
-                                :member {:userid "member1"}}]
-                              injections)
-              (model/see-application? "member1"))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))
+           (fail-command {:type :application.command/add-member
+                          :actor "member1"
+                          :member {:userid "member2"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "only valid users can be added"
+    (is (= {:errors [{:type :t.form.validation/invalid-user :userid "does-not-exist"}]}
+           (fail-command {:type :application.command/add-member
+                          :actor handler-user-id
+                          :member {:userid "does-not-exist"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))))))
 
 (deftest test-invite-member
-  (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
-                    :find-userid identity
-                    :secure-token (constantly "very-secure")}]
-    (testing "applicant can invite members"
-      (is (= {:event/type :application.event/member-invited
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:name "Member Applicant 1"
-                                   :email "member1@applicants.com"}
-              :invitation/token "very-secure"}
-             (ok-command application
-                         {:type :application.command/invite-member
+  (testing "applicant can invite members"
+    (is (= {:event/type :application.event/member-invited
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-member
+                        :actor applicant-user-id
+                        :member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}}
+                       (build-application-view [dummy-created-event])))))
+  (testing "other users cannot invite members"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-member
+                          :actor "member1"
+                          :member {:name "Member Applicant 1"
+                                   :email "member1@applicants.com"}}
+                         (build-application-view [dummy-created-event])))))
+  (testing "applicant can't invite members to submitted application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/invite-member
                           :actor applicant-user-id
                           :member {:name "Member Applicant 1"
                                    :email "member1@applicants.com"}}
-                         injections))))
-    (testing "other users cannot invite members"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-member
-                            :actor "member1"
-                            :member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}}
-                           injections))))
-    (let [submitted (apply-events application
-                                  [{:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-      (testing "applicant can't invite members to submitted application"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command submitted
-                             {:type :application.command/invite-member
-                              :actor applicant-user-id
-                              :member {:name "Member Applicant 1"
-                                       :email "member1@applicants.com"}}
-                             injections))))
-      (testing "handler can invite members to submitted application"
-        (is (= {:event/type :application.event/member-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-member
-                            :actor handler-user-id
-                            :member {:name "Member Applicant 1"
-                                     :email "member1@applicants.com"}}
-                           injections)))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "handler can invite members to submitted application"
+    (is (= {:event/type :application.event/member-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-member
+                        :actor handler-user-id
+                        :member {:name "Member Applicant 1"
+                                 :email "member1@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event]))))))
 
 (deftest test-invite-reviewer-decider
-  (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id "member1"}
-                    :find-userid identity
-                    :secure-token (constantly "very-secure")}]
-    (testing "applicant can't invite reviewer for draft"
+  (doseq [user #{applicant-user-id "member1"}]
+    (testing (str user " cannot invite reviewer or decider to draft application")
       (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-reviewer
-                            :actor applicant-user-id
+             (fail-command {:type :application.command/invite-reviewer
+                            :actor user
                             :reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}}
-                           injections))))
-    (testing "applicant can't invite decider for draft"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/invite-decider
-                            :actor applicant-user-id
+                           (build-application-view [dummy-created-event]))
+             (fail-command {:type :application.command/invite-decider
+                            :actor user
                             :decider {:name "A Decider"
                                       :email "decider@applicants.com"}}
-                           injections))))
-    (let [submitted (apply-events application [{:event/type :application.event/submitted
-                                                :event/time test-time
-                                                :event/actor applicant-user-id
-                                                :application/id app-id}])]
-      (testing "handler can invite reviewer for submitted"
-        (is (= {:event/type :application.event/reviewer-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/reviewer {:name "A Reviewer"
-                                       :email "reviewer@applicants.com"}
-                :application/comment "please review"
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-reviewer
-                            :actor handler-user-id
-                            :comment "please review"
+                           (build-application-view [dummy-created-event])))))
+    (testing (str user " cannot invite reviewer or decider to submitted application")
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/invite-reviewer
+                            :actor user
                             :reviewer {:name "A Reviewer"
                                        :email "reviewer@applicants.com"}}
-                           injections))))
-      (testing "handler can invite decider for submitted"
-        (is (= {:event/type :application.event/decider-invited
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/decider {:name "A Decider"
-                                      :email "decider@applicants.com"}
-                :application/comment "please decide"
-                :invitation/token "very-secure"}
-               (ok-command submitted
-                           {:type :application.command/invite-decider
-                            :actor handler-user-id
-                            :comment "please decide"
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event]))
+             (fail-command {:type :application.command/invite-decider
+                            :actor user
                             :decider {:name "A Decider"
                                       :email "decider@applicants.com"}}
-                           injections))))
-      (doseq [user [applicant-user-id "member1"]]
-        (testing (str user " users cannot invite reviewer for submitted")
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command submitted
-                               {:type :application.command/invite-reviewer
-                                :actor user
-                                :reviewer {:name "A Reviewer"
-                                           :email "reviewer@applicants.com"}}
-                               injections))))
-        (testing (str user " users cannot invite decider for submitted")
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command submitted
-                               {:type :application.command/invite-decider
-                                :actor user
-                                :decider {:name "A Decider"
-                                          :email "decider@applicants.com"}}
-                               injections))))))))
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event]))))))
+  (testing "handler can invite reviewer to submitted application"
+    (is (= {:event/type :application.event/reviewer-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/reviewer {:name "A Reviewer"
+                                   :email "reviewer@applicants.com"}
+            :application/comment "please review"
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-reviewer
+                        :actor handler-user-id
+                        :comment "please review"
+                        :reviewer {:name "A Reviewer"
+                                   :email "reviewer@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "handler can invite decider to submitted application"
+    (is (= {:event/type :application.event/decider-invited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/decider {:name "A Decider"
+                                  :email "decider@applicants.com"}
+            :application/comment "please decide"
+            :invitation/token "very-secure"}
+           (ok-command {:type :application.command/invite-decider
+                        :actor handler-user-id
+                        :comment "please decide"
+                        :decider {:name "A Decider"
+                                  :email "decider@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event]))))))
 
 (deftest test-accept-invitation
   (testing "invited member"
-    (let [member-invited (apply-events nil
-                                       [dummy-created-event
-                                        {:event/type :application.event/member-invited
-                                         :event/time test-time
-                                         :event/actor applicant-user-id
-                                         :application/id app-id
-                                         :application/member {:name "Some Body" :email "somebody@applicants.com"}
-                                         :invitation/token "very-secure"}])
-          injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}
-                      :find-userid identity}]
+    (testing "can join draft"
+      (is (= {:event/type :application.event/member-joined
+              :event/time test-time
+              :event/actor "somebody"
+              :application/id app-id
+              :invitation/token "very-secure"}
+             (ok-command {:type :application.command/accept-invitation
+                          :actor "somebody"
+                          :token "very-secure"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event])))))
 
-      (testing "can join draft"
-        (is (= {:event/type :application.event/member-joined
-                :event/time test-time
-                :event/actor "somebody"
-                :application/id app-id
-                :invitation/token "very-secure"}
-               (ok-command member-invited
-                           {:type :application.command/accept-invitation
+    (testing "can't join if they are already a member"
+      (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
+             (fail-command {:type :application.command/accept-invitation
                             :actor "somebody"
                             :token "very-secure"}
-                           injections))))
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-member-added-event])))))
 
-      (testing "can't join if they are already a member"
-        (let [application (apply-events member-invited
-                                        [{:event/type :application.event/member-added
-                                          :event/time test-time
-                                          :event/actor applicant-user-id
-                                          :application/id app-id
-                                          :application/member {:userid "somebody"}}])]
-          (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
-                                :actor "somebody"
-                                :token "very-secure"}
-                               injections)))))
+    (testing "can't use invalid token"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "wrong-token"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event])))))
 
-      (testing "can't use invalid token"
-        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command member-invited
-                             {:type :application.command/accept-invitation
-                              :actor "somebody"
-                              :token "wrong-token"}
-                             injections))))
+    (testing "can't use token twice"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody2"
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-member-joined-event])))))
 
-      (testing "can't use token twice"
-        (let [application (apply-events member-invited
-                                        [{:event/type :application.event/member-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :invitation/token "very-secure"}])]
-          (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
-                                :actor "somebody2"
-                                :token "very-secure"}
-                               injections)))))
+    (testing "can join submitted application"
+      (is (= {:event/type :application.event/member-joined
+              :event/actor "somebody"
+              :event/time test-time
+              :application/id app-id
+              :invitation/token "very-secure"}
+             (ok-command {:type :application.command/accept-invitation
+                          :actor "somebody"
+                          :token "very-secure"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event
+                                                  dummy-submitted-event])))))
 
-      (let [submitted (apply-events member-invited
-                                    [{:event/type :application.event/submitted
-                                      :event/time test-time
-                                      :event/actor applicant-user-id
-                                      :application/id app-id}])]
-        (testing "can join submitted application"
-          (is (= {:event/type :application.event/member-joined
-                  :event/actor "somebody"
-                  :event/time test-time
-                  :application/id app-id
-                  :invitation/token "very-secure"}
-                 (ok-command member-invited
-                             {:type :application.command/accept-invitation
-                              :actor "somebody"
-                              :token "very-secure"}
-                             injections))))
-
-        (let [closed (apply-events submitted
-                                   [{:event/type :application.event/closed
-                                     :event/time test-time
-                                     :event/actor applicant-user-id
-                                     :application/id app-id
-                                     :application/comment ""}])]
-          (testing "can't join a closed application"
-            (is (= {:errors [{:type :forbidden}]}
-                   (fail-command closed
-                                 {:type :application.command/accept-invitation
-                                  :actor "somebody"
-                                  :token "very-secure"}
-                                 injections))))))))
+    (testing "can't join a closed application"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-submitted-event
+                                                    dummy-closed-event]))))))
   (testing "invited reviewer"
-    (let [reviewer-invited (apply-events nil
-                                         [dummy-created-event
-                                          {:event/type :application.event/submitted
-                                           :event/time test-time
-                                           :event/actor applicant-user-id
-                                           :application/id app-id}
-                                          {:event/type :application.event/reviewer-invited
-                                           :event/time test-time
-                                           :event/actor handler-user-id
-                                           :application/id app-id
-                                           :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
-                                           :invitation/token "very-secure"}])]
+    (let [reviewer-invited-event {:event/type :application.event/reviewer-invited
+                                  :event/time test-time
+                                  :event/actor handler-user-id
+                                  :application/id app-id
+                                  :application/reviewer {:name "Some Body" :email "somebody@applicants.com"}
+                                  :invitation/token "very-secure"}]
       (testing "can join submitted application"
-        (let [event (ok-command reviewer-invited
-                                {:type :application.command/accept-invitation
+        (let [event (ok-command {:type :application.command/accept-invitation
                                  :actor "somebody"
                                  :token "very-secure"}
-                                injections)]
+                                (build-application-view [dummy-created-event
+                                                         dummy-submitted-event
+                                                         reviewer-invited-event]))]
           (is (= {:event/type :application.event/reviewer-joined
                   :event/time test-time
                   :event/actor "somebody"
@@ -1499,44 +1335,41 @@
           (is (instance? UUID (:application/request-id event)))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command reviewer-invited
-                             {:type :application.command/accept-invitation
+               (fail-command {:type :application.command/accept-invitation
                               :actor "somebody"
                               :token "wrong-token"}
-                             injections))))
+                             (build-application-view [dummy-created-event
+                                                      dummy-submitted-event
+                                                      reviewer-invited-event])))))
       (testing "can't use token twice"
-        (let [application (apply-events reviewer-invited
-                                        [{:event/type :application.event/reviewer-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :application/request-id (UUID/randomUUID)
-                                          :invitation/token "very-secure"}])]
+        (let [reviewer-joined-event {:event/type :application.event/reviewer-joined
+                                     :event/time test-time
+                                     :event/actor "somebody"
+                                     :application/id app-id
+                                     :application/request-id (UUID/randomUUID)
+                                     :invitation/token "very-secure"}]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
+                 (fail-command {:type :application.command/accept-invitation
                                 :actor "somebody2"
                                 :token "very-secure"}
-                               injections)))))))
+                               (build-application-view [dummy-created-event
+                                                        dummy-submitted-event
+                                                        reviewer-invited-event
+                                                        reviewer-joined-event]))))))))
   (testing "invited decider"
-    (let [decider-invited (apply-events nil
-                                        [dummy-created-event
-                                         {:event/type :application.event/submitted
-                                          :event/time test-time
-                                          :event/actor applicant-user-id
-                                          :application/id app-id}
-                                         {:event/type :application.event/decider-invited
-                                          :event/time test-time
-                                          :event/actor handler-user-id
-                                          :application/id app-id
-                                          :application/decider {:name "Some Body" :email "somebody@applicants.com"}
-                                          :invitation/token "very-secure"}])]
+    (let [decider-invited-event {:event/type :application.event/decider-invited
+                                 :event/time test-time
+                                 :event/actor handler-user-id
+                                 :application/id app-id
+                                 :application/decider {:name "Some Body" :email "somebody@applicants.com"}
+                                 :invitation/token "very-secure"}]
       (testing "can join submitted application"
-        (let [event (ok-command decider-invited
-                                {:type :application.command/accept-invitation
+        (let [event (ok-command {:type :application.command/accept-invitation
                                  :actor "somebody"
                                  :token "very-secure"}
-                                injections)]
+                                (build-application-view [dummy-created-event
+                                                         dummy-submitted-event
+                                                         decider-invited-event]))]
           (is (= {:event/type :application.event/decider-joined
                   :event/time test-time
                   :event/actor "somebody"
@@ -1547,478 +1380,369 @@
           (is (instance? UUID (:application/request-id event)))))
       (testing "can't use invalid token"
         (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-               (fail-command decider-invited
-                             {:type :application.command/accept-invitation
+               (fail-command {:type :application.command/accept-invitation
                               :actor "somebody"
                               :token "wrong-token"}
-                             injections))))
+                             (build-application-view [dummy-created-event
+                                                      dummy-submitted-event
+                                                      decider-invited-event])))))
       (testing "can't use token twice"
-        (let [application (apply-events decider-invited
-                                        [{:event/type :application.event/decider-joined
-                                          :event/time test-time
-                                          :event/actor "somebody"
-                                          :application/id app-id
-                                          :application/request-id (UUID/randomUUID)
-                                          :invitation/token "very-secure"}])]
+        (let [decider-joined-event {:event/type :application.event/decider-joined
+                                    :event/time test-time
+                                    :event/actor "somebody"
+                                    :application/id app-id
+                                    :application/request-id (UUID/randomUUID)
+                                    :invitation/token "very-secure"}]
           (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-                 (fail-command application
-                               {:type :application.command/accept-invitation
+                 (fail-command {:type :application.command/accept-invitation
                                 :actor "somebody2"
                                 :token "very-secure"}
-                               injections))))))))
+                               (build-application-view [dummy-created-event
+                                                        dummy-submitted-event
+                                                        decider-invited-event
+                                                        decider-joined-event])))))))))
 
 (deftest test-remove-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}
-                    :find-userid identity}]
-    (testing "applicant can remove members"
-      (is (= {:event/type :application.event/member-removed
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:userid "somebody"}
-              :application/comment "some comment"}
-             (ok-command application
-                         {:type :application.command/remove-member
+  (testing "applicant can remove members"
+    (is (= {:event/type :application.event/member-removed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:userid "somebody"}
+            :application/comment "some comment"}
+           (ok-command {:type :application.command/remove-member
+                        :actor applicant-user-id
+                        :member {:userid "somebody"}
+                        :comment "some comment"}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "handler can remove members"
+    (is (= {:event/type :application.event/member-removed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            ;; NB no comment
+            :application/member {:userid "somebody"}}
+           (ok-command {:type :application.command/remove-member
+                        :actor handler-user-id
+                        :member {:userid "somebody"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "applicant cannot be removed"
+    (is (= {:errors [{:type :cannot-remove-applicant}]}
+           (fail-command {:type :application.command/remove-member
                           :actor applicant-user-id
-                          :member {:userid "somebody"}
-                          :comment "some comment"}
-                         injections))))
-    (testing "handler can remove members"
-      (is (= {:event/type :application.event/member-removed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              ;; NB no comment
-              :application/member {:userid "somebody"}}
-             (ok-command application
-                         {:type :application.command/remove-member
+                          :member {:userid applicant-user-id}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))
+           (fail-command {:type :application.command/remove-member
                           :actor handler-user-id
-                          :member {:userid "somebody"}}
-                         injections))))
-    (testing "applicant cannot be removed"
-      (is (= {:errors [{:type :cannot-remove-applicant}]}
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor applicant-user-id
-                            :member {:userid applicant-user-id}}
-                           injections)
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor handler-user-id
-                            :member {:userid applicant-user-id}}
-                           injections))))
-    (testing "non-members cannot be removed"
-      (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor handler-user-id
-                            :member {:userid "notamember"}}
-                           injections))))
-    (testing "removed members cannot see the application"
-      (is (-> application
-              (model/see-application? "somebody")))
-      (is (not (-> application
-                   (apply-commands [{:type :application.command/remove-member
-                                     :actor applicant-user-id
-                                     :member {:userid "somebody"}}]
-                                   injections)
-                   (model/see-application? "somebody")))))))
-
+                          :member {:userid applicant-user-id}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "non-members cannot be removed"
+    (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
+           (fail-command {:type :application.command/remove-member
+                          :actor handler-user-id
+                          :member {:userid "notamember"}}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "removed members cannot see the application"
+    (let [member-added-application (build-application-view [dummy-created-event
+                                                            dummy-submitted-event
+                                                            dummy-member-added-event])]
+      (is (model/see-application? member-added-application "somebody"))
+      (let [member-removed-event (ok-command {:type :application.command/remove-member
+                                              :actor applicant-user-id
+                                              :member {:userid "somebody"}}
+                                             member-added-application)]
+        (is (not (-> (build-application-view [dummy-created-event
+                                              dummy-submitted-event
+                                              dummy-member-added-event
+                                              member-removed-event])
+                     (model/see-application? "somebody"))))))))
 
 (deftest test-uninvite-member
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/member-invited
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:name "Some Body" :email "some@body.com"}
-                                    :invitation/token "123456"}
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])
-        injections {:valid-user? #{applicant-user-id handler-user-id}
-                    :find-userid identity}]
-    (testing "uninvite member by applicant"
-      (is (= {:event/type :application.event/member-uninvited
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}}
-             (ok-command application
-                         {:type :application.command/uninvite-member
-                          :actor applicant-user-id
-                          :member {:name "Some Body" :email "some@body.com"}}
-                         injections))))
-    (testing "uninvite member by handler"
-      (is (= {:event/type :application.event/member-uninvited
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}
-              :application/comment ""}
-             (ok-command application
-                         {:type :application.command/uninvite-member
+  (testing "uninvite member by applicant"
+    (is (= {:event/type :application.event/member-uninvited
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/member {:name "Some Body" :email "somebody@applicants.com"}}
+           (ok-command {:type :application.command/uninvite-member
+                        :actor applicant-user-id
+                        :member {:name "Some Body" :email "somebody@applicants.com"}}
+                       (build-application-view [dummy-created-event
+                                                dummy-member-invited-event
+                                                dummy-submitted-event])))))
+  (testing "uninvite member by handler"
+    (is (= {:event/type :application.event/member-uninvited
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/member {:name "Some Body" :email "somebody@applicants.com"}
+            :application/comment ""}
+           (ok-command {:type :application.command/uninvite-member
+                        :actor handler-user-id
+                        :member {:name "Some Body" :email "somebody@applicants.com"}
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-member-invited-event
+                                                dummy-submitted-event])))))
+  (testing "only invited members can be uninvited"
+    (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
+           (fail-command {:type :application.command/uninvite-member
                           :actor handler-user-id
-                          :member {:name "Some Body" :email "some@body.com"}
+                          :member {:name "Not Member" :email "not@member.com"}
                           :comment ""}
-                         injections))))
-    (testing "only invited members can be uninvited"
-      (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
-             (fail-command application
-                           {:type :application.command/uninvite-member
-                            :actor handler-user-id
-                            :member {:name "Not Member" :email "not@member.com"}
-                            :comment ""}
-                           injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event
+                                                  dummy-submitted-event]))))))
 
 (deftest test-change-applicant
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "member1"}}])]
-    (testing "handler can promote existing member"
-      (is (= {:event/type :application.event/applicant-changed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id app-id
-              :application/applicant {:userid "member1"}
-              :application/comment ""}
-             (ok-command application
-                         {:type :application.command/change-applicant
-                          :actor handler-user-id
-                          :member {:userid "member1"}
+  (testing "handler can promote existing member"
+    (is (= {:event/type :application.event/applicant-changed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/applicant {:userid "somebody"}
+            :application/comment ""}
+           (ok-command {:type :application.command/change-applicant
+                        :actor handler-user-id
+                        :member {:userid "somebody"}
+                        :comment ""}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-member-added-event])))))
+  (testing "applicant can't promote"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor applicant-user-id
+                          :member {:userid "somebody"}
                           :comment ""}
-                         injections))))
-    (testing "applicant can't promote"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor applicant-user-id
-                            :member {:userid "member1"}
-                            :comment ""}
-                           injections))))
-    (testing "member can't promote themself"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor "member1"
-                            :member {:userid "member1"}
-                            :comment ""}
-                           injections))))
-    (testing "handler can't promote non-member"
-      (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor handler-user-id
-                            :member {:userid "unknown"}
-                            :comment ""}
-                           injections))))
-    (testing "handler can't promote current applicant"
-      (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
-             (fail-command application
-                           {:type :application.command/change-applicant
-                            :actor handler-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
-                           injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "member can't promote themself"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor "somebody"
+                          :member {:userid "somebody"}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "handler can't promote non-member"
+    (is (= {:errors [{:type :user-not-member :user {:userid "unknown"}}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor handler-user-id
+                          :member {:userid "unknown"}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event])))))
+  (testing "handler can't promote current applicant"
+    (is (= {:errors [{:type :user-not-member :user {:userid "applicant"}}]}
+           (fail-command {:type :application.command/change-applicant
+                          :actor handler-user-id
+                          :member {:userid applicant-user-id}
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-member-added-event]))))))
 
 (deftest test-review
-  (let [reviewer "reviewer"
-        reviewer2 "reviewer2"
-        reviewer3 "reviewer3"
-        application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])
-        injections {:valid-user? #{handler-user-id reviewer reviewer2 reviewer3}
-                    :find-userid identity}]
-    (testing "required :valid-user? injection"
-      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (fail-command application
-                           {:type :application.command/request-review
-                            :actor handler-user-id
-                            :reviewers [reviewer]
-                            :comment ""}
-                           {}))))
-    (testing "reviewers must not be empty"
-      (is (= {:errors [{:type :must-not-be-empty :key :reviewers}]}
-             (fail-command application
-                           {:type :application.command/request-review
-                            :actor handler-user-id
-                            :reviewers []
-                            :comment ""}
-                           injections))))
-    (testing "reviewers must be a valid users"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"}
-                       {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
-             (fail-command application
-                           {:type :application.command/request-review
-                            :actor handler-user-id
-                            :reviewers ["invaliduser" reviewer "invaliduser2"]
-                            :comment ""}
-                           injections))))
-    (testing "reviewing before ::request-review should fail"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/review
-                            :actor reviewer
-                            :comment ""}
-                           injections))))
-    (let [event-1 (ok-command application
-                              {:type :application.command/request-review
-                               :actor handler-user-id
-                               :reviewers [reviewer reviewer2]
-                               :comment ""}
-                              injections)
-          request-id-1 (:application/request-id event-1)
-          application (apply-events application [event-1])
-          ;; Make a new request that should partly override previous
-          event-2 (ok-command application
-                              {:type :application.command/request-review
-                               :actor handler-user-id
-                               :reviewers [reviewer]
-                               :comment ""}
-                              injections)
-          request-id-2 (:application/request-id event-2)
-          application (apply-events application [event-2])]
-      (testing "review requested successfully"
-        (is (instance? UUID request-id-1))
-        (is (= {:event/type :application.event/review-requested
-                :application/request-id request-id-1
-                :application/reviewers [reviewer reviewer2]
-                :application/comment ""
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id}
-               event-1))
-        (is (instance? UUID request-id-2))
-        (is (= {:event/type :application.event/review-requested
-                :application/request-id request-id-2
-                :application/reviewers [reviewer]
-                :application/comment ""
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id}
-               event-2)))
-      (testing "only the requested reviewer can review"
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application
-                             {:type :application.command/review
-                              :actor reviewer3
-                              :comment "..."}
-                             injections))))
-      (testing "reviews are linked to different requests"
-        (is (= request-id-2
-               (:application/request-id
-                (ok-command application
-                            {:type :application.command/review
-                             :actor reviewer
-                             :comment "..."}
-                            injections))))
-        (is (= request-id-1
-               (:application/request-id
-                (ok-command application
-                            {:type :application.command/review
-                             :actor reviewer2
-                             :comment "..."}
-                            injections)))))
-      (let [event (ok-command application
-                              {:type :application.command/review
-                               :actor reviewer
-                               :comment "..."}
-                              injections)
-            application (apply-events application [event])]
-        (testing "reviewed succesfully"
-          (is (= {:event/type :application.event/reviewed
-                  :event/time test-time
-                  :event/actor reviewer
-                  :application/id app-id
-                  :application/request-id request-id-2
-                  :application/comment "..."}
-                 event)))
-        (testing "cannot review twice"
-          (is (= {:errors [{:type :forbidden}]}
-                 (fail-command application
-                               {:type :application.command/review
-                                :actor reviewer
-                                :comment "..."}
-                               injections))))
-        (testing "other reviewer can still review"
-          (is (= {:event/type :application.event/reviewed
-                  :event/time test-time
-                  :event/actor reviewer2
-                  :application/id app-id
-                  :application/request-id request-id-1
-                  :application/comment "..."}
-                 (ok-command application
-                             {:type :application.command/review
-                              :actor reviewer2
-                              :comment "..."}
-                             injections))))))))
+  (testing "required :valid-user? injection"
+    (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
+           (fail-command {:type :application.command/request-review
+                          :actor handler-user-id
+                          :reviewers ["reviewer"]
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])
+                         (dissoc command-injections :valid-user?)))))
+  (testing "reviewers must not be empty"
+    (is (= {:errors [{:type :must-not-be-empty :key :reviewers}]}
+           (fail-command {:type :application.command/request-review
+                          :actor handler-user-id
+                          :reviewers []
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "reviewers must be a valid users"
+    (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"}
+                     {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
+           (fail-command {:type :application.command/request-review
+                          :actor handler-user-id
+                          :reviewers ["invaliduser" "reviewer" "invaliduser2"]
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "reviewing before ::request-review should fail"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/review
+                          :actor "reviewer"
+                          :comment ""}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "can request review"
+    (let [review-requested-event (ok-command {:type :application.command/request-review
+                                              :actor handler-user-id
+                                              :reviewers ["reviewer" "reviewer2"]
+                                              :comment ""}
+                                             (build-application-view [dummy-created-event
+                                                                      dummy-submitted-event]))]
+      (is (= {:event/type :application.event/review-requested
+              :application/request-id (:application/request-id review-requested-event)
+              :application/reviewers ["reviewer" "reviewer2"]
+              :application/comment ""
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id}
+             review-requested-event))))
+  (testing "second review request partly overrides previous request"
+    (let [review-requested-event (ok-command {:type :application.command/request-review
+                                              :actor handler-user-id
+                                              :reviewers ["reviewer2"]
+                                              :comment ""}
+                                             (build-application-view [dummy-created-event
+                                                                      dummy-submitted-event
+                                                                      dummy-review-requested-event]))]
+      (is (= {:event/type :application.event/review-requested
+              :application/request-id (:application/request-id review-requested-event)
+              :application/reviewers ["reviewer2"]
+              :application/comment ""
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id}
+             review-requested-event))))
+  (testing "only the requested reviewer can review"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/review
+                          :actor "reviewer3"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event])))))
+  (testing "review succeeds"
+    (is (= {:event/type :application.event/reviewed
+            :event/time test-time
+            :event/actor "reviewer"
+            :application/id app-id
+            :application/request-id review-request-id
+            :application/comment "..."}
+           (ok-command {:type :application.command/review
+                        :actor "reviewer"
+                        :comment "..."}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event])))))
+  (testing "cannot review twice"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/review
+                          :actor "reviewer"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event
+                                                  dummy-reviewed-event])))))
+  (testing "second reviewer can review after first reviewer"
+    (let [review-request-id-2 (UUID/randomUUID)]
+      (is (= {:event/type :application.event/reviewed
+              :event/time test-time
+              :event/actor "reviewer2"
+              :application/id app-id
+              :application/request-id review-request-id-2
+              :application/comment "..."}
+             (ok-command {:type :application.command/review
+                          :actor "reviewer2"
+                          :comment "..."}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event
+                                                  (merge dummy-review-requested-event
+                                                         {:application/request-id review-request-id-2
+                                                          :application/reviewers ["reviewer2"]})
+                                                  dummy-reviewed-event])))))))
 
 (deftest test-remark
-  (let [reviewer "reviewer"
-        application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])
-        valid-attachment-id 1234
-        wrong-application-attachment-id 1235
-        wrong-user-attachment-id 1236
-        unknown-attachment-id 1237
-        injections {:valid-user? #{applicant-user-id handler-user-id reviewer}
-                    :find-userid identity
-                    :get-attachment-metadata
-                    {valid-attachment-id {:application/id (:application/id application)
-                                          :attachment/id valid-attachment-id
-                                          :attachment/user handler-user-id}
-                     wrong-application-attachment-id {:application/id (inc (:application/id application))
-                                                      :attachment/id wrong-application-attachment-id
-                                                      :attachment/user handler-user-id}
-                     wrong-user-attachment-id {:application/id (:application/id application)
-                                               :attachment/id wrong-user-attachment-id
-                                               :attachment/user "carl"}}}]
-    (testing "handler can remark"
-      (let [event (ok-command application
-                              {:type :application.command/remark
-                               :actor handler-user-id
-                               :comment "handler's remark"
-                               :attachments [{:attachment/id valid-attachment-id}]
-                               :public false}
-                              injections)
-            _application (apply-events application [event])]
-        (is (= {:event/type :application.event/remarked
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/comment "handler's remark"
-                :application/public false
-                :event/attachments [{:attachment/id valid-attachment-id}]}
-               event))))
-    (testing "invalid attachments"
-      (is (= {:errors [{:type :invalid-attachments
-                        :attachments [wrong-application-attachment-id wrong-user-attachment-id unknown-attachment-id]}]}
-             (fail-command application
-                           {:type :application.command/remark
-                            :actor handler-user-id
-                            :comment "handler's remark"
-                            :attachments [{:attachment/id valid-attachment-id}
-                                          {:attachment/id wrong-application-attachment-id}
-                                          {:attachment/id wrong-user-attachment-id}
-                                          {:attachment/id unknown-attachment-id}]
-                            :public false}
-                           injections))))
-    (testing "applicants cannot remark"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/remark
-                            :actor applicant-user-id
-                            :comment ""
-                            :public false}
-                           injections))))
-    (testing "reviewer cannot remark before becoming reviewer"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           {:type :application.command/remark
-                            :actor reviewer
-                            :comment ""
-                            :public false}
-                           injections))))
-    (let [event-1 (ok-command application
-                              {:type :application.command/request-review
-                               :actor handler-user-id
-                               :reviewers [reviewer]
-                               :comment ""}
-                              injections)
-          application (apply-events application [event-1])
-          event-2 (ok-command application
-                              {:type :application.command/remark
-                               :actor reviewer
-                               :comment "first remark"
-                               :public false}
-                              injections)
-          application (apply-events application [event-2])]
-      (testing "reviewer can remark before"
-        (is (= {:event/type :application.event/remarked
-                :event/time test-time
-                :event/actor reviewer
-                :application/id app-id
-                :application/comment "first remark"
-                :application/public false}
-               event-2))
-        (let [event-1 (ok-command application
-                                  {:type :application.command/review
-                                   :actor reviewer
-                                   :comment "..."}
-                                  injections)
-              application (apply-events application [event-1])
-              event-2 (ok-command application
-                                  {:type :application.command/remark
-                                   :actor reviewer
-                                   :comment "second remark"
-                                   :public false}
-                                  injections)
-              application (apply-events application [event-2])]
-          (testing "and after reviewing"
-            (is (= {:event/type :application.event/remarked
-                    :event/time test-time
-                    :event/actor reviewer
-                    :application/id app-id
-                    :application/comment "second remark"
-                    :application/public false}
-                   event-2))))))))
+  (testing "invalid attachments"
+    (is (= {:errors [{:type :invalid-attachments
+                      :attachments [2 3 1337]}]}
+           (fail-command {:type :application.command/remark
+                          :actor handler-user-id
+                          :comment "handler's remark"
+                          :attachments [{:attachment/id 2}
+                                        {:attachment/id 3}
+                                        {:attachment/id 1337}]
+                          :public false}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "handler can remark"
+    (is (= {:event/type :application.event/remarked
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "handler's remark"
+            :application/public false
+            :event/attachments [{:attachment/id 1}]}
+           (ok-command {:type :application.command/remark
+                        :actor handler-user-id
+                        :comment "handler's remark"
+                        :attachments [{:attachment/id 1}]
+                        :public false}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event])))))
+  (testing "reviewer cannot remark before becoming reviewer"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/remark
+                          :actor "reviewer"
+                          :comment ""
+                          :public false}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "reviewer can remark"
+    (is (= {:event/type :application.event/remarked
+            :event/time test-time
+            :event/actor reviewer-user-id
+            :application/id app-id
+            :application/comment ""
+            :application/public false}
+           (ok-command {:type :application.command/remark
+                        :actor reviewer-user-id
+                        :comment ""
+                        :public false}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event])))))
+  (testing "reviewer can remark after reviewing"
+    (is (= {:event/type :application.event/remarked
+            :event/time test-time
+            :event/actor reviewer-user-id
+            :application/id app-id
+            :application/comment ""
+            :application/public false}
+           (ok-command {:type :application.command/remark
+                        :actor reviewer-user-id
+                        :comment ""
+                        :public false}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-review-requested-event
+                                                dummy-reviewed-event]))))))
 
 (deftest test-copy-as-new
-  (let [created-event {:event/type :application.event/created
-                       :event/time test-time
-                       :event/actor applicant-user-id
-                       :application/id app-id
-                       :application/external-id "2018/55"
-                       :application/resources [{:catalogue-item/id 1
-                                                :resource/ext-id "res1"}
-                                               {:catalogue-item/id 2
-                                                :resource/ext-id "res2"}]
-                       :application/licenses []
-                       :application/forms [{:form/id 3}]
-                       :workflow/id 1
-                       :workflow/type :workflow/default}
-        draft-saved-event {:event/type :application.event/draft-saved
-                           :event/time test-time
-                           :event/actor applicant-user-id
-                           :application/id app-id
-                           :application/field-values [{:form 3 :field "text" :value "1"}
-                                                      {:form 3 :field "attachment" :value "2"}]}
-        submitted-event {:event/type :application.event/submitted
-                         :event/time test-time
-                         :event/actor applicant-user-id
-                         :application/id app-id}
-        draft-application (apply-events nil [created-event
-                                             draft-saved-event])
-        submitted-application (apply-events draft-application [submitted-event])]
+  (let [created-event (merge dummy-created-event {:application/external-id "2018/55"
+                                                  :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                                                          {:catalogue-item/id 2 :resource/ext-id "res2"}]
+                                                  :application/forms [{:form/id 3}]})
+        draft-saved-event (merge dummy-draft-saved-event {:application/field-values [{:form 3 :field "text" :value "1"}
+                                                                                     {:form 3 :field "attachment" :value "2"}]})]
     (testing "creates a new draft-application with the same form answers"
       (testing "for a draft it is just another draft"
         (is (= [{:event/type :application.event/created
@@ -2026,10 +1750,8 @@
                  :event/actor applicant-user-id
                  :application/id new-app-id
                  :application/external-id new-external-id
-                 :application/resources [{:catalogue-item/id 1
-                                          :resource/ext-id "res1"}
-                                         {:catalogue-item/id 2
-                                          :resource/ext-id "res2"}]
+                 :application/resources [{:catalogue-item/id 1 :resource/ext-id "res1"}
+                                         {:catalogue-item/id 2 :resource/ext-id "res2"}]
                  :application/licenses [{:license/id 1} {:license/id 2}]
                  :application/forms [{:form/id 1}]
                  :workflow/id 1
@@ -2040,10 +1762,10 @@
                  :application/id new-app-id
                  :application/field-values [{:form 3 :field "text" :value "1"}
                                             {:form 3 :field "attachment" :value "102"}]}]
-               (ok-command draft-application
-                           {:type :application.command/copy-as-new
+               (ok-command {:type :application.command/copy-as-new
                             :actor applicant-user-id}
-                           injections))))
+                           (build-application-view [created-event
+                                                    draft-saved-event])))))
 
       (testing "for a submitted application it points to a previous draft application"
         (is (= [{:event/type :application.event/created
@@ -2077,48 +1799,41 @@
                  :application/id app-id
                  :application/copied-to {:application/id new-app-id
                                          :application/external-id new-external-id}}]
-               (ok-command submitted-application
-                           {:type :application.command/copy-as-new
+               (ok-command {:type :application.command/copy-as-new
                             :actor applicant-user-id}
-                           injections)))))))
+                           (build-application-view [created-event
+                                                    draft-saved-event
+                                                    dummy-submitted-event]))))))))
 
 (deftest test-delete
-  (let [draft-application (apply-events nil [dummy-created-event])
-        submitted-application (apply-events draft-application [{:event/type :application.event/submitted
-                                                                :event/time test-time
-                                                                :event/actor applicant-user-id
-                                                                :application/id app-id}])]
-    (testing "forbidden"
-      (is (= {:errors [{:type :forbidden}]} (fail-command draft-application
-                                                          {:type :application.command/delete
-                                                           :actor handler-user-id}
-                                                          injections)))
-      (is (= {:errors [{:type :forbidden}]} (fail-command submitted-application
-                                                          {:type :application.command/delete
-                                                           :actor applicant-user-id}
-                                                          injections))))
-    (testing "success"
-      (is (= {:event/type :application.event/deleted
-              :event/time test-time
-              :event/actor applicant-user-id
-              :application/id app-id}
-             (ok-command draft-application
-                         {:type :application.command/delete
+  (testing "handler cannot delete application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/delete
+                          :actor handler-user-id}
+                         (build-application-view [dummy-created-event])))))
+  (testing "applicant cannot delete submitted application"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/delete
                           :actor applicant-user-id}
-                         injections))))))
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "applicant can delete draft application"
+    (is (= {:event/type :application.event/deleted
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id}
+           (ok-command {:type :application.command/delete
+                        :actor applicant-user-id}
+                       (build-application-view [dummy-created-event]))))))
 
 (deftest test-handle-command
-  (let [application (model/application-view nil {:event/type :application.event/created
-                                                 :event/actor "applicant"
-                                                 :workflow/type :workflow/default})
+  (let [application (build-application-view [dummy-created-event])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []
-                 :actor "applicant"}
-        injections {:valid-user? #{"applicant"}
-                    :find-userid identity}]
+                 :actor applicant-user-id}]
     (testing "executes command when user is authorized"
-      (is (not (:errors (commands/handle-command command application injections)))))
+      (is (not (:errors (commands/handle-command command application command-injections)))))
     (testing "fails when command fails validation"
       (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (commands/handle-command (assoc command :time 3) application {}))))
@@ -2126,76 +1841,6 @@
       ;; the permission checks should happen before executing the command handler
       ;; and only depend on the roles and permissions
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
-            result (commands/handle-command command application injections)]
+            result (commands/handle-command command application command-injections)]
         (is (= {:errors [{:type :forbidden}]} result))))))
-
-(deftest test-redact-attachments-command
-  (let [application (apply-events nil [dummy-created-event
-                                       {:event/type :application.event/submitted
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id app-id}])
-        attachment-id-1 1234
-        attachment-id-2 2345
-        injections {:valid-user? #{applicant-user-id handler-user-id "reviewer"}
-                    :find-userid identity
-                    :get-attachment-metadata
-                    {attachment-id-1 {:application/id (:application/id application)
-                                      :attachment/id attachment-id-1
-                                      :attachment/user handler-user-id}
-                     attachment-id-2 {:application/id (:application/id application)
-                                      :attachment/id attachment-id-2
-                                      :attachment/user handler-user-id}}}]
-    (is (= {:errors [{:type :empty-redacted-attachments}]}
-           (fail-command application
-                         {:type :application.command/redact-attachments
-                          :actor handler-user-id
-                          :comment "should fail"
-                          :public false
-                          :redacted-attachments []
-                          :attachments [{:attachment/id attachment-id-2}]}
-                         injections))
-        "cannot redact if redacted-attachments is empty")
-    (testing "handler can redact attachment"
-      (let [remarked (ok-command application
-                                 {:type :application.command/remark
-                                  :actor handler-user-id
-                                  :comment "handler's remark"
-                                  :attachments [{:attachment/id attachment-id-1}]
-                                  :public false}
-                                 injections)
-            application (apply-events application [remarked])
-            redacted (ok-command application
-                                 {:type :application.command/redact-attachments
-                                  :actor handler-user-id
-                                  :comment "accidental upload, redacting"
-                                  :public false
-                                  :redacted-attachments [{:attachment/id attachment-id-1}]
-                                  :attachments [{:attachment/id attachment-id-2}]}
-                                 injections)
-            application (apply-events application [redacted])
-            [remarked-event redacted-event] (->> (:application/events application)
-                                                 (take-last 2))]
-        (is (= {:event/id 2
-                :event/type :application.event/remarked
-                :event/time test-time
-                :event/actor handler-user-id
-                :application/id app-id
-                :application/comment "handler's remark"
-                :application/public false
-                :event/attachments [{:attachment/id attachment-id-1}]}
-               (-> remarked-event
-                   (dissoc :event/actor-attributes))))
-        (is (= {:event/id 3
-                :event/type :application.event/attachments-redacted
-                :event/time test-time
-                :event/actor handler-user-id
-                :event/attachments [{:attachment/id attachment-id-2}]
-                :application/redacted-attachments [{:attachment/id attachment-id-1
-                                                    :event/id 2}]
-                :application/id app-id
-                :application/comment "accidental upload, redacting"
-                :application/public false}
-               (-> redacted-event
-                   (dissoc :event/actor-attributes))))))))
 
