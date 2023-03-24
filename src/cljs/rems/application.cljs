@@ -3,7 +3,7 @@
             [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [assoc-some find-first filter-vals update-existing]]
+            [medley.core :refer [assoc-some find-first filter-keys filter-vals update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -176,54 +176,46 @@
                                   :validation nil
                                   :attachment-status {}})))
 
-(defn- set-highlightables-by-request-id
-  "Given set of events, for each event find all events that share the
-   same :application/request-id and add them into event :highlight-event-ids."
-  [events]
-  (let [related-events (->> events
-                            (filter :application/request-id)
-                            (group-by :application/request-id)
-                            (filter-vals (comp #(> % 1) count)))]
+(defn- set-highlightables-by-request-id [events]
+  (let [related-events-by-request-id (->> events
+                                          (group-by :application/request-id)
+                                          (filter-keys some?)
+                                          (filter-vals #(<= 2 (count %))))]
     (for [event events
-          :let [request-id (:application/request-id event)
-                highlightable-event-ids (->> (get related-events request-id)
-                                             (map :event/id)
-                                             (set))]]
+          :let [highlightable-event-ids (->> event
+                                             :application/request-id
+                                             (get related-events-by-request-id)
+                                             (into #{} (map :event/id)))]]
       (update event :highlight-event-ids into highlightable-event-ids))))
 
-(defn- set-highlightables-by-redacted-attachments
-  "Given set of events, for each event of type :application.event/attachments-redacted
-   find all related events whose attachments were redacted and add them into event
-   :highlight-event-ids. For each related event, add :application.event/attachments-redacted
-   event into :highlight-event-ids."
-  [events]
-  (let [events-by-id (index-by [:event/id] events)
-        related-events (for [event events
+(defn- set-highlightables-by-redacted-attachments [events]
+  (let [related-events (for [event events
+                             :let [redacted-event-id (:event/id event)]
                              redacted-attachment (:application/redacted-attachments event)
-                             :when (contains? events-by-id (:event/id redacted-attachment))]
-                         #{(:event/id redacted-attachment) (:event/id event)})]
+                             :let [added-in-event-id (:event/id redacted-attachment)]]
+                         #{added-in-event-id redacted-event-id})]
     (for [event events
-          :let [event-id (:event/id event)
-                highlightable-event-ids (->> related-events
-                                             (filter #(contains? % event-id))
+          :let [highlightable-event-ids (->> related-events
+                                             (filter #(contains? % (:event/id event)))
                                              (reduce into #{}))]]
       (update event :highlight-event-ids into highlightable-event-ids))))
 
-(defn- update-events-highlightables
+(defn- set-event-highlightables
   "Updates events with event ids that are related to the event so that they can
    be highlighted within the UI."
-  [db]
-  (update-in db [::application :data :application/events]
-             (comp set-highlightables-by-request-id
-                   set-highlightables-by-redacted-attachments)))
+  [events]
+  (-> events
+      (set-highlightables-by-request-id)
+      (set-highlightables-by-redacted-attachments)))
 
 (rf/reg-event-fx
  ::fetch-application-result
  (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
-     {:db (cond-> (update db ::application fetcher/finished application)
-            true (update-events-highlightables)
-            (or initial-fetch? full-reload?) (initialize-edit-application))})))
+     {:db (-> db
+              (update ::application fetcher/finished application)
+              (update-in [::application :data :application/events] set-event-highlightables)
+              (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
 
 (rf/reg-event-db
  ::set-validations
