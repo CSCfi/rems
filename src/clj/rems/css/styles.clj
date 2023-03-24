@@ -22,7 +22,9 @@
             [rems.css.style-utils :refer [theme-getx get-logo-image get-navbar-logo get-logo-name-sm]]
             [ring.util.response :as response]))
 
-(def content-width (u/px 1200))
+(def content-max-width (u/px 2560))
+(def application-page-max-width (u/px 1800))
+(def navbar-max-width (u/px 1200))
 (def logo-height-menu (u/px 40))
 (def logo-height (u/px 150))
 (def menu-height 56)
@@ -46,13 +48,13 @@
   (list
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
-                         {:border-bottom "none"}])
+                         {:border-bottom :none}])
    (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
                         [:.lg-fs70pct {:font-size (u/percent 70)}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
-                        [:.commands {:white-space "nowrap"}])
+                        [:div.commands {:flex-wrap :nowrap}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
@@ -182,25 +184,28 @@
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
    [:.table-border {:padding 0
-                    :margin "1em 0"
+                    :margin "1rem 0"
                     :border (theme-getx :table-border)
                     :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
+                  :word-break :break-word
                   :background-color (theme-getx :table-bgcolor :color1)
                   :box-shadow (theme-getx :table-shadow)
                   :color (theme-getx :table-text-color)}
-    [:th {:white-space "nowrap"
+    [:th {:white-space :nowrap
           :color (theme-getx :table-heading-color)
           :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
      :td
+     ["&:last-child:not(:first-child)"
+      {:padding-left 0}]
      {:text-align "left"
-      :padding "0.5em 1em"}]
-    [:.selection {:width (u/rem 0.5)
+      :padding "0.5rem 1rem"}]
+    [:.selection {:width (u/rem 2)
                   :padding-right 0}]
     [:td:before
      {:color (theme-getx :table-text-color)}]
-    [:tr {:margin "0 1rem"}
+    [:tr
      [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
                 :background-color (theme-getx :table-hover-bgcolor :color2)}]
      [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
@@ -211,9 +216,6 @@
         {:background-color (theme-getx :table-stripe-color :table-bgcolor)}
         [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]])]
 
-    [:td.commands:last-child {:text-align "right"
-                              :padding-right (u/rem 1)}]
-
     (for [i (range 10)]
       [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
     (for [i (range 10)]
@@ -222,12 +224,11 @@
       [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
 
    [:.rems-table.cart {:box-shadow :none}]
-   [:.inner-cart {:margin (u/em 1)}]
-   [:.outer-cart {:border [[(u/px 1) :solid (theme-getx :color1)]]
+   [:.inner-cart {:margin [[(u/rem 1) 0]]}]
+   [:.outer-cart {:margin [[(u/rem 1) 0]]
+                  :border [[(u/px 1) :solid (theme-getx :color1)]]
                   :border-radius (u/rem 0.4)}]
-   [:.cart-title {:margin-left (u/em 1)
-                  :margin-right (u/em 1)
-                  :font-weight "bold"}]
+   [:.cart-title {:margin (u/rem 1)}]
    [:.fa-shopping-cart {:margin-right (u/em 0.5)}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
@@ -376,21 +377,29 @@
     [:&:active
      :&:focus
      {:left (u/em 0)}]]
+   ["a:not(.nav-link):not(.btn)" {:text-decoration :underline}]
    [:#main-content {:display :flex
                     :flex-direction :column
-                    :flex-wrap :no-wrap
+                    :flex-wrap :nowrap
                     :min-height (u/px 300)
-                    :max-width content-width
-                    :flex-grow 1
+                    :max-width content-max-width
+                    :align-items :center
                     ;; Height of navigation + logo, to avoid page content going under
                     ;; the navigation bar when the main content is focused.
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
                     :padding-top (u/px 212)
-                    :margin-top (u/px -212)}]
+                    :margin-top (u/px -212)
+                    :margin-bottom (u/rem 1)}
+    ["&>*" {:min-width (u/px 512)}]]
+   [:#empty-space {:flex-grow 1}]
    [:#main-content.page-actions {:max-width (u/percent 100)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
            :font-weight (button-navbar-font-weight)}]
+   ;; override Bootstrap blue active color with its hover color
+   [".dropdown-item.active"
+    ".dropdown-item:active"
+    {:background-color "#e9ecef"}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
@@ -400,6 +409,7 @@
     [:&:hover
      :&:focus
      :&:active:hover
+     "&:not(:disabled):not(.disabled):active"
      {:background-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
       :border-color (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
       :color (theme-getx :primary-button-hover-color :primary-button-color)
@@ -409,22 +419,18 @@
      :color (theme-getx :primary-button-color)
      :outline-color :transparent}]
    [:.btn-secondary
-    ;; Only override bootstrap's default if the key is defined in the theme
     [:&:hover
      :&:focus
      :&:active:hover
-     (into {}
-           (filter val
-                   {:background-color (theme-getx :secondary-button-hover-bgcolor)
-                    :border-color (theme-getx :secondary-button-hover-bgcolor)
-                    :color (theme-getx :secondary-button-hover-color)
-                    :outline-color :transparent}))]
-    (into {}
-          (filter val
-                  {:background-color (theme-getx :secondary-button-bgcolor)
-                   :border-color (theme-getx :secondary-button-bgcolor)
-                   :color (theme-getx :secondary-button-color)
-                   :outline-color :transparent}))]
+     "&:not(:disabled):not(.disabled):active"
+     {:background-color (theme-getx :secondary-button-hover-bgcolor :secondary-button-bgcolor :color4)
+      :border-color (theme-getx :secondary-button-hover-bgcolor :secondary-button-bgcolor :color4)
+      :color (theme-getx :secondary-button-hover-color :secondary-button-color :color4)
+      :outline-color :transparent}]
+    {:background-color (theme-getx :secondary-button-bgcolor :color4)
+     :border-color (theme-getx :secondary-button-bgcolor :color4)
+     :color (theme-getx :secondary-button-color)
+     :outline-color :transparent}]
    [:.btn-primary.disabled :.btn-primary:disabled ; same color as bootstrap's default for .btn-secondary.disabled
     {:color "#fff"
      :background-color "#6c757d"
@@ -521,7 +527,7 @@
 
    ;; Navbar
    [:.navbar-wrapper
-    {:max-width content-width}]
+    {:max-width navbar-max-width}]
    [:.navbar
     {:font-size (u/px 19)
      :letter-spacing (u/rem 0.015)
@@ -533,7 +539,14 @@
      {:background-color :inherit}]]
    [:#administration-menu
     [:.nav-link
-     {:padding ".5rem 0"}]]
+     {:padding ".5rem 0"}]
+    {:display :flex
+     :flex-direction :row
+     :align-items :center
+     :justify-content :center
+     :gap [[(u/rem 0) (u/rem 1)]]
+     :flex-wrap :wrap
+     :max-width navbar-max-width}]
    [:.navbar-top-bar {:width (u/percent 100)
                       :height (u/px 4)
                       :display :flex
@@ -576,7 +589,6 @@
                :padding-top "1rem"
                :padding-bottom "1rem"
                :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
-               :margin-top (u/em 1)
                :position :relative}
       [:a :a:hover :.nav-link {:color footer-text-color
                                :font-weight (button-navbar-font-weight)}]
@@ -602,7 +614,6 @@
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
-   (media-queries)
    [:.example-page {:margin (u/rem 2)}]
    [(s/> :.example-page :h1) {:margin "4rem 0"}]
    [(s/> :.example-page :h2) {:margin-top (u/rem 8)
@@ -633,7 +644,6 @@
     [:ins {:background-color "#acf2bd"}]
     [:del {:background-color "#fdb8c0"}]]
    [:form.inline
-    :.form-actions.inline
     {:display :inline-block}
     [:.btn-link
      {:border :none
@@ -643,17 +653,23 @@
      (s/descendant :.language-switcher :form)
      :form)
     {:margin-left (u/rem 0.5)}]
-   [:.commands {:text-align "right"
-                :padding "0 1rem"
-                :cursor :auto}]
-   [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
+   [:div.commands {:cursor :auto
+                   :display :flex
+                   :flex-direction :row
+                   :flex-wrap :wrap
+                   :gap (u/rem 0.5)
+                   :align-items :center
+                   :justify-content :flex-end}]
+   [:td [:div.commands {:justify-content :flex-start}]]
+   [:th.organization {:white-space :normal
+                      :min-width (u/rem 5.5)}]
+   [:th.active {:white-space :normal
+                :min-width (u/rem 5.5)}]
+   [:td.more-info {:display :flex
+                   :justify-content :flex-end}]
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
-   [".children-inline-blocks > *" {:display :inline-block}]
 
-   [(s/> :.form-actions "*:not(:first-child)")
-    (s/> :.commands "*:not(:first-child)")
-    {:margin-left (u/em 0.5)}]
    [".btn-opens-more::after" {:content "'...'"}]
 
    [:#action-commands {:display "flex"
@@ -779,12 +795,12 @@
                              (-> (theme-getx :color1)
                                  (c/saturate -50)
                                  (c/lighten 33)))}]
-   [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
+   [:h2 {:margin [[(u/rem 3) 0 (u/rem 2) 0]]}]
 
    ;; application page
-   ;; working around garden minifier bug that causes 1800.0px to lose the px (1800px works fine)
-   ;; https://github.com/noprompt/garden/issues/120
-   [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
+
+   [:.page-application {:max-width (u/px application-page-max-width)}]
+
    [:#actions {:position :sticky
                :top "85px"}]
    [:.reload-indicator {:position :fixed
@@ -794,15 +810,10 @@
 
    ;; application list
    [:.rems-table
-    [:.application-description
-     :.application-applicant
-     {:overflow :hidden
-      :text-overflow :ellipsis
-      :white-space :nowrap
-      :max-width "30em"}
-
-     :.application-description {:max-width "30em"}
-     :.application-applicant {:max-width "10em"}]]
+    [:.resource {:max-width (u/rem 30)}]
+    [:.description {:min-width (u/rem 6)
+                    :max-width (u/rem 30)}]
+    [:.applicant {:max-width (u/rem 10)}]]
    [:.search-field {:display :flex
                     :flex-wrap :nowrap
                     :align-items :center}
@@ -876,6 +887,14 @@
                          :-o-transition "transform 0.2s ease-in-out"
                          :transition "transform 0.2s ease-in-out"}]
    [:.rotate-180 {:transform "rotate(180deg)"}]
+
+   [:.mt-2rem {:margin-top (u/rem 2)}]
+   [:.gap-1 {:gap (u/rem 0.5)}]
+   [:.gap-2 {:gap (u/rem 1)}]
+   [:.gap-3 {:gap (u/rem 1.5)}]
+
+   ;; Media queries must be almost last so they override
+   (media-queries)
 
    ;; These must be last as the parsing fails when the first non-standard element is met
    (form-placeholder-styles)))

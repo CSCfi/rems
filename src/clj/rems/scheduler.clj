@@ -8,7 +8,9 @@
   (let [interval-millis (.getMillis interval)
         task (fn []
                (try
+                 (log/debug "Scheduler starting work")
                  (f)
+                 (log/debug "Scheduler is done")
                  (catch InterruptedException e
                    (.interrupt (Thread/currentThread))
                    (log/info e "Scheduler shutting down"))

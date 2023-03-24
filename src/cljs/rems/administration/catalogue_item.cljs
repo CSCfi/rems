@@ -36,10 +36,13 @@
 (rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn edit-button [id]
-  [atoms/link {:class "btn btn-primary"}
-   (str "/administration/catalogue-items/edit/" id)
-   (text :t.administration/edit)])
+(defn edit-action [catalogue-item-id]
+  (atoms/edit-action
+   {:class "edit-catalogue-item"
+    :url (str "/administration/catalogue-items/edit/" catalogue-item-id)}))
+
+(defn edit-button [catalogue-item-id]
+  [atoms/action-button (edit-action catalogue-item-id)])
 
 (defn- manage-categories-button []
   [atoms/link {:class "btn btn-primary"}

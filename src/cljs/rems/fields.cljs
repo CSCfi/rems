@@ -416,7 +416,7 @@
           (concat
            (for [column columns] [:th (localized (:label column))])
            (when-not readonly
-             [[:th {:style {:width "2em"}}]])))]
+             [[:th {:style {:width "2em"}} [:span.sr-only (text :t.actions/commands)]]])))]
    (into [:tbody]
          (concat
           (for [row-i (range (count rows))]

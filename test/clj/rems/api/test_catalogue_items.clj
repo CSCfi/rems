@@ -267,12 +267,15 @@
                                                 :organization {:organization/id "organization1"}})
         new-form-id (test-helpers/create-form! {:form/internal-name "new form"
                                                 :organization {:organization/id "organization1"}})
+        category {:category/id (test-helpers/create-category! {})}
         old-catalogue-item-id (test-helpers/create-catalogue-item!
                                {:organization {:organization/id "organization1"}
                                 :title {:en "change-form-test catalogue item en"
                                         :fi "change-form-test catalogue item fi"}
                                 :resource-id resource-id
-                                :form-id old-form-id})]
+                                :form-id old-form-id
+                                :categories [category]})]
+
     (testing "when the form is changed a new catalogue item is created"
       (let [new-catalogue-item-id (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                                       (authenticate +test-api-key+ "owner")
@@ -296,7 +299,7 @@
           (is (:archived old-catalogue-item))
           (is (not (:enabled old-catalogue-item))))
 
-        (let [same-keys [:wfid :workflow-name :resid :resource-id :resource-name]]
+        (let [same-keys [:wfid :workflow-name :resid :resource-id :resource-name :categories]]
           (is (= (select-keys old-catalogue-item same-keys)
                  (select-keys new-catalogue-item same-keys))))
 
@@ -304,6 +307,7 @@
                                (keys (:localizations new-catalogue-item)))]
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))))
+
     (testing "can change to form that's in another organization"
       (let [form-id (test-helpers/create-form! {:form/internal-name "wrong organization"
                                                 :organization {:organization/id "organization2"}})
@@ -313,6 +317,7 @@
                          handler
                          read-ok-body)]
         (is (true? (:success response)))))
+
     (testing "can change to nil form"
       (let [response (api-call :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form")
                                {:form nil}
@@ -339,6 +344,7 @@
                    (-> (api-call :get (str "/api/catalogue-items/" new-new-catalogue-item-id) nil
                                  +test-api-key+ "owner")
                        (select-keys [:formid :form-name :id :resource-id]))))))))
+
     (testing "can change form as organization owner"
       (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                      (authenticate +test-api-key+ "organization-owner1")
@@ -346,6 +352,7 @@
                      handler
                      read-ok-body
                      :success))))
+
     (testing "can't change form as owner of different organization"
       (let [response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate +test-api-key+ "organization-owner2")

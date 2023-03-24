@@ -15,7 +15,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::selected-items (or (::selected-items db) #{}))
+   {:db (assoc db ::selected-items-ids (or (::selected-items-ids db) #{}))
     :dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]
                  [:rems.administration.administration/remember-current-page]]}))
@@ -64,14 +64,25 @@
    {}))
 
 (rf/reg-event-db
- ::set-selected-items
+ ::set-selected-items-ids
  (fn [db [_ items]]
-   (assoc db ::selected-items items)))
+   (assoc db ::selected-items-ids items)))
 
 (rf/reg-sub
- ::selected-items
+ ::selected-items-ids
  (fn [db _]
-   (::selected-items db)))
+   (::selected-items-ids db)))
+
+(defn- items-by-ids [items ids]
+  (filter (comp ids :id) items))
+
+(rf/reg-sub
+ ::selected-catalogue-items
+ (fn [_ _]
+   [(rf/subscribe [::catalogue])
+    (rf/subscribe [::selected-items-ids])])
+ (fn [[catalogue selected-item-ids] _]
+   (items-by-ids catalogue selected-item-ids)))
 
 (defn- create-catalogue-item-button []
   [atoms/link {:class "btn btn-primary" :id :create-catalogue-item}
@@ -96,6 +107,14 @@
    (str "/administration/catalogue-items/" catalogue-item-id)
    (text :t.administration/view)])
 
+(defn- modify-item-dropdown [item]
+  [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
+   (when (roles/can-modify-organization-item? item)
+     (list (catalogue-item/edit-action (:id item))
+           (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])} item)
+           (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])} item)))])
+
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
@@ -110,38 +129,31 @@
                                (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
            :resource (let [value (:resource-name item)]
                        {:value value
-                        :td [:td.resource
-                             [atoms/link nil
-                              (str "/administration/resources/" (:resource-id item))
-                              value]]})
+                        :display-value [atoms/link nil
+                                        (str "/administration/resources/" (:resource-id item))
+                                        value]})
            :form (if-let [value (:form-name item)]
                    {:value value
-                    :td [:td.form
-                         [atoms/link nil
-                          (str "/administration/forms/" (:formid item))
-                          value]]}
+                    :display-value [atoms/link nil
+                                    (str "/administration/forms/" (:formid item))
+                                    value]}
                    {:value (text :t.administration/no-form)
                     :sort-value "" ; push "No form" cases to the top of the list when sorting
-                    :td [:td.form [text :t.administration/no-form]]})
+                    :display-value [text :t.administration/no-form]})
            :workflow (let [value (:workflow-name item)]
                        {:value value
-                        :td [:td.workflow
-                             [atoms/link nil
-                              (str "/administration/workflows/" (:wfid item))
-                              value]]})
+                        :display-value [atoms/link nil
+                                        (str "/administration/workflows/" (:wfid item))
+                                        value]})
            :created (let [value (:start item)]
                       {:value value
                        :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? item)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
-                           [view-button (:id item)]
-                           [roles/show-when roles/+admin-write-roles+
-                            [catalogue-item/edit-button (:id item)]
-                            [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
-                            [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [view-button (:id item)]
+                                      [modify-item-dropdown item]]}})
         catalogue)))
 
 (defn- catalogue-list []
@@ -163,17 +175,16 @@
                                     :filterable? false}
                                    {:key :commands
                                     :sortable? false
-                                    :filterable? false}]
+                                    :filterable? false
+                                    :aria-label (text :t.actions/commands)}]
                          :rows [::catalogue-table-rows]
-                         :default-sort-column :name
+                         :default-sort-column :created
+                         :default-sort-order :desc
                          :selectable? true
-                         :on-select #(rf/dispatch [::set-selected-items %])}]
+                         :on-select #(rf/dispatch [::set-selected-items-ids %])}]
     [:div.mt-3
      [table/search catalogue-table]
      [table/table catalogue-table]]))
-
-(defn- items-by-ids [items ids]
-  (filter (comp ids :id) items))
 
 (defn catalogue-items-page []
   (into [:div
@@ -183,11 +194,10 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
-            [:div.commands.text-left.pl-0
+            [atoms/commands
              [create-catalogue-item-button]
-             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]
-             [categories-button]]
-            [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
-                                                       (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
-            [status-flags/disabled-and-archived-explanation]]
+             [categories-button]
+             [change-form-button @(rf/subscribe [::selected-catalogue-items])]]
+            [status-flags/status-flags-intro #(do (rf/dispatch [::fetch-catalogue])
+                                                  (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]]
            [catalogue-list]])))

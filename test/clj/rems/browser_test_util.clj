@@ -4,13 +4,15 @@
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
+            [clojure.stacktrace]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
-            [rems.common.util :refer [conj-vec getx]]
+            [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
             [rems.db.test-data-helpers :as test-helpers]
@@ -38,6 +40,7 @@
 (defn context-get [k] (get @test-context k))
 (defn context-getx [k] (getx @test-context k))
 (defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
+(defn context-dissoc! [& args] (swap! test-context #(apply dissoc % args)))
 (defn context-update! [& args] (swap! test-context #(apply update % args)))
 
 (defn- ensure-empty-directories! []
@@ -277,19 +280,71 @@
 
 ;;; etaoin exported
 
+(defn- get-file-base
+  "Get the base name for the util generated files."
+  []
+  (format "%03d-%s-"
+          (get-sequence-number)
+          (get-current-test-name)))
+
 (defn screenshot [filename]
+  (let [driver (get-driver)
+        full-filename (str (get-file-base) filename ".png")
+        file (io/file (:reporting-dir @test-context) full-filename)
+        window-size (et/get-window-size driver)
+        empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+
+        without-extra-height (if (and empty-space
+                                      (pos? empty-space))
+                               (+ (- (:height window-size) empty-space) 100) ; with some margin
+                               (:height window-size))
+        need-to-adjust? (< 0 without-extra-height (:height window-size))]
+
+    ;; adjust window to correct size
+    (when need-to-adjust?
+      (et/set-window-size driver {:width (:width window-size)
+                                  :height without-extra-height}))
+
+    (et/screenshot driver file)
+
+    ;; restore (big) size
+    (when need-to-adjust?
+      (et/set-window-size driver window-size))))
+
+(defn screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
                               (get-sequence-number)
                               (get-current-test-name)
                               filename)
         file (io/file (:reporting-dir @test-context) full-filename)]
-    (et/screenshot (get-driver)
-                   file)))
+    (et/screenshot-element (get-driver)
+                           q
+                           file)))
 
-(defmacro with-postmortem [& args]
-  `(et/with-postmortem (get-driver)
-     {:dir (:reporting-dir @test-context)}
-     ~@args))
+(defn screenshot-ancestor
+  "Like `screenshot-element` but take a screenshot of an ancestor to give context."
+  [filename q]
+  (screenshot-element filename [q {:xpath "./../../.."}]))
+
+
+(defn dump-content [content filename]
+  (when (seq content)
+    (let [full-filename (format "%03d-%s-%s%s"
+                                (get-sequence-number)
+                                (get-current-test-name)
+                                filename
+                                ".txt")
+          file (io/file (:reporting-dir @test-context) full-filename)]
+      (spit file (json/generate-string-pretty content)))))
+
+(defn wait-predicate [pred & [explainer]]
+  (try (et/wait-predicate pred) ; does not need driver
+       (catch clojure.lang.ExceptionInfo ex
+         (throw (ex-info "timed out in wait-predicate"
+                         (merge (ex-data ex)
+                                (when explainer
+                                  {:explanation (explainer)}))
+                         ex)))))
 
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
@@ -318,7 +373,6 @@
 (def click (wrap-etaoin et/click))
 (def visible? (wrap-etaoin et/visible?))
 (def displayed-el? (wrap-etaoin et/displayed-el?))
-(def wait-predicate et/wait-predicate) ; does not need driver
 (def has-text? (wrap-etaoin et/has-text?))
 (def has-class? (wrap-etaoin et/has-class?))
 (def has-class-el? (wrap-etaoin et/has-class-el?))
@@ -506,9 +560,30 @@
 
 (defn gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
-  and appends them to the test context for summary reporting."
-  []
-  (context-update! :axe conj-vec (check-axe)))
+  and appends them to the test context for summary reporting.
+
+  Produces a single screenshot `accessibility-violations` with
+  all the violations marked with a border.
+
+  The violations will also be dumped into a text file under the same `name`."
+  [name]
+  (let [results (check-axe)]
+    (when-let [violations (seq (:violations results))]
+      (let [targets (select [ALL :nodes ALL :target ALL] violations)
+            originals (doall (for [target targets]
+                               [target (js-execute (str "var x = document.querySelector('" target "'); return x && x.style && x.style.outline; "))]))]
+        (doseq [target targets]
+          (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"3px dashed red\";")))
+
+        (screenshot (str name "-accessibility-violations"))
+        (dump-content violations (str name "-accessibility-violations"))
+
+        ;; let's restore the results just in case further
+        ;; tests would be affected
+        (doseq [[target original] originals]
+          (when original
+            (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"" original "\";"))))))
+    (context-update! :axe conj-vec results)))
 
 (defn accessibility-report-fixture
   "Runs the tests and finally stores the gathered accessibility
@@ -517,6 +592,7 @@
   NB: the individual tests must call `gather-axe-results` in each
   interesting spot to have a sensible report to write."
   [f]
+  (context-dissoc! :axe)
   (try
     (f)
     (finally
@@ -548,3 +624,34 @@
 
 (defn autosave-enabled? []
   (get env :enable-autosave false))
+
+(defn postmortem-handler
+  "Simplified version of `etaoin.api/postmortem-handler`"
+  [ex]
+  (let [driver (get-driver)
+        dir (:reporting-dir @test-context)]
+
+    (io/make-parents dir)
+
+    (screenshot (str "error-screenshot"))
+
+    (spit (io/file dir (str (get-file-base) "error-stacktrace.txt"))
+          (with-out-str (clojure.stacktrace/print-stack-trace ex)))
+
+    (spit (io/file dir (str (get-file-base) "error-page.html"))
+          (et/get-source driver))
+
+    (when (et/supports-logs? driver)
+      (#'et/dump-logs (et/get-logs driver)
+                      (io/file dir (str (get-file-base) "error-logs.json"))))))
+
+(defmacro with-postmortem
+  "A custom `etaoin.api/with-postmortem` that saves
+  everything in sequentially named files."
+  [& body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (rems.browser-test-util/postmortem-handler e#)
+       (throw e#))))
+

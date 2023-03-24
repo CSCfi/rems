@@ -64,10 +64,10 @@
                                         (get-in category [:category/title language])]} ; secondary sort-key is the same in the catalogue
            :title {:value (get-in category [:category/title language])}
            :description {:value (get-in category [:category/description language])}
-           :commands {:td [:td.commands
-                           [to-view-category (:category/id category)]
-                           [roles/show-when roles/+admin-write-roles+
-                            [to-edit-category (:category/id category)]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-category (:category/id category)]
+                                      [roles/show-when roles/+admin-write-roles+
+                                       [to-edit-category (:category/id category)]]]}})
         categories)))
 
 (defn- categories-list []
@@ -80,7 +80,8 @@
                                      :title (text :t.administration/description)}
                                     {:key :commands
                                      :sortable? false
-                                     :filterable? false}]
+                                     :filterable? false
+                                     :aria-label (text :t.actions/commands)}]
                           :rows [::categories-table-rows]
                           :default-sort-column :display-order}]
     [:div.mt-3

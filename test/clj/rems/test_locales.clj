@@ -128,7 +128,7 @@
                                                    :translations-directory "translations/"
                                                    :theme-path "./example-theme/theme.edn"}))]
     (testing "extra translations override translations"
-      (is (= "Display archived. Lorem ipsum." (getx-in translations [:en :t :administration :display-archived])))
+      (is (= "CSC – Overridden in Extra Translations" (getx-in translations [:en :t :footer])))
       (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
     (testing "extra translations don't override keys that are not defined in extras"
       (is (= "Active" (getx-in translations [:en :t :administration :active]))))

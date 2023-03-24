@@ -62,8 +62,9 @@
   [:tr.cart-item
    [:td.title (get-localized-title item language)]
    [:td.commands
-    [remove-from-cart-button item language]
-    (when apply-button? [apply-button [item] language])]])
+    [:div.commands.justify-content-end
+     [remove-from-cart-button item language]
+     (when apply-button? [apply-button [item] language])]]])
 
 (defn- bundle-view [items language]
   (let [many-items? (< 1 (count items))]
@@ -80,13 +81,13 @@
 (defn cart-list
   "List of shopping cart items"
   [items language]
-  [:div
+  [:div.mt-5
    (text :t.cart/intro)
    [:div.outer-cart.mb-3
     [:div.inner-cart
-     [:div.cart-title {:role "status"
-                       :aria-live "polite"
-                       :aria-atomic true}
+     [:div.cart-title.pt-3.h5 {:role "status"
+                               :aria-live "polite"
+                               :aria-atomic true}
       [:i.fa.fa-shopping-cart]
       [:span (text-format :t.cart/header (count items))]]
      (into [:table.rems-table.cart]

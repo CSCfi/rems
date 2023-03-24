@@ -46,7 +46,7 @@
 (defn- catalogue-item-more-info [item language config]
   (let [link (catalogue-item-more-info-url item language config)]
     (when link
-      [:a.btn.btn-secondary
+      [:a.btn.btn-link
        {:href link
         :target :_blank
         :aria-label (str (text :t.catalogue/more-info)
@@ -54,7 +54,7 @@
                          (get-localized-title item language)
                          ", "
                          (text :t.link/opens-in-new-window))}
-       [external-link] " " (text :t.catalogue/more-info)])))
+       (text :t.catalogue/more-info) " " [external-link]])))
 
 (defn- apply-button [item language]
   [atoms/link {:class "btn btn-primary apply-for-catalogue-item"
@@ -77,14 +77,14 @@
      (map (fn [item]
             {:key (:id item)
              :name {:value (get-localized-title item language)}
-             :commands {:td [:td.commands
-                             [catalogue-item-more-info item language config]
-                             (when logged-in?
-                               (if (:enable-cart config)
-                                 (if (contains? cart-item-ids (:id item))
-                                   [cart/remove-from-cart-button item language]
-                                   [cart/add-to-cart-button item language])
-                                 (apply-button item language)))]}})
+             :commands {:display-value [:div.commands.justify-content-end.gap-1
+                                        [catalogue-item-more-info item language config]
+                                        (when logged-in?
+                                          (if (:enable-cart config)
+                                            (if (contains? cart-item-ids (:id item))
+                                              [cart/remove-from-cart-button item language]
+                                              [cart/add-to-cart-button item language])
+                                            (apply-button item language)))]}})
           catalogue))))
 
 (defn draft-application-list []
@@ -106,10 +106,11 @@
                               :title (text :t.catalogue/header)}
                              {:key :commands
                               :sortable? false
-                              :filterable? false}]
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
                    :rows [::catalogue-table-rows]
                    :default-sort-column :name}]
-    [:div
+    [:div.mt-2rem
      [table/search catalogue]
      [table/table catalogue]]))
 
@@ -139,7 +140,7 @@
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
                               :content #(when-not (:category/id %)
-                                          [:div.commands.w-100
+                                          [:div.commands.justify-content-end.gap-1
                                            [catalogue-item-more-info % language config]
                                            (when logged-in?
                                              (if (:enable-cart config)
@@ -147,6 +148,7 @@
                                                  [cart/remove-from-cart-button % language]
                                                  [cart/add-to-cart-button % language])
                                                (apply-button % language)))])
+                              :aria-label (text :t.actions/commands)
                               :sortable? false
                               :filterable? false}]
                    :children #(concat (:category/items %) (:category/children %))
@@ -157,7 +159,7 @@
                                    (and (:enabled row)
                                         (not (:expired row)))))
                    :default-sort-column :name}]
-    [:div
+    [:div.mt-2rem
      [tree/search catalogue]
      [tree/tree catalogue]]))
 

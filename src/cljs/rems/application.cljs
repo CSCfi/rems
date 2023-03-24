@@ -1292,7 +1292,7 @@
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
-    [:div.col-lg-8
+    [:div.col-lg-8.application-content
      [application-state {:application application
                          :config config
                          :userid userid}]

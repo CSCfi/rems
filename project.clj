@@ -47,7 +47,7 @@
                  [org.clojure/tools.logging "1.2.4"]
                  [org.postgresql/postgresql "42.5.1"]
                  [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
-                 [org.webjars.npm/axe-core "4.0.2"]
+                 [org.webjars.npm/axe-core "4.6.3"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
                  [org.webjars.npm/popper.js "1.16.1"]
                  [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series

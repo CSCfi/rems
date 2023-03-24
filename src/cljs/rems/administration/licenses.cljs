@@ -69,6 +69,14 @@
    (str "/administration/licenses/" license-id)
    (text :t.administration/view)])
 
+(defn- modify-license-dropdown [license]
+  [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
+   (when (roles/can-modify-organization-item? license)
+     (list
+      (status-flags/enabled-toggle-action {:on-change  #(rf/dispatch [::set-license-enabled %1 %2 [::fetch-licenses]])} license)
+      (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-license-archived %1 %2 [::fetch-licenses]])} license)))])
+
 (rf/reg-sub
  ::licenses-table-rows
  (fn [_ _]
@@ -81,14 +89,11 @@
            :type {:value (:licensetype license)}
            :organization {:value (get-in license [:organization :organization/short-name language])}
            :active (let [checked? (status-flags/active? license)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
-                           [to-view-license (:id license)]
-                           [roles/show-when roles/+admin-write-roles+
-                            [status-flags/enabled-toggle license #(rf/dispatch [::set-license-enabled %1 %2 [::fetch-licenses]])]
-                            [status-flags/archived-toggle license #(rf/dispatch [::set-license-archived %1 %2 [::fetch-licenses]])]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-license (:id license)]
+                                      [modify-license-dropdown license]]}})
         licenses)))
 
 (defn- licenses-list []
@@ -104,7 +109,8 @@
                                    :filterable? false}
                                   {:key :commands
                                    :sortable? false
-                                   :filterable? false}]
+                                   :filterable? false
+                                   :aria-label (text :t.actions/commands)}]
                         :rows [::licenses-table-rows]
                         :default-sort-column :title}]
     [:div.mt-3
@@ -119,7 +125,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
-            [to-create-license]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-licenses])]
-            [status-flags/disabled-and-archived-explanation]]
+            [atoms/commands [to-create-license]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-licenses])]]
            [licenses-list]])))

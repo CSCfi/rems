@@ -69,6 +69,15 @@
    (str "/administration/workflows/" workflow-id)
    (text :t.administration/view)])
 
+(defn- modify-workflow-dropdown [workflow]
+  [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
+   (when (roles/can-modify-organization-item? workflow)
+     (list
+      (workflow/edit-action (:id workflow))
+      (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])} workflow)
+      (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])} workflow)))])
+
 (rf/reg-sub
  ::workflows-table-rows
  (fn [_ _]
@@ -80,15 +89,11 @@
            :organization {:value (get-in workflow [:organization :organization/short-name language])}
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
-                           [to-view-workflow (:id workflow)]
-                           [roles/show-when roles/+admin-write-roles+
-                            [workflow/edit-button (:id workflow)]
-                            [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
-                            [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-workflow (:id workflow)]
+                                      [modify-workflow-dropdown workflow]]}})
         workflows)))
 
 (defn- workflows-list []
@@ -102,7 +107,8 @@
                                     :filterable? false}
                                    {:key :commands
                                     :sortable? false
-                                    :filterable? false}]
+                                    :filterable? false
+                                    :aria-label (text :t.actions/commands)}]
                          :rows [::workflows-table-rows]
                          :default-sort-column :title}]
     [:div.mt-3
@@ -118,7 +124,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
-            [to-create-workflow]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
-            [status-flags/disabled-and-archived-explanation]]
+            [atoms/commands [to-create-workflow]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-workflows])]]
            [workflows-list]])))

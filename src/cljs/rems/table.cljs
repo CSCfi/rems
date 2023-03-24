@@ -43,7 +43,7 @@
               ;; The default is derived from :value.
               (s/optional-key :sort-value) s/Any
               ;; Lowercase string for use in filtering.
-              ;; The default is derived from :value.
+              ;; The default is derived from :value or :display-value.
               (s/optional-key :filter-value) s/Str
               ;; Simple value for rendering in the UI as-is.
               ;; The default is derived from :value.
@@ -70,6 +70,9 @@
               :key ColumnKey
               ;; Title to show at the top of the column.
               (s/optional-key :title) s/Str
+              ;; ARIA label to show at the top of the column.
+              ;; Defaults to `:title`.
+              (s/optional-key :aria-label) s/Str
               ;; Whether this column can be sorted.
               ;; Defaults to true.
               (s/optional-key :sortable?) s/Bool
@@ -165,10 +168,11 @@
                                                          (str/lower-case val)
                                                          val))))
                      (assoc-if-missing :display-value (comp str :value))
-                     (assoc-if-missing :filter-value (fn [opts]
-                                                       (if (string? (:display-value opts))
-                                                         (str/lower-case (:display-value opts))
-                                                         "")))
+                     (assoc-if-missing :filter-value (fn [{:keys [value display-value]}]
+                                                       (str/lower-case
+                                                        (cond value (str value)
+                                                              (string? display-value) display-value
+                                                              :else ""))))
                      (assoc-if-missing :td (fn [opts]
                                              [:td {:class (name column)}
                                               (:display-value opts)]))))]))
@@ -349,10 +353,12 @@
     (into [:tr (when (:selectable? table) [selection-toggle-all table])]
           (for [column columns]
             [:th
-             (when (sortable? column)
-               {:class "pointer"
-                :on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
-             (:title column)
+             (merge
+              {:class (str (some-> column :key name) (when (sortable? column) " pointer"))}
+              (when (sortable? column)
+                {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])}))
+             (or (:title column)
+                 [:span.sr-only (:aria-label column)])
              " "
              (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))
@@ -364,9 +370,7 @@
                        [:clickable
                         (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
-              :style {:display (if (::display-row? row)
-                                 "table-row"
-                                 "none")}
+              :style (when-not (::display-row? row) {:display "none"})
               :on-click (when (:selectable? table)
                           #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
                              (rf/dispatch [::toggle-row-selection table (:key row)])))}
@@ -490,7 +494,8 @@
                                :filterable? false}
                               {:key :commands
                                :sortable? false
-                               :filterable? false}]
+                               :filterable? false
+                               :aria-label (text :t.actions/commands)}]
                     :rows [::example-table-rows]
                     :default-sort-column :first-name
                     :selectable? true

@@ -8,11 +8,11 @@
 (defn search-field [{:keys [id on-search searching? info]}]
   (let [input-value (r/atom "")
         input-element (atom nil)
-        collapse-id "application-search-tips-collapse"]
+        collapse-id (str "application-search-tips-collapse-" id)]
     (fn [{:keys [id on-search searching? info]}]
       [:<>
-       [:div.search-field
-        [:label.mr-1 {:for id}
+       [:div.search-field.mt-3
+        [:label.mr-3 {:for id}
          (text :t.search/search)]
 
         [:div.input-group.mr-2.w-50
@@ -40,6 +40,7 @@
                           (on-search "")
                           (.focus @input-element))}
              [close-symbol]]])]
+
         (when info
           [:a.application-search-tips.btn.btn-link.collapsed
            {:data-toggle "collapse"

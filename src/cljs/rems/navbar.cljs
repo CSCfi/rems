@@ -9,9 +9,11 @@
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]))
 
-(defn- nav-link-impl [path title & [active?]]
+(defn- nav-link-impl [{:keys [path title active? aria-label]}]
   [atoms/link
    (merge {:class (str "nav-link" (if active? " active" ""))}
+          (when aria-label
+            {:aria-label aria-label})
           (when (rems.ajax/local-uri? {:uri path})
             {:data-toggle "collapse"
              :data-target ".navbar-collapse.show"}))
@@ -23,25 +25,33 @@
 
    By default checks if path is a prefix of location, but if match-mode is :exact,
    checks that path is exactly location."
-  [path title & [match-mode]]
-  (let [location @(rf/subscribe [:path])
-        active? (case match-mode
-                  :exact
-                  (= location path)
-                  ;; default: prefix
-                  (str/starts-with? location path))]
-    [nav-link-impl path title active?]))
+  ([path title & [match-mode]]
+   (nav-link {:path path :title title :match-mode match-mode}))
+  ([{:keys [path title aria-label match-mode]}]
+   (let [location @(rf/subscribe [:path])
+         active? (case match-mode
+                   :exact
+                   (= location path)
+                   ;; default: prefix
+                   (str/starts-with? location path))]
+     [nav-link-impl
+      {:path path
+       :title title
+       :active? active?
+       :aria-label aria-label}])))
 
 (defn user-widget [user]
   (when user
     [:div.user-widget.px-2.px-sm-0
-     [nav-link
-      "/profile"
-      [:span {:aria-label (text :t.navigation/profile)}
-       [:i.fa.fa-user.mr-1]
-       [:span.icon-description (:name user)]]]
-     [atoms/link {:id "logout" :class "nav-link"} "/logout"
-      [:span {:aria-label (text :t.navigation/logout)}
+     [nav-link {:path "/profile"
+                :title [:span
+                        [:i.fa.fa-user.mr-1]
+                        [:span.icon-description (:name user)]]
+                :aria-label (str (text :t.navigation/profile) ": " (:name user))}]
+     [atoms/link {:id "logout" :class "nav-link"
+                  :aria-label (text :t.navigation/logout)}
+      "/logout"
+      [:span
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
@@ -124,6 +134,6 @@
    [:p "Here are examples of what the inactive and active nav-links look like."
     "The examples use nav-link-impl because we can't fake the :path subscription."]
    (example "nav-link inactive"
-            [nav-link-impl "example/path" "Link text" false])
+            [nav-link-impl {:path "example/path" :title "Link text"}])
    (example "nav-link active"
-            [nav-link-impl "example/path" "Link text" true])])
+            [nav-link-impl {:path "example/path" :title "Link text" :active? true}])])
