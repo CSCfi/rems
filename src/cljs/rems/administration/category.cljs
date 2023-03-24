@@ -52,7 +52,7 @@
    (localized (:category/title category))])
 
 (defn- to-edit-category [category-id]
-  [atoms/link {:class "btn btn-primary" :id :edit}
+  [atoms/link {:class "btn btn-primary edit-category"}
    (str "/administration/categories/edit/" category-id)
    (text :t.administration/edit)])
 

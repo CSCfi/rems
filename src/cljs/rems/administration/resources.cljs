@@ -69,6 +69,13 @@
    (str "/administration/resources/" resource-id)
    (text :t.administration/view)])
 
+(defn- modify-resource-dropdown [resource]
+  [atoms/commands-group-button
+   (when (roles/can-modify-organization-item? resource)
+     (list
+      (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])} resource)
+      (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])} resource)))])
+
 (rf/reg-sub
  ::resources-table-rows
  (fn [_ _]
@@ -80,14 +87,11 @@
            :organization {:value (get-in resource [:organization :organization/short-name language])}
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
-                     {:td [:td.active
-                           [readonly-checkbox {:value checked?}]]
+                     {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
-                           [to-view-resource (:id resource)]
-                           [roles/show-when roles/+admin-write-roles+
-                            [status-flags/enabled-toggle resource #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])]
-                            [status-flags/archived-toggle resource #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])]]]}})
+           :commands {:display-value [:div.commands.flex-nowrap
+                                      [to-view-resource (:id resource)]
+                                      [modify-resource-dropdown resource]]}})
         resources)))
 
 (defn- resources-list []
@@ -101,7 +105,8 @@
                                     :filterable? false}
                                    {:key :commands
                                     :sortable? false
-                                    :filterable? false}]
+                                    :filterable? false
+                                    :aria-label (text :t.actions/commands)}]
                          :rows [::resources-table-rows]
                          :default-sort-column :title}]
     [:div.mt-3
@@ -116,7 +121,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/show-when roles/+admin-write-roles+
-            [to-create-resource]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-resources])]
-            [status-flags/disabled-and-archived-explanation]]
+            [atoms/commands [to-create-resource]]
+            [status-flags/status-flags-intro  #(rf/dispatch [::fetch-resources])]]
            [resources-list]])))

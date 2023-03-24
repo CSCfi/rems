@@ -24,15 +24,15 @@
                                    (when (:completed? phase) "completed ")
                                    (when (:closed? phase) "closed "))}
            [:span
-            (cond (:rejected? phase) [:i.fa.fa-times {:aria-label (text :t.phases/phase-rejected)}]
-                  (:revoked? phase) [:i.fa.fa-times {:aria-label (text :t.phases/phase-revoked)}]
-                  (:completed? phase) [:i.fas.fa-check {:aria-label (text :t.phases/phase-completed)}]
-                  (:active? phase) [:i.fa.fa-chevron-right {:aria-label (text :t.phases/phase-active)}]
+            (cond (:rejected? phase) [:i.fa.fa-times [:span.sr-only (text :t.phases/phase-rejected)]]
+                  (:revoked? phase) [:i.fa.fa-times [:span.sr-only (text :t.phases/phase-revoked)]]
+                  (:completed? phase) [:i.fas.fa-check [:span.sr-only (text :t.phases/phase-completed)]]
+                  (:active? phase) [:i.fa.fa-chevron-right [:span.sr-only (text :t.phases/phase-active)]]
                   ;; NVDA will not read the aria label if the element is empty, so we need an invisible icon
-                  (:closed? phase) [:i.fa.fa-chevron-right {:aria-label (text :t.phases/phase-closed)
-                                                            :style {:color "rgba(0,0,0,0)"}}]
-                  :else [:i.fa.fa-chevron-right {:aria-label (text :t.phases/phase-pending)
-                                                 :style {:color "rgba(0,0,0,0)"}}])
+                  (:closed? phase) [:i.fa.fa-chevron-right {:style {:color "rgba(0,0,0,0)"}}
+                                    [:span.sr-only (text :t.phases/phase-closed)]]
+                  :else [:i.fa.fa-chevron-right {:style {:color "rgba(0,0,0,0)"}}
+                         [:span.sr-only (text :t.phases/phase-pending)]])
             "\u00a0"
             (if (:text phase)
               (text (:text phase))

@@ -24,6 +24,7 @@
             :clear "Tyhjennä"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voi enää muokata tai lähettää."]]
+            :commands "Toiminnot"
             :comment "Kommentti"
             :decide "Päätä"
             :delete "Poista luonnos"
@@ -36,15 +37,14 @@
                      :validation-errors "Tarkasta seuraavat virheet:"
                      :validation-warnings "Tarkasta vielä seuraavat ennen lähetystä:"
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
-            :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
             :handled-applications "Käsitellyt hakemukset"
             :invite-member "Kutsu jäsen"
             :licenses-selection "Lisää käyttöehtoja"
-            :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
             :member-email "Sähköposti"
             :member-name "Nimi"
+            :modify "Muokkaa"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
             :reject "Hylkää"
             :remark "Kirjaa huomio"
@@ -67,8 +67,6 @@
             :return "Palauta hakijalle"
             :review "Katselmoi"
             :revoke "Peru käyttöoikeus"
-            :show-publications "Näytä julkaisut"
-            :show-throughput-times "Näytä käsittelyajat"
             :todo-applications "Avoimet hakemukset"}
   :administration {:active "Aktiivinen"
                    :add "Lisää"
@@ -258,10 +256,10 @@
          :remove "Poista korista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
-              :intro [:p "Allaolevien resurssien käyttöoikeudet ovat haettavissa."]
+              :intro ""
               :more-info "Lisätietoja"
               :continue-existing-application "Jatka hakemusta"
-              :continue-existing-application-intro [:div.intro [:p "Keskeneräiset hakemukset:"]]
+              :continue-existing-application-intro ""
               :apply-resources "Hae uusia käyttöoikeuksia"}
   :collapse {:hide "Piilota"
              :show "Näytä"

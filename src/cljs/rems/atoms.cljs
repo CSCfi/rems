@@ -1,23 +1,36 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
+            [medley.core :refer [remove-vals]]
             [reagent.core :as reagent]
+            [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text localized localize-attachment]]
             [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
-  [:i {:class "fa fa-external-link-alt"
-       :aria-label (text :t.link/opens-in-new-window)}])
+  [:i {:class "fa fa-external-link-alt"}
+   [:span.sr-only (text :t.link/opens-in-new-window)]])
 
 (defn file-download []
-  [:i {:class "fa fa-file-download"
-       :aria-label (text :t.link/download-file)}])
+  [:i {:class "fa fa-file-download"}
+   [:span.sr-only (text :t.link/download-file)]])
 
-(defn link [opts uri title]
-  [:a (merge opts {:href uri})
-   title])
+(defn link
+  ([opts]
+   (link (dissoc opts :label :href)
+         (:href opts)
+         (:label opts)))
+  ([opts href label]
+   (when-not (str/blank? label)
+     (let [button? (not (str/includes? (str (reagent.impl.util/class-names (:class opts)))
+                                       "btn-link"))]
+       [:a (->> {:href href}
+                (merge (when button? {:role :button}))
+                (merge opts)
+                (remove-vals nil?))
+        label]))))
 
 (defn image [opts src]
   [:img (merge opts {:src src})])
@@ -26,8 +39,7 @@
   (let [[class label] (case sort-order
                         :asc ["fa-arrow-up" :t.table/ascending-order]
                         :desc ["fa-arrow-down" :t.table/descending-order])]
-    [:i.fa {:class class
-            :aria-label (text label)}]))
+    [:i.fa {:class class}]))
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])
@@ -249,6 +261,67 @@
                          :tab-index "-1"}
           content]]))))
 
+(defn action-button
+  "Takes an `action` description and creates a button that triggers it."
+  [action]
+  [link {:id (:id action)
+         :label (:label action)
+         :href (:url action)
+         :on-click (:on-click action)
+         :class (str "btn btn-secondary " (:class action))}])
+
+(defn action-link
+  "Takes an `action` description and creates a link that triggers it."
+  [action]
+  [link {:id (:id action)
+         :label (:label action)
+         :href (:url action)
+         :on-click (:on-click action)
+         :class (str "btn btn-link " (:class action))}])
+
+(defn edit-action
+  "Standard edit action helper."
+  [action]
+  (assoc action
+         :label [text :t.administration/edit]))
+
+(defn commands
+  "Creates a standard commands group with left alignment."
+  [& commands]
+  (into [:div.commands.justify-content-start.mb-3] commands))
+
+(defn commands-group-button
+  "Displays a group of commands in a dropdown button.
+
+  If there is just one, replaces the dropdown button with
+  the actual command.
+
+  The individual commands must follow the `action` format,
+  and can be used in both link or button variant depending
+  on the number of commands."
+  [{:keys [label]} & actions]
+  (let [actions (for [action-or-list actions ; flatten first level
+                      action (if (list? action-or-list) action-or-list [action-or-list])
+                      :when (not (nil? action))]
+                  action)]
+    (case (count actions)
+      ;; nothing
+      0 nil
+
+      ;; if only one, display it as a button directly
+      1 [action-button (first actions)]
+
+      ;; group actions as links in a popup of a button
+      [:div.btn-group
+       [:button.modify-dropdown.btn.btn-secondary.dropdown-toggle
+        {:data-toggle :dropdown}
+        label]
+       [:div.dropdown-menu.dropdown-menu-right
+        (into [:div.d-flex.flex-column]
+              (for [action actions]
+                [:div.dropdown-item
+                 [action-link action]]))]])))
+
 (defn guide []
   (let [state (reagent/atom false)
         on-change #(swap! state not)]
@@ -311,4 +384,42 @@
                 [expander {:id "guide-expander-id"
                            :title "Expander block with animated chevron"
                            :expanded? false
-                           :content [:p "Expanded content"]}])])))
+                           :content [:p "Expanded content"]}])
+
+
+       (component-info action-link)
+       (example "example command as link"
+
+                (def example-command {:id "example-command"
+                                      :class "example-command"
+                                      :label "Example"
+                                      :url "http://example.com/command"
+                                      :on-click #(js/alert "click example")})
+
+                [action-link example-command])
+       (component-info action-button)
+       (example "example command as button" [action-button example-command])
+
+       (component-info commands)
+       (example "empty commands" [commands])
+       (example "with commands"
+
+                (def another-command {:id "another-command"
+                                      :class "another-command"
+                                      :label "Another"
+                                      :url "http://example.com/another"
+                                      :on-click #(js/alert "click another")})
+
+                [commands
+                 [action-button example-command]
+                 [action-button another-command]])
+
+       (component-info commands-group-button)
+       (example "empty group" [commands-group-button])
+       (example "one command is directly shown"
+                [commands-group-button {:label "Group"}
+                 example-command])
+       (example "with more commands"
+                [commands-group-button {:label "Group"}
+                 example-command
+                 another-command])])))

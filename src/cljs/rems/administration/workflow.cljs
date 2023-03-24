@@ -36,10 +36,13 @@
 (rf/reg-sub ::workflow (fn [db _] (::workflow db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn edit-button [id]
-  [atoms/link {:class "btn btn-primary edit-workflow"}
-   (str "/administration/workflows/edit/" id)
-   (text :t.administration/edit)])
+(defn edit-action [workflow-id]
+  (atoms/edit-action
+   {:class "edit-workflow"
+    :url (str "/administration/workflows/edit/" workflow-id)}))
+
+(defn edit-button [workflow-id]
+  [atoms/action-button (edit-action workflow-id)])
 
 (def workflow-types
   {:workflow/default :t.create-workflow/default-workflow

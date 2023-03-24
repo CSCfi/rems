@@ -12,14 +12,14 @@
                   :color (:color2 theme :transparent)
                   :margin "32px"
                   :font-size "40px"}
-          :class "fas fa-spinner fa-spin"
-          :aria-label (text :t.form/please-wait)}]]))
+          :class "fas fa-spinner fa-spin"}
+      [:span.sr-only (text :t.form/please-wait)]]]))
 
 (defn small
   "Small spinner for indicating loading or in-progress state."
   []
-  [:i {:class "fas fa-spinner fa-spin"
-       :aria-label (text :t.form/please-wait)}])
+  [:i {:class "fas fa-spinner fa-spin"}
+   [:span.sr-only (text :t.form/please-wait)]])
 
 (defn guide
   []

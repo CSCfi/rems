@@ -84,6 +84,9 @@
               :key ColumnKey
               ;; Title to show at the top of the column.
               (s/optional-key :title) s/Str
+              ;; ARIA label title to show at the top of the column.
+              ;; Defaults to `:title`.
+              (s/optional-key :aria-label) s/Str
               ;; Optional function (row -> value) to calculate the value to show
               ;; Defaults to the (presumable keyword) value of the `:key` prop.
               (s/optional-key :value) s/Any
@@ -179,17 +182,19 @@
                                                      [:td {:class [(name (:key column))
                                                                    (str "bg-depth-" (:depth row 0))]
                                                            :col-span (when-let [col-span-fn (:col-span column)] (col-span-fn row))}
-                                                      [:div.d-flex.flex-row.w-100.align-items-baseline
-                                                       {:class [(when first-column? (str "pad-depth-" (:depth row 0)))
-                                                                (when (:expanded? row) "expanded")]}
+                                                      (if first-column? ; wrap open chevron?
+                                                        [:div.d-flex.flex-row.w-100.align-items-baseline
+                                                         {:class [(str "pad-depth-" (:depth row 0))
+                                                                  (when (:expanded? row) "expanded")]}
 
-                                                       (when first-column?
                                                          (when (seq children)
                                                            (if (:expanded? row)
                                                              [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
-                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down])))
+                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down]))
 
-                                                       content]]))})))
+                                                         content]
+
+                                                        content)]))})))
                            (index-by [:key]))}
 
      ;; copied over
@@ -388,7 +393,8 @@
              (when (sortable? column)
                {:class "pointer"
                 :on-click #(rf/dispatch [::toggle-sorting tree (:key column)])})
-             (:title column)
+             (or (:title column)
+                 [:span.sr-only (:aria-label column)])
              " "
              (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))

@@ -200,11 +200,19 @@
                   (merge {:category/title (select-config-langs
                                            (or title {:en "Category"
                                                       :fi "Kategoria"
-                                                      :sv "Kategori"}))
-                          :category/description (select-config-langs
-                                                 (or description {:en "Category description"
-                                                                  :fi "Kategorian kuvaus"
-                                                                  :sv "Beskrivning av kategori"}))}
+                                                      :sv "Kategori"}))}
+
+                         (cond (false? description)
+                               nil
+
+                               (nil? description)
+                               {:category/description (select-config-langs {:en "Category description"
+                                                                            :fi "Kategorian kuvaus"
+                                                                            :sv "Beskrivning av kategori"})}
+
+                               :else
+                               {:category/description (select-config-langs description)})
+
                          (when (seq children)
                            {:category/children children}))))]
     (assert (:success result) {:command command :result result})

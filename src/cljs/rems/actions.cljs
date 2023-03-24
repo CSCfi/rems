@@ -28,33 +28,6 @@
 
 ;;;; UI
 
-;; TODO not implemented
-(defn- load-application-states-button []
-  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#load-application-states-modal" :disabled true}
-   (text :t.actions/load-application-states)])
-
-(defn- export-entitlements-button []
-  [:a.btn.btn-secondary
-   {:href "/api/entitlements/csv"}
-   (text :t.actions/export-entitlements)])
-
-;; TODO not implemented
-(defn- show-publications-button []
-  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#show-publications-modal" :disabled true}
-   (text :t.actions/show-publications)])
-
-;; TODO not implemented
-(defn- show-throughput-times-button []
-  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#show-throughput-times-modal" :disabled true}
-   (text :t.actions/show-throughput-times)])
-
-(defn- report-buttons []
-  [:div.form-actions.inline
-   [load-application-states-button]
-   [export-entitlements-button]
-   [show-publications-button]
-   [show-throughput-times-button]])
-
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
@@ -62,7 +35,7 @@
    [profile/maybe-ega-api-key-warning]
    [:div.spaced-sections
     [collapsible/component
-     {:id "todo-applications"
+     {:id "todo-applications-collapse"
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
@@ -74,7 +47,7 @@
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]
     [collapsible/component
-     {:id "handled-applications"
+     {:id "handled-applications-collapse"
       :on-open #(rf/dispatch [::handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>

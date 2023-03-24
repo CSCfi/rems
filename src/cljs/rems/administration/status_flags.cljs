@@ -30,6 +30,18 @@
                               " \""  [get-localized-title-for-anything item] "\""])}
       (text label)])))
 
+(defn enabled-toggle-action [{:keys [id on-change]} item]
+  (let [enabled? (:enabled item false)
+        label (if enabled?
+                :t.administration/disable
+                :t.administration/enable)]
+    {:id id
+     :class "toggle-enabled"
+     :on-click #(on-change (update item :enabled not)
+                           [:span [text label]
+                            " \""  [get-localized-title-for-anything item] "\""])
+     :label [text label]}))
+
 ;; XXX: consider rename to archived-toggle-button
 (defn archived-toggle
   ([item on-change] (archived-toggle {} item on-change))
@@ -45,6 +57,18 @@
                              [:span [text label]
                               " \"" [get-localized-title-for-anything item] "\""])}
       (text label)])))
+
+(defn archived-toggle-action [{:keys [id on-change]} item]
+  (let [archived? (:archived item false)
+        label (if archived?
+                :t.administration/unarchive
+                :t.administration/archive)]
+    {:id id
+     :class "toggle-archived"
+     :on-click #(on-change (update item :archived not)
+                           [:span [text label]
+                            " \"" [get-localized-title-for-anything item] "\""])
+     :label [text label]}))
 
 (rf/reg-event-fx
  ::set-display-archived?
@@ -62,7 +86,7 @@
         on-change (fn []
                     (rf/dispatch [::set-display-archived? (not display-archived?)])
                     (when on-change (on-change)))]
-    [:div.form-check.form-check-inline.pointer {:style {:float "right"}}
+    [:div.form-check.form-check-inline.pointer
      [checkbox {:id :display-archived
                 :class :form-check-input
                 :value display-archived?
@@ -71,7 +95,12 @@
       (text :t.administration/display-archived)]]))
 
 (defn disabled-and-archived-explanation []
-  [:p.mt-1 (text :t.administration/disabled-and-archived-explanation)])
+  [:p (text :t.administration/disabled-and-archived-explanation)])
+
+(defn status-flags-intro [on-change]
+  [:div.mt-1.d-flex.flex-row.align-items-start {:style {:gap "2rem"}}
+   [disabled-and-archived-explanation]
+   [display-archived-toggle on-change]])
 
 (defn active? [item]
   (and (:enabled item)

@@ -191,7 +191,7 @@
 
  ;; UI theme variables.
  :theme {:color1 "#eee"
-         :color2 "#999"
+         :color2 "#fff"
          :color3 "#000"
          :color4 "#000"
 
@@ -292,10 +292,10 @@
          :primary-button-bgcolor nil ; defaults to :color4
          :primary-button-hover-color nil ; defaults to :primary-button-color
          :primary-button-hover-bgcolor nil ; defaults to :primary-button-bgcolor
-         :secondary-button-color nil ; defaults to bootstrap colors
-         :secondary-button-bgcolor nil ; defaults to bootstrap colors
-         :secondary-button-hover-color nil ; defaults to bootstrap colors
-         :secondary-button-hover-bgcolor nil ; defaults to bootstrap colors
+         :secondary-button-color "#fff"
+         :secondary-button-bgcolor nil ; defaults to :color4
+         :secondary-button-hover-color nil ; defaults to :secondary-button-color
+         :secondary-button-hover-bgcolor nil ; defaults to :secondary-button-bgcolor
 
          ;; Misc
          :footer-color nil ; defaults to :table-heading-color

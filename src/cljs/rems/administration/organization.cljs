@@ -35,11 +35,13 @@
 (rf/reg-sub ::organization (fn [db _] (::organization db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn edit-button [id]
-  [atoms/link {:id "edit-organization"
-               :class "btn btn-primary"}
-   (str "/administration/organizations/edit/" id)
-   (text :t.administration/edit)])
+(defn edit-action [organization-id]
+  (atoms/edit-action
+   {:class "edit-organization"
+    :url (str "/administration/organizations/edit/" organization-id)}))
+
+(defn edit-button [organization-id]
+  [atoms/action-button (edit-action organization-id)])
 
 (defn- display-localized-review-email [review-email]
   [:div

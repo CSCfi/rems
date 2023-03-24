@@ -92,11 +92,11 @@
                                                 :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
                                                              (:application/generated-external-id app)]}
            :description {:value (:application/description app)
-                         :td [:td.description (format-description app)]}
+                         :display-value (format-description app)}
            :resource {:value (format-catalogue-items app)}
            :applicant (let [applicant (application-util/get-applicant-name app)]
                         {:value applicant
-                         :td [:td.applicant (format-applicant applicant)]})
+                         :display-value (format-applicant applicant)})
            :handlers (let [handlers (->> (get-in app [:application/workflow :workflow.dynamic/handlers])
                                          (filter :handler/active?)
                                          (map application-util/get-member-name)
@@ -128,7 +128,7 @@
            :last-activity (let [value (:application/last-activity app)]
                             {:value value
                              :display-value (localize-time value)})
-           :view {:td [:td.view [view-button app]]}})
+           :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
 
 
@@ -160,7 +160,8 @@
                       :title (text :t.applications/last-activity)}
                      {:key :view
                       :sortable? false
-                      :filterable? false}]
+                      :filterable? false
+                      :aria-label (text :t.actions/commands)}]
         application-table {:id id
                            :columns (filter #(visible-columns (:key %)) all-columns)
                            :rows [::table-rows applications]

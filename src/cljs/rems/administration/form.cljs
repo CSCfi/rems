@@ -50,13 +50,15 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
-(defn edit-button [id]
-  [:button.btn.btn-primary.edit-form
-   {:type :button
+(defn edit-action [form-id]
+  (atoms/edit-action
+   {:class "edit-form"
     :on-click (fn []
                 (rf/dispatch [:rems.spa/user-triggered-navigation])
-                (rf/dispatch [::edit-form id]))}
-   (text :t.administration/edit)])
+                (rf/dispatch [::edit-form form-id]))}))
+
+(defn edit-button [form-id]
+  [atoms/action-button (edit-action form-id)])
 
 (defn- copy-as-new-button [id]
   [atoms/link {:class "btn btn-secondary"}

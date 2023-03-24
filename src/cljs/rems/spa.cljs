@@ -380,6 +380,7 @@
        [logo])
      (when page-id
        [main-content page-id grab-focus?])
+     [:div#empty-space]
      [footer]]))
 
 ;;;; Routes

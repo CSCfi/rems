@@ -2,6 +2,7 @@
   "Admin page for organizations."
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
+            [rems.administration.organization :refer [edit-action]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
@@ -75,6 +76,22 @@
    (str "/administration/organizations/" organization-id)
    (text :t.administration/view)])
 
+(defn modify-organization-dropdown [organization]
+  (let [id (:organization/id organization)
+        org-owner? (->> @(rf/subscribe [:owned-organizations])
+                        (some (comp #{id} :organization/id)))]
+    [atoms/commands-group-button
+     {:label (text :t.actions/modify)}
+
+     (when org-owner?
+       (edit-action id))
+
+     ;; XXX: organization owner cannot use these actions currently
+     (when (roles/has-roles? :owner)
+       (list
+        (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])} organization)
+        (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])} organization)))]))
+
 (rf/reg-sub
  ::organizations-table-rows
  (fn [_ _]
@@ -86,14 +103,11 @@
       :short-name {:value (get-in organization [:organization/short-name language])}
       :name {:value (get-in organization [:organization/name language])}
       :active (let [checked? (status-flags/active? organization)]
-                {:td [:td.active
-                      [readonly-checkbox {:value checked?}]]
+                {:display-value [readonly-checkbox {:value checked?}]
                  :sort-value (if checked? 1 2)})
-      :commands {:td [:td.commands
-                      [to-view-organization (:organization/id organization)]
-                      [roles/show-when #{:owner} ; XXX: organization owner cannot use these actions currently
-                       [status-flags/enabled-toggle organization #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])]
-                       [status-flags/archived-toggle organization #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])]]]}})))
+      :commands {:display-value [:div.commands.flex-nowrap
+                                 [to-view-organization (:organization/id organization)]
+                                 [modify-organization-dropdown organization]]}})))
 
 (defn- organizations-list []
   (let [organizations-table {:id ::organizations
@@ -106,7 +120,8 @@
                                         :filterable? false}
                                        {:key :commands
                                         :sortable? false
-                                        :filterable? false}]
+                                        :filterable? false
+                                        :aria-label (text :t.actions/commands)}]
                              :rows [::organizations-table-rows]
                              :default-sort-column :name}]
     [:div.mt-3
@@ -120,9 +135,7 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[roles/show-when roles/+admin-write-roles+ ;; TODO doesn't match API roles exactly
-            [roles/show-when #{:owner}
-             [to-create-organization]]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-organizations])]
-            [status-flags/disabled-and-archived-explanation]]
+          [[roles/show-when #{:owner}
+            [atoms/commands [to-create-organization]]
+            [status-flags/status-flags-intro #(rf/dispatch [::fetch-organizations])]]
            [organizations-list]])))
