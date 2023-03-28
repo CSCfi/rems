@@ -196,11 +196,8 @@
           :color (theme-getx :table-heading-color)
           :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
-     :td
-     ["&:last-child:not(:first-child)"
-      {:padding-left 0}]
-     {:text-align "left"
-      :padding "0.5rem 1rem"}]
+     :td {:text-align "left"
+          :padding "0.5rem 1rem"}]
     [:.selection {:width (u/rem 2)
                   :padding-right 0}]
     [:td:before
@@ -661,6 +658,7 @@
                    :align-items :center
                    :justify-content :flex-end}]
    [:td [:div.commands {:justify-content :flex-start}]]
+   [:td.commands {:width "1rem"}] ; anything smaller than actual results
    [:th.organization {:white-space :normal
                       :min-width (u/rem 5.5)}]
    [:th.active {:white-space :normal
