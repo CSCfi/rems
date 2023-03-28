@@ -49,12 +49,12 @@
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom :none}])
+   (stylesheet/at-media {:max-width (:md bootstrap-media-breakpoints)}
+                        [:div.commands.flex-nowrap {:flex-wrap "wrap !important"}]) ; wrap table commands
    (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
                         [:.lg-fs70pct {:font-size (u/percent 70)}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
-   (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
-                        [:div.commands {:flex-wrap :nowrap}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
