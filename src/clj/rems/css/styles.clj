@@ -400,6 +400,7 @@
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
+    "h1[tabindex]:focus-within"
     {:outline 0
      :box-shadow "0 0 0 0.2rem rgba(38,143,255,.5) !important"}]
    [:.btn-primary
