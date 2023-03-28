@@ -1,5 +1,6 @@
 (ns rems.search
-  (:require [goog.functions :refer [debounce]]
+  (:require [clojure.string :as str]
+            [goog.functions :refer [debounce]]
             [reagent.core :as r]
             [rems.atoms :refer [close-symbol]]
             [rems.spinner :as spinner]
@@ -25,7 +26,10 @@
              :ref (fn [element]
                     (reset! input-element element))
              :on-change (fn [event]
-                          (let [value (-> event .-target .-value)]
+                          (let [value (-> event .-target .-value)
+                                value (if (string? value)
+                                        (str/triml value)
+                                        value)]
                             (reset! input-value value)
                             (on-search value)))}]
 
