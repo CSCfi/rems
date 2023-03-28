@@ -29,6 +29,7 @@ The body of the HTTP PUT request will be a JSON object that contains:
 - `"event/time"`: when the event occured
 - `"application/id"`: the id of the application
 - `"event/application"`: the entire application, with this event applied, in the same format as the `/api/applications/:id/raw` endpoint returns (see Swagger docs)
+  This can be left out with `:send-application? false` in the configuration.
 
 Other keys may also be present depending on the event type.
 

@@ -157,6 +157,7 @@
  ;;   :event-types (optional) - an array of event types to send. A missing value means "send everything".
  ;;   :timeout (optional) - timeout for the PUT in seconds. Defaults to 60s.
  ;;   :headers (optional) - a map of additional HTTP headers to send.
+ ;;   :send-application? (optional) - should application be sent in `:event/application` (defaults to true)
  ;;
  ;; See also: docs/event-notification.md
  ;;

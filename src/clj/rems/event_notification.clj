@@ -19,6 +19,9 @@
             "to" (:url target))
   (try
     (let [timeout-ms (* 1000 (get target :timeout default-timeout))
+          body (if (:send-application? target true)
+                 body
+                 (dissoc body :event/application))
           response (http/put (getx target :url)
                              {:body (json/generate-string body)
                               :throw-exceptions false
