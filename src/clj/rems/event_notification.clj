@@ -19,9 +19,6 @@
             "to" (:url target))
   (try
     (let [timeout-ms (* 1000 (get target :timeout default-timeout))
-          body (if (:send-application? target true)
-                 body
-                 (dissoc body :event/application))
           response (http/put (getx target :url)
                              {:body (json/generate-string body)
                               :throw-exceptions false
@@ -83,13 +80,13 @@
     (is (true? (wants? target {:event/type :application.event/submitted})))
     (is (true? (wants? target {:event/type :application.event/approved})))))
 
-(defn- notification-body [event]
-  (assoc event :event/application (applications/get-application (:application/id event))))
-
 (defn queue-notifications! [events]
   (when-let [targets (seq (get rems.config/env :event-notification-targets))]
     (doseq [event events
-            :let [body (notification-body event)]
+            :let [application-part (delay {:event/application (applications/get-application (:application/id event))})]
             target targets
-            :when (wants? target event)]
+            :when (wants? target event)
+            :let [body (merge event
+                              (when (:send-application? target true)
+                                @application-part))]]
       (add-to-outbox! target body))))
