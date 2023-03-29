@@ -49,12 +49,12 @@
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom :none}])
+   (stylesheet/at-media {:max-width (:md bootstrap-media-breakpoints)}
+                        [:div.commands.flex-nowrap {:flex-wrap "wrap !important"}]) ; wrap table commands
    (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
                         [:.lg-fs70pct {:font-size (u/percent 70)}])
    (stylesheet/at-media {:max-width (u/px 870)}
                         [:.user-widget [:.icon-description {:display "none"}]])
-   (stylesheet/at-media {:min-width (:xs bootstrap-media-breakpoints)}
-                        [:div.commands {:flex-wrap :nowrap}])
    (stylesheet/at-media {:prefers-reduced-motion :reduce}
                         [:body {:scroll-behavior :auto}])))
 
@@ -196,11 +196,8 @@
           :color (theme-getx :table-heading-color)
           :background-color (theme-getx :table-heading-bgcolor :color3)}]
     [:th
-     :td
-     ["&:last-child:not(:first-child)"
-      {:padding-left 0}]
-     {:text-align "left"
-      :padding "0.5rem 1rem"}]
+     :td {:text-align "left"
+          :padding "0.5rem 1rem"}]
     [:.selection {:width (u/rem 2)
                   :padding-right 0}]
     [:td:before
@@ -403,6 +400,7 @@
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
+    "h1[tabindex]:focus-within"
     {:outline 0
      :box-shadow "0 0 0 0.2rem rgba(38,143,255,.5) !important"}]
    [:.btn-primary
@@ -661,6 +659,7 @@
                    :align-items :center
                    :justify-content :flex-end}]
    [:td [:div.commands {:justify-content :flex-start}]]
+   [:td.commands {:width "1rem"}] ; anything smaller than actual results
    [:th.organization {:white-space :normal
                       :min-width (u/rem 5.5)}]
    [:th.active {:white-space :normal
