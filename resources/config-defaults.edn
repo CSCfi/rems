@@ -164,7 +164,11 @@
  ;; Example:
  ;;
  ;; :event-notification-targets [{:url "http://events/everything"}
- ;;                              {:url "http://events/filtered"
+ ;;
+ ;;                              {:url "http://events/just-the-event-is-lighter"
+ ;;                               :send-application? false}
+ ;;
+ ;;                              {:url "http://events/filtered-by-type"
  ;;                               :event-types [:application.event/created :application.event/submitted]
  ;;                               :timeout 120
  ;;                               :headers {"Authorization" "abc123"
