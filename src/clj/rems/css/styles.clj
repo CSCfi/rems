@@ -658,6 +658,7 @@
                    :gap (u/rem 0.5)
                    :align-items :center
                    :justify-content :flex-end}]
+   [:.page-catalogue [:div.commands {:flex-wrap :nowrap}]]
    [:td [:div.commands {:justify-content :flex-start}]]
    [:td.commands {:width "1rem"}] ; anything smaller than actual results
    [:th.organization {:white-space :normal
