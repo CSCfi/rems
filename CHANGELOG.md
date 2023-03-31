@@ -40,6 +40,7 @@ Changes since v2.31
 - Database connection pool can be configured, see `:hikaricp-extra-params` in `config-defaults.edn`.
 - The debug log level prints details of when the scheduled pollers run, e.g. email and event notification.
 - Search bar automatically trims the whitespace form the left side, which is useful for copied values.
+- The event notification can be configured to not send the application data with `:send-application? false`
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
