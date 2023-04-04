@@ -242,10 +242,6 @@
    :application/last-activity DateTime
    :application/applicant schema-base/UserWithAttributes
    :application/members #{schema-base/UserWithAttributes}
-   (s/optional-key :application/reviewers) #{schema-base/User}
-   (s/optional-key :application/past-reviewers) #{schema-base/User}
-   (s/optional-key :application/deciders) #{schema-base/User}
-   (s/optional-key :application/past-deciders) #{schema-base/User}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    (s/optional-key :application/blacklist) (rjs/field

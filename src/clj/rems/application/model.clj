@@ -682,17 +682,6 @@
          (transform [:application/attachments ALL :attachment/user] get-user)
          (setval [:application/attachments ALL redacted? :attachment/redacted] true))))
 
-(defn- enrich-reviewers-and-deciders [application]
-  (letfn [(get-users [kw]
-            (set (for [user (:application/user-roles application)
-                       :when (contains? (val user) kw)]
-                   {:userid (key user)})))]
-    (-> application
-        (assoc :application/reviewers (get-users :reviewer))
-        (assoc :application/past-reviewers (get-users :past-reviewer))
-        (assoc :application/deciders (get-users :decider))
-        (assoc :application/past-deciders (get-users :past-decider)))))
-
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -723,8 +712,7 @@
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
       (enrich-disable-commands get-config)
-      (enrich-attachments get-user)
-      (enrich-reviewers-and-deciders))) ; uses application roles, sensitive, see rems.application.model/hide-sensitive-information
+      (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
@@ -804,11 +792,7 @@
 
 (defn- hide-sensitive-information [application]
   (-> application
-      (dissoc :application/blacklist
-              :application/reviewers
-              :application/past-reviewers
-              :application/deciders
-              :application/past-deciders)
+      (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)
       hide-extra-user-attributes))
