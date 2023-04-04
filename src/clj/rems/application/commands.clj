@@ -439,26 +439,13 @@
       {:errors [{:type :invalid-redact-attachments
                  :attachments (sort invalid-ids)}]})))
 
-(defn- find-redacted-attachments
-  "Finds events from which the redacted attachments originate from,
-   and returns those events id with the redacted attachment id."
-  [cmd application]
-  (vec (for [attachment (:redacted-attachments cmd)
-             event (:application/events application)
-             :let [ids (map :attachment/id (:event/attachments event))]
-             :when (contains? (set ids) (:attachment/id attachment))]
-         {:event/id (:event/id event)
-          :attachment/id (:attachment/id attachment)})))
-
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
   (or (empty-redacted-attachments-error cmd)
       (invalid-redacted-attachments-error cmd application)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
-                                    :application/redacted-attachments (find-redacted-attachments
-                                                                       cmd
-                                                                       application)
+                                    :event/redacted-attachments (vec (:redacted-attachments cmd))
                                     :application/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject

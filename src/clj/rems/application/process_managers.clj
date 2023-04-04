@@ -49,5 +49,5 @@
   [new-events]
   (doseq [event new-events
           :when (= :application.event/attachments-redacted (:event/type event))
-          attachment (:application/redacted-attachments event)]
+          attachment (:event/redacted-attachments event)]
     (attachments/redact-attachment! (:attachment/id attachment))))
