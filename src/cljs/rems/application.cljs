@@ -1041,10 +1041,6 @@
                                 ;; no explicit command for :application.command/save-draft when autosave
                                 [:application.command/save-draft [save-button]])
 
-                              (when (seq @(rf/subscribe [::application-redactable-attachments]))
-                                ;; no reason to render if user cannot redact anything
-                                [:application.command/redact-attachments [redact-attachments-action-button]])
-
                               [:application.command/submit [submit-button]
                                :application.command/return [return-action-button]
                                ;; this assumes that request-review and invite-reviewer are both possible or neither is
@@ -1063,7 +1059,9 @@
                                                                          [assign-external-id-button (get application :application/assigned-external-id "")])
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
-                               :application.command/copy-as-new [copy-as-new-button]])]
+                               :application.command/copy-as-new [copy-as-new-button]
+                               :application.command/redact-attachments (when-some [attachments (seq @(rf/subscribe [::application-redactable-attachments]))]
+                                                                         [redact-attachments-action-button attachments])])]
 
     (-> (for [[command action] (partition 2 commands-and-actions)
               :when (contains? (:application/permissions application) command)]
@@ -1100,8 +1098,7 @@
                   [invite-reviewer-form app-id reload]
                   [review-form app-id reload]
                   [remark-form app-id reload]
-                  (let [attachments @(rf/subscribe [::application-redactable-attachments])]
-                    [redact-attachments-form app-id attachments reload])
+                  [redact-attachments-form app-id reload]
                   [close-form app-id show-comment-field? reload]
                   [revoke-form app-id reload]
                   [decide-form app-id reload]

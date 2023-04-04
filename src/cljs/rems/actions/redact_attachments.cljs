@@ -6,10 +6,14 @@
 
 (def ^:private action-form-id "redact-attachments")
 
+(rf/reg-sub
+ ::attachments
+ (fn [db _] (::attachments db)))
+
 (rf/reg-event-fx
  ::open-form
- (fn [{:keys [db]} _]
-   {:db db
+ (fn [{:keys [db]} [_ attachments]]
+   {:db (assoc db ::attachments attachments)
     :dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-comment-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]
@@ -36,12 +40,12 @@
                :comment comment
                :public comment-public}))
 
-(defn redact-attachments-action-button []
+(defn redact-attachments-action-button [attachments]
   [action-button {:id action-form-id
                   :text (text :t.actions/redact-attachments)
-                  :on-click #(rf/dispatch [::open-form])}])
+                  :on-click #(rf/dispatch [::open-form attachments])}])
 
-(defn redact-attachments-view [{:keys [application-id attachments new-attachments on-submit]}]
+(defn redact-attachments-view [{:keys [application-id redactable-attachments new-attachments on-submit]}]
   [action-form-view action-form-id
    (text :t.actions/redact-attachments)
    [[button-wrapper (-> {:id action-form-id
@@ -53,7 +57,7 @@
                                     :disabled (nil? on-submit)))]]
    [:<>
     [select-attachments-field {:field-key action-form-id
-                               :attachments attachments
+                               :attachments redactable-attachments
                                :label (text :t.form/attachments)}]
     [action-attachment {:field-key action-form-id
                         :application-id application-id
@@ -79,11 +83,11 @@
     (when (validate cmd)
       cmd)))
 
-(defn redact-attachments-form [application-id attachments on-finished]
+(defn redact-attachments-form [application-id on-finished]
   (let [form-fields @(rf/subscribe [::form-fields])]
     [redact-attachments-view
      {:application-id application-id
-      :attachments attachments
+      :redactable-attachments @(rf/subscribe [::attachments])
       :new-attachments (:attachments form-fields)
       :on-submit (when-some [cmd (build-command application-id form-fields)]
                    #(rf/dispatch [::send-redact-attachments cmd {:on-finished on-finished}]))}]))
