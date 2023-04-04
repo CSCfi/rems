@@ -34,25 +34,37 @@
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
-(rf/reg-sub ::select-attachments (fn [db [_ field-key]]
-                                   (vec (for [kv (get-in db [::select-attachments field-key])
-                                              :when (val kv)]
-                                          {:attachment/id (key kv)}))))
-(rf/reg-sub ::select-attachments-id (fn [db [_ field-key id]] (get-in db [::select-attachments field-key id] false)))
-(rf/reg-event-db ::init-select-attachments (fn [db [_ field-key]] (assoc-in db [::select-attachments field-key] {})))
-(rf/reg-event-db ::set-select-attachments (fn [db [_ field-key id selected]] (assoc-in db [::select-attachments field-key id] selected)))
+(rf/reg-sub
+ ::select-attachments
+ (fn [db [_ field-key]]
+   (vec (for [kv (get-in db [::select-attachments field-key])
+              :when (val kv)]
+          {:attachment/id (key kv)}))))
+(rf/reg-event-db
+ ::set-select-attachments
+ (fn [db [_ field-key m]]
+   (assoc-in db [::select-attachments field-key] m)))
+(rf/reg-sub
+ ::get-attachment-selection
+ (fn [db [_ field-key id]]
+   (get-in db [::select-attachments field-key id] false))) ; if key is not set, default value prevents warnings about uncontrolled input
+(rf/reg-event-db
+ ::set-attachment-selection
+ (fn [db [_ field-key id value]]
+   (assoc-in db [::select-attachments field-key id] value)))
 
 (defn select-attachments-field [{:keys [attachments field-key label]}]
   (into
-   [:div.select-attachments.form-group
-    [:label label]]
+   [:div.select-attachments.form-group {:id field-key}
+    [:label {:for field-key} label]]
    (for [attachment (sort-by :attachment/id > attachments)
          :let [id (:attachment/id attachment)]]
      [:div.form-check.mb-2
       [:div.d-flex.align-items-center
        [:input.form-check-input {:type :checkbox
-                                 :checked @(rf/subscribe [::select-attachments-id field-key id])
-                                 :on-change #(rf/dispatch [::set-select-attachments field-key id (.. % -target -checked)])}]
+                                 :checked @(rf/subscribe [::get-attachment-selection field-key id])
+                                 :on-change #(let [value (.. % -target -checked)]
+                                               (rf/dispatch [::set-attachment-selection field-key id value]))}]
        [attachment-link attachment]]
       (when-some [user (get-in attachment [:attachment/user :name])]
         [:b user])])))
