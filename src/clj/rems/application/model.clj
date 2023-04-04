@@ -1,11 +1,12 @@
 (ns rems.application.model
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL transform select setval]]
-            [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
+            [com.rpl.specter :refer [ALL transform select]]
+            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as form]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
@@ -198,9 +199,18 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
+(defn- update-redacted-attachments [application event]
+  (let [redacted-ids (set (for [att (:event/redacted-attachments event)]
+                            (:attachment/id att)))
+        redacted? #(contains? redacted-ids (:attachment/id %))]
+    (->> application
+         (transform [:application/attachments ALL redacted?]
+                    #(assoc % :attachment/redacted true)))))
+
 (defmethod application-base-view :application.event/attachments-redacted
-  [application _event]
-  application)
+  [application event]
+  (-> application
+      (update-redacted-attachments event)))
 
 (defmethod application-base-view :application.event/remarked
   [application _event]
@@ -828,8 +838,29 @@
           value (:field/value private)]
       (update-existing private :field/previous-value (constantly value)))))
 
-(defn apply-privacy [application roles]
-  (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))
+(defn apply-privacy-by-roles [application roles]
+  (->> application
+       (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles))))
+
+(defn- may-see-redacted-filename [roles]
+  (some #{:handler :reporter}
+        roles))
+
+(defn- apply-attachment-privacy [attachment roles userid]
+  (let [see-filename (or (not (:attachment/redacted attachment))
+                         (= userid (get-in attachment [:attachment/user :userid]))
+                         (may-see-redacted-filename roles))]
+    (cond-> attachment
+      (not see-filename) (assoc :attachment/filename :filename/redacted))))
+
+(defn apply-privacy-by-user [application roles userid]
+  (->> application
+       (transform [:application/attachments ALL] #(apply-attachment-privacy % roles userid))))
+
+(defn apply-attachment-permissions [attachment roles userid]
+  (-> attachment
+      (assoc-some :attachment/can-redact (attachment-util/can-redact-attachment attachment roles userid))
+      (dissoc :attachment/redact-roles)))
 
 (defn hide-non-public-information [application]
   (-> application
@@ -880,16 +911,6 @@
       (user-is-applicant-or-member roles)
       (not= #{:everyone-else} roles))))
 
-(defn- see-redacted-filename? [attachment userid roles]
-  (or (= userid (get-in attachment [:attachment/user :userid]))
-      (contains? roles :handler)))
-
-(defn- redact-attachment-filenames [attachments userid roles]
-  (let [apply-mask #(and (:attachment/redacted %)
-                         (not (see-redacted-filename? % userid roles)))]
-    (->> attachments
-         (setval [ALL apply-mask :attachment/filename] :filename/redacted))))
-
 (defn apply-user-permissions [application userid]
   (let [roles (permissions/user-roles application userid)
         permissions (permissions/user-permissions application userid)
@@ -901,9 +922,10 @@
             (hide-sensitive-information application))
           (personalize-todo userid)
           (hide-non-public-information)
-          (apply-privacy roles)
           (hide-attachments)
-          (update :application/attachments redact-attachment-filenames userid roles)
+          (apply-privacy-by-roles roles)
+          (apply-privacy-by-user roles userid)
+          (update :application/attachments (partial map #(apply-attachment-permissions % roles userid)))
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

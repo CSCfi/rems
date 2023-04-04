@@ -3,8 +3,8 @@
             [clojure.set]
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [index-by]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
@@ -429,12 +429,12 @@
     {:errors [{:type :empty-redacted-attachments}]}))
 
 (defn- invalid-redacted-attachments-error [cmd application]
-  (let [attachments (index-by [:attachment/id] (:application/attachments application))
-        invalid-ids (for [id (map :attachment/id (:redacted-attachments cmd))
-                          :let [attachment (get attachments id)]
-                          :when (or (nil? attachment)
-                                    (not (application-util/can-redact? attachment (:actor cmd) application)))]
-                      id)]
+  (let [redacted-ids (set (map :attachment/id (:redacted-attachments cmd)))
+        roles (permissions/user-roles application (:actor cmd))
+        invalid-ids (for [att (:application/attachments application)
+                          :when (contains? redacted-ids (:attachment/id att))
+                          :when (not (attachment-util/can-redact-attachment att roles (:actor cmd)))]
+                      (:attachment/id att))]
     (when (seq invalid-ids)
       {:errors [{:type :invalid-redact-attachments
                  :attachments (sort invalid-ids)}]})))
