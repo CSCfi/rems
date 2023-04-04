@@ -29,16 +29,17 @@
               :on-finished on-finished})
    {}))
 
-(rf/reg-sub ::form-fields
-            :<- [:rems.actions.components/select-attachments action-form-id]
-            :<- [:rems.actions.components/attachments-with-filenames action-form-id]
-            :<- [:rems.actions.components/comment action-form-id]
-            :<- [:rems.actions.components/comment-public action-form-id]
-            (fn [[select-attachments attachments comment comment-public] _]
-              {:redacted-attachments select-attachments
-               :attachments attachments
-               :comment comment
-               :public comment-public}))
+(rf/reg-sub
+ ::form-fields
+ :<- [:rems.actions.components/select-attachments action-form-id]
+ :<- [:rems.actions.components/attachments-with-filenames action-form-id]
+ :<- [:rems.actions.components/comment action-form-id]
+ :<- [:rems.actions.components/comment-public action-form-id]
+ (fn [[select-attachments attachments-with-filenames comment comment-public] _]
+   {:redact-attachments select-attachments
+    :attachments attachments-with-filenames
+    :comment comment
+    :public comment-public}))
 
 (defn redact-attachments-action-button [attachments]
   [action-button {:id action-form-id
@@ -67,20 +68,14 @@
     [comment-public-field {:field-key action-form-id
                            :label (text :t.form/comment-public)}]]])
 
-(defn- validate [{:keys [application-id redacted-attachments attachments comment public]}]
-  (and (int? application-id)
-       (some->> (seq redacted-attachments) (every? some?))
-       (boolean? public)
-       (every? some? attachments)
-       (string? comment)))
-
-(defn- build-command [application-id {:keys [redacted-attachments attachments comment public]}]
-  (let [cmd {:application-id application-id
-             :redacted-attachments (map #(select-keys % [:attachment/id]) redacted-attachments)
-             :public public
-             :attachments (map #(select-keys % [:attachment/id]) attachments)
-             :comment (or comment "")}]
-    (when (validate cmd)
+(defn- build-command [application-id {:keys [redact-attachments attachments comment public]}]
+  (when (and (some? application-id)
+             (seq redact-attachments))
+    (let [cmd {:application-id application-id
+               :redacted-attachments (map #(select-keys % [:attachment/id]) redact-attachments)
+               :public public
+               :attachments (map #(select-keys % [:attachment/id]) attachments)
+               :comment comment}]
       cmd)))
 
 (defn redact-attachments-form [application-id on-finished]
