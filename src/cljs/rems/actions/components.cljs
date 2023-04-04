@@ -207,7 +207,7 @@
    text])
 
 (defn action-link [{:keys [id text on-click]}]
-  [:a.dropdown-item
+  [:a.dropdown-item.btn.btn-link
    {:id (action-button-id id)
     :href "#"
     :data-toggle "collapse"

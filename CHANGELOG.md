@@ -42,12 +42,15 @@ Changes since v2.31
   Form attachments cannot be redacted, non-handler users may redact only their own attachments, and in decider workflow handler is not allowed to redact decider attachments.
 - Database connection pool can be configured, see `:hikaricp-extra-params` in `config-defaults.edn`.
 - The debug log level prints details of when the scheduled pollers run, e.g. email and event notification.
+- Search bar automatically trims the whitespace form the left side, which is useful for copied values.
+- The event notification can be configured to not send the application data with `:send-application? false`
 
 ### Fixes
 - Autosaving does not cause the focus to jump anymore (#3112)
 - Fix form table default sort order to be internal name (was title). (#3107)
 - Editing form of a catalogue item could fail due to categories.
 - While clicking a button, link or menu item, a wrong color was sometimes displayed.
+- Heading focus outline uses the correct blue color.
 
 ## v2.31 "Harmajankatu" 2022-11-29
 

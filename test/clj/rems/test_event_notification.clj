@@ -48,12 +48,15 @@
   (test-data/create-test-api-key!)
   (test-data/create-test-users-and-roles!)
   (with-open [server (stub/start! {"/created" {:status 200}
-                                   "/all" {:status 200}})]
+                                   "/all" {:status 200}
+                                   "/no-application" {:status 200}})]
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :enable-save-compaction true
                                          :event-notification-targets [{:url (str (:uri server) "/created")
                                                                        :event-types [:application.event/created]}
-                                                                      {:url (str (:uri server) "/all")}])]
+                                                                      {:url (str (:uri server) "/all")}
+                                                                      {:url (str (:uri server) "/no-application")
+                                                                       :send-application? false}])]
       (let [get-notifications #(doall
                                 (for [r (stub/recorded-requests server)]
                                   {:path (:path r)
@@ -91,12 +94,12 @@
 
         (event-notification/process-outbox!)
 
-        (testing "created event gets sent to both endpoints"
+        (testing "created event gets sent to all endpoints"
           (let [notifications (get-notifications)
                 app-from-raw-api (api-call :get (str "/api/applications/" app-id "/raw") nil
                                            "42" "reporter")]
-            (is (= 2 (count notifications)))
-            (is (= #{"/created" "/all"}
+            (is (= 3 (count notifications)))
+            (is (= #{"/created" "/all" "/no-application"}
                    (set (map :path notifications))))
             (is (= {:application/external-id "2001/1"
                     :application/id app-id
@@ -126,21 +129,27 @@
 
           (event-notification/process-outbox!)
 
-          (testing "draft-saved event gets sent only to /all"
+          (testing "draft-saved event gets sent to /all and /no-application"
             (let [requests (get-notifications)
-                  req (last requests)]
-              (is (= 3 (count requests)))
-              (is (= "/all" (:path req)))
-              (is (= "application.event/draft-saved"
-                     (:event/type (:data req))))
+                  ;; the requests are sorted by path
+                  all-request (nth requests 2)
+                  no-app-request (nth requests 4)]
+              (is (= 5 (count requests)))
+              (is (= "/all" (:path all-request)))
+              (is (= "/no-application" (:path no-app-request)))
+              (is (= "application.event/draft-saved" (get-in all-request [:data :event/type])))
+              (is (= "application.event/draft-saved" (get-in no-app-request [:data :event/type])))
               (is (= (:event/id event)
-                     (:event/id (:data req))))
+                     (:event/id (:data all-request))
+                     (:event/id (:data no-app-request))))
               (is (= "my value"
-                     (-> req
+                     (-> all-request
                          :data
                          :application/field-values
                          first
-                         :value))))))
+                         :value)))
+              (is (contains? (:data all-request) :event/application))
+              (is (not (contains? (:data no-app-request) :event/application))))))
 
         ;; another save gets sent even with compaction
         (testing "another (compacted) save"
@@ -155,21 +164,27 @@
 
             (event-notification/process-outbox!)
 
-            (testing "draft-saved event gets sent only to /all"
+            (testing "draft-saved event gets sent only to /all and /no-application"
               (let [requests (get-notifications)
-                    req (last requests)]
-                (is (= 4 (count requests)))
-                (is (= "/all" (:path req)))
-                (is (= "application.event/draft-saved"
-                       (:event/type (:data req))))
+                    ;; the requests are sorted by path
+                    all-request (nth requests 3)
+                    no-app-request (nth requests 6)]
+                (is (= 7 (count requests)))
+                (is (= "/all" (:path all-request)))
+                (is (= "/no-application" (:path no-app-request)))
+                (is (= "application.event/draft-saved" (get-in all-request [:data :event/type])))
+                (is (= "application.event/draft-saved" (get-in no-app-request [:data :event/type])))
                 (is (= (:event/id event)
-                       (:event/id (:data req))))
+                       (:event/id (:data all-request))
+                       (:event/id (:data no-app-request))))
                 (is (= "new value"
-                       (-> req
+                       (-> all-request
                            :data
                            :application/field-values
                            first
-                           :value)))))))))))
+                           :value)))
+                (is (contains? (:data all-request) :event/application))
+                (is (not (contains? (:data no-app-request) :event/application)))))))))))
 
 (deftest test-event-notification-ordering
   (test-data/create-test-api-key!)
