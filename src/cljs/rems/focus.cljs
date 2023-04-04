@@ -1,6 +1,5 @@
 (ns rems.focus
-  "Focuses an HTML element as soon as it exists."
-  (:require [rems.util :refer [visibility-ratio]]))
+  "Focuses an HTML element as soon as it exists.")
 
 (defn focus [element]
   (.setAttribute element "tabindex" "-1")
@@ -19,7 +18,7 @@
    (on-element-appear selector f 100))
   ([selector f tries]
    (when (pos? tries)
-     (if-some [element (first (js/$ (str selector ":visible")))] ; https://api.jquery.com/visible-selector/
+     (if-let [element (.querySelector js/document selector)]
        (f element)
        (js/setTimeout #(on-element-appear selector f (dec tries))
                       10)))))
