@@ -198,6 +198,8 @@
 
 (def conj-vec (fnil conj []))
 
+(def into-vec (fnil into []))
+
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
 

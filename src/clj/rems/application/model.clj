@@ -7,7 +7,7 @@
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [assoc-some-in conj-vec getx]]
+            [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -357,6 +357,12 @@
         (master-workflow/application-permissions-view event)
         (permissions/whitelist whitelist))))
 
+(defn- application-attachments [application event]
+  (-> application
+      (update :application/attachments into-vec (for [att (:event/attachments event)]
+                                                  {:attachment/id (:attachment/id att)
+                                                   :attachment/event (select-keys event [:event/id])}))))
+
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
@@ -366,9 +372,9 @@
       (application-base-view event)
       (application-permissions-for-workflow-view event)
       (assert-same-application-id event)
+      (application-attachments event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
-
 
 ;;;; Injections
 
@@ -705,7 +711,7 @@
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-      (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+      (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers get-workflow)
