@@ -188,25 +188,25 @@
                                              (into #{} (map :event/id)))]]
       (update event :highlight-event-ids into highlightable-event-ids))))
 
-(defn- set-highlightables-by-redacted-attachments [events]
-  (let [related-events (for [event events
-                             :let [redacted-event-id (:event/id event)]
-                             redacted-attachment (:application/redacted-attachments event)
-                             :let [added-in-event-id (:event/id redacted-attachment)]]
-                         #{added-in-event-id redacted-event-id})]
+(defn- set-highlightables-by-redacted-attachments [events attachments]
+  (let [attachments (build-index {:keys [:attachment/id]} attachments)
+        related-events (for [event events
+                             id (map :attachment/id (:event/redacted-attachments event))
+                             :let [added-in-event-id (get-in attachments [id :attachment/event :event/id])]]
+                         #{added-in-event-id (:event/id event)})]
     (for [event events
           :let [highlightable-event-ids (->> related-events
                                              (filter #(contains? % (:event/id event)))
                                              (reduce into #{}))]]
       (update event :highlight-event-ids into highlightable-event-ids))))
 
-(defn- set-event-highlightables
+(defn- set-application-event-highlightables
   "Updates events with event ids that are related to the event so that they can
    be highlighted within the UI."
-  [events]
-  (-> events
-      (set-highlightables-by-request-id)
-      (set-highlightables-by-redacted-attachments)))
+  [application]
+  (-> application
+      (update :application/events set-highlightables-by-request-id)
+      (update :application/events set-highlightables-by-redacted-attachments (:application/attachments application))))
 
 (rf/reg-event-fx
  ::fetch-application-result
@@ -214,7 +214,7 @@
    (let [initial-fetch? (not (:initialized? (::application db)))]
      {:db (-> db
               (update ::application fetcher/finished application)
-              (update-in [::application :data :application/events] set-event-highlightables)
+              (update-in [::application :data] set-application-event-highlightables)
               (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
 
 (rf/reg-event-db
@@ -615,25 +615,6 @@
  (fn [attachments-by-id [_ attachment-id]]
    (attachments-by-id attachment-id)))
 
-(rf/reg-sub
- ::application-events
- :<- [::application]
- (fn [application _]
-   (->> application
-        :application/events
-        (sort-by :event/time)
-        (reverse))))
-
-(rf/reg-sub
- ::get-attachments-by-event-id
- :<- [::application-events]
- :<- [::application-attachments-by-id]
- (fn [[events attachments-by-id] [_ event-id]]
-   (->> events
-        (find-first #(= event-id (:event/id %)))
-        :event/attachments
-        (map #(get attachments-by-id (:attachment/id %))))))
-
 (defn- field-container
   "A container component for field that isolates the pure render component
   from re-frame state. Only depends on relevant fields, not the whole application
@@ -738,6 +719,24 @@
  (fn [ids [_ event-id]]
    (contains? ids event-id)))
 
+(rf/reg-sub
+ ::application-events
+ :<- [::application]
+ (fn [application _]
+   (->> application
+        :application/events
+        (sort-by :event/time)
+        (reverse))))
+
+(rf/reg-sub
+ ::get-application-attachments-by-event-id
+ :<- [::application]
+ (fn [application [_ event-id]]
+   (->> application
+        :application/attachments
+        (filter #(= event-id
+                    (get-in % [:attachment/event :event/id]))))))
+
 (defn- event-view [{:keys [attachments highlight set-highlights]} event]
   (let [event-text (localize-event event)
         decision (localize-decision event)
@@ -766,17 +765,15 @@
       (when comment
         [:div.form-control.event-comment comment])
       (when (seq attachments)
-        (into [:<>]
-              (->> attachments
-                   (partition-all 3)
-                   (map fields/attachment-row))))]]))
+        (into [:<>] (for [attachments-row (partition-all 3 attachments)]
+                      [fields/attachment-row attachments-row])))]]))
 
 (defn- render-event [event]
   (let [opts {:highlight @(rf/subscribe [::is-event-highlighted (:event/id event)])
-              :attachments @(rf/subscribe [::get-attachments-by-event-id (:event/id event)])
-              :set-highlights (when-some [highlight-event-ids (seq (:highlight-event-ids event))]
+              :attachments @(rf/subscribe [::get-application-attachments-by-event-id (:event/id event)])
+              :set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
                                 (fn []
-                                  (rf/dispatch [::set-highlight-event-ids highlight-event-ids])))}]
+                                  (rf/dispatch [::set-highlight-event-ids event-ids])))}]
     [event-view opts event]))
 
 (defn- render-events [events]
@@ -1026,17 +1023,10 @@
     [request-decision-action-link]
     [invite-decider-action-link]]])
 
-(rf/reg-sub
- ::application-redactable-attachments
- :<- [::application]
- :<- [:user]
- (fn [[application user] _]
-   (for [attachment (:application/attachments application)
-         :when (application-util/can-redact? attachment (:userid user) application)]
-     attachment)))
-
 (defn- action-buttons [application config]
-  (let [commands-and-actions (concat
+  (let [redactable-attachments (->> (:application/attachments application)
+                                    (filter attachment-util/can-redact-attachment))
+        commands-and-actions (concat
                               (when-not (:enable-autosave config)
                                 ;; no explicit command for :application.command/save-draft when autosave
                                 [:application.command/save-draft [save-button]])
@@ -1060,8 +1050,8 @@
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
                                :application.command/copy-as-new [copy-as-new-button]
-                               :application.command/redact-attachments (when-some [attachments (seq @(rf/subscribe [::application-redactable-attachments]))]
-                                                                         [redact-attachments-action-button attachments])])]
+                               :application.command/redact-attachments (when (seq redactable-attachments)
+                                                                         [redact-attachments-action-button redactable-attachments])])]
 
     (-> (for [[command action] (partition 2 commands-and-actions)
               :when (contains? (:application/permissions application) command)]
