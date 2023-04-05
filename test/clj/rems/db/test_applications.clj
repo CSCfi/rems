@@ -80,7 +80,7 @@
     (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
     (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
 
-(deftest test-delete-application-and-reload-cache!!
+(deftest test-delete-application-and-reload-cache!
   (test-helpers/create-user! {:userid "applicant"})
   (let [app-id (test-helpers/create-application! {:actor "applicant"})]
     (is (applications/get-application app-id))

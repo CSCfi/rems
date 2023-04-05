@@ -1857,7 +1857,7 @@
 
 (deftest test-redact-attachments-command
   (testing "fail if redacted attachments is empty"
-    (is (= {:errors [{:type :empty-redacted-attachments}]}
+    (is (= {:errors [{:type :empty-redact-attachments}]}
            (fail-command {:type :application.command/redact-attachments
                           :actor handler-user-id
                           :comment "should fail"
@@ -1898,9 +1898,9 @@
             :event/time test-time
             :event/actor handler-user-id
             :event/attachments [{:attachment/id 4}]
-            :application/redacted-attachments [{:attachment/id 1 :event/id 2}
-                                               {:attachment/id 3 :event/id 4}
-                                               {:attachment/id 5 :event/id 6}]
+            :event/redacted-attachments [{:attachment/id 1}
+                                         {:attachment/id 3}
+                                         {:attachment/id 5}]
             :application/id app-id
             :application/comment "i've got the power"
             :application/public false}
@@ -1923,7 +1923,7 @@
                                                 (merge dummy-remarked-event {:event/actor decider-user-id
                                                                              :event/attachments [{:attachment/id 5}]})])))))
   (testing "fails when handler redacts decider attachment in decider workflow"
-    (is (= {:errors [{:type :invalid-redact-attachments
+    (is (= {:errors [{:type :forbidden-redact-attachments
                       :attachments [5]}]}
            (fail-command {:type :application.command/redact-attachments
                           :actor handler-user-id
@@ -1942,7 +1942,7 @@
             :event/time test-time
             :event/actor reviewer-user-id
             :event/attachments []
-            :application/redacted-attachments [{:attachment/id 3 :event/id 3}]
+            :event/redacted-attachments [{:attachment/id 3}]
             :application/id app-id
             :application/comment "accidental upload"
             :application/public false}
@@ -1958,7 +1958,7 @@
                                                 (merge dummy-remarked-event {:event/actor reviewer-user-id
                                                                              :event/attachments [{:attachment/id 3}]})])))))
   (testing "fails when reviewer redacts other users attachments"
-    (is (= {:errors [{:type :invalid-redact-attachments
+    (is (= {:errors [{:type :forbidden-redact-attachments
                       :attachments [1 5]}]}
            (fail-command {:type :application.command/redact-attachments
                           :actor reviewer-user-id
@@ -1983,7 +1983,7 @@
             :event/time test-time
             :event/actor decider-user-id
             :event/attachments []
-            :application/redacted-attachments [{:attachment/id 5 :event/id 3}]
+            :event/redacted-attachments [{:attachment/id 5}]
             :application/id app-id
             :application/comment ""
             :application/public false}
@@ -2001,7 +2001,7 @@
   (testing "fails when decider redacts other users attachments"
     (doseq [created-event [dummy-created-event
                            (merge dummy-created-event {:workflow/id 3 :workflow/type :workflow/decider})]]
-      (is (= {:errors [{:type :invalid-redact-attachments
+      (is (= {:errors [{:type :forbidden-redact-attachments
                         :attachments [1 3]}]}
              (fail-command {:type :application.command/redact-attachments
                             :actor decider-user-id

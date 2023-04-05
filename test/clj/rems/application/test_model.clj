@@ -462,7 +462,8 @@
                           :application/events [created-event]
                           :application/forms [{:form/id 40}]
                           :application/workflow {:workflow/type :workflow/master
-                                                 :workflow/id 50}})
+                                                 :workflow/id 50}
+                          :application/attachments []})
 
 (deftest test-application-view-created
   (is (= created-application (recreate created-application))))
@@ -1716,11 +1717,11 @@
         (is (= {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
                (:application/applicant application)))))))
 
-(deftest test-apply-privacy
+(deftest test-apply-role-privacy
   (letfn [(answers [application & roles]
             (-> application
                 (model/enrich-with-injections injections)
-                (model/apply-privacy (set (remove nil? roles)))
+                (model/apply-privacy-by-roles (set (remove nil? roles)))
                 (get-in [:application/forms 0 :form/fields])
                 (->> (mapv (juxt :field/value
                                  :field/previous-value

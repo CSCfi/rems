@@ -30,7 +30,9 @@
 (defn- get-attachments [application]
   (->> application
        :application/attachments
-       (mapv #(update % :attachment/user :userid))))
+       (sort-by :attachment/id)
+       (mapv #(update % :attachment/user :userid))
+       (mapv #(dissoc % :attachment/event :attachment/redact-roles))))
 
 (deftest test-run-delete-orphan-attachments
   (binding [command/*fail-on-process-manager-errors* true]
