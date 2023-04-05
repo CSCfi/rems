@@ -5,6 +5,7 @@
             [rems.common.application-util :as application-util]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as form]
+            [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
@@ -426,23 +427,32 @@
 
 (defn- empty-redacted-attachments-error [cmd]
   (when (empty? (:redacted-attachments cmd))
-    {:errors [{:type :empty-redacted-attachments}]}))
+    {:errors [{:type :empty-redact-attachments}]}))
 
 (defn- invalid-redacted-attachments-error [cmd application]
   (let [redacted-ids (set (map :attachment/id (:redacted-attachments cmd)))
-        roles (permissions/user-roles application (:actor cmd))
-        invalid-ids (for [att (:application/attachments application)
-                          :when (contains? redacted-ids (:attachment/id att))
-                          :when (not (attachment-util/can-redact-attachment att roles (:actor cmd)))]
-                      (:attachment/id att))]
-    (when (seq invalid-ids)
+        attachment-ids (set (map :attachment/id (:application/attachments application)))]
+    (when-some [invalid-ids (seq (clojure.set/difference redacted-ids attachment-ids))]
       {:errors [{:type :invalid-redact-attachments
                  :attachments (sort invalid-ids)}]})))
+
+(defn- forbidden-redacted-attachments-error [cmd application]
+  (let [redacted-ids (set (map :attachment/id (:redacted-attachments cmd)))
+        roles (permissions/user-roles application (:actor cmd))
+        attachments (build-index {:keys [:attachment/id]} (:application/attachments application))
+        forbidden-ids (->> redacted-ids
+                           (keep #(get attachments %))
+                           (remove #(attachment-util/can-redact-attachment % roles (:actor cmd)))
+                           (map :attachment/id))]
+    (when (seq forbidden-ids)
+      {:errors [{:type :forbidden-redact-attachments
+                 :attachments (sort forbidden-ids)}]})))
 
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
   (or (empty-redacted-attachments-error cmd)
       (invalid-redacted-attachments-error cmd application)
+      (forbidden-redacted-attachments-error cmd application)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
                                     :event/redacted-attachments (vec (:redacted-attachments cmd))
