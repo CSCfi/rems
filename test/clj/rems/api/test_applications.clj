@@ -1925,7 +1925,7 @@
 
       (testing "handler tries to redact attachments but fails"
         (is (= {:success false
-                :errors [{:type "forbidden-redacted-attachments"
+                :errors [{:type "forbidden-redact-attachments"
                           :attachments [applicant-att-id decider-att-id]}]}
                (send-command handler-id {:type :application.command/redact-attachments
                                          :application-id app-id

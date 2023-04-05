@@ -425,18 +425,18 @@
                                           (when-let [end (:entitlement-end cmd)]
                                             {:entitlement/end end})))))
 
-(defn- empty-redacted-attachments-error [cmd]
+(defn- empty-redact-attachments-error [cmd]
   (when (empty? (:redacted-attachments cmd))
     {:errors [{:type :empty-redact-attachments}]}))
 
-(defn- invalid-redacted-attachments-error [cmd application]
+(defn- invalid-redact-attachments-error [cmd application]
   (let [redacted-ids (set (map :attachment/id (:redacted-attachments cmd)))
         attachment-ids (set (map :attachment/id (:application/attachments application)))]
     (when-some [invalid-ids (seq (clojure.set/difference redacted-ids attachment-ids))]
       {:errors [{:type :invalid-redact-attachments
                  :attachments (sort invalid-ids)}]})))
 
-(defn- forbidden-redacted-attachments-error [cmd application]
+(defn- forbidden-redact-attachments-error [cmd application]
   (let [redacted-ids (set (map :attachment/id (:redacted-attachments cmd)))
         roles (permissions/user-roles application (:actor cmd))
         attachments (build-index {:keys [:attachment/id]} (:application/attachments application))
@@ -450,9 +450,9 @@
 
 (defmethod command-handler :application.command/redact-attachments
   [cmd application injections]
-  (or (empty-redacted-attachments-error cmd)
-      (invalid-redacted-attachments-error cmd application)
-      (forbidden-redacted-attachments-error cmd application)
+  (or (empty-redact-attachments-error cmd)
+      (invalid-redact-attachments-error cmd application)
+      (forbidden-redact-attachments-error cmd application)
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
                                     :event/redacted-attachments (vec (:redacted-attachments cmd))
