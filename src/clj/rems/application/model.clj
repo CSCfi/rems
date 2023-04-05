@@ -199,18 +199,17 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
-(defn- update-redacted-attachments [application event]
-  (let [redacted-ids (set (for [att (:event/redacted-attachments event)]
-                            (:attachment/id att)))
-        redacted? #(contains? redacted-ids (:attachment/id %))]
-    (->> application
-         (transform [:application/attachments ALL redacted?]
-                    #(assoc % :attachment/redacted true)))))
+(defn- set-redacted-attachments [attachments event]
+  (let [redacted-ids (set (map :attachment/id (:event/redacted-attachments event)))]
+    (for [att attachments
+          :let [id (:attachment/id att)]]
+      (assoc-some att :attachment/redacted (when (some #{id} redacted-ids)
+                                             true)))))
 
 (defmethod application-base-view :application.event/attachments-redacted
   [application event]
   (-> application
-      (update-redacted-attachments event)))
+      (update :application/attachments set-redacted-attachments event)))
 
 (defmethod application-base-view :application.event/remarked
   [application _event]
@@ -689,14 +688,26 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
+(defn- get-attachment-redact-roles [attachment application]
+  (when (:attachment/event attachment)
+    (let [userid (getx-in attachment [:attachment/user :userid])
+          roles (permissions/user-roles application userid)]
+      (cond
+        (some #{:handler} roles)
+        #{}
+
+        (and (= :workflow/decider (get-in application [:application/workflow :workflow/type]))
+             (some #{:decider :past-decider} roles))
+        #{}
+
+        :else
+        #{:handler}))))
+
 (defn- enrich-attachments [application get-user]
-  (let [redacted-ids (set (for [event (:application/events application)
-                                attachment (:application/redacted-attachments event)]
-                            (:attachment/id attachment)))
-        redacted? #(contains? redacted-ids (:attachment/id %))]
-    (->> application
-         (transform [:application/attachments ALL :attachment/user] get-user)
-         (setval [:application/attachments ALL redacted? :attachment/redacted] true))))
+  (->> application
+       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
+       (transform [:application/attachments ALL] #(let [roles (get-attachment-redact-roles % application)]
+                                                    (assoc-some % :attachment/redact-roles roles)))))
 
 (defn enrich-with-injections
   [application {:keys [blacklisted?
@@ -922,9 +933,9 @@
             (hide-sensitive-information application))
           (personalize-todo userid)
           (hide-non-public-information)
-          (hide-attachments)
           (apply-privacy-by-roles roles)
           (apply-privacy-by-user roles userid)
+          (hide-attachments)
           (update :application/attachments (partial map #(apply-attachment-permissions % roles userid)))
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
