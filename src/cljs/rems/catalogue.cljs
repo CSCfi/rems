@@ -77,7 +77,7 @@
      (map (fn [item]
             {:key (:id item)
              :name {:value (get-localized-title item language)}
-             :commands {:display-value [:div.commands.justify-content-end.gap-1
+             :commands {:display-value [:div.commands.flex-nowrap.justify-content-end.gap-1
                                         [catalogue-item-more-info item language config]
                                         (when logged-in?
                                           (if (:enable-cart config)
@@ -140,7 +140,7 @@
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
                               :content #(when-not (:category/id %)
-                                          [:div.commands.justify-content-end.gap-1
+                                          [:div.commands.flex-nowrap.justify-content-end.gap-1
                                            [catalogue-item-more-info % language config]
                                            (when logged-in?
                                              (if (:enable-cart config)

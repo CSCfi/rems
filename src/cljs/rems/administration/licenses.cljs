@@ -91,7 +91,7 @@
            :active (let [checked? (status-flags/active? license)]
                      {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands.flex-nowrap
+           :commands {:display-value [:div.commands
                                       [to-view-license (:id license)]
                                       [modify-license-dropdown license]]}})
         licenses)))
