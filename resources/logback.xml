@@ -5,7 +5,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%date{ISO8601} [%thread %mdc{user:--} %mdc{request-method:--} %mdc{request-uri:--}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%date{ISO8601} [%thread rqc:%mdc{request-count:--} %mdc{userid:--} %mdc{request-id:--}] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 

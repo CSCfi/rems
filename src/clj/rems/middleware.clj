@@ -7,6 +7,7 @@
             [clojure.walk :refer [keywordize-keys]]
             [medley.core :refer [update-existing]]
             [mount.core :as mount]
+            [nano-id.core :as nano-id]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -27,6 +28,8 @@
             [ring.util.response :refer [bad-request redirect header]])
   (:import [javax.servlet ServletContext]
            [rems.auth ForbiddenException UnauthorizedException]))
+
+(def nano-id (nano-id/custom "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" 8))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -158,7 +161,11 @@
 ;; This helps e.g. when debugging browser test failures.
 (def silence-logging-regex #"^/js/cljs-runtime/.*")
 
-(defn wrap-logging
+(defn wrap-context-logging
+  "Logs detailed information about a request just before
+  the main business code is run.
+
+  Here we have the most context about the user and request available."
   [handler]
   (fn [request]
     (let [uri (str (:uri request)
@@ -173,20 +180,62 @@
                     "api-key"
                     "")
                   "roles:" context/*roles*)
+
         (log/debug "session" (pr-str (:session request)))
+
         (when (seq (:form-params request))
           (log/debug "form params" (pr-str (:form-params request)))))
-      (let [response (handler request)]
-        (when log?
-          (log/info "<" (:request-method request) uri (:status response)
-                    (or (get-in response [:headers "Location"]) "")))
-        response))))
+
+      (handler request))))
+
+(def request-count (atom 0))
+
+(defn wrap-entry-logging
+  "Logs every request into an entry `req >` and exit `req <` log.
+
+  This happens in the very beginning of the request processing, so
+  not a lot of context is available yet.
+
+  This is important to show a request as soon as it's possible, so if it
+  starts to wait on middleware DB requests or such, it still appears
+  in the logs."
+  [handler]
+  (fn [request]
+    (let [uri (str (:uri request)
+                   (when-let [q (:query-string request)]
+                     (str "?" q)))
+          start (System/nanoTime)
+          log? (not (re-matches silence-logging-regex uri))
+          userid (or (get-in request [:session :identity :userid])
+                     (:userid context/*user*)
+                     (auth/get-api-userid request))]
+      (try
+        (swap! request-count inc)
+
+        (with-mdc {:userid userid
+                   :request-count @request-count}
+          (when log?
+            (log/info "req >" (:request-method request) uri)
+            (when (seq (:form-params request))
+              (log/debug "form params" (pr-str (:form-params request)))))
+
+          (let [response (handler request)]
+            (when log?
+              (log/info "req <" (:request-method request) uri (:status response)
+                        (str (int (/ (- (System/nanoTime) start) 1000000)) "ms")
+                        (or (get-in response [:headers "Location"]) "")))
+            response))
+        (finally
+          (swap! request-count dec))))))
 
 (defn- wrap-request-context [handler]
   (fn [request]
-    (with-mdc {:request-method (str/upper-case (name (:request-method request)))
-               :request-uri (:uri request)}
-      (handler request))))
+    (let [request-id (nano-id)] ; short id for separating requests
+      (binding [context/*request* (assoc request :request-id request-id)]
+        (with-mdc {:request-id request-id
+                   :request-method (str/upper-case (name (:request-method request)))
+                   :request-uri (:uri request)}
+          (handler request))))))
 
 (defn- unrelativize-url [url]
   (if (.startsWith url "/")
@@ -258,13 +307,14 @@
       ((if (:dev env) wrap-dev identity))
       wrap-fix-location-header
       wrap-unauthorized-and-forbidden
-      wrap-logging
+      wrap-context-logging
       wrap-i18n
       wrap-role-headers
       wrap-context
       wrap-user
       wrap-api-key-or-csrf-token
       auth/wrap-auth
+      wrap-entry-logging
       (wrap-defaults (wrap-defaults-settings))
       wrap-cache-control
       wrap-internal-error

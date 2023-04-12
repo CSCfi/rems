@@ -29,6 +29,12 @@ Changes since v2.31
 - Catalogue "more info" is now styled as a link instead of a button.
 - Actions page columns have been tuned, e.g. description, resource and applicant, so that they wrap nicely. (#3121, #3122)
 - Accessibility tooling has been upgraded, the report improved, and serious issues fixed.
+- Logging has been adjusted:
+  - Provide entry logging earlier (`req >`), even before user or roles are fetched.
+  - Log a short request id for every request.
+  - Log the simultaneous request count (`rqc:`).
+  - Reduce duplicate logging from each line (user, request method).
+  - Print the time it took to serve the request (`ms`).
 
 ### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)

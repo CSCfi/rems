@@ -34,7 +34,7 @@
 
 (defn- jetty-configurator [server]
   (let [pool (.getThreadPool server)]
-    (.setName pool "jetty-handlers")
+    (.setName pool "jetty")
     (.setHandler server
                  (doto (GzipHandler.)
                    (.setIncludedMimeTypes (into-array ["text/css"

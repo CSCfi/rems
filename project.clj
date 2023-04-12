@@ -60,7 +60,8 @@
                  [ring/ring-core "1.9.6"]
                  [ring/ring-defaults "0.3.4"]
                  [ring/ring-devel "1.9.6"]
-                 [ring/ring-servlet "1.9.6"]]
+                 [ring/ring-servlet "1.9.6"]
+                 [nano-id "1.0.0"]]
 
   :min-lein-version "2.9.8"
 
