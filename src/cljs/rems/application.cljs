@@ -713,30 +713,6 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(rf/reg-sub
- ::is-event-highlighted
- :<- [::highlight-event-ids]
- (fn [ids [_ event-id]]
-   (contains? ids event-id)))
-
-(rf/reg-sub
- ::application-events
- :<- [::application]
- (fn [application _]
-   (->> application
-        :application/events
-        (sort-by :event/time)
-        (reverse))))
-
-(rf/reg-sub
- ::get-application-attachments-by-event-id
- :<- [::application]
- (fn [application [_ event-id]]
-   (->> application
-        :application/attachments
-        (filter #(= event-id
-                    (get-in % [:attachment/event :event/id]))))))
-
 (defn- event-view [{:keys [attachments highlight set-highlights]} event]
   (let [event-text (localize-event event)
         decision (localize-decision event)
@@ -768,12 +744,21 @@
         (into [:<>] (for [attachments-row (partition-all 3 attachments)]
                       [fields/attachment-row attachments-row])))]]))
 
+(rf/reg-sub
+ ::enrich-event-by-id
+ :<- [::application]
+ :<- [::highlight-event-ids]
+ (fn [[application ids] [_ event-id]]
+   {:highlight (contains? ids event-id)
+    :attachments (for [att (:application/attachments application)
+                       :when (= event-id (get-in att [:attachment/event :event/id]))]
+                   att)}))
+
 (defn- render-event [event]
-  (let [opts {:highlight @(rf/subscribe [::is-event-highlighted (:event/id event)])
-              :attachments @(rf/subscribe [::get-application-attachments-by-event-id (:event/id event)])
-              :set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
-                                (fn []
-                                  (rf/dispatch [::set-highlight-event-ids event-ids])))}]
+  (let [opts (merge {:set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
+                                       (fn []
+                                         (rf/dispatch [::set-highlight-event-ids event-ids])))}
+                    @(rf/subscribe [::enrich-event-by-id (:event/id event)]))]
     [event-view opts event]))
 
 (defn- render-events [events]
@@ -860,6 +845,15 @@
      (into [:<>
             [:h3.mt-3 (text :t.form/events)]]
            (render-events events)))])
+
+(rf/reg-sub
+ ::application-events
+ :<- [::application]
+ (fn [application _]
+   (->> application
+        :application/events
+        (sort-by :event/time)
+        (reverse))))
 
 (defn- application-state [{:keys [application config userid]}]
   (let [state (:application/state application)
