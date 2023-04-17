@@ -198,17 +198,18 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
-(defn- set-redacted-attachments [attachments event]
-  (let [redacted-ids (set (map :attachment/id (:event/redacted-attachments event)))]
-    (for [att attachments
-          :let [id (:attachment/id att)]]
-      (assoc-some att :attachment/redacted (when (some #{id} redacted-ids)
-                                             true)))))
+(defn- set-redacted-attachments [attachments redacted-ids]
+  (for [attachment attachments
+        :let [id (:attachment/id attachment)]]
+    (cond-> attachment
+      (contains? redacted-ids id) (assoc :attachment/redacted true))))
 
 (defmethod application-base-view :application.event/attachments-redacted
   [application event]
   (-> application
-      (update :application/attachments set-redacted-attachments event)))
+      (update :application/attachments set-redacted-attachments (->> event
+                                                                     :event/redacted-attachments
+                                                                     (into #{} (map :attachment/id))))))
 
 (defmethod application-base-view :application.event/remarked
   [application _event]
@@ -689,14 +690,14 @@
 
 (defn- get-attachment-redact-roles [attachment application]
   (when (:attachment/event attachment)
-    (let [userid (getx-in attachment [:attachment/user :userid])
-          roles (permissions/user-roles application userid)]
+    (let [attachment-user-roles (->> (getx-in attachment [:attachment/user :userid])
+                                     (permissions/user-roles application))]
       (cond
-        (some #{:handler} roles)
+        (some #{:handler} attachment-user-roles)
         #{}
 
         (and (= :workflow/decider (get-in application [:application/workflow :workflow/type]))
-             (some #{:decider :past-decider} roles))
+             (some #{:decider :past-decider} attachment-user-roles))
         #{}
 
         :else
