@@ -636,7 +636,8 @@
                                          :nickname "In Wonderland",
                                          :organizations [{:organization/id "default"}],
                                          :researcher-status-by "so",
-                                         :userid "alice"}}
+                                         :userid "alice"}
+                       :attachment/can-redact false}
                       {:attachment/id (second (btu/context-getx :attachment-ids))
                        :attachment/filename "test-fi.txt"
                        :attachment/type "text/plain"
@@ -645,7 +646,8 @@
                                          :nickname "In Wonderland",
                                          :organizations [{:organization/id "default"}],
                                          :researcher-status-by "so",
-                                         :userid "alice"}}]
+                                         :userid "alice"}
+                       :attachment/can-redact false}]
                      (:application/attachments application))))
             (testing "applicant information"
               (is (= "alice" (get-in application [:application/applicant :userid])))
