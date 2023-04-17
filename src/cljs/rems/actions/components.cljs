@@ -35,23 +35,23 @@
    (text :t.actions/cancel)])
 
 (rf/reg-sub
- ::select-attachments
+ ::selected-attachments
  (fn [db [_ field-key]]
-   (vec (for [kv (get-in db [::select-attachments field-key])
+   (vec (for [kv (get-in db [::selected-attachments field-key])
               :when (val kv)]
           {:attachment/id (key kv)}))))
 (rf/reg-event-db
- ::set-select-attachments
+ ::set-selected-attachments
  (fn [db [_ field-key m]]
-   (assoc-in db [::select-attachments field-key] m)))
+   (assoc-in db [::selected-attachments field-key] m)))
 (rf/reg-sub
  ::get-attachment-selection
  (fn [db [_ field-key id]]
-   (get-in db [::select-attachments field-key id] false))) ; if key is not set, default value prevents warnings about uncontrolled input
+   (get-in db [::selected-attachments field-key id] false))) ; if key is not set, default value prevents warnings about uncontrolled input
 (rf/reg-event-db
  ::set-attachment-selection
  (fn [db [_ field-key id value]]
-   (assoc-in db [::select-attachments field-key id] value)))
+   (assoc-in db [::selected-attachments field-key id] value)))
 
 (defn select-attachments-field [{:keys [attachments field-key label]}]
   (let [id (str "select-attachments-" field-key)]

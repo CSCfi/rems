@@ -17,7 +17,7 @@
     :dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-comment-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]
-                 [:rems.actions.components/set-select-attachments action-form-id {}]]}))
+                 [:rems.actions.components/set-selected-attachments action-form-id {}]]}))
 
 (rf/reg-event-fx
  ::send-redact-attachments
@@ -31,7 +31,7 @@
 
 (rf/reg-sub
  ::form-fields
- :<- [:rems.actions.components/select-attachments action-form-id]
+ :<- [:rems.actions.components/selected-attachments action-form-id]
  :<- [:rems.actions.components/attachments-with-filenames action-form-id]
  :<- [:rems.actions.components/comment action-form-id]
  :<- [:rems.actions.components/comment-public action-form-id]
