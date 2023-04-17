@@ -38,8 +38,8 @@ Changes since v2.31
   This also does not include any reminder emails that you can separately enable if you wish.
 - Any individual email can be disabled by setting its translation to empty string `""` (#3117).
 - Handler, reviewer and decider can now redact application attachments. (#2491)
-  Redacted attachment exists in REMS like any other attachment, but it's file contents are permanently removed, and filename is shown to other non-handler users as redacted.
-  Form attachments cannot be redacted, non-handler users may redact only their own attachments, and in decider workflow handler is not allowed to redact decider attachments.
+  * Redacted attachment exists in REMS like any other attachment, but it's file contents are permanently removed, and filename is shown to other non-handler users as redacted.
+  * Form attachments cannot be redacted, non-handler users may redact only their own attachments, and in decider workflow handler is not allowed to redact decider attachments.
 - Database connection pool can be configured, see `:hikaricp-extra-params` in `config-defaults.edn`.
 - The debug log level prints details of when the scheduled pollers run, e.g. email and event notification.
 - Search bar automatically trims the whitespace form the left side, which is useful for copied values.

@@ -26,7 +26,7 @@
   (.focus (js/$ (str "#" id "-more-link"))))
 
 (defn- header [{:keys [title class]}]
-  [:h2 {:class ["card-header" "rems-card-margin-fix" (or class "rems-card-header")]}
+  [:h2.card-header.rems-card-margin-fix {:class (or class "rems-card-header")}
    title])
 
 (defn- show-more-button [{:keys [label id expanded callback]}]
