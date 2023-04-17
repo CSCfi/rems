@@ -1,5 +1,7 @@
 # Hooks
 
+See also [plugins](./plugins.md).
+
 ## Extra scripts
 
 You can configure REMS to include extra script files by defining configuration such as:

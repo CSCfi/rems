@@ -11,6 +11,7 @@
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
+            [rems.plugins :as plugins]
             [rems.util :refer [getx]]
             [ring.util.response :refer [redirect]])
   (:import [java.time Instant]))
@@ -91,6 +92,7 @@
     user))
 
 (defn- get-user-attributes [user-data]
+  ;; XXX: consider using a plugin for the renaming
   ;; TODO all attributes could support :rename
   (let [userid (or (find-user user-data) (get-new-userid user-data))
         _ (assert userid (when (:log-authentication-details env) {:user-data user-data}))
@@ -104,9 +106,16 @@
 ;; XXX: consider joining with rems.db.users/invalid-user?
 (defn- validate-user! [user]
   ;; userid already checked
+  ;; XXX: we can migrate this old way to the new plugin system
   (when-let [errors (seq (remove nil?
                                  [(when (and (:oidc-require-name env) (str/blank? (:name user))) :t.login.errors/name)
                                   (when (and (:oidc-require-email env) (str/blank? (:email user))) :t.login.errors/email)]))]
+    (throw (ex-info "Invalid user"
+                    {:key :t.login.errors/invalid-user
+                     :args errors
+                     :user user})))
+
+  (when-let [errors (seq (remove nil? (plugins/validate :extension-point/validate-user-data user)))]
     (throw (ex-info "Invalid user"
                     {:key :t.login.errors/invalid-user
                      :args errors
@@ -165,9 +174,12 @@
                                 json/parse-string))
                 researcher-status (ga4gh/passport->researcher-status-by user-info)
                 user-data (merge id-data user-info researcher-status)
+                user-data (plugins/transform :extension-point/process-user-data user-data)
                 user (find-or-create-user! user-data)]
+
             (when (:log-authentication-details env)
               (log/info "logged in" user-data user))
+
             (-> (redirect "/redirect")
                 (assoc :session (:session request))
                 (assoc-in [:session :access-token] access-token)

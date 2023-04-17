@@ -6,6 +6,7 @@
             [rems.common.util :refer [escape-element-id]]
             [rems.config :refer [env]]
             [rems.db.test-data-users :as test-data-users]
+            [rems.plugins :as plugins]
             [ring.util.response :refer [redirect]]))
 
 (defn get-fake-user-descriptions []
@@ -44,6 +45,7 @@
   (let [id-data (get-fake-id-data username)
         user-info (get-fake-user-info username)
         user-data (merge id-data user-info)
+        user-data (plugins/transform :extension-point/process-user-data user-data)
         user (oidc/find-or-create-user! user-data)]
     (-> (redirect "/redirect")
         (assoc :session session)
@@ -95,3 +97,4 @@
 (defroutes routes
   (GET (login-url) req (fake-login-screen req))
   (GET (logout-url) req (fake-logout req)))
+
