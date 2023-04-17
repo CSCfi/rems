@@ -36,16 +36,3 @@
       (str "redacted_" (:attachment/id attachment) ".txt")
       filename)))
 
-(defn can-redact-attachment
-  ([attachment] (:attachment/can-redact attachment))
-  ([attachment roles userid]
-   (when-not (:attachment/redacted attachment)
-     (cond
-       (nil? (get-in attachment [:attachment/event :event/id]))
-       false
-
-       (some roles (:attachment/redact-roles attachment))
-       true
-
-       :else
-       (= userid (get-in attachment [:attachment/user :userid]))))))

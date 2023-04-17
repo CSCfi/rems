@@ -3,7 +3,6 @@
             [clojure.set]
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
-            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index]]
             [rems.form-validation :as form-validation]
@@ -442,7 +441,7 @@
         attachments (build-index {:keys [:attachment/id]} (:application/attachments application))
         forbidden-ids (->> redacted-ids
                            (keep #(get attachments %))
-                           (remove #(attachment-util/can-redact-attachment % roles (:actor cmd)))
+                           (remove #(application-util/can-redact-attachment % roles (:actor cmd)))
                            (map :attachment/id))]
     (when (seq forbidden-ids)
       {:errors [{:type :forbidden-redact-attachments

@@ -1024,9 +1024,7 @@
     [invite-decider-action-link]]])
 
 (defn- action-buttons [application config]
-  (let [redactable-attachments (->> (:application/attachments application)
-                                    (filter attachment-util/can-redact-attachment))
-        commands-and-actions (concat
+  (let [commands-and-actions (concat
                               (when-not (:enable-autosave config)
                                 ;; no explicit command for :application.command/save-draft when autosave
                                 [:application.command/save-draft [save-button]])
@@ -1050,8 +1048,8 @@
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
                                :application.command/copy-as-new [copy-as-new-button]
-                               :application.command/redact-attachments (when (seq redactable-attachments)
-                                                                         [redact-attachments-action-button redactable-attachments])])]
+                               :application.command/redact-attachments (when-some [attachments (seq (filter :attachment/can-redact (:application/attachments application)))]
+                                                                         [redact-attachments-action-button attachments])])]
 
     (-> (for [[command action] (partition 2 commands-and-actions)
               :when (contains? (:application/permissions application) command)]

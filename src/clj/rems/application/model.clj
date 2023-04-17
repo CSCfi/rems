@@ -6,7 +6,6 @@
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
-            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as form]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
@@ -870,7 +869,7 @@
 
 (defn apply-attachment-permissions [attachment roles userid]
   (-> attachment
-      (assoc-some :attachment/can-redact (attachment-util/can-redact-attachment attachment roles userid))
+      (assoc-some :attachment/can-redact (application-util/can-redact-attachment attachment roles userid))
       (dissoc :attachment/redact-roles)))
 
 (defn hide-non-public-information [application]
