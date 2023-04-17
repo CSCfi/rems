@@ -188,7 +188,8 @@
    If attachment is redacted, renders localized attachment instead."
   [attachment]
   (if (:attachment/redacted attachment)
-    (localize-attachment attachment)
+    [:div.attachment-link {:title (text :t.applications/attachment-filename-redacted)}
+     (localize-attachment attachment)]
     [download-button {:title (localize-attachment attachment)
                       :url (str "/applications/attachment/" (:attachment/id attachment))}]))
 
