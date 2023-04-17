@@ -54,20 +54,21 @@
    (assoc-in db [::select-attachments field-key id] value)))
 
 (defn select-attachments-field [{:keys [attachments field-key label]}]
-  (into
-   [:div.select-attachments.form-group {:id field-key}
-    [:label {:for field-key} label]]
-   (for [attachment (sort-by :attachment/id > attachments)
-         :let [id (:attachment/id attachment)]]
-     [:div.form-check.mb-2
-      [:div.d-flex.align-items-center
-       [:input.form-check-input {:type :checkbox
-                                 :checked @(rf/subscribe [::get-attachment-selection field-key id])
-                                 :on-change #(let [value (.. % -target -checked)]
-                                               (rf/dispatch [::set-attachment-selection field-key id value]))}]
-       [attachment-link attachment]]
-      (when-some [user (get-in attachment [:attachment/user :name])]
-        [:b user])])))
+  (let [id (str "select-attachments-" field-key)]
+    (into
+     [:div.select-attachments.form-group {:id id}
+      [:label {:for id} label]]
+     (for [attachment (sort-by :attachment/id > attachments)
+           :let [attachment-id (:attachment/id attachment)]]
+       [:div.form-check.mb-2
+        [:div.d-flex.align-items-center
+         [:input.form-check-input {:type :checkbox
+                                   :checked @(rf/subscribe [::get-attachment-selection field-key attachment-id])
+                                   :on-change #(let [value (.. % -target -checked)]
+                                                 (rf/dispatch [::set-attachment-selection field-key attachment-id value]))}]
+         [attachment-link attachment]]
+        (when-some [user (get-in attachment [:attachment/user :name])]
+          [:b user])]))))
 
 (rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
 (rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
