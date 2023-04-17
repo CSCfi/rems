@@ -854,6 +854,7 @@
 
    [:.attachment-row {:display :flex
                       :flex-direction :row
+                      :align-items :center
                       :gap (u/rem 0.5)}]
 
    ;; print styling
