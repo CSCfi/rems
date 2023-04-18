@@ -640,3 +640,11 @@
   (is (= [] (keep-keys {} [])))
   (is (= [{:b 1}] (keep-keys {:a :b} [{:a 1}])))
   (is (= [{:b 1} {:c 2}] (keep-keys {:a :b :b :c} [{:a 1} {:b 2}]))))
+
+(defn contains-all-kv-pairs? [supermap map]
+  (set/superset? (set supermap) (set map)))
+
+(defn apply-filters [filters coll]
+  (let [filters (or filters {})]
+    (filter #(contains-all-kv-pairs? % filters) coll)))
+

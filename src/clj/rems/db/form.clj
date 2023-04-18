@@ -2,13 +2,12 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [map-keys filter-vals remove-keys]]
             [rems.api.schema :as schema]
-            [rems.common.util :refer [getx]]
-            [rems.schema-base :as schema-base]
             [rems.common.form :as common-form]
+            [rems.common.util :refer [apply-filters getx]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
-            [rems.util :refer [apply-filters]]
+            [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
             [schema.core :as s])
   (:import rems.InvalidRequestException))

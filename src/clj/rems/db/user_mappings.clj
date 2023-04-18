@@ -1,10 +1,8 @@
 (ns rems.db.user-mappings
   (:require [clojure.string :as str]
-            [rems.common.util :refer [conj-vec]]
+            [rems.common.util :refer [apply-filters conj-vec]]
             [rems.db.core :as db]
-            [rems.util :refer [apply-filters]]
-            [schema.core :as s])
-  (:import rems.InvalidRequestException))
+            [schema.core :as s]))
 
 (s/defschema UserMappings
   {:userid s/Str

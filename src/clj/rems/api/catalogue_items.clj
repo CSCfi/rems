@@ -5,8 +5,8 @@
             [rems.service.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
+            [rems.common.util :refer [apply-filters]]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [apply-filters]]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

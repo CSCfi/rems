@@ -1,7 +1,7 @@
 (ns rems.db.test-catalogue
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.util :refer [apply-filters]]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.catalogue :refer :all]))
 
 (deftest test-now-active?

@@ -1,9 +1,9 @@
 (ns rems.db.workflow
   (:require [rems.application.events :as events]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
-            [rems.util :refer [apply-filters]]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [medley.core :refer [update-existing-in]]))

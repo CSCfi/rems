@@ -1,10 +1,10 @@
 (ns rems.db.resource
   (:require [clojure.set]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
             [rems.ext.duo :as duo]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [apply-filters]]
             [schema.coerce :as coerce]
             [schema.core :as s])
   (:import [rems InvalidRequestException]))
