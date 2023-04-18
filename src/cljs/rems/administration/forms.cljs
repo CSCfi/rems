@@ -113,7 +113,7 @@
                       :sort-value 2}
                      {:value nil
                       :sort-value 1})
-           :commands {:display-value [:div.commands.flex-nowrap
+           :commands {:display-value [:div.commands
                                       [to-view-form form]
                                       [modify-form-dropdown form]]}})
         forms)))

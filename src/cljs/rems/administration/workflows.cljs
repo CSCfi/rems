@@ -91,7 +91,7 @@
            :active (let [checked? (status-flags/active? workflow)]
                      {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands.flex-nowrap
+           :commands {:display-value [:div.commands
                                       [to-view-workflow (:id workflow)]
                                       [modify-workflow-dropdown workflow]]}})
         workflows)))

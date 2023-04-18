@@ -64,7 +64,7 @@
                                         (get-in category [:category/title language])]} ; secondary sort-key is the same in the catalogue
            :title {:value (get-in category [:category/title language])}
            :description {:value (get-in category [:category/description language])}
-           :commands {:display-value [:div.commands.flex-nowrap
+           :commands {:display-value [:div.commands
                                       [to-view-category (:category/id category)]
                                       [roles/show-when roles/+admin-write-roles+
                                        [to-edit-category (:category/id category)]]]}})
