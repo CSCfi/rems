@@ -1,15 +1,8 @@
-(ns rems.db.test-core
+(ns rems.db.test-catalogue
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.db.core :refer :all]))
-
-(deftest test-contains-all-kv-pairs?
-  (is (contains-all-kv-pairs? nil nil))
-  (is (contains-all-kv-pairs? {} {}))
-  (is (contains-all-kv-pairs? {:a 1 :b 2} {:a 1}))
-  (is (contains-all-kv-pairs? {:a 1 :b 2} {:a 1 :b 2}))
-  (is (not (contains-all-kv-pairs? {:a 1 :b 2} {:a 2})))
-  (is (not (contains-all-kv-pairs? {:a 1 :b 2} {:c 3}))))
+            [rems.common.util :refer [apply-filters]]
+            [rems.db.catalogue :refer :all]))
 
 (deftest test-now-active?
   (let [t0 (time/epoch)
@@ -64,7 +57,7 @@
                     :start nil
                     :end yesterday}]
 
-        ; the following idiom can be used when reading database entries with 'end' field
+        ;; the following idiom can be used when reading database entries with 'end' field
         get-items (fn [filters]
                     (->> all-items
                          (map assoc-expired)

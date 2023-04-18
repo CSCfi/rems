@@ -1,6 +1,7 @@
 (ns rems.api
   (:require [clj-time.core :as time]
             [clojure.stacktrace :refer [print-cause-trace]]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
@@ -130,6 +131,20 @@
     :access-control-allow-origin #".*"
     :access-control-allow-methods [:get :put :post :delete]))
 
+(defn- should-audit-log? [path]
+  (not (or (contains? #{"/api/keepalive"
+                        "/robots.txt"}
+                      path)
+           (str/starts-with? path "/assets/")
+           (str/starts-with? path "/font/")
+           (str/starts-with? path "/js/")
+           (str/ends-with? path ".css")
+           (str/ends-with? path ".ico")
+           (str/ends-with? path ".png")
+           (str/ends-with? path ".jpg")
+           (str/ends-with? path ".woff")
+           (str/ends-with? path ".woff2"))))
+
 (defn- read-only? [request]
   (not (contains? #{:put :post} (:request-method request))))
 
@@ -138,14 +153,16 @@
 ;; so we don't need a separate transaction for logging.
 (defn audit-log-middleware [handler]
   (fn [request]
-    (let [response (handler request)]
+    (let [response (handler request)
+          path (:uri request)]
       (try
-        (db/add-to-audit-log! {:time (time/now)
-                               :path (:uri request)
-                               :method (name (:request-method request))
-                               :apikey (auth/get-api-key request)
-                               :userid (get-user-id)
-                               :status (str (:status response))})
+        (when (should-audit-log? path)
+          (db/add-to-audit-log! {:time (time/now)
+                                 :path path
+                                 :method (name (:request-method request))
+                                 :apikey (auth/get-api-key request)
+                                 :userid (get-user-id)
+                                 :status (str (:status response))}))
         (catch Throwable t
           (log/error "Adding to audit log failed:" t)))
       response)))

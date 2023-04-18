@@ -1,6 +1,5 @@
 (ns rems.util
   (:require [clojure.java.io :as io]
-            [clojure.test :refer [deftest is]]
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
             [rems.context :as context])

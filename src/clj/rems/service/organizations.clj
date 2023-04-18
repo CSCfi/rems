@@ -1,14 +1,14 @@
 (ns rems.service.organizations
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some find-first]]
-            [rems.service.dependencies :as dependencies]
-            [rems.service.util]
             [rems.auth.util]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
-            [rems.db.users :as users]))
+            [rems.db.users :as users]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util]))
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
@@ -37,9 +37,9 @@
 
 (defn get-organizations [& [{:keys [userid owner enabled archived]}]]
   (->> (organizations/get-organizations)
-       (db/apply-filters (assoc-some {}
-                                     :enabled enabled
-                                     :archived archived))
+       (apply-filters (assoc-some {}
+                                  :enabled enabled
+                                  :archived archived))
        (organization-filters userid owner)))
 
 (defn get-organization [userid org]

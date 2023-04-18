@@ -29,6 +29,8 @@ Changes since v2.31
 - Catalogue "more info" is now styled as a link instead of a button.
 - Actions page columns have been tuned, e.g. description, resource and applicant, so that they wrap nicely. (#3121, #3122)
 - Accessibility tooling has been upgraded, the report improved, and serious issues fixed.
+- Don't add static resources to audit log. (#3136)
+- Prefer and set language cookie so a db request is spared. (#3136)
 
 ### Additions
 - User attributes can now be retrieved from ID token and user_info endpoint. (#3028)

@@ -1,5 +1,6 @@
 (ns rems.db.workflow
   (:require [rems.application.events :as events]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
@@ -43,7 +44,7 @@
 (defn get-workflows [filters]
   (->> (db/get-workflows)
        (map enrich-and-format-workflow)
-       (db/apply-filters filters)))
+       (apply-filters filters)))
 
 (defn get-all-workflow-roles [userid]
   (when (some #(contains? (set (map :userid (get-in % [:workflow :handlers]))) userid)
