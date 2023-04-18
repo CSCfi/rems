@@ -57,7 +57,7 @@
                     :start nil
                     :end yesterday}]
 
-                                        ; the following idiom can be used when reading database entries with 'end' field
+        ;; the following idiom can be used when reading database entries with 'end' field
         get-items (fn [filters]
                     (->> all-items
                          (map assoc-expired)
