@@ -6,7 +6,7 @@
             [re-frame.core :as rf]
             [rems.administration.items :as items]
             [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
             [rems.common.util :refer [assoc-not-present build-index getx]]
             [rems.flash-message]
@@ -338,7 +338,7 @@
               :type "file"
               :id upload-id
               :name upload-id
-              :accept attachment-types/allowed-extensions-string
+              :accept attachment-util/allowed-extensions-string
               :on-change (fn [event]
                            (let [filecontent (aget (.. event -target -files) 0)
                                  form-data (doto (js/FormData.)
@@ -360,32 +360,33 @@
         nil)]
      [info-collapse
       {:info-id info-id
-       :aria-label-text (text-format :t.form/upload-extensions attachment-types/allowed-extensions-string)
+       :aria-label-text (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)
        :content [:div
-                 [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]
+                 [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
                  [:p (text-format :t.form/attachment-max-size
                                   (format-file-size (:attachment-max-size config)))]]}]]))
 
-(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment]}]
+(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label]}]
   [:div.form-group
+   (when label
+     [:label label])
    (into [:<>]
          (for [attachment attachments]
-           [:div.flex-row.d-flex.flex-wrap.mb-2
+           [:div.flex-row.d-flex.mb-2
             [attachment-link attachment]
-            [:button.btn.btn-outline-secondary.mr-2
+            [:button.btn.btn-outline-secondary.ml-2
              {:class (str "remove-attachment-" id)
               :type :button
-              :on-click (fn [event]
-                          (on-remove-attachment (:attachment/id attachment)))}
+              :on-click #(on-remove-attachment (:attachment/id attachment))}
              [close-symbol]
              " "
              (text :t.form/attachment-remove)]]))
    [upload-button (str "upload-" id) status on-attach]])
 
 (defn attachment-row [attachments]
-  (into [:div.flex-row.d-flex.flex-wrap]
-        (for [att attachments]
-          [attachment-link att])))
+  (into [:div.attachment-row.py-2]
+        (for [attachment attachments]
+          [attachment-link attachment])))
 
 (defn attachment-field
   [{:keys [on-attach on-remove-attachment] :as opts}]

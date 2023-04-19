@@ -282,6 +282,12 @@
                                                 :type :workflow/decider
                                                 :handlers handlers
                                                 :licenses [link text]})
+        decider2 (test-helpers/create-workflow! {:actor owner
+                                                 :organization {:organization/id "nbn"}
+                                                 :title "Decider workflow with one handler"
+                                                 :type :workflow/decider
+                                                 :handlers [approver2 rejecter-bot]
+                                                 :licenses [link text]})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -319,6 +325,7 @@
     {:default default
      :ega ega
      :decider decider
+     :decider2 decider2
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner}))
@@ -368,26 +375,6 @@
                             :application-id appid2
                             :actor approver
                             :comment "Looking good"})))
-
-(defn- create-member-applications! [catid applicant approver members]
-  (let [appid1 (test-helpers/create-draft! applicant [catid] "draft with invited members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid1
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}}))
-  (let [appid2 (test-helpers/create-draft! applicant [catid] "submitted with members")]
-    (test-helpers/command! {:type :application.command/invite-member
-                            :application-id appid2
-                            :actor applicant
-                            :member {:name "John Smith" :email "john.smith@example.org"}})
-    (test-helpers/command! {:type :application.command/submit
-                            :application-id appid2
-                            :actor applicant})
-    (doseq [member members]
-      (test-helpers/command! {:type :application.command/add-member
-                              :application-id appid2
-                              :actor approver
-                              :member member}))))
 
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
@@ -511,8 +498,8 @@
                               sort
                               rest))
 
-(defn- random-long-string []
-  (str (str/join " " (repeatedly 1000 #(rand-nth vocabulary)))
+(defn- random-long-string [& [n]]
+  (str (str/join " " (repeatedly (or n 1000) #(rand-nth vocabulary)))
        ;; prevent string interning, just to be sure
        (UUID/randomUUID)))
 
@@ -625,7 +612,7 @@
                                    :comment ""})))))
     (log/info "Performance test applications created")))
 
-(defn- create-items! [users]
+(defn- create-items! [users users-data]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
         ;; Create licenses
@@ -929,6 +916,7 @@
                                           :categories [special-category]})
     ;; forms with public and private fields, and catalogue items and applications using them
     (let [applicant (users :applicant1)
+          member (users :applicant2)
           handler (users :approver2)
           reviewer (users :reviewer)
           catid-1 (test-helpers/create-catalogue-item! {:actor owner
@@ -950,6 +938,9 @@
                                                         :workflow-id (:default workflows)
                                                         :categories [ordinary-category]})
           app-id (test-helpers/create-draft! applicant [catid-1 catid-2] "two-form draft application")]
+      (test-helpers/invite-and-accept-member! {:actor applicant
+                                               :application-id app-id
+                                               :member (get users-data member)})
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})
@@ -1026,7 +1017,102 @@
                               :application-id app-id-2
                               :actor handler
                               :reviewers [reviewer]
-                              :comment "please have a look"}))))
+                              :comment "please have a look"}))
+                              ; create application to demo attachment redaction feature
+    (let [applicant (:applicant1 users)
+          member (:applicant2 users)
+          decider (:approver1 users)
+          handler (:approver2 users)
+          reviewer (:reviewer users)
+          form-id (test-helpers/create-form! {:actor owner
+                                              :organization {:organization/id "nbn"}
+                                              :form/internal-name "Redaction test form"
+                                              :form/external-title {:en "Form"
+                                                                    :fi "Lomake"
+                                                                    :sv "Blankett"}
+                                              :form/fields [{:field/type :description
+                                                             :field/title {:en "Application title field"
+                                                                           :fi "Hakemuksen otsikko -kenttä"
+                                                                           :sv "Ansökningens rubrikfält"}
+                                                             :field/optional false}
+                                                            {:field/type :attachment
+                                                             :field/title {:en "Attachment"
+                                                                           :fi "Liitetiedosto"
+                                                                           :sv "Bilaga"}
+                                                             :field/optional false}]})
+          resource-id (test-helpers/create-resource! {:resource-ext-id "Attachment redaction test"
+                                                      :organization {:organization/id "nbn"}
+                                                      :actor owner})
+          cat-id (test-helpers/create-catalogue-item! {:actor owner
+                                                       :title {:en "Complicated data request (EN)"
+                                                               :fi "Complicated data request (FI)"
+                                                               :sv "Complicated data request (SV)"}
+                                                       :resource-id resource-id
+                                                       :form-id form-id
+                                                       :organization {:organization/id "nbn"}
+                                                       :workflow-id (:decider2 workflows)
+                                                       :categories [special-category]})
+          app-id (test-helpers/create-draft! applicant [cat-id] "redacted attachments")]
+      (test-helpers/invite-and-accept-member! {:actor applicant
+                                               :application-id app-id
+                                               :member (get users-data member)})
+      (test-helpers/fill-form! {:application-id app-id
+                                :actor applicant
+                                :field-value "lots of attachments"
+                                :attachment (test-helpers/create-attachment! {:actor applicant
+                                                                              :application-id app-id
+                                                                              :filename "applicant_attachment.pdf"})})
+      ; (delete-orphan-attachments-on-submit) process manager removes all dangling attachments,
+      ; so we submit application first before creating more attachments
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor applicant})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor handler
+                              :reviewers [reviewer]
+                              :comment "please have a look. see attachment for details"
+                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
+                                                                                              :application-id app-id
+                                                                                              :filename (str "handler_" (random-long-string 5) ".pdf")})}]})
+      (let [reviewer-attachments (repeatedly 3 #(test-helpers/create-attachment! {:actor reviewer
+                                                                                  :application-id app-id
+                                                                                  :filename "reviewer_attachment.pdf"}))]
+        (test-helpers/command! {:type :application.command/review
+                                :application-id app-id
+                                :actor reviewer
+                                :comment "here are my thoughts. see attachments for details"
+                                :attachments (vec (for [id reviewer-attachments]
+                                                    {:attachment/id id}))})
+        (test-helpers/command! {:type :application.command/redact-attachments
+                                :application-id app-id
+                                :actor reviewer
+                                :comment "accidentally uploaded wrong attachments, here are the correct ones"
+                                :public false
+                                :redacted-attachments [{:attachment/id (first reviewer-attachments)}
+                                                       {:attachment/id (nth reviewer-attachments 2)}]
+                                :attachments [{:attachment/id (test-helpers/create-attachment! {:actor reviewer
+                                                                                                :application-id app-id
+                                                                                                :filename "reviewer_attachment.pdf"})}
+                                              {:attachment/id (test-helpers/create-attachment! {:actor reviewer
+                                                                                                :application-id app-id
+                                                                                                :filename "reviewer_attachment.pdf"})}]}))
+      (test-helpers/command! {:type :application.command/request-decision
+                              :application-id app-id
+                              :actor handler
+                              :comment "please decide, here are my final notes"
+                              :deciders [decider]
+                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
+                                                                                              :application-id app-id
+                                                                                              :filename "handler_attachment.pdf"})}]})
+      (test-helpers/command! {:type :application.command/remark
+                              :application-id app-id
+                              :actor decider
+                              :comment "thank you, i will make my decision soon"
+                              :public false
+                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor decider
+                                                                                              :application-id app-id
+                                                                                              :filename "decider_attachment.pdf"})}]}))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)
@@ -1107,7 +1193,7 @@
   (create-test-users-and-roles!)
   (create-organizations! +fake-users+)
   (create-bots!)
-  (create-items! +fake-users+))
+  (create-items! +fake-users+ +fake-user-data+))
 
 (defn create-demo-data! []
   (test-helpers/assert-no-existing-data!)
@@ -1118,7 +1204,7 @@
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)
-    (create-items! users)))
+    (create-items! users user-data)))
 
 (comment
   (do ; you can manually re-create test data (useful sometimes when debugging)

@@ -1,13 +1,13 @@
 (ns rems.application.model
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL select transform]]
-            [medley.core :refer [distinct-by find-first map-vals update-existing update-existing-in]]
+            [com.rpl.specter :refer [ALL transform select]]
+            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [assoc-some-in conj-vec getx]]
+            [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -198,9 +198,18 @@
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
+(defn- set-redacted-attachments [attachments redacted-ids]
+  (for [attachment attachments
+        :let [id (:attachment/id attachment)]]
+    (cond-> attachment
+      (contains? redacted-ids id) (assoc :attachment/redacted true))))
+
 (defmethod application-base-view :application.event/attachments-redacted
-  [application _event]
-  application)
+  [application event]
+  (-> application
+      (update :application/attachments set-redacted-attachments (->> event
+                                                                     :event/redacted-attachments
+                                                                     (into #{} (map :attachment/id))))))
 
 (defmethod application-base-view :application.event/remarked
   [application _event]
@@ -357,6 +366,12 @@
         (master-workflow/application-permissions-view event)
         (permissions/whitelist whitelist))))
 
+(defn- application-attachments [application event]
+  (-> application
+      (update :application/attachments into-vec (for [att (:event/attachments event)]
+                                                  {:attachment/id (:attachment/id att)
+                                                   :attachment/event (select-keys event [:event/id])}))))
+
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
@@ -366,9 +381,9 @@
       (application-base-view event)
       (application-permissions-for-workflow-view event)
       (assert-same-application-id event)
+      (application-attachments event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
-
 
 ;;;; Injections
 
@@ -587,7 +602,7 @@
                      :application/forms [{:form/fields [{:field/type :attachment
                                                          :field/value "5" :field/previous-value "5,1,15"}]}
                                          {:form/fields [{:field/type :text
-                                                         :field/value "2" :field/previous-vaule "2"}
+                                                         :field/value "2" :field/previous-value "2"}
                                                         {:field/type :attachment
                                                          :field/value "9,11,13"}]}]}]
     (is (= {1 #{:event/attachments :field/previous-value}
@@ -673,6 +688,27 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
+(defn- get-attachment-redact-roles [attachment application]
+  (when (:attachment/event attachment)
+    (let [attachment-user-roles (->> (getx-in attachment [:attachment/user :userid])
+                                     (permissions/user-roles application))]
+      (cond
+        (some #{:handler} attachment-user-roles)
+        #{}
+
+        (and (= :workflow/decider (get-in application [:application/workflow :workflow/type]))
+             (some #{:decider :past-decider} attachment-user-roles))
+        #{}
+
+        :else
+        #{:handler}))))
+
+(defn- enrich-attachments [application get-user]
+  (->> application
+       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
+       (transform [:application/attachments ALL] #(let [roles (get-attachment-redact-roles % application)]
+                                                    (assoc-some % :attachment/redact-roles roles)))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -696,19 +732,18 @@
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-      (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-      ;(update :application/attachments mask-redacted-attachments (get-redacted-attachment-ids application))
+      (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)
-      (enrich-blacklist blacklisted?) ;; uses enriched users
+      (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config)))
+      (enrich-disable-commands get-config)
+      (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
-
 
 ;;;; Authorization
 
@@ -779,7 +814,8 @@
       ;; blacklist, so this is unnecessary. Keeping it here for
       ;; completeness anyway.
       (update :application/blacklist (partial mapv #(update % :blacklist/user censor-user)))
-      (update :application/events (partial mapv censor-users-in-event))))
+      (update :application/events (partial mapv censor-users-in-event))
+      (update :application/attachments (partial mapv #(update % :attachment/user censor-user)))))
 
 (defn- hide-sensitive-information [application]
   (-> application
@@ -813,8 +849,29 @@
           value (:field/value private)]
       (update-existing private :field/previous-value (constantly value)))))
 
-(defn apply-privacy [application roles]
-  (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))
+(defn apply-privacy-by-roles [application roles]
+  (->> application
+       (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles))))
+
+(defn- may-see-redacted-filename [roles]
+  (some #{:handler :reporter}
+        roles))
+
+(defn- apply-attachment-privacy [attachment roles userid]
+  (let [see-filename (or (not (:attachment/redacted attachment))
+                         (= userid (get-in attachment [:attachment/user :userid]))
+                         (may-see-redacted-filename roles))]
+    (cond-> attachment
+      (not see-filename) (assoc :attachment/filename :filename/redacted))))
+
+(defn apply-privacy-by-user [application roles userid]
+  (->> application
+       (transform [:application/attachments ALL] #(apply-attachment-privacy % roles userid))))
+
+(defn apply-attachment-permissions [attachment roles userid]
+  (-> attachment
+      (assoc-some :attachment/can-redact (application-util/can-redact-attachment attachment roles userid))
+      (dissoc :attachment/redact-roles)))
 
 (defn hide-non-public-information [application]
   (-> application
@@ -860,29 +917,15 @@
       (contains? roles :member)))
 
 (defn see-application? [application userid]
-  (let [permissions (permissions/user-roles application userid)]
+  (let [roles (permissions/user-roles application userid)]
     (if (= :application.state/draft (:application/state application))
-      (user-is-applicant-or-member permissions)
-      (not= #{:everyone-else} permissions))))
-
-(defn- get-redacted-attachment-ids [application]
-  (->> (:application/events application)
-       (filter (comp #{:application.event/attachments-redacted} :event/type))
-       (mapcat :application/redacted-attachments)
-       (map :attachment/id)
-       set))
-
-(defn- mask-redacted-attachments [application]
-  (let [redacted-ids (get-redacted-attachment-ids application)
-        redacted? #(contains? redacted-ids (:attachment/id %))]
-    (->> application
-         (transform [:application/attachments ALL redacted?]
-                    #(assoc % :attachment/filename :filename/redacted)))))
+      (user-is-applicant-or-member roles)
+      (not= #{:everyone-else} roles))))
 
 (defn apply-user-permissions [application userid]
-  (let [see-application? (see-application? application userid)
-        roles (permissions/user-roles application userid)
+  (let [roles (permissions/user-roles application userid)
         permissions (permissions/user-permissions application userid)
+        see-application? (see-application? application userid)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
       (-> (if see-everything?
@@ -890,9 +933,10 @@
             (hide-sensitive-information application))
           (personalize-todo userid)
           (hide-non-public-information)
-          (apply-privacy roles)
+          (apply-privacy-by-roles roles)
+          (apply-privacy-by-user roles userid)
           (hide-attachments)
-          (mask-redacted-attachments)
+          (update :application/attachments (partial map #(apply-attachment-permissions % roles userid)))
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

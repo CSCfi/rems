@@ -853,6 +853,11 @@
    (actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
+   [:.attachment-row {:display :flex
+                      :flex-direction :row
+                      :align-items :center
+                      :gap (u/rem 0.5)}]
+
    ;; print styling
    (stylesheet/at-media
     {:print true}

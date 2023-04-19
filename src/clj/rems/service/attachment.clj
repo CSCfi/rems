@@ -1,10 +1,11 @@
 (ns rems.service.attachment
   (:require [clojure.set :as set]
             [clojure.tools.logging :as log]
-            [medley.core :refer [assoc-some find-first]]
+            [medley.core :refer [find-first]]
             [rems.application.commands :as commands]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.common.attachment-util :refer [getx-filename]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.util :refer [getx]]
@@ -13,28 +14,34 @@
            [java.util.zip ZipOutputStream ZipEntry ZipException]))
 
 (defn download [attachment]
-  (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
-      (header "Content-Disposition" (str "attachment;filename=" (pr-str (:attachment/filename attachment))))
-      (content-type (:attachment/type attachment))))
+  (let [filename (getx-filename attachment)]
+    (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
+        (header "Content-Disposition" (str "attachment;filename=" (pr-str filename)))
+        (content-type (:attachment/type attachment)))))
 
-(defn get-application-attachment [user-id attachment-id]
-  (let [attachment (attachments/get-attachment attachment-id)]
+(defn- find-application-attachment [user-id attachment]
+  (when-some [application (->> attachment
+                               :application/id
+                               (applications/get-application-for-user user-id))]
+    (->> application
+         :application/attachments
+         (find-first #(= (:attachment/id attachment)
+                         (:attachment/id %))))))
+
+(defn get-application-attachment
+  "When user has sufficient view permissions, returns
+   attachment with data with user permissions applied."
+  [user-id attachment-id]
+  (when-some [attachment (attachments/get-attachment attachment-id)]
     (cond
-      (nil? attachment)
-      nil
-
       (= user-id (:attachment/user attachment))
       attachment
 
       :else
-      (let [application (applications/get-application-for-user user-id (:application/id attachment))
-            application-attachment (->> (:application/attachments application)
-                                        (find-first #(= attachment-id (:attachment/id %))))
-            redacted? (= :filename/redacted (:attachment/filename application-attachment))]
-        (if (some? application-attachment) ; user can see the attachment
-          (assoc-some attachment :attachment/filename (when redacted?
-                                                        "redacted"))
-          (throw-forbidden))))))
+      (if-some [att (find-application-attachment user-id attachment)]
+        (merge att ; application attachment has user permissions applied
+               (select-keys attachment [:attachment/data]))
+        (throw-forbidden)))))
 
 (defn add-application-attachment [user-id application-id file]
   (attachments/check-size file)
@@ -63,14 +70,12 @@
         ;; failsafe in case we have duplicate filenames in old
         ;; applications
         (try
-          (.putNextEntry zip (ZipEntry. (let [filename (getx metadata :attachment/filename)]
-                                          (if (= :filename/redacted filename)
-                                            "redacted"
-                                            filename))))
+          (.putNextEntry zip (ZipEntry. (getx-filename metadata))) ; filename is potentially masked
           (.write zip (getx attachment :attachment/data))
           (.closeEntry zip)
           (catch ZipException e
             (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e)))))
-    (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient
+    (-> (ok (ByteArrayInputStream. (.toByteArray out))) ; extra copy of the data here, could be more efficient
         (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
         (content-type "application/zip"))))
+

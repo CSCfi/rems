@@ -25,7 +25,6 @@
             :close "Stäng ansökan"
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
             :commands "Funktioner"
-            :comment "Kommentar"
             :decide "Avgör"
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
@@ -46,10 +45,13 @@
             :member-name "Namn"
             :modify "Ändra"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
+            :redact-attachments "Ändra bilagor"
             :reject "Avslå"
             :remark "Gör anteckning"
+            :remove-attachments "Radera bilagor"
             :remark-public "Visa anteckning för sökande"
             :remove-member "Ta bort deltagare"
+            :replace-attachments "Byta ut bilagor"
             :request-decision "Begär beslut"
             :request-decision-dropdown "Begär beslut"
             :request-decision-dropdown-from-user "från existerande användare..." ; TODO check
@@ -410,6 +412,7 @@
   :footer "CSC – IT-centret för forskning"
   :form {:accepted-licenses "Licenserna har accepterats"
          :actions "Funktioner"
+         :add-comment "Kommentar (dold eller synlig för sökande)"
          :add-comments-not-shown-to-applicant "Kommentar, dold för sökande"
          :add-comments-shown-to-applicant "Kommentar, synlig för sökande"
          :add-remark "Anteckning (dold eller synlig för sökande)"
@@ -426,6 +429,7 @@
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Kommentar"
+         :comment-public "Visa komment för sökande"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"
          :diff-hide "Dölj ändringar"
@@ -452,6 +456,7 @@
          :success "Genomfört"
          :upload "Lägg till bilaga"
          :upload-extensions "Tillåtna filtyper: %1."
+         :upload-replacement-attachment "Lägg till utbytande bilaga"
          :validation {:column-values-missing "Alla kolumner måste fyllas i i tabell \"%1\"."
                       :columns-required "Kräv minst en kolumn." ; TODO check
                       :invalid-email "Ogiltig e-postadress."

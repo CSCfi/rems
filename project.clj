@@ -114,7 +114,7 @@
    :project/dev {:dependencies [[binaryage/devtools "1.0.6"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.2.1"]
                                 [criterium "0.4.6"]
-                                [lambdaisland/kaocha "1.73.1175"]
+                                [lambdaisland/kaocha "1.80.1274"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
                                 [etaoin "1.0.39"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]

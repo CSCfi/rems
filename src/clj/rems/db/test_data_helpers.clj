@@ -12,6 +12,7 @@
             [rems.service.organizations :as organizations]
             [rems.service.resource :as resource]
             [rems.service.workflow :as workflow]
+            [rems.common.util :refer [fix-filename]]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -317,6 +318,17 @@
                        :actor actor})
     app-id))
 
+(defn create-attachment! [{:keys [actor application-id filename filetype data]}]
+  (let [previous-attachments (db/get-attachments-for-application {:application-id application-id})
+        filename (->> (mapv :filename previous-attachments)
+                      (fix-filename (or filename "attachment.pdf")))
+        attachment (db/save-attachment! {:application application-id
+                                         :user actor
+                                         :filename filename
+                                         :type (or filetype "application/pdf")
+                                         :data (.getBytes (or data ""))})]
+    (:id attachment)))
+
 (defn assert-no-existing-data! []
   (assert (empty? (db/get-organizations {}))
           "You have existing oranizations, refusing to continue. An empty database is needed.")
@@ -324,3 +336,16 @@
           "You have existing applications, refusing to continue. An empty database is needed.")
   (assert (empty? (db/get-catalogue-items {}))
           "You have existing catalogue items, refusing to continue. An empty database is needed."))
+
+(defn invite-and-accept-member! [{:keys [actor application-id member]}]
+  (command! {:type :application.command/invite-member
+             :actor actor
+             :application-id application-id
+             :member (select-keys member [:email :name])})
+  (command! {:type :application.command/accept-invitation
+             :actor (:userid member)
+             :application-id application-id
+             :token (-> (rems.db.applications/get-application-internal application-id)
+                        :application/events
+                        last
+                        :invitation/token)}))

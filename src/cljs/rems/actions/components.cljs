@@ -1,7 +1,7 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [enrich-user textarea]]
-            [rems.common.attachment-types :as attachment-types]
+            [rems.atoms :refer [attachment-link enrich-user textarea]]
+            [rems.common.attachment-util :as attachment-util]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -34,46 +34,74 @@
     :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
-(defn comment-field-view [{:keys [id label comment on-comment]}]
-  (let [id (str "comment-" id)]
+(rf/reg-sub
+ ::selected-attachments
+ (fn [db [_ field-key]]
+   (vec (for [kv (get-in db [::selected-attachments field-key])
+              :when (val kv)]
+          {:attachment/id (key kv)}))))
+(rf/reg-event-db
+ ::set-selected-attachments
+ (fn [db [_ field-key m]]
+   (assoc-in db [::selected-attachments field-key] m)))
+(rf/reg-sub
+ ::get-attachment-selection
+ (fn [db [_ field-key id]]
+   (get-in db [::selected-attachments field-key id] false))) ; if key is not set, default value prevents warnings about uncontrolled input
+(rf/reg-event-db
+ ::set-attachment-selection
+ (fn [db [_ field-key id value]]
+   (assoc-in db [::selected-attachments field-key id] value)))
+
+(defn select-attachments-field [{:keys [attachments field-key label]}]
+  (let [id (str "select-attachments-" field-key)]
+    (into
+     [:div.select-attachments.form-group {:id id}
+      [:label {:for id} label]]
+     (for [attachment (sort-by :attachment/id > attachments)
+           :let [attachment-id (:attachment/id attachment)]]
+       [:div.form-check.mb-2
+        [:div.d-flex.align-items-center
+         [:input.form-check-input {:type :checkbox
+                                   :checked @(rf/subscribe [::get-attachment-selection field-key attachment-id])
+                                   :on-change #(let [value (.. % -target -checked)]
+                                                 (rf/dispatch [::set-attachment-selection field-key attachment-id value]))}]
+         [attachment-link attachment]]
+        (when-some [user (get-in attachment [:attachment/user :name])]
+          [:b user])]))))
+
+(rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
+(rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
+
+(defn comment-field [{:keys [field-key label]}]
+  (let [id (str "comment-" field-key)]
     [:div.form-group
      [:label {:for id} label]
      [textarea {:id id
                 :min-rows 4
                 :max-rows 4
                 :name id
-                :placeholder (text :t.actions/comment)
-                :value comment
-                :on-change #(on-comment (.. % -target -value))}]]))
+                :value @(rf/subscribe [::comment field-key])
+                :on-change (fn [event]
+                             (let [value (.. event -target -value)]
+                               (rf/dispatch [::set-comment field-key value])))}]]))
 
-(defn public-checkbox-view [{:keys [id public on-set-public]}]
-  (let [id (str "public-" id)]
+(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key] false)))
+(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
+
+(defn comment-public-field [{:keys [field-key label]}]
+  (let [id (str "comment-public-" field-key)]
     [:div.form-group
      [:div.form-check
       [:input.form-check-input {:type "checkbox"
                                 :id id
                                 :name id
-                                :checked public
-                                :on-change #(on-set-public (.. % -target -checked))}]
+                                :checked @(rf/subscribe [::comment-public field-key])
+                                :on-change (fn [event]
+                                             (let [checked (.. event -target -checked)]
+                                               (rf/dispatch [::set-comment-public field-key checked])))}]
       [:label.form-check-label {:for id}
-       (text :t.actions/remark-public)]]]))
-
-(rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
-(rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
-
-(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key])))
-(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
-
-(defn comment-field [{:keys [field-key label public-checkbox?]}]
-  [:<>
-   [comment-field-view {:id field-key
-                        :label label
-                        :comment @(rf/subscribe [::comment field-key])
-                        :on-comment #(rf/dispatch [::set-comment field-key %])}]
-   (when public-checkbox?
-     [public-checkbox-view {:id field-key
-                            :public @(rf/subscribe [::comment-public field-key])
-                            :on-set-public #(rf/dispatch [::set-comment-public field-key %])}])])
+       label]]]))
 
 (rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))
 (rf/reg-event-db ::set-name (fn [db [_ field-key value]] (assoc-in db [::name field-key] value)))
@@ -132,12 +160,13 @@
                                 (flash-message/show-default-error! :actions description
                                                                    [:div
                                                                     [:p [text :t.form/invalid-attachment]]
-                                                                    [:p [text-format :t.form/upload-extensions attachment-types/allowed-extensions-string]]])
+                                                                    [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
                                 ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment [{:keys [application-id field-key]}]
+(defn action-attachment [{:keys [application-id field-key label]}]
   [fields/multi-attachment-view {:id field-key
+                                 :label label
                                  :attachments @(rf/subscribe [::attachments-with-filenames field-key])
                                  :on-attach #(rf/dispatch [::save-attachment application-id field-key %])
                                  :on-remove-attachment #(rf/dispatch [::remove-attachment field-key %])}])

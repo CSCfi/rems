@@ -1,7 +1,6 @@
 (ns rems.db.attachments
-  (:require [clojure.string :as str]
-            [clojure.test :refer :all]
-            [rems.common.attachment-types :as attachment-types]
+  (:require [rems.common.attachment-util :as attachment-util]
+            [rems.common.util :refer [fix-filename]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
   (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
@@ -13,7 +12,7 @@
 
 (defn check-allowed-attachment
   [filename]
-  (when-not (attachment-types/allowed-extension? filename)
+  (when-not (attachment-util/allowed-extension? filename)
     (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
 
 (defn get-attachment [attachment-id]
@@ -48,40 +47,11 @@
 
 (defn get-attachments-for-application [application-id]
   (vec
-   (for [{:keys [id filename type]} (db/get-attachments-for-application {:application-id application-id})]
+   (for [{:keys [id filename type userid]} (db/get-attachments-for-application {:application-id application-id})]
      {:attachment/id id
+      :attachment/user userid
       :attachment/filename filename
       :attachment/type type})))
-
-(defn- add-postfix [filename postfix]
-  (if-let [i (str/last-index-of filename \.)]
-    (str (subs filename 0 i) postfix (subs filename i))
-    (str filename postfix)))
-
-(deftest test-add-postfix
-  (is (= "foo (1).txt"
-         (add-postfix "foo.txt" " (1)")))
-  (is (= "foo_bar_quux (1)"
-         (add-postfix "foo_bar_quux" " (1)")))
-  (is (= "foo.bar!.quux"
-         (add-postfix "foo.bar.quux" "!")))
-  (is (= "!"
-         (add-postfix "" "!"))))
-
-(defn- fix-filename [filename existing-filenames]
-  (let [exists? (set existing-filenames)
-        versions (cons filename
-                       (map #(add-postfix filename (str " (" (inc %) ")"))
-                            (range)))]
-    (first (remove exists? versions))))
-
-(deftest test-fix-filename
-  (is (= "file.txt"
-         (fix-filename "file.txt" ["file.pdf" "picture.gif"])))
-  (is (= "file (1).txt"
-         (fix-filename "file.txt" ["file.txt" "boing.txt"])))
-  (is (= "file (2).txt"
-         (fix-filename "file.txt" ["file.txt" "file (1).txt" "file (3).txt"]))))
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
