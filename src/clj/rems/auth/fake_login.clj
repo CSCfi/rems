@@ -52,7 +52,7 @@
 
 (defn- user-selection [username]
   (let [url (url (login-url) {:username username})]
-    [:div.user.m-3 {:onclick (str "window.location.href='" url "';")}
+    [:div.user.m-3
      [:a.btn.btn-primary.text-truncate {:href url :style "width: 12rem"}
       username]]))
 
