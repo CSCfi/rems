@@ -13,6 +13,7 @@
             [clojure.set :refer [intersection]]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
+            [etaoin.keys]
             [medley.core :refer [find-first]]
             [rems.service.catalogue :as catalogue]
             [rems.service.form :as forms]
@@ -273,21 +274,10 @@
   (let [id (get-form-field-id label)]
     (set-date id date)))
 
-(defn get-field-by-label [label & [opts]]
-  (let [fields-selector (when (:field-only opts) {:css ".fields"})
-        field (btu/query (filterv some? [fields-selector
-                                         {:tag :label :fn/has-text label}
-                                         {:xpath ".."}]))]
-    (btu/wait-visible-el field)
-    field))
-
-(defn select-option [label option & [opts]]
-  (let [fields-selector (when (:field-only opts) {:css ".fields"})
-        id (-> (filterv some? [fields-selector
-                               {:tag :label :fn/has-text label}])
-               (btu/get-element-attr :for))]
+(defn select-option [label option]
+  (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
     (btu/wait-visible {:id id})
-    (btu/fill {:id id} (str option "\n"))))
+    (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
 
 (defn remove-option [label option & [opts]]
   (let [value-class "dropdown-select__multi-value"
@@ -328,11 +318,21 @@
 (defn get-application-id []
   (last (str/split (btu/get-url) #"/")))
 
-(defn get-attachments
-  ([]
-   (get-attachments {:css "a.attachment-link"}))
-  ([selector]
-   (mapv btu/get-element-text-el (btu/query-all selector))))
+(defn get-application-event-attachments []
+  (->> (btu/query-all {:css ".page-application .event .attachment-link"})
+       (mapv btu/get-element-text-el)))
+
+(defn get-application-form-attachments []
+  (->> (btu/query-all {:css ".page-application .fields .attachment-link"})
+       (mapv btu/get-element-text-el)))
+
+(defn get-application-attachments []
+  (into (get-application-event-attachments)
+        (get-application-form-attachments)))
+
+(defn get-attachments [selector]
+  (->> (btu/query-all [selector {:css ".attachment-link"}])
+       (mapv btu/get-element-text-el)))
 
 (defn get-validation-summary []
   (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top-validation ul li"})))
@@ -368,11 +368,17 @@
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :attachment-en) ; inputs are hidden
     (btu/upload-file :upload-license-button-en "test-data/test.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (set (get-attachments))}))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text)])
+                            (set (get-attachments {:css ".page-create-license"})))
+                        #(do {:attachments (set (get-attachments {:css ".page-create-license"}))}))
     (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (get-attachments)}))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text)])
+                            (set (get-attachments {:css ".page-create-license"})))
+                        #(do {:attachments (get-attachments {:css ".page-create-license"})}))
     (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text) (str "test-sv.txt" attachment-load-text)]) (set (get-attachments))) #(do {:attachments (get-attachments)}))))
+    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text) (str "test-sv.txt" attachment-load-text)])
+                            (set (get-attachments {:css ".page-create-license"})))
+                        #(do {:attachments (get-attachments {:css ".page-create-license"})}))))
 
 ;; TODO: return to DUO tests once features are complete
 ;; (defn get-duo-codes [s]
@@ -414,6 +420,10 @@
              {:as :json
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
+
+(defn wait-for-autosave-success []
+  (btu/wait-visible {:css ".alert-info" :fn/has-text "Saving"})
+  (btu/wait-visible {:id :status-success :fn/has-text "Application is saved."}))
 
 ;;; tests
 
@@ -486,11 +496,17 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
+          (btu/wait-predicate #(= ["Download file\ntest.txt"]
+                                  (get-application-attachments))
+                              #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
+          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+                                  (get-application-attachments))
+                              #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\ntest-sv.txt"] (get-attachments)) #(do {:attachments (get-attachments)}))
+          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\ntest-sv.txt"]
+                                  (get-application-attachments))
+                              #(do {:attachments (get-application-attachments)}))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
 
         (testing "uploading oversized attachment should display error"
@@ -503,19 +519,21 @@
                                     "Allowed maximum size of an attachment: 0.9 KB."])]
                    (get-error-summary)))))
 
-        (is (not (btu/field-visible? "Conditional field"))
-            "Conditional field is not visible before selecting option")
-
-        (select-option "Option list" "First option")
-        (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-        (fill-form-field "Conditional field" "Conditional")
-
-        ;; check that answers to conditional fields are retained even if they're temporarily invisible
-        (select-option "Option list" "Second option")
-        (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-        (select-option "Option list" "First option")
-        (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-        (is (= "Conditional" (btu/value-of (keyword conditional-field-id))))
+        (testing "answers to conditional fields are retained"
+          (is (not (btu/field-visible? "Conditional field"))
+              "Conditional field is not visible before selecting option")
+          (select-option "Option list" "First option")
+          (btu/wait-predicate #(btu/field-visible? "Conditional field"))
+          (fill-form-field "Conditional field" "Conditional")
+          (select-option "Option list" "Second option")
+          (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
+          ;; XXX: conditional field check sometimes fails due to rendering latency
+          (if (btu/autosave-enabled?)
+            (wait-for-autosave-success)
+            (Thread/sleep 1000))
+          (select-option "Option list" "First option")
+          (btu/wait-predicate #(btu/field-visible? "Conditional field"))
+          (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
 
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
@@ -538,21 +556,22 @@
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
-        (testing "save draft succesfully, but show validation warnings"
-          (fill-form-field "Email field" "user")
-          (btu/scroll-and-click :save)
-          (is (btu/eventually-visible? :status-warning))
-          (is (= ["Field \"Text field\" is required."
-                  "Invalid email address."]
-                 (get-validation-summary)))
-          (is (= "Invalid email address."
-                 (get-validation-for-field "Email field"))))
+        (btu/with-client-config {:enable-autosave false} ; when testing locally
+          (testing "save draft succesfully, but show validation warnings"
+            (fill-form-field "Email field" "user")
+            (btu/scroll-and-click :save)
+            (is (btu/eventually-visible? :status-warning))
+            (is (= ["Field \"Text field\" is required."
+                    "Invalid email address."]
+                   (get-validation-summary)))
+            (is (= "Invalid email address."
+                   (get-validation-for-field "Email field")))))
 
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
           (fill-form-field "Simple text field" "Private field answer")
-          (is (btu/eventually-visible? [{:id :status-success :fn/has-text "Application is saved."}]))
+          (wait-for-autosave-success)
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
                  (get-validation-summary))))
@@ -611,10 +630,24 @@
             (testing "attachments"
               (is (= [{:attachment/id (first (btu/context-getx :attachment-ids))
                        :attachment/filename "test.txt"
-                       :attachment/type "text/plain"}
+                       :attachment/type "text/plain"
+                       :attachment/user {:email "alice@example.com",
+                                         :name "Alice Applicant",
+                                         :nickname "In Wonderland",
+                                         :organizations [{:organization/id "default"}],
+                                         :researcher-status-by "so",
+                                         :userid "alice"}
+                       :attachment/can-redact false}
                       {:attachment/id (second (btu/context-getx :attachment-ids))
                        :attachment/filename "test-fi.txt"
-                       :attachment/type "text/plain"}]
+                       :attachment/type "text/plain"
+                       :attachment/user {:email "alice@example.com",
+                                         :name "Alice Applicant",
+                                         :nickname "In Wonderland",
+                                         :organizations [{:organization/id "default"}],
+                                         :researcher-status-by "so",
+                                         :userid "alice"}
+                       :attachment/can-redact false}]
                      (:application/attachments application))))
             (testing "applicant information"
               (is (= "alice" (get-in application [:application/applicant :userid])))
@@ -819,7 +852,7 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
-      (Thread/sleep 500) ;; figure out what to wait for
+      (Thread/sleep 500) ; XXX: figure out what to wait for
       (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
@@ -852,18 +885,18 @@
       (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
       (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
-                              (get-attachments))
-                          #(do {:attachments (get-attachments)})))
+                              (get-attachments :actions-approve-reject))
+                          #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
       (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\nrems_logo_en.png"]
-                              (get-attachments))
-                          #(do {:attachments (get-attachments)}))
+                              (get-attachments :actions-approve-reject))
+                          #(do {:attachments (get-attachments :actions-approve-reject)}))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
       (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
-                              (get-attachments))
-                          #(do {:attachments (get-attachments)})))
+                              (get-attachments :actions-approve-reject))
+                          #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "approve"
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
@@ -871,7 +904,7 @@
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
       (is (= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
-             (get-attachments {:css "div.event a.attachment-link"}))))
+             (get-application-event-attachments))))
 
     (testing "event via api"
       ;; Note the absence of :entitlement/end, c.f. test-approve-with-end-date
@@ -1148,7 +1181,7 @@
     (btu/fill-human :name-en (str (btu/context-getx :organization-name) " EN"))
     (btu/fill-human :name-fi (str (btu/context-getx :organization-name) " FI"))
     (btu/fill-human :name-sv (str (btu/context-getx :organization-name) " SV"))
-    (select-option "Owners" "Organization owner 1" {:fields-only false})
+    (select-option "Owners" "Organization owner 1")
     (btu/scroll-and-click :add-review-email)
     (btu/scroll-and-click :add-review-email)
 
@@ -2328,7 +2361,7 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-getx :workflow-title))
       (btu/scroll-and-click :type-decider)
-      (btu/wait-page-loaded)
+      (is (btu/eventually-visible? {:css ".alert" :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
@@ -2464,7 +2497,7 @@
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:tag :label :fn/text "Form"}))
-      (select-option "Form" (btu/context-getx :form-title) {:fields-only false})
+      (select-option "Form" (btu/context-getx :form-title))
       (btu/scroll-and-click :export-applications-button)
       (btu/wait-for-downloads #"applications_.*\.csv")) ; report has time in it that is difficult to control
 
@@ -2575,7 +2608,7 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :organization))
       (btu/fill-human :resid (str "resource for " (btu/context-getx :organization-name)))
-      (select-option "Organization" (btu/context-getx :organization-name) {:fields-only false})
+      (select-option "Organization" (btu/context-getx :organization-name))
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"})))
 

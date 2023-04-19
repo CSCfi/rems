@@ -58,3 +58,28 @@
   (is (= [["ABC/" 2000 "." 1] ["ABC/" 2000 "." 2] ["ABC/" 2000 "." 3] ["ABC/" 2002 "." 0] ["ABC/" 2002 "." 2]  ["ABC/" 2302 "." 0]]
          (sort (mapv parse-sortable-external-id ["ABC/2000.1" "ABC/2002.0" "ABC/2002.2"  "ABC/2302.0" "ABC/2000.2" "ABC/2000.3"])))))
 
+(defn can-redact-attachment [attachment roles userid]
+  (when-not (:attachment/redacted attachment)
+    (cond
+      (nil? (get-in attachment [:attachment/event :event/id]))
+      false
+
+      (some roles (:attachment/redact-roles attachment))
+      true
+
+      :else
+      (= userid (get-in attachment [:attachment/user :userid])))))
+
+(deftest test-can-redact-attachment
+  (let [user "carl"
+        roles #{:handler}
+        attachment {:attachment/event {:event/id 1}
+                    :attachment/user {:userid user}
+                    :attachment/redact-roles roles}]
+    (is (nil? (can-redact-attachment (assoc attachment :attachment/redacted true) roles user)))
+    (is (not (can-redact-attachment nil nil nil)))
+    (is (not (can-redact-attachment (dissoc attachment :attachment/event) roles user)))
+    (is (not (can-redact-attachment attachment #{:logged-in} "alice")))
+    (is (can-redact-attachment attachment #{} user))
+    (is (can-redact-attachment attachment roles "handler"))))
+

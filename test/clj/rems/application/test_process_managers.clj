@@ -27,6 +27,13 @@
     (is (number? id))
     id))
 
+(defn- get-attachments [application]
+  (->> application
+       :application/attachments
+       (sort-by :attachment/id)
+       (mapv #(update % :attachment/user :userid))
+       (mapv #(dissoc % :attachment/event :attachment/redact-roles))))
+
 (deftest test-run-delete-orphan-attachments
   (binding [command/*fail-on-process-manager-errors* true]
     (test-data/create-test-api-key!)
@@ -57,8 +64,9 @@
         (let [unrelated-app-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [cat-id]})
               unrelated-attachment-id (upload-request unrelated-app-id "alice" "attachment1.txt")]
 
-          (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
-                 (:application/attachments (applications/get-application-internal unrelated-app-id))
+          (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                 (-> (applications/get-application-internal unrelated-app-id)
+                     (get-attachments))
                  (attachments/get-attachments-for-application unrelated-app-id))
               "unrelated attachment was saved")
 
@@ -78,8 +86,9 @@
                              handler
                              read-ok-body)))
 
-                  (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
-                         (:application/attachments (applications/get-application-internal app-id))
+                  (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                         (-> (applications/get-application-internal app-id)
+                             (get-attachments))
                          (attachments/get-attachments-for-application app-id))
                       "attachment1 was saved"))
 
@@ -96,9 +105,10 @@
                                  handler
                                  read-ok-body)))
 
-                      (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"}
-                              {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}]
-                             (:application/attachments (applications/get-application-internal app-id))
+                      (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                              {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                             (-> (applications/get-application-internal app-id)
+                                 (get-attachments))
                              (attachments/get-attachments-for-application app-id))
                           "attachment1 and attachment2 are saved"))
 
@@ -117,9 +127,10 @@
 
                           ;; NB: attachment 3 should have been cleaned
 
-                          (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"}
-                                  {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}]
-                                 (:application/attachments (applications/get-application-internal app-id))
+                          (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                                  {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                                 (-> (applications/get-application-internal app-id)
+                                     (get-attachments))
                                  (attachments/get-attachments-for-application app-id))
                               "attachment1 and attachment2 are saved, but not attachment3"))))
 
@@ -134,10 +145,11 @@
                                    handler
                                    read-ok-body)))
 
-                        (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"}
-                                {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}
-                                {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain"}]
-                               (:application/attachments (applications/get-application-internal app-id))
+                        (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                                {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                                {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}]
+                               (-> (applications/get-application-internal app-id)
+                                   (get-attachments))
                                (attachments/get-attachments-for-application app-id))
                             "attachment1, attachment2 and handler attachment are saved")
 
@@ -153,11 +165,12 @@
                                        handler
                                        read-ok-body)))
 
-                            (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"} ; still here because it's the old value
-                                    {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}
-                                    {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain"}
-                                    {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain"}]
-                                   (:application/attachments (applications/get-application-internal app-id))
+                            (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"} ; still here because it's the old value
+                                    {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                                    {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}
+                                    {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                                   (-> (applications/get-application-internal app-id)
+                                       (get-attachments))
                                    (attachments/get-attachments-for-application app-id))
                                 "attachment1, attachment2, attachment4 and handler attachment are saved")
 
@@ -176,15 +189,17 @@
 
                                   ;; NB: attachment 5 should have been cleaned
 
-                                  (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain"} ; still here because it's the old value
-                                          {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain"}
-                                          {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain"}
-                                          {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain"}]
-                                         (:application/attachments (applications/get-application-internal app-id))
+                                  (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"} ; still here because it's the old value
+                                          {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
+                                          {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}
+                                          {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                                         (-> (applications/get-application-internal app-id)
+                                             (get-attachments))
                                          (attachments/get-attachments-for-application app-id))
                                       "attachment1, attachment2, attachment4 and handler attachment are saved")
 
-                                  (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain"}]
-                                         (:application/attachments (applications/get-application-internal unrelated-app-id))
+                                  (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
+                                         (-> (applications/get-application-internal unrelated-app-id)
+                                             (get-attachments))
                                          (attachments/get-attachments-for-application unrelated-app-id))
                                       "unrelated attachment is still there"))))))))))))))))))

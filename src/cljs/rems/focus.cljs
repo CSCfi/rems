@@ -1,6 +1,5 @@
 (ns rems.focus
-  "Focuses an HTML element as soon as it exists."
-  (:require [rems.util :refer [visibility-ratio]]))
+  "Focuses an HTML element as soon as it exists.")
 
 (defn focus [element]
   (.setAttribute element "tabindex" "-1")

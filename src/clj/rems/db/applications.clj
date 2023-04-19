@@ -114,7 +114,7 @@
   (when-let [application (get-application-internal application-id)]
     (-> application
         (model/hide-non-public-information)
-        (model/apply-privacy #{:reporter})))) ;; to populate required :field/private attributes
+        (model/apply-privacy-by-roles #{:reporter})))) ;; to populate required :field/private attributes
 
 (defn get-application-for-user
   "Returns the part of application state which the specified user

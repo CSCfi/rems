@@ -170,15 +170,12 @@
        [:label title]
        [:div style formatted-value]])))
 
-(defn download-button [{:keys [disabled? title url]}]
-  [:a (cond-> {:class [:attachment-link :btn :btn-outline-secondary :mr-2 :text-truncate]
-               :href url
-               :target :_blank
-               :title title
-               :style {:max-width "25em"}}
-        disabled? (-> (dissoc :href :target)
-                      (update :class conj :disabled)))
-   [file-download] " " title])
+(defn download-button [{:keys [title url]}]
+  [:a.attachment-link {:class "btn btn-outline-secondary text-truncate"
+                       :href url
+                       :target "_blank"}
+   [file-download]
+   [:span.ml-1 title]])
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
@@ -187,13 +184,14 @@
                     :url (str "/api/licenses/attachments/" id)}])
 
 (defn attachment-link
-  "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
+  "Renders a link to attachment (should have keys :attachment/id and :attachment/filename).
+   If attachment is redacted, renders localized attachment instead."
   [attachment]
-  (when attachment
-    [:div.field
-     [download-button {:disabled? (= :filename/redacted (:attachment/filename attachment))
-                       :title (localize-attachment attachment)
-                       :url (str "/applications/attachment/" (:attachment/id attachment))}]]))
+  (if (:attachment/redacted attachment)
+    [:div.attachment-link {:title (text :t.applications/attachment-filename-redacted)}
+     (localize-attachment attachment)]
+    [download-button {:title (localize-attachment attachment)
+                      :url (str "/applications/attachment/" (:attachment/id attachment))}]))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)

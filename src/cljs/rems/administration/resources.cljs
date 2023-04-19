@@ -89,7 +89,7 @@
            :active (let [checked? (status-flags/active? resource)]
                      {:display-value [readonly-checkbox {:value checked?}]
                       :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands.flex-nowrap
+           :commands {:display-value [:div.commands
                                       [to-view-resource (:id resource)]
                                       [modify-resource-dropdown resource]]}})
         resources)))

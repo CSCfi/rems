@@ -1,6 +1,7 @@
-(ns rems.common.attachment-types
+(ns rems.common.attachment-util
   (:require [clojure.string :as str]
-            [clojure.test :refer [deftest is]]))
+            [clojure.test :refer [deftest is]]
+            [rems.common.util :refer [getx]]))
 
 (def allowed-extensions
   [".pdf"
@@ -26,3 +27,12 @@
 
 (def allowed-extensions-string
   (str/join ", " allowed-extensions))
+
+(defn getx-filename
+  "Returns attachment filename suitable for download, for example."
+  [attachment]
+  (let [filename (getx attachment :attachment/filename)]
+    (if (= :filename/redacted filename)
+      (str "redacted_" (:attachment/id attachment) ".txt")
+      filename)))
+

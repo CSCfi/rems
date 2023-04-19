@@ -105,7 +105,7 @@
       :active (let [checked? (status-flags/active? organization)]
                 {:display-value [readonly-checkbox {:value checked?}]
                  :sort-value (if checked? 1 2)})
-      :commands {:display-value [:div.commands.flex-nowrap
+      :commands {:display-value [:div.commands
                                  [to-view-organization (:organization/id organization)]
                                  [modify-organization-dropdown organization]]}})))
 

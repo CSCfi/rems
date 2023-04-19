@@ -1,5 +1,6 @@
 (ns rems.db.catalogue
-  (:require [clojure.core.memoize :as memo]
+  (:require [clj-time.core :as time]
+            [clojure.core.memoize :as memo]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -48,14 +49,32 @@
       validate-catalogueitemdata
       json/generate-string))
 
+(defn now-active?
+  ([start end]
+   (now-active? (time/now) start end))
+  ([now start end]
+   (and (or (nil? start)
+            (not (time/before? now start)))
+        (or (nil? end)
+            (time/before? now end)))))
+
+(defn assoc-expired
+  "Calculates and assocs :expired attribute based on current time and :start and :end attributes.
+
+   Current time can be passed in optionally."
+  ([x]
+   (assoc-expired (time/now) x))
+  ([now x]
+   (assoc x :expired (not (now-active? now (:start x) (:end x))))))
+
 (defn get-localized-catalogue-items
   ([]
    (get-localized-catalogue-items {}))
   ([query-params]
    (->> (db/get-catalogue-items query-params)
-        (map localize-catalogue-item)
-        (map db/assoc-expired)
-        (map join-catalogue-item-data))))
+        (mapv localize-catalogue-item)
+        (mapv assoc-expired)
+        (mapv join-catalogue-item-data))))
 
 (defn get-localized-catalogue-item
   ([id]

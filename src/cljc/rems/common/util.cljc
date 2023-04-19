@@ -198,6 +198,8 @@
 
 (def conj-vec (fnil conj []))
 
+(def into-vec (fnil into []))
+
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
 
@@ -537,6 +539,36 @@
   (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
   (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
 
+(defn add-postfix [filename postfix]
+  (if-let [i (str/last-index-of filename \.)]
+    (str (subs filename 0 i) postfix (subs filename i))
+    (str filename postfix)))
+
+(deftest test-add-postfix
+  (is (= "foo (1).txt"
+         (add-postfix "foo.txt" " (1)")))
+  (is (= "foo_bar_quux (1)"
+         (add-postfix "foo_bar_quux" " (1)")))
+  (is (= "foo.bar!.quux"
+         (add-postfix "foo.bar.quux" "!")))
+  (is (= "!"
+         (add-postfix "" "!"))))
+
+(defn fix-filename [filename existing-filenames]
+  (let [exists? (set existing-filenames)
+        versions (cons filename
+                       (map #(add-postfix filename (str " (" (inc %) ")"))
+                            (range)))]
+    (first (remove exists? versions))))
+
+(deftest test-fix-filename
+  (is (= "file.txt"
+         (fix-filename "file.txt" ["file.pdf" "picture.gif"])))
+  (is (= "file (1).txt"
+         (fix-filename "file.txt" ["file.txt" "boing.txt"])))
+  (is (= "file (2).txt"
+         (fix-filename "file.txt" ["file.txt" "file (1).txt" "file (3).txt"]))))
+
 (defn assoc-some-in
   "Like `clojure.core/assoc-in`, but only associates value `v` in key path
    `ks` of associate collection `m` when `(true? (some? v)))`."
@@ -640,3 +672,11 @@
   (is (= [] (keep-keys {} [])))
   (is (= [{:b 1}] (keep-keys {:a :b} [{:a 1}])))
   (is (= [{:b 1} {:c 2}] (keep-keys {:a :b :b :c} [{:a 1} {:b 2}]))))
+
+(defn contains-all-kv-pairs? [supermap map]
+  (set/superset? (set supermap) (set map)))
+
+(defn apply-filters [filters coll]
+  (let [filters (or filters {})]
+    (filter #(contains-all-kv-pairs? % filters) coll)))
+

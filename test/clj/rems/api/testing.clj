@@ -3,6 +3,7 @@
   (:require [clj-time.format :as time-format]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [medley.core :refer [find-first]]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture reset-caches-fixture search-index-fixture]]
@@ -197,18 +198,18 @@
   (when cookie
     (re-find #"[^;]*" cookie)))
 
-(defn- get-cookie [response]
+(defn- get-session-cookie [response]
   (-> response
       :headers
       (get "Set-Cookie")
-      first
+      (->> (find-first #(str/starts-with? % "ring-session")))
       strip-cookie-attributes))
 
 (defn login-with-cookies [username]
   (let [cookie (-> (request :get "/fake-login" {:username username})
                    handler
                    assert-response-is-redirect
-                   get-cookie)]
+                   get-session-cookie)]
     (assert cookie)
     cookie))
 

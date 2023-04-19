@@ -9,6 +9,8 @@
             [mount.core :as mount]
             [nano-id.core :as nano-id]
             [rems.auth.auth :as auth]
+            [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
+            [rems.common.util :refer [assoc-some-in]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -68,7 +70,8 @@
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)
+    (binding [context/*request* (assoc request :request-id (random-uuid))
+              context/*root-path* (calculate-root-path request)
               context/*roles* (set/union
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
@@ -130,10 +133,16 @@
   "Sets context/*lang*"
   [handler]
   (fn [request]
-    (binding [context/*lang* (or (when context/*user*
-                                   (:language (user-settings/get-user-settings (getx-user-id))))
-                                 (:default-language env))]
-      (handler request))))
+    (let [user-specified-language (or (some-> request :cookies (get "rems-user-preferred-language") :value keyword)
+                                      (when context/*user*
+                                        (:language (user-settings/get-user-settings (getx-user-id)))))]
+      (binding [context/*lang* (or user-specified-language
+                                   (:default-language env))]
+        (let [response (handler request)]
+          ;; ensure the cookie is set for future requests
+          (if user-specified-language
+            (assoc-some-in response [:cookies "rems-user-preferred-language"] (some-> context/*lang* name))
+            response))))))
 
 (defn on-unauthorized-error [request]
   (error-page

@@ -49,8 +49,8 @@
    (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
                         [(s/descendant :.rems-table.cart :tr)
                          {:border-bottom :none}])
-   (stylesheet/at-media {:max-width (:md bootstrap-media-breakpoints)}
-                        [:div.commands.flex-nowrap {:flex-wrap "wrap !important"}]) ; wrap table commands
+   (stylesheet/at-media {:min-width (:md bootstrap-media-breakpoints)}
+                        [:td [:div.commands {:flex-wrap "nowrap"}]])
    (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
                         [:.lg-fs70pct {:font-size (u/percent 70)}])
    (stylesheet/at-media {:max-width (u/px 870)}
@@ -658,7 +658,8 @@
                    :gap (u/rem 0.5)
                    :align-items :center
                    :justify-content :flex-end}]
-   [:td [:div.commands {:justify-content :flex-start}]]
+   [:td [:div.commands {:justify-content :flex-start
+                        :flex-wrap :wrap}]]
    [:td.commands {:width "1rem"}] ; anything smaller than actual results
    [:th.organization {:white-space :normal
                       :min-width (u/rem 5.5)}]
@@ -851,6 +852,11 @@
    (phase-styles)
    (actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
+
+   [:.attachments {:display :flex
+                   :flex-flow "row wrap"
+                   :align-items :center
+                   :gap (u/rem 0.5)}]
 
    ;; print styling
    (stylesheet/at-media

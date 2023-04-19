@@ -120,8 +120,7 @@
 (s/defschema AttachmentsRedactedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/attachments-redacted)
-         :application/redacted-attachments [(merge EventAttachment
-                                                   {:event/id schema-base/EventId})]
+         :event/redacted-attachments [EventAttachment]
          :application/public s/Bool))
 (s/defschema ApplicantChangedEvent
   (assoc EventWithComment

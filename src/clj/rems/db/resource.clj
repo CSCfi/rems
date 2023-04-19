@@ -1,5 +1,6 @@
 (ns rems.db.resource
   (:require [clojure.set]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
             [rems.ext.duo :as duo]
             [rems.json :as json]
@@ -37,7 +38,7 @@
 
 (defn get-resources [filters]
   (->> (db/get-resources (select-keys filters [:resid]))
-       (db/apply-filters (dissoc filters :resid)) ; other filters
+       (apply-filters (dissoc filters :resid)) ; other filters
        (map format-resource)
        (map coerce-ResourceDb)))
 

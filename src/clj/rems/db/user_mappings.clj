@@ -1,9 +1,8 @@
 (ns rems.db.user-mappings
   (:require [clojure.string :as str]
-            [rems.common.util :refer [conj-vec]]
+            [rems.common.util :refer [apply-filters conj-vec]]
             [rems.db.core :as db]
-            [schema.core :as s])
-  (:import rems.InvalidRequestException))
+            [schema.core :as s]))
 
 (s/defschema UserMappings
   {:userid s/Str
@@ -41,7 +40,7 @@
   (->> (if (:ext-id-value params) ; can use index?
          (get @user-mappings-by-value (:ext-id-value params))
          (mapcat val @user-mappings-by-value))
-       (db/apply-filters (dissoc params :ext-id-value))
+       (apply-filters (dissoc params :ext-id-value))
        not-empty))
 
 (defn create-user-mapping! [user-mapping]
