@@ -19,4 +19,4 @@
 
 (def ^:dynamic ^{:doc "User's preferred language."} *lang*)
 
-+(def ^:dynamic ^{:doc "Ongoing HTTP request if any."} *request*)
+(def ^:dynamic ^{:doc "Ongoing HTTP request if any."} *request*)
