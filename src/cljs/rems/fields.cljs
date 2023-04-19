@@ -383,22 +383,22 @@
              (text :t.form/attachment-remove)]]))
    [upload-button (str "upload-" id) status on-attach]])
 
-(defn attachment-row [attachments]
-  (into [:div.attachment-row.py-2]
+(defn render-attachments [attachments]
+  (into [:div.attachments]
         (for [attachment attachments]
           [attachment-link attachment])))
 
 (defn attachment-field
   [{:keys [on-attach on-remove-attachment] :as opts}]
   [field-wrapper (assoc opts
-                        :readonly-component [attachment-row (:field/attachments opts)]
+                        :readonly-component [render-attachments (:field/attachments opts)]
                         :diff-component [:div {:style {:display :flex}}
                                          [:div
                                           (text :t.form/previous-value) ": "
-                                          [attachment-row (:field/previous-attachments opts)]]
+                                          [render-attachments (:field/previous-attachments opts)]]
                                          [:div
                                           (text :t.form/current-value) ": "
-                                          [attachment-row (:field/attachments opts)]]])
+                                          [render-attachments (:field/attachments opts)]]])
    [multi-attachment-view {:id (field-name opts)
                            :attachments (:field/attachments opts)
                            :on-attach on-attach
