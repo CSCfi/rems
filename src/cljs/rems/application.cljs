@@ -741,8 +741,8 @@
       (when comment
         [:div.form-control.event-comment comment])
       (when (seq attachments)
-        (into [:<>] (for [attachments-row (partition-all 3 attachments)]
-                      [fields/attachment-row attachments-row])))]]))
+        [:div.event-attachments.pt-2
+         [fields/render-attachments attachments]])]]))
 
 (rf/reg-sub
  ::enrich-event-by-id
