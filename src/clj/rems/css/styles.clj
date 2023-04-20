@@ -680,7 +680,8 @@
     ["> *:not(:last-child)"
      {:margin-right (u/em 0.5)}]]
 
-   [:.event-comment {:white-space :pre-wrap}]
+   [:.event-comment {:white-space :pre-wrap
+                     :word-break :break-all}]
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
