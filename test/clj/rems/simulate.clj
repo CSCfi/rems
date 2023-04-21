@@ -96,7 +96,7 @@
        (vals)
        (into #{} (map :user-id))
        (clojure.set/difference (simu/get-available-users))
-       (rand-nth*)))
+       (first)))
 
 (defn create-task! [url]
   (let [task-id (swap! task-counter inc)
@@ -175,12 +175,4 @@
                              (.toStandardDuration (time/seconds 30))))
   :stop (when queue-simulate-tasks
           (scheduler/stop! queue-simulate-tasks)))
-
-(comment
-  (-> {:url "http://localhost:3000" :concurrency 4}
-      (mount/start-with-args #'queue-simulate-tasks #'simulator-thread-pool))
-  (mount/stop #'queue-simulate-tasks #'simulator-thread-pool)
-
-  @current-tasks
-  (reset! current-tasks (list)))
 

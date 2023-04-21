@@ -106,10 +106,8 @@
   [[nil "--url URL" "URL to run simulation against" :default "http://localhost:3000/"]
    [nil "--concurrency CONCURRENCY" "Maximum concurrency" :default 8 :parse-fn #(Integer/parseInt %)]])
 
-(defn start-load-simulator [& args]
-  (doseq [component (-> args
-                        (parse-opts simulator-cli-options)
-                        :options
+(defn start-load-simulator [opts]
+  (doseq [component (-> opts
                         (mount/start-with-args #'rems.config/env
                                                #'rems.db.core/*db*
                                                #'rems.locales/translations
@@ -291,8 +289,10 @@
                   (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
 
         "load-simulator"
-        (let [_ args]
-          (apply start-load-simulator args))
+        (let [opts (-> args
+                       (parse-opts simulator-cli-options)
+                       :options)]
+          (start-load-simulator opts))
 
         (do
           (println "Unrecognized argument:" (first args))

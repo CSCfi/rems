@@ -30,7 +30,22 @@
   (rems.main/stop-app)
   (repl/refresh :after 'rems.main/start-app))
 
+(defn start-load-simulator []
+  (-> {:url "http://localhost:3000/" :concurrency 8}
+      (rems.main/start-load-simulator)))
+
+(defn stop-load-simulator []
+  (rems.main/stop-app))
+
 (defn pptransit []
   (rems.repl-utils/pptransit))
 
 (def kaocha kaocha.repl/run)
+
+(comment
+  (start-app)
+  (reload)
+  (refresh)
+  (start-load-simulator)
+  (stop-load-simulator)
+  )

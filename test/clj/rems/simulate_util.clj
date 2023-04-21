@@ -27,17 +27,20 @@
 
 (def bot-userids (set (vals +bot-users+)))
 
+(defn get-db-roles [user-id]
+  (-> user-id
+      (rems.db.roles/get-roles)
+      (disj :logged-in)))
+
 (defn get-all-users []
   (->> (rems.db.users/get-users)
        (map :userid)
-       (remove (partial contains? bot-userids))
-       (remove #(-> (rems.db.roles/get-roles %)
-                    (disj :logged-in)
-                    (seq)))
+       (remove #(contains? bot-userids %))
+       (remove (comp seq get-db-roles))
        (set)))
 
 (def get-available-users
-  (clojure.core.memoize/ttl get-all-users :ttl/threshold 10000))
+  (clojure.core.memoize/ttl get-all-users :ttl/threshold 60000))
 
 (defn get-application-fields [app-id]
   (->> app-id
