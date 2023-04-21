@@ -19,7 +19,6 @@
             [rems.db.test-data-users :as test-users]
             [rems.service.test-data :as test-data]
             [rems.json :as json]
-            [rems.main]
             [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
   (:import [java.net SocketException]))

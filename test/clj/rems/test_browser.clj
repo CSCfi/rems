@@ -28,7 +28,6 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users :as users]
             [rems.db.user-settings :as user-settings]
-            [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
             [rems.text :as text]))
 
