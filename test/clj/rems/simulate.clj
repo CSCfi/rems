@@ -137,8 +137,14 @@
             (btu/stop-existing-driver!)
             (swap! current-tasks dissoc task-id)))))))
 
+(defn validate [args]
+  (if-not (and (:url args) (:concurrency args))
+    (log/warn #'validate "validation failed:" args)
+    args))
+
 (mount/defstate simulator-thread-pool
-  :start (Executors/newCachedThreadPool)
+  :start (when (validate (mount/args)) ; tests may call mount/start
+           (Executors/newCachedThreadPool))
   :stop (when simulator-thread-pool
           (.shutdownNow simulator-thread-pool)
           (when-not (.awaitTermination simulator-thread-pool 5 TimeUnit/MINUTES)
@@ -160,7 +166,7 @@
                       (count @current-tasks) (or average-execution-time 0)))))
 
 (mount/defstate queue-simulate-tasks
-  :start (let [args (mount/args)]
+  :start (when-some [args (validate (mount/args))] ; tests may call mount/start
            (log/info 'queue-simulate-tasks args)
            (start-simulator-threads! args)
            (scheduler/start! "simulate-tasks"
