@@ -18,8 +18,10 @@
             [rems.util :refer [rand-nth*]])
   (:import [java.util.concurrent Executors ExecutorService TimeUnit]))
 
-(defonce ^:private task-counter (atom 0))
-(defonce ^:private current-tasks (atom {}))
+(def ^:private task-counter (atom 0))
+(def ^:private current-tasks (atom {}))
+(def ^:private task-statistics (atom {:completed []
+                                      :failed 0}))
 
 (defn submit-new-application []
   (simu/with-test-browser
@@ -91,12 +93,14 @@
                   [submit-new-application view-application])]
     (rand-nth* actions)))
 
-(defn get-task-user []
-  (->> @current-tasks
-       (vals)
-       (into #{} (map :user-id))
-       (clojure.set/difference (simu/get-available-users))
-       (first)))
+(defn get-task-user! [task-id]
+  (locking current-tasks
+    (let [current-users (map :user-id (vals @current-tasks))
+          available-users (-> (simu/get-available-users)
+                              (clojure.set/difference (set current-users)))]
+      (when-some [user-id (rand-nth* available-users)]
+        (swap! current-tasks assoc-in [task-id :user-id] user-id)
+        user-id))))
 
 (defn create-task! [url]
   (let [task-id (swap! task-counter inc)
@@ -104,7 +108,7 @@
                                   :url url
                                   :seed "simulator"
                                   :task-id task-id))]
-    (swap! current-tasks assoc task-id {:completed (list)})
+    (swap! current-tasks assoc task-id {})
     (fn simulate []
       (log/info "Simulator thread starting")
       (binding [btu/*test-context* task-context]
@@ -112,26 +116,25 @@
           (btu/init-driver! :chrome (btu/get-server-url))
           (while true
             (let [start (System/nanoTime)
-                  user-id (get-task-user)]
-              (if-not user-id
-                (Thread/sleep 2000) ; avoid hogging CPU when nothing to do
+                  user-id (get-task-user! task-id)]
+              (when user-id
                 (with-mdc {:userid user-id}
-                  (swap! current-tasks assoc-in [task-id :user-id] user-id)
-                  (log/info "task >")
+                  (log/debug "task >")
                   (btu/context-assoc! :user-id user-id)
                   (apply (get-task-action user-id) [])
                   (let [execution-time (int (/ (- (System/nanoTime) start) 1000000))]
-                    (swap! current-tasks update task-id #(-> %
-                                                             (dissoc :user-id)
-                                                             (update :completed conj execution-time)))
-                    (log/info "task <"))))))
+                    (swap! current-tasks update task-id dissoc :user-id)
+                    (swap! task-statistics update :completed conj execution-time))
+                  (log/debug "task <")))
+              (Thread/sleep 2000)))
           (catch InterruptedException e
             (.interrupt (Thread/currentThread))
             (log/info e "Simulator thread interrupted"))
           (catch Throwable t
             (log/error t "Internal error" (with-out-str
                                             (pprint (merge {::context @task-context}
-                                                           (ex-data t))))))
+                                                           (ex-data t)))))
+            (swap! task-statistics update :failed inc))
           (finally
             (log/info "Simulator thread shutting down")
             (btu/stop-existing-driver!)
@@ -157,13 +160,15 @@
                ^Callable (create-task! url)))))
 
 (defn print-simulator-statistics []
-  (let [completed (mapcat :completed (vals @current-tasks))
-        average-execution-time (when (seq completed)
+  (let [completed (:completed @task-statistics)
+        completed-count (count completed)
+        failed-count (:failed @task-statistics)
+        average-execution-time (when (pos? completed-count)
                                  (int (/ (reduce + completed)
-                                         (count completed))))]
+                                         completed-count)))]
     (log/info "statistics:"
-              (format "active=%d, avg_execution_time=%dms"
-                      (count @current-tasks) (or average-execution-time 0)))))
+              (format "active_threads=%d, completed_tasks=%d, failed_tasks=%d, task_avg_execution_time=%dms"
+                      (count @current-tasks) completed-count failed-count (or average-execution-time 0)))))
 
 (mount/defstate queue-simulate-tasks
   :start (when-some [args (validate (mount/args))] ; tests may call mount/start
@@ -172,7 +177,7 @@
            (scheduler/start! "simulate-tasks"
                              #(do (print-simulator-statistics)
                                   (start-simulator-threads! args))
-                             (.toStandardDuration (time/seconds 30))))
+                             (.toStandardDuration (time/seconds 15))))
   :stop (when queue-simulate-tasks
           (scheduler/stop! queue-simulate-tasks)))
 
