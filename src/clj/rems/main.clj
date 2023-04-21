@@ -19,6 +19,7 @@
             [rems.db.fix-userid]
             [rems.db.roles :as roles]
             [rems.service.test-data :as test-data]
+            [rems.simulate]
             [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
@@ -92,11 +93,31 @@
 (defn start-app [& args]
   (doseq [component (-> args
                         (parse-opts cli-options)
-                        mount/start-with-args
+                        mount/with-args
+                        (mount/start-without #'rems.simulate/queue-simulate-tasks
+                                             #'rems.simulate/simulator-thread-pool)
                         :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
   (validate/validate)
+  (refresh-caches))
+
+(def simulator-cli-options
+  [[nil "--url URL" "URL to run simulation against" :default "http://localhost:3000/"]
+   [nil "--concurrency CONCURRENCY" "Maximum concurrency" :default 8 :parse-fn #(Integer/parseInt %)]])
+
+(defn start-load-simulator [& args]
+  (doseq [component (-> args
+                        (parse-opts simulator-cli-options)
+                        :options
+                        (mount/start-with-args #'rems.config/env
+                                               #'rems.db.core/*db*
+                                               #'rems.locales/translations
+                                               #'rems.simulate/queue-simulate-tasks
+                                               #'rems.simulate/simulator-thread-pool)
+                        :started)]
+    (log/info component "started"))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
   (refresh-caches))
 
 ;; The default of the JVM is to exit with code 128+signal. However, we
@@ -142,7 +163,10 @@
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed.
      \"ega api-key <userid> <username> <password> <config-id>\" -- generate a new API-Key for the user using EGA login
-     \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new"
+     \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new
+     \"load-simulator [--url] [--concurrency]\" -- start load simulator that runs concurrent headless browser instances against target REMS.
+        --url is optional for target REMS (defaults to http://localhost:3000/).
+        --concurrency is optional number of maximum concurrent threads (defaults to 8)."
   [& args]
   (exit-on-signals!)
   (log/info "REMS" git/+version+)
@@ -265,6 +289,10 @@
                   (mount/start #'rems.config/env #'rems.db.core/*db*)
                   (rems.db.fix-userid/fix-all old-userid new-userid simulate?)
                   (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
+
+        "load-simulator"
+        (let [_ args]
+          (apply start-load-simulator args))
 
         (do
           (println "Unrecognized argument:" (first args))

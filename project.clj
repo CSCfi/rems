@@ -65,7 +65,7 @@
 
   :min-lein-version "2.9.8"
 
-  :source-paths ["src/clj" "src/cljc"]
+  :source-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; rems.simulate uses both src and test namespaces
   :java-source-paths ["src/java"]
   :javac-options ["-source" "8" "-target" "8"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; also run tests from src files

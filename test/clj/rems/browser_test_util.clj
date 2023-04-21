@@ -26,40 +26,43 @@
 
 ;;; test setup
 
-(defonce test-context
-  (atom {:url "http://localhost:3001/"
-         :mode :test
-         :seed "circle"
-         :reporting-dir (io/file "browsertest-errors")
-         :accessibility-report-dir (io/file "browsertest-accessibility-report")
-         :download-dir (io/file "browsertest-downloads")}))
+(defn create-base-context []
+  {:url "http://localhost:3001/"
+   :mode :test
+   :seed "circle"
+   :reporting-dir (io/file "browsertest-errors")
+   :accessibility-report-dir (io/file "browsertest-accessibility-report")
+   :download-dir (io/file "browsertest-downloads")})
 
-(defn get-driver [] (:driver @test-context))
-(defn get-server-url [] (:url @test-context))
-(defn get-seed [] (:seed @test-context))
-(defn context-get [k] (get @test-context k))
-(defn context-getx [k] (getx @test-context k))
-(defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
-(defn context-dissoc! [& args] (swap! test-context #(apply dissoc % args)))
-(defn context-update! [& args] (swap! test-context #(apply update % args)))
+(defonce ^:dynamic *test-context*
+  (atom (create-base-context)))
+
+(defn context-get [& args] (apply get @*test-context* args))
+(defn context-getx [k] (getx @*test-context* k))
+(defn context-assoc! [& args] (swap! *test-context* #(apply assoc % args)))
+(defn context-dissoc! [& args] (swap! *test-context* #(apply dissoc % args)))
+(defn context-update! [& args] (swap! *test-context* #(apply update % args)))
+(defn get-driver [] (context-get :driver))
+(defn get-server-url [] (context-get :url))
+(defn get-seed [] (context-get :seed))
 
 (defn- ensure-empty-directories! []
-  (ensure-empty-directory! (:reporting-dir @test-context))
-  (ensure-empty-directory! (:accessibility-report-dir @test-context))
-  (ensure-empty-directory! (:download-dir @test-context)))
+  (ensure-empty-directory! (context-get :reporting-dir))
+  (ensure-empty-directory! (context-get :accessibility-report-dir))
+  (ensure-empty-directory! (context-get :download-dir)))
 
 (defn downloaded-files [name-or-regex]
   (if (string? name-or-regex)
-    (let [f (io/file (:download-dir @test-context) name-or-regex)]
+    (let [f (io/file (context-get :download-dir) name-or-regex)]
       (when (.exists f) [f]))
-    (for [file (.listFiles (:download-dir @test-context))
+    (for [file (.listFiles (context-get :download-dir))
           :when (re-matches name-or-regex (.getName file))]
       file)))
 
 (defn delete-downloaded-files! [name-or-regex]
   (let [files (if (string? name-or-regex)
-                [(io/file (:download-dir @test-context) name-or-regex)]
-                (for [file (.listFiles (:download-dir @test-context))
+                [(io/file (context-get :download-dir) name-or-regex)]
+                (for [file (.listFiles (context-get :download-dir))
                       :when (re-matches name-or-regex (.getName file))]
                   file))]
     (doseq [file files]
@@ -82,7 +85,14 @@
                :path [:session (:session driver) "chromium/send_command"]
                :data {:cmd "Page.setDownloadBehavior"
                       :params {:behavior "allow"
-                               :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
+                               :downloadPath (.getAbsolutePath (context-get :download-dir))}}}))
+
+(defn stop-existing-driver! []
+  (when (get-driver)
+    (try
+      (some->> (et/quit (get-driver))
+               (swap! *test-context* assoc :driver))
+      (catch Exception e))))
 
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
@@ -94,8 +104,8 @@
 
    Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
-  (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
-  (swap! test-context
+  (stop-existing-driver!)
+  (swap! *test-context*
          assoc-some
          :driver (et/with-wait-timeout 60
                    (et/boot-driver browser-id
@@ -104,7 +114,7 @@
                                             :download.directory_upgrade true
                                             :safebrowsing.enabled false
                                             :safebrowsing.disable_download_protection true}
-                                    :download-dir (.getAbsolutePath (:download-dir @test-context))
+                                    :download-dir (.getAbsolutePath (context-get :download-dir))
                                     :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
                                                        (= :development mode)))}))
          :url url
@@ -123,7 +133,7 @@
   "Executes a test running a fresh driver except when in development."
   [f]
   (letfn [(run []
-            (when-not (= :development (:mode @test-context))
+            (when-not (= :development (context-get :mode))
               (init-driver! :chrome))
             (f))]
     (try
@@ -262,7 +272,7 @@
   run them for real, we use an existing server and db or
   boot everything up and recreate test data too."
   [f]
-  (if (= :development (:mode @test-context))
+  (if (= :development (context-get :mode))
     (f)
     ((compose-fixtures standalone-fixture create-test-data) f)))
 
@@ -271,7 +281,7 @@
   (f))
 
 (defn- get-sequence-number []
-  (:sequence-number (swap! test-context update :sequence-number (fnil inc 0))))
+  (:sequence-number (swap! *test-context* update :sequence-number (fnil inc 0))))
 
 (defn- get-current-test-name []
   (if-let [test-var (first clojure.test/*testing-vars*)]
@@ -287,10 +297,10 @@
           (get-sequence-number)
           (get-current-test-name)))
 
-(defn screenshot [filename]
+(defn ^:dynamic screenshot [filename]
   (let [driver (get-driver)
         full-filename (str (get-file-base) filename ".png")
-        file (io/file (:reporting-dir @test-context) full-filename)
+        file (io/file (context-get :reporting-dir) full-filename)
         window-size (et/get-window-size driver)
         empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
 
@@ -311,12 +321,12 @@
     (when need-to-adjust?
       (et/set-window-size driver window-size))))
 
-(defn screenshot-element [filename q]
+(defn ^:dynamic screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
                               (get-sequence-number)
                               (get-current-test-name)
                               filename)
-        file (io/file (:reporting-dir @test-context) full-filename)]
+        file (io/file (context-get :reporting-dir) full-filename)]
     (et/screenshot-element (get-driver)
                            q
                            file)))
@@ -326,7 +336,6 @@
   [filename q]
   (screenshot-element filename [q {:xpath "./../../.."}]))
 
-
 (defn dump-content [content filename]
   (when (seq content)
     (let [full-filename (format "%03d-%s-%s%s"
@@ -334,7 +343,7 @@
                                 (get-current-test-name)
                                 filename
                                 ".txt")
-          file (io/file (:reporting-dir @test-context) full-filename)]
+          file (io/file (context-get :reporting-dir) full-filename)]
       (spit file (json/generate-string-pretty content)))))
 
 (defn wait-predicate [pred & [explainer]]
@@ -382,6 +391,7 @@
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
+(def exists? (wrap-etaoin et/exists?))
 ;; TODO add more of etaoin here
 
 
@@ -537,7 +547,7 @@
        (mapv value-of-el)
        first))
 
-(defn check-axe
+(defn ^:dynamic check-axe
   "Runs automated accessibility tests using axe.
 
   Returns the test report.
@@ -558,7 +568,7 @@
     .then(callback);")]
     result))
 
-(defn gather-axe-results
+(defn ^:dynamic gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
   and appends them to the test context for summary reporting.
 
@@ -605,7 +615,7 @@
                                    (mapcat #(get % k))
                                    distinct
                                    (sort-by :impact))]]
-          (spit (io/file (:accessibility-report-dir @test-context) filename)
+          (spit (io/file (context-get :accessibility-report-dir) filename)
                 (json/generate-string-pretty content))
           (when (and (= :violations k) (seq content))
             (reset! violations content)))
@@ -625,11 +635,11 @@
 (defn autosave-enabled? []
   (get env :enable-autosave false))
 
-(defn postmortem-handler
+(defn ^:dynamic postmortem-handler
   "Simplified version of `etaoin.api/postmortem-handler`"
   [ex]
   (let [driver (get-driver)
-        dir (:reporting-dir @test-context)]
+        dir (context-get :reporting-dir)]
 
     (io/make-parents dir)
 

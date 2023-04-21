@@ -142,7 +142,7 @@
 
 (defn click-cart-apply []
   (btu/scroll-and-click [{:css "table.cart"}
-                         {:fn/has-text "Apply for"}
+                         {:fn/has-text "Apply"}
                          {:xpath "./ancestor::tr"}
                          {:css ".apply-for-catalogue-items"}])
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})

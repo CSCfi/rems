@@ -498,7 +498,7 @@
                               sort
                               rest))
 
-(defn- random-long-string [& [n]]
+(defn random-long-string [& [n]]
   (str (str/join " " (repeatedly (or n 1000) #(rand-nth vocabulary)))
        ;; prevent string interning, just to be sure
        (UUID/randomUUID)))
