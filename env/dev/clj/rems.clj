@@ -31,11 +31,11 @@
   (repl/refresh :after 'rems.main/start-app))
 
 (defn start-load-simulator []
-  (-> {:url "http://localhost:3000/" :concurrency 8}
-      (rems.main/start-load-simulator)))
+  (rems.main/start-load-simulator {:simulator {:url "http://localhost:3000/"
+                                               :concurrency 8}}))
 
 (defn stop-load-simulator []
-  (rems.main/stop-app))
+  (stop-app))
 
 (defn pptransit []
   (rems.repl-utils/pptransit))

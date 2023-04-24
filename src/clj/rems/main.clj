@@ -18,8 +18,8 @@
             [rems.db.core :as db]
             [rems.db.fix-userid]
             [rems.db.roles :as roles]
+            [rems.experimental.load-simulator]
             [rems.service.test-data :as test-data]
-            [rems.simulate]
             [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
@@ -93,9 +93,7 @@
 (defn start-app [& args]
   (doseq [component (-> args
                         (parse-opts cli-options)
-                        mount/with-args
-                        (mount/start-without #'rems.simulate/queue-simulate-tasks
-                                             #'rems.simulate/simulator-thread-pool)
+                        mount/start-with-args
                         :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
@@ -111,12 +109,12 @@
                         (mount/start-with-args #'rems.config/env
                                                #'rems.db.core/*db*
                                                #'rems.locales/translations
-                                               #'rems.simulate/queue-simulate-tasks
-                                               #'rems.simulate/simulator-thread-pool)
+                                               #'rems.experimental.load-simulator/queue-simulate-tasks
+                                               #'rems.experimental.load-simulator/simulator-thread-pool)
                         :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
-  (refresh-caches))
+  (applications/refresh-all-applications-cache!))
 
 ;; The default of the JVM is to exit with code 128+signal. However, we
 ;; shut down gracefully on SIGINT and SIGTERM due to the exit hooks
@@ -289,10 +287,8 @@
                   (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
 
         "load-simulator"
-        (let [opts (-> args
-                       (parse-opts simulator-cli-options)
-                       :options)]
-          (start-load-simulator opts))
+        (let [opts (:options (parse-opts args simulator-cli-options))]
+          (start-load-simulator {:simulator opts}))
 
         (do
           (println "Unrecognized argument:" (first args))

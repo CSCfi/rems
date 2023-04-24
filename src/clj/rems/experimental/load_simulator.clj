@@ -1,20 +1,20 @@
-(ns rems.simulate
+(ns rems.experimental.load-simulator
   "Run load simulator from REMS. Simulator is configured with CLI options,
    and can be run standalone or using REPL. Functions are provided for simulating
-   concurrent users via headless webdriver using etaoin. When running load simulator
-   against local REMS, you may wish to set config option :accessibility-report false."
+   concurrent users via headless webdriver using etaoin."
   (:require [clj-time.core :as time]
             [clojure.pprint :refer [pprint]]
             [clojure.set]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.browser-test-util :as btu]
+            [rems.common.util :refer [getx parse-int]]
             [rems.db.applications]
             [rems.logging :refer [with-mdc]]
             [rems.scheduler :as scheduler]
             [rems.service.test-data :as test-data]
-            [rems.simulate-util :as simu]
             [rems.test-browser :as b]
+            [rems.experimental.simulator-util :as simu]
             [rems.util :refer [rand-nth*]])
   (:import [java.util.concurrent Executors ExecutorService TimeUnit]))
 
@@ -30,16 +30,12 @@
     (b/go-to-catalogue)
     (b/add-to-cart (btu/context-get :cat-item))
     (b/click-cart-apply)
-    (btu/context-assoc! :application-id (b/get-application-id))
-    (doseq [field (simu/get-application-fields (btu/context-get :application-id))
-            :when (:field/visible field) ; ignore conditional fields for now
-            :when (not (:field/optional field))] ; ignore optional fields
-      (simu/fill field))
+    (btu/context-assoc! :application-id (parse-int (b/get-application-id)))
+    (simu/fill-application-fields (btu/context-get :application-id))
     (Thread/sleep 2000) ; wait for ui to catch up
     (when (btu/exists? :accept-licenses-button)
       (b/accept-licenses))
     (b/send-application)
-    (Thread/sleep 2000)
     (b/logout)))
 
 ;; XXX: add more actions, e.g. view pdf, return/approve/reject
@@ -52,10 +48,9 @@
     (b/go-to-application (btu/context-get :application-id))
     (btu/scroll-and-click :remark-action-button)
     (let [selector {:id (b/get-field-id "Add remark")}]
-      (simu/fill-human selector (test-data/random-long-string 5)))
+      (btu/fill-human selector (test-data/random-long-string 5)))
     (btu/scroll-and-click :remark)
     (btu/wait-visible :status-success)
-    (Thread/sleep 2000)
     (b/logout)))
 
 (defn view-application []
@@ -66,13 +61,11 @@
         (simu/get-random-application)
         :application/id
         (b/go-to-application))
-    (Thread/sleep 2000)
     (b/logout)))
 
 (comment
   ; convenience for development
   (btu/init-driver! :chrome "http://localhost:3000/" :development)
-  (b/logout)
 
   (btu/context-assoc! :user-id "alice")
   (view-application)
@@ -85,10 +78,8 @@
     (submit-new-application)))
 
 (defn get-task-action [user-id]
-  (let [role (-> user-id
-                 (rems.db.applications/get-all-application-roles)
-                 (rand-nth*))
-        actions (case role
+  (let [roles (rems.db.applications/get-all-application-roles user-id)
+        actions (case (rand-nth* roles)
                   :handler [handle-application]
                   [submit-new-application view-application])]
     (rand-nth* actions)))
@@ -96,7 +87,7 @@
 (defn get-task-user! [task-id]
   (locking current-tasks
     (let [current-users (map :user-id (vals @current-tasks))
-          available-users (-> (simu/get-available-users)
+          available-users (-> (simu/get-all-users)
                               (clojure.set/difference (set current-users)))]
       (when-some [user-id (rand-nth* available-users)]
         (swap! current-tasks assoc-in [task-id :user-id] user-id)
@@ -115,18 +106,16 @@
         (try
           (btu/init-driver! :chrome (btu/get-server-url))
           (while true
-            (let [start (System/nanoTime)
-                  user-id (get-task-user! task-id)]
-              (when user-id
+            (let [start (System/nanoTime)]
+              (when-some [user-id (get-task-user! task-id)]
+                (btu/context-assoc! :user-id user-id)
                 (with-mdc {:userid user-id}
                   (log/debug "task >")
-                  (btu/context-assoc! :user-id user-id)
                   (apply (get-task-action user-id) [])
                   (let [execution-time (int (/ (- (System/nanoTime) start) 1000000))]
                     (swap! current-tasks update task-id dissoc :user-id)
                     (swap! task-statistics update :completed conj execution-time))
-                  (log/debug "task <")))
-              (Thread/sleep 2000)))
+                  (log/debug "task <")))))
           (catch InterruptedException e
             (.interrupt (Thread/currentThread))
             (log/info e "Simulator thread interrupted"))
@@ -140,13 +129,13 @@
             (btu/stop-existing-driver!)
             (swap! current-tasks dissoc task-id)))))))
 
-(defn validate [args]
-  (if-not (and (:url args) (:concurrency args))
-    (log/warn #'validate "validation failed:" args)
-    args))
+(defn validate [opts]
+  (when-some [simulator (:simulator opts)]
+    {:url (getx simulator :url)
+     :concurrency (getx simulator :concurrency)}))
 
 (mount/defstate simulator-thread-pool
-  :start (when (validate (mount/args)) ; tests may call mount/start
+  :start (when (validate (mount/args))
            (Executors/newCachedThreadPool))
   :stop (when simulator-thread-pool
           (.shutdownNow simulator-thread-pool)
@@ -171,12 +160,12 @@
                       (count @current-tasks) completed-count failed-count (or average-execution-time 0)))))
 
 (mount/defstate queue-simulate-tasks
-  :start (when-some [args (validate (mount/args))] ; tests may call mount/start
-           (log/info 'queue-simulate-tasks args)
-           (start-simulator-threads! args)
+  :start (when-some [opts (validate (mount/args))]
+           (log/info 'queue-simulate-tasks opts)
+           (start-simulator-threads! opts)
            (scheduler/start! "simulate-tasks"
                              #(do (print-simulator-statistics)
-                                  (start-simulator-threads! args))
+                                  (start-simulator-threads! opts))
                              (.toStandardDuration (time/seconds 15))))
   :stop (when queue-simulate-tasks
           (scheduler/stop! queue-simulate-tasks)))
