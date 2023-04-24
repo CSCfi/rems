@@ -10,14 +10,18 @@
                  [clj-pdf "2.6.1"]
                  [clj-time "0.15.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
+                 [com.clojure-goes-fast/clj-memory-meter "0.2.1"]
                  [com.draines/postal "2.0.5"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.14.1"]
+                 [com.icegreen/greenmail "1.6.12"]
                  [com.stuartsierra/dependency "1.0.0"]
                  [com.rpl/specter "1.1.4"]
                  [com.taoensso/tempura "1.2.1"] ; 1.5.3 fails Wrong number of args (2) passed to: taoensso.tempura.impl/eval38628/compile-dictionary--38641, there must be a backwards incompatible change somewhere
                  [compojure "1.7.0"]
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.19"]
+                 [criterium "0.4.6"]
+                 [etaoin "1.0.39"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
                  [com.cognitect/transit-clj "1.0.329"]
@@ -28,6 +32,7 @@
                  [luminus-nrepl "0.1.7"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]
+                 [macroz/tangle "0.2.2"]
                  [markdown-clj "1.11.4"]
                  [medley "1.4.0"]
                  [metosin/compojure-api "2.0.0-alpha30" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
@@ -60,12 +65,14 @@
                  [ring/ring-core "1.9.6"]
                  [ring/ring-defaults "0.3.4"]
                  [ring/ring-devel "1.9.6"]
+                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                  [ring/ring-servlet "1.9.6"]
+                 [se.haleby/stub-http "0.2.14"]
                  [nano-id "1.0.0"]]
 
   :min-lein-version "2.9.8"
 
-  :source-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; rems.simulate uses both src and test namespaces
+  :source-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"]
   :java-source-paths ["src/java"]
   :javac-options ["-source" "8" "-target" "8"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; also run tests from src files
@@ -113,15 +120,8 @@
    :test [:project/dev :project/test :profiles/test]
 
    :project/dev {:dependencies [[binaryage/devtools "1.0.6"]
-                                [com.clojure-goes-fast/clj-memory-meter "0.2.1"]
-                                [criterium "0.4.6"]
                                 [lambdaisland/kaocha "1.80.1274"]
-                                [lambdaisland/kaocha-junit-xml "1.17.101"]
-                                [etaoin "1.0.39"]
-                                [ring/ring-mock "0.4.0" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.14"]
-                                [com.icegreen/greenmail "1.6.12"]
-                                [macroz/tangle "0.2.2"]]
+                                [lambdaisland/kaocha-junit-xml "1.17.101"]]
 
                  :plugins [[lein-ancient "0.6.15"]]
 
@@ -132,7 +132,9 @@
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems
                                 :welcome (rems/repl-help)}}
+
    :project/test {:jvm-opts ["-Drems.config=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
+
    :profiles/dev {}
    :profiles/test {}})
