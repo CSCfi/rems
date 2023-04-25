@@ -125,10 +125,14 @@
    :handler #{:see-everything
               :application.command/redact-attachments
               :application.command/remark}
-   :reviewer #{:see-everything}
-   :past-reviewer #{:see-everything}
-   :decider #{:see-everything}
-   :past-decider #{:see-everything}
+   :reviewer #{:see-everything
+               :application.command/redact-attachments}
+   :past-reviewer #{:see-everything
+                    :application.command/redact-attachments}
+   :decider #{:see-everything
+              :application.command/redact-attachments}
+   :past-decider #{:see-everything
+                   :application.command/redact-attachments}
    :everyone-else #{}})
 
 (defmethod application-permissions-view :application.event/created
