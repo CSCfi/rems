@@ -91,17 +91,16 @@
 (rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
 
 (defn comment-public-field [{:keys [field-key label]}]
-  (let [id (str "comment-public-" field-key)]
+  (let [id (str "comment-public-" field-key)
+        selection @(rf/subscribe [::comment-public field-key])
+        on-change #(rf/dispatch [::set-comment-public field-key (not selection)])]
     [:div.form-group
-     [:div.form-check
-      [:input.form-check-input {:type "checkbox"
-                                :id id
-                                :name id
-                                :checked @(rf/subscribe [::comment-public field-key])
-                                :on-change (fn [event]
-                                             (let [checked (.. event -target -checked)]
-                                               (rf/dispatch [::set-comment-public field-key checked])))}]
-      [:label.form-check-label {:for id}
+     [:div.form-check.form-check-inline.pointer
+      [checkbox {:id id
+                 :class :form-check-input
+                 :value selection
+                 :on-change on-change}]
+      [:label.form-check-label {:for id :on-click on-change}
        label]]]))
 
 (rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))
