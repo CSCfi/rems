@@ -83,14 +83,14 @@ jobs:
 
   browser-test:
     executor: db
+    parallelism: 4
     steps:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
           key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
-      - run: lein shadow-build
-      - run: lein kaocha --reporter kaocha.report/documentation browser
+      - run: lein do shadow-build, kaocha --reporter kaocha.report/documentation --plugin rems.circle-ci/plugin browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:
