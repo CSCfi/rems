@@ -7,43 +7,66 @@
             [clojure.string :as str]
             [kaocha.plugin :as p]
             [kaocha.testable :refer [test-seq]]
-            [medley.core :refer [update-existing]]))
+            [medley.core :refer [assoc-some update-existing]]))
 
-(defn get-test-ids [test-plan]
-  (->> (test-seq test-plan)
-       (sequence (comp (mapcat :kaocha.test-plan/tests)
-                       (remove :kaocha.testable/skip)
-                       (filter (comp #{:kaocha.type/var} :kaocha.testable/type))
+(def test-ids (atom #{}))
+
+(defn get-test-ids [test]
+  (->> (test-seq test)
+       (sequence (comp (filter (comp #{:kaocha.type/var} :kaocha.testable/type))
                        (map :kaocha.testable/id)))))
 
-(defn split-test-ids [test-ids]
+(defn parse-keyword [s]
+  (cond-> s
+    (str/starts-with? s ":") (subs 1)
+    :always (keyword)))
+
+(defn get-split-test-ids! [test-plan]
   (->> (sh/sh "circleci" "tests" "split" "--split-by=timings"
-              :in (str/join "\n" test-ids))
+              :in (str/join "\n" (get-test-ids test-plan)))
        :out
        (str/split-lines)
-       (into #{} (map #(keyword (subs % 1)))))) ; str/join turns :a/b into ":a/b", but keyword prepends ":", so remove first
+       (into #{} (map parse-keyword))
+       (reset! test-ids)))
 
-(defn skip-excluded-testables [test test-ids]
-  (if (:kaocha.testable/skip test)
+(defn exclude [test]
+  (when-some [id (:kaocha.testable/id test)]
+    (not-any? #{id} @test-ids)))
+
+(defn skip-excluded-tests [test]
+  (cond
+    (:kaocha.testable/skip test)
     test
-    (case (:kaocha.testable/type test)
-      (:kaocha.type/clojure.test
-       :kaocha.type/ns)
-      (update-existing test :kaocha.test-plan/tests (partial mapv #(skip-excluded-testables % test-ids)))
 
-      :kaocha.type/var
-      (let [excluded? (not (contains? test-ids (:kaocha.testable/id test)))]
-        (assoc test :kaocha.testable/skip excluded?)))))
+    (= :kaocha.type/var (:kaocha.testable/type test))
+    (-> test
+        (assoc-some :kaocha.testable/skip (exclude test)))
+
+    :else
+    (-> test
+        (update-existing :kaocha.test-plan/tests #(map skip-excluded-tests %)))))
+
+(defn without-skipped-tests [suite]
+  (cond
+    (:kaocha.testable/skip suite)
+    false
+
+    :else
+    (-> suite
+        (update-existing :kaocha.result/tests #(filter without-skipped-tests %)))))
 
 (defmethod p/-register :rems.circle-ci/plugin [_name plugins]
   (conj plugins
         {:kaocha.hooks/post-load
          (fn [test-plan]
-           (assoc test-plan ::test-ids (-> test-plan
-                                           (get-test-ids)
-                                           (split-test-ids))))
+           (get-split-test-ids! test-plan)
+           test-plan)
 
          :kaocha.hooks/pre-test
-         (fn [test test-plan]
-           (skip-excluded-testables test (::test-ids test-plan)))}))
+         (fn [test _test-plan]
+           (skip-excluded-tests test))
+
+         :kaocha.hooks/post-test
+         (fn [test _test-plan]
+           (without-skipped-tests test))}))
 
