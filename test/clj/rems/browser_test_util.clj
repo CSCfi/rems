@@ -1,4 +1,4 @@
-(ns ^:browser rems.browser-test-util
+(ns rems.browser-test-util
   "Browser test utils.
 
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
