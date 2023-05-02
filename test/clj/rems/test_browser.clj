@@ -527,10 +527,9 @@
           (fill-form-field "Conditional field" "Conditional")
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-          ;; XXX: conditional field check sometimes fails due to rendering latency
-          (if (btu/autosave-enabled?)
-            (wait-for-autosave-success)
-            (Thread/sleep 1000))
+          (Thread/sleep 1000) ;; XXX: conditional field check sometimes fails due to rendering latency
+          (when (btu/autosave-enabled?)
+            (wait-for-autosave-success))
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
           (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
