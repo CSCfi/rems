@@ -543,7 +543,7 @@
   Returns the test report.
 
   Ignores:
-  - all divs of body except #app and a re-frisk unnamed div
+  - all divs of body except #app
   - our development tooling like .dev-reload-button
 
   See https://www.deque.com/axe/"
