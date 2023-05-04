@@ -426,10 +426,6 @@
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
 
-(defn wait-for-autosave-success []
-  (btu/wait-visible {:css ".alert-info" :fn/has-text "Saving"})
-  (btu/wait-visible {:id :status-success :fn/has-text "Application is saved."}))
-
 ;;; tests
 
 (deftest test-new-application
@@ -534,7 +530,7 @@
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
           (Thread/sleep 1000) ;; XXX: conditional field check sometimes fails due to rendering latency
           (when (btu/autosave-enabled?)
-            (wait-for-autosave-success))
+            (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
           (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
@@ -575,7 +571,7 @@
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
           (fill-form-field "Simple text field" "Private field answer")
-          (wait-for-autosave-success)
+          (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
                  (get-validation-summary))))
