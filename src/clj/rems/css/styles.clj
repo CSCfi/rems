@@ -680,7 +680,8 @@
     ["> *:not(:last-child)"
      {:margin-right (u/em 0.5)}]]
 
-   [:.event-comment {:white-space :pre-wrap}]
+   [:.event-comment {:white-space :pre-wrap
+                     :word-break :break-all}]
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
@@ -893,6 +894,17 @@
    [:.gap-1 {:gap (u/rem 0.5)}]
    [:.gap-2 {:gap (u/rem 1)}]
    [:.gap-3 {:gap (u/rem 1.5)}]
+
+   [:.select-attachments {:display :flex
+                          :flex-direction :column
+                          :align-items :flex-start
+                          :gap (u/rem 0.5)}
+    [:.select-attachments-row {:display :grid
+                               :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
+                               :column-gap (u/rem 0.5)
+                               :align-items :center}
+     [(s/> ":first-child") {:grid-column :checkbox}]
+     [(s/> ":not(:first-child)") {:grid-column :content}]]]
 
    ;; Media queries must be almost last so they override
    (media-queries)

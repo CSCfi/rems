@@ -1,6 +1,6 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [attachment-link enrich-user textarea]]
+            [rems.atoms :refer [attachment-link checkbox enrich-user textarea]]
             [rems.common.attachment-util :as attachment-util]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
@@ -53,22 +53,23 @@
  (fn [db [_ field-key id value]]
    (assoc-in db [::selected-attachments field-key id] value)))
 
-(defn select-attachments-field [{:keys [attachments field-key label]}]
-  (let [id (str "select-attachments-" field-key)]
-    (into
-     [:div.select-attachments.form-group {:id id}
-      [:label {:for id} label]]
-     (for [attachment (sort-by :attachment/id > attachments)
-           :let [attachment-id (:attachment/id attachment)]]
-       [:div.form-check.mb-2
-        [:div.d-flex.align-items-center
-         [:input.form-check-input {:type :checkbox
-                                   :checked @(rf/subscribe [::get-attachment-selection field-key attachment-id])
-                                   :on-change #(let [value (.. % -target -checked)]
-                                                 (rf/dispatch [::set-attachment-selection field-key attachment-id value]))}]
-         [attachment-link attachment]]
-        (when-some [user (get-in attachment [:attachment/user :name])]
-          [:b user])]))))
+(defn select-attachments-field [{:keys [attachments field-key label user]}]
+  (let [field-id (str "select-attachments-" field-key)]
+    [:div.form-group
+     [:label {:for field-id} label]
+     (into
+      [:div.select-attachments {:id field-id}]
+      (for [att (sort-by :attachment/id > attachments)
+            :let [id (:attachment/id att)
+                  selection @(rf/subscribe [::get-attachment-selection field-key id])
+                  on-change #(rf/dispatch [::set-attachment-selection field-key id (not selection)])]]
+        [:div.select-attachments-row.form-check.form-check-inline
+         [checkbox {:class :pointer
+                    :value selection
+                    :on-change on-change}]
+         [attachment-link att]
+         (when-not (= user (get-in att [:attachment/user :userid]))
+           [:b (get-in att [:attachment/user :name])])]))]))
 
 (rf/reg-sub ::comment (fn [db [_ field-key]] (get-in db [::comment field-key])))
 (rf/reg-event-db ::set-comment (fn [db [_ field-key value]] (assoc-in db [::comment field-key] value)))
@@ -90,17 +91,16 @@
 (rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
 
 (defn comment-public-field [{:keys [field-key label]}]
-  (let [id (str "comment-public-" field-key)]
+  (let [id (str "comment-public-" field-key)
+        selection @(rf/subscribe [::comment-public field-key])
+        on-change #(rf/dispatch [::set-comment-public field-key (not selection)])]
     [:div.form-group
-     [:div.form-check
-      [:input.form-check-input {:type "checkbox"
-                                :id id
-                                :name id
-                                :checked @(rf/subscribe [::comment-public field-key])
-                                :on-change (fn [event]
-                                             (let [checked (.. event -target -checked)]
-                                               (rf/dispatch [::set-comment-public field-key checked])))}]
-      [:label.form-check-label {:for id}
+     [:div.form-check.form-check-inline.pointer
+      [checkbox {:id id
+                 :class :form-check-input
+                 :value selection
+                 :on-change on-change}]
+      [:label.form-check-label {:for id :on-click on-change}
        label]]]))
 
 (rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))

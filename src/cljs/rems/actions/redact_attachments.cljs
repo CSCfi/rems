@@ -46,7 +46,7 @@
                   :text (text :t.actions/redact-attachments)
                   :on-click #(rf/dispatch [::open-form attachments])}])
 
-(defn redact-attachments-view [{:keys [application-id redactable-attachments new-attachments on-submit]}]
+(defn redact-attachments-view [{:keys [application-id user redactable-attachments new-attachments on-submit]}]
   [action-form-view action-form-id
    (text :t.actions/redact-attachments)
    [[button-wrapper (-> {:id action-form-id
@@ -59,7 +59,8 @@
    [:<>
     [select-attachments-field {:field-key action-form-id
                                :attachments redactable-attachments
-                               :label (text :t.form/attachments)}]
+                               :label (text :t.form/attachments)
+                               :user user}]
     [action-attachment {:field-key action-form-id
                         :application-id application-id
                         :label (text :t.form/upload-replacement-attachment)}]
@@ -82,6 +83,7 @@
   (let [form-fields @(rf/subscribe [::form-fields])]
     [redact-attachments-view
      {:application-id application-id
+      :user (:userid @(rf/subscribe [:user]))
       :redactable-attachments @(rf/subscribe [::attachments])
       :new-attachments (:attachments form-fields)
       :on-submit (when-some [cmd (build-command application-id form-fields)]

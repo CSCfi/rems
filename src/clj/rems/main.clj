@@ -16,7 +16,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.fix-userid]
+            [rems.service.fix-userid]
             [rems.db.roles :as roles]
             [rems.experimental.load-simulator]
             [rems.service.test-data :as test-data]
@@ -283,7 +283,7 @@
                 (let [simulate? (not= "YES" (read-line))]
                   (println (if simulate? "Simulating only..." "Renaming..."))
                   (mount/start #'rems.config/env #'rems.db.core/*db*)
-                  (rems.db.fix-userid/fix-all old-userid new-userid simulate?)
+                  (rems.service.fix-userid/fix-all old-userid new-userid simulate?)
                   (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
 
         "load-simulator"
