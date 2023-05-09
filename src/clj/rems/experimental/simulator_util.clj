@@ -1,7 +1,10 @@
 (ns rems.experimental.simulator-util
   (:require [clojure.set]
             [com.rpl.specter :refer [ALL select]]
+            [hiccup.util]
+            [rems.auth.fake-login :as fake-login]
             [rems.browser-test-util :as btu]
+            [rems.common.util :refer [join-str]]
             [rems.db.applications]
             [rems.db.catalogue]
             [rems.db.roles]
@@ -54,10 +57,6 @@
                             (rand-nth*))]
     (get-localized-title catalogue-item :en)))
 
-#_(defn fill-human [selector value]
-    (apply (btu/wrap-etaoin et/fill-human)
-           [selector value {:mistake-prob 0 :pause-max 0.1}]))
-
 (defn fill-field [label value]
   (let [selector {:id (b/get-field-id label)}]
     (btu/fill-human selector value)))
@@ -75,4 +74,12 @@
                         :ip-address "142.250.74.110"
                         nil)]
       (fill-field label value))))
+
+(defn login-as [username]
+  (let [login-url (-> (join-str "/" [(btu/get-server-url) (fake-login/login-url)])
+                      (hiccup.util/url {:username username})
+                      (str))]
+    (btu/set-window-size 1400 7000)
+    (btu/go login-url)
+    (btu/wait-visible :logout)))
 

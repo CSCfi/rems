@@ -25,7 +25,7 @@
 
 (defn submit-new-application []
   (simu/with-test-browser
-    (b/login-as (btu/context-get :user-id))
+    (simu/login-as (btu/context-get :user-id))
     (btu/context-assoc! :cat-item (simu/get-random-catalogue-item))
     (b/go-to-catalogue)
     (b/add-to-cart (btu/context-get :cat-item))
@@ -41,7 +41,7 @@
 ;; XXX: add more actions, e.g. view pdf, return/approve/reject
 (defn handle-application []
   (simu/with-test-browser
-    (b/login-as (btu/context-get :user-id))
+    (simu/login-as (btu/context-get :user-id))
     (btu/context-assoc! :application-id (-> (btu/context-get :user-id)
                                             (simu/get-random-todo-application)
                                             :application/id))
@@ -55,7 +55,7 @@
 
 (defn view-application []
   (simu/with-test-browser
-    (b/login-as (btu/context-get :user-id))
+    (simu/login-as (btu/context-get :user-id))
     (b/go-to-applications)
     (-> (btu/context-get :user-id)
         (simu/get-random-application)
