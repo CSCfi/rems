@@ -84,6 +84,7 @@
   :antq {}
 
   :cljfmt {:paths ["project.clj" "src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ; need explicit paths to include cljs
+           :indents {delay [[:inner 0]]}
            :remove-consecutive-blank-lines? false} ; too many changes for now, probably not desirable
 
   :clean-targets ["target"]
