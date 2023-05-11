@@ -47,13 +47,7 @@
 
 ;;; common functionality
 
-(defn set-default-window-size
-  "Set browser window size big enough to show the whole page in the screenshots"
-  []
-  (btu/set-window-size 1400 7000))
-
 (defn login-as [username]
-  (set-default-window-size)
   (btu/go (btu/get-server-url))
   (btu/screenshot "landing-page")
   (btu/gather-axe-results "landing-page")
@@ -1126,7 +1120,6 @@
 
 (deftest test-guide-page
   (btu/with-postmortem
-    (set-default-window-size)
     (btu/go (str (btu/get-server-url) "guide"))
     (is (btu/eventually-visible? {:tag :h1 :fn/text "Component Guide"}))
     ;; if there is a js exception, nothing renders, so let's check
@@ -1136,7 +1129,6 @@
 (deftest test-language-change
   (btu/with-postmortem
     (testing "default language is English"
-      (set-default-window-size)
       (btu/go (btu/get-server-url))
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (login-as "alice")
@@ -3020,7 +3012,6 @@
 (deftest test-extra-pages
   (btu/with-postmortem
     (testing "without login"
-      (set-default-window-size)
       (btu/go (btu/get-server-url))
 
       (testing "extra page in menu"

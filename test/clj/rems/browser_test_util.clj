@@ -113,11 +113,13 @@
   (enable-downloads! (get-driver)))
 
 (defn refresh-driver!
-  "Refreshes an existing driver and cleans up."
+  "Refreshes an existing driver, cleans up and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
   ;; start with a clean slate
-  (et/delete-cookies (get-driver)))
+  (et/delete-cookies (get-driver))
+  ;; big enough to show the whole page in the screenshots
+  (et/set-window-size (get-driver) 1400 7000))
 
 (defn fixture-init-driver
   "Executes a test running a fresh driver except when in development."
