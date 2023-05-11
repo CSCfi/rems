@@ -34,10 +34,9 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - &cache-key anssi-tests-v2-{{ checksum "project.clj" }}-{{ checksum "package-lock.json" }}-{{ checksum "shadow-cljs.edn" }}
-            # - &cache-key v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package-lock.json" }}-{{ checksum "shadow-cljs.edn" }}
+            - &cache-key v4-dependencies-{{ checksum "project.clj" }}-{{ checksum "package-lock.json" }}-{{ checksum "shadow-cljs.edn" }}
             # fallback to using the latest cache if no exact match is found
-            # - v3-dependencies-
+            - v4-dependencies-
       # build shadow-cljs already so that all maven deps get cached
       - run: lein do deps, shadow-build
       - save_cache:
