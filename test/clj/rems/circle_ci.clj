@@ -1,6 +1,6 @@
 (ns rems.circle-ci
-  "Kaocha plugin that allows filtering created test plan before execution with testable ids.
-   Allows using CircleCI test splitting for parallel tests, e.g. slow browser tests.
+  "Kaocha plugin that performs runtime test filtering in CircleCI using test splitting.
+   Skips excluded test ids (not in split test batch) before test run.
 
    Heavily inspired by https://andreacrotti.github.io/2020-07-28-parallel-ci-kaocha/"
   (:require [clojure.java.shell :as sh]
@@ -39,26 +39,18 @@
     (when-some [id (:kaocha.testable/id test)]
       (not (contains? test-ids id)))))
 
-(defn skip-excluded-testables [test-plan test-ids]
-  (-> test-plan
-      (walk-kaocha-tests (fn [suite]
-                           (if-not (:kaocha.testable/skip suite)
-                             (assoc-some suite :kaocha.testable/skip (is-excluded suite test-ids))
-                             suite)))))
-
-(defn remove-skipped-testables [test]
-  (-> test
-      (walk-kaocha-tests (fn [suite]
-                           (when-not (:kaocha.testable/skip suite)
-                             suite)))))
-
 (defmethod p/-register :rems.circle-ci/plugin [_name plugins]
   (conj plugins
         {:kaocha.hooks/post-load
          (fn [test-plan] ; skip tests that are not included in set of test ids returned by circle ci
-           (skip-excluded-testables test-plan (split-test-ids test-plan)))
+           (let [ids (split-test-ids test-plan)]
+             (walk-kaocha-tests
+              test-plan
+              #(assoc-some % :kaocha.testable/skip (when-not (:kaocha.testable/skip %)
+                                                     (is-excluded % ids))))))
 
          :kaocha.hooks/post-test
          (fn [test _test-plan] ; remove skipped tests so that kaocha-junit-xml does not count them again
-           (remove-skipped-testables test))}))
+           (walk-kaocha-tests test #(when-not (:kaocha.testable/skip %)
+                                      %)))}))
 
