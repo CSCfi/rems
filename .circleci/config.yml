@@ -99,7 +99,7 @@ jobs:
           at: .
       - restore_cache:
           key: *cache-key
-      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.circle-ci/plugin browser
+      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha-circleci/plugin browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:

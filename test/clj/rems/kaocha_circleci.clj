@@ -1,4 +1,4 @@
-(ns rems.circle-ci
+(ns rems.kaocha-circleci
   "Kaocha plugin that performs runtime test filtering in CircleCI using test splitting.
    Skips excluded test ids (not in split test batch) before test run.
 
@@ -39,7 +39,7 @@
     (when-some [id (:kaocha.testable/id test)]
       (not (contains? test-ids id)))))
 
-(defmethod p/-register :rems.circle-ci/plugin [_name plugins]
+(defmethod p/-register :rems.kaocha-circleci/plugin [_name plugins]
   (conj plugins
         {:kaocha.hooks/post-load
          (fn [test-plan] ; skip tests that are not included in set of test ids returned by circle ci
