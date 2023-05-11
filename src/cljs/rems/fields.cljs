@@ -289,7 +289,7 @@
               (localized label)]))]))
 
 (defn label [opts]
-  (let [title (localized (:field/title opts))]
+  (let [title (-> opts :field/title localized linkify)]
     [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
@@ -406,7 +406,7 @@
                            :status (:field/attachment-status opts)}]])
 
 (defn header-field [opts]
-  (let [title (localized (:field/title opts))]
+  (let [title (-> opts :field/title localized linkify)]
     [non-field-wrapper opts [:h3 title]]))
 
 (defn- table-view [{:keys [id readonly columns rows on-change]}]

@@ -503,7 +503,7 @@
                  [:paragraph "Some text"]]]]
               [[[:heading pdf/heading-style "Form"]
                 [[[:paragraph pdf/field-heading-style
-                   "This form demonstrates all possible field types. (This text itself is a label field.)"]
+                   "This form demonstrates all possible field types. This is a link https://www.example.org/label (This text itself is a label field.)"]
                   [:paragraph ""]]
                  [[:paragraph pdf/field-heading-style "Application title field"]
                   [:paragraph "pdf test"]]
