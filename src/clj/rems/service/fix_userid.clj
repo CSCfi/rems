@@ -1,5 +1,5 @@
 
-(ns rems.db.fix-userid
+(ns rems.service.fix-userid
   (:require rems.service.dependencies
             [rems.db.api-key]
             [rems.db.applications]
