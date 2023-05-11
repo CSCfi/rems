@@ -806,8 +806,7 @@
                :top "85px"}]
    [:.reload-indicator {:position :fixed
                         :bottom "15px"
-                        :right "15px"
-                        :z-index 1000}] ; over re-frisk devtool
+                        :right "15px"}]
 
    ;; application list
    [:.rems-table

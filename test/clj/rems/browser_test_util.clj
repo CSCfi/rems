@@ -1,4 +1,4 @@
-(ns ^:browser rems.browser-test-util
+(ns rems.browser-test-util
   "Browser test utils.
 
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
@@ -113,11 +113,13 @@
   (enable-downloads! (get-driver)))
 
 (defn refresh-driver!
-  "Refreshes an existing driver and cleans up."
+  "Refreshes an existing driver, cleans up and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
   ;; start with a clean slate
-  (et/delete-cookies (get-driver)))
+  (et/delete-cookies (get-driver))
+  ;; big enough to show the whole page in the screenshots
+  (et/set-window-size (get-driver) 1400 7000))
 
 (defn fixture-init-driver
   "Executes a test running a fresh driver except when in development."
@@ -543,7 +545,7 @@
   Returns the test report.
 
   Ignores:
-  - all divs of body except #app and a re-frisk unnamed div
+  - all divs of body except #app
   - our development tooling like .dev-reload-button
 
   See https://www.deque.com/axe/"

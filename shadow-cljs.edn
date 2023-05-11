@@ -8,7 +8,6 @@
                 [metosin/komponentit "0.3.11"]
                 [re-frame "1.2.0"]
                 [reagent "1.1.1"]
-                [re-frisk "1.6.0"]
                 [reagent-utils "0.3.4"]
                 [venantius/accountant "0.2.5"]
                 [prismatic/schema "1.2.1"]]
@@ -29,8 +28,7 @@
                 :compiler-options {:optimizations :advanced
                                    :infer-externs :auto
                                    :source-map true}
-                :devtools {:preloads [re-frisk.preload]
-                           :watch-dir "target/resources/public"}}
+                :devtools {:watch-dir "target/resources/public"}}
           :cljs-test {:target :karma
                       :output-to "target/shadow/cljs-test.js"
                       :ns-regexp "test-"}}}
