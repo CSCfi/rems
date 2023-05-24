@@ -1058,7 +1058,7 @@
                                                :member (get users-data member)})
       (test-helpers/fill-form! {:application-id app-id
                                 :actor applicant
-                                :field-value "lots of attachments"
+                                :field-value "complicated application with lots of attachments and five special characters \"åöâīē\""
                                 :attachment (test-helpers/create-attachment! {:actor applicant
                                                                               :application-id app-id
                                                                               :filename "applicant_attachment.pdf"})})
