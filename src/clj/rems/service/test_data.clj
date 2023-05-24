@@ -66,9 +66,9 @@
 (def label-field
   {:field/type :label
    :field/optional false
-   :field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
-                 :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}})
+   :field/title {:en "This form demonstrates all possible field types. This is a link https://www.example.org/label (This text itself is a label field.)"
+                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. Tämä on linkki https://www.example.org/label (Tämä teksti itsessään on lisätietokenttä.)"
+                 :sv "Detta blanket visar alla möjliga fälttyper. Det här är en länk  https://www.example.org/label (Det här texten är en fält för tilläggsinformation.)"}})
 (def description-field
   {:field/type :description
    :field/optional false
@@ -1058,7 +1058,7 @@
                                                :member (get users-data member)})
       (test-helpers/fill-form! {:application-id app-id
                                 :actor applicant
-                                :field-value "lots of attachments"
+                                :field-value "complicated application with lots of attachments and five special characters \"åöâīē\""
                                 :attachment (test-helpers/create-attachment! {:actor applicant
                                                                               :application-id app-id
                                                                               :filename "applicant_attachment.pdf"})})

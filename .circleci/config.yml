@@ -29,22 +29,27 @@ executors:
 jobs:
   deps:
     executor: clojure
+    resource_class: large
     steps:
       - checkout
-      # Download and cache dependencies
       - restore_cache:
           keys:
-            - v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+            - &cache-key v4-dependencies-{{ checksum "project.clj" }}-{{ checksum "package-lock.json" }}-{{ checksum "shadow-cljs.edn" }}
             # fallback to using the latest cache if no exact match is found
-            - v3-dependencies-
-      - run: lein deps
-      - run: npm install
-      # TODO using persist_to_workspace might be more robust than using cache
+            - v4-dependencies-
+      # build shadow-cljs already so that all maven deps get cached
+      - run: lein do deps, shadow-build
       - save_cache:
           paths:
             - ~/.m2
             - node_modules
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+          key: *cache-key
+      # persist shadow-cljs build for browser tests etc
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/shadow
+            - .shadow-cljs
 
   unit-test:
     executor: clojure
@@ -52,11 +57,12 @@ jobs:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - checkout
+      - attach_workspace:
+          at: .
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+          key: *cache-key
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
-      - run: lein shadow-build
       - run: lein shadow-test
       - store_test_results:
           path: target/test-results
@@ -66,31 +72,33 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+          key: *cache-key
       - run: lein cljfmt check
 
   integration-test:
     executor: db
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+          key: *cache-key
       - run: lein kaocha --reporter kaocha.report/documentation integration
       - store_test_results:
           path: target/test-results
 
   browser-test:
     executor: db
+    resource_class: large
+    parallelism: 4
     steps:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - checkout
+      # include shadow-cljs build
+      - attach_workspace:
+          at: .
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
-      - run: lein shadow-build
-      - run: lein kaocha --reporter kaocha.report/documentation browser
+          key: *cache-key
+      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha-circleci/plugin browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:
@@ -105,7 +113,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: v3-dependencies-{{ checksum "project.clj" }}-{{ checksum "package.json" }}-{{ checksum "shadow-cljs.edn" }}
+          key: *cache-key
       - run: lein with-profile uberjar uberjar # fix a bug in leiningen 2.9.9-2.9.10, fix in 2.9.11
       - store_artifacts:
           path: target/uberjar/rems.jar

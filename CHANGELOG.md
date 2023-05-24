@@ -6,7 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.31
+Changes since v2.32
+
+### Additions
+- PDF output can be customized a little. This enables changing the font, which should fix missing diacritics. (#3158)
+
+### Fixes
+- Label and header fields have URLs made into links. (#3155)
+
+## v2.32 "Itämerenkatu" 2023-04-26
 
 **NB: GET /entitlements.csv is deprecated and will be removed in a future release. Please use GET /api/entitlements/export-csv instead.**
 **NB: Experimental application PDF export API is deprecated, and will be removed in a future release. The non-experimental PDF export API is preferred instead. (#3098)**

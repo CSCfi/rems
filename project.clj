@@ -1,4 +1,4 @@
-(defproject rems "2.31"
+(defproject rems "2.32"
   :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
   :url "https://github.com/CSCfi/rems"
 
@@ -89,10 +89,11 @@
 
   :clean-targets ["target"]
 
-  :aliases {"shadow-build" ["shell" "sh" "-c" "npm install && npx shadow-cljs compile app"]
-            "shadow-release" ["shell" "sh" "-c" "npm install && npx shadow-cljs release app"]
-            "shadow-test" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs compile cljs-test && ./node_modules/karma/bin/karma start"]
-            "shadow-watch" ["shell" "sh" "-c" "npm install --include=dev && npx shadow-cljs watch app"]
+  :aliases {"npm-deps" ["shell" "sh" "-c" "npm install --save=false --package-lock=true"] ; npm ci always removes node_modules by design, which is unnecessary and time consuming
+            "shadow-build" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs compile app --config-merge '{:build-options {:cache-level :jars}}'"]]
+            "shadow-release" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs release app"]]
+            "shadow-test" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs compile cljs-test && npx karma start"]]
+            "shadow-watch" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs watch app"]]
             "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["shadow-build"] ["kaocha" "browser"]]
             "alltests" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]
