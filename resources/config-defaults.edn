@@ -436,4 +436,14 @@
  :show-resources-section true ; should resources section be shown in the application UI
  :show-attachment-zip-action true ; should the attachment download be shown in the application actions UI
  :show-pdf-action true ; should PDF button be shown in the application actions UI
- :enable-handler-emails true} ; should notification emails be sent to the handlers, reviewers, deciders for application actions (invitation emails will be sent regardless, reminders are also sent if configured)
+ :enable-handler-emails true ; should notification emails be sent to the handlers, reviewers, deciders for application actions (invitation emails will be sent regardless, reminders are also sent if configured)
+
+ ;; Optional metadata to be passed to the PDF generation.
+ ;;
+ ;; See https://github.com/clj-pdf/clj-pdf#metadata
+ ;;
+ ;; Example:
+ ;; :pdf-metadata {:font {:encoding :unicode
+ ;;                       :ttf-name "custom-font-file.ttf"}}
+ ;;
+ :pdf-metadata {}}

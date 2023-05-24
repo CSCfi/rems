@@ -214,7 +214,7 @@
                                            (str/join ", ")))))]))])])))
 
 (defn- render-application [application]
-  [{}
+  [(env :pdf-metadata)
    (render-header application)
    (render-applicants application)
    (when (:show-resources-section env)
