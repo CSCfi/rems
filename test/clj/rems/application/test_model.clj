@@ -1514,6 +1514,26 @@
     (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
     (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
+(deftest test-enrich-disable-commands
+  (let [app {:application/state :created
+             :application/role-permissions {:role-1 #{:a :b :c :d :e}
+                                            :role-2 #{:a :b :c :d :e}
+                                            :role-3 #{:a :b :c :d :e}}}]
+    (is (= app
+           (model/enrich-disable-commands app (constantly nil) (constantly nil))))
+    (is (= {:application/state :created
+            :application/role-permissions {:role-1 #{:b :c :e}
+                                           :role-2 #{:b :c :e}
+                                           :role-3 #{:c :d :e}}}
+           (model/enrich-disable-commands app
+                                          (constantly {:disable-commands [:a :does-not-exist]})
+                                          (constantly {:workflow
+                                                       {:disable-commands [{:command :does-not-exist}
+                                                                           {:command :b :when/state [:does-not-exist]}
+                                                                           {:command :b :when/role [:role-3]}
+                                                                           {:command :c :when/state [:does-not-exist] :when/role [:role-3]}
+                                                                           {:command :d :when/state [:created] :when/role [:role-1 :role-2 :does-not-exist]}]}}))))))
+
 (deftest test-hide-sensitive-information
   (let [base (reduce model/application-view nil
                      [created-event

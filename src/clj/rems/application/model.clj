@@ -672,11 +672,31 @@
              form/enrich-form-field-visible
              application))
 
-(defn- enrich-disable-commands [application get-config]
+(defn- get-roles-for-permission [disable-command]
+  (let [roles (:when/role disable-command)
+        all-roles (list nil)]
+    (if (seq roles)
+      roles
+      all-roles)))
+
+(defn- get-workflow-disable-commands [application get-workflow]
+  (let [workflow (-> application
+                     (get-in [:application/workflow :workflow/id])
+                     (get-workflow))]
+    (for [disable-command (get-in workflow [:workflow :disable-commands])
+          :let [states (set (:when/state disable-command))]
+          :when (or (empty? states)
+                    (contains? states (:application/state application)))
+          role (get-roles-for-permission disable-command)]
+      {:permission (:command disable-command)
+       :role role})))
+
+(defn enrich-disable-commands [application get-config get-workflow]
   (permissions/blacklist application
                          (permissions/compile-rules
-                          (for [command (:disable-commands (get-config))]
-                            {:permission command}))))
+                          (concat (for [command (:disable-commands (get-config))]
+                                    {:permission command})
+                                  (get-workflow-disable-commands application get-workflow)))))
 
 (defn- get-attachment-redact-roles [attachment application]
   (when (:attachment/event attachment)
@@ -728,7 +748,7 @@
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config)
+      (enrich-disable-commands get-config get-workflow)
       (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]
