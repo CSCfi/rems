@@ -1,5 +1,7 @@
 (ns rems.focus
-  "Focuses an HTML element as soon as it exists.")
+  "Focuses an HTML element as soon as it exists."
+  (:require [reagent.core :as reagent]
+            [re-frame.core :as rf]))
 
 (defn focus [element]
   (.setAttribute element "tabindex" "-1")
@@ -61,3 +63,10 @@
   (let [offset-before (.-top rect-before)
         offset-after (.-top rect-after)]
     (.scrollBy js/window 0 (- offset-after offset-before))))
+
+(defn scroll-into-view [selector & [opts]]
+  (-> selector
+      (on-element-appear #(.scrollIntoView % (clj->js (or opts {}))))))
+
+(rf/reg-fx :rems.focus/scroll-into-view (fn [[selector opts]]
+                                          (reagent/after-render #(scroll-into-view selector opts))))

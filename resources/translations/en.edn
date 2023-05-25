@@ -76,6 +76,7 @@
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :application-state "Application state"
                    :archive "Archive"
                    :back "Back"
                    :blacklist "Blacklist"
@@ -87,6 +88,7 @@
                    :category "Category"
                    :category-children "Subcategories"
                    :change "Change"
+                   :command "Action"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"
@@ -156,9 +158,11 @@
                    :unarchive "Unarchive"
                    :user "User"
                    :userid "User id"
+                   :user-role "User role"
                    :view "View"
                    :workflow "Workflow"
-                   :workflows "Workflows"}
+                   :workflows "Workflows"
+                   :workflow-disabled-commands-explanation "This workflow hides actions from users when conditions apply."}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
                    :email "Email"
@@ -347,17 +351,21 @@
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Decider workflow"
+  :create-workflow {:create-new-rule "New rule"
+                    :decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
                     :default-workflow-description "The handler is in full control of the application process. The handler may request reviews and decisions from others as needed."
+                    :disable-commands "Disable actions"
                     :handlers "Handlers"
                     :master-workflow "Master workflow"
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
+                    :rule "Rule"
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."
-             :loading "Loading..."}
+             :loading "Loading..."
+             :placeholder-any-selection "Any"}
   :duo {:fields {:more-info "Additional info for applicant (optional)"}
         :no-duo-codes "No Data Use Ontology codes"
         :restriction {:collaboration "Primary study investigator(s)"
@@ -516,9 +524,10 @@
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (optional)"
           :parens "%1 (%2)"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
@@ -579,6 +588,13 @@
             :settings "Settings"
             :warning-about-missing-email [:<> "You will need to " [:a {:href "/profile"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
             :your-details "Your user details"}
+  :role {:applicant "Applicant"
+         :decider "Decider"
+         :handler "Handler"
+         :member "Member"
+         :past-decider "Past decider"
+         :past-reviewer "Past reviewer"
+         :reviewer "Reviewer"}
   :search {:clear-search "Clear search"
            :example-searches "Example searches"
            :learn-more "Learn more"

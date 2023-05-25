@@ -74,6 +74,7 @@
                    :add "Lägg till"
                    :added-at "Tillagd"
                    :added-by "Tillagd av"
+                   :application-state "Ansökningsstatus"
                    :archive "Arkivera"
                    :back "Tillbaka"
                    :blacklist "Svartlista"
@@ -85,6 +86,7 @@
                    :category "Kategori"
                    :category-children "Underkategorier"
                    :change "Ändra"
+                   :command "Funktion"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"
                    :create-catalogue-item "Ny katalogpost"
@@ -152,9 +154,11 @@
                    :unarchive "Avarkivera"
                    :user "Användare"
                    :userid "Användarnamn"
+                   :user-role "Användarensroll"
                    :view "Visa"
                    :workflow "Arbetsflöde"
-                   :workflows "Arbetsflöden"}
+                   :workflows "Arbetsflöden"
+                   :workflow-disabled-commands-explanation "Detta arbetsflöde döljs funktioner för användarna när villkoren uppfylls."}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
                    :email "E-postadress"
@@ -322,17 +326,21 @@
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
+  :create-workflow {:create-new-rule "Ny regel"
+                    :decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
                     :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
+                    :disable-commands "Avaktivera funktioner"
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
+                    :rule "Regel"
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."
-             :loading "Läser in..."}
+             :loading "Läser in..."
+             :placeholder-any-selection "Vad som helst"}
   :duo {:fields {:more-info "Tilläggsinformation till sökande (frivillig)"}
         :no-duo-codes "Inga DUO-koder"
         :restriction {:collaboration "Forskningsgruppledare"
@@ -473,9 +481,10 @@
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"
                :remove "Ta bort"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (valfritt)"
           :parens "%1 (%2)"}
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
@@ -535,6 +544,13 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
+  :role {:applicant "Sökande"
+         :decider "Beslutare"
+         :handler "Handläggare"
+         :member "Deltagare"
+         :past-decider "Beslutare (tidigare)"
+         :past-reviewer "Granskare (tidigare)"
+         :reviewer "Granskare"}
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"

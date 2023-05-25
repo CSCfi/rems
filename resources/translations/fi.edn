@@ -74,6 +74,7 @@
                    :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
+                   :application-state "Hakemuksen tila"
                    :archive "Arkistoi"
                    :back "Takaisin"
                    :blacklist "Kieltolista"
@@ -85,6 +86,7 @@
                    :category "Kategoria"
                    :category-children "Alakategoriat"
                    :change "Vaihda"
+                   :command "Toiminto"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
@@ -152,9 +154,11 @@
                    :unarchive "Palauta arkistosta"
                    :user "Käyttäjä"
                    :userid "Käyttäjätunnus"
+                   :user-role "Käyttäjän rooli"
                    :view "Avaa"
                    :workflow "Työvuo"
-                   :workflows "Työvuot"}
+                   :workflows "Työvuot"
+                   :workflow-disabled-commands-explanation "Tämä työvuo piilottaa toimintoja käyttäjiltä ehtojen täyttyessä."}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
                    :email "Sähköposti"
@@ -322,17 +326,21 @@
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Päättäjätyövuo"
+  :create-workflow {:create-new-rule "Uusi sääntö"
+                    :decider-workflow "Päättäjätyövuo"
                     :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on."
                     :default-workflow "Oletustyövuo"
                     :default-workflow-description "Hakemus on täysin käsittelijän hallinnassa. Käsittelijä voi pyytää toisilta katselmointeja ja päätöksiä tarpeen mukaan."
+                    :disable-commands "Poista toimintoja käytöstä"
                     :handlers "Käsittelijät"
                     :master-workflow "Master-työvuo"
                     :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
+                    :rule "Sääntö"
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."
-             :loading "Ladataan..."}
+             :loading "Ladataan..."
+             :placeholder-any-selection "Mikä tahansa"}
   :duo {:fields {:more-info "Lisätietoa hakijalle (valinnainen)"}
         :no-duo-codes "Ei DUO-koodeja"
         :restriction {:collaboration "Tutkimusryhmän johtaja(t)"
@@ -473,9 +481,10 @@
   :item-lists {:move-down "Siirrä alas"
                :move-up "Siirrä ylös"
                :remove "Poista"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (valinnainen)"
           :parens "%1 (%2)"}
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
@@ -535,6 +544,13 @@
             :settings "Asetukset"
             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
+  :role {:applicant "Hakija"
+         :decider "Päättäjä"
+         :handler "Käsittelijä"
+         :member "Jäsen"
+         :past-decider "Päättäjä (entinen)"
+         :past-reviewer "Katselmoija (entinen)"
+         :reviewer "Katselmoija"}
   :search {:clear-search "Tyhjennä hakuehdot"
            :example-searches "Esimerkkihakuja"
            :learn-more "Opi lisää"

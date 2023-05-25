@@ -260,3 +260,15 @@
   (if (= :filename/redacted (:attachment/filename attachment))
     (text :t.applications/attachment-filename-redacted)
     (:attachment/filename attachment)))
+
+(defn localize-role [role]
+  (let [localization-key (case role
+                           :applicant :t.role/applicant
+                           :decider :t.role/decider
+                           :handler :t.role/handler
+                           :member :t.role/member
+                           :past-decider :t.role/past-decider
+                           :past-reviewer :t.role/past-reviewer
+                           :reviewer :t.role/reviewer
+                           nil)]
+    (text localization-key (str role))))

@@ -1,5 +1,6 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
+            [medley.core :refer [indexed]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
@@ -10,7 +11,8 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [localized text]]
+            [rems.table :as table]
+            [rems.text :refer [localized localize-role localize-state text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -49,6 +51,40 @@
    :workflow/decider :t.create-workflow/decider-workflow
    :workflow/master :t.create-workflow/master-workflow})
 
+(rf/reg-sub ::disable-commands
+            :<- [::workflow]
+            #(get-in % [:workflow :disable-commands]))
+(rf/reg-sub ::disable-commands-table-rows
+            :<- [::disable-commands]
+            :<- [:language]
+            (fn [[disable-commands _language]]
+              (for [[rule-index rule] (indexed disable-commands)
+                    :let [states (sort (:when/state rule))
+                          roles (sort (:when/role rule))]]
+                {:key (str "disable-command-" rule-index)
+                 :command {:display-value [:pre.mb-0
+                                           (pr-str (:command rule))]}
+                 :application-state {:display-value (if (seq states)
+                                                      (str/capitalize (str/join ", " (map localize-state states)))
+                                                      (text :t.dropdown/placeholder-any-selection))}
+                 :user-role {:display-value (if (seq roles)
+                                              (str/capitalize (str/join ", " (map localize-role roles)))
+                                              (text :t.dropdown/placeholder-any-selection))}})))
+
+(defn- disable-commands-table []
+  [table/table {:id ::disable-commands
+                :columns [{:key :command
+                           :title (text :t.administration/command)
+                           :sortable? false}
+                          {:key :application-state
+                           :title (text :t.administration/application-state)
+                           :sortable? false}
+                          {:key :user-role
+                           :title (text :t.administration/user-role)
+                           :sortable? false}]
+                :rows [::disable-commands-table-rows]
+                :default-sort-column :command}])
+
 (defn workflow-view [workflow language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -78,7 +114,11 @@
                                 title (:title (localized (:localizations license)))]]
                       [atoms/link nil uri title])
                     (interpose ", ")
-                    (into [:<>]))]]}]
+                    (into [:<>]))]
+              (when (seq (get-in workflow [:workflow :disable-commands]))
+                [:<>
+                 [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
+                 [:div.mt-4 [disable-commands-table]]])]}]
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]
