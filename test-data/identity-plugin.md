@@ -3,5 +3,7 @@
 This plugin does nothing interesting. Useful for tests.
 
 ```clj
-data
+(defn transform [config data]
+  data)
+
 ```

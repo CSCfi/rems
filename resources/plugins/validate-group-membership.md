@@ -7,14 +7,15 @@ one of the valid groups.
 (require '[rems.config :refer [env]])
 (require '[clojure.string :as str])
 
-(let [{:keys [attribute-name valid-groups error-key]} config
-      groups (get data (keyword attribute-name))]
+(defn validate [config data]
+  (let [{:keys [attribute-name valid-groups error-key]} config
+        groups (get data (keyword attribute-name))]
 
-  (when (:log-authentication-details env)
-    (log/info "Groups" groups))
+    (when (:log-authentication-details env)
+      (log/info "Groups" groups))
 
-  (when (or (empty? groups)
-            (empty? (clojure.set/intersection (set groups) valid-groups)))
-    [error-key]))
+    (when (or (empty? groups)
+              (empty? (clojure.set/intersection (set groups) valid-groups)))
+      [error-key])))
 
 ```

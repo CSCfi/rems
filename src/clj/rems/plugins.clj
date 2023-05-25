@@ -65,13 +65,26 @@
 
 
 
+(defn- wrap-log-ns [extension-point-id plugin-id]
+  {'log {'trace (log-wrapper extension-point-id plugin-id :trace)
+         'debug (log-wrapper extension-point-id plugin-id :debug)
+         'info (log-wrapper extension-point-id plugin-id :info)
+         'warn (log-wrapper extension-point-id plugin-id :warn)
+         'error (log-wrapper extension-point-id plugin-id :error)
+         'fatal (log-wrapper extension-point-id plugin-id :fatal)}})
+
 (defn- load-plugin [plugin-config]
-  (let [plugin-filename (getx plugin-config :filename)]
+  (let [plugin-filename (getx plugin-config :filename)
+        ctx (-> @sci-ctx
+                sci/fork
+                (sci/merge-opts {:namespaces (wrap-log-ns :loading plugin-config)}))]
     (-> plugin-filename
         io/reader
         line-seq
         md/strip-to-clj-content
-        str/join)))
+        str/join
+        (->> (sci/eval-string* ctx))) ; evaluate plugin (defs) into context
+    ctx))
 
 (defn- load-plugins! []
   (doseq [plugin-config (vals @plugin-configs)
@@ -82,24 +95,17 @@
   "Run the plugin from `plugin-config` passing in `data` at `extension-point-id` (context used for logging).
 
   The plugin runs through SCI with some context injected (data, config, env, log etc.)"
-  [extension-point-id data plugin-config]
+  [symbol-name extension-point-id data plugin-config]
   (load-plugins!)
   (let [plugin-id (getx plugin-config :id)]
     (log/debug "Running plugin" plugin-id)
     (let [plugin (getx @plugin-cache plugin-id)
-          ctx (-> @sci-ctx
+          ctx (-> plugin
                   sci/fork
-                  (sci/merge-opts {:namespaces {'log {'trace (log-wrapper extension-point-id plugin-id :trace)
-                                                      'debug (log-wrapper extension-point-id plugin-id :debug)
-                                                      'info (log-wrapper extension-point-id plugin-id :info)
-                                                      'warn (log-wrapper extension-point-id plugin-id :warn)
-                                                      'error (log-wrapper extension-point-id plugin-id :error)
-                                                      'fatal (log-wrapper extension-point-id plugin-id :fatal)}
-
-
-                                                'user {'data data
-                                                       'config plugin-config}}}))]
-      (sci/eval-string* ctx plugin))))
+                  (sci/merge-opts {:namespaces (merge (wrap-log-ns extension-point-id plugin-config)
+                                                      {'user {'config plugin-config
+                                                              'data data}})}))]
+      (sci/eval-string* ctx (str "(" symbol-name " config data)")))))
 
 
 
@@ -119,7 +125,7 @@
   (load-plugin-configs!)
   (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
-    (reduce (partial run-plugin extension-point-id)
+    (reduce (partial run-plugin "transform" extension-point-id)
             data
             plugin-configs)))
 
@@ -136,6 +142,6 @@
   (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
     (some (fn [plugin-config]
-            (seq (run-plugin extension-point-id data plugin-config))) ; can return n problems
+            (seq (run-plugin "validate" extension-point-id data plugin-config))) ; can return n problems
           plugin-configs)))
 

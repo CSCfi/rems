@@ -49,7 +49,7 @@
         (catch clojure.lang.ExceptionInfo e
           (is (= {:type :sci/error
                   :line 7
-                  :column 1
+                  :column 3
                   :message "hello from plugin"
                   :file nil}
                  (dissoc (ex-data e) :sci.impl/callstack))
@@ -68,8 +68,8 @@
 
           (catch clojure.lang.ExceptionInfo e
             (is (= {:type :sci/error
-                    :line 6
-                    :column 7
+                    :line 7
+                    :column 9
                     :message "Argument must be an integer: "
                     :file nil}
                    (dissoc (ex-data e) :sci.impl/callstack))

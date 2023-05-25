@@ -37,33 +37,34 @@ For a group to be valid the authority must declared in config `:trusted-authorit
 (require '[rems.config :refer [env]])
 (require '[clojure.string :as str])
 
-(when (:log-authentication-details env)
-  (log/info "Data" data))
+(defn transform [config data]
+  (when (:log-authentication-details env)
+    (log/info "Data" data))
 
-(let [attribute-name (getx config :attribute-name)]
-  (if-some [attribute-value (get data (keyword attribute-name))]
-    (let [group-index (str/index-of attribute-value ":group:")
-          authority-index (str/index-of attribute-value "#")]
+  (let [attribute-name (getx config :attribute-name)]
+    (if-some [attribute-value (get data (keyword attribute-name))]
+      (let [group-index (str/index-of attribute-value ":group:")
+            authority-index (str/index-of attribute-value "#")]
 
-      (when (:log-authentication-details env)
-        (log/info "Indices" group-index authority-index))
+        (when (:log-authentication-details env)
+          (log/info "Indices" group-index authority-index))
 
-      (if (and group-index
-               authority-index
-               (< -1 group-index authority-index))
-        (let [namespace (subs attribute-value 0 group-index)
-              groups-and-role (subs attribute-value (+ group-index (count ":group:")) authority-index)
-              authority (subs attribute-value (+ authority-index (count "#")))
+        (if (and group-index
+                 authority-index
+                 (< -1 group-index authority-index))
+          (let [namespace (subs attribute-value 0 group-index)
+                groups-and-role (subs attribute-value (+ group-index (count ":group:")) authority-index)
+                authority (subs attribute-value (+ authority-index (count "#")))
 
-              groups (str/split groups-and-role #":")]
+                groups (str/split groups-and-role #":")]
 
-          (when (:log-authentication-details env)
-            (log/info "Parts" namespace groups authority))
+            (when (:log-authentication-details env)
+              (log/info "Parts" namespace groups authority))
 
-          ;; TODO: check trusted authority
+            ;; TODO: check trusted authority
 
-          (assoc data :groups groups))
-        data))
-    data))
+            (assoc data :groups groups))
+          data))
+      data)))
 
 ```

@@ -3,5 +3,7 @@
 This plugin increments the `:value`. Useful for tests.
 
 ```clj
-(update data :value inc)
+(defn transform [config data]
+  (update data :value inc))
+
 ```
