@@ -16,16 +16,6 @@
 
 ;;;; Application
 
-(def states
-  #{:application.state/approved
-    :application.state/closed
-    :application.state/draft
-    :application.state/rejected
-    :application.state/returned
-    :application.state/revoked
-    :application.state/submitted})
-;; TODO deleted state?
-
 (defmulti ^:private application-base-view
   "Updates the data in the application based on the given event.
   Contrast with calculate-permissions which updates permissions based

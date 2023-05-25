@@ -7,6 +7,7 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.common.application-util :as application-util]
             [rems.common.util :refer [deep-merge]]
             [rems.permissions :as permissions]
             [schema.core :as s])
@@ -411,7 +412,7 @@
                          (reduce model/application-view nil)
                          ;; permissions are tested separately in rems.application.test-master-workflow
                          permissions/cleanup)]
-    (is (contains? model/states (:application/state application)))
+    (is (contains? application-util/states (:application/state application)))
     application))
 
 (defn recreate
