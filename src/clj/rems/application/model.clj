@@ -672,31 +672,27 @@
              form/enrich-form-field-visible
              application))
 
-(defn- get-roles-for-permission [disable-command]
-  (let [roles (:when/role disable-command)
-        all-roles (list nil)]
-    (if (seq roles)
-      roles
-      all-roles)))
+(defn- get-permission-roles [disable-command]
+  (if-some [roles (seq (:when/role disable-command))]
+    roles
+    (list nil))) ; nil means for every role
 
-(defn- get-workflow-disable-commands [application get-workflow]
-  (let [workflow (-> application
-                     (get-in [:application/workflow :workflow/id])
-                     (get-workflow))]
-    (for [disable-command (get-in workflow [:workflow :disable-commands])
-          :let [states (set (:when/state disable-command))]
-          :when (or (empty? states)
-                    (contains? states (:application/state application)))
-          role (get-roles-for-permission disable-command)]
-      {:permission (:command disable-command)
-       :role role})))
+(defn- is-disabled-for-application [application disable-command]
+  (let [states (:when/state disable-command)]
+    (or (empty? states)
+        (contains? (set states) (:application/state application)))))
 
 (defn enrich-disable-commands [application get-config get-workflow]
-  (permissions/blacklist application
-                         (permissions/compile-rules
-                          (concat (for [command (:disable-commands (get-config))]
-                                    {:permission command})
-                                  (get-workflow-disable-commands application get-workflow)))))
+  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))]
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            (concat (for [command (:disable-commands (get-config))]
+                                      {:permission command})
+                                    (for [command (get-in workflow [:workflow :disable-commands])
+                                          :when (is-disabled-for-application application command)
+                                          role (get-permission-roles command)]
+                                      {:permission (:command command)
+                                       :role role}))))))
 
 (defn- get-attachment-redact-roles [attachment application]
   (when (:attachment/event attachment)
