@@ -156,6 +156,19 @@ Note! REMS sets a Cache-Control max-age of 23 hours for static resources (`:them
 
 Extra pages can be added to the navigation bar using `:extra-pages` configuration parameter. Each extra page can be either a link to an external url or it can show the content of a markdown file to the user. See `:extra-pages` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for examples of how to define the extra pages.
 
+## PDF customization
+
+Should you require to change the PDF output, there are styling options under the `:pdf-metadata` configuration key.
+
+By default a system font will be chosen (randomly), which many not be what you like, and which may not support all the characters you intend to use (diacritics etc.). You can customize the font like so:
+
+```clojure
+:pdf-metadata {:font {:encoding :unicode
+                      :ttf-name "/usr/share/fonts/truetype/ubuntu/Ubuntu-M.ttf"}}
+```
+
+A full list of options is described in [clj-pdf documentation](https://github.com/clj-pdf/clj-pdf#metadata).
+
 ## Logging
 
 REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything is printed to standard output. If you wish to customize logging, create your own Logback configuration file and specify its location using the `logback.configurationFile` system property:

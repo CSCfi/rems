@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.32
 
+### Additions
+- PDF output can be customized a little. This enables changing the font, which should fix missing diacritics. (#3158)
+
 ### Fixes
 - Label and header fields have URLs made into links. (#3155)
 
