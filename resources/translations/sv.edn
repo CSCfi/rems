@@ -102,6 +102,8 @@
                    :description "Rubrik"
                    :disable "Avaktivera"
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
+                   :disabled-command "Avaktiverad funktion"
+                   :disabled-commands "Avaktiverade funktioner"
                    :display-archived "Visa arkiverade"
                    :display-order "Visningsordning"
                    :edit "Ändra"
@@ -158,7 +160,7 @@
                    :view "Visa"
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
-                   :workflow-disabled-commands-explanation "Detta arbetsflöde döljs funktioner för användarna när villkoren uppfylls."}
+                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
                    :email "E-postadress"
@@ -273,6 +275,36 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
                 :form-selection "Blankett"}
+  :commands {:accept-invitation "Acceptera inbjudan"
+             :accept-licenses "Acceptera licenserna"
+             :add-licenses "Lägg till en licens"
+             :add-member "Lägg till deltagare"
+             :approve "Godkänn"
+             :assign-external-id "Ange externt id"
+             :change-applicant "Gör till sökanden"
+             :change-resources "Ändra resurser"
+             :close "Stäng ansökan"
+             :copy-as-new "Kopiera som nytt"
+             ; :create
+             :decide "Avgör"
+             :delete "Radera utkast"
+             :invite-decider "Bjud in beslutare"
+             :invite-member "Bjud in deltagare"
+             :invite-reviewer "Bjud in granskare"
+             :redact-attachments "Ändra bilagor"
+             :reject "Avslå"
+             :remark "Gör anteckning"
+             :remove-member "Ta bort deltagare"
+             :request-decision "Begär beslut"
+             :request-review "Begär granskning"
+             :return "Sänd tillbaka till sökande"
+             :review "Granska"
+             :revoke "Återkalla rättigheter"
+             :save-draft "Spara utkast"
+             ; :send-expiration-notifications
+             :submit "Lämna in ansökningen"
+             :technical-command "Teknisk aktion"
+             :uninvite-member "Ta bort deltagare"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
@@ -544,13 +576,14 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
-  :role {:applicant "Sökande"
-         :decider "Beslutare"
-         :handler "Handläggare"
-         :member "Deltagare"
-         :past-decider "Beslutare (tidigare)"
-         :past-reviewer "Granskare (tidigare)"
-         :reviewer "Granskare"}
+  :roles {:applicant "Sökande"
+          :decider "Beslutare"
+          :handler "Handläggare"
+          :member "Deltagare"
+          :past-decider "Tidigare beslutare"
+          :past-reviewer "Tidigare granskare"
+          :reviewer "Granskare"
+          :technical-role "Teknisk roll"}
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
@@ -563,6 +596,7 @@
           :show-all-n-rows "Visa alla %1 rader"}
   :unauthorized-page {:unauthorized "Ingen tillgång"
                       :you-are-unauthorized "Du har inte tillgång till denna sida."}
+  :unknown "Okänd"
   :forbidden-page {:forbidden "Förbjuden"
                    :you-are-forbidden "Innehåll förbjudet."}
   :error-page {:title "Problem"}

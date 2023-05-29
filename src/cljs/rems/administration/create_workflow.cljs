@@ -15,7 +15,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [localized localize-role localize-state text text-format]]
+            [rems.text :refer [localized localize-command localize-role localize-state text text-format]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
@@ -249,11 +249,11 @@
 
 (defn- select-command [{:keys [id commands value on-change]}]
   [:div.form-group.select-command
-   [:label.administration-field-label {:for id} (text :t.administration/command)]
+   [:label.administration-field-label {:for id} (text :t.administration/disabled-command)]
    [dropdown/dropdown
     {:id id
      :items commands
-     :item-label pr-str
+     :item-label #(str (localize-command %) " (" (name %) ")")
      :item-selected? #(= value %)
      :on-change on-change}]])
 
@@ -263,25 +263,29 @@
    [dropdown/dropdown
     {:id id
      :items application-util/states
-     :item-label localize-state
+     :item-label #(str (localize-state %) " (" (name %) ")")
      :item-selected? #(contains? (set value) %)
      :placeholder (text :t.dropdown/placeholder-any-selection)
      :multi? true
      :on-change on-change}]])
 
-(defn- select-user-roles [{:keys [id value on-change]}]
-  (let [applicant-and-members [:applicant :member]
-        experts [:handler :reviewer :decider :past-reviewer :past-decider]]
-    [:div.form-group.select-application-states
-     [:label.administration-field-label {:for id} (text :t.administration/user-role)]
-     [dropdown/dropdown
-      {:id id
-       :items (set (concat applicant-and-members experts))
-       :item-label localize-role
-       :item-selected? #(contains? (set value) %)
-       :placeholder (text :t.dropdown/placeholder-any-selection)
-       :multi? true
-       :on-change on-change}]]))
+(defn- select-user-roles []
+  (let [applicant-roles [:applicant :member]
+        expert-roles [:handler :reviewer :decider :past-reviewer :past-decider]
+        technical-roles [:expirer :reporter]]
+    (fn [{:keys [id value on-change]}]
+      [:div.form-group.select-application-states
+       [:label.administration-field-label {:for id} (text :t.administration/user-role)]
+       [dropdown/dropdown
+        {:id id
+         :items (concat applicant-roles expert-roles technical-roles)
+         :item-label #(if (some #{%} technical-roles)
+                        (str (text :t.roles/technical-role) " (" (name %) ")")
+                        (str (localize-role %) " (" (name %) ")"))
+         :item-selected? #(contains? (set value) %)
+         :placeholder (text :t.dropdown/placeholder-any-selection)
+         :multi? true
+         :on-change on-change}]])))
 
 (defn- render-disable-command-rule [rule-index rule]
   (let [id (str "disable-command-" rule-index)]

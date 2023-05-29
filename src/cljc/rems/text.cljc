@@ -261,14 +261,60 @@
     (text :t.applications/attachment-filename-redacted)
     (:attachment/filename attachment)))
 
+(def ^:private localized-roles
+  {; :api-key
+   :applicant :t.roles/applicant
+   :decider :t.roles/decider
+   ; :everyone-else
+   ; :expirer
+   :handler :t.roles/handler
+   ; :logged-in
+   :member :t.roles/member
+   ; :organization-owner
+   ; :owner
+   :past-decider :t.roles/past-decider
+   :past-reviewer :t.roles/past-reviewer
+   ; :reporter
+   :reviewer :t.roles/reviewer
+   ; :user-owner
+   })
+
 (defn localize-role [role]
-  (let [localization-key (case role
-                           :applicant :t.role/applicant
-                           :decider :t.role/decider
-                           :handler :t.role/handler
-                           :member :t.role/member
-                           :past-decider :t.role/past-decider
-                           :past-reviewer :t.role/past-reviewer
-                           :reviewer :t.role/reviewer
-                           nil)]
-    (text localization-key (str role))))
+  (text (get localized-roles role) :t.unknown))
+
+(def ^:private localized-commands
+  {:application.command/accept-invitation :t.commands/accept-invitation
+   :application.command/accept-licenses :t.commands/accept-licenses
+   :application.command/add-licenses :t.commands/add-licenses
+   :application.command/add-member :t.commands/add-member
+   :application.command/approve :t.commands/approve
+   :application.command/assign-external-id :t.commands/assign-external-id
+   :application.command/change-applicant :t.commands/change-applicant
+   :application.command/change-resources :t.commands/change-resources
+   :application.command/close :t.commands/close
+   :application.command/copy-as-new :t.commands/copy-as-new
+  ;;  :application.command/create
+   :application.command/decide :t.commands/decide
+   :application.command/delete :t.commands/delete
+   :application.command/invite-decider :t.commands/invite-decider
+   :application.command/invite-member :t.commands/invite-member
+   :application.command/invite-reviewer :t.commands/invite-reviewer
+   :application.command/redact-attachments :t.commands/redact-attachments
+   :application.command/reject :t.commands/reject
+   :application.command/remark :t.commands/remark
+   :application.command/remove-member :t.commands/remove-member
+   :application.command/request-decision :t.commands/request-decision
+   :application.command/request-review :t.commands/request-review
+   :application.command/return :t.commands/return
+   :application.command/review :t.commands/review
+   :application.command/revoke :t.commands/revoke
+   :application.command/save-draft :t.commands/save-draft
+  ;;  :application.command/send-expiration-notifications
+   :application.command/submit :t.commands/submit
+   :application.command/uninvite-member :t.commands/uninvite-member})
+
+(defn localize-command [command]
+  (let [command-type (if (keyword? command)
+                       command
+                       (:type command))]
+    (text (get localized-commands command-type) :t.unknown)))

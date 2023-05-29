@@ -12,7 +12,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localized localize-role localize-state text]]
+            [rems.text :refer [localized localize-command localize-role localize-state text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -51,6 +51,25 @@
    :workflow/decider :t.create-workflow/decider-workflow
    :workflow/master :t.create-workflow/master-workflow})
 
+(defn- render-command [command]
+  [:div
+   (localize-command command)
+   [:code.color-pre " (" (name command) ")"]])
+
+(defn- render-user-roles [roles]
+  (for [role roles]
+    [:div
+     (if (some #{role} [:expirer :reporter])
+       (text :t.roles/technical-role)
+       (localize-role role))
+     [:code.color-pre " (" (name role) ")"]]))
+
+(defn- render-application-states [states]
+  (for [state states]
+    [:div
+     (localize-state state)
+     [:code.color-pre " (" (name state) ")"]]))
+
 (rf/reg-sub ::disable-commands
             :<- [::workflow]
             #(get-in % [:workflow :disable-commands]))
@@ -59,22 +78,22 @@
             :<- [:language]
             (fn [[disable-commands _language]]
               (for [[rule-index rule] (indexed disable-commands)
-                    :let [states (sort (:when/state rule))
+                    :let [command (:command rule)
+                          states (sort (:when/state rule))
                           roles (sort (:when/role rule))]]
                 {:key (str "disable-command-" rule-index)
-                 :command {:display-value [:pre.mb-0
-                                           (pr-str (:command rule))]}
+                 :command {:display-value (render-command command)}
                  :application-state {:display-value (if (seq states)
-                                                      (str/capitalize (str/join ", " (map localize-state states)))
+                                                      (into [:<>] (render-application-states states))
                                                       (text :t.dropdown/placeholder-any-selection))}
                  :user-role {:display-value (if (seq roles)
-                                              (str/capitalize (str/join ", " (map localize-role roles)))
+                                              (into [:<>] (render-user-roles roles))
                                               (text :t.dropdown/placeholder-any-selection))}})))
 
 (defn- disable-commands-table []
   [table/table {:id ::disable-commands
                 :columns [{:key :command
-                           :title (text :t.administration/command)
+                           :title (text :t.administration/disabled-command)
                            :sortable? false}
                           {:key :application-state
                            :title (text :t.administration/application-state)
@@ -114,11 +133,14 @@
                                 title (:title (localized (:localizations license)))]]
                       [atoms/link nil uri title])
                     (interpose ", ")
-                    (into [:<>]))]
-              (when (seq (get-in workflow [:workflow :disable-commands]))
-                [:<>
-                 [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
-                 [:div.mt-4 [disable-commands-table]]])]}]
+                    (into [:<>]))]]}]
+   (when (seq (get-in workflow [:workflow :disable-commands]))
+     [collapsible/component
+      {:id "workflow-disabled-commands"
+       :title (text :t.administration/disabled-commands)
+       :always [:div
+                [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
+                [:div.mt-4 [disable-commands-table]]]}])
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]
