@@ -45,7 +45,7 @@
   (let [id-data (get-fake-id-data username)
         user-info (get-fake-user-info username)
         user-data (merge id-data user-info)
-        user-data (plugins/transform :extension-point/process-user-data user-data)
+        user-data (plugins/transform :extension-point/transform-user-data user-data)
         user (oidc/find-or-create-user! user-data)]
     (-> (redirect "/redirect")
         (assoc :session session)

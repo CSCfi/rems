@@ -1,7 +1,9 @@
 (ns rems.test-plugins
   (:require [clojure.test :refer [deftest is testing]]
             [rems.config :refer [env]]
-            [rems.plugins :as plugins]))
+            [rems.json :as json]
+            [rems.plugins :as plugins]
+            [stub-http.core :as stub]))
 
 (deftest test-transform
   (testing "without plugins configured"
@@ -55,8 +57,44 @@
                  (dissoc (ex-data e) :sci.impl/callstack))
               "the exception is wrapped fail and returned"))))))
 
+(deftest test-process
+  (with-open [server (stub/start! {"/" (fn [request]
+                                         {:status 200
+                                          :content-type "application/json"
+                                          :body (json/generate-string {:success true
+                                                                       :value (:value (:query-params request))
+                                                                       :header (get-in request [:headers :x-a-header])})})})]
+
+    (testing "with failing plugin"
+      (with-redefs [env {:plugins [{:id :plugin/fail-process
+                                    :filename "test-data/fail-process-plugin.md"}
+                                   {:id :plugin/http-example-request
+                                    :filename "test-data/example-request-plugin.md"
+                                    :url (:uri server)}]
+                         :extension-points {:test [:plugin/fail-process :plugin/http-example-request]}}]
+        (is (empty? (stub/recorded-responses server))
+            (is (= [{:result :fail}]
+                   (plugins/process :test {:value 42}))
+                "the first process to return errors is where the execution stops (short-circuit evaluation)")))
+
+      (testing "with process plugin"
+        (with-redefs [env {:plugins [{:id :plugin/fail-process
+                                      :filename "test-data/fail-process-plugin.md"} ; NB: declared but not used
+                                     {:id :plugin/http-example-request
+                                      :filename "test-data/example-request-plugin.md"
+                                      :url (:uri server)}]
+                           :extension-points {:test [:plugin/http-example-request]}}]
+
+          (plugins/process :test {:value 42})
+
+          (is (= {:success true
+                  :header "42"
+                  :value "42"}
+                 (json/parse-string (:body (first (stub/recorded-responses server)))))
+              "HTTP request succeeds"))))))
+
 (deftest test-validate
-  (testing "with validating plugin"
+  (testing "with validate plugin"
     (with-redefs [env {:plugins [{:id :plugin/fail-odd
                                   :filename "test-data/fail-odd-plugin.md"}
                                  {:id :plugin/fail-neg
@@ -76,15 +114,15 @@
                 "code will fail at runtime and the location is reported"))))
 
       (is (= nil (plugins/validate :test {:value 2}))
-          "pass both validations")
+          "pass both validate")
 
       (is (= [{:result :fail :reason :odd}] (plugins/validate :test {:value 1}))
-          "first validation fails")
+          "first validate")
 
       (is (= [{:result :fail :reason :neg}] (plugins/validate :test {:value -2}))
-          "first validation is a pass but the second fails")
+          "first validate is a pass but the second fails")
 
       (is (= [{:result :fail :reason :odd}]
              (plugins/validate :test {:value -1}))
-          "the first validator to return errors is where the execution stops (short-circuit evaluation)"))))
+          "the first validate to return errors is where the execution stops (short-circuit evaluation)"))))
 

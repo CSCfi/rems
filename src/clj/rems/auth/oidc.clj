@@ -174,7 +174,7 @@
                                 json/parse-string))
                 researcher-status (ga4gh/passport->researcher-status-by user-info)
                 user-data (merge id-data user-info researcher-status)
-                user-data (plugins/transform :extension-point/process-user-data user-data)
+                user-data (plugins/transform :extension-point/transform-user-data user-data)
                 user (find-or-create-user! user-data)]
 
             (when (:log-authentication-details env)

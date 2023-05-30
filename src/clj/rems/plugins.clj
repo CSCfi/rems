@@ -5,7 +5,8 @@
   code found in the specified file.
 
   See also docs/plugins.md"
-  (:require [clojure.java.io :as io]
+  (:require [clj-http.client]
+            [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [rems.common.util :refer [getx index-by]]
@@ -30,6 +31,7 @@
   (delay
     (sci/init {:namespaces {'rems.config {'env env}
                             'clojure.string (sci/copy-ns clojure.string (sci/create-ns 'clojure.string))
+                            'clj-http.client (sci/copy-ns clj-http.client (sci/create-ns 'clj-http.client))
 
                             'user {'getx getx}}})))
 
@@ -111,6 +113,27 @@
 
 
 
+(defn process
+  "Executes the configured plugins of `extension-point-id` to process the given `data`.
+
+  Each plugin gets a turn with the same original `data`.
+
+  The plugins will be executed in turn, in the same order as they have been configured.
+  The plugins are expected to do something side-effectful, like a HTTP request.
+
+  Each plugin should return a sequence of errors. The first non-empty result will
+  be returned (the first errors encountered) or `nil` (no errors). This would
+  will cause the processing to be re-tried later so you should prefer idempotent
+  implementations and external services."
+  [extension-point-id data]
+  ;; TODO move to mount? or refresh dynamically?
+  (load-plugin-configs!)
+  (load-plugins!)
+  (let [plugin-configs (get-plugins-at extension-point-id)]
+    (some (fn [plugin-config]
+            (seq (run-plugin "process" extension-point-id data plugin-config))) ; can return n problems
+          plugin-configs)))
+
 (defn transform
   "Reduces the configured plugins of `extension-point-id` to transform the given `data`.
 
@@ -121,7 +144,7 @@
 
   Returns whatever the last plugin returns."
   [extension-point-id data]
-  ;; TODO move to mount?
+  ;; TODO move to mount? or refresh dynamically?
   (load-plugin-configs!)
   (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
@@ -137,7 +160,7 @@
   Each plugin should return a sequence of errors. The first non-empty result will
   be returned (the first errors encountered) or `nil` (no errors)."
   [extension-point-id data]
-  ;; TODO move to mount?
+  ;; TODO move to mount? or refresh dynamically?
   (load-plugin-configs!)
   (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]

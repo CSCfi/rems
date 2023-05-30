@@ -20,6 +20,20 @@ Return the original data if nothing should be done.
   ...)
 ```
 
+### Process
+
+Processes the passed `data` for side-effects, such as integration to another server using HTTP requests.
+
+Returns the errors so an empty sequence (`nil` or `[]` for example) should be returned if everything was good.
+Any errors will prevent the possible next process from running. 
+
+In the case of a failure in processing of the same `data`, the process will be retried again, so the implementation should be idempotent. A retry can also happen for a successful process, if a processing plugin configured after this plugin fails.
+
+```clj
+(defn process [config data]
+  ...)
+```
+
 ### Validate
 
 Validates the passed `data`. 
@@ -36,11 +50,21 @@ Any errors will prevent the possible next validation from running.
 
 Next are all the current extension points and the function they expect to find in the plugin.
 
-### `:extension-point/process-user-data`
+### `:extension-point/transform-user-data`
 
-After logging in, after opening the OIDC token and potentially fetching the user info, allow processing that data further.
+After logging in, after opening the OIDC token and potentially fetching the user info, allow transforming that data further. For example, a complex field can be parsed and the result stored in new fields.
+
+See [AARC-G069-group-split.md](../resources/plugins/AARC-G069-group-split.md)
 
 ### `:extension-point/validate-user-data`
 
 After logging in, after the user data is finalized, allow validating it to prevent invalid users from logging in.
 
+See [validate-attributes.md](../resources/plugins/validate-attributes.md)
+
+### `:extension-point/process-entitlements`
+
+After entitlements have been updated, the new entitlements can be processed, and for example updated to
+another system.
+
+See [LS-AAI-GA4GH-push.md](../resources/plugins/LS-AAI-GA4GH-push.md)

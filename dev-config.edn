@@ -102,6 +102,6 @@
             :valid-groups ["VO1"]
             :error-key :t.login.errors/group}]
 
- :extension-points {:extension-point/process-user-data [:plugin/AARC-G069-group-split]
+ :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
                     :extension-point/validate-user-data [:plugin/validate-attributes
                                                          :plugin/validate-group-membership]}}
