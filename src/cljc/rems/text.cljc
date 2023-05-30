@@ -280,7 +280,7 @@
    })
 
 (defn localize-role [role]
-  (text (get localized-roles role) :t.unknown))
+  (text (get localized-roles role) :t/unknown))
 
 (def ^:private localized-commands
   {:application.command/accept-invitation :t.commands/accept-invitation
@@ -317,4 +317,4 @@
   (let [command-type (if (keyword? command)
                        command
                        (:type command))]
-    (text (get localized-commands command-type) :t.unknown)))
+    (text (get localized-commands command-type) :t/unknown)))

@@ -88,7 +88,6 @@
                    :category "Category"
                    :category-children "Subcategories"
                    :change "Change"
-                   :command "Action"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"
@@ -324,7 +323,6 @@
              :save-draft "Save as draft"
              ; :send-expiration-notifications
              :submit "Send application"
-             :technical-command "Technical action"
              :uninvite-member "Uninvite member"}
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"

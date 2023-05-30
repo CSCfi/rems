@@ -144,6 +144,13 @@
 (fetcher/reg-fetcher ::licenses "/api/licenses")
 
 (fetcher/reg-fetcher ::commands "/api/applications/commands")
+(rf/reg-sub ::available-commands
+            :<- [::commands]
+            (fn [commands]
+              (->> (sort commands)
+                   (remove #{:application.command/assign-external-id
+                             :application.command/create
+                             :application.command/send-expiration-notifications}))))
 
 ;;;; UI
 
@@ -295,7 +302,7 @@
       [:div.form-field-controls
        [items/remove-button #(rf/dispatch [::remove-rule rule-index])]]]
      [select-command {:id (str id "-select-command")
-                      :commands @(rf/subscribe [::commands])
+                      :commands @(rf/subscribe [::available-commands])
                       :value (:command rule)
                       :on-change #(rf/dispatch [::select-rule-command rule-index %])}]
      [:div.row

@@ -86,7 +86,6 @@
                    :category "Kategori"
                    :category-children "Underkategorier"
                    :change "Ändra"
-                   :command "Funktion"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"
                    :create-catalogue-item "Ny katalogpost"
@@ -303,7 +302,6 @@
              :save-draft "Spara utkast"
              ; :send-expiration-notifications
              :submit "Lämna in ansökningen"
-             :technical-command "Teknisk aktion"
              :uninvite-member "Ta bort deltagare"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
