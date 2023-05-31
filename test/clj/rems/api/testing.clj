@@ -10,7 +10,6 @@
             [rems.handler :refer :all]
             [rems.locales]
             [rems.middleware]
-            [rems.main]
             [ring.mock.request :refer :all]
             [rems.json :as json]))
 

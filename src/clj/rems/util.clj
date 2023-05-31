@@ -110,3 +110,9 @@
   (.mkdirs dir)
   (delete-directory-contents-recursively dir))
 
+(defn rand-nth*
+  "As (rand-nth), but returns nil if (seq coll) is nil."
+  [coll]
+  (some-> (seq coll)
+          (rand-nth)))
+

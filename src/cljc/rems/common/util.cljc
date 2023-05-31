@@ -680,3 +680,37 @@
   (let [filters (or filters {})]
     (filter #(contains-all-kv-pairs? % filters) coll)))
 
+(defn trim-leading [s substr]
+  (if (str/blank? substr)
+    s
+    (loop [s s]
+      (cond
+        (empty? s) s
+        (not (str/starts-with? s substr)) s
+        :else (recur (subs s (count substr)))))))
+
+(defn trim-trailing [s substr]
+  (-> (str/reverse s) (trim-leading substr) (str/reverse)))
+
+(defn join-str
+  "Like clojure.string/join but removes any duplicate instances of `separator`
+   between strings."
+  [separator coll]
+  (loop [coll coll
+         parts []]
+    (if (empty? coll)
+      (str/join separator parts)
+      (recur (rest coll)
+             (conj parts
+                   (cond-> (first coll)
+                     (seq (rest coll)) (trim-trailing separator)
+                     (seq parts) (trim-leading separator)))))))
+
+(deftest test-join-str
+  (is (= "localhost" (join-str "/" ["localhost"])))
+  (is (= "http://localhost:3000/api/thing"
+         (join-str "/" ["http://localhost:3000" "api" "thing"])
+         (join-str "/" ["http://localhost:3000/" "api" "thing"])
+         (join-str "/" ["http://localhost:3000/" "/api/" "/thing"])))
+  (is (= "a/b/c" (join-str "/" ["a/" "/b/" "/c"]))))
+
