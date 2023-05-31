@@ -305,7 +305,7 @@
              :change-resources "Change resources"
              :close "Close application"
              :copy-as-new "Copy as a new application"
-             ; :create
+             ;; :create
              :decide "Decide"
              :delete "Delete draft"
              :invite-decider "Invite decider"
@@ -321,7 +321,7 @@
              :review "Review"
              :revoke "Revoke entitlement"
              :save-draft "Save as draft"
-             ; :send-expiration-notifications
+             ;; :send-expiration-notifications
              :submit "Send application"
              :uninvite-member "Uninvite member"}
   :create-form {:add-column "Add column"

@@ -15,7 +15,7 @@
             :approve "Godkänn"
             :approve-end-date "Datum då rättigheterna upphör (valfritt)"
             :approve-reject "Godkänn eller avslå"
-            :assign-external-id "Ange externt id" ;; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
+            :assign-external-id "Ange externt id" ; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
             :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
@@ -284,7 +284,7 @@
              :change-resources "Ändra resurser"
              :close "Stäng ansökan"
              :copy-as-new "Kopiera som nytt"
-             ; :create
+             ;; :create
              :decide "Avgör"
              :delete "Radera utkast"
              :invite-decider "Bjud in beslutare"
@@ -300,7 +300,7 @@
              :review "Granska"
              :revoke "Återkalla rättigheter"
              :save-draft "Spara utkast"
-             ; :send-expiration-notifications
+             ;; :send-expiration-notifications
              :submit "Lämna in ansökningen"
              :uninvite-member "Ta bort deltagare"}
   :create-form {:add-column "Lägg till kolumn"

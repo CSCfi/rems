@@ -1036,7 +1036,7 @@
                               :actor handler
                               :reviewers [reviewer]
                               :comment "please have a look"}))
-    ; create application to demo attachment redaction feature
+    ;; create application to demo attachment redaction feature
     (let [applicant (:applicant1 users)
           member (:applicant2 users)
           decider (:approver1 users)
@@ -1080,8 +1080,8 @@
                                 :attachment (test-helpers/create-attachment! {:actor applicant
                                                                               :application-id app-id
                                                                               :filename "applicant_attachment.pdf"})})
-      ; (delete-orphan-attachments-on-submit) process manager removes all dangling attachments,
-      ; so we submit application first before creating more attachments
+      ;; (delete-orphan-attachments-on-submit) process manager removes all dangling attachments,
+      ;; so we submit application first before creating more attachments
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})
