@@ -119,3 +119,8 @@
 (s/defschema LicenseId
   {:license/id s/Int})
 
+(s/defschema DisableCommandRule
+  {:command s/Keyword
+   (s/optional-key :when/state) [s/Keyword]
+   (s/optional-key :when/role) [s/Keyword]})
+

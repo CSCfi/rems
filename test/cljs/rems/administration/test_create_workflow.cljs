@@ -9,7 +9,8 @@
                 :type :workflow/default
                 :forms [{:form/id 123}]
                 :handlers ["bob"]
-                :licenses [{:id 1}]}]
+                :licenses [{:id 1}]
+                :disable-commands [{:command :application.command/close}]}]
       (is (not (nil? (build-create-request form))))
       (is (not (nil? (build-create-request (dissoc form :forms :licenses)))))
       (is (= {:licenses [{:license/id 1}]}
@@ -21,7 +22,9 @@
       (testing "missing workflow type"
         (is (nil? (build-create-request (assoc form :type nil)))))
       (testing "invalid workflow type"
-        (is (nil? (build-create-request (assoc form :type :no-such-type)))))))
+        (is (nil? (build-create-request (assoc form :type :no-such-type)))))
+      (testing "missing command in disable commands"
+        (is (nil? (build-create-request (update form :disable-commands conj {})))))))
 
   (testing "default workflow"
     (let [form {:organization {:organization/id "abc"}
@@ -35,7 +38,8 @@
                 :type :workflow/default
                 :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]
-                :licenses []}
+                :licenses []
+                :disable-commands []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -52,7 +56,8 @@
                 :type :workflow/decider
                 :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]
-                :licenses []}
+                :licenses []
+                :disable-commands []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -68,7 +73,8 @@
                 :type :workflow/master
                 :forms []
                 :handlers ["bob" "carl"]
-                :licenses []}
+                :licenses []
+                :disable-commands []}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
@@ -77,12 +83,15 @@
   (is (= {:id 3
           :organization {:organization/id "o"}
           :title "t"
-          :handlers ["a" "b"]}
+          :handlers ["a" "b"]
+          :disable-commands [{:command :application.command/close}]}
          (build-edit-request 3 {:organization {:organization/id "o"}
                                 :title "t"
                                 :handlers [{:userid "a"} {:userid "b"}]
-                                :licenses [{:id 1}]}))) ; licenses should not be mapped
+                                :licenses [{:id 1}] ; licenses should not be mapped
+                                :disable-commands [{:command :application.command/close}]})))
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers []}))))
+  (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers []})))
+  (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "t" :handlers [{:userid "a"} {:userid "b"}] :disable-commands [{}]}))))

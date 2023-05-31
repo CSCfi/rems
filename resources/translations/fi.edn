@@ -74,6 +74,7 @@
                    :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
+                   :application-state "Hakemuksen tila"
                    :archive "Arkistoi"
                    :back "Takaisin"
                    :blacklist "Kieltolista"
@@ -99,6 +100,8 @@
                    :delete-confirmation "Haluatko todella poistaa?"
                    :description "Kuvaus"
                    :disable "Poista käytöstä"
+                   :disabled-command "Poistettu toiminto"
+                   :disabled-commands "Poistetut toiminnot"
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
                    :display-order "Näyttöjärjestys"
@@ -152,9 +155,11 @@
                    :unarchive "Palauta arkistosta"
                    :user "Käyttäjä"
                    :userid "Käyttäjätunnus"
+                   :user-role "Käyttäjän rooli"
                    :view "Avaa"
                    :workflow "Työvuo"
-                   :workflows "Työvuot"}
+                   :workflows "Työvuot"
+                   :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
                    :email "Sähköposti"
@@ -269,6 +274,35 @@
              :show-more "Näytä lisää"}
   :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta."
                 :form-selection "Lomake"}
+  :commands {:accept-invitation "Hyväksy kutsu"
+             :accept-licenses "Hyväksy käyttöehdot"
+             :add-licenses "Lisää käyttöehto"
+             :add-member "Lisää jäsen"
+             :approve "Hyväksy"
+             :assign-external-id "Aseta tunniste"
+             :change-applicant "Tee hakija"
+             :change-resources "Muuta resursseja"
+             :close "Sulje hakemus"
+             :copy-as-new "Kopioi uudeksi hakemukseksi"
+             ;; :create
+             :decide "Päätä"
+             :delete "Poista luonnos"
+             :invite-decider "Kutsu päättäjä"
+             :invite-member "Kutsu jäsen"
+             :invite-reviewer "Kutsu katselmoija"
+             :redact-attachments "Muokkaa liitetiedostoja"
+             :reject "Hylkää"
+             :remark "Kirjaa huomio"
+             :remove-member "Poista jäsen"
+             :request-decision "Pyydä päätöstä"
+             :request-review "Pyydä katselmointia"
+             :return "Palauta hakijalle"
+             :review "Katselmoi"
+             :revoke "Peru käyttöoikeus"
+             :save-draft "Tallenna"
+             ;; :send-expiration-notifications
+             :submit "Lähetä hakemus"
+             :uninvite-member "Poista henkilö"}
   :create-form {:add-column "Lisää sarake"
                 :add-form-field "Lisää kenttä"
                 :add-option "Lisää vaihtoehto"
@@ -322,17 +356,21 @@
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Päättäjätyövuo"
+  :create-workflow {:create-new-rule "Uusi sääntö"
+                    :decider-workflow "Päättäjätyövuo"
                     :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on."
                     :default-workflow "Oletustyövuo"
                     :default-workflow-description "Hakemus on täysin käsittelijän hallinnassa. Käsittelijä voi pyytää toisilta katselmointeja ja päätöksiä tarpeen mukaan."
+                    :disable-commands "Poista toimintoja käytöstä"
                     :handlers "Käsittelijät"
                     :master-workflow "Master-työvuo"
                     :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
+                    :rule "Sääntö"
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."
-             :loading "Ladataan..."}
+             :loading "Ladataan..."
+             :placeholder-any-selection "Mikä tahansa"}
   :duo {:fields {:more-info "Lisätietoa hakijalle (valinnainen)"}
         :no-duo-codes "Ei DUO-koodeja"
         :restriction {:collaboration "Tutkimusryhmän johtaja(t)"
@@ -473,9 +511,10 @@
   :item-lists {:move-down "Siirrä alas"
                :move-up "Siirrä ylös"
                :remove "Poista"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (valinnainen)"
           :parens "%1 (%2)"}
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
@@ -535,6 +574,14 @@
             :settings "Asetukset"
             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
+  :roles {:applicant "Hakija"
+          :decider "Päättäjä"
+          :handler "Käsittelijä"
+          :member "Jäsen"
+          :past-decider "Aikaisempi päättäjä"
+          :past-reviewer "Aikaisempi katselmoija"
+          :reviewer "Katselmoija"
+          :technical-role "Tekninen rooli"}
   :search {:clear-search "Tyhjennä hakuehdot"
            :example-searches "Esimerkkihakuja"
            :learn-more "Opi lisää"
@@ -547,6 +594,7 @@
           :show-all-n-rows "Näytä kaikki %1 riviä"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
+  :unknown "Tuntematon"
   :forbidden-page {:forbidden "Kielletty"
                    :you-are-forbidden "Sivun käyttö on kielletty."}
   :error-page {:title "Ongelma"}

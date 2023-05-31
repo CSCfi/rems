@@ -12,6 +12,7 @@
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.auth :as auth]
+            [rems.common.roles :refer [+admin-read-roles+]]
             [rems.config :as config]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -234,6 +235,12 @@
       :body [request ValidateRequest]
       :return schema/SuccessResponse
       (ok (validate-application request)))
+
+    (GET "/commands" []
+      :summary "List of application commands"
+      :roles +admin-read-roles+
+      :return [s/Keyword]
+      (ok (sort commands/command-names)))
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)

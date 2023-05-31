@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.application.events :as events]
-            [rems.application.model :as model]
+            [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.test-locales :refer [loc-en]]
             [rems.text :refer [with-language localize-event localize-state]]))
@@ -24,14 +24,14 @@
              (dissoc :unknown)
              (keys)
              (sort))
-         (->> model/states
+         (->> application-util/states
               (map name)
               (map keyword)
               (sort))))
   (with-language :en
     (fn []
       (is (not (valid-localization? (localize-state "foobar"))))
-      (doseq [s model/states]
+      (doseq [s application-util/states]
         (testing s
           (is (valid-localization? (localize-state s))))))))
 

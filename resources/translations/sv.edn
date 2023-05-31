@@ -15,7 +15,7 @@
             :approve "Godkänn"
             :approve-end-date "Datum då rättigheterna upphör (valfritt)"
             :approve-reject "Godkänn eller avslå"
-            :assign-external-id "Ange externt id" ;; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
+            :assign-external-id "Ange externt id" ; ELLER Ange id för den resurs ansökan (vai arbetsflödet gäller?
             :assign-external-id-info "Externt id"
             :bundling-intro [:div.intro [:p "Notera att endast resurser med gemensam ansökningsblankett och gemensamt arbetsflöde kan kopplas samman."]]
             :cancel "Avbryt"
@@ -74,6 +74,7 @@
                    :add "Lägg till"
                    :added-at "Tillagd"
                    :added-by "Tillagd av"
+                   :application-state "Ansökningsstatus"
                    :archive "Arkivera"
                    :back "Tillbaka"
                    :blacklist "Svartlista"
@@ -100,6 +101,8 @@
                    :description "Rubrik"
                    :disable "Avaktivera"
                    :disabled-and-archived-explanation "Att avaktivera ett föremål gör att det döljs för användarna. Att arkivera det gör att det även döljs från administrationsvyn."
+                   :disabled-command "Avaktiverad funktion"
+                   :disabled-commands "Avaktiverade funktioner"
                    :display-archived "Visa arkiverade"
                    :display-order "Visningsordning"
                    :edit "Ändra"
@@ -152,9 +155,11 @@
                    :unarchive "Avarkivera"
                    :user "Användare"
                    :userid "Användarnamn"
+                   :user-role "Användarensroll"
                    :view "Visa"
                    :workflow "Arbetsflöde"
-                   :workflows "Arbetsflöden"}
+                   :workflows "Arbetsflöden"
+                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
                    :email "E-postadress"
@@ -269,6 +274,35 @@
              :show-more "Visa mer"}
   :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
                 :form-selection "Blankett"}
+  :commands {:accept-invitation "Acceptera inbjudan"
+             :accept-licenses "Acceptera licenserna"
+             :add-licenses "Lägg till en licens"
+             :add-member "Lägg till deltagare"
+             :approve "Godkänn"
+             :assign-external-id "Ange externt id"
+             :change-applicant "Gör till sökanden"
+             :change-resources "Ändra resurser"
+             :close "Stäng ansökan"
+             :copy-as-new "Kopiera som nytt"
+             ;; :create
+             :decide "Avgör"
+             :delete "Radera utkast"
+             :invite-decider "Bjud in beslutare"
+             :invite-member "Bjud in deltagare"
+             :invite-reviewer "Bjud in granskare"
+             :redact-attachments "Ändra bilagor"
+             :reject "Avslå"
+             :remark "Gör anteckning"
+             :remove-member "Ta bort deltagare"
+             :request-decision "Begär beslut"
+             :request-review "Begär granskning"
+             :return "Sänd tillbaka till sökande"
+             :review "Granska"
+             :revoke "Återkalla rättigheter"
+             :save-draft "Spara utkast"
+             ;; :send-expiration-notifications
+             :submit "Lämna in ansökningen"
+             :uninvite-member "Ta bort deltagare"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
@@ -322,17 +356,21 @@
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
+  :create-workflow {:create-new-rule "Ny regel"
+                    :decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
                     :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
+                    :disable-commands "Avaktivera funktioner"
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
+                    :rule "Regel"
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."
-             :loading "Läser in..."}
+             :loading "Läser in..."
+             :placeholder-any-selection "Vad som helst"}
   :duo {:fields {:more-info "Tilläggsinformation till sökande (frivillig)"}
         :no-duo-codes "Inga DUO-koder"
         :restriction {:collaboration "Forskningsgruppledare"
@@ -473,9 +511,10 @@
   :item-lists {:move-down "Flytta nedåt"
                :move-up "Flytta uppåt"
                :remove "Ta bort"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (valfritt)"
           :parens "%1 (%2)"}
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
@@ -535,6 +574,14 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
+  :roles {:applicant "Sökande"
+          :decider "Beslutare"
+          :handler "Handläggare"
+          :member "Deltagare"
+          :past-decider "Tidigare beslutare"
+          :past-reviewer "Tidigare granskare"
+          :reviewer "Granskare"
+          :technical-role "Teknisk roll"}
   :search {:clear-search "Töm söktermer"
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
@@ -547,6 +594,7 @@
           :show-all-n-rows "Visa alla %1 rader"}
   :unauthorized-page {:unauthorized "Ingen tillgång"
                       :you-are-unauthorized "Du har inte tillgång till denna sida."}
+  :unknown "Okänd"
   :forbidden-page {:forbidden "Förbjuden"
                    :you-are-forbidden "Innehåll förbjudet."}
   :error-page {:title "Problem"}

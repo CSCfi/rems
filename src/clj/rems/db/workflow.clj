@@ -4,6 +4,7 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
+            [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [medley.core :refer [update-existing-in]]))
@@ -12,7 +13,8 @@
   {:type (apply s/enum events/workflow-types)
    :handlers [s/Str]
    (s/optional-key :forms) [{:form/id s/Num}]
-   (s/optional-key :licenses) [s/Int]})
+   (s/optional-key :licenses) [s/Int]
+   (s/optional-key :disable-commands) [schema-base/DisableCommandRule]})
 
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
@@ -20,11 +22,12 @@
 (def ^:private validate-workflow-body
   (s/validator WorkflowBody))
 
-(defn create-workflow! [{:keys [organization type title handlers forms licenses]}]
-  (let [body {:type type
-              :handlers handlers
-              :forms forms
-              :licenses licenses}]
+(defn create-workflow! [{:keys [organization type title handlers forms licenses disable-commands]}]
+  (let [body (cond-> {:type type
+                      :handlers handlers
+                      :forms forms
+                      :licenses licenses}
+               (seq disable-commands) (assoc :disable-commands disable-commands))]
     (:id (db/create-workflow! {:organization (:organization/id organization)
                                :title title
                                :workflow (json/generate-string
@@ -57,10 +60,11 @@
       (update-existing-in [:workflow :handlers] #(map :userid %))
       (update-existing-in [:workflow :licenses] #(map :license/id %))))
 
-(defn edit-workflow! [{:keys [id organization title handlers]}]
+(defn edit-workflow! [{:keys [id organization title handlers disable-commands]}]
   (let [workflow (unrich-workflow (get-workflow id))
         workflow-body (cond-> (:workflow workflow)
-                        handlers (assoc :handlers handlers))]
+                        handlers (assoc :handlers handlers)
+                        disable-commands (assoc :disable-commands disable-commands))]
     (db/edit-workflow! {:id (or id (:id workflow))
                         :title (or title (:title workflow))
                         :organization (or (:organization/id organization)
