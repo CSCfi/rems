@@ -9,6 +9,8 @@
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
+            [mount.core :as mount]
+            [nextjournal.beholder :as beholder]
             [rems.common.util :refer [getx index-by]]
             [rems.config :refer [env]]
             [rems.markdown :as md]
@@ -43,7 +45,6 @@
 
 
 ;; TODO: use common cache architecture?
-;; TODO: timed cache refresh
 (def plugin-configs (atom {}))
 (def plugin-cache (atom {}))
 
@@ -63,10 +64,6 @@
   (->> (get-in env [:extension-points extension-point-id])
        (mapv get-plugin-config)))
 
-
-
-
-
 (defn- wrap-log-ns [extension-point-id plugin-id]
   {'log {'trace (log-wrapper extension-point-id plugin-id :trace)
          'debug (log-wrapper extension-point-id plugin-id :debug)
@@ -77,6 +74,7 @@
 
 (defn- load-plugin [plugin-config]
   (let [plugin-filename (getx plugin-config :filename)
+        _ (log/info "Loading plugin" (:id plugin-config) "from" (pr-str plugin-filename))
         ctx (-> @sci-ctx
                 sci/fork
                 (sci/merge-opts {:namespaces (wrap-log-ns :loading plugin-config)}))]
@@ -89,16 +87,47 @@
     ctx))
 
 (defn- load-plugins! []
+  (reset! plugin-cache {})
   (doseq [plugin-config (vals @plugin-configs)
           :let [plugin-id (getx plugin-config :id)]]
     (swap! plugin-cache assoc plugin-id (load-plugin plugin-config))))
+
+
+(defn- plugins-files-changed [{:keys [path] :as _event}]
+  (let [filename (.toString (.toAbsolutePath path))
+        _ (log/debug "Changed plugin file" filename)
+        changed-plugins (for [plugin-config (:plugins env)
+                              :when (.endsWith path (:filename plugin-config))]
+                          plugin-config)]
+    (doseq [plugin-config changed-plugins
+            :let [plugin-id (:id plugin-config)]]
+      (swap! plugin-cache assoc plugin-id (load-plugin plugin-config)))))
+
+(defn- remove-filename [filename]
+  (.getParent (io/file filename)))
+
+(mount/defstate plugin-loader
+  :start (let [plugin-paths (->> env
+                                 :plugins
+                                 (mapv :filename)
+                                 (mapv remove-filename)
+                                 (into #{}))]
+           (log/info "Loading plugins from:" (pr-str plugin-paths))
+           ;; NB: plugin configs are read only at mount start
+           (load-plugin-configs!)
+           (load-plugins!)
+           (apply beholder/watch plugins-files-changed plugin-paths))
+  :stop (beholder/stop plugin-loader))
+
+
+
+
 
 (defn- run-plugin
   "Run the plugin from `plugin-config` passing in `data` at `extension-point-id` (context used for logging).
 
   The plugin runs through SCI with some context injected (data, config, env, log etc.)"
   [symbol-name extension-point-id data plugin-config]
-  (load-plugins!)
   (let [plugin-id (getx plugin-config :id)]
     (log/debug "Running plugin" plugin-id)
     (let [plugin (getx @plugin-cache plugin-id)
@@ -126,9 +155,6 @@
   will cause the processing to be re-tried later so you should prefer idempotent
   implementations and external services."
   [extension-point-id data]
-  ;; TODO move to mount? or refresh dynamically?
-  (load-plugin-configs!)
-  (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
     (some (fn [plugin-config]
             (seq (run-plugin "process" extension-point-id data plugin-config))) ; can return n problems
@@ -144,9 +170,6 @@
 
   Returns whatever the last plugin returns."
   [extension-point-id data]
-  ;; TODO move to mount? or refresh dynamically?
-  (load-plugin-configs!)
-  (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
     (reduce (partial run-plugin "transform" extension-point-id)
             data
@@ -160,9 +183,6 @@
   Each plugin should return a sequence of errors. The first non-empty result will
   be returned (the first errors encountered) or `nil` (no errors)."
   [extension-point-id data]
-  ;; TODO move to mount? or refresh dynamically?
-  (load-plugin-configs!)
-  (load-plugins!)
   (let [plugin-configs (get-plugins-at extension-point-id)]
     (some (fn [plugin-config]
             (seq (run-plugin "validate" extension-point-id data plugin-config))) ; can return n problems

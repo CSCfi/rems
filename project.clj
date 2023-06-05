@@ -62,7 +62,8 @@
                  [ring/ring-devel "1.9.6"]
                  [ring/ring-servlet "1.9.6"]
                  [nano-id "1.0.0"]
-                 [org.babashka/sci "0.7.39"]]
+                 [org.babashka/sci "0.7.39"]
+                 [com.nextjournal/beholder "1.0.2"]]
 
   :min-lein-version "2.9.8"
 

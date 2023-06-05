@@ -8,6 +8,8 @@
 (deftest test-transform
   (testing "without plugins configured"
     (with-redefs [env {}]
+      (#'plugins/load-plugin-configs!)
+      (#'plugins/load-plugins!)
       (is (= {} (plugins/transform :test {})))
       (is (= {:anything 52} (plugins/transform :test {:anything 52})))))
 
@@ -15,6 +17,8 @@
     (with-redefs [env {:plugins [{:id :plugin/test
                                   :filename "test-data/identity-plugin.md"}]
                        :extension-points {:test [:plugin/test]}}]
+      (#'plugins/load-plugin-configs!)
+      (#'plugins/load-plugins!)
       (is (= {} (plugins/transform :test {})))
       (is (= {:anything 52} (plugins/transform :test {:anything 52})))))
 
@@ -22,6 +26,8 @@
     (with-redefs [env {:plugins [{:id :plugin/test
                                   :filename "test-data/increment-plugin.md"}]
                        :extension-points {:test [:plugin/test]}}]
+      (#'plugins/load-plugin-configs!)
+      (#'plugins/load-plugins!)
       (is (= {:value 2} (plugins/transform :test {:value 1})))))
 
   (testing "with compile failing plugin"
@@ -29,7 +35,9 @@
                                   :filename "test-data/failing-plugin.md"}]
                        :extension-points {:test [:plugin/test]}}]
       (try
-        (plugins/transform :test {})
+        (#'plugins/load-plugin-configs!)
+        (#'plugins/load-plugins!)
+        ;; NB: error is thrown at load-time before plugin is used
 
         (catch clojure.lang.ExceptionInfo e
           (is (= {:type :sci/error
@@ -45,6 +53,9 @@
     (with-redefs [env {:plugins [{:id :plugin/test
                                   :filename "test-data/exception-plugin.md"}]
                        :extension-points {:test [:plugin/test]}}]
+      (#'plugins/load-plugin-configs!)
+      (#'plugins/load-plugins!)
+
       (try
         (plugins/transform :test {})
 
@@ -72,6 +83,9 @@
                                     :filename "test-data/example-request-plugin.md"
                                     :url (:uri server)}]
                          :extension-points {:test [:plugin/fail-process :plugin/http-example-request]}}]
+        (#'plugins/load-plugin-configs!)
+        (#'plugins/load-plugins!)
+
         (is (empty? (stub/recorded-responses server))
             (is (= [{:result :fail}]
                    (plugins/process :test {:value 42}))
@@ -84,6 +98,9 @@
                                       :filename "test-data/example-request-plugin.md"
                                       :url (:uri server)}]
                            :extension-points {:test [:plugin/http-example-request]}}]
+
+          (#'plugins/load-plugin-configs!)
+          (#'plugins/load-plugins!)
 
           (plugins/process :test {:value 42})
 
@@ -100,6 +117,9 @@
                                  {:id :plugin/fail-neg
                                   :filename "test-data/fail-neg-plugin.md"}]
                        :extension-points {:test [:plugin/fail-odd :plugin/fail-neg]}}]
+      (#'plugins/load-plugin-configs!)
+      (#'plugins/load-plugins!)
+
       (testing "failing at runtime"
         (try
           (plugins/validate :test {})
