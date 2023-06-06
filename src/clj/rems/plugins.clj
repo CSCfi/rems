@@ -93,7 +93,7 @@
     (swap! plugin-cache assoc plugin-id (load-plugin plugin-config))))
 
 
-(defn- plugins-files-changed [{:keys [path] :as _event}]
+(defn- plugin-files-changed [{:keys [path] :as _event}]
   (let [filename (.toString (.toAbsolutePath path))
         _ (log/debug "Changed plugin file" filename)
         changed-plugins (for [plugin-config (:plugins env)
@@ -113,10 +113,12 @@
                                  (mapv remove-filename)
                                  (into #{}))]
            (log/info "Loading plugins from:" (pr-str plugin-paths))
-           ;; NB: plugin configs are read only at mount start
+           ;; NB: while plugins can be reloaded
+           ;; the plugin configs are read only at mount
+           ;; start as they are part of the config
            (load-plugin-configs!)
            (load-plugins!)
-           (apply beholder/watch plugins-files-changed plugin-paths))
+           (apply beholder/watch plugin-files-changed plugin-paths))
   :stop (beholder/stop plugin-loader))
 
 
@@ -133,9 +135,9 @@
     (let [plugin (getx @plugin-cache plugin-id)
           ctx (-> plugin
                   sci/fork
-                  (sci/merge-opts {:namespaces (merge (wrap-log-ns extension-point-id plugin-config)
-                                                      {'user {'config plugin-config
-                                                              'data data}})}))]
+                  (sci/merge-opts {:namespaces (wrap-log-ns extension-point-id plugin-config)})
+                  (sci/merge-opts {:namespaces {'user {'config plugin-config
+                                                       'data data}}}))]
       (sci/eval-string* ctx (str "(" symbol-name " config data)")))))
 
 
