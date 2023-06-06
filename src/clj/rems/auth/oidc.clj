@@ -117,8 +117,8 @@
 
   (when-let [errors (seq (remove nil? (plugins/validate :extension-point/validate-user-data user)))]
     (throw (ex-info "Invalid user"
-                    {:key :t.login.errors/invalid-user
-                     :args errors
+                    {:key (or (:key (first errors)) :t.login.errors/invalid-user)
+                     :args (:args (first errors))
                      :user user}))))
 
 (defn find-or-create-user! [user-data]

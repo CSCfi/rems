@@ -9,7 +9,6 @@
             [mount.core :as mount]
             [nano-id.core :as nano-id]
             [rems.auth.auth :as auth]
-            [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
             [rems.common.util :refer [assoc-some-in]]
             [rems.config :refer [env]]
             [rems.context :as context]

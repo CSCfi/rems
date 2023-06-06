@@ -71,6 +71,10 @@ After logging in, after the user data is finalized, allow validating it to preve
 
 Expects `validate` function.
 
+The first returned error will be shown to the user on an error page. It can have the keys:
+- `:key` The translation key of the error message such as `:t.login.errors/invalid-user` (possibly from extra translations provided).
+- `:args` Additional arguments for the message translation (`%1`,`%2`, ...) if any. These must be translation keys too.
+
 See [validate-attributes.md](../resources/plugins/validate-attributes.md)
 
 ### `:extension-point/process-entitlements`
