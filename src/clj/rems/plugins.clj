@@ -16,17 +16,27 @@
             [rems.markdown :as md]
             [sci.core :as sci]))
 
-;;; SCI
+;; logging is difficult to expose so we wrap it
+
+(def ^:dynamic *logging-ctx*)
 
 (defn log-wrapper
   "Wraps the `clojure.tools.logging` macros and presents helper functions for plugins.
 
-  The `extension-point-id` and `plugin-id` are automatically included in the logs."
-  [extension-point-id plugin-id level]
+  The keys `extension-point-id` and `plugin-id` are automatically included in the logs from the
+  `*logging-ctx*`."
+  [level]
   (fn [x & args]
-    (if (instance? Throwable x)
-      (log/log level x (apply print-str extension-point-id plugin-id "-" args))
-      (log/log level (apply print-str extension-point-id plugin-id "-" x args)))))
+    (let [{:keys [extension-point-id plugin-id]} *logging-ctx*]
+      (if (instance? Throwable x)
+        (log/log level x (apply print-str extension-point-id plugin-id "-" args))
+        (log/log level (apply print-str extension-point-id plugin-id "-" x args))))))
+
+
+
+
+
+;;; SCI
 
 (def sci-ctx
   "Default SCI context for plugins."
@@ -34,8 +44,14 @@
     (sci/init {:namespaces {'rems.config {'env env}
                             'clojure.string (sci/copy-ns clojure.string (sci/create-ns 'clojure.string))
                             'clj-http.client (sci/copy-ns clj-http.client (sci/create-ns 'clj-http.client))
+                            'clojure.tools.logging {'trace (log-wrapper :trace)
+                                                    'debug (log-wrapper :debug)
+                                                    'info (log-wrapper :info)
+                                                    'warn (log-wrapper :warn)
+                                                    'error (log-wrapper :error)
+                                                    'fatal (log-wrapper :fatal)}
 
-                            'user {'getx getx}}})))
+                            'rems.common.util {'getx getx}}})))
 
 ;; make sure SCI printing goes to stdout
 (sci/alter-var-root sci/out (constantly *out*))
@@ -44,12 +60,11 @@
 
 
 
+;;; Plugins
+
 ;; TODO: use common cache architecture?
 (def plugin-configs (atom {}))
-(def plugin-cache (atom {}))
-
-
-
+(def plugin-ctx-cache (atom {}))
 
 (defn- load-plugin-configs! []
   (reset! plugin-configs
@@ -64,20 +79,10 @@
   (->> (get-in env [:extension-points extension-point-id])
        (mapv get-plugin-config)))
 
-(defn- wrap-log-ns [extension-point-id plugin-id]
-  {'log {'trace (log-wrapper extension-point-id plugin-id :trace)
-         'debug (log-wrapper extension-point-id plugin-id :debug)
-         'info (log-wrapper extension-point-id plugin-id :info)
-         'warn (log-wrapper extension-point-id plugin-id :warn)
-         'error (log-wrapper extension-point-id plugin-id :error)
-         'fatal (log-wrapper extension-point-id plugin-id :fatal)}})
-
 (defn- load-plugin [plugin-config]
   (let [plugin-filename (getx plugin-config :filename)
         _ (log/info "Loading plugin" (:id plugin-config) "from" (pr-str plugin-filename))
-        ctx (-> @sci-ctx
-                sci/fork
-                (sci/merge-opts {:namespaces (wrap-log-ns :loading plugin-config)}))]
+        ctx (-> @sci-ctx sci/fork)]
     (-> plugin-filename
         io/reader
         line-seq
@@ -87,10 +92,10 @@
     ctx))
 
 (defn- load-plugins! []
-  (reset! plugin-cache {})
+  (reset! plugin-ctx-cache {})
   (doseq [plugin-config (vals @plugin-configs)
           :let [plugin-id (getx plugin-config :id)]]
-    (swap! plugin-cache assoc plugin-id (load-plugin plugin-config))))
+    (swap! plugin-ctx-cache assoc plugin-id (load-plugin plugin-config))))
 
 
 (defn- plugin-files-changed [{:keys [path] :as _event}]
@@ -101,10 +106,15 @@
                           plugin-config)]
     (doseq [plugin-config changed-plugins
             :let [plugin-id (:id plugin-config)]]
-      (swap! plugin-cache assoc plugin-id (load-plugin plugin-config)))))
+      (swap! plugin-ctx-cache assoc plugin-id (load-plugin plugin-config)))))
 
 (defn- remove-filename [filename]
   (.getParent (io/file filename)))
+
+
+
+
+;;; Plugins (re-)loaded as files change
 
 (mount/defstate plugin-loader
   :start (let [plugin-paths (->> env
@@ -125,6 +135,8 @@
 
 
 
+;;; Internal entrypoint
+
 (defn- run-plugin
   "Run the plugin from `plugin-config` passing in `data` at `extension-point-id` (context used for logging).
 
@@ -132,17 +144,20 @@
   [symbol-name extension-point-id data plugin-config]
   (let [plugin-id (getx plugin-config :id)]
     (log/debug "Running plugin" plugin-id)
-    (let [plugin (getx @plugin-cache plugin-id)
+    (let [plugin (getx @plugin-ctx-cache plugin-id)
           ctx (-> plugin
                   sci/fork
-                  (sci/merge-opts {:namespaces (wrap-log-ns extension-point-id plugin-config)})
                   (sci/merge-opts {:namespaces {'user {'config plugin-config
                                                        'data data}}}))]
-      (sci/eval-string* ctx (str "(" symbol-name " config data)")))))
+      (binding [*logging-ctx* {:extension-point-id extension-point-id
+                               :plugin-id plugin-id}]
+        (sci/eval-string* ctx (str "(" symbol-name " config data)"))))))
 
 
 
 
+
+;;; Public API
 
 (defn process
   "Executes the configured plugins of `extension-point-id` to process the given `data`.

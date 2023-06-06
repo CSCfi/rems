@@ -6,6 +6,7 @@ one of the valid groups.
 ```clj
 (require '[rems.config :refer [env]])
 (require '[clojure.string :as str])
+(require '[clojure.tools.logging :as log])
 
 (defn validate [config data]
   (let [{:keys [attribute-name valid-groups error-key]} config

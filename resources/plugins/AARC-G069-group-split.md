@@ -34,8 +34,10 @@ a `role=R` would literally be just an additional `role=R` group.
 For a group to be valid the authority must declared in config `:trusted-authorities`.
 
 ```clj
-(require '[rems.config :refer [env]])
 (require '[clojure.string :as str])
+(require '[clojure.tools.logging :as log])
+(require '[rems.config :refer [env]])
+(require '[rems.common.util :refer [getx]])
 
 (defn transform [config data]
   (when (:log-authentication-details env)
