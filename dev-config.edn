@@ -86,6 +86,9 @@
  :enable-save-compaction true
  :enable-autosave true
 
+ ;; let's use plugins in dev
+ :oidc-require-name false
+ :oidc-require-email false
  :plugins [{:id :plugin/AARC-G069-group-split
             :filename "resources/plugins/AARC-G069-group-split.md"
             :attribute-name "eduperson_entitlement"

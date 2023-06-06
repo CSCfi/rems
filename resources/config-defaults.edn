@@ -446,4 +446,23 @@
  ;; :pdf-metadata {:font {:encoding :unicode
  ;;                       :ttf-name "custom-font-file.ttf"}}
  ;;
- :pdf-metadata {}}
+ :pdf-metadata {}
+
+ ;; REMS can be extended using plugins:
+ ;;
+ ;; Define the plugins with `:plugins` and then
+ ;; attach them to the extension points using `:extension-points`.
+ ;;
+ ;; Example:
+ ;; :plugins [{:id :plugin/group-split
+ ;;            :filename "plugins/group-split.md"
+ ;;            :attribute-name "user_groups"
+ ;;            :split-with ";"}
+ ;;
+ ;; :extension-points {:extension-point/transform-user-data [:plugin/group-split] ; should match the previous id
+ ;;                    :extension-point/validate-user-data [...
+ ;;                                                         ]}
+ ;;
+ ;; See docs/plugins.md for more information.
+ :plugins nil ; by default no plugins
+ :extension-points nil} ; by default no plugins
