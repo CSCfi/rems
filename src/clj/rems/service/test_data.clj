@@ -321,14 +321,25 @@
                                             :organization {:organization/id "csc"}
                                             :title "EGA workflow, a variant of default"
                                             :type :workflow/default
-                                            :handlers handlers})]
+                                            :handlers handlers})
+        disabled-commands (test-helpers/create-workflow! {:actor owner
+                                                          :organization {:organization/id "nbn"}
+                                                          :title "Restricted workflow"
+                                                          :type :workflow/default
+                                                          :handlers handlers
+                                                          :licenses [link text]
+                                                          :disable-commands [{:command :application.command/invite-member}
+                                                                             {:command :application.command/close
+                                                                              :when/state [:application.state/returned]
+                                                                              :when/role [:applicant]}]})]
     {:default default
      :ega ega
      :decider decider
      :decider2 decider2
      :master master
      :auto-approve auto-approve
-     :organization-owner organization-owner}))
+     :organization-owner organization-owner
+     :disabled-commands disabled-commands}))
 
 (defn- create-bona-fide-catalogue-item! [users]
   (let [owner (:owner users)
@@ -376,7 +387,7 @@
                             :actor approver
                             :comment "Looking good"})))
 
-(defn- create-applications! [catid users]
+(defn- create-applications! [catid catid-restricted users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
@@ -422,7 +433,7 @@
                               :actor approver
                               :comment "Never going to happen"}))
 
-    (let [app-id (test-helpers/create-draft! applicant [catid] "returned")]
+    (let [app-id (test-helpers/create-draft! applicant [catid-restricted] "returned")]
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})
@@ -821,19 +832,26 @@
                                           :organization {:organization/id "nbn"}
                                           :workflow-id (:decider workflows)
                                           :categories [special-category]})
-    (let [catid (test-helpers/create-catalogue-item! {:actor owner
-                                                      :title {:en "Default workflow"
-                                                              :fi "Oletustyövuo"
-                                                              :sv "Standard arbetsflöde"}
-                                                      :infourl {:en "http://www.google.com"
-                                                                :fi "http://www.google.fi"
-                                                                :sv "http://www.google.se"}
-                                                      :resource-id res1
-                                                      :form-id form
-                                                      :organization {:organization/id "nbn"}
-                                                      :workflow-id (:default workflows)
-                                                      :categories [ordinary-category]})]
-      (create-applications! catid users))
+    (let [cat {:actor owner
+               :title {:en "Default workflow"
+                       :fi "Oletustyövuo"
+                       :sv "Standard arbetsflöde"}
+               :infourl {:en "http://www.google.com"
+                         :fi "http://www.google.fi"
+                         :sv "http://www.google.se"}
+               :resource-id res1
+               :form-id form
+               :organization {:organization/id "nbn"}
+               :workflow-id (:default workflows)
+               :categories [ordinary-category]}
+          catid (test-helpers/create-catalogue-item! cat)
+          catid-restricted (test-helpers/create-catalogue-item!
+                            (assoc cat
+                                   :workflow-id (:disabled-commands workflows)
+                                   :title {:en "Default workflow (restricted)"
+                                           :fi "Oletustyövuo (rajoitettu)"
+                                           :sv "Standard arbetsflöde (begränsad)"}))]
+      (create-applications! catid catid-restricted users))
     (test-helpers/create-catalogue-item! {:actor owner
                                           :title {:en "Default workflow 2"
                                                   :fi "Oletustyövuo 2"
@@ -1018,7 +1036,7 @@
                               :actor handler
                               :reviewers [reviewer]
                               :comment "please have a look"}))
-                              ; create application to demo attachment redaction feature
+    ;; create application to demo attachment redaction feature
     (let [applicant (:applicant1 users)
           member (:applicant2 users)
           decider (:approver1 users)
@@ -1062,8 +1080,8 @@
                                 :attachment (test-helpers/create-attachment! {:actor applicant
                                                                               :application-id app-id
                                                                               :filename "applicant_attachment.pdf"})})
-      ; (delete-orphan-attachments-on-submit) process manager removes all dangling attachments,
-      ; so we submit application first before creating more attachments
+      ;; (delete-orphan-attachments-on-submit) process manager removes all dangling attachments,
+      ;; so we submit application first before creating more attachments
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})

@@ -2,6 +2,16 @@
   (:require [clojure.test :refer [deftest is]]
             [rems.common.util :as util]))
 
+(def states
+  #{:application.state/approved
+    :application.state/closed
+    :application.state/draft
+    :application.state/rejected
+    :application.state/returned
+    :application.state/revoked
+    :application.state/submitted})
+;; TODO deleted state?
+
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))
         user-accepted-licenses (get (:application/accepted-licenses application) userid)]

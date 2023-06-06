@@ -905,6 +905,8 @@
      [(s/> ":first-child") {:grid-column :checkbox}]
      [(s/> ":not(:first-child)") {:grid-column :content}]]]
 
+   [:.color-pre {:color "#212529"}] ; same color as bootstrap's default for [:pre]
+
    ;; Media queries must be almost last so they override
    (media-queries)
 

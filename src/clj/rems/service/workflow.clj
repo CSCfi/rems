@@ -1,6 +1,7 @@
 (ns rems.service.workflow
   (:require [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
+            [rems.application.commands :as commands]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -27,22 +28,30 @@
      :errors [{:type :invalid-license
                :licenses invalid}]}))
 
-(defn create-workflow! [{:keys [organization handlers licenses forms] :as cmd}]
+(defn invalid-disable-commands-error [disable-commands]
+  (when-some [invalid (seq (remove (comp (set commands/command-names) :command) disable-commands))]
+    {:success false
+     :errors [{:type :invalid-disable-commands
+               :commands invalid}]}))
+
+(defn create-workflow! [{:keys [organization handlers licenses forms disable-commands] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)
       (invalid-licenses-error licenses)
+      (invalid-disable-commands-error disable-commands)
       (let [id (workflow/create-workflow! (update cmd :licenses #(map :license/id %)))]
         (dependencies/reset-cache!)
         {:success (not (nil? id))
          :id id})))
 
-(defn edit-workflow! [{:keys [id organization handlers] :as cmd}]
+(defn edit-workflow! [{:keys [id organization handlers disable-commands] :as cmd}]
   (let [workflow (workflow/get-workflow id)]
     (util/check-allowed-organization! (:organization workflow))
     (when organization
       (util/check-allowed-organization! organization))
     (or (invalid-users-error handlers)
+        (invalid-disable-commands-error disable-commands)
         (do
           (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
           (applications/reload-cache!)

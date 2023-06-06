@@ -1,20 +1,20 @@
 (ns rems.user-settings
   (:require [clojure.string :as str]
-            [goog.net.cookies]
+            [goog.net.Cookies]
             [re-frame.core :as rf]
             [rems.flash-message :as flash-message]
             [rems.util :refer [fetch put!]]))
 
 (def ^:private language-cookie-name "rems-user-preferred-language")
+(def ^:private cookies (.getInstance goog.net.Cookies))
 
 (defn get-language-cookie []
-  (when-let [value (.get goog.net.cookies language-cookie-name)]
+  (when-let [value (.get cookies language-cookie-name)]
     (keyword value)))
 
 (defn- set-language-cookie! [language]
   (let [year-in-seconds (* 3600 24 365)]
-    (.set goog.net.cookies language-cookie-name (name language) year-in-seconds "/")))
-
+    (.set cookies language-cookie-name (name language) year-in-seconds "/")))
 
 (defn- get-current-language [db]
   (let [available-languages (set (:languages (:config db)))

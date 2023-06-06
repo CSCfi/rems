@@ -1,19 +1,21 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
-            [medley.core :refer [find-first]]
+            [medley.core :refer [find-first indexed remove-nth update-existing]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [organization-field radio-button-group text-field]]
+            [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
-            [rems.common.util :refer [keep-keys replace-key]]
+            [rems.common.application-util :as application-util]
+            [rems.common.util :refer [andstr conj-vec keep-keys replace-key]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [localized text]]
+            [rems.text :refer [localized localize-command localize-role localize-state text text-format]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
@@ -24,11 +26,13 @@
                    {:db (assoc db
                                ::workflow-id workflow-id
                                ::actors nil
+                               ::commands nil
                                ::editing? (some? workflow-id)
                                ::form {:type :workflow/default})
                     :dispatch-n [[::actors]
                                  [::forms {:disabled true :archived true}]
                                  [::licenses]
+                                 [::commands]
                                  (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
@@ -49,7 +53,8 @@
                                             :forms (mapv #(select-keys % [:form/id]) (get workflow :forms))
                                             :handlers (get workflow :handlers)
                                             :licenses (->> (:licenses workflow)
-                                                           (map #(replace-key % :license/id :id)))})))
+                                                           (mapv #(replace-key % :license/id :id)))
+                                            :disable-commands (get workflow :disable-commands)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -68,7 +73,8 @@
      (seq (:handlers request))
      true)
    (not (str/blank? (get-in request [:organization :organization/id])))
-   (not (str/blank? (:title request)))))
+   (not (str/blank? (:title request)))
+   (every? :command (:disable-commands request))))
 
 (defn build-create-request [form]
   (let [request (merge
@@ -76,7 +82,10 @@
                   :title (trim-when-string (:title form))
                   :type (:type form)
                   :forms (mapv #(select-keys % [:form/id]) (:forms form))
-                  :licenses (vec (keep-keys {:id :license/id} (:licenses form)))}
+                  :licenses (vec (keep-keys {:id :license/id} (:licenses form)))
+                  :disable-commands (->> (:disable-commands form)
+                                         (mapv #(update-existing % :when/state vec))
+                                         (mapv #(update-existing % :when/role vec)))}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -86,13 +95,17 @@
   (and (number? (:id request))
        (seq (:handlers request))
        (not (str/blank? (get-in request [:organization :organization/id])))
-       (not (str/blank? (:title request)))))
+       (not (str/blank? (:title request)))
+       (every? :command (:disable-commands request))))
 
 (defn build-edit-request [id form]
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :id id
                  :title (:title form)
-                 :handlers (map :userid (:handlers form))}]
+                 :handlers (map :userid (:handlers form))
+                 :disable-commands (->> (:disable-commands form)
+                                        (mapv #(update-existing % :when/state vec))
+                                        (mapv #(update-existing % :when/role vec)))}]
     (when (valid-edit-request? request)
       request)))
 
@@ -129,6 +142,15 @@
                                   (->> (sort-by :id licenses)
                                        (assoc-in db [::form :licenses]))))
 (fetcher/reg-fetcher ::licenses "/api/licenses")
+
+(fetcher/reg-fetcher ::commands "/api/applications/commands")
+(rf/reg-sub ::available-commands
+            :<- [::commands]
+            (fn [commands]
+              (->> (sort commands)
+                   (remove #{:application.command/assign-external-id
+                             :application.command/create
+                             :application.command/send-expiration-notifications}))))
 
 ;;;; UI
 
@@ -207,11 +229,108 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/administration/workflows"
+   (str "/administration/workflows" (andstr "/" @(rf/subscribe [::workflow-id])))
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]
   [:div.alert.alert-info description])
+
+(defn- create-rule [{:keys [db]} [_]]
+  {:db (update-in db [::form :disable-commands] conj-vec {})
+   :rems.focus/scroll-into-view [".disable-commands" {:block :end}]})
+
+(defn- remove-rule [{:keys [db]} [_ rule-index]]
+  {:db (update-in db [::form :disable-commands] #(vec (remove-nth rule-index %)))
+   :rems.focus/scroll-into-view [".disable-commands" {:block :end}]})
+
+(defn- set-rule [k]
+  (fn [db [_ rule-index v]]
+    (assoc-in db [::form :disable-commands rule-index k] v)))
+
+(rf/reg-sub ::disable-commands (fn [db _] (get-in db [::form :disable-commands])))
+(rf/reg-event-fx ::create-rule create-rule)
+(rf/reg-event-fx ::remove-rule remove-rule)
+(rf/reg-event-db ::select-rule-command (set-rule :command))
+(rf/reg-event-db ::select-rule-application-states (set-rule :when/state))
+(rf/reg-event-db ::select-rule-user-roles (set-rule :when/role))
+
+(defn- select-command [{:keys [id commands value on-change]}]
+  [:div.form-group.select-command
+   [:label.administration-field-label {:for id} (text :t.administration/disabled-command)]
+   [dropdown/dropdown
+    {:id id
+     :items commands
+     :item-label #(str (localize-command %) " (" (name %) ")")
+     :item-selected? #(= value %)
+     :on-change on-change}]])
+
+(defn- select-application-states [{:keys [id value on-change]}]
+  [:div.form-group.select-application-states
+   [:label.administration-field-label {:for id} (text :t.administration/application-state)]
+   [dropdown/dropdown
+    {:id id
+     :items application-util/states
+     :item-label #(str (localize-state %) " (" (name %) ")")
+     :item-selected? #(contains? (set value) %)
+     :placeholder (text :t.dropdown/placeholder-any-selection)
+     :multi? true
+     :on-change on-change}]])
+
+(defn- select-user-roles []
+  (let [applicant-roles [:applicant :member]
+        expert-roles [:handler :reviewer :decider :past-reviewer :past-decider]
+        technical-roles [:expirer :reporter]]
+    (fn [{:keys [id value on-change]}]
+      [:div.form-group.select-application-states
+       [:label.administration-field-label {:for id} (text :t.administration/user-role)]
+       [dropdown/dropdown
+        {:id id
+         :items (concat applicant-roles expert-roles technical-roles)
+         :item-label #(if (some #{%} technical-roles)
+                        (str (text :t.roles/technical-role) " (" (name %) ")")
+                        (str (localize-role %) " (" (name %) ")"))
+         :item-selected? #(contains? (set value) %)
+         :placeholder (text :t.dropdown/placeholder-any-selection)
+         :multi? true
+         :on-change on-change}]])))
+
+(defn- render-disable-command-rule [rule-index rule]
+  (let [id (str "disable-command-" rule-index)]
+    [:div.form-field.disable-command
+     [:div.form-field-header
+      [:h4 (text :t.create-workflow/rule)]
+      [:div.form-field-controls
+       [items/remove-button #(rf/dispatch [::remove-rule rule-index])]]]
+     [select-command {:id (str id "-select-command")
+                      :commands @(rf/subscribe [::available-commands])
+                      :value (:command rule)
+                      :on-change #(rf/dispatch [::select-rule-command rule-index %])}]
+     [:div.row
+      [:div.col-md
+       [select-application-states {:id (str id "-select-application-states")
+                                   :value (:when/state rule)
+                                   :on-change #(rf/dispatch [::select-rule-application-states rule-index (vec %)])}]]
+      [:div.col-md
+       [select-user-roles {:id (str id "-select-user-roles")
+                           :value (:when/role rule)
+                           :on-change #(rf/dispatch [::select-rule-user-roles rule-index (vec %)])}]]]]))
+
+(defn- workflow-disable-commands-field []
+  (let [disable-commands @(rf/subscribe [::disable-commands])]
+    [:div.form-group.disable-commands
+     [:label.administration-field-label
+      (text-format :t.label/optional (text :t.create-workflow/disable-commands))]
+     (when (seq disable-commands)
+       [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)])
+     (into [:<>]
+           (for [[rule-index rule] (indexed disable-commands)]
+             [render-disable-command-rule rule-index rule]))
+     [:div.dashed-group.text-center
+      [:a#new-rule {:href "#"
+                    :on-click (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [::create-rule]))}
+       (text :t.create-workflow/create-new-rule)]]]))
 
 ;; TODO: Eventually filter handlers by the selected organization when
 ;;   we are sure that all the handlers have the organization information?
@@ -301,6 +420,7 @@
                     :workflow/master [master-workflow-form])
 
                   [workflow-licenses-field]
+                  [workflow-disable-commands-field]
 
                   [:div.col.commands
                    [cancel-button]

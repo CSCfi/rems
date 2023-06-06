@@ -16,16 +16,6 @@
 
 ;;;; Application
 
-(def states
-  #{:application.state/approved
-    :application.state/closed
-    :application.state/draft
-    :application.state/rejected
-    :application.state/returned
-    :application.state/revoked
-    :application.state/submitted})
-;; TODO deleted state?
-
 (defmulti ^:private application-base-view
   "Updates the data in the application based on the given event.
   Contrast with calculate-permissions which updates permissions based
@@ -682,11 +672,27 @@
              form/enrich-form-field-visible
              application))
 
-(defn- enrich-disable-commands [application get-config]
-  (permissions/blacklist application
-                         (permissions/compile-rules
-                          (for [command (:disable-commands (get-config))]
-                            {:permission command}))))
+(defn- get-permission-roles [disable-command]
+  (if-some [roles (seq (:when/role disable-command))]
+    roles
+    (list nil))) ; nil means for every role
+
+(defn- is-disabled-for-application [application disable-command]
+  (let [states (:when/state disable-command)]
+    (or (empty? states)
+        (contains? (set states) (:application/state application)))))
+
+(defn enrich-disable-commands [application get-config get-workflow]
+  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))]
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            (concat (for [command (:disable-commands (get-config))]
+                                      {:permission command})
+                                    (for [command (get-in workflow [:workflow :disable-commands])
+                                          :when (is-disabled-for-application application command)
+                                          role (get-permission-roles command)]
+                                      {:permission (:command command)
+                                       :role role}))))))
 
 (defn- get-attachment-redact-roles [attachment application]
   (when (:attachment/event attachment)
@@ -738,7 +744,7 @@
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config)
+      (enrich-disable-commands get-config get-workflow)
       (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]

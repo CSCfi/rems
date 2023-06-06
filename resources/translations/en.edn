@@ -76,6 +76,7 @@
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :application-state "Application state"
                    :archive "Archive"
                    :back "Back"
                    :blacklist "Blacklist"
@@ -101,6 +102,8 @@
                    :delete-confirmation "Do you really want to delete?"
                    :description "Description"
                    :disable "Disable"
+                   :disabled-command "Disabled action"
+                   :disabled-commands "Disabled actions"
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
                    :display-order "Display order"
@@ -156,9 +159,11 @@
                    :unarchive "Unarchive"
                    :user "User"
                    :userid "User id"
+                   :user-role "User role"
                    :view "View"
                    :workflow "Workflow"
-                   :workflows "Workflows"}
+                   :workflows "Workflows"
+                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
                    :email "Email"
@@ -290,6 +295,35 @@
              :show-more "Show more"}
   :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
+  :commands {:accept-invitation "Accept invitation"
+             :accept-licenses "Accept the terms of use"
+             :add-licenses "Add terms of use"
+             :add-member "Add member"
+             :approve "Approve"
+             :assign-external-id "Assign external id"
+             :change-applicant "Make applicant"
+             :change-resources "Change resources"
+             :close "Close application"
+             :copy-as-new "Copy as a new application"
+             ;; :create
+             :decide "Decide"
+             :delete "Delete draft"
+             :invite-decider "Invite decider"
+             :invite-member "Invite member"
+             :invite-reviewer "Invite reviewer"
+             :redact-attachments "Redact attachments"
+             :reject "Reject"
+             :remark "Remark"
+             :remove-member "Remove member"
+             :request-decision "Request decision"
+             :request-review "Request review"
+             :return "Return to applicant"
+             :review "Review"
+             :revoke "Revoke entitlement"
+             :save-draft "Save as draft"
+             ;; :send-expiration-notifications
+             :submit "Send application"
+             :uninvite-member "Uninvite member"}
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"
@@ -347,17 +381,21 @@
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:decider-workflow "Decider workflow"
+  :create-workflow {:create-new-rule "New rule"
+                    :decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
                     :default-workflow-description "The handler is in full control of the application process. The handler may request reviews and decisions from others as needed."
+                    :disable-commands "Disable actions"
                     :handlers "Handlers"
                     :master-workflow "Master workflow"
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
+                    :rule "Rule"
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."
-             :loading "Loading..."}
+             :loading "Loading..."
+             :placeholder-any-selection "Any"}
   :duo {:fields {:more-info "Additional info for applicant (optional)"}
         :no-duo-codes "No Data Use Ontology codes"
         :restriction {:collaboration "Primary study investigator(s)"
@@ -516,9 +554,10 @@
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
-  :label {:default "%1: %2"
-          :dash "%1 – %2"
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
           :long "%1: %2 – %3"
+          :optional "%1 (optional)"
           :parens "%1 (%2)"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
@@ -579,6 +618,14 @@
             :settings "Settings"
             :warning-about-missing-email [:<> "You will need to " [:a {:href "/profile"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
             :your-details "Your user details"}
+  :roles {:applicant "Applicant"
+          :decider "Decider"
+          :handler "Handler"
+          :member "Member"
+          :past-decider "Past decider"
+          :past-reviewer "Past reviewer"
+          :reviewer "Reviewer"
+          :technical-role "Technical role"}
   :search {:clear-search "Clear search"
            :example-searches "Example searches"
            :learn-more "Learn more"
@@ -592,6 +639,7 @@
           :show-all-n-rows "Show all %1 rows"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
+  :unknown "Unknown"
   :forbidden-page {:forbidden "Forbidden"
                    :you-are-forbidden "Access to the page is forbidden."}
   :error-page {:title "Problem"}
