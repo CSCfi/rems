@@ -11,6 +11,7 @@ Changes since v2.32
 ### Additions
 - PDF output can be customized a little. This enables changing the font, which should fix missing diacritics. (#3158)
 - Workflows can now disable commands dynamically by application state, user role, or both. Rules can be set in workflow administration page under disable commands field. (#3131)
+- Plugins can be written to extend REMS functionality in select extension points. So far there is support for plugins written in Clojure embedded in Markdown files. See `docs/plugins.md` for details. (#3133)
 
 ### Fixes
 - Label and header fields have URLs made into links. (#3155)
