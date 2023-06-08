@@ -14,7 +14,7 @@ A plugin to validate that specified attributes are present and not empty strings
     error-key))
 
 (defn validate [config data]
-  (when-some [invalid-attributes (empty-attributes data (get config :required-attributes))]
+  (when-some [invalid-attributes (seq (empty-attributes data (get config :required-attributes)))]
     (log/info invalid-attributes)
     [{:key :t.login.errors/invalid-user
       :args invalid-attributes}]))
