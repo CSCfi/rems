@@ -99,12 +99,11 @@
             :required-attributes [{:attribute-name "name" :error-key :t.login.errors/name}
                                   {:attribute-name "email" :error-key :t.login.errors/email}]}
 
-           {:id :plugin/validate-group-membership
+           {:id :plugin/validate-group-membership ; NB: not in use at the moment
             :filename "resources/plugins/validate-group-membership.md"
             :attribute-name "groups"
             :valid-groups ["VO1"]
             :error-key :t.login.errors/group}]
 
  :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
-                    :extension-point/validate-user-data [:plugin/validate-attributes
-                                                         :plugin/validate-group-membership]}}
+                    :extension-point/validate-user-data [:plugin/validate-attributes]}}
