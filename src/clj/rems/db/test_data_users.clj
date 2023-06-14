@@ -68,7 +68,7 @@
    "new-user" {:sub "new-user" :email "new-user@example.com" :name "New User"}})
 
 (def +fake-user-info+
-  {"alice" {:researcher-status-by "so"}
+  {"alice" {:researcher-status-by "so" :eduperson_entitlement "urn:lifescience-ri.eu:group:VO1:B:1:role=R#perun.aai.lifescience-ri.eu"}
    "elixir-alice" {:researcher-status-by "so"}})
 
 (def +user-descriptions+

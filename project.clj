@@ -61,7 +61,9 @@
                  [ring/ring-defaults "0.3.4"]
                  [ring/ring-devel "1.9.6"]
                  [ring/ring-servlet "1.9.6"]
-                 [nano-id "1.0.0"]]
+                 [nano-id "1.0.0"]
+                 [org.babashka/sci "0.7.39"]
+                 [com.nextjournal/beholder "1.0.2"]]
 
   :min-lein-version "2.9.8"
 
@@ -83,6 +85,7 @@
   :antq {}
 
   :cljfmt {:paths ["project.clj" "src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ; need explicit paths to include cljs
+           :indents {delay [[:inner 0]]}
            :remove-consecutive-blank-lines? false} ; too many changes for now, probably not desirable
 
   :clean-targets ["target"]

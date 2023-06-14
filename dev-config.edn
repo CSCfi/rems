@@ -17,7 +17,8 @@
  ;; some attributes that google oauth returns:
  :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
                          {:attribute "picture"}
-                         {:attribute "organizations"}]
+                         {:attribute "organizations"}
+                         {:attribute "groups" :name {:en "Groups" :fi "Ryhmät" :sv "Grupper"}}]
  :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
  :extra-pages [{:id "about"
@@ -83,4 +84,26 @@
  :enable-duo true
  :enable-catalogue-tree true
  :enable-save-compaction true
- :enable-autosave true}
+ :enable-autosave true
+
+ ;; let's use plugins in dev
+ :oidc-require-name false
+ :oidc-require-email false
+ :plugins [{:id :plugin/AARC-G069-group-split
+            :filename "resources/plugins/AARC-G069-group-split.md"
+            :attribute-name "eduperson_entitlement"
+            :trusted-authorities ["perun.aai.lifescience-ri.eu"]}
+
+           {:id :plugin/validate-attributes
+            :filename "resources/plugins/validate-attributes.md"
+            :required-attributes [{:attribute-name "name" :error-key :t.login.errors/name}
+                                  {:attribute-name "email" :error-key :t.login.errors/email}]}
+
+           {:id :plugin/validate-group-membership ; NB: not in use at the moment
+            :filename "resources/plugins/validate-group-membership.md"
+            :attribute-name "groups"
+            :valid-groups ["VO1"]
+            :error-key :t.login.errors/group}]
+
+ :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
+                    :extension-point/validate-user-data [:plugin/validate-attributes]}}

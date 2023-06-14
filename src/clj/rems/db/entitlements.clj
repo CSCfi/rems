@@ -12,6 +12,7 @@
             [rems.db.outbox :as outbox]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
+            [rems.plugins :as plugins]
             [rems.scheduler :as scheduler]
             [rems.service.ega :as ega]))
 
@@ -27,6 +28,10 @@
 
 (defn- post-entitlements! [{:keys [action type entitlements config]}]
   (case type
+    :plugin
+    (plugins/process :extension-point/process-entitlements entitlements)
+
+    ;; TODO consider removing in favour of plugins
     :ega
     (when config
       (try (doseq [entitlement entitlements] ; technically these could be grouped per user & api-key
@@ -34,8 +39,9 @@
            (catch Exception e
              (log/error "POST failed" e)
              (or (ex-data e)
-                 {:status "exception"}))))
+                 [{:status "exception"}]))))
 
+    ;; TODO consider removing in favour of plugins
     :basic ; TODO: let's move this :entitlements-target (v1) at some point to :entitlement-post (v2)
     (when-let [target (get-in env [:entitlements-target action])]
       (let [payload (get-entitlements-payload entitlements action)
@@ -57,7 +63,7 @@
             (log/infof "Posted entitlements to %s: %s -> %s" target payload status)
             (do
               (log/warnf "Entitlement post failed: %s", response)
-              (str "failed: " status))))))))
+              [(str "failed: " status)])))))))
 
 ;; TODO argh adding these everywhere sucks
 ;; TODO consider using schema coercions
@@ -71,8 +77,8 @@
   (doseq [entry (mapv fix-entry-from-db
                       (outbox/get-due-entries :entitlement-post))]
     ;; TODO could send multiple entitlements at once instead of one outbox entry at a time
-    (if-let [error (post-entitlements! (:outbox/entitlement-post entry))]
-      (let [entry (outbox/attempt-failed! entry error)]
+    (if-let [errors (post-entitlements! (:outbox/entitlement-post entry))]
+      (let [entry (outbox/attempt-failed! entry errors)]
         (when (not (:outbox/next-attempt entry))
           (log/warn "all attempts to send entitlement post id " (:outbox/id entry) "failed")))
       (outbox/attempt-succeeded! (:outbox/id entry)))))
@@ -101,6 +107,7 @@
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (let [entitlements (db/get-entitlements {:application application-id :user user-id :resource resource-id})]
       (add-to-outbox! :add :basic entitlements nil)
+      (add-to-outbox! :add :plugin entitlements nil)
       (doseq [config (:entitlement-push env)]
         (add-to-outbox! :add (:type config) entitlements config)))))
 

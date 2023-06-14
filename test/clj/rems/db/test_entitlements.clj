@@ -65,16 +65,16 @@
     (run-with-server
      {:status 404}
      (fn [_]
-       (is (= "failed: 404" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
+       (is (= ["failed: 404"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "timeout"
     (run-with-server
      {:status 200 :delay 5000} ;; timeout of 2500 in code
      (fn [_]
-       (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
+       (is (= ["failed: exception"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "invalid url"
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :entitlements-target {:add "http://invalid/entitlements"})]
-      (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
+      (is (= ["failed: exception"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
   (testing "no server configured"
     (is (nil? (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
 
@@ -329,10 +329,10 @@
       (run-with-ega-server
        {"/p/permissions" {:status 200 :delay 5000}} ;; timeout of 2500 in code
        (fn [server]
-         (is (= {:status "exception"} (#'entitlements/post-entitlements! (post-data-for server)))))))
+         (is (= [{:status "exception"}] (#'entitlements/post-entitlements! (post-data-for server)))))))
 
     (testing "invalid url"
-      (is (= {:status "exception"} (#'entitlements/post-entitlements! (post-data-for {:uri "http://invalid/address/altogether"})))))
+      (is (= [{:status "exception"}] (#'entitlements/post-entitlements! (post-data-for {:uri "http://invalid/address/altogether"})))))
 
     (testing "no server configured means no problem"
       (is (= nil (#'entitlements/post-entitlements! (dissoc (post-data-for {:uri "http://invalid/address/no/problem"}) :config)))))))
