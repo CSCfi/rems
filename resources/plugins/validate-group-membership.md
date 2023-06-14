@@ -17,6 +17,6 @@ one of the valid groups.
 
     (when (or (empty? groups)
               (empty? (clojure.set/intersection (set groups) valid-groups)))
-      [error-key])))
+      [{:key error-key}])))
 
 ```
