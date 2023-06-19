@@ -21,18 +21,24 @@ Releases can be found on the github [release page](https://github.com/CSCfi/rems
 
    `git fetch; git checkout origin/master` 
 
-2. Edit CHANGELOG.md:
+2. Update changelog and version number:
 
-   - See the name of the previous release, find the street with that name,
-     select a street that is next to that street but is not yet used as
-     a release name.
+   1. Edit CHANGELOG.md:
 
-   - Add a line for the new release, e.g.,
-     `## v2.6 "Kalevalantie" 2018-11-12`
+      - See the name of the previous release, find the street with that name,
+      select a street that is next to that street but is not yet used as
+      a release name.
 
-   - Move all changes from under `## Unreleased` to under the new release
+      - Add a line for the new release, e.g.,
+      `## v2.6 "Kalevalantie" 2018-11-12`
 
-   - Leave `Changes since v[x.y]` text under `## Unreleased`
+      - Move all changes from under `## Unreleased` to under the new release
+
+      - Leave `Changes since v[x.y]` text under `## Unreleased`
+
+   2. Edit the first line in project.clj:
+
+   `(defproject rems "2.33" ...)`
 
 3. Create a pull request for those changes (e.g. branch `release-2.6` with commit `release: v2.6`)
 
