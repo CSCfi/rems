@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.32
+Changes since v2.33
+
+## v2.33 "Santakuja" 2023-06-19
 
 ### Additions
 - PDF output can be customized a little. This enables changing the font, which should fix missing diacritics. (#3158)
