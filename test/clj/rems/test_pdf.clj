@@ -36,8 +36,7 @@
            (with-language :en
              (fn []
                (with-fixed-time (time/date-time 2010)
-                 (fn []
-                   (#'pdf/render-fields data)))))))
+                 (#'pdf/render-fields data))))))
     (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
 
 (deftest test-pdf-private-form-fields
@@ -156,8 +155,7 @@
              (with-language :sv
                (fn []
                  (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))))
+                   (#'pdf/render-application (applications/get-application-for-user "alice" application-id))))))))
     (testing "handler should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: "]
@@ -221,8 +219,7 @@
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))))
+                   (#'pdf/render-application (applications/get-application-for-user "developer" application-id))))))))
     (testing "decider should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Hakemus 2000/1: "]
@@ -286,8 +283,7 @@
              (with-language :fi
                (fn []
                  (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))))
+                   (#'pdf/render-application (applications/get-application-for-user "david" application-id))))))))
     (testing "reviewer should not see private fields"
       (is (= [{}
               [[:heading pdf/heading-style "Ansökan 2000/1: "]
@@ -340,8 +336,7 @@
              (with-language :sv
                (fn []
                  (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
+                   (#'pdf/render-application (applications/get-application-for-user "carl" application-id))))))))))
 
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
@@ -553,8 +548,7 @@
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))))
+                   (#'pdf/render-application (applications/get-application-for-user handler application-id))))))))
     (testing "pdf rendering succeeds"
       (is (some?
            (with-language :en

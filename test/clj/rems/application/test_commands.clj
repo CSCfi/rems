@@ -927,13 +927,12 @@
             :application/id app-id
             :application/comment "fine"}
            (with-fixed-time (DateTime. 1234)
-             (fn []
-               (ok-command {:type :application.command/approve
-                            :actor handler-user-id
-                            :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
-                            :comment "fine"}
-                           (build-application-view [dummy-created-event
-                                                    dummy-submitted-event])))))))
+             (ok-command {:type :application.command/approve
+                          :actor handler-user-id
+                          :entitlement-end (time/plus (DateTime. 1234) (time/days 1))
+                          :comment "fine"}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]))))))
   (testing "rejected successfully"
     (is (= {:event/type :application.event/rejected
             :application/comment "bad"

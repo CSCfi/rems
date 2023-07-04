@@ -584,15 +584,13 @@
                                          :enable-save-compaction true)]
       (testing "save draft"
         (with-fixed-time (time/date-time 2022 1 1)
-          (fn []
-
-            (is (= {:success true}
-                   (send-command user-id
-                                 {:type :application.command/save-draft
-                                  :application-id application-id
-                                  :field-values [{:form form-id
-                                                  :field "field"
-                                                  :value "1"}]}))))))
+          (is (= {:success true}
+                 (send-command user-id
+                               {:type :application.command/save-draft
+                                :application-id application-id
+                                :field-values [{:form form-id
+                                                :field "field"
+                                                :value "1"}]})))))
 
       (testing "application has one save event"
         (let [application (get-application-for-user application-id user-id)]
@@ -617,14 +615,13 @@
 
       (testing "save draft again"
         (with-fixed-time (time/date-time 2022 1 2)
-          (fn []
-            (is (= {:success true}
-                   (send-command user-id
-                                 {:type :application.command/save-draft
-                                  :application-id application-id
-                                  :field-values [{:form form-id
-                                                  :field "field"
-                                                  :value "2"}]}))))))
+          (is (= {:success true}
+                 (send-command user-id
+                               {:type :application.command/save-draft
+                                :application-id application-id
+                                :field-values [{:form form-id
+                                                :field "field"
+                                                :value "2"}]})))))
 
       (testing "application still has one save event"
         (let [application (get-application-for-user application-id user-id)]
