@@ -30,7 +30,7 @@
     (with-fixed-time date
       (f))))
 
-(defn suppress-logging [^String logger-name]
+(defn suppress-logging-fixture [^String logger-name]
   (fn [f]
     (let [^Logger logger (LoggerFactory/getLogger logger-name)
           original-level (.getLevel logger)]
