@@ -57,10 +57,10 @@
   (with-fixed-time (time/date-time 2010)
     (api-key/add-api-key! api-key {})
     (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"})
-          ;; don't set malice's email to test the api with nil emails
+    ;; don't set malice's email to test the api with nil emails
     (test-helpers/create-user! {:userid "malice" :name "Malice Applicant"})
     (test-helpers/create-user! {:userid "handler"})
-          ;; owner is automatically created by (test-helpers/create-resource!) but here for consistency
+    ;; owner is automatically created by (test-helpers/create-resource!) but here for consistency
     (test-helpers/create-user! {:userid "owner"} :owner)
     (test-helpers/create-user! {:userid "reporter"} :reporter)
     (let [res-id (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"})
