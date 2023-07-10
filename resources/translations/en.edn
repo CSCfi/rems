@@ -433,6 +433,11 @@
                                :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can still view the application at %6"
                                :subject-to-handler "(%3) Application has been closed"
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application at %6"}
+          ;; %1 - name of recipient
+          ;; %2 - id of application (+ description of application if available)
+          ;; %3 - date of last activity in application
+          ;; %4 - date of application expiration (after which draft application will be removed)
+          ;; %5 - link to application
           :application-expiration-notification {:subject-to-member "Your unsubmitted application %2 will be deleted soon"
                                                 :message-to-member "Dear %1,\n\nYour unsubmitted application has been inactive since %3 and it will be deleted after %4, if it is not edited.\n\nYou can view and edit the application at %5"}
           :application-returned {:subject-to-applicant "Your application %3 needs to be amended"

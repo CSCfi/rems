@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.33
 
+### Fixes
+- Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.
+
 ## v2.33 "Santakuja" 2023-06-19
 
 ### Additions
