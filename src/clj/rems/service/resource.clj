@@ -1,12 +1,11 @@
 (ns rems.service.resource
   (:require [com.rpl.specter :refer [ALL transform]]
-            [rems.service.dependencies :as dependencies]
-            [rems.service.util :as util]
-            [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
             [rems.db.resource :as resource]
-            [rems.ext.duo :as duo]))
+            [rems.ext.duo :as duo]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]))
 
 (defn- join-dependencies [resource]
   (when resource
@@ -34,13 +33,16 @@
 
 (defn set-resource-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
-  (db/set-resource-enabled! {:id id :enabled enabled})
+  (resource/set-resource-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-resource-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
   (or (dependencies/change-archive-status-error archived {:resource/id id})
       (do
-        (db/set-resource-archived! {:id id
-                                    :archived archived})
+        (resource/set-resource-archived! {:id id
+                                          :archived archived})
         {:success true})))
+
+(defn ext-id-exists? [ext-id]
+  (resource/ext-id-exists? ext-id))

@@ -24,16 +24,16 @@
     {:userid userid
      :roles roles}))
 
-(defn get-roles [user]
-  (let [roles (set (map role-from-db (db/get-roles {:user user})))]
+(defn get-roles [useruser]
+  (let [roles (set (map role-from-db (db/get-roles {:user useruser})))]
     (conj roles :logged-in))) ; base role for everybody
 
-(defn add-role! [user role]
-  (db/add-role! {:user user :role (role-to-db role)})
+(defn add-role! [userid role]
+  (db/add-role! {:user userid :role (role-to-db role)})
   nil)
 
-(defn remove-role! [user role]
-  (db/remove-role! {:user user :role (role-to-db role)})
+(defn remove-role! [userid role]
+  (db/remove-role! {:user userid :role (role-to-db role)})
   nil)
 
 (defn remove-roles! [userid]
@@ -48,4 +48,8 @@
                    :role (role-to-db role)})))
 
 (comment
+  (get-roles "owner")
+  (get-roles "frank")
+  (db/get-roles {:user "owner"})
+  (db/get-roles {:user "frank"})
   (db/remove-roles! {:user "frank"}))

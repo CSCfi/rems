@@ -4,16 +4,15 @@
             [clojure.tools.logging :as log]
             [rems.application.commands :as commands]
             [rems.application.eraser :as eraser]
-            [rems.application.expirer-bot :as expirer-bot]
-            [rems.service.command :as command]
             [rems.config :refer [env]]
             [rems.locales]
-            [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.db.roles :as roles]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings :as user-settings]
+            [rems.service.application :as application]
+            [rems.service.command :as command]
             [rems.testing-util :refer [with-fixed-time]]))
 
 (defn- empty-footer [f]
@@ -58,13 +57,13 @@
     app-id))
 
 (defn- expiration-notification-events [app-id]
-  (->> (applications/get-application-internal app-id)
+  (->> (application/get-full-internal-application app-id)
        :application/events
        (filter (comp #{:application.event/expiration-notifications-sent}
                      :event/type))))
 
 (defn- get-all-application-ids [user-id]
-  (->> (applications/get-all-applications user-id)
+  (->> (application/get-full-personalized-applications-by-user user-id)
        (map :application/id)))
 
 (defn- log*-mock [coll-atom]
@@ -94,13 +93,13 @@
             (eraser/process-applications!))
           (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
           (is (empty? @outbox-emails))
-          (is (= [(str "Cannot process applications, because user " expirer-bot/bot-userid " does not exist")]
+          (is (= [(str "Cannot process applications, because user expirer-bot does not exist")]
                  (->> @log-messages
                       (filter (comp #{:warn} :level))
                       (map :message)))))
 
-        (test-helpers/create-user! {:userid expirer-bot/bot-userid})
-        (roles/add-role! expirer-bot/bot-userid :expirer)
+        (test-helpers/create-user! {:userid "expirer-bot"})
+        (roles/add-role! "expirer-bot" :expirer)
 
         (testing "does not delete applications when configuration is not valid"
           (reset! log-messages [])
@@ -140,8 +139,8 @@
       (fn []
         (test-helpers/create-user! {:userid "alice"})
         (test-helpers/create-user! {:userid "member"})
-        (test-helpers/create-user! {:userid expirer-bot/bot-userid})
-        (roles/add-role! expirer-bot/bot-userid :expirer)
+        (test-helpers/create-user! {:userid "expirer-bot"})
+        (roles/add-role! "expirer-bot" :expirer)
         (let [now (time/now)
               draft-expires-in-6d (create-application! {:draft? true
                                                         :date-time (time/minus now (time/days 84))

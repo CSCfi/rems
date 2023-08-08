@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [rems.application.commands :as commands]
-            [rems.db.applications :as applications]))
+            [rems.service.application :as application]))
 
 (def ^:private todo-roles
   #{:handler :reviewer :decider :past-reviewer :past-decider})
@@ -11,8 +11,8 @@
   (and (some todo-roles (:application/roles application))
        (not= :application.state/draft (:application/state application))))
 
-(defn- get-potential-todos [user-id]
-  (->> (applications/get-all-applications user-id)
+(defn- get-potential-todos [userid]
+  (->> (application/get-full-personalized-applications-with-user userid)
        (filter potential-todo?)))
 
 (def ^:private todo-commands
@@ -67,10 +67,10 @@
            todo-commands)
         "seems like a new command has been added; is it a todo or handled todo?")))
 
-(defn get-todos [user-id]
-  (->> (get-potential-todos user-id)
+(defn get-todos [userid]
+  (->> (get-potential-todos userid)
        (filter todo?)))
 
-(defn get-handled-todos [user-id]
-  (->> (get-potential-todos user-id)
+(defn get-handled-todos [userid]
+  (->> (get-potential-todos userid)
        (remove todo?)))

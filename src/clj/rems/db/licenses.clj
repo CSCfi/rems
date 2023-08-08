@@ -77,3 +77,25 @@
 (defn license-exists? [id]
   (some? (db/get-license {:id id})))
 
+(defn create-license! [params]
+  (db/create-license! params))
+
+(defn create-license-localization! [params]
+  (db/create-license-localization! params))
+
+(defn create-license-attachment! [params]
+  (db/create-license-attachment! params))
+
+(defn remove-license-attachment! [params]
+  (db/remove-license-attachment! params))
+
+(defn get-license-attachment [params]
+  (db/get-license-attachment params))
+
+(defn set-license-enabled! [params]
+  (db/set-license-enabled! params))
+
+(defn set-license-archived! [params]
+  (db/set-license-archived! params))
+
+

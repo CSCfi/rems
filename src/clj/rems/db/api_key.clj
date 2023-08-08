@@ -1,6 +1,6 @@
 (ns rems.db.api-key
   (:require [clojure.core.memoize :as memo]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [update-existing]]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]

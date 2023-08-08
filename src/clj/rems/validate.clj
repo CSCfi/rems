@@ -3,15 +3,15 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.tools.logging :as log]
             [rems.api.forms]
+            [rems.api.schema]
             [rems.application.events :as events]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
-            [rems.api.schema]
+            [rems.service.application :as application]
             [rems.service.catalogue :as catalogue]
             [rems.service.form :as form]
             [rems.service.licenses :as licenses]
             [rems.service.resource :as resources]
-            [rems.db.events :as events-db]
             [rems.db.organizations :as organizations]
             [rems.ext.duo]
             [schema.core :as s]))
@@ -63,7 +63,7 @@
   (log/info "Validating data")
   (try
     (validate-forms)
-    (events/validate-events (events-db/get-all-events-since 0))
+    (events/validate-events (application/get-all-events-since 0))
     (validate-organizations)
     (when (:enable-duo env)
       (when (empty? (rems.ext.duo/get-duo-codes))

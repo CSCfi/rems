@@ -1,31 +1,269 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.set :as set]
-            [clojure.test :refer [deftest is]]
-            [clojure.tools.logging :as log]
             [conman.core :as conman]
-            [medley.core :refer [distinct-by map-vals]]
-            [mount.core :as mount]
-            [rems.application.events-cache :as events-cache]
-            [rems.application.model :as model]
-            [rems.auth.util :refer [throw-forbidden]]
+            [medley.core :refer [filter-vals]]
+            [rems.application.commands :as commands]
+            [rems.application.events :as events]
             [rems.cache]
-            [rems.common.util :refer [conj-set keep-keys]]
+            [rems.common.util :refer [conj-set disj-set]]
             [rems.config :refer [env]]
-            [rems.db.attachments :as attachments]
-            [rems.db.blacklist :as blacklist]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.csv :as csv]
-            [rems.db.events :as events]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
-            [rems.permissions :as permissions]
-            [rems.scheduler :as scheduler])
-  (:import [org.joda.time Duration]))
+            [rems.json :as json]
+            [rems.schema-base :as schema-base]
+            [rems.application.model :as model]
+            [schema-tools.core :as st]
+            [schema.coerce :as coerce]
+            [schema.utils])
+  (:import rems.TryAgainException))
+
+;;; Cache
+
+(defn reload-cache! []
+  ;; TODO implement
+  )
+
+;;; Events
+
+(def ^:private coerce-event-commons
+  (coerce/coercer! (st/open-schema schema-base/EventBase) json/coercion-matcher))
+
+(def ^:private coerce-event-specifics
+  (coerce/coercer! events/Event json/coercion-matcher))
+
+(defn- coerce-event [event]
+  ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
+  (-> event
+      coerce-event-commons
+      coerce-event-specifics))
+
+(defn json->event [json]
+  (when json
+    (coerce-event (json/parse-string json))))
+
+(defn event->json [event]
+  (events/validate-event event)
+  (json/generate-string event))
+
+(defn- fix-event-from-db [event]
+  (assoc (-> event :eventdata json->event)
+         :event/id (:id event)))
+
+(defn get-application-events [application-id]
+  (assert application-id)
+  (->> {:application application-id}
+       db/get-application-events
+       (mapv fix-event-from-db)))
+
+(defn get-all-events-since [event-id]
+  (mapv fix-event-from-db (db/get-application-events-since {:id event-id})))
+
+(defn get-latest-event []
+  (fix-event-from-db (db/get-latest-application-event {})))
+
+(defn- user-applications-projection [user-applications event application]
+  (let [actor (:event/actor event)
+        app-id (:application/id event)]
+    (case (:event/type event)
+      (:application.event/attachments-redacted
+       :application.event/applicant-changed
+       :application.event/approved
+       :application.event/closed
+       :application.event/review-requested
+       :application.event/reviewed
+       :application.event/copied-to
+       :application.event/decided
+       :application.event/decider-invited
+       :application.event/decision-requested
+       :application.event/deleted
+       :application.event/draft-saved
+       :application.event/external-id-assigned
+       :application.event/expiration-notifications-sent
+       :application.event/licenses-accepted
+       :application.event/licenses-added
+       :application.event/member-invited
+       :application.event/member-uninvited
+       :application.event/rejected
+       :application.event/remarked
+       :application.event/resources-changed
+       :application.event/returned
+       :application.event/reviewer-invited
+       :application.event/revoked
+       :application.event/submitted)
+      user-applications ; no user added
+
+      :application.event/copied-from
+      (reduce (fn [user-applications userid]
+                (update user-applications userid app-id))
+              user-applications
+              (:application/members application))
+
+      :application.event/created
+      (update user-applications actor conj-set app-id)
+
+      :application.event/decider-joined
+      (update user-applications actor conj-set app-id)
+
+      :application.event/member-added
+      (update user-applications actor conj-set (:userid (:application/member event)))
+
+      :application.event/member-joined
+      (update user-applications actor conj-set app-id)
+
+      :application.event/member-removed
+      (update user-applications actor disj-set (:userid (:application/member event)))
+
+      :application.event/reviewer-joined
+      (update user-applications actor conj-set app-id))))
+
+(defn- user-roles-projection [user-roles event application]
+  (let [actor (:event/actor event)]
+    (case (:event/type event)
+      (:application.event/attachments-redacted
+       :application.event/approved
+       :application.event/closed
+       :application.event/copied-from
+       :application.event/copied-to
+       :application.event/decider-invited
+       :application.event/deleted
+       :application.event/draft-saved
+       :application.event/external-id-assigned
+       :application.event/expiration-notifications-sent
+       :application.event/licenses-accepted
+       :application.event/licenses-added
+       :application.event/member-invited
+       :application.event/member-uninvited
+       :application.event/rejected
+       :application.event/remarked
+       :application.event/resources-changed
+       :application.event/returned
+       :application.event/reviewer-invited
+       :application.event/revoked
+       :application.event/submitted)
+      user-roles ; no user role added
+
+      :application.event/reviewed
+      (update user-roles actor (fn [roles]
+                                 (-> roles
+                                     (disj-set :reviewer)
+                                     (conj-set :past-reviewer))))
+
+      :application.event/review-requested
+      (reduce (fn [user-roles reviewer]
+                (update user-roles reviewer conj-set :reviewer))
+              user-roles
+              (:application/reviewers event))
+
+      :application.event/applicant-changed
+      (-> user-roles
+          (update (:application/applicant application) disj-set :applicant)
+          (update (:application/applicant event) (conj-set :applicant)))
+
+      :application.event/decided
+      (update user-roles actor (fn [roles]
+                                 (-> roles
+                                     (disj-set :decider)
+                                     (conj-set :past-decider))))
+
+      :application.event/decision-requested
+      (reduce (fn [user-roles decider]
+                (update user-roles decider conj-set :decider))
+              user-roles
+              (:application/deciders event))
+
+      :application.event/created
+      (update user-roles actor conj-set :applicant)
+
+      :application.event/decider-joined
+      (update user-roles actor conj-set :decider)
+
+      :application.event/member-added
+      (update user-roles (:userid (:application/member event)) conj-set :member)
+
+      :application.event/member-joined
+      (update user-roles actor conj-set :member)
+
+      :application.event/member-removed
+      (update user-roles (:userid (:application/member event)) disj-set :member)
+
+      :application.event/reviewer-joined
+      (update user-roles actor conj-set :reviewer))))
+
+(def projections (atom nil))
+
+(defn- update-projections [event application]
+  (swap! projections (fn [projections]
+                       (-> projections
+                           (update :projection/user-applications user-applications-projection event application)
+                           (update :projection/user-roles user-roles-projection event application))))
+  event)
+
+(defn get-users-with-role [role]
+  ;; TODO optimize
+  (set (keys (filter-vals #(contains? % role) (:projection/user-roles @projections)))))
+
+(defn get-all-application-roles [userid]
+  (get (:projection/user-roles @projections) userid #{}))
+
+(defn add-event!
+  "Add `event` of the `application` to database.
+
+  Updates the projections regarding the application.
+
+  Returns the event as it went into the db."
+  [application event]
+  (-> {:application (:application/id event)
+       :eventdata (event->json event)}
+      db/add-application-event!
+      fix-event-from-db
+      (update-projections application)))
+
+(defn update-event!
+  "Updates an event on top of an old one. Returns the event as it went into the db."
+  [event]
+  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
+        _ (assert old-event)
+        event (merge old-event event)]
+    (db/update-application-event! {:id (:event/id old-event)
+                                   :application (:application/id event)
+                                   :eventdata (event->json (dissoc event :event/id))})
+    event))
+
+(defn replace-event!
+  "Replaces an event on top of an old one.
+
+  Differs from `add-event!` in that it replaces an old event.
+  Differs from `update-event!` in that the event id is a new one.
+
+  Returns the event as it went into the db."
+  [event]
+  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
+        _ (assert old-event)
+        event (merge old-event event)]
+    (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
+                                                       :application (:application/id event)
+                                                       :eventdata (event->json (dissoc event :event/id))}))))
+
+(defn add-event-with-compaction!
+  "Add `event` to database.
+
+  Consecutive `:draft-saved` events of `application` are compacted into one by replacing
+  the last event of `application` instead of creating a new one.
+
+  Returns the event as it went into the db."
+  [application event]
+  (let [last-event (-> application
+                       :application/events
+                       last)]
+    (if (and (:enable-save-compaction env)
+             (= :application.event/draft-saved
+                (:event/type event)
+                (:event/type last-event))
+             (= (:application/id event)
+                (:application/id last-event)))
+      (replace-event! (merge event
+                             (select-keys last-event [:event/id])))
+      (add-event! application event))))
 
 ;;; Creating applications
 
@@ -52,246 +290,85 @@
 
 ;;; Running commands
 
-(defn get-catalogue-item-licenses [catalogue-item-id]
-  (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
-        workflow-licenses (-> (workflow/get-workflow (:wfid item))
-                              (get-in [:workflow :licenses]))]
-    (->> (licenses/get-licenses {:items [catalogue-item-id]})
-         (keep-keys {:id :license/id})
-         (into workflow-licenses)
-         (distinct-by :license/id))))
+(defmacro one-at-a-time! [& body]
+  ;; Use locks to prevent multiple commands being executed in parallel.
+  ;; Serializable isolation level will already avoid anomalies, but produces
+  ;; lots of transaction conflicts when there is contention. This lock
+  ;; roughly doubles the throughput for rems.db.test-transactions tests.
+  ;;
+  ;; To clarify: without this lock our API calls would sometimes fail
+  ;; with transaction conflicts due to the serializable isolation
+  ;; level. The transaction conflict exceptions aren't handled
+  ;; currently and would cause API calls to fail with HTTP status 500.
+  ;; With this lock, API calls block more but never result in
+  ;; transaction conflicts.
+  ;;
+  ;; See docs/architecture/010-transactions.md for more info.
+  `(try
+     (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+     ~@body
 
-(defn get-application-by-invitation-token [invitation-token]
-  (:id (db/get-application-by-invitation-token {:token invitation-token})))
+     (catch org.postgresql.util.PSQLException e#
+       (if (.contains (.getMessage e#) "lock timeout")
+         (throw (TryAgainException. e#))
+         (throw e#)))))
 
-;;; Fetching applications (for API)
+(defn command! [cmd application command-injections]
+  (commands/handle-command cmd application command-injections))
 
-(def fetcher-injections
-  {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template (rems.cache/cached form/get-form-template)
-   :get-catalogue-item (fn [id] ((rems.cache/cached catalogue/get-localized-catalogue-item) id {:expand-names? true :expand-resource-data? true}))
-   :get-config (fn [] env)
-   :get-license (rems.cache/cached licenses/get-license)
-   :get-user (rems.cache/cached users/get-user)
-   :get-users-with-role (rems.cache/cached users/get-users-with-role)
-   :get-workflow (rems.cache/cached workflow/get-workflow)
-   :blacklisted? (fn [userid resource] ((rems.cache/cached blacklist/blacklisted?) userid resource))
-   ;; TODO: no caching for these, but they're only used by command handlers currently
-   :get-attachment-metadata attachments/get-attachment-metadata
-   :get-catalogue-item-licenses get-catalogue-item-licenses})
-
-(defn get-application-internal
-  "Returns the full application state without any user permission
-   checks and filtering of sensitive information. Don't expose via APIs."
-  [application-id]
-  (let [events (events/get-application-events application-id)]
-    (if (empty? events)
-      nil ; application not found
-      (model/build-application-view events fetcher-injections))))
-
-(defn get-application-for-user
-  "Returns the part of application state which the specified user
-   is allowed to see. Suitable for returning from public APIs as-is."
-  [user-id application-id]
-  (when-let [application (get-application-internal application-id)]
-    (or (model/apply-user-permissions application user-id)
-        (throw-forbidden))))
+(defn get-application-id-by-invitation-token [invitation-token]
+  (:id (db/get-application-id-by-invitation-token {:token invitation-token})))
 
 ;;; Listing all applications
 
-(defn- all-applications-view
-  "Projection for the current state of all applications."
-  [applications event]
-  (if-let [app-id (:application/id event)] ; old style events don't have :application/id
-    (update applications app-id model/application-view event)
-    applications))
+(defn get-simple-applications
+  "Gets simple shallow version of all applications. Useful for lists."
+  []
+  (->> (db/get-application-events)
+       (mapv fix-event-from-db)
+       (group-by :application/id)
+       vals
+       (mapv model/build-application-view)
+       (sort-by :application/id)))
 
-(defn- ->ApplicationOverview [application]
-  (dissoc application
-          :application/events
-          :application/forms
-          :application/licenses))
+(defn get-applications-with-user [userid]
+  (throw (RuntimeException. "get-applications-with-user not implemented")))
 
-(mount/defstate
-  ^{:doc "The cached state will contain the following keys:
-          ::raw-apps
-          - Map from application ID to the pure projected state of an application.
-          ::enriched-apps
-          - Map from application ID to the enriched version of an application.
-            Built from the raw apps by calling `enrich-with-injections`.
-            Since the injected entities (resources, forms etc.) are mutable,
-            it creates a cache invalidation problem here.
-          ::apps-by-user
-          - Map from user ID to a list of applications which the user can see.
-            Built from the enriched apps by calling `apply-user-permissions`.
-          ::roles-by-user
-          - Map from user ID to a set of all application roles which the user has,
-            a union of roles from all applications."}
-  all-applications-cache
-  :start (events-cache/new))
-
-(comment
-  (require '[clj-memory-meter.core :as mm])
-  (mm/measure (-> @all-applications-cache :state ::enriched-apps first))
-  (count (-> @all-applications-cache :state ::enriched-apps))
-  (mm/measure (-> @all-applications-cache :state ::enriched-apps))
-  (mm/measure (-> @all-applications-cache :state)))
-
-(defn- group-apps-by-user [apps]
-  (->> apps
-       (mapcat (fn [app]
-                 (for [user (keys (:application/user-roles app))]
-                   (when-let [app (model/apply-user-permissions app user)]
-                     [user app]))))
-       (reduce (fn [apps-by-user [user app]]
-                 (update apps-by-user user conj app))
-               {})))
-
-(deftest test-group-apps-by-user
-  (let [apps [(-> {:application/id 1}
-                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
-              (-> {:application/id 2}
-                  (permissions/give-role-to-users :bar ["user-1"]))]]
-    (is (= {"user-1" [{:application/id 1} {:application/id 2}]
-            "user-2" [{:application/id 1}]}
-           (->> (group-apps-by-user apps)
-                (map-vals (fn [apps]
-                            (->> apps
-                                 (map #(select-keys % [:application/id]))
-                                 (sort-by :application/id)))))))))
-
-(defn- group-roles-by-user [apps]
-  (->> apps
-       (mapcat (fn [app] (:application/user-roles app)))
-       (reduce (fn [roles-by-user [user roles]]
-                 (update roles-by-user user set/union roles))
-               {})))
-
-(deftest test-group-roles-by-user
-  (let [apps [(-> {:application/id 1}
-                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
-              (-> {:application/id 2}
-                  (permissions/give-role-to-users :bar ["user-1"]))]]
-    (is (= {"user-1" #{:foo :bar}
-            "user-2" #{:foo}}
-           (group-roles-by-user apps)))))
-
-(defn- group-users-by-role [apps]
-  (->> apps
-       (mapcat (fn [app]
-                 (for [[user roles] (:application/user-roles app)
-                       role roles]
-                   [user role])))
-       (reduce (fn [users-by-role [user role]]
-                 (update users-by-role role conj-set user))
-               {})))
-
-(deftest test-group-users-by-role
-  (let [apps [(-> {:application/id 1}
-                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
-              (-> {:application/id 2}
-                  (permissions/give-role-to-users :bar ["user-1"]))]]
-    (is (= {:foo #{"user-1" "user-2"}
-            :bar #{"user-1"}}
-           (group-users-by-role apps)))))
-
-(defn refresh-all-applications-cache! []
-  (events-cache/refresh!
-   all-applications-cache
-   (fn [state events]
-     ;; Because enrich-with-injections is not idempotent,
-     ;; it's necessary to hold on to the "raw" applications.
-     ;; TODO: consider making enrich-with-injections idempotent (move dissocs to hide-non-public-information and other small refactorings)
-     (let [raw-apps (reduce all-applications-view (::raw-apps state) events)
-           updated-app-ids (distinct (map :application/id events))
-           ;; TODO: batched injections: only one DB query to fetch all catalogue items etc.
-           ;;       - fetch all items in the background as a batch, use plain maps as injections
-           ;;       - change db/get-license and db/get-user-attributes to fetch all rows if ID is not defined
-           cached-injections (map-vals memoize fetcher-injections)
-           enriched-apps (->> (select-keys raw-apps updated-app-ids)
-                              (map-vals #(model/enrich-with-injections % cached-injections))
-                              (merge (::enriched-apps state)))]
-       {::raw-apps raw-apps
-        ::enriched-apps enriched-apps
-        ::apps-by-user (group-apps-by-user (vals enriched-apps))
-        ::roles-by-user (group-roles-by-user (vals enriched-apps))
-        ::users-by-role (group-users-by-role (vals enriched-apps))}))))
-
-(defn get-all-unrestricted-applications []
-  (-> (refresh-all-applications-cache!)
-      ::enriched-apps
-      (vals)))
-
-(defn get-all-applications [user-id]
-  (-> (refresh-all-applications-cache!)
-      (get-in [::apps-by-user user-id])
-      (->> (map ->ApplicationOverview))))
-
-(defn- get-all-applications-full [user-id] ;; full i.e. not overview
-  (-> (refresh-all-applications-cache!)
-      (get-in [::apps-by-user user-id])))
-
-(defn get-all-application-roles [user-id]
-  (-> (refresh-all-applications-cache!)
-      (get-in [::roles-by-user user-id])
-      (set)))
-
-(defn get-users-with-role [role]
-  (-> (refresh-all-applications-cache!)
-      (get-in [::users-by-role role])
-      (set)))
-
-(defn- my-application? [application]
-  (some #{:applicant :member} (:application/roles application)))
-
-(defn get-my-applications [user-id]
-  (->> (get-all-applications user-id)
-       (filter my-application?)))
-
-(defn export-applications-for-form-as-csv [user-id form-id language]
-  (let [applications (get-all-applications-full user-id)
-        filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (csv/applications-to-csv filtered-applications form-id language)))
-
-(defn reload-cache! []
-  (log/info "Start rems.db.applications/reload-cache!")
-  (rems.cache/empty-injections-cache!)
-  ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
-  (events-cache/empty! all-applications-cache)
-  (refresh-all-applications-cache!)
-  (log/info "Finished rems.db.applications/reload-cache!"))
-
-;; empty the cache occasionally in case some of the injected entities are changed
-(mount/defstate all-applications-cache-reloader
-  :start (scheduler/start! "all-applications-cache-reloader" reload-cache! (Duration/standardHours 1))
-  :stop (scheduler/stop! all-applications-cache-reloader))
-
-(defn- get-application-cached
+(defn get-simple-internal-application
+  "Simple application state with some internal information. Not personalized for any users. Not suitable for public APIs."
   [application-id]
-  (refresh-all-applications-cache!)
-  (get-in @all-applications-cache [:state ::enriched-apps application-id]))
+  (some-> application-id
+          get-application-events
+          seq
+          model/build-application-view))
 
-(defn get-application
-  "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
-  [application-id]
-  (when-let [application (get-application-internal application-id)]
-    (-> application
-        (model/hide-non-public-information)
-        (model/apply-privacy #{:reporter})))) ;; to populate required :field/private attributes
+(defn get-simple-internal-applications []
+  (->> (get-simple-applications)
+       (mapv (comp get-simple-internal-application :application/id))))
+
+(defn get-simple-internal-applications-by-user [userid]
+  (->> (get-simple-internal-applications)
+       (filterv (fn [application]
+                  (or (= (-> application :application/applicant :userid) userid)
+                      (contains? (set (map :userid (:application/members application))) userid))))))
 
 (defn delete-application!
   [app-id]
-  (let [application (get-application app-id)]
+  ;; XXX: additional safety measure for now
+  ;; consider removing when old applications need to expire
+  (let [application (get-simple-internal-application app-id)]
     (assert (= :application.state/draft (:application/state application))
             (str "Tried to delete application " app-id " which is not a draft!")))
+
   (db/delete-application-attachments! {:application app-id})
   (db/delete-application-events! {:application app-id})
   (db/delete-application! {:application app-id}))
 
-(defn delete-application-and-reload-cache! [app-id]
-  (delete-application! app-id)
-  (reload-cache!))
 
-(defn reset-cache! []
-  (events-cache/empty! all-applications-cache))
+(defn reload-projections! []
+  (doseq [event (get-all-events-since 0)]
+    (update-projections event (get-simple-internal-application (:application/id event)))))
+
+(comment
+  (reload-projections!))
 

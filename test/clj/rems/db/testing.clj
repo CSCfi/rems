@@ -8,14 +8,12 @@
             [rems.application.search]
             [rems.cache]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.service.test-data :as test-data]
             [rems.db.user-mappings :as user-mappings]
-            [rems.locales])
-  (:import [org.joda.time Duration ReadableInstant]))
+            [rems.locales]))
 
 (defn reset-db-fixture [f]
   (try
@@ -28,10 +26,11 @@
   (mount/start-with-args {:test true}
                          #'rems.config/env
                          #'rems.locales/translations
-                         #'rems.db.core/*db*)
+                         #'rems.db.core/*db*
+                         #'rems.application.search/search-index)
   (db/assert-test-database!)
-  (rems.cache/empty-injections-cache!)
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
+  ;;(rems.cache/empty-injections-cache!)
   (f)
   (mount/stop))
 
@@ -42,11 +41,12 @@
 
 (defn reset-caches-fixture [f]
   (try
-    (mount/start #'applications/all-applications-cache)
+    ;; TODO: rewrite with new application cache
+    #_(mount/start #'applications/all-applications-cache)
     (f)
     (finally
-      (applications/reset-cache!)
-      (catalogue/reset-cache!)
+      #_(applications/reset-cache!)
+      #_(catalogue/reset-cache!)
       (category/reset-cache!)
       (dependencies/reset-cache!)
       (user-mappings/reset-cache!))))

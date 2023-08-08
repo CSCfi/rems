@@ -2,9 +2,9 @@
   (:require [clj-time.core :as time]
             [rems.api.util :refer [not-found-json-response]]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.db.core :as db]
             [rems.common.roles :refer [has-roles?]]
             [rems.config :refer [env]]
+            [rems.db.entitlements :as entitlements]
             [rems.ga4gh :as ga4gh]
             [rems.util :refer [getx getx-user-id]]))
 
@@ -23,7 +23,7 @@
 
     :else
     (ga4gh/entitlements->passport
-     (db/get-entitlements {:user user
-                           :active-at (when-not expired
-                                        (time/now))}))))
+     (entitlements/get-entitlements {:user user
+                                     :active-at (when-not expired
+                                                  (time/now))}))))
 

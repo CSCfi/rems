@@ -210,15 +210,15 @@
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                                    :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                                    :sv "Exempelblankett med alla fälttyper"})
-        _simple-form (test-helpers/create-form! {:actor "owner"
+        private-form (test-helpers/create-form! {:actor "owner"
                                                  :organization {:organization/id "nbn"}
-                                                 :form/internal-name "Simple form"
-                                                 :form/external-title {:en "Simple Form"
-                                                                       :fi "Yksinkertainen lomake"
-                                                                       :sv "Enkelt Blankett"}
-                                                 :form/fields [{:field/title {:en "Simple text field"
-                                                                              :fi "Yksinkertainen tekstikenttä"
-                                                                              :sv "Textfält"}
+                                                 :form/internal-name "Private form"
+                                                 :form/external-title {:en "Private Form"
+                                                                       :fi "Privaattilomake"
+                                                                       :sv "Privat Blankett"}
+                                                 :form/fields [{:field/title {:en "Private text field"
+                                                                              :fi "Privaattitekstikenttä"
+                                                                              :sv "Privat textfält"}
                                                                 :field/optional false
                                                                 :field/type :text
                                                                 :field/max-length 100
@@ -247,13 +247,13 @@
         ;;                                                                                                            :values ["csc"]}]}]}})
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "Standard arbetsflöde"} :resource-id res-id1})
-        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+        _ (test-helpers/create-catalogue-item! {:form-id private-form
                                                 :workflow-id wfid
                                                 :title {:en "Default workflow with private form"
                                                         :fi "Oletustyövuo yksityisellä lomakkeella"
                                                         :sv "Standard arbetsflöde med privat blankett"}
                                                 :resource-id res-id2})
-        ;; item-id3 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
+        ;; item-id3 (test-helpers/create-catalogue-item! {:form-id private-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
         ;;                                                                                                :sv "Standard blankettarbetsflöde med DUO-koder"} :resource-id duo-resource})
         app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
     (test-helpers/submit-application {:application-id app-id

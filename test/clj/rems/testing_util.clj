@@ -2,10 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [rems.context :as context]
-            [rems.db.applications :as applications]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.db.organizations :as organizations])
+            [rems.db.organizations :as organizations]
+            [rems.service.cache :as cache])
   (:import [ch.qos.logback.classic Level Logger]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -42,11 +42,11 @@
                                       "test"
                                       (make-array FileAttribute 0))))
 
-(defmacro with-user [user & body]
-  `(binding [context/*user* (users/get-raw-user-attributes ~user)
-             context/*roles* (set/union (roles/get-roles ~user)
-                                        (organizations/get-all-organization-roles ~user)
-                                        (applications/get-all-application-roles ~user))]
+(defmacro with-user [userid & body]
+  `(binding [context/*user* (users/get-raw-user-attributes ~userid)
+             context/*roles* (set/union (roles/get-roles ~userid)
+                                        (organizations/get-all-organization-roles ~userid)
+                                        (cache/get-all-application-roles ~userid))]
      ~@body))
 
 (defmacro with-fake-login-users
@@ -64,3 +64,8 @@
                                                                                                :description (pr-str v)}))}])]
      ~@body))
 
+(comment
+  (let [userid "owner"]
+    (set/union (roles/get-roles userid)
+               (organizations/get-all-organization-roles userid)
+               (cache/get-all-application-roles userid))))

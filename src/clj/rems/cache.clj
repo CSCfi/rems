@@ -68,5 +68,9 @@
 ;; in rems.db.applications
 ;; cached-injections (map-vals memoize fetcher-injections)
 
-(defn cached [f]
-  f)
+(defn cached [fv]
+  (let [name (-> fv meta :name str)]
+    (fn [& args]
+      (prn :cached name args)
+      (apply fv args))))
+

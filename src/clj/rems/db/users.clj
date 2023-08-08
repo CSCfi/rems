@@ -1,6 +1,6 @@
 (ns rems.db.users
   (:require [clojure.string :as str]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.user-settings :as user-settings]
@@ -118,8 +118,8 @@
 
 (defn get-users-with-role [role]
   (->> (db/get-users-with-role {:role (name role)})
-       (map :userid)
-       (doall)))
+       (mapv :userid)
+       set))
 
 (defn get-user
   "Given a userid, returns a map with keys :userid, :email, :name and optionally :notification-email"

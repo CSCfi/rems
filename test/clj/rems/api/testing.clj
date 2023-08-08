@@ -82,6 +82,18 @@
                      (slurp body)))})
   response)
 
+(defn assert-response-is-ok-redirect [response]
+  (assert response)
+  (assert (= 302 (:status response))
+          {:status (:status response)
+           :body (when-let [body (:body response)]
+                   (if (string? body)
+                     body
+                     (slurp body)))})
+  (assert (not (str/starts-with? (get-in response [:headers "Location"]) "/error"))
+          response)
+  response)
+
 (defn assert-response-is-server-error? [response]
   (assert-schema-errors response)
   (assert (= 500 (:status response))))
@@ -208,7 +220,7 @@
 (defn login-with-cookies [username]
   (let [cookie (-> (request :get "/fake-login" {:username username})
                    handler
-                   assert-response-is-redirect
+                   assert-response-is-ok-redirect
                    get-session-cookie)]
     (assert cookie)
     cookie))

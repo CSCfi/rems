@@ -18,10 +18,19 @@
 
 (defn interesting-ns? [s]
   (and (str/starts-with? s "rems.")
+       ;; utils and helpers are not interesting
        (not (str/ends-with? s ".util"))
        (not (str/ends-with? s "-util"))
+       (not (str/ends-with? s "-helpers"))
        (not (str/starts-with? s "rems.api.schema"))
+
+       ;; special cases
+       (not (str/starts-with? s "rems.service.test-data"))
        (not (str/starts-with? s "rems.service.dependencies"))
+
+       ;; not interesting right now
+       (not (str/starts-with? s "rems.main"))
+
        (or (= s "rems.main")
            (= s "rems.cli")
            (str/starts-with? s "rems.ext.")
@@ -41,11 +50,11 @@
     [:cli :service] true
     [:api :service] true
     [:service :db] true
-    [:service :service] true
+    [:service :service] false ; circular dependency
     [:api :ext] true
     [:service :ext] true
     [:ext :ext] true
-    [:db :db] (= "rems.db.core" (:name to))
+    [:db :core] (= "rems.db.core" (:name to))
     [:api :api] (= "rems.api" (:name from))
     false))
 (defn analyze-code []
@@ -77,11 +86,18 @@
                                         (and (interesting-ns? from)
                                              (interesting-ns? to))))
                               ;;(concat [["rems.cli"]])  ; consider implementing `rems.cli` ns
-                              (map (fn [[from to]] [from to (when-not (ok-transition? (namespace-by-id from)
-                                                                                      (namespace-by-id to))
+                              ;;(remove #(ok-transition? (namespace-by-id (first %)) (namespace-by-id (second %))))
+                              (map (fn [[from to]] [from to (if (ok-transition? (namespace-by-id from)
+                                                                                (namespace-by-id to))
+                                                              {:color :black
+                                                               :constraint true
+                                                               :weight 1}
                                                               {:color :red
                                                                :constraint false
-                                                               :weight 0.01})])))]
+                                                               :weight 0.01})])))
+        nodes-with-edges (into #{} (mapcat (partial take 2) namespace-usages))
+        namespaces (filter (comp nodes-with-edges :name) namespaces)]
+    (prn nodes-with-edges namespaces)
     {:namespace-usages namespace-usages
      :namespaces namespaces}))
 
@@ -243,6 +259,6 @@
     (rems.trace/reset!)
     #_(rems.service.catalogue/get-localized-catalogue-items {:archived false :enabled true})
     #_(rems.service.catalogue/get-catalogue-tree {:archived false :enabled true})
-    (count (rems.db.applications/get-all-applications "handler"))
+    (count (rems.service.application/get-applications-with-user "handler"))
     #_(rems.db.applications/get-application 1016)
     (call-graph @rems.trace/trace-a)))

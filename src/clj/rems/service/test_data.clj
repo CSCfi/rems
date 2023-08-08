@@ -516,9 +516,9 @@
 
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
-  (let [resource-count 1000
-        application-count 1000
-        user-count 1000
+  (let [resource-count 10
+        application-count 10
+        user-count 10
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
@@ -745,11 +745,14 @@
 
         form-private-nbn (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "nbn"}
-                                                     :form/internal-name "Simple form"
-                                                     :form/external-title {:en "Form"
-                                                                           :fi "Lomake"
-                                                                           :sv "Blankett"}
-                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                     :form/internal-name "Private form"
+                                                     :form/external-title {:en "Private"
+                                                                           :fi "Privaattilomake"
+                                                                           :sv "Privat Blankett"}
+                                                     :form/fields [(merge text-field {:field/title {:en "Private text field"
+                                                                                                    :fi "Yksityinen tekstikenttä"
+                                                                                                    :sv "Privat textfält"}
+                                                                                      :field/max-length 100
                                                                                       :field/privacy :private})]})
 
         form-private-thl (test-helpers/create-form! {:actor owner
@@ -1225,7 +1228,20 @@
     (create-items! users user-data)))
 
 (comment
+  (create-archived-form! "owner")
+  (#'rems.db.organizations/parse-organization (rems.db.core/get-organization-by-id {:id "nbn"}))
+  (rems.db.organizations/getx-organization-by-id "nbn")
+  (rems.db.organizations/join-organization {:organization {:organization/id "nbn"}})
+  (test-helpers/create-form! {:actor "owner"
+                              :organization {:organization/id "nbn"}
+                              :form/internal-name "Archived form, should not be seen by applicants"
+                              :form/external-title {:en "Archived form, should not be seen by applicants"
+                                                    :fi "Archived form, should not be seen by applicants"
+                                                    :sv "Archived form, should not be seen by applicants"}})
+  (with-user "owner"
+    (form/set-form-archived! {:id 29 :archived true}))
   (do ; you can manually re-create test data (useful sometimes when debugging)
+    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
     (create-test-data!)
     (create-performance-test-data!)))

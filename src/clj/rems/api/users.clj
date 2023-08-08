@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.util] ; required for route :roles
-            [rems.db.users :as users]
+            [rems.service.user :as user]
             [rems.middleware :as middleware]
             [rems.schema-base :as schema-base]
             [ring.util.http-response :refer :all]
@@ -29,7 +29,7 @@
       :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
       :return schema/SuccessResponse
-      (users/add-user! command)
+      (user/add-user! command)
       (ok {:success true}))
 
     (PUT "/edit" []
@@ -37,7 +37,7 @@
       :roles #{:owner :user-owner}
       :body [command EditUserCommand]
       :return schema/SuccessResponse
-      (users/edit-user! command)
+      (user/edit-user! command)
       (ok {:success true}))
 
     (GET "/active" []

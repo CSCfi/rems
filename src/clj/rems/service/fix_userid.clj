@@ -4,9 +4,9 @@
             [rems.db.api-key]
             [rems.db.applications]
             [rems.db.attachments]
+            [rems.db.audit-log]
             [rems.db.blacklist]
-            [rems.db.core]
-            [rems.db.events]
+            [rems.db.entitlements]
             [rems.db.form]
             [rems.db.invitation]
             [rems.db.licenses]
@@ -35,7 +35,7 @@
 
 (defn fix-application-event [old-userid new-userid simulate?]
   (doall
-   (for [old-event (rems.db.events/get-all-events-since 0)
+   (for [old-event (rems.db.applications/get-all-events-since 0)
          :let [new-event (cond-> old-event
                            (= old-userid (:event/actor old-event))
                            (assoc :event/actor new-userid)
@@ -56,7 +56,7 @@
      (do
        (apply prn #'fix-application-event old-event params)
        (when-not simulate?
-         (apply rems.db.events/update-event! params))
+         (apply rems.db.applications/update-event! params))
        {:old-event old-event :params params}))))
 
 (comment
@@ -79,7 +79,7 @@
 
 (defn fix-audit-log [old-userid new-userid simulate?]
   (doall
-   (for [audit-log (rems.db.core/get-audit-log)
+   (for [audit-log (rems.db.audit-log/get-audit-log)
          :when (= old-userid (:userid audit-log))
          :let [params [(merge audit-log
                               {:time-new (:time audit-log)
@@ -91,7 +91,7 @@
      (do
        (apply prn #'fix-audit-log audit-log params)
        (when-not simulate?
-         (let [result (apply rems.db.core/update-audit-log! params)]
+         (let [result (apply rems.db.audit-log/update-audit-log! params)]
            (assert (= 1 (first result)) {:audit-log audit-log :params params :result result})))
        {:audit-log audit-log :params params}))))
 
@@ -125,7 +125,7 @@
 
 (defn fix-entitlement [old-userid new-userid simulate?]
   (doall
-   (for [old (rems.db.core/get-entitlements nil)
+   (for [old (rems.db.entitlements/get-entitlements nil)
          :let [new (cond-> old
                      (= old-userid (:userid old))
                      (assoc :userid new-userid)
@@ -147,7 +147,7 @@
      (do
        (apply prn #'fix-entitlement old params)
        (when-not simulate?
-         (apply rems.db.core/update-entitlement! params))
+         (apply rems.db.entitlements/update-entitlement! params))
        {:old old :params params}))))
 
 (comment
@@ -295,7 +295,6 @@
                   [(:name (meta f))
                    (f old-userid new-userid simulate?)]))]
     (remove-old-user old-userid simulate?)
-    ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
 
 (comment

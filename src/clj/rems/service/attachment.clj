@@ -6,8 +6,8 @@
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.common.attachment-util :refer [getx-filename]]
-            [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
+            [rems.service.cache :as cache]
             [rems.util :refer [getx]]
             [ring.util.http-response :refer [ok content-type header]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
@@ -22,7 +22,7 @@
 (defn- find-application-attachment [user-id attachment]
   (when-some [application (->> attachment
                                :application/id
-                               (applications/get-application-for-user user-id))]
+                               (cache/get-full-personalized-application-for-user user-id))]
     (->> application
          :application/attachments
          (find-first #(= (:attachment/id attachment)
@@ -46,7 +46,7 @@
 (defn add-application-attachment [user-id application-id file]
   (attachments/check-size file)
   (attachments/check-allowed-attachment (:filename file))
-  (let [application (applications/get-application-for-user user-id application-id)]
+  (let [application (cache/get-full-personalized-application-for-user user-id application-id)]
     (when-not (some (set/union commands/commands-with-comments
                                #{:application.command/save-draft})
                     (:application/permissions application))
@@ -79,3 +79,8 @@
         (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
         (content-type "application/zip"))))
 
+(defn delete-attachment! [attachment-id]
+  (attachments/delete-attachment! attachment-id))
+
+(defn redact-attachment! [attachment-id]
+  (attachments/redact-attachment! attachment-id))

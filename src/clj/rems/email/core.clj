@@ -5,24 +5,23 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
-            [rems.service.todos :as todos]
-            [rems.service.workflow :as workflow]
             [rems.application.model]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
             [rems.db.invitation :as invitation]
             [rems.db.outbox :as outbox]
-            [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
             [rems.email.template :as template]
-            [rems.scheduler :as scheduler])
+            [rems.scheduler :as scheduler]
+            [rems.service.application :as application]
+            [rems.service.todos :as todos]
+            [rems.service.user :as user]
+            [rems.service.workflow :as workflow])
   (:import [javax.mail.internet InternetAddress]
            [org.joda.time Duration Period]))
 
 (defn- event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                              (applications/get-application app-id))))
+    (template/event-to-emails (rems.application.model/enrich-event event user/get-user (constantly nil))
+                              (application/get-full-internal-application app-id))))
 
 (defn- enqueue-email! [email]
   (outbox/put! {:outbox/type :email
@@ -37,17 +36,17 @@
 (defn generate-handler-reminder-emails! []
   (doseq [email (->> (workflow/get-handlers)
                      (map (fn [handler]
-                            (let [lang (:language (user-settings/get-user-settings (:userid handler)))
+                            (let [lang (:language (user/get-user-settings (:userid handler)))
                                   apps (todos/get-todos (:userid handler))]
                               (template/handler-reminder-email lang handler apps))))
                      (remove nil?))]
     (enqueue-email! email)))
 
 (defn generate-reviewer-reminder-emails! []
-  (doseq [email (->> (applications/get-users-with-role :reviewer)
-                     (map users/get-user)
+  (doseq [email (->> (user/get-users-with-role :reviewer)
+                     (map user/get-user)
                      (map (fn [reviewer]
-                            (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))
+                            (let [lang (:language (user/get-user-settings (:userid reviewer)))
                                   apps (->> (todos/get-todos (:userid reviewer))
                                             (map #(= :waiting-for-your-review (:application/todo %))))]
                               (template/reviewer-reminder-email lang reviewer apps))))
@@ -102,8 +101,8 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (:notification-email (user-settings/get-user-settings (:to-user email-spec)))
-                             (:email (users/get-user (:to-user email-spec))))
+                             (:notification-email (user/get-user-settings (:to-user email-spec)))
+                             (:email (user/get-user (:to-user email-spec))))
                      ;; https://tools.ietf.org/html/rfc3834
                      ;; postal turns extra keys into headers
                      "Auto-Submitted" "auto-generated")

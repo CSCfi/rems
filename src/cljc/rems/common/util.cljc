@@ -196,6 +196,8 @@
 
 (def conj-set (fnil conj #{}))
 
+(def disj-set (fnil disj #{}))
+
 (def conj-vec (fnil conj []))
 
 (def into-vec (fnil into []))

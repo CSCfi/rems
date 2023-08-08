@@ -1,8 +1,9 @@
 (ns rems.service.blacklist
   (:require [clj-time.core :as time]
-            [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
-            [rems.db.users :as users]))
+            [rems.db.resource :as resource]
+            [rems.db.users :as users]
+            [rems.service.dependencies :as dependencies]))
 
 (defn- command->event [command actor]
   {:event/actor actor
@@ -11,15 +12,32 @@
    :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
    :event/comment (:comment command)})
 
+(defn- check-foreign-keys [event]
+  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
+  (when-not (users/user-exists? (:userid event))
+    (throw (IllegalArgumentException. "user doesn't exist")))
+  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+    (throw (IllegalArgumentException. "resource doesn't exist")))
+  event)
+
+(defn blacklisted? [userid resource]
+  (blacklist/blacklisted? userid resource))
+
+(defn add-event! [event]
+  (blacklist/add-event! (check-foreign-keys event)))
+
+(defn update-event! [event]
+  (blacklist/update-event! (check-foreign-keys event)))
+
 (defn add-user-to-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
                             (assoc :event/type :blacklist.event/add)))
-  (applications/reload-cache!))
+  (dependencies/evict! :blacklist/by-user (get-in command [:blacklist/user :userid])))
 
 (defn remove-user-from-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
                             (assoc :event/type :blacklist.event/remove)))
-  (applications/reload-cache!))
+  (dependencies/evict! :blacklist/by-user (get-in command [:blacklist/user :userid])))
 
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}

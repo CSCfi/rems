@@ -1,8 +1,6 @@
 (ns rems.db.blacklist
   (:require [rems.common.util :refer [getx]]
             [rems.db.core :as db]
-            [rems.db.resource :as resource]
-            [rems.db.users :as users]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -39,20 +37,12 @@
   (assoc (json->event (:eventdata event))
          :event/id (:event/id event)))
 
-(defn- check-foreign-keys [event]
-  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
-  (when-not (users/user-exists? (:userid event))
-    (throw (IllegalArgumentException. "user doesn't exist")))
-  (when-not (resource/ext-id-exists? (:resource/ext-id event))
-    (throw (IllegalArgumentException. "resource doesn't exist")))
-  event)
-
 (defn add-event! [event]
-  (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
+  (db/add-blacklist-event! {:eventdata (-> event event->json)}))
 
 (defn update-event! [event]
   (db/update-blacklist-event! {:id (getx event :event/id)
-                               :eventdata (-> event check-foreign-keys event->json)}))
+                               :eventdata (-> event event->json)}))
 
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))

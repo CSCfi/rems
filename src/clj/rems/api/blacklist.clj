@@ -4,12 +4,11 @@
             [rems.api.schema :as schema]
             [rems.service.command :as command]
             [rems.service.blacklist :as blacklist]
+            [rems.service.resource :as resource]
+            [rems.service.user :as user]
             [rems.api.util :refer [unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
-            [rems.db.resource :as resource]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-in getx-user-id]]
             [ring.util.http-response :refer [ok]]
@@ -28,7 +27,7 @@
          :blacklist/added-at DateTime))
 
 (defn- user-not-found-error [command]
-  (when-not (users/user-exists? (get-in command [:blacklist/user :userid]))
+  (when-not (user/user-exists? (get-in command [:blacklist/user :userid]))
     (unprocessable-entity-json-response "user not found")))
 
 (defn- resource-not-found-error [command]
@@ -45,14 +44,14 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (blacklist/get-blacklist {:userid (user-mappings/find-userid user)
+      (ok (blacklist/get-blacklist {:userid (user/find-userid user)
                                     :resource/ext-id resource})))
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
       :roles  #{:owner :handler}
       :return [schema-base/UserWithAttributes]
-      (ok (users/get-users)))
+      (ok (user/get-users)))
 
     ;; TODO write access to blacklist for organization-owner
 
@@ -61,7 +60,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (user/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
@@ -78,7 +77,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (user/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)

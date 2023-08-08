@@ -153,12 +153,11 @@ WHERE id = :id;
 SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
-SELECT catid AS id, langcode, title, infoUrl
-FROM catalogue_item_localization;
+SELECT catid as id, langcode, title, infoUrl
+FROM catalogue_item_localization
+WHERE catid = :id;
 
 -- :name upsert-catalogue-item-localization! :insert
--- TODO now that we have the catalogue_item_localization_unique
--- constraint, we can get rid of the synthetic id column
 INSERT INTO catalogue_item_localization
   (catid, langcode, title, infoUrl)
 VALUES (:id, :langcode, :title,
@@ -343,6 +342,7 @@ INSERT INTO license
 (organization, type)
 VALUES
 (:organization, :type::license_type)
+RETURNING id;
 
 -- :name set-license-enabled! :!
 UPDATE license
@@ -631,7 +631,7 @@ WHERE apiKey = :apikey;
 -- :name get-api-keys :? :*
 SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key;
 
--- :name get-application-by-invitation-token :? :1
+-- :name get-application-id-by-invitation-token :? :1
 SELECT app.id
 FROM catalogue_item_application app
 JOIN application_event evt ON (app.id = evt.appid)

@@ -1,9 +1,18 @@
 (ns rems.db.test-data-helpers
   (:require [clj-time.core :as time]
-            [medley.core :refer [assoc-some update-existing]]
+            [clojure.string]
             [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
-            [clojure.string]
+            [medley.core :refer [assoc-some update-existing]]
+            [rems.common.util :refer [fix-filename]]
+            [rems.config]
+            [rems.db.core :as db]
+            [rems.db.roles :as roles]
+            [rems.db.organizations]
+            [rems.db.test-data-users :refer [+fake-user-data+]]
+            [rems.db.users :as users]
+            [rems.db.user-mappings :as user-mappings]
+            [rems.service.cache :as cache]
             [rems.service.catalogue :as catalogue]
             [rems.service.category :as category]
             [rems.service.command :as command]
@@ -12,15 +21,6 @@
             [rems.service.organizations :as organizations]
             [rems.service.resource :as resource]
             [rems.service.workflow :as workflow]
-            [rems.common.util :refer [fix-filename]]
-            [rems.config]
-            [rems.db.applications :as applications]
-            [rems.db.core :as db]
-            [rems.db.roles :as roles]
-            [rems.db.organizations]
-            [rems.db.test-data-users :refer [+fake-user-data+]]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]))
 
@@ -262,7 +262,7 @@
    :time (or time (time/now))})
 
 (defn fill-form! [{:keys [application-id actor field-value optional-fields attachment multiselect] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (cache/get-full-personalized-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
@@ -289,7 +289,7 @@
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (cache/get-full-personalized-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      ;; copy existing forms so as to not override
@@ -301,7 +301,7 @@
                      :duo-codes duos))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (cache/get-full-personalized-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/accept-licenses
                      :accepted-licenses (map :license/id (:application/licenses app))))))
@@ -346,7 +346,7 @@
   (command! {:type :application.command/accept-invitation
              :actor (:userid member)
              :application-id application-id
-             :token (-> (rems.db.applications/get-application-internal application-id)
+             :token (-> (cache/get-full-internal-application application-id)
                         :application/events
                         last
                         :invitation/token)}))

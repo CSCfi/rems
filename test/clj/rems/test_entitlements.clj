@@ -1,12 +1,12 @@
-(ns ^:integration rems.db.test-entitlements
+(ns ^:integration rems.test-entitlements
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.entitlements :as entitlements]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture test-db-fixture rollback-db-fixture]]
+            [rems.entitlements :as entitlements]
             [rems.json :as json]
             [rems.testing-util :refer [fixed-time-fixture suppress-logging]]
             [stub-http.core :as stub]))
@@ -152,7 +152,7 @@
                                      :accepted-licenses [lic-id1]}) ; only accept some licenses
              (is (= {applicant #{lic-id1 lic-id2}
                      member #{lic-id1}}
-                    (:application/accepted-licenses (applications/get-application app-id))))
+                    (:application/accepted-licenses (applications/get-simple-internal-application app-id))))
 
              (entitlements/process-outbox!)
 

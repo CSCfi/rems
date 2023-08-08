@@ -12,7 +12,6 @@
             [rems.common.util :refer [assoc-some-in]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
@@ -21,6 +20,7 @@
             [rems.logging :refer [with-mdc]]
             [rems.middleware.dev :refer [wrap-dev]]
             [rems.multipart]
+            [rems.service.application :as application]
             [rems.util :refer [getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -76,7 +76,7 @@
                                  (set/union (roles/get-roles (getx-user-id))
                                             (organizations/get-all-organization-roles (getx-user-id))
                                             (workflow/get-all-workflow-roles (getx-user-id))
-                                            (applications/get-all-application-roles (getx-user-id))))
+                                            (application/get-all-application-roles (getx-user-id))))
                                (when (:uses-valid-api-key? request)
                                  #{:api-key}))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}

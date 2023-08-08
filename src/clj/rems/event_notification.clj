@@ -4,12 +4,11 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
-            [rems.api.schema :as schema]
             [rems.config]
-            [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.json :as json]
             [rems.scheduler :as scheduler]
+            [rems.service.application :as application]
             [rems.util :refer [getx]]))
 
 (def ^:private default-timeout 60)
@@ -83,7 +82,7 @@
 (defn queue-notifications! [events]
   (when-let [targets (seq (get rems.config/env :event-notification-targets))]
     (doseq [event events
-            :let [application-part (delay {:event/application (applications/get-application (:application/id event))})]
+            :let [application-part (delay {:event/application (application/get-full-public-application (:application/id event))})]
             target targets
             :when (wants? target event)
             :let [body (merge event

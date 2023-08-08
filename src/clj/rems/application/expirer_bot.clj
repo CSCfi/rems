@@ -8,8 +8,6 @@
             [rems.config :refer [env]])
   (:import [org.joda.time Period]))
 
-(def bot-userid "expirer-bot")
-
 (defn- get-last-activity [application]
   (let [last-event (last (:application/events application))]
     (if (= (:event/type last-event)
@@ -29,7 +27,7 @@
                 (time/before? (time/now)))
     {:type :application.command/delete
      :time (time/now)
-     :actor bot-userid
+     :actor "expirer-bot"
      :application-id (:application/id application)}))
 
 (deftest test-expire-application
@@ -94,7 +92,7 @@
   (when (should-send-email application)
     {:type :application.command/send-expiration-notifications
      :time (time/now)
-     :actor bot-userid
+     :actor "expirer-bot"
      :application-id (:application/id application)
      :last-activity (:application/last-activity application)
      :expires-on (expiration-time application)}))

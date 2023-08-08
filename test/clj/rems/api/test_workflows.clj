@@ -4,13 +4,11 @@
             [rems.service.workflow :as workflows]
             [rems.api.testing :refer :all]
             [rems.common.util :refer [replace-key]]
-            [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
-            [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
+            [rems.service.application :as application]
             [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
@@ -212,7 +210,7 @@
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (testing "application is initialized with the correct set of handlers"
-      (let [app (applications/get-application app-id)]
+      (let [app (application/get-full-internal-application app-id)]
         (is (= #{"handler" "carl"}
                (application->handler-user-ids app)))))
 
@@ -271,7 +269,7 @@
                                       handler))))
 
     (testing "application is updated when handlers are changed"
-      (let [app (applications/get-application app-id)]
+      (let [app (application/get-full-internal-application app-id)]
         (is (= #{"owner" "alice"}
                (application->handler-user-ids app)))))))
 

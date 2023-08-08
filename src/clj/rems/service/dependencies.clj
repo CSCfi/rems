@@ -91,6 +91,18 @@
 (defn reset-cache! []
   (reset! dependencies-cache nil))
 
+
+;; TODO: rewrite
+(defn evict! [type id]
+  #_(case type
+      :not-implemented/catalogue-item
+      (do #_(catalogue/reset-cache!)
+          #_(applications/reload-cache!)
+          #_(reset-cache!)
+          nil)
+      :not-implemented/workflow nil))
+
+
 ;; TODO change format of errors so we can get rid of this conversion
 (defn- format-deps-for-errors [deps]
   (apply merge-with concat
@@ -154,3 +166,4 @@
     {:success false
      :errors [(merge {:type :t.administration.errors/in-use-by}
                      (format-deps-for-errors users))]}))
+

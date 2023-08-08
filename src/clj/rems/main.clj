@@ -9,19 +9,19 @@
             [luminus.repl-server :as repl]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
-            [rems.service.ega :as ega]
             [rems.application.search :as search]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.service.fix-userid]
             [rems.db.roles :as roles]
-            [rems.service.test-data :as test-data]
             [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
+            [rems.service.ega :as ega]
+            [rems.service.application :as application]
+            [rems.service.fix-userid]
+            [rems.service.test-data :as test-data]
             [rems.validate :as validate])
   (:import [sun.misc Signal SignalHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler])
@@ -85,8 +85,8 @@
 
 (defn- refresh-caches []
   (log/info "Refreshing caches")
-  (applications/refresh-all-applications-cache!)
-  (search/refresh!)
+  ;; Consider warming all the caches here
+  (search/index-applications! (application/get-full-internal-applications))
   (log/info "Caches refreshed"))
 
 (defn start-app [& args]
@@ -179,7 +179,8 @@
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
-                       #'rems.locales/translations)
+                       #'rems.locales/translations
+                       #'rems.application.search/search-index)
           (log/info "Creating test data")
           (test-data/create-test-data!)
           (test-data/create-performance-test-data!)
@@ -189,7 +190,8 @@
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
-                       #'rems.locales/translations)
+                       #'rems.locales/translations
+                       #'rems.application.search/search-index)
           (test-data/create-demo-data!))
 
         "api-key"

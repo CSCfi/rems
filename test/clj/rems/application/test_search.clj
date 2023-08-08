@@ -41,7 +41,7 @@
 
   (testing "find by ID"
     (let [app-id (test-helpers/create-application! {:actor "alice"})
-          app (applications/get-application app-id)
+          app (applications/get-simple-internal-application app-id)
           generated (:application/generated-external-id app)
           assigned "1980/0.1234-ext5"]
       (test-helpers/command! {:type :application.command/submit

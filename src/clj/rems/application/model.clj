@@ -747,9 +747,12 @@
       (enrich-disable-commands get-config get-workflow)
       (enrich-attachments get-user)))
 
-(defn build-application-view [events injections]
+(defn build-application-view-with-injections [events injections]
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
+
+(defn build-application-view [events]
+  (reduce application-view nil events))
 
 ;;;; Authorization
 

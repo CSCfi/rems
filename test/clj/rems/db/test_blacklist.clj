@@ -15,7 +15,7 @@
   (test-helpers/create-user! {:userid "user2"})
   (test-helpers/create-user! {:userid "handler"})
   (test-helpers/create-resource! {:resource-ext-id "urn.fi/123"})
-  (test-helpers/create-resource! {:resource-ext-id "urn.fi/124"})
+  (test-helpers/create-resource! {:rseource-ext-id "urn.fi/124"})
 
   (blacklist/add-event! {:event/type :blacklist.event/add
                          :event/actor "handler"
@@ -68,28 +68,3 @@
       "user was never added to blacklist")
   (is (blacklist/blacklisted? "user2" "urn.fi/124")
       "user was added to blacklist but not removed"))
-
-(deftest test-parameter-validation
-  (let [user-id "test-user"
-        resource-ext-id "test-resource"
-        command {:event/type :blacklist.event/add
-                 :event/actor "handler"
-                 :event/comment ""
-                 :event/time (time/now)
-                 :resource/ext-id resource-ext-id
-                 :userid user-id}]
-    (test-helpers/create-user! {:userid user-id})
-    (test-helpers/create-resource! {:resource-ext-id resource-ext-id})
-
-    (testing "user and resource both exist"
-      (is (not (blacklist/blacklisted? user-id resource-ext-id)))
-      (blacklist/add-event! command)
-      (is (blacklist/blacklisted? user-id resource-ext-id)))
-
-    (testing "user doesn't exist"
-      (is (thrown? IllegalArgumentException
-                   (blacklist/add-event! (assoc command :userid "non-existing-user")))))
-
-    (testing "resource doesn't exist"
-      (is (thrown? IllegalArgumentException
-                   (blacklist/add-event! (assoc command :resource/ext-id "non-existing-resource")))))))

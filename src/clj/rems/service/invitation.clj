@@ -1,10 +1,10 @@
 (ns rems.service.invitation
   (:require [rems.service.util :as util]
-            [rems.db.applications :as applications]
             [rems.db.invitation :as invitation]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
+            [rems.service.dependencies :as dependencies]
             [medley.core :refer [update-existing]]
             [rems.util :refer [secure-token]]))
 
@@ -79,7 +79,7 @@
             (workflow/edit-workflow! {:id workflow-id
                                       :handlers (conj handlers userid)})
             (invitation/accept-invitation! userid token)
-            (applications/reload-cache!)
+            (dependencies/evict! :workflow workflow-id)
             {:success true
              :invitation/workflow {:workflow/id (:id workflow)}})))
       {:success false

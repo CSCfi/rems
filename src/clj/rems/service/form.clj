@@ -5,7 +5,6 @@
             [rems.service.util :as util]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
-            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.organizations :as organizations]))
 
@@ -70,13 +69,13 @@
 
 (defn set-form-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (get-form-template id)))
-  (db/set-form-template-enabled! {:id id :enabled enabled})
+  (form/set-form-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-form-template id)))
   (or (dependencies/change-archive-status-error archived {:form/id id})
       (do
-        (db/set-form-template-archived! {:id id
-                                         :archived archived})
+        (form/set-form-archived! {:id id
+                                  :archived archived})
         {:success true})))

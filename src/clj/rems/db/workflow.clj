@@ -2,7 +2,6 @@
   (:require [rems.application.events :as events]
             [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
-            [rems.db.users :as users]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -38,7 +37,7 @@
       (update :workflow #(coerce-workflow-body (json/parse-string %)))
       (update :organization (fn [id] {:organization/id id}))
       (update-in [:workflow :licenses] #(mapv (fn [id] {:license/id id}) %))
-      (update-in [:workflow :handlers] #(mapv users/get-user %))))
+      (update-in [:workflow :handlers] #(mapv (fn [userid] {:userid userid}) %))))
 
 (defn get-workflow [id]
   (when-let [wf (db/get-workflow {:wfid id})]
@@ -71,3 +70,9 @@
                                           (get-in workflow [:organization :organization/id]))
                         :workflow (json/generate-string workflow-body)}))
   {:success true})
+
+(defn set-workflow-enabled! [{:keys [id enabled]}]
+  (db/set-workflow-enabled! {:id id :enabled enabled}))
+
+(defn set-workflow-archived! [{:keys [id archived]}]
+  (db/set-workflow-archived! {:id id :archived archived}))

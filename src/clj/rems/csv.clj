@@ -1,4 +1,4 @@
-(ns rems.db.csv
+(ns rems.csv
   "Utilities for exporting database contents as CSV"
   (:require [clj-time.core :as time]
             [clojure.string :as str]

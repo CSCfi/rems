@@ -1,14 +1,14 @@
 (ns ^:integration rems.api.test-users
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.testing-util :refer [with-fake-login-users]]
             [rems.db.roles :as roles]
-            [rems.service.test-data :as test-data]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.handler :refer [handler]]
             [rems.middleware :as middleware]
+            [rems.service.test-data :as test-data]
+            [rems.testing-util :refer [with-fake-login-users]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures

@@ -5,7 +5,6 @@
   (:require [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [rems.db.user-secrets :as user-secrets]
             [rems.json :as json]
             [rems.util :refer [getx]]))
 

@@ -2,10 +2,10 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.handler :refer [handler]]
+            [rems.service.application :as application]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -119,7 +119,7 @@
         (is (:success create))
         (let [app-id (test-helpers/create-application! {:catalogue-item-ids [id]
                                                         :actor "alice"})
-              get-app #(applications/get-application app-id)]
+              get-app #(application/get-full-internal-application app-id)]
           (is (= {:sv "http://info.se"}
                  (:catalogue-item/infourl
                   (first (:application/resources (get-app))))))

@@ -3,12 +3,12 @@
   (:require [clojure.test :refer :all]
             [rems.config]
             [rems.context :as context]
-            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
+            [rems.service.application :as application]
+            [rems.service.test-data :as test-data]
             [rems.testing-tempura :refer [fake-tempura-fixture]])
   (:import (rems.auth ForbiddenException)))
 
@@ -48,7 +48,7 @@
                             :application-id app-id
                             :actor "handler"
                             :comment ""})
-    (is (= :application.state/approved (:application/state (applications/get-application-for-user applicant app-id))))
+    (is (= :application.state/approved (:application/state (application/get-full-personalized-application-for-user applicant app-id))))
 
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))

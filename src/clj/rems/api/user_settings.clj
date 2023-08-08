@@ -3,13 +3,13 @@
             [rems.api.schema :as schema]
             [rems.config :refer [env]]
             [rems.service.ega :as ega]
-            [rems.service.user-settings :as user-settings]
+            [rems.service.user :as user]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def GetUserSettings user-settings/UserSettings)
+(def GetUserSettings user/UserSettings)
 
 (s/defschema UpdateUserSettings
   {(s/optional-key :language) s/Keyword
@@ -30,21 +30,21 @@
       :summary "Get user settings"
       :roles #{:logged-in}
       :return GetUserSettings
-      (ok (user-settings/get-user-settings (get-user-id))))
+      (ok (user/get-user-settings (get-user-id))))
 
     (PUT "/edit" []
       :summary "Update user settings"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
-      (ok (user-settings/update-user-settings! (getx-user-id) settings)))
+      (ok (user/update-user-settings! (getx-user-id) settings)))
 
     (PUT "/" []
       :summary "Update user settings, DEPRECATED, will disappear, use /edit instead"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
-      (ok (user-settings/update-user-settings! (getx-user-id) settings)))
+      (ok (user/update-user-settings! (getx-user-id) settings)))
 
     (POST "/generate-ega-api-key" [:as request] ; NB: binding syntax
       :summary "Generates a new EGA API-key for the user."

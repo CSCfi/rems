@@ -2,8 +2,8 @@
   (:require [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.config]
+            [rems.db.applications  :as applications]
             [rems.db.core :as db]
-            [rems.db.events :as events]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture test-db-fixture reset-db-fixture]]
             [rems.db.users :as users])
@@ -69,8 +69,7 @@
            (.submit thread-pool ^Callable task))))
 
 (deftest test-event-publishing-consistency
-  (let [test-duration-millis 2000
-        applications-count 5
+  (let [applications-count 5
         writers-per-application 5
         concurrent-readers 5
         writes-per-application 5
@@ -107,11 +106,11 @@
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
                                 {::app-id app-id
-                                 ::events (events/get-application-events app-id)}))
+                                 ::events (applications/get-application-events app-id)}))
             read-all-events (fn []
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
-                                {::events (events/get-all-events-since 0)}))
+                                {::events (applications/get-all-events-since 0)}))
             thread-pool (Executors/newCachedThreadPool)
             app-events-readers (submit-all thread-pool (for [app-id app-ids]
                                                          (fn [] (sample-until-interrupted
@@ -119,13 +118,20 @@
             all-events-readers (submit-all thread-pool (for [_ (range concurrent-readers)]
                                                          (fn [] (sample-until-interrupted
                                                                  (fn [] (read-all-events))))))
+            writer-count (atom 0)
             writers (submit-all thread-pool (for [app-id app-ids
                                                   _ (range writers-per-application)]
                                               (fn [] (sample-until-finished
-                                                      (fn [x] (write-event app-id x))
+                                                      (fn [x]
+                                                        (let [result (write-event app-id x)]
+                                                          (swap! writer-count inc)
+                                                          result))
                                                       (range 1 (inc writes-per-application))))))]
-        ;; TODO: we could finish right after all the writers have finished
-        (Thread/sleep test-duration-millis)
+
+        ;; wait until all the writers have finished
+        (while (< @writer-count (* applications-count writers-per-application writes-per-application))
+          (Thread/sleep 100))
+
         (doto thread-pool
           (.shutdownNow)
           (.awaitTermination 30 TimeUnit/SECONDS))
@@ -134,7 +140,7 @@
               writer-results (remove #{::transaction-conflict} writer-attempts)
               app-events-reader-results (flatten (map #(.get ^Future %) app-events-readers))
               all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
-              final-events (events/get-all-events-since 0)
+              final-events (applications/get-all-events-since 0)
               final-events-by-app-id (group-by :application/id final-events)]
 
           (comment
