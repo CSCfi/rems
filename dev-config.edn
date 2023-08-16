@@ -15,11 +15,11 @@
  :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
  :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
  ;; some attributes that google oauth returns:
- :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi"}}
+ :oidc-extra-attributes [{:attribute "nickname" :name {:en "Nickname" :fi "Lempinimi" :da "Kaldenavn"}}
                          {:attribute "picture"}
                          {:attribute "organizations"}
-                         {:attribute "groups" :name {:en "Groups" :fi "Ryhmät" :sv "Grupper"}}]
- :languages [:en :fi :sv]
+                         {:attribute "groups" :name {:en "Groups" :fi "Ryhmät" :sv "Grupper" :da "Grupper"}}]
+ :languages [:da :en :fi :sv]
  :public-url "http://localhost:3000/"
  :extra-pages [{:id "about"
                 :translations {:fi {:title "Info"
@@ -28,6 +28,8 @@
                                     :filename "about-en.md"}
                                :sv {:title "Info"
                                     :filename "about-sv.md"}}}
+                               :da {:title "Info"
+                                    :filename "about-da.md"}}}
                {:id "footer"
                 :filename "footer-en.md"
                 :translations {:fi {:title "Footer"
@@ -35,6 +37,8 @@
                                :en {:title "Footer"}
                                :sv {:title "Footer"
                                     :filename "footer-sv.md"}}
+                               :da {:title "Footer"
+                                    :filename "footer-da.md"}}
                 :show-menu false
                 :show-footer true}
                {:id "link"
@@ -44,13 +48,15 @@
                                     :filename "link-en.md"}
                                :sv {:title "Link"
                                     :filename "link-sv.md"}}
+                               :da {:title "Link"
+                                    :filename "link-da.md"}}
                 :show-menu false
                 :show-footer false}
                {:id "mixed"
                 :heading false
                 :translations {:fi {:title "Mixed"
                                     :filename "mixed-fi.md"}
-                               :en {:url "https://example.org/en/mixed"}} ; missing sv
+                               :en {:url "https://example.org/en/mixed"}} ; missing sv and da
                 :show-menu false
                 :show-footer false}
                {:id "unlocalized"
@@ -64,6 +70,7 @@
                                     :url "https://example.org/fi"}
                                :en {:title "Example"}
                                :sv {:title "Exempel"}}
+                               :da {:title "Eksempel"}}
                 :show-menu true
                 :show-footer true}]
  :extra-pages-path "./test-data/extra-pages"
