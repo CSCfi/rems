@@ -1,6 +1,7 @@
 (ns rems.db.blacklist
   (:require [rems.common.util :refer [getx]]
             [rems.db.core :as db]
+            [rems.dependencies :as dependencies]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -38,11 +39,13 @@
          :event/id (:event/id event)))
 
 (defn add-event! [event]
-  (db/add-blacklist-event! {:eventdata (-> event event->json)}))
+  (db/add-blacklist-event! {:eventdata (-> event event->json)})
+  (dependencies/notify-watchers! {:userid [(:userid event)]}))
 
 (defn update-event! [event]
   (db/update-blacklist-event! {:id (getx event :event/id)
-                               :eventdata (-> event event->json)}))
+                               :eventdata (-> event event->json)})
+  (dependencies/notify-watchers! {:userid [(:userid event)]}))
 
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))

@@ -31,13 +31,11 @@
 
 (defn add-user-to-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/add)))
-  (dependencies/evict! :blacklist/by-user (get-in command [:blacklist/user :userid])))
+                            (assoc :event/type :blacklist.event/add))))
 
 (defn remove-user-from-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/remove)))
-  (dependencies/evict! :blacklist/by-user (get-in command [:blacklist/user :userid])))
+                            (assoc :event/type :blacklist.event/remove))))
 
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}

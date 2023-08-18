@@ -11,6 +11,7 @@
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings :as user-settings]
+            [rems.dependencies :as dependencies]
             [rems.service.application :as application]
             [rems.service.command :as command]
             [rems.testing-util :refer [with-fixed-time]]))
@@ -116,6 +117,8 @@
           (reset! log-messages [])
           (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
           (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
+            ;; configuration change doesn't automatically invalidate the application cache so we do it here
+            (dependencies/notify-watchers! {:application/id (get-all-application-ids "alice")})
             (eraser/process-applications!))
           (is (= #{draft old-submitted} (set (get-all-application-ids "alice"))))
           (is (empty? @outbox-emails))

@@ -95,7 +95,6 @@
                             ;; plain resources can't be edited so skip them
                             :catalogue-item/id (mapv :catalogue-item/id (:application/resources application))
                             :license/id (mapv :license/id (:application/licenses application)) ;; licenses can't actually be edited
-
                             :userid (keys (:application/user-roles application))}
 
                            (fn callback-cache-dissoc [params]

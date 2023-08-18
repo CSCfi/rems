@@ -37,9 +37,10 @@
         submitted-applications (mapv #(application/get-full-internal-application (:application/id %)) submissions)
         revokes (get by-type :application.event/revoked)
         revoked-users (->> revokes
-                           (map (comp application/get-full-internal-application :application/id))
+                           (mapv (comp application/get-full-internal-application :application/id))
                            (mapcat application-util/applicant-and-members)
-                           (map :userid))]
+                           (map :userid)
+                           distinct)]
     (doall
      (concat
       (mapcat consider-rejecting submitted-applications)

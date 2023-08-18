@@ -36,7 +36,8 @@
 
 (defn search-index-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
-  (mount/start #'rems.application.search/search-index)
+  (mount/start #'rems.application.search/search-index
+               #'rems.application.search/indexer-poller)
   (f))
 
 (defn reset-caches-fixture [f]

@@ -2,6 +2,7 @@
   (:require [rems.common.attachment-util :as attachment-util]
             [rems.common.util :refer [fix-filename]]
             [rems.db.core :as db]
+            [rems.dependencies :as dependencies]
             [rems.util :refer [file-to-bytes]])
   (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
 
@@ -63,6 +64,7 @@
                                       :filename filename
                                       :type content-type
                                       :data byte-array}))]
+    (dependencies/notify-watchers! {:application/id [application-id]})
     {:id id
      :success true}))
 
@@ -75,24 +77,33 @@
                           :user (:attachment/user attachment)
                           :filename (:attachment/filename attachment)
                           :type (:attachment/type attachment)})
+  (dependencies/notify-watchers! {:application/id [(:application/id attachment)]})
   {:id (:attachment/id attachment)
    :success true})
 
 (defn redact-attachment!
   "Updates the attachment by zeroing the file data."
   [attachment-id]
-  (db/redact-attachment! {:id attachment-id})
-  {:id attachment-id
-   :success true})
+  (let [attachment (get-attachment attachment-id)]
+    (db/redact-attachment! {:id attachment-id})
+    (dependencies/notify-watchers! {:application/id [(:application/id attachment)]})
+    {:id attachment-id
+     :success true}))
 
 (defn copy-attachment! [new-application-id attachment-id]
-  (let [attachment (db/get-attachment {:id attachment-id})]
-    (:id (db/save-attachment! {:application new-application-id
-                               :user (:userid attachment)
-                               :filename (:filename attachment)
-                               :type (:type attachment)
-                               :data (:data attachment)}))))
+  (let [attachment (db/get-attachment {:id attachment-id})
+        attachment-id (:id (db/save-attachment! {:application new-application-id
+                                                 :user (:userid attachment)
+                                                 :filename (:filename attachment)
+                                                 :type (:type attachment)
+                                                 :data (:data attachment)}))]
+    (dependencies/notify-watchers! {:application/id [new-application-id]})
+
+    attachment-id))
 
 (defn delete-attachment! [attachment-id]
-  (db/delete-attachment! {:id attachment-id}))
+  (when attachment-id
+    (let [attachment (get-attachment attachment-id)]
+      (db/delete-attachment! {:id attachment-id})
+      (dependencies/notify-watchers! {:application/id [(:application/id attachment)]}))))
 

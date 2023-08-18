@@ -16,6 +16,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
+            [rems.application.search] ;; to enable API search features
             [rems.layout :as layout]
             [rems.middleware :refer [wrap-cacheable wrap-base]]
             [rems.util :refer [getx-user-id never-match-route]]

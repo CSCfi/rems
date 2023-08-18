@@ -36,7 +36,7 @@
     (process-managers/delete-applications new-events)
     (process-managers/delete-orphan-attachments-on-submit new-events)
     (process-managers/clear-redacted-attachments new-events)
-    (search/index-events! new-events cache/get-full-internal-application))))
+    (search/request-index-events! new-events cache/get-full-internal-application))))
 
 
 (def ^:private command-injections

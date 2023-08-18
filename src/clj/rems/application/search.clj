@@ -1,11 +1,13 @@
 (ns rems.application.search
-  (:require [clojure.java.io :as io]
+  (:require [clj-time.core :as time]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
+            [rems.scheduler :as scheduler]
             [rems.text :as text]
             [rems.util :refer [delete-directory-contents-recursively]])
   (:import [org.apache.lucene.analysis Analyzer]
@@ -106,8 +108,28 @@
                     :when application]
               (index-application! writer application))
             #_(log/info "Finished indexing" (count app-ids) "applications")))
-        (.maybeRefresh searcher-manager)))
-    nil)) ; process manager expects sequence of new events
+        (.maybeRefresh searcher-manager)))))
+
+(def indexing-requests (atom nil))
+
+(defn process-index-events! []
+  (locking index-lock
+    (when-some [requests (seq @indexing-requests)]
+      (let [events (mapcat first requests)
+            get-full-internal-application (second (first requests))] ; NB: doesn't matter which get-full-internal-application is actually used
+        (index-events! events
+                       get-full-internal-application))))) ; TODO avoid by moving to system ns
+
+(defn request-index-events! [events get-full-internal-application]
+  (swap! indexing-requests conj [events get-full-internal-application])
+  nil) ; process manager expects sequence of new events)
+
+(mount/defstate indexer-poller
+  :start (do (reset! indexing-requests nil)
+             (scheduler/start! "search-indexer-poller"
+                               process-index-events!
+                               (.toStandardDuration (time/seconds 1))))
+  :stop (scheduler/stop! indexer-poller))
 
 (defn index-applications! [applications]
   (locking index-lock

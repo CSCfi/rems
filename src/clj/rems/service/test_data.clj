@@ -1241,7 +1241,7 @@
   (with-user "owner"
     (form/set-form-archived! {:id 29 :archived true}))
   (do ; you can manually re-create test data (useful sometimes when debugging)
-    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations #'rems.application.search/search-index)
+    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations #'rems.application.search/search-index #'rems.application.search/indexer-poller)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
     (create-test-data!)
     (create-performance-test-data!)))

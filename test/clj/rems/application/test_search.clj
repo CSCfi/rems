@@ -20,6 +20,8 @@
 
   (testing "find by applicant"
     (let [app-id (test-helpers/create-application! {:actor "alice"})]
+      ;; instead of (search/process-index-events!), let's wait
+      (Thread/sleep 1100) ; should've been indexed
       (is (= #{app-id} (search/find-applications "alice")) "user ID, any field")
       (is (= #{app-id} (search/find-applications "applicant:alice")) "user ID")
       (is (= #{app-id} (search/find-applications "applicant:\"Alice Applicant\"")) "name")
@@ -34,6 +36,7 @@
                               :application-id app-id
                               :actor "developer"
                               :member {:userid "elsa"}})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "elsa")) "user ID, any field")
       (is (= #{app-id} (search/find-applications "member:elsa")) "user ID")
       (is (= #{app-id} (search/find-applications "member:\"Elsa Roleless\"")) "name")
@@ -51,6 +54,7 @@
                               :application-id app-id
                               :actor "developer"
                               :external-id assigned})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
       (is (= #{app-id} (search/find-applications (str "\"" assigned "\""))) "assigned ID, any field")
       (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
@@ -74,6 +78,7 @@
                               :field-values [{:form form-id
                                               :field "abc"
                                               :value "Supercalifragilisticexpialidocious"}]})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "Supercalifragilisticexpialidocious")) "any field")
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
@@ -85,6 +90,7 @@
                                                                :sv "Skinka"}})
           app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                     :actor "alice"})]
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "Spam")) "en title, any field")
       (is (= #{app-id} (search/find-applications "resource:Spam")) "en title")
       (is (= #{app-id} (search/find-applications "resource:Nötkötti")) "fi title")
@@ -100,6 +106,7 @@
                               :application-id app-id
                               :actor "developer"
                               :comment ""})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "Approved")) "en status, any field")
       (is (= #{app-id} (search/find-applications "state:Approved")) "en status")
       (is (= #{app-id} (search/find-applications "state:Hyväksytty")) "fi status")))
@@ -114,6 +121,7 @@
                               :actor "developer"
                               :reviewers ["elsa"]
                               :comment ""})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "\"Waiting for a review\"")) "en todo, any field")
       (is (= #{app-id} (search/find-applications "\"waiting-for-review\"")) "keyword todo, any field")
       (is (= #{app-id} (search/find-applications "todo:\"Waiting for a review\"")) "en todo")
@@ -147,6 +155,7 @@
                                              {:form form-id2
                                               :field "1"
                                               :value "It's just a flesh wound."}]})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "scratch")) "any field")
       (is (= #{app-id} (search/find-applications "form:scratch")) "form field")
       (is (= #{app-id} (search/find-applications "flesh")) "any field")
@@ -168,6 +177,7 @@
                               :field-values [{:form form-id
                                               :field "1"
                                               :value "version1"}]})
+      (search/process-index-events!)
       (is (= #{app-id} (search/find-applications "version1"))
           "original version is indexed")
 
@@ -177,6 +187,7 @@
                               :field-values [{:form form-id
                                               :field "1"
                                               :value "version2"}]})
+      (search/process-index-events!)
       (is (= #{} (search/find-applications "version1"))
           "should not find old versions")
       (is (= #{app-id} (search/find-applications "version2"))
