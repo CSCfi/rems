@@ -24,10 +24,11 @@
     (email/try-send-emails!)
     (entitlements/process-outbox!)
     (event-notification/process-outbox!))
+
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})
               event-server (stub/start! {"/event" {:status 200}})]
-    ;; TODO should test emails with a mock smtp server
+    ;; TODO could test emails with a mock smtp server (see email/test_core.clj)
     (let [email-atom (atom [])]
       (with-redefs [rems.config/env (assoc rems.config/env
                                            :smtp-host "localhost"

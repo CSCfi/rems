@@ -13,11 +13,11 @@
 (defn find-userid [userid]
   (user-mappings/find-userid userid))
 
-(defn add-user! [command]
-  (users/add-user! command))
+(defn add-user! [user]
+  (users/add-user! user))
 
-(defn edit-user! [command]
-  (users/edit-user! command))
+(defn edit-user! [user]
+  (users/edit-user! user))
 
 (def UserSettings user-settings/UserSettings)
 

@@ -9,6 +9,7 @@
             [rems.common.util :refer [conj-set disj-set]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.dependencies :as dependencies]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [rems.application.model :as model]
@@ -191,12 +192,11 @@
 
 (def projections (atom nil))
 
-(defn- update-projections [event application]
+(defn- update-projections! [event application]
   (swap! projections (fn [projections]
                        (-> projections
                            (update :projection/user-applications user-applications-projection event application)
-                           (update :projection/user-roles user-roles-projection event application))))
-  event)
+                           (update :projection/user-roles user-roles-projection event application)))))
 
 (defn get-users-with-role [role]
   ;; TODO optimize
@@ -212,22 +212,28 @@
 
   Returns the event as it went into the db."
   [application event]
-  (-> {:application (:application/id event)
-       :eventdata (event->json event)}
-      db/add-application-event!
-      fix-event-from-db
-      (update-projections application)))
+  (let [app-id (:application/id event)
+        new-event (-> {:application app-id
+                       :eventdata (event->json event)}
+                      db/add-application-event!
+                      fix-event-from-db)]
+    (update-projections! new-event application)
+    (dependencies/notify-watchers! {:application/id [app-id]})
+    new-event))
 
 (defn update-event!
   "Updates an event on top of an old one. Returns the event as it went into the db."
   [event]
   (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
         _ (assert old-event)
-        event (merge old-event event)]
+        new-event (merge old-event event)
+        app-id (:application/id new-event)]
     (db/update-application-event! {:id (:event/id old-event)
-                                   :application (:application/id event)
-                                   :eventdata (event->json (dissoc event :event/id))})
-    event))
+                                   :application app-id
+                                   :eventdata (event->json (dissoc new-event :event/id))})
+    ;; TODO CACHE (update-projections! new-event application)
+    (dependencies/notify-watchers! {:application/id [app-id]})
+    new-event))
 
 (defn replace-event!
   "Replaces an event on top of an old one.
@@ -236,13 +242,19 @@
   Differs from `update-event!` in that the event id is a new one.
 
   Returns the event as it went into the db."
-  [event]
+  [application event]
   (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
         _ (assert old-event)
-        event (merge old-event event)]
-    (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
-                                                       :application (:application/id event)
-                                                       :eventdata (event->json (dissoc event :event/id))}))))
+        event (merge old-event event)
+        app-id (:application/id event)
+        new-event (->> {:id (:event/id old-event)
+                        :application app-id
+                        :eventdata (event->json (dissoc event :event/id))}
+                       db/replace-application-event!
+                       fix-event-from-db)]
+    (update-projections! new-event application)
+    (dependencies/notify-watchers! {:application/id [app-id]})
+    new-event))
 
 (defn add-event-with-compaction!
   "Add `event` to database.
@@ -261,7 +273,8 @@
                 (:event/type last-event))
              (= (:application/id event)
                 (:application/id last-event)))
-      (replace-event! (merge event
+      (replace-event! application
+                      (merge event
                              (select-keys last-event [:event/id])))
       (add-event! application event))))
 
@@ -314,7 +327,10 @@
          (throw e#)))))
 
 (defn command! [cmd application command-injections]
-  (commands/handle-command cmd application command-injections))
+  (let [result (commands/handle-command cmd application command-injections)]
+    (when (empty? (:errors result)) ; nothing can't change when there's an error
+      (dependencies/notify-watchers! {:application/id (mapv :application/id (:events result))}))
+    result))
 
 (defn get-application-id-by-invitation-token [invitation-token]
   (:id (db/get-application-id-by-invitation-token {:token invitation-token})))
@@ -362,12 +378,13 @@
 
   (db/delete-application-attachments! {:application app-id})
   (db/delete-application-events! {:application app-id})
-  (db/delete-application! {:application app-id}))
+  (db/delete-application! {:application app-id})
+  (dependencies/notify-watchers! {:application/id [app-id]}))
 
 
 (defn reload-projections! []
   (doseq [event (get-all-events-since 0)]
-    (update-projections event (get-simple-internal-application (:application/id event)))))
+    (update-projections! event (get-simple-internal-application (:application/id event)))))
 
 (comment
   (reload-projections!))

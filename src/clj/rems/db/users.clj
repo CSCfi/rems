@@ -4,6 +4,7 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.user-settings :as user-settings]
+            [rems.dependencies :as dependencies]
             [rems.json :as json]))
 
 ;; TODO: remove format/unformat, there should be no need
@@ -51,7 +52,8 @@
   [userid userattrs]
   (assert userid)
   (assert userattrs)
-  (db/add-user! {:user userid :userattrs (json/generate-string userattrs)}))
+  (db/add-user! {:user userid :userattrs (json/generate-string userattrs)})
+  (dependencies/notify-watchers! {:userid [userid]}))
 
 (defn add-user!
   "Create or update a user given formatted user attributes."
@@ -61,7 +63,8 @@
 (defn edit-user!
   "Update a user given formatted user attributes."
   [user]
-  (db/edit-user! {:user (:userid user) :userattrs (json/generate-string (unformat-user user))}))
+  (db/edit-user! {:user (:userid user) :userattrs (json/generate-string (unformat-user user))})
+  (dependencies/notify-watchers! {:userid [(:userid user)]}))
 
 (defn get-raw-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
@@ -140,4 +143,5 @@
 
 (defn remove-user! [userid]
   (assert userid)
-  (db/remove-user! {:user userid}))
+  (db/remove-user! {:user userid})
+  (dependencies/notify-watchers! {:userid [userid]}))

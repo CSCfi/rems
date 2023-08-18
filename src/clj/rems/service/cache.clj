@@ -14,7 +14,8 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow]))
+            [rems.db.workflow :as workflow]
+            [rems.dependencies :as dependencies]))
 
 (defn get-users []
   (users/get-users))
@@ -56,12 +57,7 @@
 
 (def cache-all-applications "cached list of all applications that exist" (atom nil))
 
-(def cache-application-by-id "cache of fetched full applications" (atom nil))
-
-(def cache-user-application-roles (cache/lru-cache-factory {} :treshold 100))
-
-(comment
-  (cache/lookup-or-miss cache-user-application-roles 1 applications/get-application-internal))
+(def cache-full-internal-application-by-id "cache of fetched full applications" (atom nil))
 
 (defn get-localized-catalogue-item [id]
   (catalogue/get-localized-catalogue-item id))
@@ -75,14 +71,38 @@
        (transform [:application/workflow :workflow.dynamic/handlers ALL] #(users/join-user %))
        #_(transform [:application/resources ALL] join-catalogue-item)))
 
+(defn cache-dissoc! [cache id]
+  (swap! cache dissoc id))
+
 (defn get-full-internal-application
   "Returns the full application state without any user permission
   checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (when-some [events (seq (applications/get-application-events application-id))]
-    (-> events
-        (model/build-application-view-with-injections fetcher-injections)
-        join-dependencies)))
+  (when-not (contains? @cache-full-internal-application-by-id application-id)
+    ;; calculate new value
+    (when-let [application (some-> (applications/get-simple-internal-application application-id)
+                                   (model/enrich-with-injections fetcher-injections)
+                                   join-dependencies
+                                   (model/apply-privacy-by-roles #{:reporter}))]
+
+      ;; update cache
+      (swap! cache-full-internal-application-by-id assoc application-id application)
+
+      ;; watch any changes
+      (dependencies/watch! {:application/id [application-id]
+                            :workflow/id [(:workflow/id (:application/workflow application))]
+                            :form/id (mapv :form/id (:application/forms application))
+                            ;; plain resources can't be edited so skip them
+                            :catalogue-item/id (mapv :catalogue-item/id (:application/resources application))
+                            :license/id (mapv :license/id (:application/licenses application)) ;; licenses can't actually be edited
+
+                            :userid (keys (:application/user-roles application))}
+
+                           (fn callback-cache-dissoc [params]
+                             (cache-dissoc! cache-full-internal-application-by-id application-id)
+                             (dependencies/unwatch! (:watch/id params))))))
+
+  (get @cache-full-internal-application-by-id application-id))
 
 (defn get-full-internal-applications
   "Returns the full application state of all applications without
@@ -94,10 +114,7 @@
                 (->> (applications/get-simple-applications)
                      (mapv (comp get-full-internal-application :application/id))
                      (index-by [:application/id]))))
-  ;; TODO remove when stabilized
-  #_(assert (= @applications-by-id
-               (index-by [:application/id] (applications/get-applications)))
-            "application cache does not match db")
+
   (->> @cache-all-applications
        vals
        (sort-by :application/id)))
@@ -107,10 +124,12 @@
   is allowed to see. Suitable for returning from public APIs as-is."
   [userid application-id]
   (when-let [application (applications/get-simple-internal-application application-id)]
-    (or (-> application
-            (model/enrich-with-injections fetcher-injections)
-            join-dependencies
-            (model/apply-user-permissions userid))
+    (or (some-> application
+                :application/id
+                get-full-internal-application
+                ;;(model/enrich-with-injections fetcher-injections)
+                ;;join-dependencies
+                (model/apply-user-permissions userid))
         (throw-forbidden))))
 
 (defn get-full-personalized-applications-by-user
@@ -124,7 +143,7 @@
                :let [application (some-> application
                                          :application/id
                                          get-full-internal-application
-                                         join-dependencies
+                                         ;;join-dependencies
                                          (model/apply-user-permissions userid))]]
            application)))
 
@@ -144,26 +163,30 @@
        vec))
 
 (defn get-all-application-roles [userid]
-  (applications/get-all-application-roles userid)
-  #_(get @cache-user-application-roles userid #{}))
-
-(defn get-full-internal-application [application-id]
-  (some-> (applications/get-simple-internal-application application-id)
-          (model/enrich-with-injections fetcher-injections)
-          join-dependencies
-          (model/apply-privacy-by-roles #{:reporter})))
+  ;; low level cache is enough
+  (applications/get-all-application-roles userid))
 
 (defn get-full-public-application [application-id]
-  (some-> (applications/get-simple-internal-application application-id)
-          (model/enrich-with-injections fetcher-injections)
-          join-dependencies
-          model/hide-non-public-information
-          (model/apply-privacy-by-roles #{:reporter})))
+  (some->    application-id
+             get-full-internal-application
+             ;;applications/get-simple-internal-application
+             ;;(model/enrich-with-injections fetcher-injections)
+             ;;join-dependencies
+             model/hide-non-public-information
+             (model/apply-privacy-by-roles #{:reporter})))
 
-(defn reset-cache! []
+(defn reset-cache!
+  "Empty all the contents from the cache."
+  []
+  ;; TODO implement
+  (reset! cache-all-applications {}))
+
+(defn reload-cache!
+  "Empty all the contents from the cache, and then reload to warm up."
+  []
+  (reset-cache!)
   ;; TODO implement
   )
 
-(defn reload-cache! []
-  ;; TODO implement
-  )
+(comment
+  (reset-cache!))

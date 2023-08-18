@@ -516,9 +516,9 @@
 
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
-  (let [resource-count 10
-        application-count 10
-        user-count 10
+  (let [resource-count 1000
+        application-count 1000
+        user-count 1000
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
@@ -1241,7 +1241,7 @@
   (with-user "owner"
     (form/set-form-archived! {:id 29 :archived true}))
   (do ; you can manually re-create test data (useful sometimes when debugging)
-    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations)
+    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations #'rems.application.search/search-index)
     (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
     (create-test-data!)
     (create-performance-test-data!)))

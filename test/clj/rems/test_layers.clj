@@ -62,41 +62,41 @@
         analysis (-> ret :out edn/read-string :analysis)
         namespaces (->> analysis
                         :namespace-definitions
-                        (map (comp str :name))
+                        (mapv (comp str :name))
                         ;;(concat ["rems.cli"]) ; consider implementing `rems.cli` ns
-                        (map rename-ns)
-                        (filter interesting-ns?)
-                        (map #(merge {:name %}
-                                     (cond (str/starts-with? % "rems.ext.") {:layer :ext}
-                                           (str/starts-with? % "rems.db.core") {:layer :core}
-                                           (str/starts-with? % "rems.db.") {:layer :db}
-                                           (str/starts-with? % "rems.service.") {:layer :service}
-                                           (str/starts-with? % "rems.api") {:layer :api}
-                                           (str/starts-with? % "rems.main") {:layer :main}
-                                           (str/starts-with? % "rems.cli") {:layer :cli}))))
+                        (mapv rename-ns)
+                        (filterv interesting-ns?)
+                        (mapv #(merge {:name %}
+                                      (cond (str/starts-with? % "rems.ext.") {:layer :ext}
+                                            (str/starts-with? % "rems.db.core") {:layer :core}
+                                            (str/starts-with? % "rems.db.") {:layer :db}
+                                            (str/starts-with? % "rems.service.") {:layer :service}
+                                            (str/starts-with? % "rems.api") {:layer :api}
+                                            (str/starts-with? % "rems.main") {:layer :main}
+                                            (str/starts-with? % "rems.cli") {:layer :cli}))))
 
         namespace-by-id (index-by :name namespaces)
 
         namespace-usages (->> analysis
                               :namespace-usages
-                              (map (juxt (comp str :from) (comp str :to)))
+                              (mapv (juxt (comp str :from) (comp str :to)))
                               distinct
-                              (map (fn [[from to]] [(rename-ns from) (rename-ns to)]))
-                              (filter (fn [[from to]]
-                                        (and (interesting-ns? from)
-                                             (interesting-ns? to))))
+                              (mapv (fn [[from to]] [(rename-ns from) (rename-ns to)]))
+                              (filterv (fn [[from to]]
+                                         (and (interesting-ns? from)
+                                              (interesting-ns? to))))
                               ;;(concat [["rems.cli"]])  ; consider implementing `rems.cli` ns
                               ;;(remove #(ok-transition? (namespace-by-id (first %)) (namespace-by-id (second %))))
-                              (map (fn [[from to]] [from to (if (ok-transition? (namespace-by-id from)
-                                                                                (namespace-by-id to))
-                                                              {:color :black
-                                                               :constraint true
-                                                               :weight 1}
-                                                              {:color :red
-                                                               :constraint false
-                                                               :weight 0.01})])))
-        nodes-with-edges (into #{} (mapcat (partial take 2) namespace-usages))
-        namespaces (filter (comp nodes-with-edges :name) namespaces)]
+                              (mapv (fn [[from to]] [from to (if (ok-transition? (namespace-by-id from)
+                                                                                 (namespace-by-id to))
+                                                               {:color :black
+                                                                :constraint true
+                                                                :weight 1}
+                                                               {:color :red
+                                                                :constraint false
+                                                                :weight 0.01})])))
+        nodes-with-edges (doall (into #{} (mapcat (partial take 2) namespace-usages)))
+        namespaces (filterv (comp nodes-with-edges :name) namespaces)]
     (prn nodes-with-edges namespaces)
     {:namespace-usages namespace-usages
      :namespaces namespaces}))
@@ -181,27 +181,47 @@
                                        (str/starts-with? % "rems.main") {:layer :main}
                                        (str/starts-with? % "rems.cli") {:layer :cli}))))
         edges (->> trace
-                   (map (juxt :from :to))
-                   (remove #(or (nil? (first %)) (nil? (second %)))))
+                   (mapv (juxt :from :to))
+                   (remove #(or (nil? (first %)) (nil? (second %))))
+                   vec)
         edge-freqs (frequencies edges)
         calls-by-ids (group-by (juxt :from :to)
                                (for [call trace] call))
-        edges (for [[from to] (distinct edges)
-                    :let [calls (calls-by-ids [from to])
-                          c (edge-freqs [from to])
-                          _ (prn (mapv :elapsed-time calls))
-                          avg (/ (average (mapv :elapsed-time calls)) 1000.0)
-                          lazy (count (filter :lazy? calls))]]
-                [(sym->id from) (sym->id to) {:label [:table {:border 0}
-                                                      [:tr [:td "count"] [:td c]]
-                                                      [:tr [:td "avg"] [:td (format "%.2f ms" avg)]]
-                                                      (cond (= lazy c) [:tr [:td "lazy"] [:td "true"]]
-                                                            (pos? lazy) [:tr [:td "lazy"] [:td (format "%d/%d (%.0f%%)" (int lazy) (int c) (* 100.0 (/ lazy (double c))))]])]}])
+        hide-cutoff-ms 0
+        cutoff-ms 0.5
+        edges (doall (for [[from to] (distinct edges)
+                           :let [calls (calls-by-ids [from to])]
+                           :when (seq calls)
+                           :let [c (edge-freqs [from to])
+                                 times (->> calls
+                                            (mapv :elapsed-time)
+                                            (remove nil?))
+                                 _ (prn from to times)
+                                 avg (/ (average times) 1000.0)
+                                 min-time (if (seq times) (/ (apply min times) 1000.0) 0)
+                                 max-time (if (seq times) (/ (apply max times) 1000.0) 0)
+                                 lazy (count (filter :lazy? calls))]
+                           :when (> max-time hide-cutoff-ms)]
+                       [(sym->id from) (sym->id to) {;;:color (if (and avg (< avg cutoff-ms)) "#gray" "black")
+                                                     :weight (or (and min-time (number? min-time)) 0.01)
+                                                     :penwidth (max (or (and min-time (number? min-time) (Math/sqrt min-time)) 0.1)
+                                                                    0.1)
+                                                     :label (if (and max-time (< max-time cutoff-ms))
+                                                              ""
+                                                              [:table {:border 0}
+                                                               [:tr [:td "count"] [:td c]]
+                                                               (when (> c 1) [:tr [:td "min"] [:td (format "%.2f ms" min-time)]])
+                                                               [:tr [:td (if (> c 1) "avg" "")] [:td (format "%.2f ms" avg)]]
+                                                               (when (> c 1) [:tr [:td "max"] [:td (format "%.2f ms" max-time)]])
+                                                               (cond (= lazy c) [:tr [:td "lazy"] [:td "true"]]
+                                                                     (pos? lazy) [:tr [:td "lazy"] [:td (format "%d/%d (%.0f%%)" (int lazy) (int c) (* 100.0 (/ lazy (double c))))]])])}]))
+        node-has-edge? (into #{} (concat (mapv first edges) (mapv second edges)))
+        nodes (filterv (comp node-has-edge? :id) nodes)
         dot (tangle.core/graph->dot nodes
                                     edges
                                     {:directed? true
-                                     :graph {;;:rankdir :LR
-                                             :rankdir :TB
+                                     :graph {:rankdir :LR
+                                             ;;:rankdir :TB
                                              ;;:ranksep 1.5
                                              ;;:rank :min
                                              :dpi 150
@@ -243,7 +263,8 @@
                                                                      :fillcolor "cyan"}))))})]
     (clojure.java.io/copy dot (clojure.java.io/file "docs/rems-call-graph.dot"))
     (clojure.java.io/copy (tangle.core/dot->svg dot) (clojure.java.io/file "docs/rems-call-graph.svg"))
-    (clojure.java.io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-call-graph.png"))))
+    (clojure.java.io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-call-graph.png"))
+    (clojure.java.io/copy (tangle.core/dot->image dot "jpg") (clojure.java.io/file "docs/rems-call-graph.jpg"))))
 
 (comment
   (rems.trace/bind-ns 'rems.service.catalogue)
@@ -260,5 +281,18 @@
     #_(rems.service.catalogue/get-localized-catalogue-items {:archived false :enabled true})
     #_(rems.service.catalogue/get-catalogue-tree {:archived false :enabled true})
     (count (rems.service.application/get-applications-with-user "handler"))
-    #_(rems.db.applications/get-application 1016)
+
+    (mount.core/start #'rems.config/env #'rems.db.core/*db* #'rems.locales/translations #'rems.application.search/search-index)
+    (rems.trace/bind-rems)
+    (rems.service.application/get-full-public-application 1)
+    (repeatedly 100 (fn []
+                      (rems.service.command/command! {:type :application.command/create
+                                                      :actor "elsa"
+                                                      :time (clj-time.core/date-time 2001)
+                                                      :catalogue-item-ids [1]})
+                      (rems.service.command/command! {:type :application.command/save-draft
+                                                      :actor "alice"
+                                                      :time (clj-time.core/date-time 2001)
+                                                      :application-id 1
+                                                      :field-values []})))
     (call-graph @rems.trace/trace-a)))

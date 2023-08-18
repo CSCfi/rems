@@ -24,18 +24,20 @@
 ;; Process managers react to events with side effects & new commands.
 ;; See docs/architecture/002-event-side-effects.md
 (defn- run-process-managers [new-events]
-  (concat
-   (process-managers/revokes-to-blacklist new-events)
-   (email/generate-event-emails! new-events)
-   (entitlements/update-entitlements-for-events new-events)
-   (rejecter-bot/run-rejecter-bot new-events)
-   (approver-bot/run-approver-bot new-events)
-   (bona-fide-bot/run-bona-fide-bot new-events)
-   (event-notification/queue-notifications! new-events)
-   (process-managers/delete-applications new-events)
-   (process-managers/delete-orphan-attachments-on-submit new-events)
-   (process-managers/clear-redacted-attachments new-events)
-   (search/index-events! new-events cache/get-full-internal-application)))
+  (doall
+   (concat
+    (process-managers/revokes-to-blacklist new-events)
+    (email/generate-event-emails! new-events)
+    (entitlements/update-entitlements-for-events new-events)
+    (rejecter-bot/run-rejecter-bot new-events)
+    (approver-bot/run-approver-bot new-events)
+    (bona-fide-bot/run-bona-fide-bot new-events)
+    (event-notification/queue-notifications! new-events)
+    (process-managers/delete-applications new-events)
+    (process-managers/delete-orphan-attachments-on-submit new-events)
+    (process-managers/clear-redacted-attachments new-events)
+    (search/index-events! new-events cache/get-full-internal-application))))
+
 
 (def ^:private command-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
@@ -50,7 +52,7 @@
    :get-attachment-metadata attachments/get-attachment-metadata
    :get-catalogue-item-licenses cache/get-catalogue-item-licenses
    :secure-token secure-token
-   :allocate-application-ids! (resolve 'rems.service.application/allocate-application-ids!)
+   :allocate-application-ids! applications/allocate-application-ids!
    :copy-attachment! attachments/copy-attachment!
    :valid-user? users/user-exists?
    :find-userid user-mappings/find-userid})

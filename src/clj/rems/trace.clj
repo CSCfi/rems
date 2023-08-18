@@ -72,7 +72,7 @@
   (doseq [ns-sym (->> (all-ns)
                       (map ns-name)
                       (filterv #(clojure.string/starts-with? % "rems."))
-                      (remove #{'rems.trace 'rems.db.outbox}))]
+                      (remove #{'rems.trace 'rems.test-layers 'rems.db.outbox}))]
     (prn :instrumenting ns-sym)
     (bind-ns ns-sym)))
 

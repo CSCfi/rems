@@ -1,10 +1,11 @@
 (ns rems.service.catalogue
   (:require [medley.core :refer [assoc-some]]
+            [rems.common.util :refer [build-dags]]
             [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.organizations :as organizations]
-            [rems.common.util :refer [build-dags]]
-            [rems.service.dependencies :as dependencies]
+            [rems.dependencies :as dependencies]
+            [rems.service.dependencies :as service-dependencies]
             [rems.service.util :as util]))
 
 ;; TODO this bypasses the db layer
@@ -22,7 +23,7 @@
                                                                 :title (:title localization)
                                                                 :infourl (:infourl localization)}))))]
     ;; New dependencies introduced
-    (dependencies/reset-cache!)
+    (service-dependencies/reset-cache!)
     ;; Reset cache so that next call to get localizations will get these ones.
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
@@ -90,17 +91,20 @@
   (when-let [catalogueitemdata (catalogue/catalogueitemdata->json item)]
     (catalogue/set-catalogue-item-data! {:id id
                                          :catalogueitemdata catalogueitemdata}))
+  (dependencies/notify-watchers! {:catalogue-item/id [id]})
   {:success true})
 
 (defn set-catalogue-item-enabled! [{:keys [id] :as command}]
   (check-allowed-to-edit! id)
   (catalogue/set-catalogue-item-enabled! command)
+  (dependencies/notify-watchers! {:catalogue-item/id [id]})
   {:success true})
 
 (defn set-catalogue-item-archived! [{:keys [id archived] :as command}]
   (check-allowed-to-edit! id)
-  (or (dependencies/change-archive-status-error archived {:catalogue-item/id id})
+  (or (service-dependencies/change-archive-status-error archived {:catalogue-item/id id})
       (do (catalogue/set-catalogue-item-archived! command)
+          (dependencies/notify-watchers! {:catalogue-item/id [id]})
           {:success true})))
 
 (defn change-form!
@@ -133,6 +137,6 @@
       (catalogue/set-catalogue-item-archived! {:id (:id item) :archived true})
 
       ;; New dependencies introduced
-      (dependencies/reset-cache!)
+      (service-dependencies/reset-cache!)
 
       {:success true :catalogue-item-id (:id new-item)})))
