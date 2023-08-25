@@ -185,6 +185,8 @@
                  :duos {:validation {:missing-duo-codes "DUO-koodit ovat määritetty resursseihin, mutta puuttuvat hakemuksesta:"}}
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
+                 :event {:not-shown-to-applicant "Ei näytetä hakijalle"
+                         :shown-to-applicant "Näytetään hakijalle"}
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
                           :attachments-redacted "%1 poisti liitetiedostoja. %2"

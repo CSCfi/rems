@@ -192,6 +192,8 @@
                  :empty "Ingen ansøgninger."
                  ;; %1 - date
                  :entitlement-end "Udløbsdato for rettighederne: %1."
+                 :event {:not-shown-to-applicant "Skjult for ansøgere"
+                         :shown-to-applicant "Synlig for ansøgere"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."

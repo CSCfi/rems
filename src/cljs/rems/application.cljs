@@ -669,7 +669,7 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- event-view [{:keys [attachments]} event]
+(defn- event-view [{:keys [attachments see-everything]} event]
   (let [event-text (localize-event event)
         decision (localize-decision event)
         comment (case (:event/type event)
@@ -680,12 +680,25 @@
                   [application-link (:application/copied-to event) (text :t.applications/application)]
 
                   (not-empty (:application/comment event)))
-        time (localize-time (:event/time event))]
+        time (localize-time (:event/time event))
+        event-public (:application/public event)]
     [:div.row.event
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.event-description.d-flex.justify-content-between.col-form-label
-       [:b.col.pl-0 event-text]]
+       [:div.col.pl-0
+        (cond
+          (and see-everything
+               (true? event-public)) [:<>
+                                      [:i.event-public.fas.fa-eye
+                                       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]
+                                      [:b.pl-2 (text-format :t.label/parens event-text (text :t.applications.event/shown-to-applicant))]]
+          (and see-everything
+               (false? event-public)) [:<>
+                                       [:i.fas.fa-eye-slash
+                                        [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]
+                                       [:b.pl-2 (text-format :t.label/parens event-text (text :t.applications.event/not-shown-to-applicant))]]
+          :else [:b event-text])]]
       (when decision
         [:div.event-decision decision])
       (when comment
@@ -695,12 +708,14 @@
          [fields/render-attachments attachments]])]]))
 
 (defn- render-events [application events]
-  (for [event events]
-    [event-view {:attachments (for [att (:application/attachments application)
-                                    :when (= (:event/id event)
-                                             (get-in att [:attachment/event :event/id]))]
-                                att)}
-     event]))
+  (let [see-everything (application-util/see-everything? application)]
+    (for [event events]
+      [event-view {:attachments (for [att (:application/attachments application)
+                                      :when (= (:event/id event)
+                                               (get-in att [:attachment/event :event/id]))]
+                                  att)
+                   :see-everything see-everything}
+       event])))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
@@ -781,21 +796,13 @@
    (when (seq events)
      (into [:<>
             [:h3.mt-3 (text :t.form/events)]]
-           (render-events events)))])
-
-(rf/reg-sub
- ::application-events
- :<- [::application]
- (fn [application _]
-   (->> application
-        :application/events
-        (sort-by :event/time)
-        (reverse))))
+           (render-events application events)))])
 
 (defn- application-state [{:keys [application config userid]}]
   (let [state (:application/state application)
-        events @(rf/subscribe [::application-events])
-        [events-show-always events-collapse] (split-at 3 events)]
+        events (sort-by :event/time > (:application/events application))
+        [events-show-always events-collapse] (split-at 3 events)
+        handler? (is-handler? application userid)]
     [collapsible/component
      (-> {:id "header"
           :title (text :t.applications/state)

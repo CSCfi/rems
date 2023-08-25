@@ -40,6 +40,11 @@
 (defn is-handler? [application userid]
   (contains? (workflow-handlers application) userid))
 
+(defn see-everything?
+  "Does current user have permission to see everything in application?"
+  [application]
+  (contains? (set (:application/permissions application)) :see-everything))
+
 (defn- parse-int-maybe [x]
   (if (re-matches #"\d+" x)
     (util/parse-int x)

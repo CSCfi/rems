@@ -185,6 +185,8 @@
                  :duos {:validation {:missing-duo-codes "DUO koder anges i resurser, men de saknas från ansökan:"}}
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
+                 :event {:not-shown-to-applicant "Dold för sökande"
+                         :shown-to-applicant "Synlig för sökande"}
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
                           :attachments-redacted "%1 tog bort bilagor. %2"
