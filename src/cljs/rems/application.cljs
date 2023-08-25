@@ -3,7 +3,7 @@
             [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [assoc-some find-first filter-keys filter-vals update-existing]]
+            [medley.core :refer [find-first update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -52,19 +52,6 @@
 
 (defn reload! [application-id & [full-reload?]]
   (rf/dispatch [::fetch-application application-id full-reload?]))
-
-(defn- disabled-items-warning [application]
-  (when (contains? (:application/permissions application) :see-everything) ; don't show to applicants
-    (when-some [resources (->> (:application/resources application)
-                               (filter #(or (not (:catalogue-item/enabled %))
-                                            (:catalogue-item/expired %)
-                                            (:catalogue-item/archived %)))
-                               seq)]
-      [:div.alert.alert-warning
-       (text :t.form/alert-disabled-resources)
-       (into [:ul]
-             (for [resource resources]
-               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
@@ -1003,8 +990,8 @@
   (let [app-id (:application/id application)
         ;; The :see-everything permission is used to determine whether the user
         ;; is allowed to see all comments. It would not make sense for the user
-        ;; to be able to write a comment which he then cannot see.
-        show-comment-field? (contains? (:application/permissions application) :see-everything)
+        ;; to be able to write a comment which they cannot see.
+        show-comment-field? (application-util/see-everything? application)
         actions (action-buttons application config)
         reload (partial reload! app-id)
         go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
@@ -1200,9 +1187,22 @@
                   (mapcat #(get-in % [:resource/duo :duo/codes])))]
     duos))
 
+(defn- disabled-items-warning [application]
+  (when-some [resources (->> (:application/resources application)
+                             (filter #(or (not (:catalogue-item/enabled %))
+                                          (:catalogue-item/expired %)
+                                          (:catalogue-item/archived %)))
+                             seq)]
+    [:div.alert.alert-warning
+     (text :t.form/alert-disabled-resources)
+     (into [:ul]
+           (for [resource resources]
+             [:li (localized (:catalogue-item/title resource))]))]))
+
 (defn- render-application [{:keys [application config userid language]}]
   [:<>
-   [disabled-items-warning application]
+   (when (application-util/see-everything? application) ; don't show to applicants
+     [disabled-items-warning application])
    [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
@@ -1218,7 +1218,7 @@
        (if @(rf/subscribe [::readonly?])
          [:div.mt-3 [application-duo-codes]]
          [:div.mt-3 [edit-application-duo-codes]]))
-     (when (contains? (:application/permissions application) :see-everything)
+     (when (application-util/see-everything? application)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
      [:div.mt-3 [application-fields application]]]
