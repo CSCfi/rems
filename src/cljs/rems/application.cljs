@@ -124,8 +124,7 @@
             (dissoc ::application
                     ::edit-application
                     ::duo-codes
-                    ::autosaving
-                    ::highlight-event-ids))
+                    ::autosaving))
     :dispatch-n (if (-> db :config :enable-duo)
                   [[::fetch-application id true] [::duo-codes]]
                   [[::fetch-application id true]])}))
@@ -176,45 +175,12 @@
                                   :validation nil
                                   :attachment-status {}})))
 
-(defn- set-highlightables-by-request-id [events]
-  (let [related-events-by-request-id (->> events
-                                          (group-by :application/request-id)
-                                          (filter-keys some?)
-                                          (filter-vals #(<= 2 (count %))))]
-    (for [event events
-          :let [highlightable-event-ids (->> event
-                                             :application/request-id
-                                             (get related-events-by-request-id)
-                                             (into #{} (map :event/id)))]]
-      (update event :highlight-event-ids into highlightable-event-ids))))
-
-(defn- set-highlightables-by-redacted-attachments [events attachments]
-  (let [attachments (build-index {:keys [:attachment/id]} attachments)
-        related-events (for [event events
-                             id (map :attachment/id (:event/redacted-attachments event))
-                             :let [added-in-event-id (get-in attachments [id :attachment/event :event/id])]]
-                         #{added-in-event-id (:event/id event)})]
-    (for [event events
-          :let [highlightable-event-ids (->> related-events
-                                             (filter #(contains? % (:event/id event)))
-                                             (reduce into #{}))]]
-      (update event :highlight-event-ids into highlightable-event-ids))))
-
-(defn- set-application-event-highlightables
-  "Updates events with event ids that are related to the event so that they can
-   be highlighted within the UI."
-  [application]
-  (-> application
-      (update :application/events set-highlightables-by-request-id)
-      (update :application/events set-highlightables-by-redacted-attachments (:application/attachments application))))
-
 (rf/reg-event-fx
  ::fetch-application-result
  (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      {:db (-> db
               (update ::application fetcher/finished application)
-              (update-in [::application :data] set-application-event-highlightables)
               (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
 
 (rf/reg-event-db
@@ -488,16 +454,6 @@
      :searching? searching?
      nil (filterv #(not= application-id (:application/id %)) data))))
 
-(rf/reg-event-db
- ::set-highlight-event-ids
- (fn [db [_ event-ids]]
-   (assoc db ::highlight-event-ids event-ids)))
-
-(rf/reg-sub
- ::highlight-event-ids
- (fn [db _]
-   (set (::highlight-event-ids db))))
-
 ;;;; UI components
 
 (defn- pdf-button [app-id]
@@ -713,7 +669,7 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- event-view [{:keys [attachments highlight set-highlights]} event]
+(defn- event-view [{:keys [attachments]} event]
   (let [event-text (localize-event event)
         decision (localize-decision event)
         comment (case (:event/type event)
@@ -726,16 +682,10 @@
                   (not-empty (:application/comment event)))
         time (localize-time (:event/time event))]
     [:div.row.event
-     {:class (when highlight
-               "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.event-description.d-flex.justify-content-between.col-form-label
-       [:b.col.pl-0 event-text]
-       (when (fn? set-highlights)
-         [:div.d-inline-flex.align-items-start
-          [:a {:href "#" :on-click set-highlights}
-           (text :t.applications/highlight-related-events)]])]
+       [:b.col.pl-0 event-text]]
       (when decision
         [:div.event-decision decision])
       (when comment
@@ -744,26 +694,13 @@
         [:div.event-attachments.pt-2
          [fields/render-attachments attachments]])]]))
 
-(rf/reg-sub
- ::enrich-event-by-id
- :<- [::application]
- :<- [::highlight-event-ids]
- (fn [[application ids] [_ event-id]]
-   {:highlight (contains? ids event-id)
-    :attachments (for [att (:application/attachments application)
-                       :when (= event-id (get-in att [:attachment/event :event/id]))]
-                   att)}))
-
-(defn- render-event [event]
-  (let [opts (merge {:set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
-                                       (fn []
-                                         (rf/dispatch [::set-highlight-event-ids event-ids])))}
-                    @(rf/subscribe [::enrich-event-by-id (:event/id event)]))]
-    [event-view opts event]))
-
-(defn- render-events [events]
-  (for [e events]
-    [render-event e]))
+(defn- render-events [application events]
+  (for [event events]
+    [event-view {:attachments (for [att (:application/attachments application)
+                                    :when (= (:event/id event)
+                                             (get-in att [:attachment/event :event/id]))]
+                                att)}
+     event]))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
@@ -865,21 +802,21 @@
           :always [:div
                    [:div.mb-3
                     [phases state (get-application-phases state)]]
-                   (when (is-handler? application userid)
-                     (->> events-show-always
-                          (application-state-details application config)))]
-          :collapse-hidden (when (and (not (is-handler? application userid))
-                                      (seq events))
-                             [:div.mt-3.mb-3
-                              [render-event (first events)]])
-          :collapse (if (is-handler? application userid)
-                      (when (seq events-collapse)
-                        (into [:div]
-                              (render-events events-collapse)))
-                      (->> (concat events-show-always events-collapse)
-                           (application-state-details application config)))
-          :on-close #(rf/dispatch [::set-highlight-event-ids []])} ; remove highlights on toggle close
-         (assoc-some :open? (seq @(rf/subscribe [::highlight-event-ids]))))])) ; show all events on highlight
+                   (when handler?
+                     (application-state-details application
+                                                config
+                                                events-show-always))]
+          :collapse-hidden (when-not handler?
+                             (when (seq events)
+                               (into [:div.my-3]
+                                     (render-events application (take 1 events)))))
+          :collapse (if-not handler?
+                      (application-state-details application
+                                                 config
+                                                 (concat events-show-always events-collapse))
+                      (some->> (seq events-collapse)
+                               (render-events application)
+                               (into [:div])))})]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -1602,20 +1539,6 @@
                              :event/actor-attributes {:name "Hannah Handler"}
                              :application/decision :rejected
                              :application/comment "This application is bad."}])
-   (example "event with comment & decision, highlighted"
-            (let [opts {:highlight true}]
-              [event-view opts {:event/time #inst "2020-01-01T08:35"
-                                :event/type :application.event/decided
-                                :event/actor-attributes {:name "Hannah Handler"}
-                                :application/decision :rejected
-                                :application/comment "This application is bad."}]))
-   (example "event that triggers highlight on other events"
-            (let [opts {:set-highlights #(println "set highlights")}]
-              [event-view opts {:event/time #inst "2020-01-01T08:37"
-                                :event/type :application.event/review-requested
-                                :event/actor-attributes {:name "Hannah Handler"}
-                                :application/reviewers [{:name "Carl Reviewer"}]
-                                :application/comment "Please take a look"}]))
    (example "event with comment & attachment"
             (let [opts {:attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}]
               [event-view opts {:event/time #inst "2020-01-01T08:35"
