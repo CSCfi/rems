@@ -118,11 +118,13 @@
       (let [events (mapcat first requests)
             get-full-internal-application (second (first requests))] ; NB: doesn't matter which get-full-internal-application is actually used
         (index-events! events
-                       get-full-internal-application))))) ; TODO avoid by moving to system ns
+                       get-full-internal-application))  ; TODO avoid by moving to system ns
+      (reset! indexing-requests nil))))
 
 (defn request-index-events! [events get-full-internal-application]
-  (swap! indexing-requests conj [events get-full-internal-application])
-  nil) ; process manager expects sequence of new events)
+  (locking index-lock
+    (swap! indexing-requests conj [events get-full-internal-application])
+    nil)) ; process manager expects sequence of new events)
 
 (mount/defstate indexer-poller
   :start (do (reset! indexing-requests nil)
