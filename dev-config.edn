@@ -19,7 +19,7 @@
                          {:attribute "picture"}
                          {:attribute "organizations"}
                          {:attribute "groups" :name {:en "Groups" :fi "Ryhmät" :sv "Grupper" :da "Grupper"}}]
- :languages [:da :en :fi :sv]
+ :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
  :extra-pages [{:id "about"
                 :translations {:fi {:title "Info"
