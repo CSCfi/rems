@@ -26,14 +26,18 @@
 
 (defn- view-button [app]
   (let [config @(rf/subscribe [:rems.config/config])
-        id (format-application-id config app)]
+        id (format-application-id config app)
+        description (:application/description app)]
     [atoms/link
      {:class "btn btn-primary"
-      :aria-label (if (str/blank? (:application/description app))
-                    (text-format :t.applications/view-application-without-description
-                                 id (format-catalogue-items app))
+      :aria-label (if (str/blank? description)
+                    (let [catalogue-items (format-catalogue-items app)]
+                      (text-format :t.applications/view-application-without-description
+                                   {:application/id id :catalogue-item-names catalogue-items}
+                                   id catalogue-items))
                     (text-format :t.applications/view-application-with-description
-                                 id (:application/description app)))}
+                                 {:application/id id :application/description description}
+                                 id description))}
      (str "/application/" (:application/id app))
      (text :t.applications/view)]))
 
@@ -68,7 +72,6 @@
           seconds (time/seconds (* 0.75 (time/in-seconds (time/interval start dl))))
           threshold (time/plus start seconds)]
       (time/after? (time/now) threshold))))
-
 
 (rf/reg-sub
  ::table-rows
@@ -130,7 +133,6 @@
                              :display-value (localize-time value)})
            :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
-
 
 (defn list [{:keys [id applications visible-columns default-sort-column default-sort-order]
              :or {visible-columns (constantly true)}}]
