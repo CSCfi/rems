@@ -19,7 +19,7 @@
                          {:attribute "picture"}
                          {:attribute "organizations"}
                          {:attribute "groups" :name {:en "Groups" :fi "Ryhmät" :sv "Grupper" :da "Grupper"}}]
- :languages [:da :en :fi :sv]
+ :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
  :extra-pages [{:id "about"
                 :translations {:fi {:title "Info"
@@ -27,7 +27,7 @@
                                :en {:title "About"
                                     :filename "about-en.md"}
                                :sv {:title "Info"
-                                    :filename "about-sv.md"}}}
+                                    :filename "about-sv.md"}
                                :da {:title "Info"
                                     :filename "about-da.md"}}}
                {:id "footer"
@@ -36,7 +36,7 @@
                                     :filename "footer-fi.md"}
                                :en {:title "Footer"}
                                :sv {:title "Footer"
-                                    :filename "footer-sv.md"}}
+                                    :filename "footer-sv.md"}
                                :da {:title "Footer"
                                     :filename "footer-da.md"}}
                 :show-menu false
@@ -47,7 +47,7 @@
                                :en {:title "Link"
                                     :filename "link-en.md"}
                                :sv {:title "Link"
-                                    :filename "link-sv.md"}}
+                                    :filename "link-sv.md"}
                                :da {:title "Link"
                                     :filename "link-da.md"}}
                 :show-menu false
@@ -69,7 +69,7 @@
                 :translations {:fi {:title "Esimerkki"
                                     :url "https://example.org/fi"}
                                :en {:title "Example"}
-                               :sv {:title "Exempel"}}
+                               :sv {:title "Exempel"}
                                :da {:title "Eksempel"}}
                 :show-menu true
                 :show-footer true}]
