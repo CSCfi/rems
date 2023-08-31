@@ -8,6 +8,10 @@ have notable changes.
 
 Changes since v2.33
 
+### Changes
+- "Show related events" has been removed from application page.
+- Sensitive events (currently `#{:application.event/remarked :application.event/attachments-redacted}`) now show eye-open/eye-closed icon when `:application/public` is true/false. This change is only visible to handler, reviewer and decider. (#3156)
+
 ### Additions
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
 
