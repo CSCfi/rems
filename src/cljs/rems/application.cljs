@@ -672,20 +672,23 @@
     [:div.row.event
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
-      [:div.event-description.d-flex.justify-content-between.col-form-label
-       [:div.col.pl-0
-        (cond
-          (and see-everything
-               (true? event-public)) [:<>
-                                      [:i.event-public.fas.fa-eye
-                                       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]
-                                      [:b.pl-2 (text-format :t.label/parens event-text (text :t.applications.event/shown-to-applicant))]]
-          (and see-everything
-               (false? event-public)) [:<>
-                                       [:i.fas.fa-eye-slash
-                                        [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]
-                                       [:b.pl-2 (text-format :t.label/parens event-text (text :t.applications.event/not-shown-to-applicant))]]
-          :else [:b event-text])]]
+      [:div.event-description.col-form-label
+       (cond
+         (and see-everything
+              (true? event-public)) (let [shown-text (text :t.applications.event/shown-to-applicant)]
+                                      [:div.event-public.row.no-gutters.gap-1
+                                       [:div.col-sm-auto
+                                        [:i.fas.fa-eye
+                                         [:span.sr-only shown-text]]]
+                                       [:b.col-sm (text-format :t.label/parens event-text shown-text)]])
+         (and see-everything
+              (false? event-public)) (let [not-shown-text (text :t.applications.event/not-shown-to-applicant)]
+                                       [:div.event-not-public.row.no-gutters.gap-1
+                                        [:div.col-sm-auto
+                                         [:i.fas.fa-eye-slash
+                                          [:span.sr-only not-shown-text]]]
+                                        [:b.col-sm (text-format :t.label/parens event-text not-shown-text)]])
+         :else [:b event-text])]
       (when decision
         [:div.event-decision decision])
       (when comment
@@ -695,12 +698,12 @@
          [fields/render-attachments attachments]])]]))
 
 (defn- render-events [application events]
-  (let [see-everything (application-util/see-everything? application)]
-    (for [event events]
-      [event-view {:attachments (for [att (:application/attachments application)
-                                      :when (= (:event/id event)
-                                               (get-in att [:attachment/event :event/id]))]
-                                  att)
+  (let [see-everything (application-util/see-everything? application)
+        attachments-by-event-id (->> (:application/attachments application)
+                                     (group-by #(-> % :attachment/event :event/id)))]
+    (for [event events
+          :let [id (:event/id event)]]
+      [event-view {:attachments (get attachments-by-event-id id)
                    :see-everything see-everything}
        event])))
 
