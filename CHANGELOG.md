@@ -10,6 +10,7 @@ Changes since v2.33
 
 ### Additions
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
+- Added experimental support for named format parameters in translations. (#3183)
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.
