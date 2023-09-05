@@ -3,10 +3,11 @@
             [clojure.java.shell :as sh]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging]
             [rems.common.util :refer [recursive-keys]]
             [rems.locales :as locales]
+            [rems.tempura]
             [rems.testing-util :refer [create-temp-dir]]
             [rems.util :refer [getx-in delete-directory-recursively]]
             [taoensso.tempura.impl :refer [compile-dictionary]])
@@ -47,27 +48,32 @@
   (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
 
 (deftest test-format-parameters-match
-  (testing "[:en vs :da]"
-    (let [en (loc-en)
-          da (loc-da)]
-      (doseq [k (recursive-keys en)] ;; we check that keys match separately
-        (testing k
-          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
-                 (locales/extract-format-parameters (getx-in da (vec k)))))))))
-  (testing "[:en vs :fi]"
-    (let [en (loc-en)
-          fi (loc-fi)]
-      (doseq [k (recursive-keys en)] ;; we check that keys match separately
-        (testing k
-          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
-                 (locales/extract-format-parameters (getx-in fi (vec k)))))))))
-  (testing "[:en vs :sv]"
-    (let [en (loc-en)
-          sv (loc-sv)]
-      (doseq [k (recursive-keys en)]
-        (testing k
-          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
-                 (locales/extract-format-parameters (getx-in sv (vec k))))))))))
+  (let [en (loc-en)
+        da (loc-da)
+        fi (loc-fi)
+        sv (loc-sv)
+        translation-keys (recursive-keys en)]
+    (testing "[:en vs :da]"
+      (doseq [ks translation-keys]
+        (testing ks
+          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
+                 (locales/extract-format-parameters (getx-in da (vec ks)))))
+          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
+                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in da (vec ks))))))))))
+    (testing "[:en vs :fi]"
+      (doseq [ks translation-keys]
+        (testing ks
+          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
+                 (locales/extract-format-parameters (getx-in fi (vec ks)))))
+          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
+                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in fi (vec ks))))))))))
+    (testing "[:en vs :sv]"
+      (doseq [ks translation-keys]
+        (testing ks
+          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
+                 (locales/extract-format-parameters (getx-in sv (vec ks)))))
+          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
+                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in sv (vec ks))))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
