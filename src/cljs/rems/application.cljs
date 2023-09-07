@@ -800,20 +800,18 @@
                    [:div.mb-3
                     [phases state (get-application-phases state)]]
                    (when handler?
-                     (application-state-details application
-                                                config
-                                                events-show-always))]
+                     [application-state-details application config events-show-always])]
           :collapse-hidden (when-not handler?
                              (when (seq events)
                                (into [:div.my-3]
                                      (render-events application (take 1 events)))))
-          :collapse (if-not handler?
-                      (application-state-details application
-                                                 config
-                                                 (concat events-show-always events-collapse))
-                      (some->> (seq events-collapse)
-                               (render-events application)
-                               (into [:div])))})]))
+          :collapse [:div
+                     (if-not handler?
+                       [application-state-details application config (concat events-show-always
+                                                                             events-collapse)]
+                       (when (seq events-collapse)
+                         (into [:<>]
+                               (render-events application events-collapse))))]})]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
