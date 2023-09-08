@@ -53,7 +53,9 @@
             (is (valid-localization? (localize-event
                                       (merge {:event/type event-type}
                                              (when (= event-type :application.event/decided)
-                                               {:application/decision :approved})))))))))))
+                                               {:application/decision :approved})
+                                             (when (= event-type :application.event/voted)
+                                               {:vote/value "accept"})))))))))))
 
 (deftest test-localize-event
   ;; check some event types that have special logic

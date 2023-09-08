@@ -182,8 +182,17 @@
                        #'rems.locales/translations)
           (log/info "Creating test data")
           (test-data/create-test-data!)
-          (test-data/create-performance-test-data!)
           (log/info "Test data created"))
+
+        "pref-data"
+        (do
+          (mount/start #'rems.config/env
+                       #'rems.db.core/*db*
+                       #'rems.locales/translations)
+          (log/info "Creating performance test data")
+          (test-data/create-test-data!)
+          (test-data/create-performance-test-data!)
+          (log/info "Performance test data created"))
 
         "demo-data"
         (do

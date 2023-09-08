@@ -54,7 +54,8 @@
                                             :handlers (get workflow :handlers)
                                             :licenses (->> (:licenses workflow)
                                                            (mapv #(replace-key % :license/id :id)))
-                                            :disable-commands (get workflow :disable-commands)})))
+                                            :disable-commands (get workflow :disable-commands)
+                                            :voting (get workflow :voting)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -85,7 +86,8 @@
                   :licenses (vec (keep-keys {:id :license/id} (:licenses form)))
                   :disable-commands (->> (:disable-commands form)
                                          (mapv #(update-existing % :when/state vec))
-                                         (mapv #(update-existing % :when/role vec)))}
+                                         (mapv #(update-existing % :when/role vec)))
+                  :voting (:voting form)}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -105,7 +107,8 @@
                  :handlers (map :userid (:handlers form))
                  :disable-commands (->> (:disable-commands form)
                                         (mapv #(update-existing % :when/state vec))
-                                        (mapv #(update-existing % :when/role vec)))}]
+                                        (mapv #(update-existing % :when/role vec)))
+                 :voting (:voting form)}]
     (when (valid-edit-request? request)
       request)))
 
@@ -332,6 +335,30 @@
                                 (rf/dispatch [::create-rule]))}
        (text :t.create-workflow/create-new-rule)]]]))
 
+(rf/reg-sub ::voting (fn [db _] (get-in db [::form :voting])))
+(rf/reg-event-db ::set-voting (fn [db [_ voting]] (assoc-in db [::form :voting] voting)))
+
+(defn- select-voting-type-field [{:keys [value on-change]}]
+  [:div.form-group.select-voting-type
+   [:label.administration-field-label {:for "voting-type"}
+    (text-format :t.label/optional (text :t.administration/voting))]
+
+   [:p (text :t.create-workflow/voting-explanation)]
+
+   [dropdown/dropdown
+    {:id "voting-type"
+     :items [{:type nil :label (text :t.administration/no-voting)}
+             {:type :handlers-vote :label (text :t.administration/handlers-vote)}]
+     :item-label :label
+     :item-selected? #(= value (:type %))
+     :on-change (comp on-change :type)}]])
+
+(defn- workflow-voting []
+  (let [voting @(rf/subscribe [::voting])]
+    [:div.form-group.voting
+     [select-voting-type-field {:value (:type voting)
+                                :on-change #(rf/dispatch [::set-voting (assoc voting :type %)])}]]))
+
 ;; TODO: Eventually filter handlers by the selected organization when
 ;;   we are sure that all the handlers have the organization information?
 (defn- workflow-handlers-field []
@@ -392,7 +419,8 @@
    [workflow-forms-field]])
 
 (defn create-workflow-page []
-  (let [form @(rf/subscribe [::form])
+  (let [config @(rf/subscribe [:rems.config/config])
+        form @(rf/subscribe [::form])
         workflow-type (:type form)
         loading? (or @(rf/subscribe [::actors :fetching?])
                      @(rf/subscribe [::workflow :fetching?]))
@@ -420,7 +448,14 @@
                     :workflow/master [master-workflow-form])
 
                   [workflow-licenses-field]
-                  [workflow-disable-commands-field]
+
+                  ;; optional extra stuff
+                  ;; XXX: could use collapsible too
+                  [:div.spaced-vertically-5.mt-5
+                   [workflow-disable-commands-field]
+
+                   (when (:enable-voting config)
+                     [workflow-voting])]
 
                   [:div.col.commands
                    [cancel-button]

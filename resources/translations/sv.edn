@@ -69,7 +69,8 @@
             :return "Sänd tillbaka till sökande"
             :review "Granska"
             :revoke "Återkalla rättigheter"
-            :todo-applications "Aktiva ansökningar"}
+            :todo-applications "Aktiva ansökningar"
+            :vote "Rösta"}
   :administration {:active "Aktiv"
                    :add "Lägg till"
                    :added-at "Tillagd"
@@ -123,6 +124,7 @@
                    :external-title "Namn"
                    :form "Blankett"
                    :forms "Blanketter"
+                   :handlers-vote "Händläggarna röstar"
                    :has-errors "Fel"
                    :id "Id"
                    :internal-name "Inre namn"
@@ -135,6 +137,7 @@
                    :no-categories "Inga kategorier"
                    :no-form "Ingen blankett"
                    :no-licenses "Inga licenser"
+                   :no-voting "Inga omröstning"
                    :optional "(valfritt)"
                    :org "Org"
                    :organization "Organisation"
@@ -157,6 +160,7 @@
                    :userid "Användarnamn"
                    :user-role "Användarensroll"
                    :view "Visa"
+                   :voting "Omröstning"
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
                    :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
@@ -217,7 +221,8 @@
                           :reviewer-joined "%1 blev granskare." ; TODO check
                           :revoked "%1 återkallade rättigheter."
                           :submitted "%1 lämnade in ansökan."
-                          :unknown "Okänd"}
+                          :unknown "Okänd"
+                          :voted "%1 röstade %2."}
                  :export {:applicant "Sökande"
                           :external-id "Externt id"
                           :first-submitted "Inlämnad"
@@ -254,7 +259,12 @@
                          :waiting-for-your-review "Väntar på din granskning"}
                  :view "Visa"
                  :view-application-with-description "Visa ansökan %1: %2"
-                 :view-application-without-description "Visa ansökan %1 för resurser: %2"}
+                 :view-application-without-description "Visa ansökan %1 för resurser: %2"
+                 :votes "Röster"
+                 :voting {:previously-voted [:p "Tidigare du röstade %1. Du kan förändra rösten här."]
+                          :votes {:accept "Ja"
+                                  :empty "Ingen"
+                                  :reject "Nej"}}}
   :cart {:add "Lägg i korgen"
          :apply "Ansök"
          :apply-for-bundle "Ansök om %1 resurser"
@@ -302,7 +312,8 @@
              :save-draft "Spara utkast"
              ;; :send-expiration-notifications
              :submit "Lämna in ansökningen"
-             :uninvite-member "Ta bort deltagare"}
+             :uninvite-member "Ta bort deltagare"
+             :vote "Rösta"}
   :create-form {:add-column "Lägg till kolumn"
                 :add-form-field "Lägg till fält"
                 :add-option "Lägg till alternativ"
@@ -366,7 +377,8 @@
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
                     :rule "Regel"
-                    :title "Arbetsflödets namn"}
+                    :title "Arbetsflödets namn"
+                    :voting-explanation "Hantering av ansökningar kan innehålla omröstning."}
   :dropdown {:no-results "Inga resultat"
              :placeholder "Välj..."
              :loading "Läser in..."

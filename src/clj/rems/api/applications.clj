@@ -252,12 +252,12 @@
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/delete commands/DeleteCommand
-                      "Only drafts can be deleted. Only applicants can delete drafts.")
+      "Only drafts can be deleted. Only applicants can delete drafts.")
     (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
     (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand
-                      "Promote member of application to applicant. Previous applicant becomes a member.")
+      "Promote member of application to applicant. Previous applicant becomes a member.")
     (command-endpoint :application.command/redact-attachments commands/RedactAttachmentsCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
@@ -270,6 +270,8 @@
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
+    (command-endpoint :application.command/vote commands/VoteCommand)
+
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
