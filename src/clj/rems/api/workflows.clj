@@ -17,7 +17,7 @@
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :licenses) [schema-base/LicenseId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) {:type (s/maybe (s/enum :handlers-vote))}})
+   (s/optional-key :voting) (s/maybe {:type (s/maybe (s/enum :handlers-vote))})})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
@@ -26,7 +26,7 @@
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) {:type (s/maybe (s/enum :handlers-vote))}})
+   (s/optional-key :voting) (s/maybe {:type (s/maybe (s/enum :handlers-vote))})})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool
