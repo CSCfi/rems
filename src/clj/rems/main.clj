@@ -184,7 +184,7 @@
           (test-data/create-test-data!)
           (log/info "Test data created"))
 
-        "pref-data"
+        "perf-data"
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
