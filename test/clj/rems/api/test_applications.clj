@@ -1501,17 +1501,17 @@
                             :vote "Accept"}))))
 
     (testing "enable voting"
-      (-> (request :put "/api/workflows/edit")
-          (authenticate api-key owner)
-          (json-body {:id workflow-id
-                      :organization {:organization/id "abc"}
-                      :title "Workflow with voting"
-                      :handlers [handler-id1 handler-id2]
-                      :disable-commands []
-                      :voting {:type "handlers-vote"}})
-          handler
-          read-ok-body
-          :id))
+      (is (= {:success true}
+             (-> (request :put "/api/workflows/edit")
+                 (authenticate api-key owner)
+                 (json-body {:id workflow-id
+                             :organization {:organization/id "abc"}
+                             :title "Workflow with voting"
+                             :handlers [handler-id1 handler-id2]
+                             :disable-commands []
+                             :voting {:type "handlers-vote"}})
+                 handler
+                 read-ok-body))))
 
     (testing "vote 1"
       (is (= {:success true} (send-command handler-id1
