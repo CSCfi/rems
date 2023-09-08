@@ -39,7 +39,8 @@
                 :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]
                 :licenses []
-                :disable-commands []}
+                :disable-commands []
+                :voting nil}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -57,7 +58,8 @@
                 :forms [{:form/id 13}]
                 :handlers ["bob" "carl"]
                 :licenses []
-                :disable-commands []}
+                :disable-commands []
+                :voting nil}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -74,7 +76,8 @@
                 :forms []
                 :handlers ["bob" "carl"]
                 :licenses []
-                :disable-commands []}
+                :disable-commands []
+                :voting nil}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
@@ -84,7 +87,8 @@
           :organization {:organization/id "o"}
           :title "t"
           :handlers ["a" "b"]
-          :disable-commands [{:command :application.command/close}]}
+          :disable-commands [{:command :application.command/close}]
+          :voting nil}
          (build-edit-request 3 {:organization {:organization/id "o"}
                                 :title "t"
                                 :handlers [{:userid "a"} {:userid "b"}]

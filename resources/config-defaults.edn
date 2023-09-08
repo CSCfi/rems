@@ -465,4 +465,5 @@
  ;;
  ;; See docs/plugins.md for more information.
  :plugins nil ; by default no plugins
- :extension-points nil} ; by default no plugins
+ :extension-points nil ; by default no plugins
+ :enable-voting false} ; voting (experimental)

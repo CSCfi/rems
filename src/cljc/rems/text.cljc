@@ -185,7 +185,8 @@
    :application.event/revoked :t.applications.events/revoked
    :application.event/reviewer-invited :t.applications.events/reviewer-invited
    :application.event/reviewer-joined :t.applications.events/reviewer-joined
-   :application.event/submitted :t.applications.events/submitted})
+   :application.event/submitted :t.applications.events/submitted
+   :application.event/voted :t.applications.events/voted})
 
 (defn localize-decision [event]
   (when-let [decision (:application/decision event)]
@@ -244,6 +245,10 @@
         :application.event/attachments-redacted
         (when (seq (:event/attachments event))
           (text :t.applications/redacted-attachments-replaced))
+
+        :application.event/voted
+        (when-not (str/blank? (:vote/value event))
+          (text (keyword (str "t" ".applications.voting.votes") (:vote/value event))))
 
         nil))
      (case event-type
@@ -311,7 +316,8 @@
    :application.command/save-draft :t.commands/save-draft
    ;; :application.command/send-expiration-notifications
    :application.command/submit :t.commands/submit
-   :application.command/uninvite-member :t.commands/uninvite-member})
+   :application.command/uninvite-member :t.commands/uninvite-member
+   :application.command/vote :t.commands/vote})
 
 (defn localize-command [command]
   (let [command-type (if (keyword? command)
