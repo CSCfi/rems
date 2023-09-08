@@ -69,7 +69,8 @@
             :return "Palauta hakijalle"
             :review "Katselmoi"
             :revoke "Peru käyttöoikeus"
-            :todo-applications "Avoimet hakemukset"}
+            :todo-applications "Avoimet hakemukset"
+            :vote "Äänestä"}
   :administration {:active "Aktiivinen"
                    :add "Lisää"
                    :added-at "Lisätty"
@@ -123,6 +124,7 @@
                    :external-title "Nimi"
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :handlers-vote "Käsittelijät äänestää"
                    :has-errors "Virheet"
                    :id "Tunnus"
                    :internal-name "Sisäinen nimi"
@@ -135,6 +137,7 @@
                    :no-categories "Ei kategorioita"
                    :no-form "Ei lomaketta"
                    :no-licenses "Ei lisenssejä"
+                   :no-voting "Ei äänestystä"
                    :optional "(valinnainen)"
                    :org "Org"
                    :organization "Organisaatio"
@@ -157,6 +160,7 @@
                    :userid "Käyttäjätunnus"
                    :user-role "Käyttäjän rooli"
                    :view "Avaa"
+                   :voting "Äänestys"
                    :workflow "Työvuo"
                    :workflows "Työvuot"
                    :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]}
@@ -217,7 +221,8 @@
                           :reviewer-joined "%1 hyväksyi kutsun katselmoijaksi."
                           :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
-                          :unknown "Tuntematon"}
+                          :unknown "Tuntematon"
+                          :voted "%1 äänesti %2."}
                  :export {:applicant "Hakija"
                           :external-id "Ulkoinen tunniste"
                           :first-submitted "Lähetetty"
@@ -254,7 +259,12 @@
                          :waiting-for-your-review "Odottaa sinun katselmointiasi"}
                  :view "Näytä"
                  :view-application-with-description "Näytä hakemus %1: %2"
-                 :view-application-without-description "Näytä hakemus %1 resursseille: %2"}
+                 :view-application-without-description "Näytä hakemus %1 resursseille: %2"
+                 :votes "Votes"
+                 :voting {:previously-voted [:p "Äänestit aiemmin %1. Voit vaihtaa ääntäsi tästä."]
+                          :votes {:accept "Jaa"
+                                  :empty "Tyhjä"
+                                  :reject "Ei"}}}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
@@ -302,7 +312,8 @@
              :save-draft "Tallenna"
              ;; :send-expiration-notifications
              :submit "Lähetä hakemus"
-             :uninvite-member "Poista henkilö"}
+             :uninvite-member "Poista henkilö"
+             :vote "Äänestä"}
   :create-form {:add-column "Lisää sarake"
                 :add-form-field "Lisää kenttä"
                 :add-option "Lisää vaihtoehto"
@@ -366,7 +377,8 @@
                     :master-workflow "Master-työvuo"
                     :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
                     :rule "Sääntö"
-                    :title "Työvuon nimi"}
+                    :title "Työvuon nimi"
+                    :voting-explanation "Hakemuksen käsittelyyn voi liittyä äänestys."}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."
              :loading "Ladataan..."

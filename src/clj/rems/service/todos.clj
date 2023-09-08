@@ -53,7 +53,8 @@
           :application.command/invite-decider
           :application.command/remove-member
           :application.command/uninvite-member
-          ;; remarks can be made without a request, also on handled todos
+          ;; remarks and votes can be made without a request, also on handled todos
+          :application.command/vote
           :application.command/remark
           :application.command/send-expiration-notifications
           :application.command/redact-attachments}

@@ -26,6 +26,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
+            [rems.actions.vote :refer [vote-action-button vote-form votes-summary]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :as application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
@@ -817,7 +818,7 @@
                                  [application-link new-app nil]))))
        ")"])))
 
-(defn- application-state-details [application config events]
+(defn- application-state-details [application config]
   [:<>
    [:h3.mt-3 (text :t.applications/details)]
    [info-field
@@ -840,11 +841,13 @@
    [info-field
     (text :t.applications/latest-activity)
     (localize-time (:application/last-activity application))
-    {:inline? true}]
-   (when (seq events)
-     (into [:<>
-            [:h3.mt-3 (text :t.form/events)]]
-           (render-events events)))])
+    {:inline? true}]])
+
+(defn- application-events [events]
+  (when (seq events)
+    (into [:<>
+           [:h3.mt-3 (text :t.form/events)]]
+          (render-events events))))
 
 (rf/reg-sub
  ::application-events
@@ -865,19 +868,27 @@
           :always [:div
                    [:div.mb-3
                     [phases state (get-application-phases state)]]
+
                    (when (is-handler? application userid)
-                     (->> events-show-always
-                          (application-state-details application config)))]
+                     [:<>
+                      [application-state-details application config]
+
+                      (when (seq (:application/votes application))
+                        [votes-summary application])
+
+                      [application-events events-show-always]])]
           :collapse-hidden (when (and (not (is-handler? application userid))
                                       (seq events))
-                             [:div.mt-3.mb-3
+                             [:div.my-3
                               [render-event (first events)]])
           :collapse (if (is-handler? application userid)
                       (when (seq events-collapse)
                         (into [:div]
                               (render-events events-collapse)))
-                      (->> (concat events-show-always events-collapse)
-                           (application-state-details application config)))
+
+                      [:<>
+                       [application-state-details application config]
+                       [application-events (concat events-show-always events-collapse)]])
           :on-close #(rf/dispatch [::set-highlight-event-ids []])} ; remove highlights on toggle close
          (assoc-some :open? (seq @(rf/subscribe [::highlight-event-ids]))))])) ; show all events on highlight
 
@@ -1037,6 +1048,7 @@
                                :application.command/approve [approve-reject-action-button]
                                :application.command/reject [approve-reject-action-button]
                                :application.command/revoke [revoke-action-button]
+                               :application.command/vote [vote-action-button]
                                :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
                                                                          [assign-external-id-button (get application :application/assigned-external-id "")])
                                :application.command/close [close-action-button]
@@ -1087,7 +1099,8 @@
                   [return-form app-id reload]
                   [approve-reject-form app-id reload]
                   [assign-external-id-form app-id reload]
-                  [delete-form app-id go-to-catalogue]]]}])))
+                  [delete-form app-id go-to-catalogue]
+                  [vote-form app-id application reload]]]}])))
 
 (defn- render-resource [resource language]
   (let [config @(rf/subscribe [:rems.config/config])

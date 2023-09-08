@@ -90,7 +90,8 @@
        :application.event/returned
        :application.event/reviewer-invited
        :application.event/revoked
-       :application.event/submitted)
+       :application.event/submitted
+       :application.event/voted)
       user-applications ; no user added
 
       :application.event/copied-from
@@ -140,7 +141,8 @@
        :application.event/returned
        :application.event/reviewer-invited
        :application.event/revoked
-       :application.event/submitted)
+       :application.event/submitted
+       :application.event/voted)
       user-roles ; no user role added
 
       :application.event/reviewed
