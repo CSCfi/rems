@@ -287,7 +287,8 @@
                                                  :title "Decider workflow with one handler"
                                                  :type :workflow/decider
                                                  :handlers [approver2 rejecter-bot]
-                                                 :licenses [link text]})
+                                                 :licenses [link text]
+                                                 :voting {:type :handlers-vote}})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
