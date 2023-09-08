@@ -15,7 +15,7 @@
    (s/optional-key :forms) [{:form/id s/Num}]
    (s/optional-key :licenses) [s/Int]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) schema-base/WorkflowVoting})
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
 
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
