@@ -28,7 +28,8 @@
                       :handlers handlers
                       :forms forms
                       :licenses licenses}
-               (seq disable-commands) (assoc :disable-commands disable-commands))]
+               (seq disable-commands) (assoc :disable-commands disable-commands)
+               voting (assoc :voting voting))]
     (:id (db/create-workflow! {:organization (:organization/id organization)
                                :title title
                                :workflow (json/generate-string
