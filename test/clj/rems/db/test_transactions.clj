@@ -119,12 +119,19 @@
             all-events-readers (submit-all thread-pool (for [_ (range concurrent-readers)]
                                                          (fn [] (sample-until-interrupted
                                                                  (fn [] (read-all-events))))))
+            writer-count (atom 0)
             writers (submit-all thread-pool (for [app-id app-ids
                                                   _ (range writers-per-application)]
                                               (fn [] (sample-until-finished
-                                                      (fn [x] (write-event app-id x))
+                                                      (fn [x]
+                                                        (let [result (write-event app-id x)]
+                                                          (swap! writer-count inc)
+                                                          result))
                                                       (range 1 (inc writes-per-application))))))]
-        ;; TODO: we could finish right after all the writers have finished
+        ;; wait until all the writers have finished
+        (while (< @writer-count (* applications-count writers-per-application writes-per-application))
+          (Thread/sleep 100))
+
         (Thread/sleep test-duration-millis)
         (doto thread-pool
           (.shutdownNow)
