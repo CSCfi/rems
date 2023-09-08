@@ -1554,10 +1554,10 @@
               {:event/type "application.event/voted" :event/actor handler-id1 :vote/value "Reject"}
               {:event/type "application.event/voted" :event/actor handler-id2 :vote/value "Accept"}]
              (-> application-id
-                    (get-application-for-user handler-id1)
-                    (get-in [:application/events])
-                    (->> (take-last 3)
-                         (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
+                 (get-application-for-user handler-id1)
+                 (get-in [:application/events])
+                 (->> (take-last 3)
+                      (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
 
 (deftest test-application-export
   (let [applicant "alice"

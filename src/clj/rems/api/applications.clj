@@ -251,13 +251,11 @@
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
-    (command-endpoint :application.command/delete commands/DeleteCommand
-      "Only drafts can be deleted. Only applicants can delete drafts.")
+    (command-endpoint :application.command/delete commands/DeleteCommand "Only drafts can be deleted. Only applicants can delete drafts.")
     (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
-    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand
-      "Promote member of application to applicant. Previous applicant becomes a member.")
+    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand "Promote member of application to applicant. Previous applicant becomes a member.")
     (command-endpoint :application.command/redact-attachments commands/RedactAttachmentsCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
