@@ -77,9 +77,7 @@
   (if (str/blank? query)
     apps
     (let [app-ids (search/find-applications query)]
-      (filter (fn [app]
-                (contains? app-ids (:application/id app)))
-              apps))))
+      (filter (comp app-ids :application/id) apps))))
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
