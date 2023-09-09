@@ -16,7 +16,8 @@
    :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :licenses) [schema-base/LicenseId]
-   (s/optional-key :disable-commands) [schema-base/DisableCommandRule]})
+   (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
@@ -24,7 +25,8 @@
    ;; type can't change
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [schema-base/UserId]
-   (s/optional-key :disable-commands) [schema-base/DisableCommandRule]})
+   (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

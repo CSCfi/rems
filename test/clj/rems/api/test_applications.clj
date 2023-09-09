@@ -18,8 +18,7 @@
             [rems.testing-util :refer [with-fixed-time with-user]]
             [ring.mock.request :refer :all])
   (:import java.io.ByteArrayOutputStream
-           java.util.zip.ZipInputStream
-           [org.joda.time DateTime DateTimeUtils DateTimeZone]))
+           java.util.zip.ZipInputStream))
 
 (use-fixtures
   :each
@@ -1450,6 +1449,112 @@
                   :email "developer@example.com"}
                  (first (:application/members application))
                  (get-in application [:application/events 2 :application/member]))))))))
+
+
+(deftest test-application-vote
+  (let [api-key "42"
+        applicant-id "alice"
+        handler-id1 "handler"
+        handler-id2 "developer"
+        reviewer-id "carl"
+        owner "owner"
+        form-id (test-helpers/create-form! {})
+        workflow-id (test-helpers/create-workflow! {:type :workflow/master
+                                                    :handlers [handler-id1 handler-id2]})
+        cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                          :form-id form-id})
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                          :actor applicant-id})]
+    (testing "submit"
+      (is (= {:success true} (send-command applicant-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
+    (testing "invite reviewer"
+      (is (= {:success true} (send-command handler-id1
+                                           {:type :application.command/request-review
+                                            :application-id application-id
+                                            :reviewers [reviewer-id]}))))
+    (testing "unrelated user can't vote"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command applicant-id
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Accept"})))
+
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command reviewer-id
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Accept"}))))
+
+    (testing "handler can't vote if voting is not enabled"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command handler-id1
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Accept"}))))
+
+    (testing "enable voting"
+      (is (= {:success true}
+             (-> (request :put "/api/workflows/edit")
+                 (authenticate api-key owner)
+                 (json-body {:id workflow-id
+                             :organization {:organization/id "abc"}
+                             :title "Workflow with voting"
+                             :handlers [handler-id1 handler-id2]
+                             :disable-commands []
+                             :voting {:type "handlers-vote"}})
+                 handler
+                 read-ok-body))))
+
+    (testing "vote 1"
+      (is (= {:success true} (send-command handler-id1
+                                           {:type :application.command/vote
+                                            :application-id application-id
+                                            :vote "Accept"}))))
+
+    (testing "handling users can see voting and votes"
+      (doseq [userid [handler-id1 handler-id2 reviewer-id]]
+        (let [application (get-application-for-user application-id userid)]
+          (is (= {:handler "Accept"} (get-in application [:application/votes])))
+          (is (= {:type "handlers-vote"} (get-in application [:application/workflow :workflow/voting]))))))
+
+    (testing "applicant can't see voting or votes"
+      (let [application (get-application-for-user application-id applicant-id)]
+        (is (= nil (get-in application [:application/votes])))
+        (is (= nil (get-in application [:application/workflow :workflow/voting])))))
+
+    (testing "vote 2 overrides vote 1"
+      (is (= {:success true} (send-command handler-id1
+                                           {:type :application.command/vote
+                                            :application-id application-id
+                                            :vote "Reject"})))
+      (is (= {:handler "Reject"} (-> application-id
+                                     (get-application-for-user handler-id1)
+                                     (get-in [:application/votes])))))
+
+    (testing "vote 3 is in addition to vote 2"
+      (is (= {:success true} (send-command handler-id2
+                                           {:type :application.command/vote
+                                            :application-id application-id
+                                            :vote "Accept"})))
+      (is (= {:handler "Reject"
+              :developer "Accept"} (-> application-id
+                                       (get-application-for-user handler-id1)
+                                       (get-in [:application/votes])))))
+
+    (testing "voting events"
+      (is (= [{:event/type "application.event/voted" :event/actor handler-id1 :vote/value "Accept"}
+              {:event/type "application.event/voted" :event/actor handler-id1 :vote/value "Reject"}
+              {:event/type "application.event/voted" :event/actor handler-id2 :vote/value "Accept"}]
+             (-> application-id
+                 (get-application-for-user handler-id1)
+                 (get-in [:application/events])
+                 (->> (take-last 3)
+                      (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
 
 (deftest test-application-export
   (let [applicant "alice"

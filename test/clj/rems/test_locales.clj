@@ -19,6 +19,9 @@
            (set (unused-translation-keys {:a {:b "x" :c "x"}}
                                          {:a {:b "y" :d "y"} :x "y"}))))))
 
+(defn loc-da []
+  (read-string (slurp (io/resource "translations/da.edn"))))
+
 (defn loc-en []
   (read-string (slurp (io/resource "translations/en.edn"))))
 
@@ -29,6 +32,9 @@
   (read-string (slurp (io/resource "translations/sv.edn"))))
 
 (deftest test-all-languages-defined
+  #_(is (= (recursive-keys (loc-en))
+           (recursive-keys (loc-da)))
+        "en matches da")
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-fi)))
       "en matches fi")
@@ -41,6 +47,13 @@
   (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
 
 (deftest test-format-parameters-match
+  #_(testing "[:en vs :da]"
+      (let [en (loc-en)
+            da (loc-da)]
+        (doseq [k (recursive-keys en)] ;; we check that keys match separately
+          (testing k
+            (is (= (locales/extract-format-parameters (getx-in en (vec k)))
+                   (locales/extract-format-parameters (getx-in da (vec k)))))))))
   (testing "[:en vs :fi]"
     (let [en (loc-en)
           fi (loc-fi)]

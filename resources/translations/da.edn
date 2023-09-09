@@ -1,0 +1,664 @@
+{:t
+ {:accept-invitation {:header "Accepter invitation"
+                      :title "Accepter invitation"
+                      :success {:workflow "Tilslutning til arbejdsgangshåndtering lykkedes."}
+                      :errors {:already-member {:workflow "Du håndterer allerede arbejdsgang."}
+                               :invalid-invitation-type "Accept af invitation mislykkedes."
+                               :invalid-token [:span "Accept af invitation mislykkedes. Tjek invitationstoken " [:code "%1"]]
+                               :invalid-workflow "Accept af invitation mislykkedes."}}
+  :actions {:accept-invitation "Accepter invitation"
+            :accept-invitation-already-member "Du er allerede medlem."
+            :accept-invitation-success "Tilslutning til ansøgning lykkedes."
+            :accept-licenses "Accepter brugsvilkårene"
+            :add-licenses "Tilføj et brugsvilkår"
+            :add-member "Tilføj medlem"
+            :approve "Godkend"
+            :approve-end-date "Udløbsdato for adgangsrettigheder (valgfri)"
+            :approve-reject "Godkend eller afvis"
+            :assign-external-id "Tildel ekstern id"
+            :assign-external-id-info "Ekstern id"
+            :bundling-intro [:div.intro [:p "NB: Kun ressourcer med samme ansøgningsarbejdsgang kan lægges sammen."]]
+            :cancel "Afbryd"
+            :change-applicant "Gør til ansøger"
+            :change-resources "Rediger ressourcer"
+            :clear "Ryd"
+            :close "Luk ansøgning"
+            :close-intro [:div.intro [:p "NB: Hvis ansøgningen er lukket, kan den ikke ændres eller indsendes længere."]]
+            :commands "Handlinger"
+            :decide "Beslut"
+            :delete "Slet kladde"
+            :delete-intro [:div.intro [:p "Slet denne kladde permanent?"]]
+            :errors {:already-member "Bruger er allerede medlem af denne ansøgning"
+                     :duplicate-id "Id er allerede i brug."
+                     ;; %1 - invitation token
+                     :invalid-token [:div [:p "Tilslutning til ansøgning mislykkedes."] [:p "Tjek invitationstoken " [:code "%1"]]]
+                     :licenses-not-accepted "Brugsvilkår ikke accepteret."
+                     ;; %1 - organization name
+                     :organization-does-not-exist "Organisation \"%1\" eksisterer ikke"
+                     :validation-errors "Undersøg følgende fejl:"
+                     :validation-warnings "Undersøg følgende før indsendelse:"
+                     :entitlement-end-not-in-future "Udløbsdato for adgangsrettigheder skal være i fremtiden."}
+            :generate-ega-api-key-in-profile "Dan en på profilsiden."
+            :handled-applications "Processerede ansøgninger"
+            :invite-member "Inviter medlem"
+            :licenses-selection "Tilføj brugsvilkår"
+            :member "Medlem"
+            :member-email "E-mail"
+            :member-name "Navn"
+            :modify "Ændr"
+            :name-and-email-required "Navn og e-mail er påkrævede."
+            :redact-attachments "Fjern bilag"
+            :reject "Afvis"
+            :remark "Bemærkning"
+            :remark-public "Vis til ansøger"
+            :remove-attachments "Fjern bilag"
+            :remove-member "Fjern medlem"
+            :replace-attachments "Udskift bilag"
+            :request-decision "Anmod om afgørelse"
+            :request-decision-dropdown "Anmod om afgørelse"
+            :request-decision-dropdown-from-user "fra eksisterende bruger..."
+            :request-decision-dropdown-via-email "via e-mail..."
+            :request-decision-from-user "Anmod om afgørelse fra eksisterende bruger"
+            :request-decision-via-email "Anmod om afgørelse via e-mail"
+            :request-review "Anmod om gennemsyn"
+            :request-review-dropdown "Anmod om gennemsyn"
+            :request-review-dropdown-from-user "fra eksisterende bruger..."
+            :request-review-dropdown-via-email "via e-mail..."
+            :request-review-from-user "Anmod om gennemsyn fra eksisterende bruger"
+            :request-review-via-email "Anmod om gennemsyn via e-mail"
+            :request-selections "Send anmodninger til"
+            :resources-selection "Ressourcer indeholdt i ansøgningen:"
+            :return "Send tilbage til ansøger"
+            :review "Gennemse"
+            :revoke "Tilbagekald rettigheder"
+            :todo-applications "Aktive ansøgninger"
+            :vote nil}
+  :administration {:active "Aktiv"
+                   :add "Tilføj"
+                   :added-at "Tilføjet"
+                   :added-by "Tilføjet af"
+                   :application-state "Ansøgningsstatus"
+                   :archive "Arkiver"
+                   :back "Tilbage"
+                   :blacklist "Sortliste"
+                   :change-form "Rediger blanket"
+                   :cancel "Afbryd"
+                   :catalogue-item "Katalogpost"
+                   :catalogue-items "Katalogposter"
+                   :categories "Kategorier"
+                   :category "Kategori"
+                   :category-children "Underkategorier"
+                   :change "Rediger"
+                   :comment "Kommentar"
+                   :copy-as-new "Kopier som ny"
+                   :create-catalogue-item "Ny katalogpost"
+                   :create-category "Ny kategori"
+                   :create-form "Ny blanket"
+                   :create-license "Nyt brugsvilkår"
+                   :create-organization "Ny organisation"
+                   :create-resource "Ny ressource"
+                   :create-workflow "Ny arbejdsgang"
+                   :created "Oprettet"
+                   :delete "Slet"
+                   :delete-confirmation "Ønsker du virkelig at slette?"
+                   :description "Beskrivelse"
+                   :disable "Deaktiver"
+                   :disabled-command "Deaktiveret funktion"
+                   :disabled-commands "Deaktiverede funktioner"
+                   :disabled-and-archived-explanation "Deaktivering skjuler en post fra ansøgere. Arkivering skjuler den også i administrationsgrænsefladen."
+                   :display-archived "Vis arkiverede"
+                   :display-order "Visningsrækkefølge"
+                   :edit "Rediger"
+                   :edit-catalogue-item "Rediger katalogpost"
+                   :edit-category "Rediger kategori"
+                   :edit-form "Rediger blanket"
+                   :edit-organization "Rediger organisation"
+                   :edit-workflow "Rediger arbejdsgang"
+                   :email "E-mail"
+                   :enable "Aktiver"
+                   :end "Slut"
+                   :errors {:dependencies-archived "Arkiverede afhængigheder:"
+                            :in-use-by "Aktiv i:"
+                            :dependencies-not-found "Manglende afhængigheder:"
+                            :self-as-subcategory-disallowed "Kategori kan ikke være en underkategori til sig selv"
+                            :ancestor-as-subcategory-disallowed "Kategori kan ikke være en underkategori, da det ville skabe en løkke"}
+                   :export-applications "Eksporter ansøgninger"
+                   :external-title "Navn"
+                   :form "Blanket"
+                   :forms "Blanketter"
+                   :handlers-vote nil
+                   :has-errors "Fejl"
+                   :id "Id"
+                   :internal-name "Internt navn"
+                   :license "Brugsvilkår"
+                   ;; %1 - license name
+                   :license-field "Brugsvilkår \"%1\""
+                   :licenses "Brugsvilkår"
+                   :manage-categories "Administrer kategorier"
+                   :more-info "Webadresse til mere information"
+                   :name "Navn"
+                   :no-categories "Ingen kategorier"
+                   :no-form "Ingen blanket"
+                   :no-licenses "Ingen brugsvilkår"
+                   :no-voting nil
+                   :optional "(valgfrit)"
+                   :org "Org"
+                   :organization "Organisation"
+                   :organizations "Organisationer"
+                   :owners "Ejere"
+                   :preview "Forhåndsvisning"
+                   :remove "Slet"
+                   :reports "Rapporter"
+                   :resource "Ressource"
+                   :resources "Ressourcer"
+                   ;; %1 - number
+                   :review-email-n "E-mailadresse til gennemsyn %1"
+                   :review-emails "E-mailadresser til gennemsyn"
+                   :save "Gem"
+                   :short-name "Forkortelse"
+                   :start "Begyndelse"
+                   :title "Navn"
+                   :type "Type"
+                   :unarchive "Dearkiver"
+                   :user "Bruger"
+                   :userid "Brugernavn"
+                   :user-role "Brugerrolle"
+                   :view "Vis"
+                   :voting nil
+                   :workflow "Arbejdsgang"
+                   :workflows "Arbejdsgange"
+                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]}
+  :applicant-info {:applicant "Ansøger"
+                   :applicants "Ansøgere"
+                   :email "E-mail"
+                   :email-idp "E-mail (fra identitetsudbyder)"
+                   :invited-member "Inviteret medlem"
+                   :member "Medlem"
+                   :name "Navn"
+                   :notification-email "E-mailadresse (angivet af den ansøgende)"
+                   :organization "Organisation"
+                   :researcher-status "Ansøgers forskerstatus"
+                   :username "Brugernavn"}
+  :applications {:all-applications "Alle ansøgninger"
+                 :applicant "Ansøger"
+                 :application "Ansøgning"
+                 :applications "Ansøgninger"
+                 :attachment-filename-redacted "Bilag fjernet"
+                 :continue-existing-application "Genoptag ansøgning"
+                 :copied-from "kopieret fra ansøgning"
+                 :copied-to "kopieret til ansøgning"
+                 :created "Oprettet"
+                 ;; TODO: Once the terms have stabilized, convert db and the
+                 ;;   code to match the term in UI.
+                 :description "Titel"
+                 :details "Detaljer"
+                 :duos {:validation {:missing-duo-codes "DUO-koder er angivet i ressourcer, men mangler i ansøgning:"}}
+                 :empty "Ingen ansøgninger."
+                 ;; %1 - date
+                 :entitlement-end "Udløbsdato for rettighederne: %1."
+                 ;; Format parameters for all events:
+                 ;; %1 - name of event actor
+                 :events {:applicant-changed "%1 ændrede ansøger til %2."
+                          :approved "%1 godkendte ansøgningen."
+                          :attachments-redacted "%1 redacted attachments. %2"
+                          :closed "%1 lukkede ansøgningen."
+                          :copied-from "Denne ansøgning er en kopi af en tidligere ansøgning."
+                          :copied-to "%1 kopierede ansøgningen til en ny ansøgning."
+                          :created "%1 oprettede ansøgningen %2."
+                          :decided "%1 indsendte en afgørelse for ansøgningen."
+                          ;; %2 - name & email of decider
+                          :decider-invited "%1 inviterede %2 til at afgøre."
+                          :decider-joined "%1 accepterede invitation til afgørelse."
+                          ;; %2 - name of decider
+                          :decision-requested "%1 anmodede om afgørelse fra %2."
+                          :deleted "%1 slettede kladden."
+                          :draft-saved "%1 opdaterede ansøgningen."
+                          ;; %2 - external id
+                          :external-id-assigned "%1 tilføjede eksternt id %2."
+                          :expiration-notifications-sent "%1 sendte e-mail pga. inaktiv ansøgning."
+                          :licenses-accepted "%1 accepterede brugsvilkår."
+                          :licenses-added "%1 tilføjede brugsvilkår."
+                          ;; %2 - member name
+                          :member-added "%1 tilføjede %2 til ansøgningen."
+                          :member-invited "%1 inviterede %2 til ansøgningen."
+                          :member-joined "%1 blev deltager."
+                          :member-removed "%1 fjernede %2 fra ansøgningen."
+                          :member-uninvited "%1 fjernede %2 fra ansøgningen."
+                          :rejected "%1 afviste ansøgningen."
+                          :remarked "%1 tilføjede en bemærkning."
+                          ;; %2 - comma-separated list of catalogue item anems
+                          :resources-changed "%1 ændrede ressourcerne. Nye ressourcer: %2."
+                          :returned "%1 anmodede om ændringer til ansøgningen."
+                          ;; %2 - name of reviewer
+                          :review-requested "%1 anmodede om gennemsyn fra %2."
+                          :reviewed "%1 gennemså ansøgningen."
+                          ;; %2 - name & email of reviewer
+                          :reviewer-invited "%1 inviterede %2 til at gennemse ansøgningen."
+                          :reviewer-joined "%1 accepterede invitation til gennemsyn."
+                          :revoked "%1 tilbagekaldte rettigheder."
+                          :submitted "%1 indsendte ansøgningen til gennemsyn."
+                          :unknown "Unknown"
+                          :voted nil}
+                 :export {:applicant "Ansøger"
+                          :external-id "Eksternt id"
+                          :first-submitted "Indsendt"
+                          :id "id"
+                          :resources "Ressourcer"
+                          :state "Tilstand"}
+                 :handlers "Sagsbehandler"
+                 :highlight-related-events "Vis relaterede hændelser."
+                 :id "id"
+                 :intro [:div.intro [:p "Udfyld og indsend ansøgningen. Du kan invitere andre til at deltage i ansøgningen. Alle deltagere skal acceptere brugsvilkår senest når ansøgningen godkendes."]]
+                 :last-activity "Ændret"
+                 :latest-activity "Seneste aktivitet"
+                 :my-applications "Mine ansøgninger"
+                 :redacted-attachments-replaced "Nye bilag erstattede de gamle bilag."
+                 :resource "Ressource"
+                 :state "Status"
+                 :states {:approved "Godkendt"
+                          :closed "Lukket"
+                          :draft "Kladde"
+                          :rejected "Afslået"
+                          :returned "Returneret"
+                          :revoked "Tilbagekaldt"
+                          :submitted "Indsendt"
+                          :unknown "Ukendt"}
+                 :submitted "Sendt"
+                 :todo "Handling påkræves"
+                 :todos {:new-application "Ny ansøgning"
+                         :no-pending-requests "Alle anmodninger er håndteret"
+                         :resubmitted-application "Ansøgning genindsendt"
+                         :unknown "Ukendt"
+                         :waiting-for-decision "Afventer beslutning"
+                         :waiting-for-review "Afventer gennemsyn"
+                         :waiting-for-your-decision "Afventer din beslutning"
+                         :waiting-for-your-review "Afventer dit gennemsyn"}
+                 :view "Vis"
+                 ;; %1 - application id
+                 ;; %2 - application description
+                 :view-application-with-description "Vis ansøgning %1: %2"
+                 ;; %1 - application id
+                 ;; %2 - comma-separated list of catalogue item names
+                 :view-application-without-description "Vis ansøgning %1 for ressourcer: %2"
+                 :votes nil
+                 :voting {:previously-voted nil
+                          :votes {:accept nil
+                                  :empty nil
+                                  :reject nil}}}
+  :cart {:add "Læg i kurven"
+         :apply "Ansøg"
+         ;; %1 - number of resources
+         :apply-for-bundle "Ansøg om %1 ressourcer "
+         :header "%1 ressourcer i kurven"
+         :intro [:div.intro [:p "Anmod om adgangsrettigheder ved at tilføje ressourcer til kurven. Ressourcer der benytter samme ansøgning er lagt sammen i kurven."]]
+         :remove "Fjern fra kurv"}
+  :catalogue {:catalogue "Katalog"
+              :header "Katalog"
+              :intro ""
+              :more-info "Læs mere"
+              :continue-existing-application "Genoptag ansøgning"
+              :continue-existing-application-intro ""
+              :apply-resources "Ansøg om ressourcer"}
+  :collapse {:hide "Skjul"
+             :show "Vis"
+             :show-less "Vis mindre"
+             :show-more "Vis mere"}
+  :change-form {:change-form-intro "Du er ved at ændre blanketten for nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket."
+                :form-selection "Blanket"}
+  :commands {:accept-invitation "Accepter invitation"
+             :accept-licenses "Accepter brugsvilkår"
+             :add-licenses "Tilføj brugsvilkår"
+             :add-member "Tilføj deltager"
+             :approve "Godkend"
+             :assign-external-id "Tildel ekstern id"
+             :change-applicant "Gør til ansøger"
+             :change-resources "Rediger ressourcer"
+             :close "Luk ansøgning"
+             :copy-as-new "Kopier som ny ansøgning"
+             ;; :create
+             :decide "Afgør"
+             :delete "Slet kladde"
+             :invite-decider "Inviter beslutningstager"
+             :invite-member "Inviter deltager"
+             :invite-reviewer "Inviter reviewer"
+             :redact-attachments "Rediger bilag"
+             :reject "Afslå"
+             :remark "Opret bemærkning"
+             :remove-member "Fjern deltager"
+             :request-decision "Anmod om afgørelse"
+             :request-review "Anmod om gennemsyn"
+             :return "Send tilbage til ansøger"
+             :review "Gennemse"
+             :revoke "Tilbagekald rettigheder"
+             :save-draft "Gem som kladde"
+             ;; :send-expiration-notifications
+             :submit "Indsend ansøgning"
+             :uninvite-member "Fjern deltagerinvitation"
+             :vote nil}
+  :create-form {:add-column "Tilføj kolonne"
+                :add-form-field "Tilføj felt"
+                :add-option "Tilføj valgmulighed"
+                :additional-settings "Flere indstillinger"
+                :collapse-aria-label "Info om "
+                ;; %1 - column number
+                :column-n "Kolonne %1"
+                :column-key "Id"
+                :column-label "Label"
+                :confirm-remove-field "Slet feltet?"
+                :field-id "Felt id"
+                ;; %1 - field number
+                ;; %2 - field title
+                :field-n "Felt %1: %2"
+                :field-title "Felttitel"
+                :field-type "Felttype"
+                :info-text "Feltbeskrivelse (valgfri)"
+                :maxlength "Maksimalt antal tegn (valgfri)"
+                :option-key "Id"
+                :option-label "Titel"
+                ;; %1 - option number
+                :option-n "Alternativ %1"
+                :optional "Valgfrit felt"
+                :placeholder "Eksempel (valgfrit)"
+                :privacy {:private "Privat"
+                          :public "Offentlig"}
+                :required-table "Kræv mindst en række"
+                :type-attachment "Bilag"
+                :type-date "Datofelt"
+                :type-description "Ansøgningstitel"
+                :type-email "Email-adresse"
+                :type-header "Titel"
+                :type-ip-address "IP-adresse"
+                :type-label "Informationsfelt"
+                :type-multiselect "Menu med flere valg"
+                :type-option "Rullegardinsmenu"
+                :type-phone-number "Telefonnummer"
+                :type-privacy "Offentlig/privat"
+                :type-table "Tabel"
+                :type-text "Tekstrude"
+                :type-texta "Tekstfelt"
+                :type-visibility "Synlighed"
+                :visibility {:always "Vises altid"
+                             :field "Felt"
+                             :has-value "Har en af værdierne"
+                             :hidden "Skjult"
+                             :only-if "Vises hvis"}}
+  :create-license {:external-link "Eksternt link"
+                   :inline-text "Tekst"
+                   :license-attachment "Bilag"
+                   :license-text "Tekst i vilkår"
+                   :license-type "Vilkårstype"
+                   :link-to-license "Link til vilkår"
+                   :title "Titel"}
+  :create-resource {:licenses-selection "Vilkår"
+                    :resid "Ressource id"
+                    :resid-placeholder "urn:test:fi:some-uuid"}
+  :create-workflow {:create-new-rule "Ny regel"
+                    :decider-workflow "Arbejdsgang for beslutningstager"
+                    :decider-workflow-description "Behandler kan ikke godkende eller afslå ansøgningen, kun beslutningstagere kan gøre dette."
+                    :default-workflow "Standard arbejdsgang"
+                    :default-workflow-description "Behandler er i fuld kontrol over ansøgningsprocessen, og kan bede om gennemsyn og afgørelser fra andre efter behov."
+                    :disable-commands "Deaktiver funktioner"
+                    :handlers "Behandlere"
+                    :master-workflow "Master-workflow"
+                    :master-workflow-description "KUN TIL TEST. Foreningsmængde af alle arbejdsgange."
+                    :rule "Regel"
+                    :title "Arbejdsgangens navn"
+                    :voting-explanation nil}
+  :dropdown {:no-results "Ingen resultater"
+             :placeholder "Vælg..."
+             :loading "Indlæser..."
+             :placeholder-any-selection "Hvilken som helst"}
+  :duo {:fields {:more-info "Mere information til ansøger (valgfrit)"}
+        :no-duo-codes "Ingen DUO-koder"
+        :restriction {:collaboration "Forskningsgruppeledere"
+                      :date "Publikationsmoratorium indtil (dato)"
+                      :institute "Godkendt institution"
+                      :location "Geografisk region"
+                      :mondo "Sygdom (Mondo)"
+                      :months "Gyldig i (måneder)"
+                      :project "Godkendt projekt"
+                      :topic "Forskningstype"
+                      :users "Godkendte brugere"}
+        :title "Data Use Ontology"
+        :validation {:mondo-not-valid "Angivne Mondo-koder er ikke kompatible:"
+                     :needs-validation "Data Use Ontology restriction needs to be reviewed manually:"}}
+  ;; Format parameters for all emails (unless otherwise noted):
+  ;; %1 - name of recipient
+  ;; %2 - name of event actor
+  ;; %3 - id of application (+ description of application if available)
+  ;; %4 - name of applicant
+  ;; %5 - catalogue items of application, comma separated list
+  ;; %6 - link to application
+  :email {:applicant-changed {:subject-to-member "Ansøger til ansøgning %3 blev ændret"
+                              :message-to-member "Kære %1,\n\nAnsøgeren til ansøgningen %3 blev ændret til %4 af %2.\n\nDu kan se ansøgningen på %6."
+                              :subject-to-handler "(%3) Ansøger ændret"
+                              :message-to-handler "Kære %1,\n\nAnsøgeren til ansøgningen %3 blev ændret til %4 af %2.\n\nDu kan se ansøgningen på %6."}
+          :application-approved {:subject-to-applicant "Din ansøgning %3 blev godkendt"
+                                 :message-to-applicant "Kære %1,\n\nDin ansøgning %3 blev godkendt.\n\nDu kan se ansøgningen og afgørelsen på %6"
+                                 :subject-to-handler "(%3) Ansøgningen blev godkendt"
+                                 :message-to-handler "Kære %1,\n\n%2 har godkendt ansøgningen %3 fra %4.\n\nDu kan se ansøgningen og afgørelsen på %6"}
+          :application-rejected {:subject-to-applicant "Din ansøgning %3 blev afslået"
+                                 :message-to-applicant "Kære %1,\n\nDin ansøgning %3 blev afslået.\n\nDu kan se ansøgningen og afgørelsen på %6"
+                                 :subject-to-handler "(%3) Ansøgningen blev afslået"
+                                 :message-to-handler "Kære %1,\n\n%2 afslog ansøgningen %3 fra %4.\n\nDu kan se ansøgningen og afgørelsen på %6"}
+          :application-closed {:subject-to-applicant "Din ansøgning %3 blev lukket"
+                               :message-to-applicant "Kære %1,\n\nDin ansøgning %3 blev lukket.\n\nDu kan stadig se ansøgningen på %6"
+                               :subject-to-handler "(%3) Ansøgning blev lukket"
+                               :message-to-handler "Kære %1,\n\n%2 lukkede ansøgningen %3 fra %4.\n\nDu kan se ansøgningen på %6"}
+          ;; %1 - name of recipient
+          ;; %2 - id of application (+ description of application if available)
+          ;; %3 - date of last activity in application
+          ;; %4 - date of application expiration (after which draft application will be removed)
+          ;; %5 - link to application
+          :application-expiration-notification {:subject-to-member "Din uindsendte ansøgning %2 vil blive slettet snart"
+                                                :message-to-member "Kære %1,\n\nDin uindsendte ansøgning har været inaktiv siden %3 og den vil blive slettet efter %4, hvis den ikke ændres.\n\ndu kan se og redigere ansøgningen på %5"}
+          :application-returned {:subject-to-applicant "Din ansøgning %3 mangler ændringer"
+                                 :message-to-applicant "Kære %1,\n\nDin ansøgning %3 er sendt tilbage pga. mangler. Rediger den venligst i henhold til anmodninger og genindsend.\n\nDu kan se og redigere ansøgningen på %6"
+                                 :subject-to-handler "(%3) Ansøgningen er sendt tilbage til ansøger."
+                                 :message-to-handler "Kære %1,\n\n%2 har sendt ansøgningen %3 tilbage til ansøger %4 for ændringer.\n\nDu kan se ansøgningen på %6"}
+          :application-revoked {:subject-to-applicant "Rettigheder relateret til din ansøgning %3 blev tilbagekaldt"
+                                :message-to-applicant "Kære %1,\n\nRettigheder relateret til din ansøgning %3 blev tilbagekaldt.\n\nDu kan se ansøgningen på %6"
+                                :subject-to-handler "(%3) Rettigheder blev tilbagekaldt"
+                                :message-to-handler "Kære %1,\n\n%2 har tilbagekaldt rettigheder relateret til ansøgning %3 fra %4.\n\nDu kan se ansøgningen på %6"}
+          :application-licenses-added {:subject "Din ansøgnings %3 brugsvilkår er ændret"
+                                       :message "Kære %1,\n\n%2 har anmodet om din godkendelse af ændrede brugsvilkår for ansøgning %3.\n\nDu kan se ansøgningen og godkende de ændrede brugsvilkår på %6"}
+          :application-resubmitted {:subject-to-handler "(%3) Ansøgning blev genindsendt"
+                                    :message-to-handler "Kære %1,\n\nAnsøgning %3 er blevet genindsendt af %4.\n\nDu kan se ansøgningen på %6"}
+          :application-submitted {:subject-to-applicant "Din ansøgning %3 blev indsendt"
+                                  :message-to-applicant "Kære %1,\n\nDin ansøgning %3 blev genindsendt. Du vil få besked via e-mail når ansøgningen er blevet behandlet.\n\nDu kan se ansøgningen på %6"
+                                  :subject-to-handler "(%3) En ny ansøgning blev indsendt"
+                                  :message-to-handler "Kære %1,\n\n%4 indsendte en ny ansøgning %3 for at tilgå ressourcerne %5.\n\nDu kan se ansøgningen på %6"}
+          :decided {:subject "(%3) Notifikation om afgørelse på ansøgning"
+                    :message "Kære %1,\n\n%2 har afgivet en afgørelse på ansøgning %3, indsendt af %4.\n\nDu kan se ansøgningen på %6"}
+          ;; generic text shared by decider-invited and reviewer-invited at the moment
+          ;; %1 - name of invited person, as entered in application
+          ;; %2 - applicant name
+          ;; %3 - application id (+ description if available)
+          ;; %4 - invitation link
+          :decider-invited {:subject "Invitation til at deltage i behandling af ansøgning %3"
+                            :message "Kære %1,\n\nDu er inviteret til at deltage i behandling af ansøgning %3, af %2.\n\nDu kan se ansøgningen på %4"}
+          :decision-requested {:subject "(%3) Anmodning om afgørelse"
+                               :message "Kære %1,\n\n%2 har anmodet om din afgørelse på ansøgning %3, indsendt af %4.\n\nDu kan se ansøgningen på %6"}
+          :footer "\n\nSvar venligst ikke tilbage på denne automatisk genererede besked."
+          :handler-reminder {:application "%1, indsendt af %2"
+                             :message "Kære %1,\n\nFølgende ansøgninger er i gang og kan kræve handling af dig:\n\n%2\n\nDu kan se ansøgningerne på %3"
+                             :subject "Ansøgninger i gang"}
+          :member-added {:subject "Tilføjet som deltager i ansøgning %3"
+                         :message "Kære %1,\n\nDu er blevet tilføjet som deltager i ansøgning %3, indsendt af %4.\n\nDu kan se ansøgningen og acceptere brugsvilkår på %6"}
+          ;; %1 - name of member, as entered in application
+          ;; %2 - applicant name
+          ;; %3 - application id (+ description if available)
+          ;; %4 - invitation link
+          :member-invited {:subject "Invitation til deltagelse i ansøgning %3"
+                           :message "Kære %1,\n\nDu er blevet inviteret til at deltage i ansøgningen %3, af %2.\n\nDu kan se ansøgningen og acceptere brugsvilkår på %4"}
+          :regards "\n\nMed venlig hilsen,\n\nREMS\n"
+          :remarked {:subject "(%3) Ansøgningen blev kommenteret"
+                     :message "Kære %1,\n\n%2 har kommenteret på ansøgning %3, indsendt af %4.\n\nDu kan se ansøgningen og kommentaren på %6"}
+          :review-requested {:subject "(%3) Anmodning om gennemsyn"
+                             :message "Kære %1,\n\n%2 har anmodet om dit gennemsyn af ansøgning %3, indsendt af %4.\n\nDu kan gennemse ansøgningen på %6"}
+          :reviewed {:subject "(%3) Ansøgningen blev gennemset"
+                     :message "Kære %1,\n\n%2 har gennemset ansøgningen %3, indsendt af %4.\n\nDu kan gennemse ansøgningen på %6"}
+          :reviewer-invited {:subject "Invitation til deltagelse i behandling af ansøgning %3"
+                             :message "Kære %1,\n\nDu er blevet inviteret til at deltage i behandling af ansøgning %3, af %2.\n\nDu kan se ansøgningen på %4"}
+          :reviewer-reminder {:application "%1, indsendt af %2"
+                              :message "Kære %1,\n\nFølgende ansøgninger afventer gennemsyn af dig:\n\n%2\n\nDu kan se ansøgningerne på %3"
+                              :subject "Ansøgninger der afventer gennemsyn"}
+          :workflow-handler-invitation {:message "Kære %1,\n\n%2 har inviteret dig til at blive behandler på ansøgninger i arbejdsgang %3.\n\nDu kan se arbejdsgangen på %4"
+                                        :subject "Invitation til behandling af ansøgninger"}}
+  :footer "CSC – IT Center for Science"
+  :form {:accepted-licenses "Brugsvilkår blev accepteret"
+         :actions "Funktioner"
+         :add-comment "Tilføj kommentar (synlig eller skjult for ansøger)"
+         :add-comments-not-shown-to-applicant "Tilføj kommentar (vises ikke for ansøger)"
+         :add-comments-shown-to-applicant "Tilføj kommentar (vises for ansøger)"
+         :add-remark "Tilføj anmærkning (synlig eller skjult for ansøger)"
+         :add-row "Tilføj række"
+         :alert-blacklisted-users "Disse deltagere i ansøgningen er blokerede fra nogle af de anvendte ressourcer:"
+         :alert-disabled-resources "Ansøgningen indeholder contains ressourcer der ikke længere er tilgængelige:"
+         :application "Ansøgning"
+         :attachment-remove "Fjern"
+         :attachments "Bilag"
+         :attachments-as-zip "Bilag (zip)"
+         :autosave "Automatisk gemning"
+         :autosave-confirmed "Ansøgningen er gemt."
+         :autosave-in-progress "Gemmer"
+         :checkbox-checked "Ja"
+         :checkbox-unchecked "Nej"
+         :comment "Kommentar"
+         :comment-public "Vis kommentar til ansøger"
+         :copy-as-new "Kopier som en ny ansøgning"
+         :current-value "Nuværende"
+         :diff-hide "Skjul ændringer"
+         :diff-show "Vis ændringer"
+         :events "Hændelser"
+         :failed "Mislykkedes"
+         :has-accepted-licenses "Brugsvilkår accepteret."
+         :invalid-attachment "Bilags filtype er ikke tilladt."
+         :too-large-attachment "Bilaget er for stort."
+         :attachment-max-size "Maksimal størrelse på bilag: %1."
+         :last-save "Sidst gemt %1."
+         :licenses "Brugsvilkår"
+         ;; %1 - number
+         :maxlength "(maks. %1 tegn)"
+         :must-accept-licenses "Alle ansøgere skal acceptere brugsviklår for at anvende ressourcerne."
+         :no-rows "Ingen rækker"
+         :optional "(valgfrit)"
+         :please-wait "Vent venligst"
+         :previous-applications "Ansøgers tidligere ansøgninger"
+         :previous-value "Forrige"
+         :required ""
+         :resources "Ressourcer"
+         :save "Gem som kladde"
+         :submit "Indsend ansøgningen"
+         :success "Gennemført"
+         :upload "Upload et bilag"
+         :upload-extensions "Tilladte filtyper: %1."
+         :upload-replacement-attachment "Upload erstattende bilag"
+         ;; %1 - field name
+         :validation {:column-values-missing "Alle kolonner skal udfyldes i tabel \"%1\"."
+                      :columns-required "Mindst en kolonne er påkrævet."
+                      :invalid-email "Ugyldig e-mailadresse."
+                      :invalid-phone-number "Ugyldigt telefonnummer."
+                      :invalid-ip-address "Ugyldig IP-adresse."
+                      :invalid-ip-address-private "Dette er en privat IP-adresse og kan ikke bruges i en ansøgning."
+                      :invalid-user "Ugyldig bruger."
+                      :invalid-value "Ugyldig værdi."
+                      :options-required "Mindst en værdi er påkrævet."
+                      :required "Feltet \"%1\" er obligatorisk."
+                      :toolong "Teksten i feltet \"%1\" er for lang."
+                      :unsupported "Feltet \"%1\" er ikke understøttet."}}
+  :header {:title "REMS"}
+  :item-lists {:move-down "Flyt ned"
+               :move-up "Flyt op"
+               :remove "Fjern"}
+  :label {:dash "%1 – %2"
+          :default "%1: %2"
+          :long "%1: %2 – %3"
+          :optional "%1 (valgfrit)"
+          :parens "%1 (%2)"}
+  :link {:download-file "Download fil"
+         :opens-in-new-window "Åbner i nyt vindue"}
+  :login {:alternative "Andre muligheder for log-ind"
+          :alternative-text ""
+          :errors {:invalid-user "Log-ind mislykkedes på grund af manglende information (%1). Kontroller venligst din  identifikationstjeneste."
+                   :email "E-mail"
+                   :name "Navn"
+                   :unknown "Log-ind mislykkedes. Kontroller venligst din  identifikationstjeneste."}
+          :fake-text ""
+          :fake-title ""
+          :intro [:div [:h1 "Velkommen til REMS"] [:p "Dette er en demo-version hvor du kan teste REMS. Demo-versionen udstiller nogle fiktive datasæt som du kan ansøge om adgang til. Læs mere påon " [:a {:href "/extra-pages/about"} "info-siden"] " page."]]
+          :intro2 ""
+          :login "Log ind"
+          :oidc-text ""
+          :oidc-title ""
+          :text [:p "Log ind for at tilgå REMS."]
+          :title ""}
+  :missing "Manglende oversættelse %1"
+  :navigation {:actions "Funktioner"
+               :administration "Administration"
+               :applications "Ansøgninger"
+               :catalogue "Katalog"
+               ;; %1 - name of language
+               :change-language "Skift sprog til %1"
+               :home "Hjem"
+               :logout "Log ud"
+               :navigation "Navigation"
+               :navigation-small "Navigation menu"
+               :profile "Profile"
+               :skip-navigation "Gå til sideindhold"}
+  :not-found-page {:not-found "Siden kunne ikke findes"
+                   :page-was-not-found "Denne side kunne ikke findes."}
+  :pdf {:generated "Denne PDF blev genereret"}
+  :phases {:apply "Indsend"
+           :approve "Godkend"
+           :approved "Godkendt"
+           :phase-active "Status aktiv:"
+           :phase-closed "Status lukket:"
+           :phase-completed "Status færdig:"
+           :phase-pending "Næste skridt:"
+           :phase-rejected "Status afvist:"
+           :phase-revoked "Status tilbagekaldt:"
+           :rejected "Afslået"
+           :revoked "Tilbagekaldt"}
+  :profile {:delete-api-key "Slet API-nøgle"
+            :ega-api-key-expiration-date "API-nøgles udløbsdato"
+            :ega-api-key-expired [:p "Du har en udløbet EGA API-nøgle. Generer venligst en ny."]
+            :ega-api-key-none [:p "Du har ikke en gyldig EGA API-nøgle endnu."]
+            :ega-api-key-valid [:p "Du har en gyldig EGA API-nøgle."]
+            :ega-full "The European Genome-phenome Archive"
+            :ega-intro [:p "Rettigheder til ansøgninger du godkender kan overføres til EGA-servere. Dette kræver at du har en gyldig API-nøgle. For at generere en, skal du først koble din ELIXIR brugerkonto til EGA-kontoen."]
+            :generate-api-key "Generer API-nøgle"
+            :idp-email "E-mailadresse fra identifikationstjeneste"
+            :no-email "(ingen e-mailadresse)"
+            :notification-email "Anvend en anden e-mailadresse til notifikationer"
+            :save "Gem"
+            :settings "Indstillinger"
+            :warning-about-missing-email [:<> "Du er nødt til at " [:a {:href "/profile"} "tilføje en e-mailadresse til dine indstillinger"] ", så du kan modtage notifikationer om dine ansøgninger."]
+            :your-details "Dine brugerdetaljer"}
+  :roles {:applicant "Ansøger"
+          :decider "Beslutningstager"
+          :handler "Behandler"
+          :member "Deltager"
+          :past-decider "Tidligere beslutningstager"
+          :past-reviewer "Tidligere reviewer"
+          :reviewer "Reviewer"
+          :technical-role "Teknisk rolle"}
+  :search {:clear-search "Ryd søgning"
+           :example-searches "Eksempler på søgninger"
+           :learn-more "læs mere"
+           :search "Søg"}
+  :table {:ascending-order "Stigende rækkefølge"
+          :descending-order "Faldende rækkefølge"
+          :all-rows-selected "Alle rækker er valgte"
+          :no-rows-selected "Ingen rækker er valgte"
+          :some-rows-selected "Nogle rækker er valgte"
+          ;; %1 - number
+          :show-all-n-rows "Vis alle %1 rækker"}
+  :unauthorized-page {:unauthorized "Ingen adgang"
+                      :you-are-unauthorized "Du er ikke autoriseret til at tilgå denne side."}
+  :unknown "Ukendt"
+  :forbidden-page {:forbidden "Forbudt"
+                   :you-are-forbidden "Adgang til indholdet ikke tlladt."}
+  :error-page {:title "Problem"}
+  :meta {:description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
+         :keywords "REMS, entitlement, access management, tool, access rights, resources, datasets"}}}

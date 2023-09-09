@@ -264,6 +264,12 @@
   [application _event]
   application)
 
+(defmethod application-base-view :application.event/voted
+  [application event]
+  (assoc-in application
+            [:application/votes (:event/actor event)]
+            (:vote/value event)))
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -310,6 +316,7 @@
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
+    {:permission :application.command/vote}
     {:role :handler :permission :application.command/approve}
     {:role :handler :permission :application.command/reject}
     {:role :expirer :permission :application.command/delete}
@@ -342,6 +349,7 @@
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
+    {:permission :application.command/vote}
     {:role :decider :permission :application.command/approve}
     {:role :decider :permission :application.command/reject}
     {:role :expirer :permission :application.command/delete}
@@ -682,7 +690,7 @@
     (or (empty? states)
         (contains? (set states) (:application/state application)))))
 
-(defn enrich-disable-commands [application get-config get-workflow]
+(defn enrich-workflow-disable-commands [application get-config get-workflow]
   (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))]
     (permissions/blacklist application
                            (permissions/compile-rules
@@ -693,6 +701,17 @@
                                           role (get-permission-roles command)]
                                       {:permission (:command command)
                                        :role role}))))))
+
+(defn enrich-workflow-voting [application get-config get-workflow]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        workflow (get-workflow workflow-id)
+        config (get-config)
+        voting (get-in workflow [:workflow :voting])]
+
+    (if (and (:enable-voting config) voting (:type voting))
+      (assoc-in application [:application/workflow :workflow/voting] voting)
+
+      (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/vote}])))))
 
 (defn- get-attachment-redact-roles [attachment application]
   (when (:attachment/event attachment)
@@ -744,7 +763,8 @@
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config get-workflow)
+      (enrich-workflow-disable-commands get-config get-workflow)
+      (enrich-workflow-voting get-config get-workflow)
       (enrich-attachments get-user)))
 
 (defn build-application-view [events injections]
@@ -760,7 +780,8 @@
                                   :application.event/decided
                                   :application.event/decider-invited
                                   :application.event/decider-joined
-                                  :application.event/decision-requested})
+                                  :application.event/decision-requested
+                                  :application.event/voted})
 (deftest test-sensitive-events
   (let [public-events #{:application.event/attachments-redacted
                         :application.event/applicant-changed
@@ -828,6 +849,8 @@
       (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)
+      (update :application/workflow dissoc :workflow/voting)
+      (dissoc :application/votes)
       hide-extra-user-attributes))
 
 (defn- hide-invitation-tokens [application]

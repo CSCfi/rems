@@ -1,11 +1,13 @@
 (ns rems.email.test-template
   (:require [clojure.test :refer :all]
+            [clj-time.core :as time]
             [mount.core :as mount]
             [rems.application.model :as model]
             [rems.config]
             [rems.db.user-settings :as user-settings]
             [rems.email.template :as template]
-            [rems.locales]))
+            [rems.locales]
+            [rems.testing-util :refer [with-fixed-time]]))
 
 (defn empty-footer [f]
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
@@ -525,3 +527,33 @@
               :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
              (email-to "applicant" mails))))))
 
+(deftest test-expiration-notifications-sent-email
+  (with-redefs [rems.config/env (assoc rems.config/env :application-expiration {:application.state/draft {:delete-after "P90D"
+                                                                                                          :reminder-before "P7D"}})]
+    (let [add-member {:application/id 7
+                      :event/type :application.event/member-added
+                      :event/actor "handler"
+                      :application/member {:userid "member"}}
+          member-events (conj created-events add-member)
+          notifications-sent (with-fixed-time (time/date-time 2023 6 19)
+                               #(do {:application/id 7
+                                     :event/type :application.event/expiration-notifications-sent
+                                     :expires-on (time/plus (time/now) (time/days 7))
+                                     :last-activity (time/minus (time/now) (time/days 83))}))]
+      (is (= [{:to-user "applicant"
+               :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
+               :body "Dear Alice Applicant,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}
+              {:to-user "member"
+               :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
+               :body "Dear member,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}]
+             (emails member-events notifications-sent)))
+      (with-redefs [rems.locales/translations (assoc-in rems.locales/translations
+                                                        [:fi :t :email :application-expiration-notification :message-to-member]
+                                                        "Lähettämätön hakemuksesi %5 poistetaan automaattisesti %4 jälkeen, jos sitä ei muokata.")]
+        (is (= [{:to-user "applicant"
+                 :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
+                 :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}
+                {:to-user "member"
+                 :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
+                 :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}]
+               (emails :fi member-events notifications-sent)))))))

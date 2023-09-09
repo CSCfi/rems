@@ -41,7 +41,8 @@
                     :enable-autosave
                     :show-resources-section
                     :show-attachment-zip-action
-                    :show-pdf-action])
+                    :show-pdf-action
+                    :enable-voting])
       (update :extra-pages filter-extra-pages)))
 
 (defn get-config-full []
