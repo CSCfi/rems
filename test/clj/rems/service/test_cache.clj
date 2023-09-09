@@ -89,7 +89,6 @@
                                                                   :fi {:title "Fi title new"}
                                                                   :sv {:title "Sv title new"}}}))
         app8 (cache/get-full-internal-application app-id)
-        _ (is (not= app7 app8) "cache should update if a catalogue item is changed")
-        ]))
+        _ (is (not= app7 app8) "cache should update if a catalogue item is changed")]))
 
 ;; TODO CACHE test projections are updated
