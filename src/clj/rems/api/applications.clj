@@ -150,8 +150,8 @@
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (application/get-full-personalized-applications-with-user (getx-user-id))
-               (mapv project-application-overview)
-               (filter-with-search query))))
+               (filter-with-search query)
+               (mapv project-application-overview))))
 
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
@@ -159,8 +159,8 @@
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-todos (getx-user-id))
-               (mapv project-application-overview)
-               (filter-with-search query))))
+               (filter-with-search query)
+               (mapv project-application-overview))))
 
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
@@ -168,8 +168,8 @@
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-handled-todos (getx-user-id))
-               (mapv project-application-overview)
-               (filter-with-search query))))
+               (filter-with-search query)
+               (mapv project-application-overview))))
 
     (POST "/create" []
       :summary "Create a new application"
