@@ -323,13 +323,13 @@
       :produces ["application/pdf"]
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
-          #(-> app
-               (pdf/application-to-pdf-bytes)
-               (ByteArrayInputStream.)
-               (ok)
+          (-> app
+              (pdf/application-to-pdf-bytes)
+              (ByteArrayInputStream.)
+              (ok)
                ;; could also set "attachment" here to force download:
-               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
-               (content-type "application/pdf")))
+              (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+              (content-type "application/pdf")))
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []

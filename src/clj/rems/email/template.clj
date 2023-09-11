@@ -51,26 +51,25 @@
   (vec
    (for [recipient recipients
          :let [email (with-language (:language (user-settings/get-user-settings (:userid recipient)))
-                       (fn []
-                         (when (and body-text (not (str/blank? (text-no-fallback body-text))))
-                           {:to-user (:userid recipient)
-                            :subject (text-format subject-text
-                                                  (application-util/get-member-name recipient)
-                                                  (application-util/get-member-name (:event/actor-attributes event))
-                                                  (format-application-for-email application)
-                                                  (application-util/get-applicant-name application)
-                                                  (resources-for-email application)
-                                                  (link-to-application (:application/id event)))
-                            :body (str
-                                   (text-format body-text
+                       (when (and body-text (not (str/blank? (text-no-fallback body-text))))
+                         {:to-user (:userid recipient)
+                          :subject (text-format subject-text
                                                 (application-util/get-member-name recipient)
                                                 (application-util/get-member-name (:event/actor-attributes event))
                                                 (format-application-for-email application)
                                                 (application-util/get-applicant-name application)
                                                 (resources-for-email application)
                                                 (link-to-application (:application/id event)))
-                                   (text :t.email/regards)
-                                   (text :t.email/footer))})))]
+                          :body (str
+                                 (text-format body-text
+                                              (application-util/get-member-name recipient)
+                                              (application-util/get-member-name (:event/actor-attributes event))
+                                              (format-application-for-email application)
+                                              (application-util/get-applicant-name application)
+                                              (resources-for-email application)
+                                              (link-to-application (:application/id event)))
+                                 (text :t.email/regards)
+                                 (text :t.email/footer))}))]
          :when email]
      email)))
 
@@ -188,57 +187,54 @@
 
 (defmethod event-to-emails :application.event/member-invited [event application]
   (with-language (:default-language env)
-    (fn []
-      [{:to (:email (:application/member event))
-        :subject (text-format :t.email.member-invited/subject
-                              (:name (:application/member event))
-                              (application-util/get-applicant-name application)
-                              (format-application-for-email application)
-                              (invitation-link (:invitation/token event)))
-        :body (str
-               (text-format :t.email.member-invited/message
+    [{:to (:email (:application/member event))
+      :subject (text-format :t.email.member-invited/subject
                             (:name (:application/member event))
                             (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
-               (text :t.email/regards)
-               (text :t.email/footer))}])))
+      :body (str
+             (text-format :t.email.member-invited/message
+                          (:name (:application/member event))
+                          (application-util/get-applicant-name application)
+                          (format-application-for-email application)
+                          (invitation-link (:invitation/token event)))
+             (text :t.email/regards)
+             (text :t.email/footer))}]))
 
 (defmethod event-to-emails :application.event/reviewer-invited [event application]
   (with-language (:default-language env)
-    (fn []
-      [{:to (:email (:application/reviewer event))
-        :subject (text-format :t.email.reviewer-invited/subject
-                              (:name (:application/reviewer event))
-                              (application-util/get-applicant-name application)
-                              (format-application-for-email application)
-                              (invitation-link (:invitation/token event)))
-        :body (str
-               (text-format :t.email.reviewer-invited/message
+    [{:to (:email (:application/reviewer event))
+      :subject (text-format :t.email.reviewer-invited/subject
                             (:name (:application/reviewer event))
                             (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
-               (text :t.email/regards)
-               (text :t.email/footer))}])))
+      :body (str
+             (text-format :t.email.reviewer-invited/message
+                          (:name (:application/reviewer event))
+                          (application-util/get-applicant-name application)
+                          (format-application-for-email application)
+                          (invitation-link (:invitation/token event)))
+             (text :t.email/regards)
+             (text :t.email/footer))}]))
 
 (defmethod event-to-emails :application.event/decider-invited [event application]
   (with-language (:default-language env)
-    (fn []
-      [{:to (:email (:application/decider event))
-        :subject (text-format :t.email.decider-invited/subject
-                              (:name (:application/decider event))
-                              (application-util/get-applicant-name application)
-                              (format-application-for-email application)
-                              (invitation-link (:invitation/token event)))
-        :body (str
-               (text-format :t.email.decider-invited/message
+    [{:to (:email (:application/decider event))
+      :subject (text-format :t.email.decider-invited/subject
                             (:name (:application/decider event))
                             (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
-               (text :t.email/regards)
-               (text :t.email/footer))}])))
+      :body (str
+             (text-format :t.email.decider-invited/message
+                          (:name (:application/decider event))
+                          (application-util/get-applicant-name application)
+                          (format-application-for-email application)
+                          (invitation-link (:invitation/token event)))
+             (text :t.email/regards)
+             (text :t.email/footer))}]))
 
 (defmethod event-to-emails :application.event/applicant-changed [event application]
   (concat (emails-to-recipients (application-util/applicant-and-members application)
@@ -254,76 +250,72 @@
   (vec
    (for [recipient (application-util/applicant-and-members application)]
      (with-language (:language (user-settings/get-user-settings (:userid recipient)))
-       (fn []
-         {:to-user (:userid recipient)
-          :subject (text-format :t.email.application-expiration-notification/subject-to-member
-                                (application-util/get-member-name recipient)
-                                (format-application-for-email application)
-                                (localize-utc-date (:last-activity event))
-                                (localize-utc-date (:expires-on event))
-                                (link-to-application (:application/id application)))
-          :body (str
-                 (text-format :t.email.application-expiration-notification/message-to-member
+       {:to-user (:userid recipient)
+        :subject (text-format :t.email.application-expiration-notification/subject-to-member
                               (application-util/get-member-name recipient)
                               (format-application-for-email application)
                               (localize-utc-date (:last-activity event))
                               (localize-utc-date (:expires-on event))
                               (link-to-application (:application/id application)))
-                 (text :t.email/regards)
-                 (text :t.email/footer))})))))
+        :body (str
+               (text-format :t.email.application-expiration-notification/message-to-member
+                            (application-util/get-member-name recipient)
+                            (format-application-for-email application)
+                            (localize-utc-date (:last-activity event))
+                            (localize-utc-date (:expires-on event))
+                            (link-to-application (:application/id application)))
+               (text :t.email/regards)
+               (text :t.email/footer))}))))
 
 ;; TODO member-joined?
 
 (defn handler-reminder-email [lang handler applications]
   (with-language lang
-    (fn []
-      (when (not (empty? applications))
-        (let [list (->> applications
-                        (map (fn [application]
-                               (text-format :t.email.handler-reminder/application
-                                            (format-application-for-email application)
-                                            (application-util/get-member-name (:application/applicant application)))))
-                        (str/join "\n"))]
-          {:to-user (:userid handler)
-           :subject (text :t.email.handler-reminder/subject)
-           :body (text-format :t.email.handler-reminder/message
-                              (application-util/get-member-name handler)
-                              list
-                              (str (:public-url env) "actions"))})))))
+    (when (not (empty? applications))
+      (let [list (->> applications
+                      (map (fn [application]
+                             (text-format :t.email.handler-reminder/application
+                                          (format-application-for-email application)
+                                          (application-util/get-member-name (:application/applicant application)))))
+                      (str/join "\n"))]
+        {:to-user (:userid handler)
+         :subject (text :t.email.handler-reminder/subject)
+         :body (text-format :t.email.handler-reminder/message
+                            (application-util/get-member-name handler)
+                            list
+                            (str (:public-url env) "actions"))}))))
 
 (defn reviewer-reminder-email [lang reviewer applications]
   (with-language lang
-    (fn []
-      (when (not (empty? applications))
-        (let [list (->> applications
-                        (map (fn [application]
-                               (text-format :t.email.reviewer-reminder/application
-                                            (format-application-for-email application)
-                                            (application-util/get-member-name (:application/applicant application)))))
-                        (str/join "\n"))]
-          {:to-user (:userid reviewer)
-           :subject (text :t.email.reviewer-reminder/subject)
-           :body (text-format :t.email.reviewer-reminder/message
-                              (application-util/get-member-name reviewer)
-                              list
-                              (str (:public-url env) "actions"))})))))
+    (when (not (empty? applications))
+      (let [list (->> applications
+                      (map (fn [application]
+                             (text-format :t.email.reviewer-reminder/application
+                                          (format-application-for-email application)
+                                          (application-util/get-member-name (:application/applicant application)))))
+                      (str/join "\n"))]
+        {:to-user (:userid reviewer)
+         :subject (text :t.email.reviewer-reminder/subject)
+         :body (text-format :t.email.reviewer-reminder/message
+                            (application-util/get-member-name reviewer)
+                            list
+                            (str (:public-url env) "actions"))}))))
 
 (defn workflow-handler-invitation-email [lang invitation workflow]
   (with-language lang
-    (fn []
-      (when workflow
-        {:to (:invitation/email invitation)
-         :subject (text-format :t.email.workflow-handler-invitation/subject
-                               (:invitation/name invitation)
-                               (get-in invitation [:invitation/invited-by :name])
-                               (:title workflow)
-                               (invitation-link (:invitation/token invitation)))
-         :body (str
-                (text-format :t.email.workflow-handler-invitation/message
+    (when workflow
+      {:to (:invitation/email invitation)
+       :subject (text-format :t.email.workflow-handler-invitation/subject
                              (:invitation/name invitation)
                              (get-in invitation [:invitation/invited-by :name])
                              (:title workflow)
                              (invitation-link (:invitation/token invitation)))
-                (text :t.email/regards)
-                (text :t.email/footer))}))))
+       :body (str
+              (text-format :t.email.workflow-handler-invitation/message
+                           (:invitation/name invitation)
+                           (get-in invitation [:invitation/invited-by :name])
+                           (:title workflow)
+                           (invitation-link (:invitation/token invitation)))
+              (text :t.email/regards)
+              (text :t.email/footer))})))
 

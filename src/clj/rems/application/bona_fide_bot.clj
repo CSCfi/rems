@@ -103,70 +103,69 @@
 
 (deftest test-generate-commands
   (with-fixed-time (time/date-time 2010)
-    (fn []
-      (testing "submitted event,"
-        (let [event {:event/type :application.event/submitted
-                     :event/actor "applicant"
-                     :application/id 1234}
-              applicant-attributes {:userid "applicant"
-                                    :email "applicant@example.com"
-                                    :name "An Applicant"}
-              forms [{:form/fields [{:field/type :text
-                                     :field/value "this is text"}
-                                    {:field/type :email
-                                     :field/value "referer92@example.com"}
-                                    {:field/type :date
-                                     :field/value "2020-01-01"}]}]]
-          (testing "bot not handler"
-            (is (empty? (generate-commands event
-                                           applicant-attributes
-                                           {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}]}
-                                            :application/forms forms}))))
-          (testing "bot is handler"
-            (is (= [{:type :application.command/invite-decider
-                     :time (time/date-time 2010)
-                     :application-id 1234
-                     :actor "bona-fide-bot"
-                     :decider {:name "Referer" :email "referer92@example.com"}}]
-                   (generate-commands event
-                                      applicant-attributes
-                                      {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}
-                                                                                          {:userid bot-userid}]}
-                                       :application/forms forms}))))))
-      (testing "decided event,"
-        (let [event {:event/type :application.event/decided
-                     :event/actor "referer"
-                     :application/decision :approved
-                     :application/id 1234}
-              referer-attributes {:userid "referer"
-                                  :email "refer2000@example.com"
-                                  :name "Ref Errer"}]
-          (testing "bot not handler"
-            (is (empty? (generate-commands event
-                                           referer-attributes
-                                           {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}]}}))))
-          (testing "bot is handler,"
-            (let [application {:application/workflow {:workflow.dynamic/handlers [{:userid bot-userid}]}}]
-              (testing "referer does not have researcher status"
-                (is (= [{:type :application.command/reject
-                         :time (time/date-time 2010)
-                         :application-id 1234
-                         :actor "bona-fide-bot"}]
-                       (generate-commands event referer-attributes application))))
-              (testing "referer has researcher status,"
-                (let [referer-attributes (assoc referer-attributes :researcher-status-by "so")]
-                  (testing "referer approves"
-                    (is (= [{:type :application.command/approve
-                             :time (time/date-time 2010)
-                             :application-id 1234
-                             :actor "bona-fide-bot"}]
-                           (generate-commands event referer-attributes application))))
-                  (testing "referer rejects"
-                    (is (= [{:type :application.command/reject
-                             :time (time/date-time 2010)
-                             :application-id 1234
-                             :actor "bona-fide-bot"}]
-                           (generate-commands (assoc event :application/decision :rejected) referer-attributes application)))))))))))))
+    (testing "submitted event,"
+      (let [event {:event/type :application.event/submitted
+                   :event/actor "applicant"
+                   :application/id 1234}
+            applicant-attributes {:userid "applicant"
+                                  :email "applicant@example.com"
+                                  :name "An Applicant"}
+            forms [{:form/fields [{:field/type :text
+                                   :field/value "this is text"}
+                                  {:field/type :email
+                                   :field/value "referer92@example.com"}
+                                  {:field/type :date
+                                   :field/value "2020-01-01"}]}]]
+        (testing "bot not handler"
+          (is (empty? (generate-commands event
+                                         applicant-attributes
+                                         {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}]}
+                                          :application/forms forms}))))
+        (testing "bot is handler"
+          (is (= [{:type :application.command/invite-decider
+                   :time (time/date-time 2010)
+                   :application-id 1234
+                   :actor "bona-fide-bot"
+                   :decider {:name "Referer" :email "referer92@example.com"}}]
+                 (generate-commands event
+                                    applicant-attributes
+                                    {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}
+                                                                                        {:userid bot-userid}]}
+                                     :application/forms forms}))))))
+    (testing "decided event,"
+      (let [event {:event/type :application.event/decided
+                   :event/actor "referer"
+                   :application/decision :approved
+                   :application/id 1234}
+            referer-attributes {:userid "referer"
+                                :email "refer2000@example.com"
+                                :name "Ref Errer"}]
+        (testing "bot not handler"
+          (is (empty? (generate-commands event
+                                         referer-attributes
+                                         {:application/workflow {:workflow.dynamic/handlers [{:userid "handler"}]}}))))
+        (testing "bot is handler,"
+          (let [application {:application/workflow {:workflow.dynamic/handlers [{:userid bot-userid}]}}]
+            (testing "referer does not have researcher status"
+              (is (= [{:type :application.command/reject
+                       :time (time/date-time 2010)
+                       :application-id 1234
+                       :actor "bona-fide-bot"}]
+                     (generate-commands event referer-attributes application))))
+            (testing "referer has researcher status,"
+              (let [referer-attributes (assoc referer-attributes :researcher-status-by "so")]
+                (testing "referer approves"
+                  (is (= [{:type :application.command/approve
+                           :time (time/date-time 2010)
+                           :application-id 1234
+                           :actor "bona-fide-bot"}]
+                         (generate-commands event referer-attributes application))))
+                (testing "referer rejects"
+                  (is (= [{:type :application.command/reject
+                           :time (time/date-time 2010)
+                           :application-id 1234
+                           :actor "bona-fide-bot"}]
+                         (generate-commands (assoc event :application/decision :rejected) referer-attributes application))))))))))))
 
 
 

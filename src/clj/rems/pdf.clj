@@ -234,6 +234,6 @@
 
 (comment
   (with-language :en
-    #(clojure.pprint/pprint (render-application application)))
+    (clojure.pprint/pprint (render-application application)))
   (with-language :en
-    #(application-to-pdf application "/tmp/application.pdf")))
+    (application-to-pdf application "/tmp/application.pdf")))

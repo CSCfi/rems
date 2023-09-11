@@ -12,11 +12,12 @@
             #?(:clj [rems.locales :as locales])
             [taoensso.tempura :refer [tr]]))
 
-(defn with-language [lang f]
-  (assert (keyword? lang) {:lang lang})
-  #?(:clj (binding [context/*lang* lang
-                    context/*tempura* (partial tr (locales/tempura-config) [lang])]
-            (f))))
+#?(:clj
+   (defmacro with-language [lang & body]
+     `(binding [rems.context/*lang* ~lang
+                rems.context/*tempura* (partial tr (rems.locales/tempura-config) [~lang])]
+        (assert (keyword? ~lang) {:lang ~lang})
+        ~@body)))
 
 (defn- failsafe-fallback
   "Fallback for when loading the translations has failed."

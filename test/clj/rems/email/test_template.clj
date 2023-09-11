@@ -536,10 +536,10 @@
                       :application/member {:userid "member"}}
           member-events (conj created-events add-member)
           notifications-sent (with-fixed-time (time/date-time 2023 6 19)
-                               #(do {:application/id 7
-                                     :event/type :application.event/expiration-notifications-sent
-                                     :expires-on (time/plus (time/now) (time/days 7))
-                                     :last-activity (time/minus (time/now) (time/days 83))}))]
+                               {:application/id 7
+                                :event/type :application.event/expiration-notifications-sent
+                                :expires-on (time/plus (time/now) (time/days 7))
+                                :last-activity (time/minus (time/now) (time/days 83))})]
       (is (= [{:to-user "applicant"
                :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
                :body "Dear Alice Applicant,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}
