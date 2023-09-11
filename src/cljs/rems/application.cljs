@@ -802,16 +802,19 @@
                                         [phases state (get-application-phases state)]]
                                        [application-state-details application config]
                                        (when (seq (:application/votes application))
-                                         [votes-summary application])]
-                              :collapse-hidden [application-events application (take 3 events)]
-                              :collapse [application-events application events]}]
+                                         [votes-summary application])
+                                       [application-events application (take 3 events)]]
+                              :collapse (into [:<>]
+                                              (render-events application (drop 3 events)))}]
       [collapsible/component {:id "header"
                               :title (text :t.applications/state)
                               :always [phases state (get-application-phases state)]
                               :collapse-hidden (when (seq events)
                                                  (into [:div.my-3]
                                                        (render-events application (take 1 events))))
-                              :collapse [application-state-details application config]}])))
+                              :collapse [:div
+                                         [application-state-details application config]
+                                         [application-events application events]]}])))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
