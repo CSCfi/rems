@@ -9,7 +9,7 @@
   (:import [ch.qos.logback.classic Level Logger]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [org.joda.time DateTimeZone DateTimeUtils]
+           [org.joda.time DateTime DateTimeZone DateTimeUtils]
            [org.slf4j LoggerFactory]))
 
 (defn utc-fixture [f]
@@ -18,18 +18,19 @@
     (f)
     (DateTimeZone/setDefault old)))
 
-(defn with-fixed-time [date f]
-  (DateTimeUtils/setCurrentMillisFixed (.getMillis date))
-  (try
-    (f)
-    (finally
-      (DateTimeUtils/setCurrentMillisSystem))))
+(defmacro with-fixed-time [^DateTime date & body]
+  `(try
+     (DateTimeUtils/setCurrentMillisFixed (.getMillis ~date))
+     ~@body
+     (finally
+       (DateTimeUtils/setCurrentMillisSystem))))
 
 (defn fixed-time-fixture [date]
   (fn [f]
-    (with-fixed-time date f)))
+    (with-fixed-time date
+      (f))))
 
-(defn suppress-logging [^String logger-name]
+(defn suppress-logging-fixture [^String logger-name]
   (fn [f]
     (let [^Logger logger (LoggerFactory/getLogger logger-name)
           original-level (.getLevel logger)]

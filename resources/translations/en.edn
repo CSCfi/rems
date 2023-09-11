@@ -71,7 +71,8 @@
             :return "Return to applicant"
             :review "Review"
             :revoke "Revoke entitlement"
-            :todo-applications "Open applications"}
+            :todo-applications "Open applications"
+            :vote "Vote"}
   :administration {:active "Active"
                    :add "Add"
                    :added-at "Added at"
@@ -125,6 +126,7 @@
                    :external-title "Title"
                    :form "Form"
                    :forms "Forms"
+                   :handlers-vote "Handlers vote"
                    :has-errors "Errors"
                    :id "Id"
                    :internal-name "Name"
@@ -138,6 +140,7 @@
                    :no-categories "No categories"
                    :no-form "No form"
                    :no-licenses "No licenses"
+                   :no-voting "No voting"
                    :optional "(optional)"
                    :org "Org"
                    :organization "Organization"
@@ -161,6 +164,7 @@
                    :userid "User id"
                    :user-role "User role"
                    :view "View"
+                   :voting "Voting"
                    :workflow "Workflow"
                    :workflows "Workflows"
                    :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
@@ -235,7 +239,8 @@
                           :reviewer-joined "%1 accepted the invitation to review."
                           :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
-                          :unknown "Unknown"}
+                          :unknown "Unknown"
+                          :voted "%1 voted %2."}
                  :export {:applicant "Applicant"
                           :external-id "External id"
                           :first-submitted "Submitted"
@@ -275,7 +280,12 @@
                  :view-application-with-description "View application %1: %2"
                  ;; %1 - application id
                  ;; %2 - comma-separated list of catalogue item names
-                 :view-application-without-description "View application %1 for resources: %2"}
+                 :view-application-without-description "View application %1 for resources: %2"
+                 :votes "Votes"
+                 :voting {:previously-voted [:p "Previously you voted %1. You can change your vote here."]
+                          :votes {:accept "Accept"
+                                  :empty "Empty"
+                                  :reject "Reject"}}}
   :cart {:add "Add to cart"
          :apply "Apply"
          ;; %1 - number of resources
@@ -324,7 +334,8 @@
              :save-draft "Save as draft"
              ;; :send-expiration-notifications
              :submit "Send application"
-             :uninvite-member "Uninvite member"}
+             :uninvite-member "Uninvite member"
+             :vote "Vote"}
   :create-form {:add-column "Add column"
                 :add-form-field "Add field"
                 :add-option "Add option"
@@ -392,7 +403,8 @@
                     :master-workflow "Master workflow"
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
                     :rule "Rule"
-                    :title "Title"}
+                    :title "Title"
+                    :voting-explanation "You can require a vote to decide on the application."}
   :dropdown {:no-results "No results"
              :placeholder "Select..."
              :loading "Loading..."

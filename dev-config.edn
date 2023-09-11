@@ -113,4 +113,6 @@
             :error-key :t.login.errors/group}]
 
  :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
-                    :extension-point/validate-user-data [:plugin/validate-attributes]}}
+                    :extension-point/validate-user-data [:plugin/validate-attributes]}
+
+ :enable-voting true}

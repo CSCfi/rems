@@ -26,6 +26,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
+            [rems.actions.vote :refer [vote-action-button vote-form votes-summary]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :as application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
@@ -759,7 +760,7 @@
                                  [application-link new-app nil]))))
        ")"])))
 
-(defn- application-state-details [application config events]
+(defn- application-state-details [application config]
   [:<>
    [:h3.mt-3 (text :t.applications/details)]
    [info-field
@@ -782,36 +783,35 @@
    [info-field
     (text :t.applications/latest-activity)
     (localize-time (:application/last-activity application))
-    {:inline? true}]
-   (when (seq events)
-     (into [:<>
-            [:h3.mt-3 (text :t.form/events)]]
-           (render-events application events)))])
+    {:inline? true}]])
+
+(defn- application-events [application events]
+  (when (seq events)
+    (into [:<>
+           [:h3.mt-3 (text :t.form/events)]]
+          (render-events application events))))
 
 (defn- application-state [{:keys [application config userid]}]
   (let [state (:application/state application)
-        events (sort-by :event/time > (:application/events application))
-        [events-show-always events-collapse] (split-at 3 events)
-        handler? (is-handler? application userid)]
-    [collapsible/component
-     (-> {:id "header"
-          :title (text :t.applications/state)
-          :always [:div
-                   [:div.mb-3
-                    [phases state (get-application-phases state)]]
-                   (when handler?
-                     [application-state-details application config events-show-always])]
-          :collapse-hidden (when-not handler?
-                             (when (seq events)
-                               (into [:div.my-3]
-                                     (render-events application (take 1 events)))))
-          :collapse [:div
-                     (if-not handler?
-                       [application-state-details application config (concat events-show-always
-                                                                             events-collapse)]
-                       (when (seq events-collapse)
-                         (into [:<>]
-                               (render-events application events-collapse))))]})]))
+        events (sort-by :event/time > (:application/events application))]
+    (if (is-handler? application userid)
+      [collapsible/component {:id "header"
+                              :title (text :t.applications/state)
+                              :always [:div
+                                       [:div.mb-3
+                                        [phases state (get-application-phases state)]]
+                                       [application-state-details application config]
+                                       (when (seq (:application/votes application))
+                                         [votes-summary application])]
+                              :collapse-hidden [application-events application (take 3 events)]
+                              :collapse [application-events application events]}]
+      [collapsible/component {:id "header"
+                              :title (text :t.applications/state)
+                              :always [phases state (get-application-phases state)]
+                              :collapse-hidden (when (seq events)
+                                                 (into [:div.my-3]
+                                                       (render-events application (take 1 events))))
+                              :collapse [application-state-details application config]}])))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -969,6 +969,7 @@
                                :application.command/approve [approve-reject-action-button]
                                :application.command/reject [approve-reject-action-button]
                                :application.command/revoke [revoke-action-button]
+                               :application.command/vote [vote-action-button]
                                :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
                                                                          [assign-external-id-button (get application :application/assigned-external-id "")])
                                :application.command/close [close-action-button]
@@ -1019,7 +1020,8 @@
                   [return-form app-id reload]
                   [approve-reject-form app-id reload]
                   [assign-external-id-form app-id reload]
-                  [delete-form app-id go-to-catalogue]]]}])))
+                  [delete-form app-id go-to-catalogue]
+                  [vote-form app-id application reload]]]}])))
 
 (defn- render-resource [resource language]
   (let [config @(rf/subscribe [:rems.config/config])

@@ -34,11 +34,9 @@
              [[[:paragraph {:spacing-before 8, :style :bold} "Table field"]
                [:paragraph "No rows"]]]]]
            (with-language :en
-             (fn []
-               (with-fixed-time (time/date-time 2010)
-                 (fn []
-                   (#'pdf/render-fields data)))))))
-    (is (some? (with-language :en #(pdf/application-to-pdf-bytes data))))))
+             (with-fixed-time (time/date-time 2010)
+               (#'pdf/render-fields data)))))
+    (is (some? (with-language :en (pdf/application-to-pdf-bytes data))))))
 
 (deftest test-pdf-private-form-fields
   (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
@@ -154,10 +152,8 @@
                  [[:phrase "2000-01-01 00:00" " " "Alice Applicant skapade ansökan 2000/1." nil nil nil]
                   [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]]]]]]
              (with-language :sv
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))))
+               (with-fixed-time (time/date-time 2010)
+                 (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))
     (testing "handler should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: "]
@@ -219,10 +215,8 @@
                    "\nComment: I have decided"
                    nil]]]]]]
              (with-language :en
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))))
+               (with-fixed-time (time/date-time 2010)
+                 (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))
     (testing "decider should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Hakemus 2000/1: "]
@@ -284,10 +278,8 @@
                    "\nKommentti: I have decided"
                    nil]]]]]]
              (with-language :fi
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))))
+               (with-fixed-time (time/date-time 2010)
+                 (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))
     (testing "reviewer should not see private fields"
       (is (= [{}
               [[:heading pdf/heading-style "Ansökan 2000/1: "]
@@ -338,10 +330,8 @@
                    "\nKommentar: I have decided"
                    nil]]]]]]
              (with-language :sv
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))))
+               (with-fixed-time (time/date-time 2010)
+                 (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))
 
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
@@ -551,14 +541,11 @@
                   [:phrase "2003-01-01 00:00" " " "David Decider filed a decision for the application." "\nDavid Decider approved the application." "\nComment: I have decided" nil]
                   [:phrase "2003-01-01 00:00" " " "Developer approved the application." nil "\nComment: approved" "\nAttachments: file1.txt, file2.pdf"]]]]]]
              (with-language :en
-               (fn []
-                 (with-fixed-time (time/date-time 2010)
-                   (fn []
-                     (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))))
+               (with-fixed-time (time/date-time 2010)
+                 (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))
     (testing "pdf rendering succeeds"
       (is (some?
            (with-language :en
-             #(do
-                ;; uncomment this to get a pdf file to look at
-                #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
-                (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id)))))))))
+             ;; uncomment this to get a pdf file to look at
+             #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
+             (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id))))))))

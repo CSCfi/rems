@@ -133,7 +133,12 @@
                                 title (:title (localized (:localizations license)))]]
                       [atoms/link nil uri title])
                     (interpose ", ")
-                    (into [:<>]))]]}]
+                    (into [:<>]))]
+              (when-let [voting (get-in workflow [:workflow :voting])]
+                [inline-info-field
+                 (text :t.administration/voting)
+                 (text (keyword (str "t" ".administration") (:type voting)))])]}]
+
    (when (seq (get-in workflow [:workflow :disable-commands]))
      [collapsible/component
       {:id "workflow-disabled-commands"
@@ -141,6 +146,7 @@
        :always [:div
                 [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
                 [:div.mt-4 [disable-commands-table]]]}])
+
    (let [id (:id workflow)]
      [:div.col.commands
       [administration/back-button "/administration/workflows"]

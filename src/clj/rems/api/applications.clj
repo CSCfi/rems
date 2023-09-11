@@ -251,13 +251,11 @@
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
-    (command-endpoint :application.command/delete commands/DeleteCommand
-                      "Only drafts can be deleted. Only applicants can delete drafts.")
+    (command-endpoint :application.command/delete commands/DeleteCommand "Only drafts can be deleted. Only applicants can delete drafts.")
     (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
-    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand
-                      "Promote member of application to applicant. Previous applicant becomes a member.")
+    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand "Promote member of application to applicant. Previous applicant becomes a member.")
     (command-endpoint :application.command/redact-attachments commands/RedactAttachmentsCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
@@ -270,6 +268,8 @@
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
+    (command-endpoint :application.command/vote commands/VoteCommand)
+
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
@@ -323,13 +323,13 @@
       :produces ["application/pdf"]
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
-          #(-> app
-               (pdf/application-to-pdf-bytes)
-               (ByteArrayInputStream.)
-               (ok)
+          (-> app
+              (pdf/application-to-pdf-bytes)
+              (ByteArrayInputStream.)
+              (ok)
                ;; could also set "attachment" here to force download:
-               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
-               (content-type "application/pdf")))
+              (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+              (content-type "application/pdf")))
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []

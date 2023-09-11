@@ -48,7 +48,8 @@
    (s/optional-key :enable-autosave) s/Bool
    (s/optional-key :show-resources-section) s/Bool
    (s/optional-key :show-attachment-zip-action) s/Bool
-   (s/optional-key :show-pdf-action) s/Bool})
+   (s/optional-key :show-pdf-action) s/Bool
+   (s/optional-key :enable-voting) s/Bool})
 
 (def translations-api
   (context "/translations" []

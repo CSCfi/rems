@@ -173,6 +173,10 @@
 (s/defschema SubmittedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/submitted)))
+(s/defschema VotedEvent
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/voted)
+         :vote/value s/Str))
 
 (def event-schemas
   {:application.event/attachments-redacted AttachmentsRedactedEvent
@@ -206,7 +210,8 @@
    :application.event/reviewer-invited ReviewerInvitedEvent
    :application.event/reviewer-joined ReviewerJoinedEvent
    :application.event/revoked RevokedEvent
-   :application.event/submitted SubmittedEvent})
+   :application.event/submitted SubmittedEvent
+   :application.event/voted VotedEvent})
 
 (def event-types
   (keys event-schemas))

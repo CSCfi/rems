@@ -120,6 +120,9 @@
   (assoc CommandWithComment
          :member {:name s/Str
                   :email s/Str}))
+(s/defschema VoteCommand
+  (assoc CommandWithComment
+         :vote s/Str))
 
 (def command-schemas
   {:application.command/accept-invitation AcceptInvitationCommand
@@ -150,7 +153,8 @@
    :application.command/save-draft SaveDraftCommand
    :application.command/send-expiration-notifications SendExpirationNotificationsCommand
    :application.command/submit SubmitCommand
-   :application.command/uninvite-member UninviteMemberCommand})
+   :application.command/uninvite-member UninviteMemberCommand
+   :application.command/vote VoteCommand})
 
 (def command-names
   (keys command-schemas))
@@ -689,6 +693,14 @@
   [cmd _application _injections]
   (ok {:event/type :application.event/external-id-assigned
        :application/external-id (:external-id cmd)}))
+
+(defmethod command-handler :application.command/vote
+  [cmd application injections]
+  (add-comment-and-attachments cmd application injections
+                               {:event/type :application.event/voted
+                                :vote/value (:vote cmd)}))
+
+
 
 (defn- forbidden-error [application cmd]
   (let [permissions (if application

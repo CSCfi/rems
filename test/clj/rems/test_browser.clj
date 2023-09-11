@@ -30,7 +30,7 @@
             [rems.db.user-settings :as user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :as text]))
+            [rems.text :refer [localize-time text with-language]]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -117,10 +117,10 @@
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}])
   ;; wait for the new language to take effect
   (btu/wait-predicate #(= (btu/value-of [{:css ".footer-text"}])
-                          (text/with-language language
-                            (fn [] (text/text :t/footer))))))
+                          (with-language language
+                            (text :t/footer)))))
 
-(defmacro with-language
+(defmacro with-change-language
   "Executes body between calls to `(change-language language)`
    and `(change-language :en)`."
   [language & body]
@@ -2503,7 +2503,7 @@
                           [(:application/id application)
                            (q (:application/external-id application))
                            (q (get-in application [:application/applicant :name]))
-                           (q (text/localize-time (get-in application [:application/first-submitted])))
+                           (q (localize-time (get-in application [:application/first-submitted])))
                            (q "Applied")
                            (q "")
                            (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
@@ -2930,7 +2930,7 @@
     (login-as "owner")
     (testing "create licenses with different license types"
       (testing "external link"
-        (with-language :en
+        (with-change-language :en
           (go-to-admin "Licenses")
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
           (btu/scroll-and-click :create-license)
@@ -2960,7 +2960,7 @@
                  (slurp-fields :license)))))
       (testing "inline text"
         (go-to-admin "Licenses")
-        (with-language :fi
+        (with-change-language :fi
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Lisenssit"}))
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-inline-text-fi")
@@ -2986,7 +2986,7 @@
                  (slurp-fields :license)))))
       (testing "attachment"
         (go-to-admin "Licenses")
-        (with-language :sv
+        (with-change-language :sv
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenser"}))
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-attachments-sv")
