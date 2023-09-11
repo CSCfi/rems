@@ -12,8 +12,7 @@
 
 #?(:clj
    (defmacro with-language [lang & body]
-     `(binding [rems.context/*lang* ~lang
-                rems.context/*tempura* (partial tr (rems.locales/tempura-config) [~lang])]
+     `(binding [rems.context/*lang* ~lang]
         (assert (keyword? ~lang) {:lang ~lang})
         ~@body)))
 
