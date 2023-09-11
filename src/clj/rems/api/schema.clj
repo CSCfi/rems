@@ -257,12 +257,14 @@
    :application/forms [Form]
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
-                          (s/optional-key :workflow.dynamic/handlers) [Handler]}
+                          (s/optional-key :workflow.dynamic/handlers) [Handler]
+                          (s/optional-key :workflow/voting) schema-base/WorkflowVoting}
    :application/roles #{s/Keyword}
    :application/permissions Permissions
    :application/attachments [ApplicationAttachment]
    ;; TODO :application/end instead?
    (s/optional-key :entitlement/end) (s/maybe DateTime)
+   (s/optional-key :application/votes) {schema-base/UserId s/Str}
    (s/optional-key :application/duo) {(s/optional-key :duo/codes) [schema-base/DuoCodeFull]
                                       :duo/matches [{:duo/id s/Str
                                                      :duo/shorthand s/Str
