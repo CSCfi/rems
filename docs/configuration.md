@@ -144,6 +144,12 @@ for a list of all translation keys and their format parameters. Format
 parameters are pieces of text like `%3` that get replaced with certain
 information.
 
+### Localization format parameters
+
+Localizations may use format parameters for dynamic translations, e.g. emails. Format parameters are pieces of text that get replaced with certain information. Vector format parameters are default, which typically look like `"Application %1"`, where `"%1"` refers to specific position in the translation arguments.
+
+Experimental support exists for named format parameters, which can be used alternatively. Named format parameters are included in text like `"Application %:application/id%"`, and unlike vector format parameters, do not rely on specific ordering of translation arguments.
+
 ## Themes
 
 Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [example-theme/theme.edn](https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn) for an example.
