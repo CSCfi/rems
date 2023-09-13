@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.profile :as profile]
             [rems.search :as search]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text text-format]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -38,6 +38,8 @@
      {:id "todo-applications-collapse"
       :open? true
       :title (text :t.actions/todo-applications)
+      :bottom-less-button? false
+      :always [:div (text-format :t.actions/todo-applications-count {:count (some-> @(rf/subscribe [::todo-applications :data]) count)})]
       :collapse [:<>
                  [search/application-search-field {:id "todo-search"
                                                    :on-search #(rf/dispatch [::todo-applications {:query %}])
@@ -50,6 +52,9 @@
      {:id "handled-applications-collapse"
       :on-open #(rf/dispatch [::handled-applications])
       :title (text :t.actions/handled-applications)
+      :top-less-button? true
+      :bottom-less-button? false
+      :always [:div (text-format :t.actions/handled-applications-count {:count (some-> @(rf/subscribe [::handled-applications :data]) count)})]
       :collapse [:<>
                  [search/application-search-field {:id "handled-search"
                                                    :on-search #(rf/dispatch [::handled-applications {:query %}])
@@ -57,4 +62,5 @@
                  [application-list/component {:applications ::handled-applications
                                               :hidden-columns #{:todo :created :submitted}
                                               :default-sort-column :last-activity
-                                              :default-sort-order :desc}]]}]]])
+                                              :default-sort-order :desc
+                                              :paging? true}]]}]]])

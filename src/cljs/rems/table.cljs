@@ -394,7 +394,7 @@
 (rf/reg-sub
  ::paging
  (fn [db [_ table]]
-   (merge {:page-size 2 ; defaults
+   (merge {:page-size 50 ; defaults
            :current-page 0}
           (get-in db [::paging (:id table)]))))
 

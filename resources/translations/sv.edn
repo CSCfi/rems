@@ -38,6 +38,7 @@
                      :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
+            :handled-applications-count "Det finns %:count% behandlade ansökningar."
             :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
             :member "Deltagare"
@@ -70,6 +71,7 @@
             :review "Granska"
             :revoke "Återkalla rättigheter"
             :todo-applications "Aktiva ansökningar"
+            :todo-applications-count "Det finns %:count% aktiva ansökningar."
             :vote "Rösta"}
   :administration {:active "Aktiv"
                    :add "Lägg till"

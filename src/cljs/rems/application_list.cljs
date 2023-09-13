@@ -134,7 +134,7 @@
            :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
 
-(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order]
+(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order paging?]
              :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
@@ -169,7 +169,10 @@
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
-    [table/table application-table]))
+    [:<>
+     [table/table application-table]
+     (when paging?
+       [table/paging application-table])]))
 
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
