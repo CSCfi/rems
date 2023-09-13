@@ -24,6 +24,7 @@
             [rems.atoms :refer [checkbox sort-symbol]]
             [rems.focus :as focus]
             [rems.guide-util :refer [component-info example namespace-info]]
+            [rems.paging :as paging]
             [rems.search :as search]
             [rems.text :refer [text text-format]]
             [schema.core :as s]))
@@ -385,6 +386,56 @@
                           :row row})
             (:td cell)))))
 
+(rf/reg-event-db
+ ::set-paging
+ (fn [db [_ table paging]]
+   (assoc-in db [::paging (:id table)] paging)))
+
+(rf/reg-sub
+ ::paging
+ (fn [db [_ table]]
+   (merge {:page-size 2 ; defaults
+           :current-page 0}
+          (get-in db [::paging (:id table)]))))
+
+(rf/reg-sub
+ ::pages
+ (fn [[_ table] _]
+   [(rf/subscribe [::sorted-and-filtered-rows table])
+    (rf/subscribe [::paging table])])
+ (fn [[rows paging] [_ _table]]
+   (if (empty? rows)
+     0
+     (js/Math.ceil (/ (count rows)
+                      (:page-size paging))))))
+
+(rf/reg-sub
+ ::paged-rows
+ (fn [[_ table] _]
+   [(rf/subscribe [::sorted-and-filtered-rows table])
+    (rf/subscribe [::paging table])])
+ (fn [[rows paging] [_ _table]]
+   (->> rows
+        (drop (* (:page-size paging) (:current-page paging)))
+        (take (:page-size paging)))))
+
+(defn paging
+  "Paging component for paging a `rems.table/table` instance
+  which takes the same `table` parameter as this component.
+
+  See `rems.table/Table` for the `table` parameter schema."
+  [table paging-opts]
+  (s/validate Table table)
+  (let [paging @(rf/subscribe [::paging table])
+        pages @(rf/subscribe [::pages table])
+        on-change (fn [value]
+                    (rf/dispatch [::set-paging table value]))]
+    [paging/paging-field (merge {:id (str (name (:id table)) "-paging")
+                                 :on-change on-change
+                                 :paging paging
+                                 :pages pages}
+                                paging-opts)]))
+
 (defn table
   "A filterable and sortable table component.
   Meant to be used together with the `rems.table/search` component.
@@ -392,7 +443,7 @@
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
-  (let [rows @(rf/subscribe [::sorted-and-filtered-rows table]) ; TODO refactor to use ::displayed-rows
+  (let [rows @(rf/subscribe [::paged-rows table]) ; TODO refactor to use ::displayed-rows
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
         columns @(rf/subscribe [::filtered-columns table])

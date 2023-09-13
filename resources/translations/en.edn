@@ -653,7 +653,8 @@
           :no-rows-selected "No rows selected"
           :some-rows-selected "Some rows selected"
           ;; %1 - number
-          :show-all-n-rows "Show all %1 rows"}
+          :show-all-n-rows "Show all %1 rows"
+          :paging {:page "Page"}}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
   :unknown "Unknown"

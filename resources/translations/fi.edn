@@ -603,7 +603,8 @@
           :all-rows-selected "Kaikki rivit valittuna"
           :no-rows-selected "Ei yhtään riviä valittuna"
           :some-rows-selected "Joitain rivejä valittuna"
-          :show-all-n-rows "Näytä kaikki %1 riviä"}
+          :show-all-n-rows "Näytä kaikki %1 riviä"
+          :paging {:page "Sivu"}}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :unknown "Tuntematon"

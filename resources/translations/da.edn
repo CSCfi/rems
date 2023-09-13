@@ -653,7 +653,8 @@
           :no-rows-selected "Ingen rækker er valgte"
           :some-rows-selected "Nogle rækker er valgte"
           ;; %1 - number
-          :show-all-n-rows "Vis alle %1 rækker"}
+          :show-all-n-rows "Vis alle %1 rækker"
+          :paging {:page nil}}
   :unauthorized-page {:unauthorized "Ingen adgang"
                       :you-are-unauthorized "Du er ikke autoriseret til at tilgå denne side."}
   :unknown "Ukendt"
