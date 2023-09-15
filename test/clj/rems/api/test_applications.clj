@@ -2,10 +2,10 @@
   (:require [clj-time.core :as time]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.service.attachment :as attachment]
             [rems.service.catalogue :as catalogue]
-            [rems.api.testing :refer :all]
+            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
             [rems.db.attachments]
@@ -16,7 +16,7 @@
             [rems.handler :refer [handler]]
             [rems.json]
             [rems.testing-util :refer [with-fixed-time with-user]]
-            [ring.mock.request :refer :all])
+            [ring.mock.request :refer [header json-body request]])
   (:import java.io.ByteArrayOutputStream
            java.util.zip.ZipInputStream))
 
@@ -1278,7 +1278,6 @@
              (get-in (get-application-for-user app-id user-id)
                      [:application/forms 0 :form/fields 1 :field/previous-value]))))))
 
-
 (deftest test-decider-workflow
   (let [applicant "alice"
         handler "handler"
@@ -1449,7 +1448,6 @@
                   :email "developer@example.com"}
                  (first (:application/members application))
                  (get-in application [:application/events 2 :application/member]))))))))
-
 
 (deftest test-application-vote
   (let [api-key "42"
@@ -2208,7 +2206,6 @@
                    (fetch-zip handler-id "?all=false")
                    (fetch-zip reporter-id "?all=false")))))))))
 
-
 (deftest test-application-api-license-attachments
   (let [api-key "42"
         applicant "alice"
@@ -2741,7 +2738,8 @@
                                     :event/actor "alice"
                                     :event/type "application.event/created"
                                     :event/id 100
-                                    :application/licenses []}
+                                    :application/licenses []
+                                    :event/visibility ["visibility/public"]}
                                    {:event/id 100
                                     :event/type "application.event/draft-saved"
                                     :event/time "2010-01-01T00:00:00.000Z"
@@ -2749,7 +2747,8 @@
                                     :application/id app-id
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}
-                                                               {:form form-id :field "att" :value (str att-id)}]}]
+                                                               {:form form-id :field "att" :value (str att-id)}]
+                                    :event/visibility ["visibility/public"]}]
               :application/duo {:duo/matches []}}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
