@@ -92,6 +92,17 @@
  :enable-catalogue-tree true
  :enable-save-compaction true
  :enable-autosave true
+ :extended-logging-routes ["/api/catalogue-items/create"
+                           "/api/catalogue-items/edit"
+                           "/api/categories/create"
+                           "/api/categories/edit"
+                           "/api/forms/create"
+                           "/api/forms/edit"
+                           "/api/users/create"
+                           "/api/users/edit"
+                           "/api/user-settings/edit"
+                           "/api/workflows/create"
+                           "/api/workflows/edit"]
 
  ;; let's use plugins in dev
  :oidc-require-name false

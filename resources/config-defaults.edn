@@ -429,6 +429,28 @@
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
  :enable-save-compaction false ; whether to merge consecutive saves into one event (EXPERIMENTAL)
  :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
+
+ ;; Extended logging for routes that should additionally log content of entity mutation.
+ ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
+ ;; the logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
+ ;;
+ ;; logging occurs after request data has been coerced to a schema, but before the mutation is persisted.
+ ;; as such, the logged information is only authoritative about the state of the respective entitiy iff the request was successful.
+ ;;
+ ;; only routes that mutate an existing entity can be logged, the possible routes are as follows:
+ ;; ["/api/catalogue-items/create"
+ ;;  "/api/catalogue-items/edit"
+ ;;  "/api/categories/create"
+ ;;  "/api/categories/edit"
+ ;;  "/api/forms/create"
+ ;;  "/api/forms/edit"
+ ;;  "/api/users/create"
+ ;;  "/api/users/edit"
+ ;;  "/api/user-settings/edit"
+ ;;  "/api/workflows/create"
+ ;;  "/api/workflows/edit"]
+ :extended-logging-routes []
+
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
  :application-list-hidden-columns []

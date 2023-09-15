@@ -1,7 +1,7 @@
 (ns rems.api.organizations
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response extended-logging]] ; required for route :roles
             [rems.service.organizations :as organizations]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
@@ -46,19 +46,21 @@
                                                   (when-not disabled {:enabled true})
                                                   (when-not archived {:archived false})))))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create organization"
       :roles #{:owner}
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
+      (extended-logging request command)
       (ok (organizations/add-organization! command)))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Edit organization. Organization owners cannot change the owners."
       ;; explicit roles seem clearer here instead of +admin-write-roles+
       :roles #{:owner :organization-owner}
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse
+      (extended-logging request command)
       (ok (organizations/edit-organization! command)))
 
     (PUT "/archived" []
