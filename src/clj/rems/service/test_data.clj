@@ -518,7 +518,7 @@
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
   (let [resource-count 1000
-        application-count 1000
+        application-count 3000
         user-count 1000
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]

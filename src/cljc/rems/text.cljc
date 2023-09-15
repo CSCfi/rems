@@ -6,16 +6,13 @@
                :cljs [cljs-time.format :as time-format])
             #?(:cljs [cljs-time.coerce :as time-coerce])
             [clojure.string :as str]
-            #?(:cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
             #?(:clj [rems.context :as context])
-            #?(:clj [rems.locales :as locales])
-            [taoensso.tempura :refer [tr]]))
+            [rems.tempura]))
 
 #?(:clj
    (defmacro with-language [lang & body]
-     `(binding [rems.context/*lang* ~lang
-                rems.context/*tempura* (partial tr (rems.locales/tempura-config) [~lang])]
+     `(binding [rems.context/*lang* ~lang]
         (assert (keyword? ~lang) {:lang ~lang})
         ~@body)))
 
@@ -27,53 +24,50 @@
                  (cons k args)))))
 
 (defn text-format
-  "Return the tempura translation for a given key & time arguments"
+  "Return the tempura translation for a given key and arguments.
+   Map can be used for named parameters as `(first args)`,
+   when the localization resource supports them. `(rest args)`
+   are then used as vector arguments if localization resource does not support
+   named parameters. See `rems.tempura/tr`
+
+   (text-format :key {:arg :value} varg-1 varg-2 ...)"
   [k & args]
-  #?(:clj (context/*tempura* [k :t/missing] (vec args))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (tr {:dict @translations}
-                 [@language]
-                 [k :t/missing (failsafe-fallback k args)]
-                 (vec args)))))
+  #?(:clj (rems.tempura/tr [k :t/missing]
+                           args)
+     :cljs (rems.tempura/tr [k :t/missing (failsafe-fallback k args)]
+                            args)))
 
 (defn text-no-fallback
   "Return the tempura translation for a given key. Additional fallback
   keys can be given but there is no default fallback text."
   [& ks]
-  #?(:clj (context/*tempura* (vec ks))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (try
-               (tr {:dict @translations}
-                   [@language]
-                   (vec ks))
-               (catch js/Object e
-                 ;; fail gracefully if the re-frame state is incomplete
-                 (.error js/console e)
-                 (str (vec ks)))))))
+  #?(:clj (rems.tempura/tr ks)
+     :cljs (try
+             (rems.tempura/tr ks)
+             (catch js/Object e
+               ;; fail gracefully if the re-frame state is incomplete
+               (.error js/console e)
+               (str (vec ks))))))
 
 (defn text
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (apply text-no-fallback (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (apply text-no-fallback
+                 (conj (vec ks)
+                       (text-format :t/missing (vec ks))))
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (try
-               (tr {:dict @translations}
-                   [@language]
-                   (conj (vec ks) (text-format :t/missing (vec ks))))
-               (catch js/Object e
-                 ;; fail gracefully if the re-frame state is incomplete
-                 (.error js/console e)
-                 (str (vec ks)))))))
+     :cljs (try
+             (rems.tempura/tr (conj (vec ks)
+                                    (text-format :t/missing (vec ks))))
+             (catch js/Object e
+               ;; fail gracefully if the re-frame state is incomplete
+               (.error js/console e)
+               (str (vec ks))))))
 
 (defn localized [m]
-  (let [lang #?(:clj context/*lang*
-                :cljs @(rf/subscribe [:language]))]
+  (let [lang (rems.tempura/get-language)]
     (or (get m lang)
         (first (vals m)))))
 
@@ -152,7 +146,6 @@
                                                                       (time/time-zone-for-offset 5)))))
             (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 1 1)
                                                                       (time/time-zone-for-offset -5))))))))
-
 
 (def ^:private event-types
   {:application.event/applicant-changed :t.applications.events/applicant-changed
