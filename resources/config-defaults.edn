@@ -432,10 +432,6 @@
 
  ;; Extended logging for routes that should additionally log content of entity mutation.
  ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
- ;; the logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
- ;;
- ;; logging occurs after request data has been coerced to a schema, but before the mutation is persisted.
- ;; as such, the logged information is only authoritative about the state of the respective entitiy iff the request was successful.
  ;;
  ;; only routes that mutate an existing entity can be logged, the possible routes are as follows:
  ;; ["/api/catalogue-items/create"
