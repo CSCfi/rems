@@ -657,9 +657,29 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- event-view [{:keys [attachments see-everything]} event]
+(defn- event-description [event]
   (let [event-text (localize-event event)
-        decision (localize-decision event)
+        event-visibility (:event/visibility event)]
+    (cond
+      (:visibility/public event-visibility)
+      [:div.row.no-gutters.gap-1
+       [:div.col-sm-auto
+        [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
+         [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
+       [:b.col-sm event-text]]
+
+      (:visibility/handling-users event-visibility)
+      [:div.row.no-gutters.gap-1
+       [:div.col-sm-auto
+        [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
+         [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
+       [:b.col-sm event-text]]
+
+      :else
+      [:b event-text])))
+
+(defn- event-view [{:keys [attachments]} event]
+  (let [decision (localize-decision event)
         comment (case (:event/type event)
                   :application.event/copied-from
                   [application-link (:application/copied-from event) (text :t.applications/application)]
@@ -668,44 +688,25 @@
                   [application-link (:application/copied-to event) (text :t.applications/application)]
 
                   (not-empty (:application/comment event)))
-        time (localize-time (:event/time event))
-        event-public (:application/public event)]
+        time (localize-time (:event/time event))]
     [:div.row.event
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
       [:div.event-description.col-form-label
-       (cond
-         (and see-everything
-              (true? event-public)) (let [shown-text (text :t.applications.event/shown-to-applicant)]
-                                      [:div.event-public.row.no-gutters.gap-1
-                                       [:div.col-sm-auto
-                                        [:i.fas.fa-eye
-                                         [:span.sr-only shown-text]]]
-                                       [:b.col-sm (text-format :t.label/parens event-text shown-text)]])
-         (and see-everything
-              (false? event-public)) (let [not-shown-text (text :t.applications.event/not-shown-to-applicant)]
-                                       [:div.event-not-public.row.no-gutters.gap-1
-                                        [:div.col-sm-auto
-                                         [:i.fas.fa-eye-slash
-                                          [:span.sr-only not-shown-text]]]
-                                        [:b.col-sm (text-format :t.label/parens event-text not-shown-text)]])
-         :else [:b event-text])]
+       [event-description event]]
       (when decision
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
       (when (seq attachments)
-        [:div.event-attachments.pt-2
+        [:div.event-attachments.py-2
          [fields/render-attachments attachments]])]]))
 
 (defn- render-events [application events]
-  (let [see-everything (application-util/see-everything? application)
-        attachments-by-event-id (->> (:application/attachments application)
-                                     (group-by #(-> % :attachment/event :event/id)))]
-    (for [event events
-          :let [id (:event/id event)]]
-      [event-view {:attachments (get attachments-by-event-id id)
-                   :see-everything see-everything}
+  (let [attachments-by-event-id (->> (:application/attachments application)
+                                     (group-by #(get-in % [:attachment/event :event/id])))]
+    (for [event events]
+      [event-view {:attachments (get attachments-by-event-id (:event/id event))}
        event])))
 
 (defn- get-application-phases [state]
