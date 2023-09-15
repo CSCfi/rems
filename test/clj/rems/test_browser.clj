@@ -909,7 +909,7 @@
              (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
-                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes :event/visibility)))))))
 
 (deftest test-invite-decider
   (testing "create test data"
@@ -1116,7 +1116,7 @@
              (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
-                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes :event/visibility)))))))
 
 (deftest test-guide-page
   (btu/with-postmortem
@@ -1281,7 +1281,6 @@
       (go-to-admin "Resources")
       (is (some #(= (btu/context-getx :resid) (get % "title"))
                 (slurp-rows :resources))))))
-
 
 (defn create-form []
   (testing "create form"
