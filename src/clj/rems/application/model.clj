@@ -2,12 +2,14 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL transform select]]
-            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [assoc-some distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
+            [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
+            [rems.config]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -734,6 +736,13 @@
        (transform [:application/attachments ALL] #(let [roles (get-attachment-redact-roles % application)]
                                                     (assoc-some % :attachment/redact-roles roles)))))
 
+(defn- enrich-workflow-anonymize-handling [application get-workflow]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        workflow (get-workflow workflow-id)
+        anonymize-handling (get-in workflow [:workflow :anonymize-handling])]
+    (-> application
+        (assoc-some-in [:application/workflow :workflow/anonymize-handling] anonymize-handling))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -761,6 +770,7 @@
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers get-workflow)
+      (enrich-workflow-anonymize-handling get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
@@ -844,12 +854,49 @@
       (update :application/events (partial mapv censor-users-in-event))
       (update :application/attachments (partial mapv #(update % :attachment/user censor-user)))))
 
+(def anonymous-handler {:userid "rems-handler"
+                        :name nil
+                        :email nil})
+
+(defn anonymize-users-in-attachments [attachments userids]
+  (vec
+   (for [attachment attachments
+         :let [userid (get-in attachment [:attachment/user :userid])]]
+     (if (some #{userid} userids)
+       (assoc attachment :attachment/user anonymous-handler)
+       attachment))))
+
+(defn anonymize-users-in-events [events userids]
+  (vec
+   (for [event events
+         :let [userid (:event/actor event)]]
+     (if (some #{userid} userids)
+       (-> event
+           (assoc :event/actor (:userid anonymous-handler))
+           (assoc :event/actor-attributes anonymous-handler))
+       event))))
+
+(defn get-handling-users [application]
+  (let [handling-roles #(clojure.set/intersection +handling-roles+ (set %))]
+    (set
+     (some->> (:application/user-roles application)
+              (filter-vals (comp seq handling-roles))
+              keys))))
+
+(defn apply-workflow-anonymization [application]
+  (if (get-in application [:application/workflow :workflow/anonymize-handling])
+    (let [handling-users (get-handling-users application)]
+      (-> application
+          (update :application/attachments anonymize-users-in-attachments handling-users)
+          (update :application/events anonymize-users-in-events handling-users)))
+    application))
+
 (defn- hide-sensitive-information [application]
   (-> application
       (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)
-      (update :application/workflow dissoc :workflow/voting)
+      apply-workflow-anonymization
+      (update :application/workflow dissoc :workflow.dynamic/handlers :workflow/voting :workflow/anonymize-handling)
       (dissoc :application/votes)
       hide-extra-user-attributes))
 
