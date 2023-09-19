@@ -121,7 +121,8 @@
                                                                          (map enrich-user)
                                                                          (map :display)
                                                                          (str/join ", "))]
-              [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value (true? (get-in workflow [:workflow :anonymize-handling]))}]]
+              (when (get-in workflow [:workflow :anonymize-handling])
+                [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]])
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
               [inline-info-field (text :t.administration/forms)
                (if-some [forms (seq (for [form (get-in workflow [:workflow :forms])
