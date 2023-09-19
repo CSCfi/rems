@@ -165,7 +165,7 @@
                    :voting "Omröstning"
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
-                   :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande och deltagare."
+                   :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
                    :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
