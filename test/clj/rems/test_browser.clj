@@ -1030,7 +1030,8 @@
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
                 "Forms" ""
-                "Licenses" ""}
+                "Licenses" ""
+                "Anonymize handling" false}
                (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
@@ -1337,7 +1338,8 @@
               "Handlers" "Hannah Handler (handler@example.com)"
               "Forms" ""
               "Licenses" ""
-              "Active" true}
+              "Active" true
+              "Anonymize handling" false}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
       (is (some #(= (btu/context-getx :workflow-name) (get % "title"))
@@ -2373,7 +2375,8 @@
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
-              "Active" true}
+              "Active" true
+              "Anonymize handling" false}
              (slurp-fields :workflow))))
     (testing "edit workflow"
       (btu/scroll-and-click {:css ".edit-workflow"})
@@ -2400,7 +2403,8 @@
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
-              "Active" true}
+              "Active" true
+              "Anonymize handling" false}
              (slurp-fields :workflow)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
