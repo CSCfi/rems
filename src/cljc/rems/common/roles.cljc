@@ -16,9 +16,6 @@
 (defn show-all-applications? [roles]
   (some #{:reporter} roles))
 
-(defn show-reviews? [roles]
-  (some #{:handler :reviewer :decider :past-reviewer :past-decider} roles))
-
 (defn show-admin-pages? [roles]
   (some +admin-read-roles+ roles))
 

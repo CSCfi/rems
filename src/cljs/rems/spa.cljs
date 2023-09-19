@@ -179,7 +179,7 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (roles/show-reviews? roles) (navigate! "/actions")
+         (some roles/+handling-roles+ roles) (navigate! "/actions")
          (roles/show-admin-pages? roles) (navigate! "/administration")
          :else (navigate! "/catalogue"))
        {})
