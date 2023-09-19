@@ -177,7 +177,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-workflow! [{:keys [actor organization title type handlers forms licenses disable-commands voting]
+(defn create-workflow! [{:keys [actor organization title type handlers forms licenses disable-commands voting anonymize-handling]
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
@@ -191,7 +191,8 @@
                                      ["developer"]))
                    :licenses (mapv (fn [id] {:license/id id}) licenses)
                    :disable-commands disable-commands
-                   :voting voting}))]
+                   :voting voting
+                   :anonymize-handling anonymize-handling}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 

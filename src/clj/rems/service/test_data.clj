@@ -323,16 +323,17 @@
                                             :title "EGA workflow, a variant of default"
                                             :type :workflow/default
                                             :handlers handlers})
-        disabled-commands (test-helpers/create-workflow! {:actor owner
-                                                          :organization {:organization/id "nbn"}
-                                                          :title "Restricted workflow"
-                                                          :type :workflow/default
-                                                          :handlers handlers
-                                                          :licenses [link text]
-                                                          :disable-commands [{:command :application.command/invite-member}
-                                                                             {:command :application.command/close
-                                                                              :when/state [:application.state/returned]
-                                                                              :when/role [:applicant]}]})]
+        restricted (test-helpers/create-workflow! {:actor owner
+                                                   :organization {:organization/id "nbn"}
+                                                   :title "Restricted workflow"
+                                                   :type :workflow/default
+                                                   :handlers handlers
+                                                   :licenses [link text]
+                                                   :disable-commands [{:command :application.command/invite-member}
+                                                                      {:command :application.command/close
+                                                                       :when/state [:application.state/returned]
+                                                                       :when/role [:applicant]}]
+                                                   :anonymize-handling true})]
     {:default default
      :ega ega
      :decider decider
@@ -340,7 +341,7 @@
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner
-     :disabled-commands disabled-commands}))
+     :restricted restricted}))
 
 (defn- create-bona-fide-catalogue-item! [users]
   (let [owner (:owner users)
@@ -391,6 +392,7 @@
 (defn- create-applications! [catid catid-restricted users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
+        approver2 (users :approver2)
         reviewer (users :reviewer)]
 
     (test-helpers/create-draft! applicant [catid] "draft application")
@@ -438,10 +440,24 @@
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor applicant})
-      (test-helpers/command! {:type :application.command/return
+      (test-helpers/command! {:type :application.command/remark
                               :application-id app-id
                               :actor approver
-                              :comment "Need more details"}))
+                              :comment "processing is due now"
+                              :public true})
+      (test-helpers/command! {:type :application.command/request-review
+                              :application-id app-id
+                              :actor approver2
+                              :reviewers [reviewer]
+                              :comment "please have a look"})
+      (test-helpers/command! {:type :application.command/review
+                              :application-id app-id
+                              :actor reviewer
+                              :comment "not looking good"})
+      (test-helpers/command! {:type :application.command/return
+                              :application-id app-id
+                              :actor approver2
+                              :comment "need more details"}))
 
     (let [app-id (test-helpers/create-draft! applicant [catid] "approved & closed")]
       (test-helpers/command! {:type :application.command/submit
@@ -848,7 +864,7 @@
           catid (test-helpers/create-catalogue-item! cat)
           catid-restricted (test-helpers/create-catalogue-item!
                             (assoc cat
-                                   :workflow-id (:disabled-commands workflows)
+                                   :workflow-id (:restricted workflows)
                                    :title {:en "Default workflow (restricted)"
                                            :fi "Oletustyövuo (rajoitettu)"
                                            :sv "Standard arbetsflöde (begränsad)"}))]
