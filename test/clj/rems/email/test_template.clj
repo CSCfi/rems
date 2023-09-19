@@ -1,5 +1,5 @@
 (ns rems.email.test-template
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [clj-time.core :as time]
             [mount.core :as mount]
             [rems.application.model :as model]
@@ -49,7 +49,14 @@
                              :email "handler@example.com"}
                             {:userid "assistant"
                              :name "Amber Assistant"
-                             :email "assistant@example.com"}]}}})
+                             :email "assistant@example.com"}]}}
+   6 {:workflow {:handlers [{:userid "handler"
+                             :name "Hannah Handler"
+                             :email "handler@example.com"}
+                            {:userid "assistant"
+                             :name "Amber Assistant"
+                             :email "assistant@example.com"}]
+                 :anonymize-handling true}}})
 
 (def ^:private get-form-template
   (constantly {:form/id 40
@@ -121,20 +128,21 @@
   ([base-events event]
    (emails :en base-events event)))
 
-(def created-events [{:application/id 7
-                      :application/external-id "2001/3"
-                      :event/type :application.event/created
-                      :event/actor "applicant"
-                      :application/resources [{:catalogue-item/id 10
-                                               :resource/ext-id "urn:11"}
-                                              {:catalogue-item/id 20
-                                               :resource/ext-id "urn:21"}]
-                      :application/forms [{:form/id 40}]
-                      :workflow/id 5
-                      :workflow/type :workflow/default}
-                     {:application/id 7
-                      :event/type :application.event/draft-saved
-                      :application/field-values [{:form 40 :field "1" :value "Application title"}]}])
+(def create-event {:application/id 7
+                   :application/external-id "2001/3"
+                   :event/type :application.event/created
+                   :event/actor "applicant"
+                   :application/resources [{:catalogue-item/id 10
+                                            :resource/ext-id "urn:11"}
+                                           {:catalogue-item/id 20
+                                            :resource/ext-id "urn:21"}]
+                   :application/forms [{:form/id 40}]
+                   :workflow/id 5
+                   :workflow/type :workflow/default})
+(def save-draft-event {:application/id 7
+                       :event/type :application.event/draft-saved
+                       :application/field-values [{:form 40 :field "1" :value "Application title"}]})
+(def created-events [create-event save-draft-event])
 
 (def submit-event {:application/id 7
                    :event/type :application.event/submitted
@@ -142,6 +150,9 @@
                    :event/time 13})
 
 (def base-events (conj created-events submit-event))
+(def anonymous-wf-events [(assoc create-event :workflow/id 6)
+                          save-draft-event
+                          submit-event])
 
 (deftest test-submitted
   (let [mails (emails created-events submit-event)]
@@ -211,7 +222,22 @@
     (is (= {:to-user "applicant"
             :subject "(2001/3, \"Application title\") Application has been commented"
             :body "Dear Alice Applicant,\n\nRandom Remarker has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
-           (email-to "applicant" mails)))))
+           (email-to "applicant" mails))))
+  (testing "remarked anonymize handling workflow"
+    (let [mails (emails anonymous-wf-events {:application/id 7
+                                             :event/type :application.event/remarked
+                                             :event/actor "handler"
+                                             :application/public true
+                                             :application/comment "remark!"})]
+      (is (= #{"assistant" "applicant"} (email-recipients mails)))
+      (is (= {:to-user "applicant"
+              :subject "(2001/3, \"Application title\") Application has been commented"
+              :body "Dear Alice Applicant,\n\nHandler has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
+             (email-to "applicant" mails)))
+      (is (= {:to-user "assistant"
+              :subject "(2001/3, \"Application title\") Application has been commented"
+              :body "Dear Amber Assistant,\n\nHannah Handler has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
+             (email-to "assistant" mails))))))
 
 (deftest test-members-licenses-approved-closed
   (let [add-member {:application/id 7
@@ -236,6 +262,17 @@
         (is (= {:to-user "applicant"
                 :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
                 :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can view the application and approve the changed terms of use at http://example.com/application/7"}
+               (email-to "applicant" mails)))))
+    (testing "licenses-added anonymize handling workflow"
+      (let [mails (emails (conj anonymous-wf-events add-member join)
+                          {:application/id 7
+                           :event/type :application.event/licenses-added
+                           :event/actor "handler"
+                           :application/licenses [{:license/id 1234}]})]
+        (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
+        (is (= {:to-user "applicant"
+                :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
+                :body "Dear Alice Applicant,\n\nHandler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can view the application and approve the changed terms of use at http://example.com/application/7"}
                (email-to "applicant" mails)))))
     (testing "approved"
       (let [mails (emails member-events {:application/id 7
@@ -417,7 +454,22 @@
     (is (= {:to-user "handler"
             :subject "(2001/3, \"Application title\") Applicant changed"
             :body "Dear Hannah Handler,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
-           (email-to "handler" mails)))))
+           (email-to "handler" mails)))
+    (testing "change-applicant anonymize handling workflow"
+      (let [mails (emails anonymous-wf-events change)]
+        (is (= #{"applicant" "handler" "bob"} (email-recipients mails)))
+        (is (= {:to-user "applicant"
+                :subject "Applicant for application 2001/3, \"Application title\" changed"
+                :body "Dear Alice Applicant,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Handler.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "applicant" mails)))
+        (is (= {:to-user "bob"
+                :subject "Applicant for application 2001/3, \"Application title\" changed"
+                :body "Dear Bob Boss,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Handler.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "bob" mails)))
+        (is (= {:to-user "handler"
+                :subject "(2001/3, \"Application title\") Applicant changed"
+                :body "Dear Hannah Handler,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "handler" mails)))))))
 
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
