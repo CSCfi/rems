@@ -589,7 +589,8 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
-  :roles {:applicant "Sökande"
+  :roles {:anonymous-handler :sv.t.roles/handler
+          :applicant "Sökande"
           :decider "Beslutare"
           :handler "Handläggare"
           :member "Deltagare"

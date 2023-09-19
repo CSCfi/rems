@@ -182,6 +182,13 @@
    :application.event/submitted :t.applications.events/submitted
    :application.event/voted :t.applications.events/voted})
 
+(defn localize-user
+  "Returns localization for special user if possible. Otherwise returns formatted user."
+  [user]
+  (case (:userid user)
+    "rems-handler" (text :t.roles/anonymous-handler)
+    (application-util/get-member-name user)))
+
 (defn localize-decision [event]
   (when-let [decision (:application/decision event)]
     (text-format
@@ -189,7 +196,7 @@
        :approved :t.applications.events/approved
        :rejected :t.applications.events/rejected
        :t.applications.events/unknown)
-     (application-util/get-member-name (:event/actor-attributes event)))))
+     (localize-user (:event/actor-attributes event)))))
 
 (defn localize-invitation [{:keys [name email]}]
   (str name " <" email ">"))
@@ -199,14 +206,14 @@
     (str
      (text-format
       (get event-types event-type :t.applications.events/unknown)
-      (application-util/get-member-name (:event/actor-attributes event))
+      (localize-user (:event/actor-attributes event))
       (case event-type
         :application.event/review-requested
-        (str/join ", " (mapv application-util/get-member-name
+        (str/join ", " (mapv localize-user
                              (:application/reviewers event)))
 
         :application.event/decision-requested
-        (str/join ", " (mapv application-util/get-member-name
+        (str/join ", " (mapv localize-user
                              (:application/deciders event)))
 
         :application.event/created
@@ -217,10 +224,10 @@
 
         (:application.event/member-added
          :application.event/member-removed)
-        (application-util/get-member-name (:application/member event))
+        (localize-user (:application/member event))
 
         :application.event/applicant-changed
-        (application-util/get-member-name (:application/applicant event))
+        (localize-user (:application/applicant event))
 
         (:application.event/member-invited
          :application.event/member-uninvited)

@@ -589,7 +589,8 @@
             :settings "Asetukset"
             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
-  :roles {:applicant "Hakija"
+  :roles {:anonymous-handler :fi.t.roles/handler
+          :applicant "Hakija"
           :decider "Päättäjä"
           :handler "Käsittelijä"
           :member "Jäsen"

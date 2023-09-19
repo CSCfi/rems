@@ -638,7 +638,8 @@
             :settings "Settings"
             :warning-about-missing-email [:<> "You will need to " [:a {:href "/profile"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
             :your-details "Your user details"}
-  :roles {:applicant "Applicant"
+  :roles {:anonymous-handler :en.t.roles/handler ; use handler as default translation for workflow anonymized handlers
+          :applicant "Applicant"
           :decider "Decider"
           :handler "Handler"
           :member "Member"

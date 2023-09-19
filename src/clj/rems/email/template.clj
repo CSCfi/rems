@@ -1,11 +1,12 @@
 (ns rems.email.template
   (:require [clojure.string :as str]
             [rems.common.application-util :as application-util]
-            [rems.application.model]
+            [rems.application.model :as model]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.user-settings :as user-settings]
-            [rems.text :refer [localize-utc-date text text-no-fallback text-format with-language]]
+            [rems.permissions :as permissions]
+            [rems.text :refer [localize-user localize-utc-date text text-no-fallback text-format with-language]]
             [rems.util :as util]))
 
 ;;; Mapping events to emails
@@ -41,6 +42,19 @@
 (defn- other-handlers [event application]
   (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
 
+(defn- apply-event-privacy [event application userid]
+  (cond
+    (contains? (permissions/user-permissions application userid) :see-everything)
+    event
+
+    (get-in application [:application/workflow :workflow/anonymize-handling])
+    (-> [event]
+        (model/anonymize-users-in-events (model/get-handling-users application))
+        first)
+
+    :else
+    event))
+
 (defmulti event-to-emails
   (fn [event _application] (:event/type event)))
 
@@ -52,24 +66,25 @@
    (for [recipient recipients
          :let [email (with-language (:language (user-settings/get-user-settings (:userid recipient)))
                        (when (and body-text (not (str/blank? (text-no-fallback body-text))))
-                         {:to-user (:userid recipient)
-                          :subject (text-format subject-text
+                         (let [event (apply-event-privacy event application (:userid recipient))]
+                           {:to-user (:userid recipient)
+                            :subject (text-format subject-text
+                                                  (application-util/get-member-name recipient)
+                                                  (localize-user (:event/actor-attributes event))
+                                                  (format-application-for-email application)
+                                                  (application-util/get-applicant-name application)
+                                                  (resources-for-email application)
+                                                  (link-to-application (:application/id event)))
+                            :body (str
+                                   (text-format body-text
                                                 (application-util/get-member-name recipient)
-                                                (application-util/get-member-name (:event/actor-attributes event))
+                                                (localize-user (:event/actor-attributes event))
                                                 (format-application-for-email application)
                                                 (application-util/get-applicant-name application)
                                                 (resources-for-email application)
                                                 (link-to-application (:application/id event)))
-                          :body (str
-                                 (text-format body-text
-                                              (application-util/get-member-name recipient)
-                                              (application-util/get-member-name (:event/actor-attributes event))
-                                              (format-application-for-email application)
-                                              (application-util/get-applicant-name application)
-                                              (resources-for-email application)
-                                              (link-to-application (:application/id event)))
-                                 (text :t.email/regards)
-                                 (text :t.email/footer))}))]
+                                   (text :t.email/regards)
+                                   (text :t.email/footer))})))]
          :when email]
      email)))
 
@@ -158,13 +173,15 @@
                         :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
-  (emails-to-recipients (concat (handlers application)
-                                (when (:application/public event)
-                                  ;; no need to email members on non-actionable things
-                                  [(:application/applicant application)]))
-                        event application
-                        :t.email.remarked/subject
-                        :t.email.remarked/message))
+  (concat (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.remarked/subject
+                                :t.email.remarked/message)
+          (when (:application/public event) ; no need to email members on non-actionable things
+            (emails-to-recipients [(:application/applicant application)]
+                                  event application
+                                  :t.email.remarked/subject
+                                  :t.email.remarked/message))))
 
 (defmethod event-to-emails :application.event/decided [event application]
   (emails-to-recipients (handlers application)
