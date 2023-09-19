@@ -5,7 +5,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [organization-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.atoms :as atoms :refer [enrich-user document-title]]
+            [rems.atoms :as atoms :refer [checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
             [rems.common.application-util :as application-util]
@@ -55,7 +55,8 @@
                                             :licenses (->> (:licenses workflow)
                                                            (mapv #(replace-key % :license/id :id)))
                                             :disable-commands (get workflow :disable-commands)
-                                            :voting (get workflow :voting)})))
+                                            :voting (get workflow :voting)
+                                            :anonymize-handling (:anonymize-handling workflow)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -87,7 +88,8 @@
                   :disable-commands (->> (:disable-commands form)
                                          (mapv #(update-existing % :when/state vec))
                                          (mapv #(update-existing % :when/role vec)))
-                  :voting (:voting form)}
+                  :voting (:voting form)
+                  :anonymize-handling (:anonymize-handling form false)}
                  (when (needs-handlers? (:type form))
                    {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
@@ -108,7 +110,8 @@
                  :disable-commands (->> (:disable-commands form)
                                         (mapv #(update-existing % :when/state vec))
                                         (mapv #(update-existing % :when/role vec)))
-                 :voting (:voting form)}]
+                 :voting (:voting form)
+                 :anonymize-handling (:anonymize-handling form)}]
     (when (valid-edit-request? request)
       request)))
 
@@ -154,6 +157,9 @@
                    (remove #{:application.command/assign-external-id
                              :application.command/create
                              :application.command/send-expiration-notifications}))))
+
+(rf/reg-sub ::workflow-anonymize-handling (fn [db _] (get-in db [::form :anonymize-handling])))
+(rf/reg-event-db ::toggle-anonymize-handling (fn [db [_]] (update-in db [::form :anonymize-handling] not)))
 
 ;;;; UI
 
@@ -400,22 +406,39 @@
          :disabled? @(rf/subscribe [::editing?])
          :on-change #(rf/dispatch [::set-forms %])}])]))
 
+(defn- workflow-anonymize-handling-field []
+  (let [anonymize-handling @(rf/subscribe [::workflow-anonymize-handling])
+        on-change #(rf/dispatch [::toggle-anonymize-handling])]
+    [:div.form-group.anonymize-handling
+     [:div.form-group.form-check.form-check-inline.pointer
+      [checkbox {:id :anonymize-handling
+                 :class :form-check-input
+                 :value anonymize-handling
+                 :on-change on-change}]
+      [:label.form-check-label {:for :anonymize-handling :on-click on-change}
+       (text :t.administration/anonymize-handling)]]
+     (when anonymize-handling
+       [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)])]))
+
 (defn default-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/default-workflow-description)]
    [workflow-handlers-field]
+   [workflow-anonymize-handling-field]
    [workflow-forms-field]])
 
 (defn decider-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
    [workflow-handlers-field]
+   [workflow-anonymize-handling-field]
    [workflow-forms-field]])
 
 (defn master-workflow-form []
   [:div
    [workflow-type-description (text :t.create-workflow/master-workflow-description)]
    [workflow-handlers-field]
+   [workflow-anonymize-handling-field]
    [workflow-forms-field]])
 
 (defn create-workflow-page []

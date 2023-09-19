@@ -77,6 +77,7 @@
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :anonymize-handling "Anonymized handling"
                    :application-state "Application state"
                    :archive "Archive"
                    :back "Back"
@@ -139,6 +140,7 @@
                    :name "Name"
                    :no-categories "No categories"
                    :no-form "No form"
+                   :no-forms "No forms"
                    :no-licenses "No licenses"
                    :no-voting "No voting"
                    :optional "(optional)"
@@ -167,6 +169,7 @@
                    :voting "Voting"
                    :workflow "Workflow"
                    :workflows "Workflows"
+                   :workflow-anonymize-handling-explanation "This workflow hides handler's personally identifiable information (e.g. name and email) from applicant and members."
                    :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
