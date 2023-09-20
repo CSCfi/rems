@@ -1,5 +1,6 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
+            [clj-time.coerce :as time-coerce]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [medley.core :refer [update-existing]]
@@ -71,6 +72,9 @@
                          :field schema-base/FieldId
                          :value schema-base/FieldValue}]
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
+
+(s/defschema Count
+  s/Int)
 
 ;; Api implementation
 
@@ -156,13 +160,23 @@
       (ok (->> (todos/get-todos (getx-user-id))
                (filter-with-search query))))
 
+    (GET "/handled/count" []
+      :summary "Get count of all applications that the current user no more needs to act on."
+      :roles #{:logged-in}
+      :return Count
+      (ok (todos/get-handled-todos-count (getx-user-id))))
+
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (todos/get-handled-todos (getx-user-id))
-               (filter-with-search query))))
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
+                     {limit :- (describe s/Int "how many results to return") nil}]
+      (ok (cond->> (todos/get-handled-todos (getx-user-id))
+            query (filter-with-search query)
+            true (sort-by (comp - time-coerce/to-long :application/last-activity))
+            limit (take limit))))
+
 
     (POST "/create" []
       :summary "Create a new application"
@@ -327,7 +341,7 @@
               (pdf/application-to-pdf-bytes)
               (ByteArrayInputStream.)
               (ok)
-               ;; could also set "attachment" here to force download:
+              ;; could also set "attachment" here to force download:
               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
               (content-type "application/pdf")))
         (api-util/not-found-json-response)))
