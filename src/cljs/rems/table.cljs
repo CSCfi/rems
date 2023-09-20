@@ -91,6 +91,8 @@
    (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))
    ;; does the table have row selection?
    (s/optional-key :selectable?) s/Bool
+   ;; how many rows to show at maximum
+   (s/optional-key :limit) (s/maybe s/Int)
    ;; callback for currently selected row keys
    (s/optional-key :on-select) (s/=> [ColumnKey])})
 
@@ -195,9 +197,18 @@
      column)))
 
 (rf/reg-sub
- ::rows
+ ::limited-rows
  (fn [[_ table] _]
    [(rf/subscribe (:rows table))])
+ (fn [[rows] [_ table]]
+   (if-let [limit (:limit table)]
+     (take limit rows)
+     rows)))
+
+(rf/reg-sub
+ ::rows
+ (fn [[_ table] _]
+   [(rf/subscribe [::limited-rows table])])
  (fn [[rows] _]
    (->> rows
         (s/validate Rows)
