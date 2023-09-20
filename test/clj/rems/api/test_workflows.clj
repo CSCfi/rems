@@ -275,19 +275,19 @@
       (let [app (applications/get-application app-id)]
         (is (= #{"owner" "alice"}
                (application->handler-user-ids app)))))
-    
+
     (testing "change anonymize handling"
       (let [get-anonymize-handling #(-> % :workflow (select-keys [:anonymize-handling]))
             edit-wf #(api-call :put "/api/workflows/edit"
                                (merge {:id wfid} %)
                                +test-api-key+ user-id)]
-    
+
         (is (true? (:success (edit-wf {:anonymize-handling true}))))
         (is (= {:anonymize-handling true} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))
-    
+
         (is (true? (:success (edit-wf {}))))
         (is (= {:anonymize-handling true} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))
-    
+
         (is (true? (:success (edit-wf {:anonymize-handling false}))))
         (is (= {:anonymize-handling false} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))))))
 
