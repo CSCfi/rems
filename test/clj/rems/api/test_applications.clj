@@ -1441,8 +1441,7 @@
                                     api-key user)]
           (is (= {:userid "alice"
                   :name "Alice Applicant"
-                  :email "alice@example.com"
-                  :organizations [{:organization/id "default"}]}
+                  :email "alice@example.com"}
                  (:application/applicant application)
                  (get-in application [:application/events 0 :event/actor-attributes])))
           (is (= {:userid "developer"
