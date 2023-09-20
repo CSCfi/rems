@@ -55,7 +55,7 @@
       :roles +admin-write-roles+
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (workflow/create-workflow! command)))
 
     (PUT "/edit" request
@@ -63,7 +63,7 @@
       :roles +admin-write-roles+
       :body [command EditWorkflowCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (workflow/edit-workflow! command)))
 
     (PUT "/archived" []

@@ -50,7 +50,7 @@
       :roles +admin-write-roles+
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (form/create-form! command)))
 
     (GET "/:form-id" []
@@ -75,7 +75,7 @@
       :roles +admin-write-roles+
       :body [command EditFormCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (form/edit-form! command)))
 
     (PUT "/archived" []

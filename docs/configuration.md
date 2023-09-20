@@ -183,29 +183,14 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
 ### Extended Logging
 
-The config option `:extended-logging` is for routes that should additionally log the content of entity mutations.
-
-Logging is at `INFO` level and the log messages are prefixed with `extended-logging (:uri request)` e.g. `extended-logging /api/forms/edit`.
+The config option `:extended-logging` can be enabled to additionally log the content of entity mutations.
 
 These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
 
-Logging occurs after request data has been coerced to a schema, but before the mutation is persisted.
-as such, the logged information is only authoritative about the state of the respective entity iff the request was successful.
+Logging is at `INFO` level and the log messages are prefixed with `extended-logging (:uri request)` e.g. `extended-logging /api/forms/edit`.
 
-Only routes that mutate an existing entity benefit from extended logging, the possible routes are as follows:
-```
- ["/api/catalogue-items/create"
-  "/api/catalogue-items/edit"
-  "/api/categories/create"
-  "/api/categories/edit"
-  "/api/forms/create"
-  "/api/forms/edit"
-  "/api/users/create"
-  "/api/users/edit"
-  "/api/user-settings/edit"
-  "/api/workflows/create"
-  "/api/workflows/edit"]
-```
+Logging occurs before the mutation is persisted. As such, the logged information is only authoritative about the state of the respective entity iff the request was successful.
+
 ## Application expiration scheduler
 
 REMS can be configured to delete applications after a set period of time has passed since last activity. Expiration can be defined for application states with ISO-8601 duration formatting, and optionally email notification can be configured to be sent to applicant and members before deletion. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.

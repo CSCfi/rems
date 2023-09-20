@@ -52,6 +52,6 @@
     (-> (http-response/unprocessable-entity body)
         (http-response/content-type "application/json"))))
 
-(defn extended-logging [request mutation]
-  (-> (when (some (partial = (:uri request)) (:extended-logging-routes env))
-        (log/info "extended-logging" (:uri request) mutation))))
+(defn extended-logging [request]
+  (-> (when (:extended-logging env)
+        (log/info "extended-logging" (:uri request) (:params request)))))

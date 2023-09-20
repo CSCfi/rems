@@ -432,20 +432,7 @@
 
  ;; Extended logging for routes that should additionally log content of entity mutation.
  ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
- ;;
- ;; only routes that mutate an existing entity can be logged, the possible routes are as follows:
- ;; ["/api/catalogue-items/create"
- ;;  "/api/catalogue-items/edit"
- ;;  "/api/categories/create"
- ;;  "/api/categories/edit"
- ;;  "/api/forms/create"
- ;;  "/api/forms/edit"
- ;;  "/api/users/create"
- ;;  "/api/users/edit"
- ;;  "/api/user-settings/edit"
- ;;  "/api/workflows/create"
- ;;  "/api/workflows/edit"]
- :extended-logging-routes []
+ :extended-logging-routes false
 
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]

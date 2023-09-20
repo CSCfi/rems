@@ -107,7 +107,7 @@
       :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/edit" request
@@ -115,7 +115,7 @@
       :roles +admin-write-roles+
       :body [command EditCatalogueItemCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
         (not-found-json-response)
         (ok (catalogue/edit-catalogue-item! command))))

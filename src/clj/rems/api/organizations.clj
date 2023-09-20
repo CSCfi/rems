@@ -51,7 +51,7 @@
       :roles #{:owner}
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (organizations/add-organization! command)))
 
     (PUT "/edit" request
@@ -60,7 +60,7 @@
       :roles #{:owner :organization-owner}
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (organizations/edit-organization! command)))
 
     (PUT "/archived" []

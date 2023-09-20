@@ -38,7 +38,7 @@
       :roles +admin-write-roles+
       :body [command schema/CreateCategoryCommand]
       :return CreateCategoryResponse
-      (extended-logging request command)
+      (extended-logging request)
       (ok (category/create-category! command)))
 
     (PUT "/edit" request
@@ -46,7 +46,7 @@
       :roles +admin-write-roles+
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (if (category/get-category (:category/id command))
         (ok (category/update-category! command))
         (not-found-json-response)))

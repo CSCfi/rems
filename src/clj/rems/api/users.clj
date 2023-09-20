@@ -29,7 +29,7 @@
       :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (users/add-user! command)
       (ok {:success true}))
 
@@ -38,7 +38,7 @@
       :roles #{:owner :user-owner}
       :body [command EditUserCommand]
       :return schema/SuccessResponse
-      (extended-logging request command)
+      (extended-logging request)
       (users/edit-user! command)
       (ok {:success true}))
 
