@@ -9,7 +9,6 @@
             [rems.common.form :as form]
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
-            [rems.config]
             [rems.permissions :as permissions]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -53,8 +52,7 @@
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
-      (assoc-some-in [:application/duo :duo/codes] (when (:enable-duo rems.config/env)
-                                                     (:application/duo-codes event)))))
+      (assoc-some-in [:application/duo :duo/codes] (:application/duo-codes event))))
 
 (defmethod application-base-view :application.event/licenses-accepted
   [application event]
@@ -513,8 +511,8 @@
                                               :duo/restrictions (:restrictions dataset-code)}]
                nil)}))
 
-(defn- enrich-application-duo-matches [application]
-  (if-not (:enable-duo rems.config/env)
+(defn- enrich-application-duo-matches [application get-config]
+  (if-not (:enable-duo (get-config))
     application
     (let [duos (->> application :application/duo :duo/codes)
           matches (for [resource (:application/resources application)
@@ -760,7 +758,7 @@
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
-      enrich-application-duo-matches ; uses enriched resources
+      (enrich-application-duo-matches get-config) ; uses enriched resources
       (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
@@ -877,10 +875,10 @@
        event))))
 
 (defn get-handling-users [application]
-  (let [handling-roles #(clojure.set/intersection +handling-roles+ (set %))]
+  (let [get-handling-roles #(clojure.set/intersection +handling-roles+ (set %))]
     (set
      (some->> (:application/user-roles application)
-              (filter-vals (comp seq handling-roles))
+              (filter-vals (comp seq get-handling-roles))
               keys))))
 
 (defn apply-workflow-anonymization [application]
