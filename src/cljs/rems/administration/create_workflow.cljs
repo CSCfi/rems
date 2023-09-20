@@ -91,7 +91,7 @@
                   :voting (:voting form)
                   :anonymize-handling (:anonymize-handling form false)}
                  (when (needs-handlers? (:type form))
-                   {:handlers (map :userid (:handlers form))}))]
+                   {:handlers (mapv :userid (:handlers form))}))]
     (when (valid-create-request? request)
       request)))
 
@@ -106,12 +106,12 @@
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :id id
                  :title (:title form)
-                 :handlers (map :userid (:handlers form))
+                 :handlers (mapv :userid (:handlers form))
                  :disable-commands (->> (:disable-commands form)
                                         (mapv #(update-existing % :when/state vec))
                                         (mapv #(update-existing % :when/role vec)))
                  :voting (:voting form)
-                 :anonymize-handling (:anonymize-handling form)}]
+                 :anonymize-handling (:anonymize-handling form false)}]
     (when (valid-edit-request? request)
       request)))
 

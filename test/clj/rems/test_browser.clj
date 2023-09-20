@@ -1029,8 +1029,8 @@
                 "Type" "Master workflow"
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
-                "Forms" ""
-                "Licenses" ""}
+                "Forms" "No forms"
+                "Licenses" "No licenses"}
                (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
@@ -1335,8 +1335,8 @@
               "Title" (btu/context-getx :workflow-name)
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
-              "Forms" ""
-              "Licenses" ""
+              "Forms" "No forms"
+              "Licenses" "No licenses"
               "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")

@@ -88,19 +88,33 @@
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test
-  (is (= {:id 3
-          :organization {:organization/id "o"}
-          :title "t"
-          :handlers ["a" "b"]
-          :disable-commands [{:command :application.command/close}]
-          :voting nil
-          :anonymize-handling true}
-         (build-edit-request 3 {:organization {:organization/id "o"}
-                                :title "t"
-                                :handlers [{:userid "a"} {:userid "b"}]
-                                :licenses [{:id 1}] ; licenses should not be mapped
-                                :disable-commands [{:command :application.command/close}]
-                                :anonymize-handling true})))
+  (testing "form defaults"
+    (is (= {:id 3
+            :organization {:organization/id "o"}
+            :title "t"
+            :handlers ["a" "b"]
+            :disable-commands []
+            :voting nil
+            :anonymize-handling false}
+           (build-edit-request 3 {:organization {:organization/id "o"}
+                                  :title "t"
+                                  :handlers [{:userid "a"} {:userid "b"}]}))))
+  (testing "extra options"
+    (is (= {:id 3
+            :organization {:organization/id "o"}
+            :title "t"
+            :handlers ["a" "b"]
+            :disable-commands [{:command :application.command/close}]
+            :voting :handlers-vote
+            :anonymize-handling true}
+           (build-edit-request 3 {:organization {:organization/id "o"}
+                                  :title "t"
+                                  :handlers [{:userid "a"} {:userid "b"}]
+                                  :licenses [{:id 1}] ; licenses should not be mapped
+                                  :disable-commands [{:command :application.command/close}]
+                                  :voting :handlers-vote
+                                  :anonymize-handling true}))))
+
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "" :handlers [{:userid "a"} {:userid "b"}]})))
