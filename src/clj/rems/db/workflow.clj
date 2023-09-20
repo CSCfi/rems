@@ -70,7 +70,7 @@
                         handlers (assoc :handlers handlers)
                         disable-commands (assoc :disable-commands disable-commands)
                         voting (assoc :voting voting)
-                        :always (assoc :anonymize-handling (true? anonymize-handling)))]
+                        (some? anonymize-handling) (assoc :anonymize-handling anonymize-handling))]
     (db/edit-workflow! {:id (or id (:id workflow))
                         :title (or title (:title workflow))
                         :organization (or (:organization/id organization)
