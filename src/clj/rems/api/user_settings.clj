@@ -38,7 +38,7 @@
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
-      (extended-logging request settings)
+      (extended-logging request)
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))
 
     (PUT "/" []
