@@ -46,7 +46,6 @@
   (create-handlers!)
   (let [create-workflow (fn [user-id organization workflow]
                           (api-call :post "/api/workflows/create"
-                                    ; type forms
                                     (merge {:organization {:organization/id organization}
                                             :title "workflow title"
                                             :handlers ["handler" "carl"]}
