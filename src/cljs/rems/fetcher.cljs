@@ -68,7 +68,9 @@
   Further options can be given as a map `opts`:
   - `:result`      - a transformation function that is applied to each result before storing it
   - `:on-success`  - called after successful fetch
-  - `:path-params` - a function that receives the db and can assign path param values"
+  - `:path-params` - a function that receives the db and can assign path param values
+
+  Returns a structure that allows updating parameters, e.g. notifying about parameters."
   [id url & [opts]]
   (let [result-id (keyword (namespace id)
                            (str (name id) "-result"))
@@ -118,4 +120,6 @@
        (case k
          :searching? (and (get-in db [id :fetching?])
                           (get-in db [id :initialized?]))
+         :data? (or (get-in db [id :fetching?])
+                    (get-in db [id :initialized?]))
          (get-in db [id (or k :data)]))))))
