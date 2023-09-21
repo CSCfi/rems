@@ -86,8 +86,6 @@
                (include-js "/assets/font-awesome/js/fontawesome.js")
                (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
                (include-js "/assets/jquery/jquery.min.js")
-               (include-js "/assets/popper.js/dist/umd/popper.min.js")
-               (include-js "/assets/tether/dist/js/tether.min.js")
                (include-js "/assets/bootstrap/js/bootstrap.min.js")
                (when (:accessibility-report env) (include-js "/assets/axe-core/axe.min.js"))
                (for [extra-script (get-in env [:extra-scripts :files])]

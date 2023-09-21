@@ -46,13 +46,11 @@
                  [org.clojure/tools.cli "1.0.214"]
                  [org.clojure/tools.logging "1.2.4"]
                  [org.postgresql/postgresql "42.5.1"]
-                 [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
                  [org.webjars.npm/axe-core "4.6.3"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
-                 [org.webjars.npm/popper.js "1.16.1"]
-                 [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
+                 [org.webjars/bootstrap "5.3.2"]
                  [org.webjars/font-awesome "6.1.0"] ; icons don't work with "6.2.0"
-                 [org.webjars/jquery "3.6.3"]
+                 [org.webjars/jquery "3.7.1"]
                  [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
                  [ring-cors "0.1.13"]
                  [ring-middleware-format "0.7.5"]
