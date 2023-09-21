@@ -651,8 +651,10 @@
            :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
+          :first-rows-only "Showing the first %1 rows only."
           :all-rows-selected "All rows selected"
           :no-rows-selected "No rows selected"
+          :show-all-rows "Show all rows"
           :some-rows-selected "Some rows selected"
           ;; %1 - number
           :show-all-n-rows "Show all %1 rows"

@@ -1,6 +1,5 @@
 (ns rems.table
-  "Sortable and filterable table component, which is optimized for
-  continuous filtering between every key press - without lag.
+  "Sortable, filterable and pageable table component.
 
   The implementation uses a non-conventional re-frame solution
   in order to support multiple components on the same page and
@@ -8,11 +7,18 @@
 
   - The `table` parameter is passed as a parameter to dynamic subscriptions,
     so that we can have multiple table components on the same page.
+
   - The rows are processed in stages by chaining subscriptions:
-      (:rows table) -> [::rows table] -> [::sorted-rows table] -> [::sorted-and-filtered-rows table] -> [::displayed-rows table]
-    This way only the last subscription, which does the filtering,
-    needs to be recalculated when the user types the search parameters.
-    Likewise, changing sorting only recalculates the last two subscriptions.
+
+         (:rows table)
+      -> [::rows table]
+      -> [::sorted-rows table]
+      -> [::sorted-and-filtered-rows table]
+      -> [::limited-rows table]
+      -> [::paged-rows table]
+
+    This way only the last subscriptions, which do the filtering and paging,
+    need to be recalculated when the user types the search parameters (and not using API search).
 
   (The users of this component don't need to know about these intermediate
   subscriptions and all other performance optimizations.)
@@ -22,11 +28,10 @@
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [checkbox sort-symbol]]
-            [rems.focus :as focus]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.paging :as paging]
             [rems.search :as search]
-            [rems.text :refer [text text-format]]
+            [rems.text :refer [text]]
             [schema.core :as s]))
 
 (s/defschema ColumnKey
@@ -91,8 +96,10 @@
    (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))
    ;; does the table have row selection?
    (s/optional-key :selectable?) s/Bool
+   ;; does the table have paging?
+   (s/optional-key :paging?) (s/maybe s/Bool)
    ;; how many rows to show at maximum
-   (s/optional-key :limit) (s/maybe s/Int)
+   (s/optional-key :max-rows) (s/maybe s/Int)
    ;; callback for currently selected row keys
    (s/optional-key :on-select) (s/=> [ColumnKey])})
 
@@ -100,7 +107,7 @@
 (rf/reg-event-db
  ::reset
  (fn [db _]
-   (dissoc db ::sorting ::filtering ::max-rows)))
+   (dissoc db ::sorting ::filtering)))
 
 (defn- flip [order]
   (case order
@@ -141,17 +148,6 @@
  ::filtering
  (fn [db [_ table]]
    (get-in db [::filtering (:id table)])))
-
-(rf/reg-event-db
- ::show-all-rows
- (fn [db [_ table]]
-   (assoc-in db [::max-rows (:id table)] js/Number.MAX_SAFE_INTEGER)))
-
-(rf/reg-sub
- ::max-rows
- (fn [db [_ table]]
-   (or (get-in db [::max-rows (:id table)])
-       50)))
 
 (defn- assoc-if-missing [m k make-default]
   (if (contains? m k)
@@ -197,18 +193,9 @@
      column)))
 
 (rf/reg-sub
- ::limited-rows
- (fn [[_ table] _]
-   [(rf/subscribe (:rows table))])
- (fn [[rows] [_ table]]
-   (if-let [limit (:limit table)]
-     (take limit rows)
-     rows)))
-
-(rf/reg-sub
  ::rows
  (fn [[_ table] _]
-   [(rf/subscribe [::limited-rows table])])
+   [(rf/subscribe (:rows table))])
  (fn [[rows] _]
    (->> rows
         (s/validate Rows)
@@ -258,18 +245,7 @@
    (let [search-terms (parse-search-terms (:filters filtering))
          columns (->> columns
                       (filter filterable?))]
-     (->> rows
-          (map (fn [row]
-                 ;; performance optimization: hide DOM nodes instead of destroying them
-                 (assoc row ::display-row? (display-row? row columns search-terms))))))))
-
-(rf/reg-sub
- ::displayed-rows
- (fn [db [_ table]]
-   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
-         max-rows @(rf/subscribe [::max-rows table])
-         rows (filter ::display-row? rows)]
-     (take max-rows rows))))
+     (filter #(display-row? % columns search-terms) rows))))
 
 (defn search
   "Search field component for filtering a `rems.table/table` instance
@@ -279,7 +255,9 @@
   [table]
   (s/validate Table table)
   (let [filtering @(rf/subscribe [::filtering table])
+        paging @(rf/subscribe [::paging table])
         on-search (fn [value]
+                    (rf/dispatch [::set-paging table (assoc paging :current-page 0)])
                     (rf/dispatch [::set-filtering table (assoc filtering :filters value)]))]
     [search/search-field {:id (str (name (:id table)) "-search")
                           :on-search on-search
@@ -322,7 +300,7 @@
  ::row-selection-state
  (fn [db [_ table]]
    (let [selected-rows @(rf/subscribe [::selected-rows table])
-         all-visible-rows (set (map :key @(rf/subscribe [::displayed-rows table])))
+         all-visible-rows (set (map :key @(rf/subscribe [::paged-rows table])))
          all-selected?  (and (= all-visible-rows selected-rows) (seq all-visible-rows))
          some-selected? (seq selected-rows)]
      (cond all-selected? :all
@@ -333,7 +311,7 @@
   "A checkbox-like component useful for a selection toggle in the table header."
   [table]
   (let [selection-state @(rf/subscribe [::row-selection-state table])
-        visible-rows @(rf/subscribe [::displayed-rows table])
+        visible-rows @(rf/subscribe [::paged-rows table])
         on-change (case selection-state
                     :all #(rf/dispatch [::set-selected-rows table []])
                     :some #(rf/dispatch [::set-selected-rows table []])
@@ -382,7 +360,6 @@
                        [:clickable
                         (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
-              :style (when-not (::display-row? row) {:display "none"})
               :on-click (when (:selectable? table)
                           #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
                              (rf/dispatch [::toggle-row-selection table (:key row)])))}
@@ -410,25 +387,36 @@
           (get-in db [::paging (:id table)]))))
 
 (rf/reg-sub
+ ::limited-rows
+ (fn [[_ table] _]
+   [(rf/subscribe [::sorted-and-filtered-rows table])])
+ (fn [[rows] [_ table]]
+   (if-let [max-rows (:max-rows table)]  ; only ever up to this maximum
+     (take max-rows rows)
+     rows)))
+
+(rf/reg-sub
  ::pages
  (fn [[_ table] _]
-   [(rf/subscribe [::sorted-and-filtered-rows table])
+   [(rf/subscribe [::limited-rows table])
     (rf/subscribe [::paging table])])
  (fn [[rows paging] [_ _table]]
-   (if (empty? rows)
-     0
-     (js/Math.ceil (/ (count rows)
-                      (:page-size paging))))))
+   (cond (empty? rows) 0
+         (not paging) 1
+         :else (js/Math.ceil (/ (count rows)
+                                (:page-size paging))))))
 
 (rf/reg-sub
  ::paged-rows
  (fn [[_ table] _]
-   [(rf/subscribe [::sorted-and-filtered-rows table])
+   [(rf/subscribe [::limited-rows table])
     (rf/subscribe [::paging table])])
- (fn [[rows paging] [_ _table]]
-   (->> rows
-        (drop (* (:page-size paging) (:current-page paging)))
-        (take (:page-size paging)))))
+ (fn [[rows paging] [_ table]]
+   (if (:paging? table)
+     (->> rows
+          (drop (* (:page-size paging) (:current-page paging)))
+          (take (:page-size paging)))
+     rows)))
 
 (defn paging
   "Paging component for paging a `rems.table/table` instance
@@ -454,35 +442,17 @@
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
-  (let [rows @(rf/subscribe [::paged-rows table]) ; TODO refactor to use ::displayed-rows
+  (let [rows @(rf/subscribe [::paged-rows table])
         language @(rf/subscribe [:language])
-        max-rows @(rf/subscribe [::max-rows table])
-        columns @(rf/subscribe [::filtered-columns table])
-        ;; When showing all rows, table-row is responsible for filtering displayed rows,
-        ;; but with truncation the visible rows need to be filtered before truncation.
-        rows (if (< max-rows (count rows))
-               (filter ::display-row? rows)
-               rows)]
+        columns @(rf/subscribe [::filtered-columns table])]
     [:div.table-border
      [:table.rems-table {:id (name (:id table))
                          :class (:id table)}
       [:thead
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
-       (for [row (take max-rows rows)]
-         ^{:key (:key row)} [table-row row table columns])]
-      (when (< max-rows (count rows))
-        [:tfoot
-         [:tr [:td {:col-span (+ (count columns)
-                                 (if (:selectable? table) 1 0))
-                    :style {:text-align :center}}
-               [:button.btn.btn-primary {:type :button
-                                         :on-click (fn []
-                                                     (rf/dispatch [::show-all-rows table])
-                                                     (let [next-row (:key (nth rows max-rows))]
-                                                       (focus/focus-element-async (str "table.rems-table." (name (:id table))
-                                                                                       " > tbody > tr[data-row='" next-row "'] > td"))))}
-                (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
+       (for [row rows]
+         ^{:key (:key row)} [table-row row table columns])]]]))
 
 ;;; guide
 
