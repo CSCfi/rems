@@ -651,11 +651,11 @@
            :search "Søg"}
   :table {:ascending-order "Stigende rækkefølge"
           :descending-order "Faldende rækkefølge"
+          :first-rows-only nil
           :all-rows-selected "Alle rækker er valgte"
           :no-rows-selected "Ingen rækker er valgte"
+          :show-all-rows nil
           :some-rows-selected "Nogle rækker er valgte"
-          ;; %1 - number
-          :show-all-n-rows "Vis alle %1 rækker"
           :paging {:page nil}}
   :unauthorized-page {:unauthorized "Ingen adgang"
                       :you-are-unauthorized "Du er ikke autoriseret til at tilgå denne side."}

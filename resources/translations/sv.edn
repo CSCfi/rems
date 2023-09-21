@@ -602,10 +602,11 @@
            :search "Sök"}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
+          :first-rows-only "Visar endast de första %1 raderna."
           :all-rows-selected "Alla rader är valda"
           :no-rows-selected "Inga rader är valda"
+          :show-all-rows "Visa alla raderna"
           :some-rows-selected "Några rader är valda"
-          :show-all-n-rows "Visa alla %1 rader"
           :paging {:page "Sidan"}}
   :unauthorized-page {:unauthorized "Ingen tillgång"
                       :you-are-unauthorized "Du har inte tillgång till denna sida."}

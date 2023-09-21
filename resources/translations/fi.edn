@@ -602,10 +602,11 @@
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
+          :first-rows-only "Näytetään vain ensimmäiset %1 riviä."
           :all-rows-selected "Kaikki rivit valittuna"
           :no-rows-selected "Ei yhtään riviä valittuna"
+          :show-all-rows "Näytä kaikki rivit"
           :some-rows-selected "Joitain rivejä valittuna"
-          :show-all-n-rows "Näytä kaikki %1 riviä"
           :paging {:page "Sivu"}}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
