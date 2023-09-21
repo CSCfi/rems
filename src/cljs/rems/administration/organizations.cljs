@@ -123,10 +123,12 @@
                                         :filterable? false
                                         :aria-label (text :t.actions/commands)}]
                              :rows [::organizations-table-rows]
+                             :paging? true
                              :default-sort-column :name}]
     [:div.mt-3
      [table/search organizations-table]
-     [table/table organizations-table]]))
+     [table/table organizations-table]
+     [table/paging organizations-table]]))
 
 (defn organizations-page []
   (into [:div

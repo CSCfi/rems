@@ -108,10 +108,12 @@
                                     :filterable? false
                                     :aria-label (text :t.actions/commands)}]
                          :rows [::resources-table-rows]
+                         :paging? true
                          :default-sort-column :title}]
     [:div.mt-3
      [table/search resources-table]
-     [table/table resources-table]]))
+     [table/table resources-table]
+     [table/paging resources-table]]))
 
 (defn resources-page []
   (into [:div

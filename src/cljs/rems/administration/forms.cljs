@@ -136,10 +136,12 @@
                                 :filterable? false
                                 :aria-label (text :t.actions/commands)}]
                      :rows [::forms-table-rows]
+                     :paging? true
                      :default-sort-column :internal-name}]
     [:div.mt-3
      [table/search forms-table]
-     [table/table forms-table]]))
+     [table/table forms-table]
+     [table/paging forms-table]]))
 
 (defn forms-page []
   (into [:div

@@ -109,10 +109,12 @@
                               :filterable? false
                               :aria-label (text :t.actions/commands)}]
                    :rows [::catalogue-table-rows]
+                   :paging? true
                    :default-sort-column :name}]
     [:div.mt-2rem
      [table/search catalogue]
-     [table/table catalogue]]))
+     [table/table catalogue]
+     [table/paging catalogue]]))
 
 (defn- catalogue-tree []
   (let [language @(rf/subscribe [:language])

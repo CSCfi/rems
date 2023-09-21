@@ -181,10 +181,12 @@
                          :default-sort-column :created
                          :default-sort-order :desc
                          :selectable? true
+                         :paging? true
                          :on-select #(rf/dispatch [::set-selected-items-ids %])}]
     [:div.mt-3
      [table/search catalogue-table]
-     [table/table catalogue-table]]))
+     [table/table catalogue-table]
+     [table/paging catalogue-table]]))
 
 (defn catalogue-items-page []
   (into [:div

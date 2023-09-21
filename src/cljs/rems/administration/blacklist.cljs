@@ -238,10 +238,12 @@
                                :filterable? false
                                :aria-label (text :t.actions/commands)}]
                     :rows [::blacklist]
+                    :paging? true
                     :default-sort-column :resource}]
     [:div.mt-3
      [table/search table-spec]
-     [table/table table-spec]]))
+     [table/table table-spec]
+     [table/paging table-spec]]))
 
 (defn blacklist []
   (if @(rf/subscribe [::loading?])

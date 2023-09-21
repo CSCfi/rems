@@ -110,10 +110,12 @@
                                     :filterable? false
                                     :aria-label (text :t.actions/commands)}]
                          :rows [::workflows-table-rows]
+                         :paging? true
                          :default-sort-column :title}]
     [:div.mt-3
      [table/search workflows-table]
-     [table/table workflows-table]]))
+     [table/table workflows-table]
+     [table/paging workflows-table]]))
 
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []

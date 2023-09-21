@@ -3,6 +3,7 @@
   (:require [cljs-time.core :as time]
             [clojure.set :as set]
             [clojure.string :as str]
+            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.common.application-util :as application-util]
@@ -134,7 +135,7 @@
            :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
 
-(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order paging?]
+(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order paging? max-rows]
              :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
@@ -168,7 +169,9 @@
                            :columns (filter #(visible-columns (:key %)) all-columns)
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
-                           :default-sort-order default-sort-order}]
+                           :default-sort-order default-sort-order
+                           :max-rows max-rows
+                           :paging? paging?}]
     [:<>
      [table/table application-table]
      (when paging?

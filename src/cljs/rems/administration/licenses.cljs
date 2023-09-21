@@ -112,10 +112,12 @@
                                    :filterable? false
                                    :aria-label (text :t.actions/commands)}]
                         :rows [::licenses-table-rows]
+                        :paging? true
                         :default-sort-column :title}]
     [:div.mt-3
      [table/search licenses-table]
-     [table/table licenses-table]]))
+     [table/table licenses-table]
+     [table/paging licenses-table]]))
 
 (defn licenses-page []
   (into [:div
