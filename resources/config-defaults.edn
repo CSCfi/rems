@@ -432,7 +432,7 @@
 
  ;; Extended logging for routes that should additionally log content of entity mutation.
  ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
- :extended-logging-routes false
+ :enable-extended-logging false
 
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]

@@ -183,7 +183,7 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
 ### Extended Logging
 
-The config option `:extended-logging` can be enabled to additionally log the content of entity mutations.
+The config option `:enable-extended-logging` can be toggled to additionally log the content of entity mutations.
 
 These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
 
