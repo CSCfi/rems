@@ -119,29 +119,24 @@
         forms)))
 
 (defn- forms-list []
-  (let [forms-table {:id ::forms
-                     :columns [{:key :organization
-                                :title (text :t.administration/organization)}
-                               {:key :internal-name
-                                :title (text :t.administration/internal-name)}
-                               {:key :active
-                                :title (text :t.administration/active)
-                                :filterable? false}
-                               {:key :errors
-                                :when-rows (fn [rows] (some (comp seq :value :errors) rows))
-                                :title (text :t.administration/has-errors)
-                                :filterable? false}
-                               {:key :commands
-                                :sortable? false
-                                :filterable? false
-                                :aria-label (text :t.actions/commands)}]
-                     :rows [::forms-table-rows]
-                     :paging? true
-                     :default-sort-column :internal-name}]
-    [:div.mt-3
-     [table/search forms-table]
-     [table/table forms-table]
-     [table/paging forms-table]]))
+  [table/standard {:id ::forms
+                   :columns [{:key :organization
+                              :title (text :t.administration/organization)}
+                             {:key :internal-name
+                              :title (text :t.administration/internal-name)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :errors
+                              :when-rows (fn [rows] (some (comp seq :value :errors) rows))
+                              :title (text :t.administration/has-errors)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::forms-table-rows]
+                   :default-sort-column :internal-name}])
 
 (defn forms-page []
   (into [:div

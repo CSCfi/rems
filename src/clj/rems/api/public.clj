@@ -49,7 +49,8 @@
    (s/optional-key :show-resources-section) s/Bool
    (s/optional-key :show-attachment-zip-action) s/Bool
    (s/optional-key :show-pdf-action) s/Bool
-   (s/optional-key :enable-voting) s/Bool})
+   (s/optional-key :enable-voting) s/Bool
+   (s/optional-key :tables) {s/Keyword {s/Keyword s/Any}}})
 
 (def translations-api
   (context "/translations" []

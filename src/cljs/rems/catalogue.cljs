@@ -101,7 +101,7 @@
          :default-sort-order :desc}]])))
 
 (defn- catalogue-table []
-  (let [catalogue {:id ::catalogue
+  [table/standard {:id ::catalogue
                    :columns [{:key :name
                               :title (text :t.catalogue/header)}
                              {:key :commands
@@ -109,12 +109,7 @@
                               :filterable? false
                               :aria-label (text :t.actions/commands)}]
                    :rows [::catalogue-table-rows]
-                   :paging? true
-                   :default-sort-column :name}]
-    [:div.mt-2rem
-     [table/search catalogue]
-     [table/table catalogue]
-     [table/paging catalogue]]))
+                   :default-sort-column :name}])
 
 (defn- catalogue-tree []
   (let [language @(rf/subscribe [:language])

@@ -170,12 +170,10 @@
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order
-                           :max-rows max-rows
-                           :paging? paging?}]
+                           :max-rows max-rows}]
     [:<>
      [table/table application-table]
-     (when paging?
-       [table/paging application-table])]))
+     [table/paging application-table]]))
 
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])

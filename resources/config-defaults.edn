@@ -466,4 +466,14 @@
  ;; See docs/plugins.md for more information.
  :plugins nil ; by default no plugins
  :extension-points nil ; by default no plugins
- :enable-voting false} ; voting (experimental)
+ :enable-voting false ; voting (experimental)
+
+ ;; REMS tables can have some parameters tuned.
+ ;; Not every attribute may work in every table yet.
+ ;;
+ ;; key   - identity of the table (e.g. `:catalogue`)
+ ;; value - a map
+ ;;    `:paging?`   - whether to use paging (defaults to true)
+ ;;    `:page-size` - defaults to 50
+ ;;    `:max-rows`  - how many rows to show ever
+ :tables {}}

@@ -97,27 +97,22 @@
         licenses)))
 
 (defn- licenses-list []
-  (let [licenses-table {:id ::licenses
-                        :columns [{:key :organization
-                                   :title (text :t.administration/organization)}
-                                  {:key :title
-                                   :title (text :t.administration/title)}
-                                  {:key :type
-                                   :title (text :t.administration/type)}
-                                  {:key :active
-                                   :title (text :t.administration/active)
-                                   :filterable? false}
-                                  {:key :commands
-                                   :sortable? false
-                                   :filterable? false
-                                   :aria-label (text :t.actions/commands)}]
-                        :rows [::licenses-table-rows]
-                        :paging? true
-                        :default-sort-column :title}]
-    [:div.mt-3
-     [table/search licenses-table]
-     [table/table licenses-table]
-     [table/paging licenses-table]]))
+  [table/standard {:id ::licenses
+                   :columns [{:key :organization
+                              :title (text :t.administration/organization)}
+                             {:key :title
+                              :title (text :t.administration/title)}
+                             {:key :type
+                              :title (text :t.administration/type)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::licenses-table-rows]
+                   :default-sort-column :title}])
 
 (defn licenses-page []
   (into [:div

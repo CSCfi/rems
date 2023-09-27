@@ -86,5 +86,4 @@
                                                   :hidden-columns #{:todo :created :submitted}
                                                   :default-sort-column :last-activity
                                                   :default-sort-order :desc
-                                                  :paging? true
                                                   :max-rows (when-not show-all-rows? 50)}])]}]]]))

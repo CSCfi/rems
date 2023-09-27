@@ -192,6 +192,28 @@
          :when ((:when-rows column identity) rows)]
      column)))
 
+(rf/reg-event-db
+ ::set-paging
+ (fn [db [_ table paging]]
+   (assoc-in db [::paging (:id table)] paging)))
+
+(rf/reg-sub
+ ::current-paging
+ (fn [db [_ table]]
+   (get-in db [::paging (:id table)])))
+
+(rf/reg-sub
+ ::paging
+ (fn [[_ table] _]
+   [(rf/subscribe [::current-paging table])
+    (rf/subscribe [:rems.config/config])])
+ (fn [[paging config] [_ table]]
+   (merge {:page-size 50 ; defaults
+           :current-page 0
+           :paging? (:paging? table true)}
+          (get-in config [:tables (:id table)]) ; config overrides
+          paging)))
+
 (rf/reg-sub
  ::rows
  (fn [[_ table] _]
@@ -374,24 +396,14 @@
                           :row row})
             (:td cell)))))
 
-(rf/reg-event-db
- ::set-paging
- (fn [db [_ table paging]]
-   (assoc-in db [::paging (:id table)] paging)))
-
-(rf/reg-sub
- ::paging
- (fn [db [_ table]]
-   (merge {:page-size 50 ; defaults
-           :current-page 0}
-          (get-in db [::paging (:id table)]))))
-
 (rf/reg-sub
  ::limited-rows
  (fn [[_ table] _]
-   [(rf/subscribe [::sorted-and-filtered-rows table])])
- (fn [[rows] [_ table]]
-   (if-let [max-rows (:max-rows table)]  ; only ever up to this maximum
+   [(rf/subscribe [::sorted-and-filtered-rows table])
+    (rf/subscribe [:rems.config/config])])
+ (fn [[rows config] [_ table]]
+   (if-let [max-rows (or (get-in config [:tables (:id table) :max-rows]) ; only ever up to this maximum
+                         (:max-rows table))]
      (take max-rows rows)
      rows)))
 
@@ -412,7 +424,7 @@
    [(rf/subscribe [::limited-rows table])
     (rf/subscribe [::paging table])])
  (fn [[rows paging] [_ table]]
-   (if (:paging? table)
+   (if (:paging? paging)
      (->> rows
           (drop (* (:page-size paging) (:current-page paging)))
           (take (:page-size paging)))
@@ -429,11 +441,12 @@
         pages @(rf/subscribe [::pages table])
         on-change (fn [value]
                     (rf/dispatch [::set-paging table value]))]
-    [paging/paging-field (merge {:id (str (name (:id table)) "-paging")
-                                 :on-change on-change
-                                 :paging paging
-                                 :pages pages}
-                                paging-opts)]))
+    (when (:paging? paging)
+      [paging/paging-field (merge {:id (str (name (:id table)) "-paging")
+                                   :on-change on-change
+                                   :paging paging
+                                   :pages pages}
+                                  paging-opts)])))
 
 (defn table
   "A filterable and sortable table component.
@@ -453,6 +466,14 @@
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:key row)} [table-row row table columns])]]]))
+
+(defn standard
+  "Standard table component, a combination of `search`, `table` and `paging`."
+  [table]
+  [:div.mt-2rem
+   [search table]
+   [rems.table/table table]
+   [paging table]])
 
 ;;; guide
 
