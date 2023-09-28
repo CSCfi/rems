@@ -1445,8 +1445,11 @@
       (create-category)
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
-      (go-to-catalogue)
-      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-getx :catalogue-item-name)}]))))
+      ;; technically we could check this from
+      ;; the catalogue page but we'd need to search
+      (let [public-catalogue-items-by-name (->> (catalogue/get-catalogue-table {:enabled true})
+                                                (group-by (comp :title :en :localizations)))]
+        (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-getx :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"
