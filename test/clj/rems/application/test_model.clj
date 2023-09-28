@@ -1790,4 +1790,4 @@
             {:attachment/id 5 :attachment/filename "5.txt"}
             {:attachment/id 6 :attachment/filename "6.txt"}]
            (:application/attachments
-            (#'model/hide-attachments application))))))
+            (#'model/hide-non-accessible-attachments application))))))
