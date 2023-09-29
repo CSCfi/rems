@@ -714,11 +714,12 @@
       (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/vote}])))))
 
 (defn- allowed-redact-roles [application attachment]
-  (let [user (getx-in attachment [:attachment/user :userid])
+  (let [event-id (get-in attachment [:attachment/event :event/id])
+        user (getx-in attachment [:attachment/user :userid])
         roles (permissions/user-roles application user)
         workflow (:application/workflow application)]
     (cond
-      (not (:attachment/event attachment)) ; e.g. applicant attachment in form
+      (not event-id) ; e.g. applicant attachment in form
       #{}
 
       (and (= :workflow/decider (:workflow/type workflow))

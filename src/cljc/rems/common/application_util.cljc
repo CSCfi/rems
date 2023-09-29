@@ -70,19 +70,22 @@
          (sort (mapv parse-sortable-external-id ["ABC/2000.1" "ABC/2002.0" "ABC/2002.2"  "ABC/2302.0" "ABC/2000.2" "ABC/2000.3"])))))
 
 (defn can-redact-attachment [attachment roles userid]
-  (let [event-id (get-in attachment [:attachment/event :event/id])
+  (let [already-redacted (:attachment/redacted attachment)
+        event-id (get-in attachment [:attachment/event :event/id])
         allowed-roles (:attachment/redact-roles attachment)]
     (cond
-      (or (:attachment/redacted attachment)
-          (not event-id))
+      already-redacted false
+
+      (not event-id) false
+
+      (= userid (get-in attachment [:attachment/user :userid]))
+      true
+
+      (empty? (clojure.set/intersection (set roles)
+                                        (set allowed-roles)))
       false
 
-      (not= userid (get-in attachment [:attachment/user :userid]))
-      (some? (not-empty (clojure.set/intersection (set roles)
-                                                  (set allowed-roles))))
-
-      :else
-      true)))
+      :else true)))
 
 (deftest test-can-redact-attachment
   (testing "redact roles and user can redact"
