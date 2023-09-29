@@ -445,7 +445,7 @@
         attachments (build-index {:keys [:attachment/id]} (:application/attachments application))
         forbidden-ids (->> redacted-ids
                            (keep #(get attachments %))
-                           (remove #(application-util/can-redact-attachment % roles (:actor cmd)))
+                           (remove #(application-util/can-redact-attachment? % roles (:actor cmd)))
                            (map :attachment/id))]
     (when (seq forbidden-ids)
       {:errors [{:type :forbidden-redact-attachments
