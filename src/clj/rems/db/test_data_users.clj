@@ -1,6 +1,5 @@
 (ns rems.db.test-data-users
-  (:require [clojure.test :refer :all]
-            [rems.application.approver-bot :as approver-bot]
+  (:require [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.application.expirer-bot :as expirer-bot]))
@@ -27,6 +26,7 @@
    :owner "owner"
    :reporter "reporter"
    :reviewer "carl"
+   :decider "diana"
    :roleless1 "elsa"
    :roleless2 "frank"
    :johnsmith "johnsmith"
@@ -38,6 +38,7 @@
    "malice" {:userid "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value" :mappings {"alt-id" "malice-alt-id"}}
    "handler" {:userid "handler" :email "handler@example.com" :name "Hannah Handler" :mappings {"alt-id" "handler-alt-id"}}
    "carl" {:userid "carl" :email "carl@example.com" :name "Carl Reviewer" :mappings {"alt-id" "carl-alt-id"}}
+   "diana" {:userid "diana" :email "diana@example.com" :name "Diana Decider"}
    "elsa" {:userid "elsa" :email "elsa@example.com" :name "Elsa Roleless" :mappings {"alt-id" "elsa-alt-id"}}
    "frank" {:userid "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:userid "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
@@ -53,6 +54,7 @@
    "malice" {:sub "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:sub "handler" :email "handler@example.com" :name "Hannah Handler"}
    "carl" {:sub "carl" :email "carl@example.com" :name "Carl Reviewer"}
+   "diana" {:userid "diana" :email "diana@example.com" :name "Diana Decider"}
    "elsa" {:sub "elsa" :email "elsa@example.com" :name "Elsa Roleless"}
    "frank" {:sub "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:sub "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
@@ -87,6 +89,8 @@
              :description "Owner is the user who owns all the resources and manages them in the administration. They can create the catalogue of resources, workflows, forms etc. They can also delegate this power to other users and set who handles which applications, but aren't necessarily the person who does this work themselves."}
             {:userid "carl"
              :description "Carl is an expert, who is sometimes asked to review applications, thus taking a small part in the handling process."}
+            {:userid "diana"
+             :description "Diana is an expert, who is sometimes asked to decide whether applications should be approved or rejected, thus taking a small part in the handling process."}
             {:userid "reporter"
              :description "Reporter is an administrative users, who is only interested in counting beans and applications, having no part in the actual handling."}]}
 
