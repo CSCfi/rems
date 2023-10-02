@@ -31,7 +31,7 @@
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :as application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
             [rems.common.attachment-util :as attachment-util]
-            [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
+            [rems.atoms :as atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -45,7 +45,7 @@
             [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-decision localize-event localized localize-state localize-time localize-time-with-seconds text text-format]]
+            [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
@@ -714,7 +714,19 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- event-view [{:keys [attachments highlight set-highlights]} event]
+(defn- render-redacted-attachments [redacted-attachments attachments]
+  [:<>
+   [:div.event-redacted-attachments.pt-2
+    [atoms/info-field (text :t.applications/redacted-attachments)
+     (for [att redacted-attachments]
+       (localize-attachment (dissoc att :attachment/redacted)))
+     {:multiline? true}]]
+   (when (seq attachments)
+     [:div.event-attachments
+      [:label (text :t.applications/replacing-attachments)]
+      [fields/render-attachments attachments]])])
+
+(defn- event-view [{:keys [attachments redacted-attachments highlight set-highlights]} event]
   (let [event-text (localize-event event)
         decision (localize-decision event)
         comment (case (:event/type event)
@@ -741,19 +753,34 @@
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
-      (when (seq attachments)
+      (cond
+        (seq redacted-attachments)
+        [render-redacted-attachments redacted-attachments attachments]
+
+        (seq attachments)
         [:div.event-attachments.pt-2
-         [fields/render-attachments attachments]])]]))
+         [fields/render-attachments attachments]]
+
+        :else nil)]]))
 
 (rf/reg-sub
  ::enrich-event-by-id
  :<- [::application]
  :<- [::highlight-event-ids]
  (fn [[application ids] [_ event-id]]
-   {:highlight (contains? ids event-id)
-    :attachments (for [att (:application/attachments application)
-                       :when (= event-id (get-in att [:attachment/event :event/id]))]
-                   att)}))
+   (let [event (->> application
+                    :application/events
+                    (find-first (comp #{event-id} :event/id)))
+         redacted-ids (map :attachment/id (:event/redacted-attachments event))]
+     {:highlight (contains? ids event-id)
+      :attachments (for [att (:application/attachments application)
+                         :when (= event-id (get-in att [:attachment/event :event/id]))]
+                     att)
+      :redacted-attachments (when (seq redacted-ids)
+                              (for [att (:application/attachments application)
+                                    :let [id (:attachment/id att)]
+                                    :when (some #{id} redacted-ids)]
+                                att))})))
 
 (defn- render-event [event]
   (let [opts (merge {:set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
