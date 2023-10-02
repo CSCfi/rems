@@ -281,14 +281,8 @@
                                                 :title "Decider workflow"
                                                 :type :workflow/decider
                                                 :handlers handlers
-                                                :licenses [link text]})
-        decider2 (test-helpers/create-workflow! {:actor owner
-                                                 :organization {:organization/id "nbn"}
-                                                 :title "Decider workflow with one handler"
-                                                 :type :workflow/decider
-                                                 :handlers [approver2 rejecter-bot]
-                                                 :licenses [link text]
-                                                 :voting {:type :handlers-vote}})
+                                                :licenses [link text]
+                                                :voting {:type :handlers-vote}})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -336,7 +330,6 @@
     {:default default
      :ega ega
      :decider decider
-     :decider2 decider2
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner
@@ -1040,8 +1033,9 @@
     ;; create application to demo attachment redaction feature
     (let [applicant (:applicant1 users)
           member (:applicant2 users)
-          decider (:approver1 users)
-          handler (:approver2 users)
+          decider (:decider users)
+          handler (:approver2 users) ; "handler"
+          handler2 (:approver1 users) ; "developer"
           reviewer (:reviewer users)
           form-id (test-helpers/create-form! {:actor owner
                                               :organization {:organization/id "nbn"}
@@ -1069,7 +1063,7 @@
                                                        :resource-id resource-id
                                                        :form-id form-id
                                                        :organization {:organization/id "nbn"}
-                                                       :workflow-id (:decider2 workflows)
+                                                       :workflow-id (:decider workflows)
                                                        :categories [special-category]})
           app-id (test-helpers/create-draft! applicant [cat-id] "redacted attachments")]
       (test-helpers/invite-and-accept-member! {:actor applicant
@@ -1116,6 +1110,14 @@
                                               {:attachment/id (test-helpers/create-attachment! {:actor reviewer
                                                                                                 :application-id app-id
                                                                                                 :filename "reviewer_attachment.pdf"})}]}))
+      (test-helpers/command! {:type :application.command/remark
+                              :application-id app-id
+                              :actor handler2
+                              :comment "here are my thoughts, see the attachment"
+                              :public false
+                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler2
+                                                                                              :application-id app-id
+                                                                                              :filename "handler2_attachment.pdf"})}]})
       (test-helpers/command! {:type :application.command/request-decision
                               :application-id app-id
                               :actor handler
