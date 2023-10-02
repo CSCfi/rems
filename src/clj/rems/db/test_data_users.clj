@@ -54,7 +54,7 @@
    "malice" {:sub "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:sub "handler" :email "handler@example.com" :name "Hannah Handler"}
    "carl" {:sub "carl" :email "carl@example.com" :name "Carl Reviewer"}
-   "diana" {:userid "diana" :email "diana@example.com" :name "Diana Decider"}
+   "diana" {:sub "diana" :email "diana@example.com" :name "Diana Decider"}
    "elsa" {:sub "elsa" :email "elsa@example.com" :name "Elsa Roleless"}
    "frank" {:sub "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:sub "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
