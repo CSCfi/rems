@@ -124,6 +124,7 @@
    :approver1 "RDapprover1@funet.fi"
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
+   :decider "RDdecider@funet.fi"
    :organization-owner1 "RDorganizationowner1@funet.fi"
    :organization-owner2 "RDorganizationowner2@funet.fi"
    :owner "RDowner@funet.fi"
@@ -135,6 +136,7 @@
    "RDapprover1@funet.fi" {:userid "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
    "RDapprover2@funet.fi" {:userid "RDapprover2@funet.fi" :email "RDapprover2.test@rems_example.org" :name "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:userid "RDreview@funet.fi" :email "RDreview.test@rems_example.org" :name "RDreview REMSDEMO"}
+   "RDdecider@funet.fi" {:userid "RDdecider@funet.fi" :email "RDdecider.test@rems_example.org" :name "RDdecider REMSDEMO"}
    "RDowner@funet.fi" {:userid "RDowner@funet.fi" :email "RDowner.test@test_example.org" :name "RDowner REMSDEMO"}
    "RDorganizationowner1@funet.fi" {:userid "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "RDorganizationowner2@funet.fi" {:userid "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
@@ -146,6 +148,7 @@
    "RDapprover1@funet.fi" {:sub "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
    "RDapprover2@funet.fi" {:sub "RDapprover2@funet.fi" :email "RDapprover2.test@rems_example.org" :name "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:sub "RDreview@funet.fi" :email "RDreview.test@rems_example.org" :name "RDreview REMSDEMO"}
+   "RDdecider@funet.fi" {:userid "RDdecider@funet.fi" :email "RDdecider.test@rems_example.org" :name "RDdecider REMSDEMO"}
    "RDowner@funet.fi" {:sub "RDowner@funet.fi" :email "RDowner.test@test_example.org" :name "RDowner REMSDEMO"}
    "RDorganizationowner1@funet.fi" {:sub "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "RDorganizationowner2@funet.fi" {:sub "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
