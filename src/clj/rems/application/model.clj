@@ -887,22 +887,22 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
-(defn- should-redact-attachment? [attachment roles userid]
+(defn hide-redacted-filename [attachment permissions userid]
   (cond
     (not (:attachment/redacted attachment))
-    false
+    attachment
 
     (= userid (get-in attachment [:attachment/user :userid]))
-    false
+    attachment
 
-    (some #{:handler :reporter} roles)
-    false
+    (contains? permissions :see-everything)
+    attachment
 
-    :else true))
+    :else (assoc attachment :attachment/filename :filename/redacted)))
 
-(defn apply-attachment-permissions [attachment roles userid]
-  (if (should-redact-attachment? attachment roles userid)
-    (assoc attachment :attachment/filename :filename/redacted)
+(defn set-redact-permissions [attachment roles userid]
+  (if (:attachment/redacted attachment)
+    attachment
     (assoc attachment :attachment/can-redact (application-util/can-redact-attachment? attachment roles userid))))
 
 (defn hide-non-public-information [application]
@@ -943,7 +943,8 @@
           (personalize-todo userid)
           (apply-privacy-by-roles roles)
           (hide-non-accessible-attachments)
-          (update :application/attachments (partial mapv #(apply-attachment-permissions % roles userid)))
+          (update :application/attachments (partial mapv #(hide-redacted-filename % permissions userid)))
+          (update :application/attachments (partial mapv #(set-redact-permissions % roles userid)))
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (hide-non-public-information)
