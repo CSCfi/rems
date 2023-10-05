@@ -88,6 +88,13 @@
   (btu/screenshot "applications-page")
   (btu/gather-axe-results "applications-page"))
 
+(defn go-to-actions []
+  (click-navigation-menu "Actions")
+  (btu/wait-visible {:tag :h1 :fn/text "Actions"})
+  (btu/wait-page-loaded)
+  (btu/screenshot "actions-page")
+  (btu/gather-axe-results "actions-page"))
+
 (defn go-to-application [application-id]
   (btu/go (str (btu/get-server-url) "application/" application-id))
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
@@ -910,6 +917,85 @@
                  :application/events
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+
+(defn- create-processed-application! [start n]
+  (doseq [i (range start (+ start n))]
+    (let [app-id (test-helpers/create-draft! "alice" [1] (str "test-processed-applications-" (inc i)))]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor "alice"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id app-id
+                              :comment "looks good"
+                              :actor "developer"}))))
+
+(deftest test-processed-applications-and-paging
+  (btu/with-postmortem
+    (login-as "developer")
+
+    (testing "no processed applications"
+      (btu/wait-visible {:fn/text "There are 0 processed applications."})
+      (btu/screenshot "0_processed-applications"))
+
+    (testing "with one processed application"
+      (create-processed-application! 0 1)
+      (btu/reload)
+      (btu/wait-visible {:fn/text "There are 1 processed applications."})
+      (btu/screenshot "01_processed-applications-closed")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/screenshot "01_processed-applications-opened"))
+
+    (testing "with 100 processed applications"
+      (create-processed-application! 1 99)
+      (btu/reload)
+      (btu/wait-visible {:fn/text "There are 100 processed applications."})
+      (btu/screenshot "100_processed-applications-closed")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "100_processed-applications-opened")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+      (btu/wait-invisible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "100_processed-applications-show-all-rows"))
+
+    (btu/with-client-config {:tables {:rems.actions/handled-applications {:page-size 10}}}
+      ;; revisit (reload without reloading config)
+      (click-navigation-menu "Catalogue")
+      (click-navigation-menu "Actions")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/screenshot "100_processed-applications-paged-opened-page-1")
+      (testing "first page has newest rows"
+        (is (= (for [i (range 100 90 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications)))))
+
+      (testing "5th page"
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "5"}])
+        (is (= (for [i (range 60 50 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "100_processed-applications-paged-opened-page-5"))
+
+      (testing "visiting another page will reset current page to first"
+        (click-navigation-menu "Catalogue")
+        (click-navigation-menu "Actions")
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+        (btu/wait-for-animation)
+        (btu/screenshot "100_processed-applications-paged-revisit")
+        (testing "first page still has newest rows"
+          (is (= (for [i (range 100 90 -1)]
+                   (str "test-processed-applications-" i))
+                 (mapv #(get % "description") (slurp-rows :handled-applications))))))
+
+      (testing "load all rows to visit 10th page"
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+        (btu/wait-for-animation)
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
+        (is (= (for [i (range 10 0 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "100_processed-applications-paged-opened-page-10-visited-admin")))))
 
 (deftest test-invite-decider
   (testing "create test data"
