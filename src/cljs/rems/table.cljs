@@ -435,18 +435,26 @@
   which takes the same `table` parameter as this component.
 
   See `rems.table/Table` for the `table` parameter schema."
-  [table paging-opts]
+  [table _paging-opts]
   (s/validate Table table)
-  (let [paging @(rf/subscribe [::paging table])
-        pages @(rf/subscribe [::pages table])
-        on-change (fn [value]
-                    (rf/dispatch [::set-paging table value]))]
-    (when (:paging? paging)
-      [paging/paging-field (merge {:id (str (name (:id table)) "-paging")
-                                   :on-change on-change
-                                   :paging paging
-                                   :pages pages}
-                                  paging-opts)])))
+  (reagent/create-class
+   {:component-did-mount
+    (fn []
+      ;; reset paging on navigation to return to first page
+      (rf/dispatch [::set-paging table nil]))
+
+    :reagent-render
+    (fn [table paging-opts]
+      (let [paging @(rf/subscribe [::paging table])
+            pages @(rf/subscribe [::pages table])
+            on-change (fn [value]
+                        (rf/dispatch [::set-paging table value]))]
+        (when (:paging? paging)
+          [paging/paging-field (merge {:id (str (name (:id table)) "-paging")
+                                       :on-change on-change
+                                       :paging paging
+                                       :pages pages}
+                                      paging-opts)])))}))
 
 (defn table
   "A filterable and sortable table component.
