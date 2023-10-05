@@ -2132,6 +2132,7 @@
                  (send-command handler1 {:type :application.command/redact-attachments
                                          :application-id app-id
                                          :comment ""
+                                         :public false
                                          :redacted-attachments [{:attachment/id (@decider-test-context decider)}]
                                          :attachments []}))))))))
 
