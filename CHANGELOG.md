@@ -8,8 +8,10 @@ have notable changes.
 
 Changes since v2.33
 
+### Changes
+- The tables take advantage of a new paging feature. Especially, the handler Actions page and its handled applications table uses paging and only fetches handled applications when so requested. The first 50 rows are only fetched by default. Paging can be also configured per table, if the default is not good (page size 50 rows). (#3191)
+
 ### Additions
-- The handler Actions page handled applications uses paging and only fetches handled applications when so requested.
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
 - Added experimental support for named format parameters in translations. (#3183)
