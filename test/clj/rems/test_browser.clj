@@ -876,7 +876,7 @@
       (is (btu/eventually-visible? :comment-approve-reject))
       (btu/fill-human :comment-approve-reject "this is a comment")
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
-      (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
+      (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
       (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
                               (get-attachments :actions-approve-reject))
@@ -1281,7 +1281,6 @@
       (go-to-admin "Resources")
       (is (some #(= (btu/context-getx :resid) (get % "title"))
                 (slurp-rows :resources))))))
-
 
 (defn create-form []
   (testing "create form"

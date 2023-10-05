@@ -2,21 +2,19 @@
   (:require [clj-time.core :as time]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.service.attachment :as attachment]
             [rems.service.catalogue :as catalogue]
-            [rems.api.testing :refer :all]
+            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
-            [rems.db.attachments]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
             [rems.service.test-data :as test-data :refer [+test-api-key+]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
-            [rems.json]
             [rems.testing-util :refer [with-fixed-time with-user]]
-            [ring.mock.request :refer :all])
+            [ring.mock.request :refer [header json-body request]])
   (:import java.io.ByteArrayOutputStream
            java.util.zip.ZipInputStream))
 
@@ -1927,7 +1925,7 @@
         decider "diana"
         reviewer "carl"
         form-id (test-helpers/create-form! {:form/fields [test-data/attachment-field]})
-        workflow-id (test-helpers/create-workflow! {:type :workflow/decider
+        workflow-id (test-helpers/create-workflow! {:type :workflow/default
                                                     :handlers [handler1 integration]})
         cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
                                                           :form-id form-id})
@@ -2014,10 +2012,10 @@
               {:attachment/id (@test-context handler1) :attachment/can-redact true}
               {:attachment/id (@test-context integration) :attachment/can-redact true}
               {:attachment/id (@test-context reviewer) :attachment/can-redact true}
-              {:attachment/id (@test-context decider) :attachment/can-redact false}]
+              {:attachment/id (@test-context decider) :attachment/can-redact true}]
              (->> (get-api-attachments app-id handler1)
                   (map #(select-keys % [:attachment/id :attachment/can-redact]))))
-          "handler should have redact permission for handler and reviewer attachments")
+          "handler should have redact permission for all handling user attachments")
 
       (is (= [{:attachment/id (@test-context applicant) :attachment/can-redact false}
               {:attachment/id (@test-context handler1) :attachment/can-redact false}
@@ -2026,7 +2024,7 @@
               {:attachment/id (@test-context decider) :attachment/can-redact false}]
              (->> (get-api-attachments app-id reviewer)
                   (map #(select-keys % [:attachment/id :attachment/can-redact]))))
-          "reviewer should have redact permission for reviewer attachment")
+          "reviewer should have redact permission only for reviewer attachment")
 
       (is (= [{:attachment/id (@test-context applicant) :attachment/can-redact false}
               {:attachment/id (@test-context handler1) :attachment/can-redact false}
@@ -2035,7 +2033,48 @@
               {:attachment/id (@test-context decider) :attachment/can-redact true}]
              (->> (get-api-attachments app-id decider)
                   (map #(select-keys % [:attachment/id :attachment/can-redact]))))
-          "decider should have redact permission for decider attachment"))
+          "decider should have redact permission only for decider attachment"))
+
+    (is (= {:success true}
+           (send-command reviewer {:type :application.command/redact-attachments
+                                   :application-id app-id
+                                   :comment ""
+                                   :public true
+                                   :redacted-attachments [{:attachment/id (@test-context reviewer)}]
+                                   :attachments []}))
+        "reviewer can redact attachment")
+
+    (doseq [user [applicant handler1 integration reviewer decider "reporter"]]
+      (testing (str "redacted attachment permissions as " user)
+        (is (= [{:attachment/id (@test-context reviewer) :attachment/redacted true}]
+               (->> (get-api-attachments app-id user)
+                    (filter #(= (@test-context reviewer) (:attachment/id %)))
+                    (map #(select-keys % [:attachment/id :attachment/can-redact :attachment/redacted])))))))
+
+    (testing "downloading redacted attachment as handling user"
+      (is (= {:headers {"Content-Disposition" "attachment;filename=\"remark (2).txt\""}
+              :body ""}
+             (download-api-attachment (@test-context reviewer) handler1)
+             (download-api-attachment (@test-context reviewer) integration)
+             (download-api-attachment (@test-context reviewer) reviewer)
+             (download-api-attachment (@test-context reviewer) decider)
+             (download-api-attachment (@test-context reviewer) "reporter"))))
+
+    (testing "downloading redacted attachment as applying user"
+      (is (= {:headers {"Content-Disposition" (str "attachment;filename=\"redacted_" (@test-context reviewer) ".txt\"")}
+              :body ""}
+             (download-api-attachment (@test-context reviewer) applicant))))
+
+    (testing "redacted attachment cannot be redacted again"
+      (is (= {:success false
+              :errors [{:type "forbidden-redact-attachments"
+                        :attachments [(@test-context reviewer)]}]}
+             (send-command handler1 {:type :application.command/redact-attachments
+                                     :application-id app-id
+                                     :comment ""
+                                     :public true
+                                     :redacted-attachments [{:attachment/id (@test-context reviewer)}]
+                                     :attachments []}))))
 
     (testing "handler cannot redact applicant attachment"
       (is (= {:success false
@@ -2048,52 +2087,6 @@
                                      :redacted-attachments [{:attachment/id (@test-context applicant)}]
                                      :attachments []}))))
 
-    (testing "handler cannot redact decider attachment in decider workflow"
-      (is (= {:success false
-              :errors [{:type "forbidden-redact-attachments"
-                        :attachments [(@test-context decider)]}]}
-             (send-command handler1 {:type :application.command/redact-attachments
-                                     :application-id app-id
-                                     :comment ""
-                                     :public true
-                                     :redacted-attachments [{:attachment/id (@test-context decider)}]
-                                     :attachments []}))))
-
-    (testing "reviewer redacts attachment"
-      (is (= {:success true}
-             (send-command reviewer {:type :application.command/redact-attachments
-                                     :application-id app-id
-                                     :comment ""
-                                     :public true
-                                     :redacted-attachments [{:attachment/id (@test-context reviewer)}]
-                                     :attachments []})))
-      (is (= {:headers {"Content-Disposition" "attachment;filename=\"remark (2).txt\""}
-              :body ""}
-             (download-api-attachment (@test-context reviewer) handler1)
-             (download-api-attachment (@test-context reviewer) reviewer)))
-      (is (= {:headers {"Content-Disposition" (str "attachment;filename=\"redacted_" (@test-context reviewer) ".txt\"")}
-              :body ""}
-             (download-api-attachment (@test-context reviewer) applicant)
-             (download-api-attachment (@test-context reviewer) decider)))
-      (is (= [{:attachment/id (@test-context applicant) :attachment/can-redact false}
-              {:attachment/id (@test-context handler1) :attachment/can-redact false}
-              {:attachment/id (@test-context integration) :attachment/can-redact false}
-              {:attachment/id (@test-context reviewer) :attachment/redacted true}
-              {:attachment/id (@test-context decider) :attachment/can-redact false}]
-             (->> (get-api-attachments app-id reviewer)
-                  (map #(select-keys % [:attachment/id :attachment/can-redact :attachment/redacted]))))
-          "redacted attachment is no longer redactable")
-      (is (= {:success false
-              :errors [{:type "forbidden-redact-attachments"
-                        :attachments [(@test-context reviewer)]}]}
-             (send-command handler1 {:type :application.command/redact-attachments
-                                     :application-id app-id
-                                     :comment ""
-                                     :public true
-                                     :redacted-attachments [{:attachment/id (@test-context reviewer)}]
-                                     :attachments []}))
-          "cannot redact already redacted attachment"))
-
     (testing "handler can redact other handlers attachment"
       (is (= {:success true}
              (send-command handler1 {:type :application.command/redact-attachments
@@ -2101,7 +2094,46 @@
                                      :comment ""
                                      :public false
                                      :redacted-attachments [{:attachment/id (@test-context integration)}]
-                                     :attachments []}))))))
+                                     :attachments []}))))
+
+    (testing "handler cannot redact decider attachment in decider workflow"
+      (let [workflow-id (test-helpers/create-workflow! {:type :workflow/decider
+                                                        :handlers [handler1 integration]})
+            cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                              :form-id form-id})
+            app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                      :actor applicant})
+            decider-test-context (atom nil)]
+        (testing "setup test data"
+          (swap! decider-test-context assoc applicant (upload-api-attachment-ok app-id applicant "applicant.txt"))
+          (is (= {:success true}
+                 (send-command applicant {:type :application.command/save-draft
+                                          :application-id app-id
+                                          :field-values [{:form form-id
+                                                          :field "fld1"
+                                                          :value (str (@decider-test-context applicant))}]})
+                 (send-command applicant {:type :application.command/submit
+                                          :application-id app-id})
+                 (send-command integration {:type :application.command/request-decision
+                                            :application-id app-id
+                                            :deciders [decider]
+                                            :comment "please decide"}))))
+        (testing "decider can approve with comment and attachment"
+          (swap! decider-test-context assoc decider (upload-api-attachment-ok app-id decider "decision.txt"))
+          (is (= {:success true}
+                 (send-command decider {:type :application.command/approve
+                                        :application-id app-id
+                                        :comment "here is my decision document"
+                                        :attachments [{:attachment/id (@decider-test-context decider)}]}))))
+        (testing "handler tries to redact decider attachment but fails"
+          (is (= {:success false
+                  :errors [{:type "forbidden-redact-attachments"
+                            :attachments [(@decider-test-context decider)]}]}
+                 (send-command handler1 {:type :application.command/redact-attachments
+                                         :application-id app-id
+                                         :comment ""
+                                         :redacted-attachments [{:attachment/id (@decider-test-context decider)}]
+                                         :attachments []}))))))))
 
 (deftest test-application-attachment-zip
   (let [api-key +test-api-key+
