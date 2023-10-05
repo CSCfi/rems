@@ -887,7 +887,7 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
-(defn hide-redacted-filename [attachment permissions userid]
+(defn- hide-redacted-filename [attachment permissions userid]
   (cond
     (not (:attachment/redacted attachment))
     attachment
@@ -900,10 +900,21 @@
 
     :else (assoc attachment :attachment/filename :filename/redacted)))
 
-(defn set-redact-permissions [attachment roles userid]
+(defn- set-redact-permissions [attachment roles userid]
   (if (:attachment/redacted attachment)
     attachment
     (assoc attachment :attachment/can-redact (application-util/can-redact-attachment? attachment roles userid))))
+
+(defn apply-attachments-privacy [application userid]
+  (let [roles (permissions/user-roles application userid)
+        permissions (permissions/user-permissions application userid)
+        see-everything? (contains? permissions :see-everything)]
+    (-> (if see-everything?
+          application
+          ;; applying users do not need to see event redacted attachments, only the latest
+          (update application :application/events (partial mapv #(dissoc % :event/redacted-attachments))))
+        (update :application/attachments (partial mapv #(hide-redacted-filename % permissions userid)))
+        (update :application/attachments (partial mapv #(set-redact-permissions % roles userid))))))
 
 (defn hide-non-public-information [application]
   (-> application
@@ -943,8 +954,7 @@
           (personalize-todo userid)
           (apply-privacy-by-roles roles)
           (hide-non-accessible-attachments)
-          (update :application/attachments (partial mapv #(hide-redacted-filename % permissions userid)))
-          (update :application/attachments (partial mapv #(set-redact-permissions % roles userid)))
+          (apply-attachments-privacy userid)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (hide-non-public-information)
