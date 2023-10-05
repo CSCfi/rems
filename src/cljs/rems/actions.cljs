@@ -17,7 +17,7 @@
                 ::todo-applications
                 ::handled-applications
                 ::handled-applications-count
-                ::set-show-all-rows
+                ::show-all-rows
                 ::user-settings)
     :dispatch-n [[::todo-applications]
                  [::handled-applications-count]
