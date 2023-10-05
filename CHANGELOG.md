@@ -9,12 +9,13 @@ have notable changes.
 Changes since v2.33
 
 ### Changes
-- Handler may now redact attachments from other handlers. (#3190)
+- Handler can now redact other handlers attachments. (#3190)
 
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
 - Added experimental support for named format parameters in translations. (#3183)
+- Event now shows which attachments were redacted when viewing as handling user. (#3190)
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.
