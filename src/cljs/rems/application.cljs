@@ -714,17 +714,24 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- render-redacted-attachments [redacted-attachments attachments]
-  [:<>
-   [:div.event-redacted-attachments.pt-2
-    [atoms/info-field (text :t.applications/redacted-attachments)
-     (for [att redacted-attachments]
-       (localize-attachment (dissoc att :attachment/redacted)))
-     {:multiline? true}]]
+(defn- event-redacted-attachments [attachments redacted-attachments]
+  [:div.d-flex.flex-column.gap-1.pt-2
+   [:div.event-redacted-attachments
+    [:label (text :t.applications/redacted-attachments)]
+    [:div.container-fluid.break-newline
+     (->> redacted-attachments
+          (mapv #(localize-attachment (dissoc % :attachment/redacted)))
+          (interpose "\n")
+          (into [:<>]))]]
    (when (seq attachments)
-     [:div.event-attachments
+     [:div.event-new-attachments
       [:label (text :t.applications/replacing-attachments)]
-      [fields/render-attachments attachments]])])
+      [:div.container-fluid
+       [fields/render-attachments attachments]]])])
+
+(defn- event-attachments [attachments]
+  [:div.event-new-attachments.pt-2
+   [fields/render-attachments attachments]])
 
 (defn- event-view [{:keys [attachments redacted-attachments highlight set-highlights]} event]
   (let [event-text (localize-event event)
@@ -753,15 +760,9 @@
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
-      (cond
-        (seq redacted-attachments)
-        [render-redacted-attachments redacted-attachments attachments]
-
-        (seq attachments)
-        [:div.event-attachments.pt-2
-         [fields/render-attachments attachments]]
-
-        :else nil)]]))
+      (if (seq redacted-attachments)
+        [event-redacted-attachments attachments redacted-attachments]
+        [event-attachments attachments])]]))
 
 (rf/reg-sub
  ::enrich-event-by-id
@@ -1662,19 +1663,31 @@
                                 :event/type :application.event/remarked
                                 :event/actor-attributes {:name "Hannah Handler"}
                                 :application/comment (str lipsum "\n\nA final line.")}]))
-   (example "event with redacted attachments"
-            (let [opts {:attachments [{:attachment/filename "regular_file.pdf"}
-                                      {:attachment/filename "regular_file.pdf"
-                                       :attachment/redacted true}
-                                      {:attachment/filename :filename/redacted
-                                       :attachment/redacted true}]}]
-              [event-view opts {:event/time #inst "2020-01-01T08:35"
-                                :event/type :application.event/remarked
+   (example "event that redacts and replaces attachments"
+            (let [opts {:attachments [{:attachment/filename "new_image.jpeg"}
+                                      {:attachment/filename "new_document.pdf"}]
+                        :redacted-attachments [{:attachment/filename "image_alice.jpeg" :attachment/redacted true}
+                                               {:attachment/filename "document_alice.pdf" :attachment/redacted true}]}]
+              [event-view opts {:event/time #inst "2023-10-04T06:50"
+                                :event/type :application.event/attachments-redacted
                                 :event/actor-attributes {:name "Hannah Handler"}
                                 :application/comment (str lipsum "\n\nA final line.")}]))
+   (example "event where redacted attachments filenames are hidden"
+            (let [opts {:attachments (list {:attachment/filename :filename/redacted}
+                                           {:attachment/filename "document.pdf"}
+                                           {:attachment/filename :filename/redacted})}]
+              [event-view opts {:event/time #inst "2023-10-04T06:50"
+                                :event/type :application.event/remarked
+                                :event/actor-attributes {:name "Hannah Handler"}}]))
    (example "event with many attachments"
-            (let [opts {:attachments (repeat 30 {:attachment/filename "image.jpeg"})}]
-              [event-view opts {:event/time #inst "2020-01-01T08:35"
+            (let [opts {:attachments (list {:attachment/filename "document.txt"}
+                                           {:attachment/filename "agreement.doc" :attachment/redacted true}
+                                           {:attachment/filename "binding.834c530d-1a72-46c3-9593-f84269a915bf.pdf" :attachment/redacted true}
+                                           {:attachment/filename "document.txt"}
+                                           {:attachment/filename "document.7097ae1c-ba94-47b0-a551-9f127da5e277.jpeg"}
+                                           {:attachment/filename "document.6b10763b-f1b7-435d-aaf0-b327805f58fc.pdf" :attachment/redacted true}
+                                           {:attachment/filename "binding.important.txt"})}]
+              [event-view opts {:event/time #inst "2023-10-04T06:50"
                                 :event/type :application.event/approved
                                 :event/actor-attributes {:name "Hannah Handler"}}]))
 
