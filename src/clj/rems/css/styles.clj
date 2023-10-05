@@ -684,6 +684,9 @@
    [:.event-comment {:white-space :pre-wrap
                      :word-break :break-all}]
 
+   [:.current-page {:font-size (u/percent 120)
+                    :text-underline-offset (u/rem 0.25)}]
+
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
    [:.form-group {:text-align "initial"}

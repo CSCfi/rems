@@ -6,10 +6,13 @@
 
 (defn- page-number [paging page on-change]
   (if (= (:current-page paging) page)
-    [:span (str (inc page))]
+    [atoms/link {:label [:u (str (inc page))]
+                 :class "btn btn-link current-page"
+                 :disabled true
+                 :on-click #(on-change (assoc paging :current-page page))}]
 
-    [atoms/link {:href ""
-                 :label (str (inc page))
+    [atoms/link {:label (str (inc page))
+                 :class "btn btn-link"
                  :on-click #(on-change (assoc paging :current-page page))}]))
 
 (defn paging-field
@@ -26,31 +29,42 @@
   [{:keys [id on-change paging pages]}]
   (r/with-let [show-all-page-numbers (r/atom (:show-all-page-numbers paging))]
     (when (> pages 1)
-      [:div.d-flex.gap-1.justify-content-center.flex-wrap.mr-3.my-3 {:id id}
-       (text :t.table.paging/page)
+      [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
+       [:div (text :t.table.paging/page)]
+       [:div.mr-3.my-3
+        {:style (if @show-all-page-numbers
+                  {:display :grid
+                   :grid-template-columns "repeat(20, min-content)"
+                   :align-items :baseline}
+                  {:display :flex
+                   :justify-content :center
+                   :align-items :center
+                   :flex-wrap :wrap})
+         :id (str id "-pages")}
 
-       (if (or @show-all-page-numbers
-               (< pages 10))
-         ;; just show them all
-         (for [page (range pages)]
-           ^{:key (str id "-page-" page)}
-           [page-number paging page on-change])
+        (if (or @show-all-page-numbers
+                (< pages 10))
+          ;; just show them all
+          (for [page (range pages)]
+            ^{:key (str id "-page-" page)}
+            [page-number paging page on-change])
 
-         ;; show 1 2 3 ... 7 8 9
-         (let [first-pages (take 3 (range pages))
-               last-pages (take-last 3 (drop 3 (range pages)))]
-           [:<>
-            (for [page first-pages]
-              ^{:key (str id "-page-" page)}
-              [page-number paging page on-change])
+          ;; show 1 2 3 ... 7 8 9
+          (let [first-pages (take 3 (range pages))
+                last-pages (take-last 3 (drop 3 (range pages)))]
+            [:<>
+             (for [page first-pages]
+               ^{:key (str id "-page-" page)}
+               [page-number paging page on-change])
 
-            ^{:key (str id "-page-...")}
-            [atoms/link {:label "..."
-                         :on-click #(reset! show-all-page-numbers true)}]
+             ^{:key (str id "-page-...")}
+             [atoms/link {:label "..."
+                          :class "btn btn-link"
+                          :on-click #(reset! show-all-page-numbers true)}]
 
-            (for [page last-pages]
-              ^{:key (str id "-page-" page)}
-              [page-number paging page on-change])]))])))
+             (for [page last-pages]
+               ^{:key (str id "-page-" page)}
+               [page-number paging page on-change])]))]])))
 
 
 (defn guide []
