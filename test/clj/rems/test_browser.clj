@@ -30,7 +30,8 @@
             [rems.db.user-settings :as user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :refer [localize-time text with-language]]))
+            [rems.text :refer [localize-time text with-language]]
+            [rems.service.todos :as todos]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -920,7 +921,7 @@
 
 (defn- create-processed-application! [start n]
   (doseq [i (range start (+ start n))]
-    (let [app-id (test-helpers/create-draft! "alice" [1] (str "test-processed-applications-" (inc i)))]
+    (let [app-id (test-helpers/create-draft! "alice" [(btu/context-getx :catalogue-id)] (str "test-processed-applications-" (inc i)))]
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
                               :actor "alice"})
@@ -930,33 +931,37 @@
                               :actor "developer"}))))
 
 (deftest test-processed-applications-and-paging
+  (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
+                                                           :organization {:organization/id "nbn"}
+                                                           :form/internal-name "Paging test form"
+                                                           :form/external-title {:en "Paging test form EN"
+                                                                                 :fi "Paging test form FI"
+                                                                                 :sv "Paging test form SV"}
+                                                           :form/fields [{:field/type :description
+                                                                          :field/optional false
+                                                                          :field/title {:en "Application title field"
+                                                                                        :fi "Hakemuksen otsikko -kenttä"
+                                                                                        :sv "Ansökningens rubrikfält"}}]}))
+  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
+
   (btu/with-postmortem
     (login-as "developer")
 
-    (testing "no processed applications"
-      (btu/wait-visible {:fn/text "There are 0 processed applications."})
-      (btu/screenshot "0_processed-applications"))
-
-    (testing "with one processed application"
-      (create-processed-application! 0 1)
+    (testing "with 100+ processed applications"
+      ;; NB: other tests may process applications too
+      ;; the created 100 applications will be the latest
+      (create-processed-application! 0 100)
+      (btu/context-assoc! :todos (todos/get-handled-todos "developer")) ; check against API
       (btu/reload)
-      (btu/wait-visible {:fn/text "There are 1 processed applications."})
-      (btu/screenshot "01_processed-applications-closed")
-      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-      (btu/screenshot "01_processed-applications-opened"))
-
-    (testing "with 100 processed applications"
-      (create-processed-application! 1 99)
-      (btu/reload)
-      (btu/wait-visible {:fn/text "There are 100 processed applications."})
-      (btu/screenshot "100_processed-applications-closed")
+      (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
+      (btu/screenshot "processed-applications-closed")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
       (btu/wait-for-animation)
       (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
-      (btu/screenshot "100_processed-applications-opened")
+      (btu/screenshot "processed-applications-opened")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
       (btu/wait-invisible {:fn/text "Showing the first 50 rows only."})
-      (btu/screenshot "100_processed-applications-show-all-rows"))
+      (btu/screenshot "processed-applications-show-all-rows"))
 
     (btu/with-client-config {:tables {:rems.actions/handled-applications {:page-size 10}}}
       ;; revisit (reload without reloading config)
@@ -964,7 +969,7 @@
       (click-navigation-menu "Actions")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
       (btu/wait-for-animation)
-      (btu/screenshot "100_processed-applications-paged-opened-page-1")
+      (btu/screenshot "processed-applications-paged-opened-page-1")
       (testing "first page has newest rows"
         (is (= (for [i (range 100 90 -1)]
                  (str "test-processed-applications-" i))
@@ -975,14 +980,14 @@
         (is (= (for [i (range 60 50 -1)]
                  (str "test-processed-applications-" i))
                (mapv #(get % "description") (slurp-rows :handled-applications))))
-        (btu/screenshot "100_processed-applications-paged-opened-page-5"))
+        (btu/screenshot "processed-applications-paged-opened-page-5"))
 
       (testing "visiting another page will reset current page to first"
         (click-navigation-menu "Catalogue")
         (click-navigation-menu "Actions")
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
         (btu/wait-for-animation)
-        (btu/screenshot "100_processed-applications-paged-revisit")
+        (btu/screenshot "processed-applications-paged-revisit")
         (testing "first page still has newest rows"
           (is (= (for [i (range 100 90 -1)]
                    (str "test-processed-applications-" i))
@@ -995,7 +1000,7 @@
         (is (= (for [i (range 10 0 -1)]
                  (str "test-processed-applications-" i))
                (mapv #(get % "description") (slurp-rows :handled-applications))))
-        (btu/screenshot "100_processed-applications-paged-opened-page-10-visited-admin")))))
+        (btu/screenshot "processed-applications-paged-opened-page-10-visited-admin")))))
 
 (deftest test-invite-decider
   (testing "create test data"
