@@ -491,15 +491,15 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt"]
+          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove"]
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\ntest-sv.txt"]
+          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove" "Download file\ntest-sv.txt\nRemove"]
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
@@ -550,7 +550,7 @@
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
-        (btu/with-client-config {:enable-autosave false} ; when testing locally
+        (btu/with-client-config {:enable-autosave false}
           (testing "save draft succesfully, but show validation warnings"
             (fill-form-field "Email field" "user")
             (btu/scroll-and-click :save)
@@ -878,17 +878,17 @@
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
       (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\nrems_logo_en.png"]
+      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txtnRemove" "Download file\nrems_logo_en.png\nRemove"]
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)}))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "approve"
