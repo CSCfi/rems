@@ -59,7 +59,7 @@
       (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
                                                     (pprint data)))))))
 
-(defn ^ExecutorService start! [name f ^Duration interval & [opts]]
+(defn start! ^ExecutorService [name f ^Duration interval & [opts]]
   (let [interval-millis (.getMillis interval)
         factory (proxy [java.util.concurrent.ThreadFactory] []
                   (newThread [r]
