@@ -42,24 +42,25 @@
     (is (not (time-within-intervals? (at 17) buzy-hours)))
     (is (not (time-within-intervals? (at 22) buzy-hours)))))
 
+(defn- task-wrapper [f opts]
+  (try
+    (log/debug "Scheduler starting work")
+    (let [now (time-core/now)
+          buzy-hours (intervals-on-day now (:buzy-hours opts))
+          buzy-hour? (time-within-intervals? now buzy-hours)]
+      (if buzy-hour?
+        (log/debug "Scheduler skipping because of buzy hour" (:buzy-hours opts))
+        (f)))
+    (log/debug "Scheduler is done")
+    (catch InterruptedException e
+      (.interrupt (Thread/currentThread))
+      (log/info e "Scheduler shutting down"))
+    (catch Throwable t ; prevents suppressing subsequent executions
+      (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
+                                                    (pprint data)))))))
+
 (defn ^ExecutorService start! [name f ^Duration interval & [opts]]
   (let [interval-millis (.getMillis interval)
-        task (fn []
-               (try
-                 (log/debug "Scheduler starting work")
-                 (let [now (time-core/now)
-                       buzy-hours (intervals-on-day now (:buzy-hours opts))
-                       buzy-hour? (time-within-intervals? now buzy-hours)]
-                   (if buzy-hour?
-                     (log/debug "Scheduler skipping because of buzy hour" (:buzy-hours opts))
-                     (f)))
-                 (log/debug "Scheduler is done")
-                 (catch InterruptedException e
-                   (.interrupt (Thread/currentThread))
-                   (log/info e "Scheduler shutting down"))
-                 (catch Throwable t ; prevents suppressing subsequent executions
-                   (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
-                                                                 (pprint data)))))))
         factory (proxy [java.util.concurrent.ThreadFactory] []
                   (newThread [r]
                     (let [thread (.newThread (java.util.concurrent.Executors/defaultThreadFactory) r)]
@@ -67,7 +68,7 @@
                       thread)))]
 
     (doto (ScheduledThreadPoolExecutor. 1 factory)
-      (.scheduleWithFixedDelay task interval-millis interval-millis TimeUnit/MILLISECONDS))))
+      (.scheduleWithFixedDelay #(task-wrapper f opts) interval-millis interval-millis TimeUnit/MILLISECONDS))))
 
 (defn stop! [^ExecutorService scheduler]
   (.shutdownNow scheduler)
