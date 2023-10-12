@@ -8,11 +8,18 @@ have notable changes.
 
 Changes since v2.33
 
+**NB: This release contains migrations!**
+**NB: `:application/public` is renamed to `:event/public` (in `application_event` table `eventdata` column).**
+
+### Changes
+- "Show related events" has been removed from events. (#3156)
+
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
 - Added experimental support for named format parameters in translations. (#3183)
 - Cache reloading can be configured using the new `:buzy-hours` config. REMS will then try to avoid reloading during the specified time spans. (#3194)
+- The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.

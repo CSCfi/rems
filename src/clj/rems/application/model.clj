@@ -5,7 +5,7 @@
             [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :as application-util]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment can-see-everything? is-applying-user?]]
             [rems.common.form :as form]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
@@ -557,10 +557,65 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
+(def ^:private sensitive-events #{:application.event/review-requested
+                                  :application.event/reviewed
+                                  :application.event/reviewer-invited
+                                  :application.event/reviewer-joined
+                                  :application.event/decided
+                                  :application.event/decider-invited
+                                  :application.event/decider-joined
+                                  :application.event/decision-requested
+                                  :application.event/voted})
+
+(deftest test-sensitive-events
+  (let [public-events #{:application.event/attachments-redacted
+                        :application.event/applicant-changed
+                        :application.event/approved
+                        :application.event/closed
+                        :application.event/copied-from
+                        :application.event/copied-to
+                        :application.event/created
+                        :application.event/deleted
+                        :application.event/draft-saved
+                        :application.event/external-id-assigned
+                        :application.event/expiration-notifications-sent
+                        :application.event/licenses-accepted
+                        :application.event/licenses-added
+                        :application.event/member-added
+                        :application.event/member-invited
+                        :application.event/member-joined
+                        :application.event/member-removed
+                        :application.event/member-uninvited
+                        :application.event/rejected
+                        :application.event/remarked
+                        :application.event/resources-changed
+                        :application.event/returned
+                        :application.event/revoked
+                        :application.event/submitted}]
+    (is (= #{}
+           (set/intersection sensitive-events public-events)))
+    (is (= #{}
+           (set/difference (set events/event-types)
+                           (set/union public-events sensitive-events)))
+        "seems like a new event has been added; is public or sensitive?")))
+
+(defn get-event-visibility [event]
+  (let [event-public (:event/public event)
+        event-type (:event/type event)]
+    (case event-public
+      true :visibility/public
+      false :visibility/handling-users
+      (cond
+        (contains? sensitive-events event-type)
+        :visibility/handling-users
+
+        :else :visibility/public))))
+
 (defn enrich-event [event get-user get-catalogue-item]
   (let [event-type (:event/type event)]
     (merge event
-           {:event/actor-attributes (get-user (:event/actor event))}
+           {:event/actor-attributes (get-user (:event/actor event))
+            :event/visibility (get-event-visibility event)}
            (case event-type
              :application.event/resources-changed
              {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
@@ -613,7 +668,7 @@
            (classify-attachments application)))))
 
 (defn- get-blacklist [application blacklisted?]
-  (let [all-members (application-util/applicant-and-members application)
+  (let [all-members (applicant-and-members application)
         all-resources (distinct (map :resource/ext-id (:application/resources application)))]
     (vec
      (for [member all-members
@@ -773,51 +828,9 @@
 
 ;;;; Authorization
 
-(def ^:private sensitive-events #{:application.event/review-requested
-                                  :application.event/reviewed
-                                  :application.event/reviewer-invited
-                                  :application.event/reviewer-joined
-                                  :application.event/decided
-                                  :application.event/decider-invited
-                                  :application.event/decider-joined
-                                  :application.event/decision-requested
-                                  :application.event/voted})
-(deftest test-sensitive-events
-  (let [public-events #{:application.event/attachments-redacted
-                        :application.event/applicant-changed
-                        :application.event/approved
-                        :application.event/closed
-                        :application.event/copied-from
-                        :application.event/copied-to
-                        :application.event/created
-                        :application.event/deleted
-                        :application.event/draft-saved
-                        :application.event/external-id-assigned
-                        :application.event/expiration-notifications-sent
-                        :application.event/licenses-accepted
-                        :application.event/licenses-added
-                        :application.event/member-added
-                        :application.event/member-invited
-                        :application.event/member-joined
-                        :application.event/member-removed
-                        :application.event/member-uninvited
-                        :application.event/rejected
-                        :application.event/remarked
-                        :application.event/resources-changed
-                        :application.event/returned
-                        :application.event/revoked
-                        :application.event/submitted}]
-    (is (= #{}
-           (set/intersection sensitive-events public-events)))
-    (is (= #{}
-           (set/difference (set events/event-types)
-                           (set/union public-events sensitive-events)))
-        "seems like a new event has been added; is public or sensitive?")))
-
 (defn- hide-sensitive-events [events]
   (->> events
-       (remove (comp sensitive-events :event/type))
-       (remove (comp false? :application/public)))) ; :application/public might not be set
+       (filterv #(= :visibility/public (:event/visibility %)))))
 
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))
@@ -847,7 +860,8 @@
 (defn- hide-sensitive-information [application]
   (-> application
       (dissoc :application/blacklist)
-      (update :application/events hide-sensitive-events)
+      (update :application/events hide-sensitive-events) ; uses :event/public :event/visibility
+      (update :application/events (partial mapv #(dissoc % :event/public :event/visibility)))
       (update :application/workflow dissoc :workflow.dynamic/handlers)
       (update :application/workflow dissoc :workflow/voting)
       (dissoc :application/votes)
@@ -899,7 +913,7 @@
 
 (defn apply-attachment-permissions [attachment roles userid]
   (-> attachment
-      (assoc-some :attachment/can-redact (application-util/can-redact-attachment attachment roles userid))
+      (assoc-some :attachment/can-redact (can-redact-attachment attachment roles userid))
       (dissoc :attachment/redact-roles)))
 
 (defn hide-non-public-information [application]
@@ -941,15 +955,17 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
-(defn user-is-applicant-or-member [roles]
-  (or (contains? roles :applicant)
-      (contains? roles :member)))
-
 (defn see-application? [application userid]
-  (let [roles (permissions/user-roles application userid)]
-    (if (= :application.state/draft (:application/state application))
-      (user-is-applicant-or-member roles)
-      (not= #{:everyone-else} roles))))
+  (let [state (:application/state application)
+        roles (permissions/user-roles application userid)]
+    (cond
+      (= :application.state/draft state)
+      (is-applying-user? {:application/roles roles})
+
+      (= #{:everyone-else} roles)
+      false
+
+      :else true)))
 
 (defn apply-user-permissions [application userid]
   (let [roles (permissions/user-roles application userid)

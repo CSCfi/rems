@@ -196,6 +196,8 @@
                  :empty "Ingen ansøgninger."
                  ;; %1 - date
                  :entitlement-end "Udløbsdato for rettighederne: %1."
+                 :event {:not-shown-to-applicant "Skjult for ansøgere"
+                         :shown-to-applicant "Synlig for ansøgere"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
@@ -246,7 +248,6 @@
                           :resources "Ressourcer"
                           :state "Tilstand"}
                  :handlers "Sagsbehandler"
-                 :highlight-related-events "Vis relaterede hændelser."
                  :id "id"
                  :intro [:div.intro [:p "Udfyld og indsend ansøgningen. Du kan invitere andre til at deltage i ansøgningen. Alle deltagere skal acceptere brugsvilkår senest når ansøgningen godkendes."]]
                  :last-activity "Ændret"
