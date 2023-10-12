@@ -5,7 +5,7 @@
             [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :as application-util]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment can-see-everything? is-applying-user?]]
             [rems.common.form :as form]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
@@ -668,7 +668,7 @@
            (classify-attachments application)))))
 
 (defn- get-blacklist [application blacklisted?]
-  (let [all-members (application-util/applicant-and-members application)
+  (let [all-members (applicant-and-members application)
         all-resources (distinct (map :resource/ext-id (:application/resources application)))]
     (vec
      (for [member all-members
@@ -913,7 +913,7 @@
 
 (defn apply-attachment-permissions [attachment roles userid]
   (-> attachment
-      (assoc-some :attachment/can-redact (application-util/can-redact-attachment attachment roles userid))
+      (assoc-some :attachment/can-redact (can-redact-attachment attachment roles userid))
       (dissoc :attachment/redact-roles)))
 
 (defn hide-non-public-information [application]
@@ -955,15 +955,17 @@
         visible? (comp visible-ids :attachment/id)]
     (update application :application/attachments #(filterv visible? %))))
 
-(defn user-is-applicant-or-member [roles]
-  (or (contains? roles :applicant)
-      (contains? roles :member)))
-
 (defn see-application? [application userid]
-  (let [roles (permissions/user-roles application userid)]
-    (if (= :application.state/draft (:application/state application))
-      (user-is-applicant-or-member roles)
-      (not= #{:everyone-else} roles))))
+  (let [state (:application/state application)
+        roles (permissions/user-roles application userid)]
+    (cond
+      (= :application.state/draft state)
+      (is-applying-user? {:application/roles roles})
+
+      (= #{:everyone-else} roles)
+      false
+
+      :else true)))
 
 (defn apply-user-permissions [application userid]
   (let [roles (permissions/user-roles application userid)

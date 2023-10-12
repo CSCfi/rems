@@ -29,7 +29,7 @@
             [rems.actions.vote :refer [vote-action-button vote-form votes-summary]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
-            [rems.common.application-util :as application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
+            [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
             [rems.common.attachment-util :as attachment-util]
             [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
@@ -991,10 +991,7 @@
 
 (defn- actions-form [application config]
   (let [app-id (:application/id application)
-        ;; The :see-everything permission is used to determine whether the user
-        ;; is allowed to see all comments. It would not make sense for the user
-        ;; to be able to write a comment which they cannot see.
-        show-comment-field? (application-util/see-everything? application)
+        show-comment-field? (is-handling-user? application)
         actions (action-buttons application config)
         reload (partial reload! app-id)
         go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
@@ -1205,9 +1202,10 @@
 
 (defn- render-application [{:keys [application config userid language]}]
   [:<>
-   (when (application-util/see-everything? application) ; don't show to applicants
+   (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
      [disabled-items-warning application])
-   [blacklist-warning application]
+   (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
+     [blacklist-warning application])
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8.application-content
@@ -1222,7 +1220,7 @@
        (if @(rf/subscribe [::readonly?])
          [:div.mt-3 [application-duo-codes]]
          [:div.mt-3 [edit-application-duo-codes]]))
-     (when (application-util/see-everything? application)
+     (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
      [:div.mt-3 [application-fields application]]]

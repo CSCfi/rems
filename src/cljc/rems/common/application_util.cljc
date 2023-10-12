@@ -1,5 +1,6 @@
 (ns rems.common.application-util
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.set]
+            [clojure.test :refer [deftest is]]
             [rems.common.util :as util]))
 
 (def states
@@ -37,13 +38,39 @@
 (defn workflow-handlers [application]
   (set (mapv :userid (get-in application [:application/workflow :workflow.dynamic/handlers]))))
 
-(defn is-handler? [application userid]
+(defn is-handler?
+  "Returns true if `userid` is currently workflow handler in `application`."
+  [application userid]
   (contains? (workflow-handlers application) userid))
 
-(defn see-everything?
-  "Does current user have permission to see everything in application?"
+(def +applying-user-roles+ #{:applicant :member})
+(def +handling-user-roles+ #{:handler :reviewer :decider :past-reviewer :past-decider})
+
+(defn is-applying-user?
+  "Returns true if current user is applying for `application`.
+
+   See `rems.common.application-util/+applying-user-roles+`"
   [application]
-  (contains? (set (:application/permissions application)) :see-everything))
+  (let [roles (set (:application/roles application))
+        applying-roles (clojure.set/intersection +applying-user-roles+ roles)]
+    (some? (seq applying-roles))))
+
+(defn is-handling-user?
+  "Returns true if current user is taking part in handling process of `application` .
+
+   See `rems.common.application-util/+handling-user-roles+`"
+  [application]
+  (let [roles (set (:application/roles application))
+        handling-roles (clojure.set/intersection +handling-user-roles+ roles)]
+    (some? (seq handling-roles))))
+
+(defn can-see-everything?
+  "Returns true if current user has special `:see-everything` permission in `application`.
+
+   See `docs/glossary.md`"
+  [application]
+  (let [permissions (set (:application/permissions application))]
+    (contains? permissions :see-everything)))
 
 (defn- parse-int-maybe [x]
   (if (re-matches #"\d+" x)
