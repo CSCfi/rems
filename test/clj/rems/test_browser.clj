@@ -899,7 +899,7 @@
                                            (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)}))
-      (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
+      (let [buttons (btu/query-all [:actions-approve-reject {:css ".attachments button.remove"}])]
         (btu/click-el (last buttons)))
       (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
                                    (mapv (fn [filename]
