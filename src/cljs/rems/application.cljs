@@ -675,24 +675,27 @@
 
     [:b (localize-event event)]))
 
-(defn- event-redacted-attachments [attachments redacted-attachments]
-  [:div.d-flex.flex-column.gap-1.pt-2
-   [:div.event-redacted-attachments
-    [:label (text :t.applications/redacted-attachments)]
-    [:div.container-fluid.break-newline
-     (->> redacted-attachments
-          (mapv #(localize-attachment (dissoc % :attachment/redacted)))
-          (interpose "\n")
-          (into [:<>]))]]
-   (when (seq attachments)
-     [:div.event-new-attachments
-      [:label (text :t.applications/replacing-attachments)]
-      [:div.container-fluid
-       [fields/render-attachments attachments]]])])
+(defn- event-attachments [attachments redacted-attachments]
+  (cond
+    (seq redacted-attachments)
+    [:div.d-flex.flex-column.gap-1.pt-2
+     [:div.event-redacted-attachments
+      [:label (text :t.applications/redacted-attachments)]
+      [:div.break-newline
+       (->> redacted-attachments
+            (mapv #(localize-attachment (dissoc % :attachment/redacted)))
+            (interpose "\n")
+            (into [:<>]))]]
+     (when (seq attachments)
+       [:div.event-new-attachments
+        [:label (text :t.applications/replacing-attachments)]
+        [fields/render-attachments attachments]])]
 
-(defn- event-attachments [attachments]
-  [:div.event-new-attachments.pt-2
-   [fields/render-attachments attachments]])
+    (seq attachments)
+    [:div.event-new-attachments.pt-2
+     [fields/render-attachments attachments]]
+
+    :else nil))
 
 (defn- event-view [{:keys [attachments redacted-attachments]} event]
   (let [decision (localize-decision event)
@@ -714,12 +717,10 @@
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
-      (if (seq redacted-attachments)
-        [event-redacted-attachments attachments redacted-attachments]
-        [event-attachments attachments])]]))
+      [event-attachments attachments redacted-attachments]]]))
 
 (defn- render-events [application events]
-  (let [attachments-by-event-id (index-by [(comp :event/id :attachment/event)] (:application/attachments application))
+  (let [attachments-by-event-id (group-by (comp :event/id :attachment/event) (:application/attachments application))
         attachments-by-id (index-by [:attachment/id] (:application/attachments application))]
     (for [event events]
       [event-view {:attachments (get attachments-by-event-id (:event/id event))

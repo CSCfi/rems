@@ -863,8 +863,7 @@
    [:.attachment-link {:width (u/percent 100)
                        :display :inline-flex
                        :flex-wrap :nowrap
-                       :align-items :center
-                       :gap (u/rem 0.5)}]
+                       :align-items :center}]
 
    [:.download.disabled {:border-style :dashed}]
    [(s/> :.download ":not(:first-child)") {:margin-left (u/rem 0.5)}]
