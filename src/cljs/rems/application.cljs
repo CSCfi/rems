@@ -3,7 +3,7 @@
             [clojure.set :refer [union]]
             [goog.string]
             [re-frame.core :as rf]
-            [medley.core :refer [assoc-some find-first filter-keys filter-vals update-existing]]
+            [medley.core :refer [find-first update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.components :refer [button-wrapper]]
@@ -29,7 +29,7 @@
             [rems.actions.vote :refer [vote-action-button vote-form votes-summary]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
-            [rems.common.application-util :as application-util :refer [accepted-licenses? form-fields-editable? get-member-name is-handler?]]
+            [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
             [rems.common.attachment-util :as attachment-util]
             [rems.atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
@@ -53,19 +53,6 @@
 
 (defn reload! [application-id & [full-reload?]]
   (rf/dispatch [::fetch-application application-id full-reload?]))
-
-(defn- disabled-items-warning [application]
-  (when (contains? (:application/permissions application) :see-everything) ; don't show to applicants
-    (when-some [resources (->> (:application/resources application)
-                               (filter #(or (not (:catalogue-item/enabled %))
-                                            (:catalogue-item/expired %)
-                                            (:catalogue-item/archived %)))
-                               seq)]
-      [:div.alert.alert-warning
-       (text :t.form/alert-disabled-resources)
-       (into [:ul]
-             (for [resource resources]
-               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
   (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
@@ -125,8 +112,7 @@
             (dissoc ::application
                     ::edit-application
                     ::duo-codes
-                    ::autosaving
-                    ::highlight-event-ids))
+                    ::autosaving))
     :dispatch-n (if (-> db :config :enable-duo)
                   [[::fetch-application id true] [::duo-codes]]
                   [[::fetch-application id true]])}))
@@ -177,45 +163,12 @@
                                   :validation nil
                                   :attachment-status {}})))
 
-(defn- set-highlightables-by-request-id [events]
-  (let [related-events-by-request-id (->> events
-                                          (group-by :application/request-id)
-                                          (filter-keys some?)
-                                          (filter-vals #(<= 2 (count %))))]
-    (for [event events
-          :let [highlightable-event-ids (->> event
-                                             :application/request-id
-                                             (get related-events-by-request-id)
-                                             (into #{} (map :event/id)))]]
-      (update event :highlight-event-ids into highlightable-event-ids))))
-
-(defn- set-highlightables-by-redacted-attachments [events attachments]
-  (let [attachments (build-index {:keys [:attachment/id]} attachments)
-        related-events (for [event events
-                             id (map :attachment/id (:event/redacted-attachments event))
-                             :let [added-in-event-id (get-in attachments [id :attachment/event :event/id])]]
-                         #{added-in-event-id (:event/id event)})]
-    (for [event events
-          :let [highlightable-event-ids (->> related-events
-                                             (filter #(contains? % (:event/id event)))
-                                             (reduce into #{}))]]
-      (update event :highlight-event-ids into highlightable-event-ids))))
-
-(defn- set-application-event-highlightables
-  "Updates events with event ids that are related to the event so that they can
-   be highlighted within the UI."
-  [application]
-  (-> application
-      (update :application/events set-highlightables-by-request-id)
-      (update :application/events set-highlightables-by-redacted-attachments (:application/attachments application))))
-
 (rf/reg-event-fx
  ::fetch-application-result
  (fn [{:keys [db]} [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      {:db (-> db
               (update ::application fetcher/finished application)
-              (update-in [::application :data] set-application-event-highlightables)
               (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
 
 (rf/reg-event-db
@@ -489,16 +442,6 @@
      :searching? searching?
      nil (filterv #(not= application-id (:application/id %)) data))))
 
-(rf/reg-event-db
- ::set-highlight-event-ids
- (fn [db [_ event-ids]]
-   (assoc db ::highlight-event-ids event-ids)))
-
-(rf/reg-sub
- ::highlight-event-ids
- (fn [db _]
-   (set (::highlight-event-ids db))))
-
 ;;;; UI components
 
 (defn- pdf-button [app-id]
@@ -714,9 +657,26 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- event-view [{:keys [attachments highlight set-highlights]} event]
-  (let [event-text (localize-event event)
-        decision (localize-decision event)
+(defn- event-description [event]
+  (case (:event/visibility event)
+    :visibility/public
+    [:div.row.no-gutters.gap-1
+     [:div.col-sm-auto
+      [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
+       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
+     [:b.col-sm (localize-event event)]]
+
+    :visibility/handling-users
+    [:div.row.no-gutters.gap-1
+     [:div.col-sm-auto
+      [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
+       [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
+     [:b.col-sm (localize-event event)]]
+
+    [:b (localize-event event)]))
+
+(defn- event-view [{:keys [attachments]} event]
+  (let [decision (localize-decision event)
         comment (case (:event/type event)
                   :application.event/copied-from
                   [application-link (:application/copied-from event) (text :t.applications/application)]
@@ -727,44 +687,24 @@
                   (not-empty (:application/comment event)))
         time (localize-time (:event/time event))]
     [:div.row.event
-     {:class (when highlight
-               "border rounded border-primary")}
      [:label.col-sm-2.col-form-label time]
      [:div.col-sm-10
-      [:div.event-description.d-flex.justify-content-between.col-form-label
-       [:b.col.pl-0 event-text]
-       (when (fn? set-highlights)
-         [:div.d-inline-flex.align-items-start
-          [:a {:href "#" :on-click set-highlights}
-           (text :t.applications/highlight-related-events)]])]
+      [:div.event-description.col-form-label
+       [event-description event]]
       (when decision
         [:div.event-decision decision])
       (when comment
         [:div.form-control.event-comment comment])
       (when (seq attachments)
-        [:div.event-attachments.pt-2
+        [:div.event-attachments.py-2
          [fields/render-attachments attachments]])]]))
 
-(rf/reg-sub
- ::enrich-event-by-id
- :<- [::application]
- :<- [::highlight-event-ids]
- (fn [[application ids] [_ event-id]]
-   {:highlight (contains? ids event-id)
-    :attachments (for [att (:application/attachments application)
-                       :when (= event-id (get-in att [:attachment/event :event/id]))]
-                   att)}))
-
-(defn- render-event [event]
-  (let [opts (merge {:set-highlights (when-some [event-ids (seq (:highlight-event-ids event))]
-                                       (fn []
-                                         (rf/dispatch [::set-highlight-event-ids event-ids])))}
-                    @(rf/subscribe [::enrich-event-by-id (:event/id event)]))]
-    [event-view opts event]))
-
-(defn- render-events [events]
-  (for [e events]
-    [render-event e]))
+(defn- render-events [application events]
+  (let [attachments-by-event-id (->> (:application/attachments application)
+                                     (group-by #(get-in % [:attachment/event :event/id])))]
+    (for [event events]
+      [event-view {:attachments (get attachments-by-event-id (:event/id event))}
+       event])))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:application.state/rejected} state)
@@ -843,54 +783,36 @@
     (localize-time (:application/last-activity application))
     {:inline? true}]])
 
-(defn- application-events [events]
+(defn- application-events [application events]
   (when (seq events)
     (into [:<>
            [:h3.mt-3 (text :t.form/events)]]
-          (render-events events))))
-
-(rf/reg-sub
- ::application-events
- :<- [::application]
- (fn [application _]
-   (->> application
-        :application/events
-        (sort-by :event/time)
-        (reverse))))
+          (render-events application events))))
 
 (defn- application-state [{:keys [application config userid]}]
   (let [state (:application/state application)
-        events @(rf/subscribe [::application-events])
-        [events-show-always events-collapse] (split-at 3 events)]
-    [collapsible/component
-     (-> {:id "header"
-          :title (text :t.applications/state)
-          :always [:div
-                   [:div.mb-3
-                    [phases state (get-application-phases state)]]
-
-                   (when (is-handler? application userid)
-                     [:<>
-                      [application-state-details application config]
-
-                      (when (seq (:application/votes application))
-                        [votes-summary application])
-
-                      [application-events events-show-always]])]
-          :collapse-hidden (when (and (not (is-handler? application userid))
-                                      (seq events))
-                             [:div.my-3
-                              [render-event (first events)]])
-          :collapse (if (is-handler? application userid)
-                      (when (seq events-collapse)
-                        (into [:div]
-                              (render-events events-collapse)))
-
-                      [:<>
-                       [application-state-details application config]
-                       [application-events (concat events-show-always events-collapse)]])
-          :on-close #(rf/dispatch [::set-highlight-event-ids []])} ; remove highlights on toggle close
-         (assoc-some :open? (seq @(rf/subscribe [::highlight-event-ids]))))])) ; show all events on highlight
+        events (sort-by :event/time > (:application/events application))]
+    (if (is-handler? application userid)
+      [collapsible/component {:id "header"
+                              :title (text :t.applications/state)
+                              :always [:div
+                                       [:div.mb-3
+                                        [phases state (get-application-phases state)]]
+                                       [application-state-details application config]
+                                       (when (seq (:application/votes application))
+                                         [votes-summary application])
+                                       [application-events application (take 3 events)]]
+                              :collapse (into [:<>]
+                                              (render-events application (drop 3 events)))}]
+      [collapsible/component {:id "header"
+                              :title (text :t.applications/state)
+                              :always [phases state (get-application-phases state)]
+                              :collapse-hidden (when (seq events)
+                                                 (into [:div.my-3]
+                                                       (render-events application (take 1 events))))
+                              :collapse [:div
+                                         [application-state-details application config]
+                                         [application-events application events]]}])))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -1069,10 +991,7 @@
 
 (defn- actions-form [application config]
   (let [app-id (:application/id application)
-        ;; The :see-everything permission is used to determine whether the user
-        ;; is allowed to see all comments. It would not make sense for the user
-        ;; to be able to write a comment which he then cannot see.
-        show-comment-field? (contains? (:application/permissions application) :see-everything)
+        show-comment-field? (is-handling-user? application)
         actions (action-buttons application config)
         reload (partial reload! app-id)
         go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
@@ -1269,10 +1188,24 @@
                   (mapcat #(get-in % [:resource/duo :duo/codes])))]
     duos))
 
+(defn- disabled-items-warning [application]
+  (when-some [resources (->> (:application/resources application)
+                             (filter #(or (not (:catalogue-item/enabled %))
+                                          (:catalogue-item/expired %)
+                                          (:catalogue-item/archived %)))
+                             seq)]
+    [:div.alert.alert-warning
+     (text :t.form/alert-disabled-resources)
+     (into [:ul]
+           (for [resource resources]
+             [:li (localized (:catalogue-item/title resource))]))]))
+
 (defn- render-application [{:keys [application config userid language]}]
   [:<>
-   [disabled-items-warning application]
-   [blacklist-warning application]
+   (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
+     [disabled-items-warning application])
+   (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
+     [blacklist-warning application])
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8.application-content
@@ -1287,7 +1220,7 @@
        (if @(rf/subscribe [::readonly?])
          [:div.mt-3 [application-duo-codes]]
          [:div.mt-3 [edit-application-duo-codes]]))
-     (when (contains? (:application/permissions application) :see-everything)
+     (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
      [:div.mt-3 [application-fields application]]]
@@ -1615,20 +1548,6 @@
                              :event/actor-attributes {:name "Hannah Handler"}
                              :application/decision :rejected
                              :application/comment "This application is bad."}])
-   (example "event with comment & decision, highlighted"
-            (let [opts {:highlight true}]
-              [event-view opts {:event/time #inst "2020-01-01T08:35"
-                                :event/type :application.event/decided
-                                :event/actor-attributes {:name "Hannah Handler"}
-                                :application/decision :rejected
-                                :application/comment "This application is bad."}]))
-   (example "event that triggers highlight on other events"
-            (let [opts {:set-highlights #(println "set highlights")}]
-              [event-view opts {:event/time #inst "2020-01-01T08:37"
-                                :event/type :application.event/review-requested
-                                :event/actor-attributes {:name "Hannah Handler"}
-                                :application/reviewers [{:name "Carl Reviewer"}]
-                                :application/comment "Please take a look"}]))
    (example "event with comment & attachment"
             (let [opts {:attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}]
               [event-view opts {:event/time #inst "2020-01-01T08:35"

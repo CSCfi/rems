@@ -192,6 +192,8 @@
                  :duos {:validation {:missing-duo-codes "DUO koder anges i resurser, men de saknas från ansökan:"}}
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
+                 :event {:not-shown-to-applicant "Dold för sökande"
+                         :shown-to-applicant "Synlig för sökande"}
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
                           :attachments-redacted "%1 tog bort bilagor. %2"
@@ -233,7 +235,6 @@
                           :resources "Resurser"
                           :state "Tillstånd"}
                  :handlers "Handläggare"
-                 :highlight-related-events "Visa relaterade händelser."
                  :id "id"
                  :intro [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
                  :last-activity "Ändrat"

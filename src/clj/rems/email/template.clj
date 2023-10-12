@@ -173,15 +173,13 @@
                         :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
-  (concat (emails-to-recipients (other-handlers event application)
-                                event application
-                                :t.email.remarked/subject
-                                :t.email.remarked/message)
-          (when (:application/public event) ; no need to email members on non-actionable things
-            (emails-to-recipients [(:application/applicant application)]
-                                  event application
-                                  :t.email.remarked/subject
-                                  :t.email.remarked/message))))
+  (emails-to-recipients (concat (other-handlers event application)
+                                (when (:event/public event)
+                                  ;; no need to email members on non-actionable things
+                                  [(:application/applicant application)]))
+                        event application
+                        :t.email.remarked/subject
+                        :t.email.remarked/message))
 
 (defmethod event-to-emails :application.event/decided [event application]
   (emails-to-recipients (handlers application)

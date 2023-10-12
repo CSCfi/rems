@@ -199,6 +199,8 @@
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
+                 :event {:not-shown-to-applicant "Not shown to applicant"
+                         :shown-to-applicant "Shown to applicant"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 changed the applicant to %2."
@@ -249,7 +251,6 @@
                           :resources "Resources"
                           :state "State"}
                  :handlers "Handlers"
-                 :highlight-related-events "Show related events."
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"
