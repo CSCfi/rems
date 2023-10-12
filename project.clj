@@ -24,7 +24,7 @@
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
                  [luminus-jetty "0.2.3"]
-                 [luminus-migrations "0.7.1"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
+                 [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
                  [luminus-nrepl "0.1.7"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]

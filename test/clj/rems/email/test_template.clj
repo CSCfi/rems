@@ -205,7 +205,7 @@
   (let [mails (emails base-events {:application/id 7
                                    :event/type :application.event/remarked
                                    :event/actor "remarker"
-                                   :application/public true
+                                   :event/public true
                                    :application/comment "remark!"})]
     (is (= #{"assistant" "handler" "applicant"} (email-recipients mails)))
     (is (= {:to-user "applicant"
