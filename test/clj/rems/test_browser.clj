@@ -508,7 +508,8 @@
                                                (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
-          (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
+          (btu/scroll-and-click-el (last (btu/query-all [{:css (str "#container-" attachment-field-id)}
+                                                         {:css ".attachments button.remove"}]))))
 
         (testing "uploading oversized attachment should display error"
           (btu/with-client-config {:attachment-max-size 900}
@@ -593,10 +594,12 @@
         (btu/gather-axe-results "accepted-licenses")
 
         (testing "attachment download"
-          (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
-          (btu/wait-for-downloads "test.txt")
-          (is (= (slurp "test-data/test.txt")
-                 (slurp (first (btu/downloaded-files "test.txt"))))))
+          (let [download-button (->> (btu/query-all {:css ".attachment-link .download"})
+                                     (find-first (comp #{"Download file\ntest.txt"} btu/value-of-el)))]
+            (btu/scroll-and-click-el download-button)
+            (btu/wait-for-downloads "test.txt")
+            (is (= (slurp "test-data/test.txt")
+                   (slurp (first (btu/downloaded-files "test.txt")))))))
 
         (send-application)
         (btu/gather-axe-results "sent-application")

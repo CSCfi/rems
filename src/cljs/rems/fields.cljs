@@ -372,12 +372,11 @@
    (into [:div.attachments.form-group]
          (for [attachment attachments]
            [:div.attachment-link
-            [download-button {:title (:attachment/filename attachment)}]
+            [download-button {:title (:attachment/filename attachment)
+                              :url (str "/applications/attachment/" (:attachment/id attachment))}]
             [:div.col-auto
-             [:button.btn.btn-outline-secondary
-              {:class (str "remove-attachment-" id)
-               :type :button
-               :on-click #(on-remove-attachment (:attachment/id attachment))}
+             [:button.remove.btn.btn-outline-secondary
+              {:on-click #(on-remove-attachment (:attachment/id attachment))}
               [close-symbol]
               " "
               (text :t.form/attachment-remove)]]]))
