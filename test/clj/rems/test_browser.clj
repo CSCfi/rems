@@ -491,15 +491,21 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove"]
+          (btu/wait-predicate #(= (->> ["test.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
+          (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove" "Download file\ntest-sv.txt\nRemove"]
+          (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt" "test-sv.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
@@ -878,17 +884,23 @@
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
       (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
-      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txtnRemove" "Download file\nrems_logo_en.png\nRemove"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)}))
       (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
         (btu/click-el (last buttons)))
-      (btu/wait-predicate #(= ["Download file\ntest.txt\nRemove" "Download file\ntest-fi.txt\nRemove"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "approve"
@@ -897,7 +909,9 @@
     (testing "event visible in eventlog"
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
-      (is (= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (is (= (->> ["test.txt" "test-fi.txt"]
+                  (mapv (fn [filename]
+                          (str/join "\n" (list "Download file" filename)))))
              (get-application-event-attachments))))
 
     (testing "event via api"
