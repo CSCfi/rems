@@ -2739,7 +2739,7 @@
                                     :event/type "application.event/created"
                                     :event/id 100
                                     :application/licenses []
-                                    :event/visibility ["visibility/public"]}
+                                    :event/visibility "visibility/public"}
                                    {:event/id 100
                                     :event/type "application.event/draft-saved"
                                     :event/time "2010-01-01T00:00:00.000Z"
@@ -2748,7 +2748,7 @@
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}
                                                                {:form form-id :field "att" :value (str att-id)}]
-                                    :event/visibility ["visibility/public"]}]
+                                    :event/visibility "visibility/public"}]
               :application/duo {:duo/matches []}}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)

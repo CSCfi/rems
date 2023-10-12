@@ -658,25 +658,22 @@
      (application-list/format-application-id config application)]))
 
 (defn- event-description [event]
-  (let [event-text (localize-event event)
-        event-visibility (:event/visibility event)]
-    (cond
-      (:visibility/public event-visibility)
-      [:div.row.no-gutters.gap-1
-       [:div.col-sm-auto
-        [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
-         [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
-       [:b.col-sm event-text]]
+  (case (:event/visibility event)
+    :visibility/public
+    [:div.row.no-gutters.gap-1
+     [:div.col-sm-auto
+      [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
+       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
+     [:b.col-sm (localize-event event)]]
 
-      (:visibility/handling-users event-visibility)
-      [:div.row.no-gutters.gap-1
-       [:div.col-sm-auto
-        [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
-         [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
-       [:b.col-sm event-text]]
+    :visibility/handling-users
+    [:div.row.no-gutters.gap-1
+     [:div.col-sm-auto
+      [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
+       [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
+     [:b.col-sm (localize-event event)]]
 
-      :else
-      [:b event-text])))
+    [:b (localize-event event)]))
 
 (defn- event-view [{:keys [attachments]} event]
   (let [decision (localize-decision event)

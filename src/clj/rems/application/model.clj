@@ -600,16 +600,16 @@
         "seems like a new event has been added; is public or sensitive?")))
 
 (defn get-event-visibility [event]
-  (case (:event/public event)
-    true
-    #{:visibility/public}
+  (let [event-public (:event/public event)
+        event-type (:event/type event)]
+    (case event-public
+      true :visibility/public
+      false :visibility/handling-users
+      (cond
+        (contains? sensitive-events event-type)
+        :visibility/handling-users
 
-    false
-    #{:visibility/handling-users}
-
-    (if (contains? sensitive-events (:event/type event))
-      #{:visibility/handling-users}
-      #{:visibility/public})))
+        :else :visibility/public))))
 
 (defn enrich-event [event get-user get-catalogue-item]
   (let [event-type (:event/type event)]
@@ -830,7 +830,7 @@
 
 (defn- hide-sensitive-events [events]
   (->> events
-       (filterv (comp :visibility/public :event/visibility))))
+       (filterv #(= :visibility/public (:event/visibility %)))))
 
 (defn- censor-user [user]
   (select-keys user [:userid :name :email :organizations :notification-email]))

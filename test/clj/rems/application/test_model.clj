@@ -1254,7 +1254,7 @@
                                 :workflow/id 50
                                 :workflow/type :workflow/master
                                 :application/licenses [{:license/id 30} {:license/id 31} {:license/id 32}]
-                                :event/visibility #{:visibility/public}}
+                                :event/visibility :visibility/public}
                                {:event/type :application.event/draft-saved
                                 :application/id 1
                                 :event/time (DateTime. 2000)
@@ -1264,27 +1264,27 @@
                                                            {:form 40 :field "43" :value "private answer"}
                                                            {:form 40 :field "field-does-not-exist" :value "something"}]
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
-                                :event/visibility #{:visibility/public}}
+                                :event/visibility :visibility/public}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
                                 :event/time (DateTime. 2500)
                                 :event/actor "applicant"
                                 :application/accepted-licenses #{30 31 32}
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
-                                :event/visibility #{:visibility/public}}
+                                :event/visibility :visibility/public}
                                {:event/type :application.event/submitted
                                 :application/id 1
                                 :event/time (DateTime. 3000)
                                 :event/actor "applicant"
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
-                                :event/visibility #{:visibility/public}}
+                                :event/visibility :visibility/public}
                                {:event/type :application.event/approved
                                 :application/id 1
                                 :event/time (DateTime. 4000)
                                 :event/actor "handler"
                                 :application/comment "looks good"
                                 :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
-                                :event/visibility #{:visibility/public}}]
+                                :event/visibility :visibility/public}]
           :application/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
           :application/role-permissions nil
           :application/description "foo"
@@ -1335,7 +1335,7 @@
             :event/time (DateTime. 1)
             :event/actor "applicant"
             :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant" :secret "secret"}
-            :event/visibility #{:visibility/public}
+            :event/visibility :visibility/public
             :application/id 1
             :application/resources [{:catalogue-item/id 10
                                      :resource/id 11
@@ -1371,7 +1371,7 @@
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
-            :event/visibility #{:visibility/handling-users}
+            :event/visibility :visibility/handling-users
             :application/id 1
             :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
@@ -1386,7 +1386,7 @@
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
-            :event/visibility #{:visibility/handling-users}
+            :event/visibility :visibility/handling-users
             :application/id 1
             :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider" :secret "secret"}
                                     {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer" :secret "secret"}]}
@@ -1401,7 +1401,7 @@
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
-            :event/visibility #{:visibility/public}
+            :event/visibility :visibility/public
             :application/id 1
             :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-added
@@ -1415,7 +1415,7 @@
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
-            :event/visibility #{:visibility/public}
+            :event/visibility :visibility/public
             :application/id 1
             :application/member {:userid "member" :email "member@example.com" :name "Member" :secret "secret"}}
            (model/enrich-event {:event/type :application.event/member-removed
