@@ -346,6 +346,7 @@
     [:&:hover {:color (theme-getx :link-hover-color :color4)}]]
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
+   [:.disabled (make-important {:opacity 1})] ; XXX: bootstrap default has too low contrast for accessibility
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
@@ -608,7 +609,6 @@
     [:&:hover {:filter "brightness(80%)"}]]
 
    (rems-table-styles)
-   [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
@@ -854,10 +854,19 @@
    (actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
+   [:.break-newline {:white-space :pre-wrap}]
+
    [:.attachments {:display :flex
-                   :flex-flow "row wrap"
-                   :align-items :center
+                   :flex-direction :column
+                   :flex-wrap :nowrap
                    :gap (u/rem 0.5)}]
+   [:.attachment-link {:width (u/percent 100)
+                       :display :inline-flex
+                       :flex-wrap :nowrap
+                       :align-items :center}]
+
+   [:.download.disabled {:border-style :dashed}]
+   [(s/> :.download ":not(:first-child)") {:margin-left (u/rem 0.5)}]
 
    ;; print styling
    (stylesheet/at-media

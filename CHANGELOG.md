@@ -13,6 +13,7 @@ Changes since v2.33
 
 ### Changes
 - "Show related events" has been removed from events. (#3156)
+- Handler can now redact other handlers attachments. (#3190)
 
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
@@ -20,6 +21,7 @@ Changes since v2.33
 - Added experimental support for named format parameters in translations. (#3183)
 - Cache reloading can be configured using the new `:buzy-hours` config. REMS will then try to avoid reloading during the specified time spans. (#3194)
 - The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
+- Event now shows which attachments were redacted when viewing as handling user. (#3190)
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.
