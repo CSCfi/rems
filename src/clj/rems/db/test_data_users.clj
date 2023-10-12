@@ -1,6 +1,5 @@
 (ns rems.db.test-data-users
-  (:require [clojure.test :refer :all]
-            [rems.application.approver-bot :as approver-bot]
+  (:require [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.application.expirer-bot :as expirer-bot]))
@@ -27,6 +26,7 @@
    :owner "owner"
    :reporter "reporter"
    :reviewer "carl"
+   :decider "diana"
    :roleless1 "elsa"
    :roleless2 "frank"
    :johnsmith "johnsmith"
@@ -38,6 +38,7 @@
    "malice" {:userid "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value" :mappings {"alt-id" "malice-alt-id"}}
    "handler" {:userid "handler" :email "handler@example.com" :name "Hannah Handler" :mappings {"alt-id" "handler-alt-id"}}
    "carl" {:userid "carl" :email "carl@example.com" :name "Carl Reviewer" :mappings {"alt-id" "carl-alt-id"}}
+   "diana" {:userid "diana" :email "diana@example.com" :name "Diana Decider"}
    "elsa" {:userid "elsa" :email "elsa@example.com" :name "Elsa Roleless" :mappings {"alt-id" "elsa-alt-id"}}
    "frank" {:userid "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:userid "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
@@ -53,6 +54,7 @@
    "malice" {:sub "malice" :email "malice@example.com" :name "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "handler" {:sub "handler" :email "handler@example.com" :name "Hannah Handler"}
    "carl" {:sub "carl" :email "carl@example.com" :name "Carl Reviewer"}
+   "diana" {:sub "diana" :email "diana@example.com" :name "Diana Decider"}
    "elsa" {:sub "elsa" :email "elsa@example.com" :name "Elsa Roleless"}
    "frank" {:sub "frank" :email "frank@example.com" :name "Frank Roleless" :organizations [{:organization/id "frank"}]}
    "organization-owner1" {:sub "organization-owner1" :email "organization-owner1@example.com" :name "Organization Owner 1"}
@@ -87,6 +89,8 @@
              :description "Owner is the user who owns all the resources and manages them in the administration. They can create the catalogue of resources, workflows, forms etc. They can also delegate this power to other users and set who handles which applications, but aren't necessarily the person who does this work themselves."}
             {:userid "carl"
              :description "Carl is an expert, who is sometimes asked to review applications, thus taking a small part in the handling process."}
+            {:userid "diana"
+             :description "Diana is an expert, who is sometimes asked to decide whether applications should be approved or rejected, thus taking a small part in the handling process."}
             {:userid "reporter"
              :description "Reporter is an administrative users, who is only interested in counting beans and applications, having no part in the actual handling."}]}
 
@@ -120,6 +124,7 @@
    :approver1 "RDapprover1@funet.fi"
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
+   :decider "RDdecider@funet.fi"
    :organization-owner1 "RDorganizationowner1@funet.fi"
    :organization-owner2 "RDorganizationowner2@funet.fi"
    :owner "RDowner@funet.fi"
@@ -131,6 +136,7 @@
    "RDapprover1@funet.fi" {:userid "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
    "RDapprover2@funet.fi" {:userid "RDapprover2@funet.fi" :email "RDapprover2.test@rems_example.org" :name "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:userid "RDreview@funet.fi" :email "RDreview.test@rems_example.org" :name "RDreview REMSDEMO"}
+   "RDdecider@funet.fi" {:userid "RDdecider@funet.fi" :email "RDdecider.test@rems_example.org" :name "RDdecider REMSDEMO"}
    "RDowner@funet.fi" {:userid "RDowner@funet.fi" :email "RDowner.test@test_example.org" :name "RDowner REMSDEMO"}
    "RDorganizationowner1@funet.fi" {:userid "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "RDorganizationowner2@funet.fi" {:userid "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
@@ -142,6 +148,7 @@
    "RDapprover1@funet.fi" {:sub "RDapprover1@funet.fi" :email "RDapprover1.test@rems_example.org" :name "RDapprover1 REMSDEMO"}
    "RDapprover2@funet.fi" {:sub "RDapprover2@funet.fi" :email "RDapprover2.test@rems_example.org" :name "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:sub "RDreview@funet.fi" :email "RDreview.test@rems_example.org" :name "RDreview REMSDEMO"}
+   "RDdecider@funet.fi" {:userid "RDdecider@funet.fi" :email "RDdecider.test@rems_example.org" :name "RDdecider REMSDEMO"}
    "RDowner@funet.fi" {:sub "RDowner@funet.fi" :email "RDowner.test@test_example.org" :name "RDowner REMSDEMO"}
    "RDorganizationowner1@funet.fi" {:sub "RDorganizationowner1@funet.fi" :email "RDorganizationowner1.test@test_example.org" :name "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
    "RDorganizationowner2@funet.fi" {:sub "RDorganizationowner2@funet.fi" :email "RDorganizationowner2.test@test_example.org" :name "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}

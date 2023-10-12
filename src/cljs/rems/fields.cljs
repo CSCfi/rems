@@ -5,7 +5,7 @@
             [goog.functions :refer [debounce rateLimit]]
             [re-frame.core :as rf]
             [rems.administration.items :as items]
-            [rems.atoms :refer [add-symbol attachment-link close-symbol failure-symbol textarea]]
+            [rems.atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
             [rems.common.util :refer [assoc-not-present build-index getx]]
@@ -36,7 +36,6 @@
                                       :ref focus-when-collapse-opened
                                       :tab-index "-1"}
     content]])
-
 
 (defn- diff [value previous-value]
   (let [dmp (diff_match_patch.)
@@ -333,7 +332,7 @@
   (let [upload-id (str id "-input")
         info-id (str id "-info")
         config @(rf/subscribe [:rems.config/config])]
-    [:div.upload-file.mr-2
+    [:div.upload-file
      [:input {:style {:display "none"}
               :type "file"
               :id upload-id
@@ -370,22 +369,22 @@
   [:div.form-group
    (when label
      [:label label])
-   (into [:<>]
+   (into [:div.attachments.form-group]
          (for [attachment attachments]
-           [:div.flex-row.d-flex.mb-2
-            [attachment-link attachment]
-            [:button.btn.btn-outline-secondary.ml-2
-             {:class (str "remove-attachment-" id)
-              :type :button
-              :on-click #(on-remove-attachment (:attachment/id attachment))}
-             [close-symbol]
-             " "
-             (text :t.form/attachment-remove)]]))
+           [:div.attachment-link
+            [download-button {:title (:attachment/filename attachment)
+                              :url (str "/applications/attachment/" (:attachment/id attachment))}]
+            [:div.col-auto
+             [:button.remove.btn.btn-outline-secondary
+              {:on-click #(on-remove-attachment (:attachment/id attachment))}
+              [close-symbol]
+              " "
+              (text :t.form/attachment-remove)]]]))
    [upload-button (str "upload-" id) status on-attach]])
 
 (defn render-attachments [attachments]
   (into [:div.attachments]
-        (for [attachment attachments]
+        (for [attachment (sort-by :attachment/id attachments)]
           [attachment-link attachment])))
 
 (defn attachment-field
@@ -533,6 +532,7 @@
                                     :on-attach (fn [_] nil)}])
    (example "multiple attachments, long filenames"
             [multi-attachment-view {:id "action-guide-example-1"
+                                    :label "Long filenames"
                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
                                     :on-attach (fn [_] nil)}])

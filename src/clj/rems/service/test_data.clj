@@ -281,14 +281,8 @@
                                                 :title "Decider workflow"
                                                 :type :workflow/decider
                                                 :handlers handlers
-                                                :licenses [link text]})
-        decider2 (test-helpers/create-workflow! {:actor owner
-                                                 :organization {:organization/id "nbn"}
-                                                 :title "Decider workflow with one handler"
-                                                 :type :workflow/decider
-                                                 :handlers [approver2 rejecter-bot]
-                                                 :licenses [link text]
-                                                 :voting {:type :handlers-vote}})
+                                                :licenses [link text]
+                                                :voting {:type :handlers-vote}})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -337,7 +331,6 @@
     {:default default
      :ega ega
      :decider decider
-     :decider2 decider2
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner
@@ -1056,8 +1049,9 @@
     ;; create application to demo attachment redaction feature
     (let [applicant (:applicant1 users)
           member (:applicant2 users)
-          decider (:approver1 users)
-          handler (:approver2 users)
+          decider (:decider users)
+          handler (:approver2 users) ; "handler"
+          handler2 (:approver1 users) ; "developer"
           reviewer (:reviewer users)
           form-id (test-helpers/create-form! {:actor owner
                                               :organization {:organization/id "nbn"}
@@ -1085,7 +1079,7 @@
                                                        :resource-id resource-id
                                                        :form-id form-id
                                                        :organization {:organization/id "nbn"}
-                                                       :workflow-id (:decider2 workflows)
+                                                       :workflow-id (:decider workflows)
                                                        :categories [special-category]})
           app-id (test-helpers/create-draft! applicant [cat-id] "redacted attachments")]
       (test-helpers/invite-and-accept-member! {:actor applicant
@@ -1110,44 +1104,51 @@
                               :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
                                                                                               :application-id app-id
                                                                                               :filename (str "handler_" (random-long-string 5) ".pdf")})}]})
-      (let [reviewer-attachments (repeatedly 3 #(test-helpers/create-attachment! {:actor reviewer
-                                                                                  :application-id app-id
-                                                                                  :filename "reviewer_attachment.pdf"}))]
-        (test-helpers/command! {:type :application.command/review
+      (test-helpers/command! {:type :application.command/review
+                              :application-id app-id
+                              :actor reviewer
+                              :comment "here are my thoughts. see attachments for details"
+                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor reviewer
+                                                                                              :application-id app-id
+                                                                                              :filename "reviewer_attachment.pdf"})}]})
+      (let [handler2-attachments (vec (for [att ["process_document_one.pdf" "process_document_two.pdf" "process_document_three.pdf"]]
+                                        {:attachment/id (test-helpers/create-attachment! {:actor handler2
+                                                                                          :application-id app-id
+                                                                                          :filename att})}))]
+        (test-helpers/command! {:type :application.command/remark
                                 :application-id app-id
-                                :actor reviewer
-                                :comment "here are my thoughts. see attachments for details"
-                                :attachments (vec (for [id reviewer-attachments]
-                                                    {:attachment/id id}))})
+                                :actor handler2
+                                :comment "see the attached process documents"
+                                :public true
+                                :attachments handler2-attachments})
+        (test-helpers/command! {:type :application.command/request-decision
+                                :application-id app-id
+                                :actor handler
+                                :comment "please decide, here are my final notes"
+                                :deciders [decider]
+                                :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
+                                                                                                :application-id app-id
+                                                                                                :filename "handler_attachment.pdf"})}]})
+        (test-helpers/command! {:type :application.command/remark
+                                :application-id app-id
+                                :actor decider
+                                :comment "thank you, i will make my decision soon"
+                                :public false
+                                :attachments [{:attachment/id (test-helpers/create-attachment! {:actor decider
+                                                                                                :application-id app-id
+                                                                                                :filename "decider_attachment.pdf"})}]})
         (test-helpers/command! {:type :application.command/redact-attachments
                                 :application-id app-id
-                                :actor reviewer
-                                :comment "accidentally uploaded wrong attachments, here are the correct ones"
-                                :public false
-                                :redacted-attachments [{:attachment/id (first reviewer-attachments)}
-                                                       {:attachment/id (nth reviewer-attachments 2)}]
-                                :attachments [{:attachment/id (test-helpers/create-attachment! {:actor reviewer
+                                :actor handler
+                                :comment "updated the process documents to latest version"
+                                :public true
+                                :redacted-attachments (vec (rest handler2-attachments))
+                                :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
                                                                                                 :application-id app-id
-                                                                                                :filename "reviewer_attachment.pdf"})}
-                                              {:attachment/id (test-helpers/create-attachment! {:actor reviewer
+                                                                                                :filename "process_document_two.pdf"})}
+                                              {:attachment/id (test-helpers/create-attachment! {:actor handler
                                                                                                 :application-id app-id
-                                                                                                :filename "reviewer_attachment.pdf"})}]}))
-      (test-helpers/command! {:type :application.command/request-decision
-                              :application-id app-id
-                              :actor handler
-                              :comment "please decide, here are my final notes"
-                              :deciders [decider]
-                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor handler
-                                                                                              :application-id app-id
-                                                                                              :filename "handler_attachment.pdf"})}]})
-      (test-helpers/command! {:type :application.command/remark
-                              :application-id app-id
-                              :actor decider
-                              :comment "thank you, i will make my decision soon"
-                              :public false
-                              :attachments [{:attachment/id (test-helpers/create-attachment! {:actor decider
-                                                                                              :application-id app-id
-                                                                                              :filename "decider_attachment.pdf"})}]}))))
+                                                                                                :filename "process_document_three.pdf"})}]})))))
 
 (defn create-organizations! [users]
   (let [owner (users :owner)

@@ -2,10 +2,10 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL transform select]]
-            [medley.core :refer [assoc-some dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :refer [applicant-and-members can-redact-attachment is-applying-user?]]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user?]]
             [rems.common.form :as form]
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
@@ -768,26 +768,26 @@
 
       (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/vote}])))))
 
-(defn- get-attachment-redact-roles [attachment application]
-  (when (:attachment/event attachment)
-    (let [attachment-user-roles (->> (getx-in attachment [:attachment/user :userid])
-                                     (permissions/user-roles application))]
-      (cond
-        (some #{:handler} attachment-user-roles)
-        #{}
+(defn- allowed-redact-roles [application attachment]
+  (let [event-id (get-in attachment [:attachment/event :event/id])
+        user (getx-in attachment [:attachment/user :userid])
+        roles (permissions/user-roles application user)
+        workflow (:application/workflow application)]
+    (cond
+      (not event-id) ; e.g. applicant attachment in form
+      #{}
 
-        (and (= :workflow/decider (get-in application [:application/workflow :workflow/type]))
-             (some #{:decider :past-decider} attachment-user-roles))
-        #{}
+      (and (= :workflow/decider (:workflow/type workflow))
+           (some #{:decider :past-decider} roles))
+      #{}
 
-        :else
-        #{:handler}))))
+      :else
+      #{:handler})))
 
 (defn- enrich-attachments [application get-user]
   (->> application
        (transform [:application/attachments ALL] #(update % :attachment/user get-user))
-       (transform [:application/attachments ALL] #(let [roles (get-attachment-redact-roles % application)]
-                                                    (assoc-some % :attachment/redact-roles roles)))))
+       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
 
 (defn- enrich-workflow-anonymize-handling [application get-workflow]
   (let [workflow-id (get-in application [:application/workflow :workflow/id])
@@ -942,32 +942,47 @@
   (->> application
        (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles))))
 
-(defn- may-see-redacted-filename [roles]
-  (some #{:handler :reporter}
-        roles))
+(defn- hide-non-accessible-attachments [application]
+  (let [visible-ids (set (keys (classify-attachments application)))
+        visible? (comp visible-ids :attachment/id)]
+    (update application :application/attachments #(filterv visible? %))))
 
-(defn- apply-attachment-privacy [attachment roles userid]
-  (let [see-filename (or (not (:attachment/redacted attachment))
-                         (= userid (get-in attachment [:attachment/user :userid]))
-                         (may-see-redacted-filename roles))]
-    (cond-> attachment
-      (not see-filename) (assoc :attachment/filename :filename/redacted))))
+(defn- hide-redacted-filename [attachment permissions userid]
+  (cond
+    (not (:attachment/redacted attachment))
+    attachment
 
-(defn apply-privacy-by-user [application roles userid]
-  (->> application
-       (transform [:application/attachments ALL] #(apply-attachment-privacy % roles userid))))
+    (= userid (get-in attachment [:attachment/user :userid]))
+    attachment
 
-(defn apply-attachment-permissions [attachment roles userid]
-  (-> attachment
-      (assoc-some :attachment/can-redact (can-redact-attachment attachment roles userid))
-      (dissoc :attachment/redact-roles)))
+    (contains? permissions :see-everything)
+    attachment
+
+    :else (assoc attachment :attachment/filename :filename/redacted)))
+
+(defn- set-redact-permissions [attachment roles userid]
+  (if (:attachment/redacted attachment)
+    attachment
+    (assoc attachment :attachment/can-redact (can-redact-attachment? attachment roles userid))))
+
+(defn apply-attachments-privacy [application userid]
+  (let [roles (permissions/user-roles application userid)
+        permissions (permissions/user-permissions application userid)
+        see-everything? (contains? permissions :see-everything)]
+    (-> (if see-everything?
+          application
+          ;; applying users do not need to see event redacted attachments, only the latest
+          (update application :application/events (partial mapv #(dissoc % :event/redacted-attachments))))
+        (update :application/attachments (partial mapv #(hide-redacted-filename % permissions userid)))
+        (update :application/attachments (partial mapv #(set-redact-permissions % roles userid))))))
 
 (defn hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
-      (dissoc :application/past-members)))
+      (dissoc :application/past-members)
+      (update :application/attachments (partial mapv #(dissoc % :attachment/redact-roles)))))
 
 (defn- personalize-todo [application userid]
   (cond-> application
@@ -976,30 +991,6 @@
 
     (contains? (::latest-decision-request-by-user application) userid)
     (assoc :application/todo :waiting-for-your-decision)))
-
-(defn- visible-attachment-ids [application]
-  (->> application
-       classify-attachments
-       keys
-       set))
-
-(deftest test-visible-attachment-ids
-  (let [application {:application/events [{:event/type :application.event/foo
-                                           :event/attachments [{:attachment/id 1}
-                                                               {:attachment/id 3}]}
-                                          {:event/type :application.event/bar}]
-                     :application/forms [{:form/fields [{:field/type :attachment
-                                                         :field/value "5" :field/previous-value "7,15"}]}
-                                         {:form/fields [{:field/type :text
-                                                         :field/value "2" :field/previous-vaule "2"}
-                                                        {:field/type :attachment
-                                                         :field/value "9,11,13"}]}]}]
-    (is (= #{1 3 5 7 9 11 13 15} (visible-attachment-ids application)))))
-
-(defn- hide-attachments [application]
-  (let [visible-ids (visible-attachment-ids application)
-        visible? (comp visible-ids :attachment/id)]
-    (update application :application/attachments #(filterv visible? %))))
 
 (defn see-application? [application userid]
   (let [state (:application/state application)
@@ -1023,11 +1014,10 @@
             application
             (hide-sensitive-information application))
           (personalize-todo userid)
-          (hide-non-public-information)
           (apply-privacy-by-roles roles)
-          (apply-privacy-by-user roles userid)
-          (hide-attachments)
-          (update :application/attachments (partial map #(apply-attachment-permissions % roles userid)))
+          (hide-non-accessible-attachments)
+          (apply-attachments-privacy userid)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
+          (hide-non-public-information)
           (permissions/cleanup)))))

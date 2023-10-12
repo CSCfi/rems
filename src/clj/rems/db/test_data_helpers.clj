@@ -334,7 +334,7 @@
 
 (defn assert-no-existing-data! []
   (assert (empty? (db/get-organizations {}))
-          "You have existing oranizations, refusing to continue. An empty database is needed.")
+          "You have existing organizations, refusing to continue. An empty database is needed.")
   (assert (empty? (db/get-application-events {}))
           "You have existing applications, refusing to continue. An empty database is needed.")
   (assert (empty? (db/get-catalogue-items {}))

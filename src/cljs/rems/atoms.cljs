@@ -155,8 +155,9 @@
   so they are not supported.
 
   Additional options:
-  `:inline?` - puts the label and value on the same row
-  `:box?`    - wrap the value into a field value box (default true)"
+  `:inline?`     - puts the label and value on the same row
+  `:box?`        - wrap the value into a field value box (default true)
+  `:multiline?`  - puts the value in multiple rows, if possible. see `rems.atoms/format-field-values`"
   [title value & [{:keys [inline? box? multiline?] :or {box? true} :as _opts}]]
   (let [formatted-value (format-field-values value multiline?)
         style (cond box? {:class "form-control"}
@@ -170,28 +171,45 @@
        [:label title]
        [:div style formatted-value]])))
 
-(defn download-button [{:keys [title url]}]
-  [:a.attachment-link {:class "btn btn-outline-secondary text-truncate"
-                       :href url
-                       :target "_blank"}
-   [file-download]
-   [:span.ml-1 title]])
+(defn download-button [{:keys [disabled? title url]}]
+  (if disabled?
+    [:a.download.btn.btn-outline-secondary.text-truncate.disabled
+     {:disabled true
+      :role :button
+      :tabIndex "-1"}
+     [:span title]]
+
+    [:a.download.btn.btn-outline-secondary.text-truncate
+     {:href url
+      :role :button
+      :target "_blank"}
+     [file-download]
+     [:span title]]))
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
-  [download-button {:title title
-                    :url (str "/api/licenses/attachments/" id)}])
+  [:div.attachment-link
+   [download-button {:title title
+                     :url (str "/api/licenses/attachments/" id)}]])
 
-(defn attachment-link
-  "Renders a link to attachment (should have keys :attachment/id and :attachment/filename).
-   If attachment is redacted, renders localized attachment instead."
-  [attachment]
-  (if (:attachment/redacted attachment)
-    [:div.attachment-link {:title (text :t.applications/attachment-filename-redacted)}
-     (localize-attachment attachment)]
-    [download-button {:title (localize-attachment attachment)
-                      :url (str "/applications/attachment/" (:attachment/id attachment))}]))
+(defn attachment-link [attachment]
+  (let [filename (:attachment/filename attachment)]
+    (cond
+      (= :filename/redacted filename)
+      [:div.attachment-link
+       (text :t.applications/attachment-filename-redacted)]
+
+      (:attachment/redacted attachment)
+      [:div.attachment-link
+       [download-button {:disabled? true
+                         :title filename}]
+       [:div.col-auto (text :t.applications/attachment-filename-redacted)]]
+
+      :else
+      [:div.attachment-link
+       [download-button {:title (localize-attachment attachment)
+                         :url (str "/applications/attachment/" (:attachment/id attachment))}]])))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
@@ -383,7 +401,6 @@
                            :title "Expander block with animated chevron"
                            :expanded? false
                            :content [:p "Expanded content"]}])
-
 
        (component-info action-link)
        (example "example command as link"

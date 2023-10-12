@@ -263,9 +263,15 @@
   "If attachment is redacted, return localized text for redacted attachment.
    Otherwise return value of :attachment/filename."
   [attachment]
-  (if (= :filename/redacted (:attachment/filename attachment))
-    (text :t.applications/attachment-filename-redacted)
-    (:attachment/filename attachment)))
+  (let [filename (:attachment/filename attachment)]
+    (cond
+      (= :filename/redacted filename)
+      (text :t.applications/attachment-filename-redacted)
+
+      (:attachment/redacted attachment)
+      (text-format :t.label/parens filename (text :t.applications/attachment-filename-redacted))
+
+      :else filename)))
 
 (def ^:private localized-roles
   {;; :api-key
