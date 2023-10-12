@@ -72,7 +72,7 @@
             :review "Gennemse"
             :revoke "Tilbagekald rettigheder"
             :todo-applications "Aktive ansøgninger"
-            :vote nil}
+            :vote "Stem"}
   :administration {:active "Aktiv"
                    :add "Tilføj"
                    :added-at "Tilføjet"
@@ -126,7 +126,7 @@
                    :external-title "Navn"
                    :form "Blanket"
                    :forms "Blanketter"
-                   :handlers-vote nil
+                   :handlers-vote "Sagsbehandlers stemme"
                    :has-errors "Fejl"
                    :id "Id"
                    :internal-name "Internt navn"
@@ -140,7 +140,7 @@
                    :no-categories "Ingen kategorier"
                    :no-form "Ingen blanket"
                    :no-licenses "Ingen brugsvilkår"
-                   :no-voting nil
+                   :no-voting "Ingen afstemning"
                    :optional "(valgfrit)"
                    :org "Org"
                    :organization "Organisation"
@@ -164,7 +164,7 @@
                    :userid "Brugernavn"
                    :user-role "Brugerrolle"
                    :view "Vis"
-                   :voting nil
+                   :voting "Afstemning"
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
                    :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]}
@@ -240,7 +240,7 @@
                           :revoked "%1 tilbagekaldte rettigheder."
                           :submitted "%1 indsendte ansøgningen til gennemsyn."
                           :unknown "Unknown"
-                          :voted nil}
+                          :voted "%1 stemte %2."}
                  :export {:applicant "Ansøger"
                           :external-id "Eksternt id"
                           :first-submitted "Indsendt"
@@ -281,11 +281,11 @@
                  ;; %1 - application id
                  ;; %2 - comma-separated list of catalogue item names
                  :view-application-without-description "Vis ansøgning %1 for ressourcer: %2"
-                 :votes nil
-                 :voting {:previously-voted nil
-                          :votes {:accept nil
-                                  :empty nil
-                                  :reject nil}}}
+                 :votes "Stemmer"
+                 :voting {:previously-voted [:p "Du har tidligere stemt %1. Du kan ændre din stemme her."]
+                          :votes {:accept "Godkend"
+                                  :empty "Blank"
+                                  :reject "Afvis"}}}
   :cart {:add "Læg i kurven"
          :apply "Ansøg"
          ;; %1 - number of resources
@@ -335,7 +335,7 @@
              ;; :send-expiration-notifications
              :submit "Indsend ansøgning"
              :uninvite-member "Fjern deltagerinvitation"
-             :vote nil}
+             :vote "Stem"}
   :create-form {:add-column "Tilføj kolonne"
                 :add-form-field "Tilføj felt"
                 :add-option "Tilføj valgmulighed"
@@ -404,7 +404,7 @@
                     :master-workflow-description "KUN TIL TEST. Foreningsmængde af alle arbejdsgange."
                     :rule "Regel"
                     :title "Arbejdsgangens navn"
-                    :voting-explanation nil}
+                    :voting-explanation "Du kan påkræve en afstemning om ansøgningen."}
   :dropdown {:no-results "Ingen resultater"
              :placeholder "Vælg..."
              :loading "Indlæser..."
@@ -541,7 +541,7 @@
          :licenses "Brugsvilkår"
          ;; %1 - number
          :maxlength "(maks. %1 tegn)"
-         :must-accept-licenses "Alle ansøgere skal acceptere brugsviklår for at anvende ressourcerne."
+         :must-accept-licenses "Alle ansøgere skal acceptere brugsvilkår for at anvende ressourcerne."
          :no-rows "Ingen rækker"
          :optional "(valgfrit)"
          :please-wait "Vent venligst"
