@@ -304,7 +304,7 @@
                            :event/actor handler-user-id
                            :application/id app-id
                            :application/comment "handler's remark"
-                           :application/public false
+                           :event/public false
                            :event/attachments [{:attachment/id 1}]})
 
 ;;; Tests
@@ -1699,7 +1699,7 @@
             :event/actor handler-user-id
             :application/id app-id
             :application/comment "handler's remark"
-            :application/public false
+            :event/public false
             :event/attachments [{:attachment/id 1}]}
            (ok-command {:type :application.command/remark
                         :actor handler-user-id
@@ -1722,7 +1722,7 @@
             :event/actor reviewer-user-id
             :application/id app-id
             :application/comment ""
-            :application/public false}
+            :event/public false}
            (ok-command {:type :application.command/remark
                         :actor reviewer-user-id
                         :comment ""
@@ -1736,7 +1736,7 @@
             :event/actor reviewer-user-id
             :application/id app-id
             :application/comment ""
-            :application/public false}
+            :event/public false}
            (ok-command {:type :application.command/remark
                         :actor reviewer-user-id
                         :comment ""
@@ -1902,7 +1902,7 @@
                                          {:attachment/id 5}]
             :application/id app-id
             :application/comment "i've got the power"
-            :application/public false}
+            :event/public false}
            (ok-command {:type :application.command/redact-attachments
                         :actor handler-user-id
                         :comment "i've got the power"
@@ -1944,7 +1944,7 @@
             :event/redacted-attachments [{:attachment/id 3}]
             :application/id app-id
             :application/comment "accidental upload"
-            :application/public false}
+            :event/public false}
            (ok-command {:type :application.command/redact-attachments
                         :actor reviewer-user-id
                         :comment "accidental upload"
@@ -1985,7 +1985,7 @@
             :event/redacted-attachments [{:attachment/id 5}]
             :application/id app-id
             :application/comment ""
-            :application/public false}
+            :event/public false}
            (ok-command {:type :application.command/redact-attachments
                         :actor decider-user-id
                         :comment ""

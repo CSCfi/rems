@@ -459,7 +459,7 @@
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
                                     :event/redacted-attachments (vec (:redacted-attachments cmd))
-                                    :application/public (:public cmd)})))
+                                    :event/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
@@ -535,7 +535,7 @@
   [cmd application injections]
   (add-comment-and-attachments cmd application injections
                                {:event/type :application.event/remarked
-                                :application/public (:public cmd)}))
+                                :event/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
   [cmd application injections]
