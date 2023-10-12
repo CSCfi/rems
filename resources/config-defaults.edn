@@ -476,4 +476,19 @@
  ;;    `:paging?`   - whether to use paging (defaults to true)
  ;;    `:page-size` - defaults to 50
  ;;    `:max-rows`  - how many rows to show ever
- :tables {}}
+ :tables {}
+
+ ;; REMS can be configured to avoid heavy work
+ ;; (cache reloading) during pre-defined buzy hours.
+ ;;
+ ;; For example config:
+ ;;
+ ;; :buzy-hours [["07:00" "11:00"]
+ ;;              ["12:00" "17:00"]]
+ ;;
+ ;; would define the buzy hours to be (server time) from seven (07:00) in
+ ;; the morning to eleven (11:00). Then after a break another buzy hour period
+ ;; from noon (12:00) until five (17:00) in the evening.
+ ;;
+ ;; As few or as many periods can be defined.
+ :buzy-hours nil}
