@@ -6,7 +6,7 @@
             [rems.application.events :as events]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
-            [ring.util.http-response :refer :all]
+            [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
 
 (s/defschema CreateWorkflowCommand
@@ -17,7 +17,8 @@
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :licenses) [schema-base/LicenseId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
+   (s/optional-key :anonymize-handling) (s/maybe s/Bool)})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
@@ -26,7 +27,8 @@
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
+   (s/optional-key :anonymize-handling) (s/maybe s/Bool)})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

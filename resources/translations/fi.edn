@@ -75,6 +75,7 @@
                    :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
+                   :anonymize-handling "Anonymisoitu käsittely"
                    :application-state "Hakemuksen tila"
                    :archive "Arkistoi"
                    :back "Takaisin"
@@ -136,6 +137,7 @@
                    :name "Nimi"
                    :no-categories "Ei kategorioita"
                    :no-form "Ei lomaketta"
+                   :no-forms "Ei lomakkeita"
                    :no-licenses "Ei lisenssejä"
                    :no-voting "Ei äänestystä"
                    :optional "(valinnainen)"
@@ -163,7 +165,9 @@
                    :voting "Äänestys"
                    :workflow "Työvuo"
                    :workflows "Työvuot"
-                   :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]}
+                   :workflow-anonymize-handling-explanation "Tämä työvuo piilottaa käsittelijöiden henkilökohtaiset tunnistetiedot (kuten nimen ja sähköpostiosoitteen) hakijoilta."
+                   :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]
+                   :workflow-type "Työvuon tyyppi"}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
                    :email "Sähköposti"
@@ -589,7 +593,8 @@
             :settings "Asetukset"
             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
-  :roles {:applicant "Hakija"
+  :roles {:anonymous-handler :fi.t.roles/handler
+          :applicant "Hakija"
           :decider "Päättäjä"
           :handler "Käsittelijä"
           :member "Jäsen"

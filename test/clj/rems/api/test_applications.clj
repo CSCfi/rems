@@ -87,10 +87,12 @@
        :application/attachments
        (sort-by :attachment/id)))
 
-(defn- get-last-event [application-id user-id]
-  (-> (get-application-for-user application-id user-id)
-      :application/events
-      last))
+(defn- get-events [app-id user-id]
+  (-> (get-application-for-user app-id user-id)
+      :application/events))
+
+(defn- get-last-event [app-id user-id]
+  (last (get-events app-id user-id)))
 
 (def testfile (io/file "./test-data/test.txt"))
 
@@ -1437,8 +1439,7 @@
                                     api-key user)]
           (is (= {:userid "alice"
                   :name "Alice Applicant"
-                  :email "alice@example.com"
-                  :organizations [{:organization/id "default"}]}
+                  :email "alice@example.com"}
                  (:application/applicant application)
                  (get-in application [:application/events 0 :event/actor-attributes])))
           (is (= {:userid "developer"
@@ -2821,3 +2822,150 @@
                            api-key reporter)
                  ;; event ids are unpredictable
                  (update :application/events (partial map #(update % :event/id (constantly 100))))))))))
+
+(deftest test-application-handler-anonymization
+  (let [applicant "alice"
+        member "malice"
+        reviewer "carl"
+        decider (test-helpers/create-user! {:userid "decider"
+                                            :email "decider@example.com"
+                                            :name "David Decider"
+                                            :organizations [{:organization/id "default"}]})
+        handler-id (test-helpers/create-user! {:userid "special-handler"
+                                               :email "special-handler@example.com"
+                                               :name "Heather Handler"
+                                               :organizations [{:organization/id "default"}]
+                                               :nickname "Edge case"})
+        _ (api-call :put "/api/user-settings/edit" {:language :fi :notification-email "special-handler-notifications@example.com"} +test-api-key+ handler-id)
+        workflow-id (test-helpers/create-workflow! {:title "Restricted workflow"
+                                                    :handlers [handler-id]
+                                                    :type :workflow/decider
+                                                    :anonymize-handling true})
+        cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id})
+        app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                  :actor applicant})]
+    (testing "test setup"
+      (is (= {:language "fi" :notification-email "special-handler-notifications@example.com"}
+             (api-call :get "/api/user-settings" nil +test-api-key+ handler-id))
+          "handler user has extra attributes set")
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/save-draft
+                                      :application-id app-id
+                                      :field-values []}))
+          "applicant can save draft")
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))
+          "applicant can submit application")
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/add-member
+                                       :application-id app-id
+                                       :member {:userid member}}))
+          "handler can add member")
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/remark
+                                       :public true
+                                       :application-id app-id
+                                       :comment "see attachment for details"
+                                       :attachments [{:attachment/id (upload-api-attachment-ok app-id handler-id "remark.txt")}]}))
+          "handler can remark with attachment")
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/request-review
+                                       :application-id app-id
+                                       :reviewers [reviewer]
+                                       :comment "please give your review"}))
+          "handler can request review")
+      (is (= {:success true}
+             (send-command reviewer {:type :application.command/remark
+                                     :public true ; XXX: should reviewer be able to make public remark?
+                                     :application-id app-id
+                                     :comment "not sure"}))
+          "reviewer can make a public remark")
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/request-decision
+                                       :application-id app-id
+                                       :deciders [decider]
+                                       :comment "please give your decision"}))
+          "handler can request decision")
+      (is (= {:success true}
+             (send-command decider {:type :application.command/remark
+                                    :public true ; XXX: should decider be able to make public remark?
+                                    :application-id app-id
+                                    :comment "i will make final decision soon"}))
+          "decider can make a public remark"))
+
+    (testing "attachments"
+      (let [get-attachments (fn [userid]
+                              (vec (for [att (get-api-attachments app-id userid)]
+                                     (select-keys att [:attachment/user]))))]
+        (is (= [{:attachment/user {:userid "special-handler" :email "special-handler@example.com" :name "Heather Handler" :nickname "Edge case" :organizations [{:organization/id "default"}] :notification-email "special-handler-notifications@example.com"}}]
+               (get-attachments handler-id)
+               (get-attachments reviewer))
+            "handler and reviewer can see all user attributes in attachments")
+        (is (= [{:attachment/user {:userid "rems-handler" :email nil :name nil}}]
+               (get-attachments applicant)
+               (get-attachments member))
+            "applicant and member can see only anonymized handler in attachments")))
+
+    (testing "events"
+      (let [select-event-columns #(select-keys % [:event/actor :event/actor-attributes :event/public :event/visibility])
+            get-app-events (fn [userid]
+                             (->> (get-events app-id userid)
+                                  (mapv (juxt :event/type select-event-columns))))
+            applicant-full {:userid "alice" :email "alice@example.com" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
+            handler-full {:userid "special-handler" :email "special-handler@example.com" :name "Heather Handler" :nickname "Edge case" :organizations [{:organization/id "default"}] :notification-email "special-handler-notifications@example.com"}
+            reviewer-full {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}
+            decider-full {:userid "decider" :email "decider@example.com" :name "David Decider" :organizations [{:organization/id "default"}]}]
+
+        (testing "as handling users"
+          (is (= [["application.event/created"            {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/draft-saved"        {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/submitted"          {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/member-added"       {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/public"}]
+                  ["application.event/remarked"           {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/public" :event/public true}]
+                  ["application.event/review-requested"   {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/handling-users"}]
+                  ["application.event/remarked"           {:event/actor "carl" :event/actor-attributes reviewer-full :event/visibility "visibility/public" :event/public true}]
+                  ["application.event/decision-requested" {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/handling-users"}]
+                  ["application.event/remarked"           {:event/actor "decider" :event/actor-attributes decider-full :event/visibility "visibility/public" :event/public true}]]
+                 (get-app-events handler-id)
+                 (get-app-events reviewer)
+                 (get-app-events decider)
+                 (get-app-events "reporter"))
+              "handling users see full event actor attributes and both :event/public and :event/visibility attributes"))
+
+        (testing "as applying users"
+          (let [applicant-short {:userid "alice" :email "alice@example.com" :name "Alice Applicant"}
+                anonymous {:userid "rems-handler" :name nil :email nil}]
+
+            (is (= [["application.event/created"              {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/draft-saved"          {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/submitted"            {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/member-added"         {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+                    #_["application.event/review-requested"   {:event/actor "special-handler" :event/actor-attributes handler-attributes}]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+                    #_["application.event/decision-requested" {:event/actor "special-handler" :event/actor-attributes handler-attributes}]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]]
+                   (get-app-events applicant)
+                   (get-app-events member))
+                "applying users see anonymized handling users and shortened actor attributes, and neither :event/public nor :event/visibility are visible")))))
+
+    (testing "workflow"
+      (is (= {:workflow/id workflow-id
+              :workflow/type "workflow/decider"
+              :workflow/anonymize-handling true
+              :workflow.dynamic/handlers [{:userid "special-handler"
+                                           :name "Heather Handler"
+                                           :email "special-handler@example.com"
+                                           :organizations [{:organization/id "default"}]
+                                           :notification-email "special-handler-notifications@example.com"
+                                           :nickname "Edge case"
+                                           :handler/active? true}]}
+             (:application/workflow (get-application-for-user app-id handler-id))
+             (:application/workflow (get-application-for-user app-id reviewer)))
+          "handler and reviewer can see anonymize handling attributes in workflow")
+      (is (= {:workflow/id workflow-id
+              :workflow/type "workflow/decider"}
+             (:application/workflow (get-application-for-user app-id applicant))
+             (:application/workflow (get-application-for-user app-id member)))
+          "applicant and member do not see anonymize handling attributes in workflow"))))

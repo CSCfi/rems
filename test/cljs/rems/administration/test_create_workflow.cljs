@@ -10,11 +10,13 @@
                 :forms [{:form/id 123}]
                 :handlers ["bob"]
                 :licenses [{:id 1}]
-                :disable-commands [{:command :application.command/close}]}]
+                :disable-commands [{:command :application.command/close}]
+                :anonymize-handling true}]
       (is (not (nil? (build-create-request form))))
       (is (not (nil? (build-create-request (dissoc form :forms :licenses)))))
-      (is (= {:licenses [{:license/id 1}]}
-             (select-keys (build-create-request form) [:licenses])))
+      (is (= {:anonymize-handling true
+              :licenses [{:license/id 1}]}
+             (select-keys (build-create-request form) [:anonymize-handling :licenses])))
       (testing "missing organization"
         (is (nil? (build-create-request (assoc form :organization nil)))))
       (testing "missing title"
@@ -40,7 +42,8 @@
                 :handlers ["bob" "carl"]
                 :licenses []
                 :disable-commands []
-                :voting nil}
+                :voting nil
+                :anonymize-handling false}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -59,7 +62,8 @@
                 :handlers ["bob" "carl"]
                 :licenses []
                 :disable-commands []
-                :voting nil}
+                :voting nil
+                :anonymize-handling false}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
@@ -77,23 +81,40 @@
                 :handlers ["bob" "carl"]
                 :licenses []
                 :disable-commands []
-                :voting nil}
+                :voting nil
+                :anonymize-handling false}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test
-  (is (= {:id 3
-          :organization {:organization/id "o"}
-          :title "t"
-          :handlers ["a" "b"]
-          :disable-commands [{:command :application.command/close}]
-          :voting nil}
-         (build-edit-request 3 {:organization {:organization/id "o"}
-                                :title "t"
-                                :handlers [{:userid "a"} {:userid "b"}]
-                                :licenses [{:id 1}] ; licenses should not be mapped
-                                :disable-commands [{:command :application.command/close}]})))
+  (testing "form defaults"
+    (is (= {:id 3
+            :organization {:organization/id "o"}
+            :title "t"
+            :handlers ["a" "b"]
+            :disable-commands []
+            :voting nil
+            :anonymize-handling false}
+           (build-edit-request 3 {:organization {:organization/id "o"}
+                                  :title "t"
+                                  :handlers [{:userid "a"} {:userid "b"}]}))))
+  (testing "extra options"
+    (is (= {:id 3
+            :organization {:organization/id "o"}
+            :title "t"
+            :handlers ["a" "b"]
+            :disable-commands [{:command :application.command/close}]
+            :voting :handlers-vote
+            :anonymize-handling true}
+           (build-edit-request 3 {:organization {:organization/id "o"}
+                                  :title "t"
+                                  :handlers [{:userid "a"} {:userid "b"}]
+                                  :licenses [{:id 1}] ; licenses should not be mapped
+                                  :disable-commands [{:command :application.command/close}]
+                                  :voting :handlers-vote
+                                  :anonymize-handling true}))))
+
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
   (is (nil? (build-edit-request 3 {:organization {:organization/id "o"} :title "" :handlers [{:userid "a"} {:userid "b"}]})))

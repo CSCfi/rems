@@ -714,7 +714,7 @@
       [:div.event-description.col-form-label
        [event-description event]]
       (when decision
-        [:div.event-decision decision])
+        [:div.event-decision.mb-2 decision])
       (when comment
         [:div.form-control.event-comment comment])
       [event-attachments attachments redacted-attachments]]]))
@@ -1576,6 +1576,11 @@
                                 :event/type :application.event/remarked
                                 :event/actor-attributes {:name "Hannah Handler"}
                                 :application/comment (str lipsum "\n\nA final line.")}]))
+   (example "event with anonymized user"
+            [event-view nil {:event/time #inst "2020-01-01T08:35"
+                             :event/type :application.event/remarked
+                             :event/actor-attributes {:userid "rems-handler"}
+                             :application/comment "I could be reviewer 1 or reviewer 2, but you will never know."}])
    (example "event that redacts and replaces attachments"
             (let [opts {:attachments [{:attachment/filename "new_image.jpeg"}
                                       {:attachment/filename "new_document.pdf"}]

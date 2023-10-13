@@ -75,6 +75,7 @@
                    :add "Lägg till"
                    :added-at "Tillagd"
                    :added-by "Tillagd av"
+                   :anonymize-handling "Anonymiserad hantering"
                    :application-state "Ansökningsstatus"
                    :archive "Arkivera"
                    :back "Tillbaka"
@@ -136,6 +137,7 @@
                    :name "Namn"
                    :no-categories "Inga kategorier"
                    :no-form "Ingen blankett"
+                   :no-forms "Inga blanketter"
                    :no-licenses "Inga licenser"
                    :no-voting "Inga omröstning"
                    :optional "(valfritt)"
@@ -163,7 +165,9 @@
                    :voting "Omröstning"
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
-                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
+                   :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
+                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
+                   :workflow-type "Arbetsflödets typ"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
                    :email "E-postadress"
@@ -589,7 +593,8 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
-  :roles {:applicant "Sökande"
+  :roles {:anonymous-handler :sv.t.roles/handler
+          :applicant "Sökande"
           :decider "Beslutare"
           :handler "Handläggare"
           :member "Deltagare"

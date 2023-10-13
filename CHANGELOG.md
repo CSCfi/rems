@@ -23,6 +23,7 @@ Changes since v2.33
 - Cache reloading can be configured using the new `:buzy-hours` config. REMS will then try to avoid reloading during the specified time spans. (#3194)
 - The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
 - Event now shows which attachments were redacted when viewing as handling user. (#3190)
+- Workflow has new option to anonymize handling users. When enabled, applying users may only see "Handler" in events where handling user's name would appear. Event emails to applying users similarly show only anonymized name where handling user's name would appear. Application API also returns only anonymized name to applying users. Anonymized name is customizable with translation key `:t.roles/anonymous-handler`, which defaults to `:t.roles/handler`.
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.

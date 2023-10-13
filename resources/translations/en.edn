@@ -77,6 +77,7 @@
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :anonymize-handling "Anonymized handling"
                    :application-state "Application state"
                    :archive "Archive"
                    :back "Back"
@@ -139,6 +140,7 @@
                    :name "Name"
                    :no-categories "No categories"
                    :no-form "No form"
+                   :no-forms "No forms"
                    :no-licenses "No licenses"
                    :no-voting "No voting"
                    :optional "(optional)"
@@ -167,7 +169,9 @@
                    :voting "Voting"
                    :workflow "Workflow"
                    :workflows "Workflows"
-                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
+                   :workflow-anonymize-handling-explanation "This workflow hides handling users personally identifiable information (e.g. name and email) from applying users."
+                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]
+                   :workflow-type "Workflow type"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
                    :email "Email"
@@ -638,7 +642,8 @@
             :settings "Settings"
             :warning-about-missing-email [:<> "You will need to " [:a {:href "/profile"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
             :your-details "Your user details"}
-  :roles {:applicant "Applicant"
+  :roles {:anonymous-handler :en.t.roles/handler ; use handler as default translation for workflow anonymized handlers
+          :applicant "Applicant"
           :decider "Decider"
           :handler "Handler"
           :member "Member"
