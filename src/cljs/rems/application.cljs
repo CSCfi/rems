@@ -714,7 +714,7 @@
       [:div.event-description.col-form-label
        [event-description event]]
       (when decision
-        [:div.event-decision decision])
+        [:div.event-decision.mb-2 decision])
       (when comment
         [:div.form-control.event-comment comment])
       [event-attachments attachments redacted-attachments]]]))

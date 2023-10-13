@@ -386,7 +386,8 @@
   (let [applicant (users :applicant1)
         approver (users :approver1)
         approver2 (users :approver2)
-        reviewer (users :reviewer)]
+        reviewer (users :reviewer)
+        decider (users :decider)]
 
     (test-helpers/create-draft! applicant [catid] "draft application")
 
@@ -443,10 +444,30 @@
                               :actor approver2
                               :reviewers [reviewer]
                               :comment "please have a look"})
+      (test-helpers/command! {:type :application.command/remark
+                              :application-id app-id
+                              :actor reviewer
+                              :comment "application is missing key purpose"
+                              :public true})
       (test-helpers/command! {:type :application.command/review
                               :application-id app-id
                               :actor reviewer
-                              :comment "not looking good"})
+                              :comment "not looking good in my opinion"})
+      (test-helpers/command! {:type :application.command/request-decision
+                              :application-id app-id
+                              :actor approver2
+                              :comment "please decide"
+                              :deciders [decider]})
+      (test-helpers/command! {:type :application.command/remark
+                              :application-id app-id
+                              :actor decider
+                              :comment "i agree with previous remarker"
+                              :public true})
+      (test-helpers/command! {:type :application.command/decide
+                              :application-id app-id
+                              :actor decider
+                              :decision :rejected
+                              :comment "unacceptable in current state"})
       (test-helpers/command! {:type :application.command/return
                               :application-id app-id
                               :actor approver2
