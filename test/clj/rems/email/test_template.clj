@@ -227,7 +227,7 @@
     (let [mails (emails anonymous-wf-events {:application/id 7
                                              :event/type :application.event/remarked
                                              :event/actor "handler"
-                                             :application/public true
+                                             :event/public true
                                              :application/comment "remark!"})]
       (is (= #{"assistant" "applicant"} (email-recipients mails)))
       (is (= {:to-user "applicant"
