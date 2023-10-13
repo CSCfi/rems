@@ -53,5 +53,5 @@
         (http-response/content-type "application/json"))))
 
 (defn extended-logging [request]
-  (-> (when (:enable-extended-logging env)
-        (log/info "extended-logging" (:uri request) (:params request)))))
+  (when (:enable-extended-logging env)
+    (log/info "extended-logging" (:uri request) (:params request))))
