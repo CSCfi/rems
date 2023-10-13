@@ -170,7 +170,8 @@
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
                    :workflow-anonymize-handling-explanation nil
-                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]}
+                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]
+                   :workflow-type nil}
   :applicant-info {:applicant "Ansøger"
                    :applicants "Ansøgere"
                    :email "E-mail"

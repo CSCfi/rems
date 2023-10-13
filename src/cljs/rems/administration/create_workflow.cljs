@@ -65,6 +65,8 @@
 
 (def workflow-types #{:workflow/default :workflow/decider :workflow/master})
 
+(rf/reg-sub ::workflow-type (fn [db _] (get-in db [::form :type])))
+
 (defn needs-handlers? [type]
   (contains? #{:workflow/default :workflow/decider :workflow/master} type))
 
@@ -206,18 +208,27 @@
          :on-change #(rf/dispatch [::set-licenses %])}])]))
 
 (defn- workflow-type-field []
-  [radio-button-group context {:id :workflow-type
-                               :keys [:type]
-                               :readonly @(rf/subscribe [::editing?])
-                               :orientation :horizontal
-                               :options (concat
-                                         [{:value :workflow/default
-                                           :label (text :t.create-workflow/default-workflow)}
-                                          {:value :workflow/decider
-                                           :label (text :t.create-workflow/decider-workflow)}]
-                                         (when (config/dev-environment?)
-                                           [{:value :workflow/master
-                                             :label (text :t.create-workflow/master-workflow)}]))}])
+  [:div.form-group
+   [:label.administration-field-label {:for :workflow-type}
+    (text :t.administration/workflow-type)]
+   [radio-button-group context
+    {:id :workflow-type
+     :keys [:type]
+     :readonly @(rf/subscribe [::editing?])
+     :orientation :horizontal
+     :options (concat
+               [{:value :workflow/default
+                 :label (text :t.create-workflow/default-workflow)}
+                {:value :workflow/decider
+                 :label (text :t.create-workflow/decider-workflow)}]
+               (when (config/dev-environment?)
+                 [{:value :workflow/master
+                   :label (text :t.create-workflow/master-workflow)}]))}]
+   [:div.alert.alert-info
+    (case @(rf/subscribe [::workflow-type])
+      :workflow/default (text :t.create-workflow/default-workflow-description)
+      :workflow/decider (text :t.create-workflow/decider-workflow-description)
+      :workflow/master (text :t.create-workflow/master-workflow-description))]])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
@@ -240,9 +251,6 @@
   [atoms/link {:class "btn btn-secondary"}
    (str "/administration/workflows" (andstr "/" @(rf/subscribe [::workflow-id])))
    (text :t.administration/cancel)])
-
-(defn workflow-type-description [description]
-  [:div.alert.alert-info description])
 
 (defn- create-rule [{:keys [db]} [_]]
   {:db (update-in db [::form :disable-commands] conj-vec {})
@@ -420,31 +428,8 @@
      (when anonymize-handling
        [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)])]))
 
-(defn default-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/default-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-anonymize-handling-field]
-   [workflow-forms-field]])
-
-(defn decider-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-anonymize-handling-field]
-   [workflow-forms-field]])
-
-(defn master-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/master-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-anonymize-handling-field]
-   [workflow-forms-field]])
-
 (defn create-workflow-page []
   (let [config @(rf/subscribe [:rems.config/config])
-        form @(rf/subscribe [::form])
-        workflow-type (:type form)
         loading? (or @(rf/subscribe [::actors :fetching?])
                      @(rf/subscribe [::workflow :fetching?]))
         editing? @(rf/subscribe [::editing?])
@@ -463,15 +448,11 @@
                  [:div#workflow-editor.fields
                   [workflow-organization-field]
                   [workflow-title-field]
-
                   [workflow-type-field]
-                  (case workflow-type
-                    :workflow/default [default-workflow-form]
-                    :workflow/decider [decider-workflow-form]
-                    :workflow/master [master-workflow-form])
-
+                  [workflow-anonymize-handling-field]
+                  [workflow-handlers-field]
+                  [workflow-forms-field]
                   [workflow-licenses-field]
-
                   ;; optional extra stuff
                   ;; XXX: could use collapsible too
                   [:div.spaced-vertically-5.mt-5

@@ -170,7 +170,8 @@
                    :workflow "Workflow"
                    :workflows "Workflows"
                    :workflow-anonymize-handling-explanation "This workflow hides handling users personally identifiable information (e.g. name and email) from applying users."
-                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
+                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]
+                   :workflow-type "Workflow type"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
                    :email "Email"
