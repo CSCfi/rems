@@ -92,6 +92,7 @@
  :enable-catalogue-tree true
  :enable-save-compaction true
  :enable-autosave true
+ :enable-extended-logging true
 
  ;; let's use plugins in dev
  :oidc-require-name false

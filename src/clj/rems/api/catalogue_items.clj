@@ -3,7 +3,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.service.catalogue :as catalogue]
-            [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response check-user extended-logging]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
             [rems.common.util :refer [apply-filters]]
             [rems.schema-base :as schema-base]
@@ -102,18 +102,20 @@
         (ok it)
         (not-found-json-response)))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create a new catalogue item"
       :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
+      (extended-logging request)
       (ok (catalogue/create-catalogue-item! command)))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Edit a catalogue item"
       :roles +admin-write-roles+
       :body [command EditCatalogueItemCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
         (not-found-json-response)
         (ok (catalogue/edit-catalogue-item! command))))

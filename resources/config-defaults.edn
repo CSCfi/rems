@@ -429,6 +429,11 @@
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
  :enable-save-compaction false ; whether to merge consecutive saves into one event (EXPERIMENTAL)
  :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
+
+ ;; Extended logging for routes that should additionally log content of entity mutation.
+ ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
+ :enable-extended-logging false
+
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
  :application-list-hidden-columns []
