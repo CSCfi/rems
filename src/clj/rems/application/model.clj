@@ -906,6 +906,7 @@
   (-> application
       (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
+      (update :application/events (partial mapv #(dissoc % :event/public :event/visibility)))
       apply-workflow-anonymization
       (dissoc-in [:application/workflow :workflow.dynamic/handlers]
                  [:application/workflow :workflow/voting]

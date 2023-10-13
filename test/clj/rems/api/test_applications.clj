@@ -2908,43 +2908,47 @@
             "applicant and member can see only anonymized handler in attachments")))
 
     (testing "events"
-      (let [get-app-events (fn [userid]
+      (let [select-event-columns #(select-keys % [:event/actor :event/actor-attributes :event/public :event/visibility])
+            get-app-events (fn [userid]
                              (->> (get-events app-id userid)
-                                  (mapv (juxt :event/type #(select-keys % [:event/actor :event/actor-attributes])))))
+                                  (mapv (juxt :event/type select-event-columns))))
             applicant-full {:userid "alice" :email "alice@example.com" :name "Alice Applicant" :nickname "In Wonderland" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
             handler-full {:userid "special-handler" :email "special-handler@example.com" :name "Heather Handler" :nickname "Edge case" :organizations [{:organization/id "default"}] :notification-email "special-handler-notifications@example.com"}
             reviewer-full {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}
             decider-full {:userid "decider" :email "decider@example.com" :name "David Decider" :organizations [{:organization/id "default"}]}]
 
         (testing "as handling users"
-          (is (= [["application.event/created" {:event/actor "alice" :event/actor-attributes applicant-full}]
-                  ["application.event/draft-saved" {:event/actor "alice" :event/actor-attributes applicant-full}]
-                  ["application.event/submitted" {:event/actor "alice" :event/actor-attributes applicant-full}]
-                  ["application.event/member-added" {:event/actor "special-handler" :event/actor-attributes handler-full}]
-                  ["application.event/remarked" {:event/actor "special-handler" :event/actor-attributes handler-full}]
-                  ["application.event/review-requested" {:event/actor "special-handler" :event/actor-attributes handler-full}]
-                  ["application.event/remarked" {:event/actor "carl" :event/actor-attributes reviewer-full}]
-                  ["application.event/decision-requested" {:event/actor "special-handler" :event/actor-attributes handler-full}]
-                  ["application.event/remarked" {:event/actor "decider" :event/actor-attributes decider-full}]]
+          (is (= [["application.event/created"            {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/draft-saved"        {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/submitted"          {:event/actor "alice" :event/actor-attributes applicant-full :event/visibility "visibility/public"}]
+                  ["application.event/member-added"       {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/public"}]
+                  ["application.event/remarked"           {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/public" :event/public true}]
+                  ["application.event/review-requested"   {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/handling-users"}]
+                  ["application.event/remarked"           {:event/actor "carl" :event/actor-attributes reviewer-full :event/visibility "visibility/public" :event/public true}]
+                  ["application.event/decision-requested" {:event/actor "special-handler" :event/actor-attributes handler-full :event/visibility "visibility/handling-users"}]
+                  ["application.event/remarked"           {:event/actor "decider" :event/actor-attributes decider-full :event/visibility "visibility/public" :event/public true}]]
                  (get-app-events handler-id)
                  (get-app-events reviewer)
                  (get-app-events decider)
-                 (get-app-events "reporter"))))
+                 (get-app-events "reporter"))
+              "handling users see full event actor attributes and both :event/public and :event/visibility attributes"))
 
         (testing "as applying users"
           (let [applicant-short {:userid "alice" :email "alice@example.com" :name "Alice Applicant"}
                 anonymous {:userid "rems-handler" :name nil :email nil}]
-            (is (= [["application.event/created" {:event/actor "alice" :event/actor-attributes applicant-short}]
-                    ["application.event/draft-saved" {:event/actor "alice" :event/actor-attributes applicant-short}]
-                    ["application.event/submitted" {:event/actor "alice" :event/actor-attributes applicant-short}]
-                    ["application.event/member-added" {:event/actor "rems-handler" :event/actor-attributes anonymous}]
-                    ["application.event/remarked" {:event/actor "rems-handler" :event/actor-attributes anonymous}]
-                    #_["application.event/review-requested" {:event/actor "special-handler" :event/actor-attributes handler-attributes}]
-                    ["application.event/remarked" {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+
+            (is (= [["application.event/created"              {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/draft-saved"          {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/submitted"            {:event/actor "alice" :event/actor-attributes applicant-short}]
+                    ["application.event/member-added"         {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]
+                    #_["application.event/review-requested"   {:event/actor "special-handler" :event/actor-attributes handler-attributes}]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]
                     #_["application.event/decision-requested" {:event/actor "special-handler" :event/actor-attributes handler-attributes}]
-                    ["application.event/remarked" {:event/actor "rems-handler" :event/actor-attributes anonymous}]]
+                    ["application.event/remarked"             {:event/actor "rems-handler" :event/actor-attributes anonymous}]]
                    (get-app-events applicant)
-                   (get-app-events member)))))))
+                   (get-app-events member))
+                "applying users see anonymized handling users and shortened actor attributes, and neither :event/public nor :event/visibility are visible")))))
 
     (testing "workflow"
       (is (= {:workflow/id workflow-id
