@@ -52,6 +52,9 @@
     (-> (http-response/unprocessable-entity body)
         (http-response/content-type "application/json"))))
 
-(defn extended-logging [request]
-  (when (:enable-extended-logging env)
-    (log/info "extended-logging" (:uri request) (:params request))))
+(defmacro extended-logging
+  "Helper for logging detailed information about requests."
+  [request]
+  `(when (:enable-extended-logging rems.config/env)
+     (let [request# ~request]
+       (log/info "> params:" (:params request#)))))
