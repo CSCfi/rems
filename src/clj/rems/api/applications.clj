@@ -8,7 +8,7 @@
             [rems.service.command :as command]
             [rems.service.licenses :as licenses]
             [rems.service.todos :as todos]
-            [rems.api.util :as api-util] ; required for route :roles
+            [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.auth :as auth]
@@ -104,12 +104,13 @@
 
 (defmacro command-endpoint [command schema & [additional-doc]]
   (let [path (str "/" (name command))]
-    `(POST ~path []
+    `(POST ~path ~'request
        :summary ~(str "Submit a `" (name command) "` command for an application. " additional-doc)
        :roles #{:logged-in}
-       :body [request# ~schema]
+       :body [body# ~schema]
        :return schema/SuccessResponse
-       (ok (api-command ~command request#)))))
+       (extended-logging ~'request)
+       (ok (api-command ~command body#)))))
 
 (defn accept-invitation [invitation-token]
   (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
@@ -164,18 +165,20 @@
       (ok (->> (todos/get-handled-todos (getx-user-id))
                (filter-with-search query))))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create a new application"
       :roles #{:logged-in}
-      :body [request CreateApplicationCommand]
+      :body [command CreateApplicationCommand]
       :return CreateApplicationResponse
-      (ok (api-command :application.command/create request)))
+      (extended-logging request)
+      (ok (api-command :application.command/create command)))
 
-    (POST "/copy-as-new" []
+    (POST "/copy-as-new" request
       :summary "Create a new application as a copy of an existing application."
       :roles #{:logged-in}
       :body [request commands/CopyAsNewCommand]
       :return CopyAsNewResponse
+      (extended-logging request)
       (ok (api-command :application.command/copy-as-new request)))
 
     (GET "/reviewers" []
@@ -214,26 +217,29 @@
         (attachment/download attachment)
         (api-util/not-found-json-response)))
 
-    (POST "/add-attachment" []
+    (POST "/add-attachment" request
       :summary "Add an attachment file related to an application"
       :roles #{:logged-in}
       :multipart-params [file :- schema/FileUpload]
       :query-params [application-id :- (describe s/Int "application id")]
       :return SaveAttachmentResponse
+      (extended-logging request)
       (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
 
-    (POST "/accept-invitation" []
+    (POST "/accept-invitation" request
       :summary "Accept an invitation by token"
       :roles #{:logged-in}
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
+      (extended-logging request)
       (ok (accept-invitation invitation-token)))
 
-    (POST "/validate" []
+    (POST "/validate" request
       :summary "Validate the form, like in save, but nothing is saved. NB: At the moment, both errors and validations are identical, but this may not always be so."
       :roles #{:logged-in}
       :body [request ValidateRequest]
       :return schema/SuccessResponse
+      (extended-logging request) ; this is for completeness, nothing should be saved
       (ok (validate-application request)))
 
     (GET "/commands" []
@@ -327,7 +333,7 @@
               (pdf/application-to-pdf-bytes)
               (ByteArrayInputStream.)
               (ok)
-               ;; could also set "attachment" here to force download:
+              ;; could also set "attachment" here to force download:
               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
               (content-type "application/pdf")))
         (api-util/not-found-json-response)))
