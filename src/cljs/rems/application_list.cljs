@@ -3,7 +3,6 @@
   (:require [cljs-time.core :as time]
             [clojure.set :as set]
             [clojure.string :as str]
-            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.common.application-util :as application-util]
