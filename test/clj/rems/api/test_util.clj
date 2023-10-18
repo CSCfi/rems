@@ -3,12 +3,10 @@
             [clojure.java.io :as io]
             [compojure.api.sweet :refer [GET]]
             [rems.api.util]
-            [rems.api.testing :refer [api-fixture add-login-cookies assert-response-is-ok read-body]]
-            [rems.testing-util :refer [copy-temp-file]]
+            [rems.api.testing :refer [add-multipart api-fixture add-login-cookies assert-response-is-ok read-body]]
             [rems.context :as context]
             [rems.handler :refer [handler]]
             [rems.service.test-data :as test-data]
-            [peridot.multipart]
             [ring.util.http-response :refer [ok]]
             [ring.mock.request :refer [header json-body request]]
             [rems.db.test-data-helpers :as test-helpers]
@@ -139,15 +137,15 @@
         ;; check that the attachment content is not logged
         (let [app-id (:application-id body)
               testfile (io/file "./test-data/test.txt")
-              body (with-redefs [rems.api.util/select-filenames #(assoc % :tempfile "test-temp-file")]
+              body (with-redefs [rems.api.util/select-filenames #(assoc % :tempfile "ring-would-name-this-file-randomly")]
                      (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
-                         (merge (peridot.multipart/build {:file (copy-temp-file testfile "applicant.txt")}))
+                         (add-multipart {:file testfile})
                          (add-login-cookies "alice")
                          handler
                          assert-response-is-ok
                          read-body))]
           (is (:success body))
-          (is (= [:info (str "> params: {:application-id " app-id ", :file {:filename applicant.txt, :content-type text/plain, :tempfile test-temp-file, :size 16}}")] @log))))
+          (is (= [:info (str "> params: {:application-id " app-id ", :file {:filename test.txt, :content-type text/plain, :tempfile ring-would-name-this-file-randomly, :size 16}}")] @log))))
 
       (let [body (-> (request :post "/api/resources/create")
                      (add-login-cookies "owner")
