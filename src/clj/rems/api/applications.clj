@@ -78,6 +78,8 @@
 
 ;; Api implementation
 
+(def last-activity (comp time-coerce/to-long :application/last-activity))
+
 (defn- filter-with-search [query apps]
   (if (str/blank? query)
     apps
@@ -174,9 +176,8 @@
                      {limit :- (describe s/Int "how many results to return") nil}]
       (ok (cond->> (todos/get-handled-todos (getx-user-id))
             query (filter-with-search query)
-            true (sort-by (comp - time-coerce/to-long :application/last-activity))
+            true (sort-by last-activity >)
             limit (take limit))))
-
 
     (POST "/create" []
       :summary "Create a new application"
