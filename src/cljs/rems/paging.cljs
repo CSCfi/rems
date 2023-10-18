@@ -4,7 +4,7 @@
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
-(defn- page-number [paging page on-change]
+(defn- page-number [{:keys [paging page on-change]}]
   (if (= (:current-page paging) page)
     [atoms/link {:label [:u (str (inc page))]
                  :class "btn btn-link current-page"
@@ -14,6 +14,12 @@
     [atoms/link {:label (str (inc page))
                  :class "btn btn-link"
                  :on-click #(on-change (assoc paging :current-page page))}]))
+
+(defn- page-numbers [{:keys [id] :as opts} pages]
+  [:<>
+   (for [page pages]
+     ^{:key (str id "-page-" page)}
+     [page-number (assoc opts :page page)])])
 
 (defn paging-field
   "Component for showing page numbers.
@@ -27,7 +33,8 @@
     `:show-all-page-numbers` - state of whether to show all page numbers or `...`
   `:pages`                   - how many pages exist"
   [{:keys [id on-change paging pages]}]
-  (r/with-let [show-all-page-numbers (r/atom (:show-all-page-numbers paging))]
+  (r/with-let [show-all-page-numbers (r/atom (:show-all-page-numbers paging))
+               opts {:id id :paging paging :on-change on-change}]
     (when (> pages 1)
       [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
        [:div (text :t.table.paging/page)]
@@ -49,26 +56,20 @@
         (if (or @show-all-page-numbers
                 (< pages 10))
           ;; just show them all
-          (for [page (range pages)]
-            ^{:key (str id "-page-" page)}
-            [page-number paging page on-change])
+          [page-numbers opts (range pages)]
 
           ;; show 1 2 3 ... 7 8 9
           (let [first-pages (take 3 (range pages))
                 last-pages (take-last 3 (drop 3 (range pages)))]
             [:<>
-             (for [page first-pages]
-               ^{:key (str id "-page-" page)}
-               [page-number paging page on-change])
+             [page-numbers opts first-pages]
 
              ^{:key (str id "-page-...")}
              [atoms/link {:label "..."
                           :class "btn btn-link"
                           :on-click #(reset! show-all-page-numbers true)}]
 
-             (for [page last-pages]
-               ^{:key (str id "-page-" page)}
-               [page-number paging page on-change])]))]])))
+             [page-numbers opts last-pages]]))]])))
 
 
 (defn guide []
