@@ -36,7 +36,8 @@
 
 (defn actions-page []
   (let [query (:query @(rf/subscribe [::handled-applications :query]))
-        show-all-rows? @(rf/subscribe [::show-all-rows])]
+        show-all-rows? @(rf/subscribe [::show-all-rows])
+        handled-count @(rf/subscribe [::handled-applications-count :data])]
     [:div
      [document-title (text :t.navigation/actions)]
      [flash-message/component :top]
@@ -63,27 +64,27 @@
                       (rf/dispatch [::handled-applications-count]))
         :top-less-button? false
         :bottom-less-button? false
-        :always (when-let [c @(rf/subscribe [::handled-applications-count :data])]
-                  [:div [:p (text-format :t.actions/handled-applications-count {:count c})]])
-        :collapse [:<>
-                   [search/application-search-field {:id "handled-search"
-                                                     :on-search #(do (rf/dispatch [::set-show-all-rows false])
-                                                                     (rf/dispatch [::handled-applications {:query % :limit 51}]))
-                                                     :searching? @(rf/subscribe [::handled-applications :searching?])
-                                                     :debounce-time 2000}]
+        :always (when handled-count [:div [:p (text-format :t.actions/handled-applications-count {:count handled-count})]])
+        :collapse (when (and handled-count (pos? handled-count)) ; is there anything to show?
+                    [:<>
+                     [search/application-search-field {:id "handled-search"
+                                                       :on-search #(do (rf/dispatch [::set-show-all-rows false])
+                                                                       (rf/dispatch [::handled-applications {:query % :limit 51}]))
+                                                       :searching? @(rf/subscribe [::handled-applications :searching?])
+                                                       :debounce-time 2000}]
 
-                   ;; XXX: it would be nice to extract this as a pattern
-                   (when (and (not show-all-rows?)
-                              (> (count @(rf/subscribe [::handled-applications :data])) 50))
-                     [:p.my-3.alert.alert-info
-                      (text-format :t.table/first-rows-only 50)
-                      [:button.btn.btn-secondary.ml-3 {:on-click #(do (rf/dispatch [::set-show-all-rows true])
-                                                                      (rf/dispatch [::handled-applications (when query {:query query})]))}
-                       (text :t.table/show-all-rows)]])
+                     ;; XXX: it would be nice to extract this as a pattern
+                     (when (and (not show-all-rows?)
+                                (> (count @(rf/subscribe [::handled-applications :data])) 50))
+                       [:p.my-3.alert.alert-info
+                        (text-format :t.table/first-rows-only 50)
+                        [:button.btn.btn-secondary.ml-3 {:on-click #(do (rf/dispatch [::set-show-all-rows true])
+                                                                        (rf/dispatch [::handled-applications (when query {:query query})]))}
+                         (text :t.table/show-all-rows)]])
 
-                   (when @(rf/subscribe [::handled-applications :data?])
-                     [application-list/component {:applications ::handled-applications
-                                                  :hidden-columns #{:todo :created :submitted}
-                                                  :default-sort-column :last-activity
-                                                  :default-sort-order :desc
-                                                  :max-rows (when-not show-all-rows? 50)}])]}]]]))
+                     (when @(rf/subscribe [::handled-applications :data?])
+                       [application-list/component {:applications ::handled-applications
+                                                    :hidden-columns #{:todo :created :submitted}
+                                                    :default-sort-column :last-activity
+                                                    :default-sort-order :desc
+                                                    :max-rows (when-not show-all-rows? 50)}])])}]]]))
