@@ -135,7 +135,7 @@
            :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
         apps)))
 
-(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order paging? max-rows]
+(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order max-rows]
              :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
