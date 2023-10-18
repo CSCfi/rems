@@ -43,6 +43,14 @@
                                       "test"
                                       (make-array FileAttribute 0))))
 
+(defn copy-temp-file
+  "Copies `file` to new temp directory as `filename`.
+   Useful for copying and renaming a file temporarily for tests."
+  [file filename]
+  (let [f (io/file (create-temp-dir) filename)]
+    (io/copy file f)
+    f))
+
 (defmacro with-user [user & body]
   `(binding [context/*user* (users/get-raw-user-attributes ~user)
              context/*roles* (set/union (roles/get-roles ~user)

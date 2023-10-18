@@ -57,17 +57,16 @@
   "Helper for printing multipart params.
 
   Replaces the file object with a filename, else we print a Java object."
-  [multipart-params]
-  (map-vals (fn [v] (update-existing v :tempfile #(some-> % (.getName))))
-            multipart-params))
+  [param]
+  (update-existing param :tempfile #(some-> % (.getName))))
 
 (defn select-params
   "Helper for printing request parameters.
 
   Regular params as well as multipart params are."
   [request]
-  (merge (:params request)
-         (select-filenames (:multipart-params request))))
+  (->> (:params request)
+       (map-vals #(cond-> % (map? %) select-filenames))))
 
 (defmacro extended-logging
   "Helper for logging detailed information about requests."

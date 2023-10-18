@@ -125,7 +125,8 @@
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.14"]
                                 [com.icegreen/greenmail "1.6.12"]
-                                [macroz/tangle "0.2.2"]]
+                                [macroz/tangle "0.2.2"]
+                                [peridot "0.5.4"]]
 
                  :plugins [[lein-ancient "0.6.15"]]
 
