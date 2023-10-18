@@ -34,8 +34,12 @@
        [:div.mr-3.my-3
         {:style (if @show-all-page-numbers
                   {:display :grid
-                   :grid-template-columns "repeat(20, min-content)"
-                   :align-items :baseline}
+                   :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
+                   :align-content :start
+                   :align-items :baseline
+                   :justify-items :center
+                   :gap "0 0.5rem"
+                   :max-width "100%"}
                   {:display :flex
                    :justify-content :center
                    :align-items :center
