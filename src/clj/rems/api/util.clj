@@ -61,9 +61,7 @@
   (update-existing param :tempfile #(some-> % (.getName))))
 
 (defn select-params
-  "Helper for printing request parameters.
-
-  Regular params as well as multipart params are."
+  "Helper for printing request parameters."
   [request]
   (->> (:params request)
        (map-vals #(cond-> % (map? %) select-filenames))))
