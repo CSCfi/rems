@@ -32,7 +32,7 @@
 (defn scan-for-malware
   "Feeds byte-array to STDIN and runs executable at malware-scanner-path returns true if malware executable returns a non-zero status-code, false otherwise, logs STERR of executable"
   [malware-scanner-path byte-array]
-  (let [scan-output (sh "bash" "-c" malware-scanner-path :in byte-array )]
+  (let [scan-output (sh "sh" "-c" malware-scanner-path :in byte-array)]
     {:detected (not= (:exit scan-output) 0)
      :log (:err scan-output)}))
 
@@ -59,7 +59,7 @@
 
 (defn check-for-malware-if-enabled [byte-array]
   (when-let [malware-scanner-path (str (:malware-scanner-path env))]
-    (let [scan (scan-for-malware malware-scanner-path byte-array )]
+    (let [scan (scan-for-malware malware-scanner-path byte-array)]
       (when (and (:enable-malware-scanner-logging env) (seq (:log scan)))
         (log/info (:log scan)))
       (when (:detected scan)
