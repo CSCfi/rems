@@ -150,3 +150,7 @@
       (dependencies/reset-cache!)
 
       {:success true :catalogue-item-id (:id new-item)})))
+
+(defn get-catalogue-table [opts]
+  (get-localized-catalogue-items (merge {:archived false}
+                                        opts)))

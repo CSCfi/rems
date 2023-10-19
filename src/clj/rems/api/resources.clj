@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.service.resource :as resource]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.ext.duo :as duo]
             [rems.ext.mondo :as mondo]
@@ -77,23 +77,26 @@
         (ok resource)
         (not-found-json-response)))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create resource"
       :roles +admin-write-roles+
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
+      (extended-logging request)
       (ok (resource/create-resource! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive resource"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (resource/set-resource-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable resource"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (resource/set-resource-enabled! command)))))

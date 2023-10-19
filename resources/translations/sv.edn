@@ -38,6 +38,7 @@
                      :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
+            :handled-applications-count "Det finns %:count% behandlade ansökningar."
             :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
             :member "Deltagare"
@@ -70,6 +71,7 @@
             :review "Granska"
             :revoke "Återkalla rättigheter"
             :todo-applications "Aktiva ansökningar"
+            :todo-applications-count "Det finns %:count% aktiva ansökningar."
             :vote "Rösta"}
   :administration {:active "Aktiv"
                    :add "Lägg till"
@@ -608,10 +610,12 @@
            :search "Sök"}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
+          :first-rows-only "Visar endast de första %1 raderna."
           :all-rows-selected "Alla rader är valda"
           :no-rows-selected "Inga rader är valda"
+          :show-all-rows "Visa alla raderna"
           :some-rows-selected "Några rader är valda"
-          :show-all-n-rows "Visa alla %1 rader"}
+          :paging {:page "Sidan"}}
   :unauthorized-page {:unauthorized "Ingen tillgång"
                       :you-are-unauthorized "Du har inte tillgång till denna sida."}
   :unknown "Okänd"

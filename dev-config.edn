@@ -119,4 +119,5 @@
  :malware-scanner-path "test-data/malware-scanner-executables/pass-with-output.sh"
  :enable-malware-scanner-logging true
 
- :enable-voting true}
+ :enable-voting true
+ :tables {:rems.catalogue/catalogue {:paging? false}}}

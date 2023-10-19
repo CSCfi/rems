@@ -38,6 +38,7 @@
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
             :handled-applications "Käsitellyt hakemukset"
+            :handled-applications-count "Käsiteltyjä hakemuksia on %:count% kpl."
             :invite-member "Kutsu jäsen"
             :licenses-selection "Lisää käyttöehtoja"
             :member "Jäsen"
@@ -70,6 +71,7 @@
             :review "Katselmoi"
             :revoke "Peru käyttöoikeus"
             :todo-applications "Avoimet hakemukset"
+            :todo-applications-count "Avoimia hakemuksia on %:count% kpl."
             :vote "Äänestä"}
   :administration {:active "Aktiivinen"
                    :add "Lisää"
@@ -608,10 +610,12 @@
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
+          :first-rows-only "Näytetään vain ensimmäiset %1 riviä."
           :all-rows-selected "Kaikki rivit valittuna"
           :no-rows-selected "Ei yhtään riviä valittuna"
+          :show-all-rows "Näytä kaikki rivit"
           :some-rows-selected "Joitain rivejä valittuna"
-          :show-all-n-rows "Näytä kaikki %1 riviä"}
+          :paging {:page "Sivu"}}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :unknown "Tuntematon"

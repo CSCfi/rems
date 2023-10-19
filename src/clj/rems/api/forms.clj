@@ -78,16 +78,18 @@
       (extended-logging request)
       (ok (form/edit-form! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive form"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (form/set-form-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable form"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (form/set-form-enabled! command)))))

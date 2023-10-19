@@ -6,6 +6,7 @@
             [medley.core :refer [find-first]]
             [mount.core :as mount]
             [muuntaja.core :as muuntaja]
+            [peridot.multipart]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-db-fixture reset-caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [rems.locales]
@@ -240,3 +241,7 @@
 (defn parse-date [x]
   (when (string? x)
     (time-format/parse (time-format/formatters :date-time) x)))
+
+(defn add-multipart [request multipart]
+  (merge request
+         (peridot.multipart/build multipart)))

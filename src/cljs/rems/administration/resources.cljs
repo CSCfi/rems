@@ -95,23 +95,20 @@
         resources)))
 
 (defn- resources-list []
-  (let [resources-table {:id ::resources
-                         :columns [{:key :organization
-                                    :title (text :t.administration/organization)}
-                                   {:key :title
-                                    :title (text :t.administration/resource)}
-                                   {:key :active
-                                    :title (text :t.administration/active)
-                                    :filterable? false}
-                                   {:key :commands
-                                    :sortable? false
-                                    :filterable? false
-                                    :aria-label (text :t.actions/commands)}]
-                         :rows [::resources-table-rows]
-                         :default-sort-column :title}]
-    [:div.mt-3
-     [table/search resources-table]
-     [table/table resources-table]]))
+  [table/standard {:id ::resources
+                   :columns [{:key :organization
+                              :title (text :t.administration/organization)}
+                             {:key :title
+                              :title (text :t.administration/resource)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::resources-table-rows]
+                   :default-sort-column :title}])
 
 (defn resources-page []
   (into [:div

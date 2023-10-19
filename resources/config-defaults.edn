@@ -472,7 +472,7 @@
  :plugins nil ; by default no plugins
  :extension-points nil ; by default no plugins
  :enable-voting false ; voting (experimental)
-
+ 
  ;; If a `:malware-scanner-path` is defined, it is assumed to be an executable that:
  ;; can take a binary file from `STDIN` and return a status code of zero if and only if the file passes the scan.
  :malware-scanner-path nil
@@ -480,6 +480,35 @@
  ;; If `:malware-scanner-path` is defined, enabling `:enable-malware-scanner-logging` will make REMS log whatever the
  ;; malware executable printed to `STDERR` before exiting.
  :enable-malware-scanner-logging false
+ 
+ ;; REMS tables can have some parameters tuned.
+ ;; Not every attribute may work in every table yet.
+ ;;
+ ;; key   - identity of the table (e.g. `:rems.catalogue/catalogue`)
+ ;; value - a map
+ ;;    `:paging?`   - whether to use paging (defaults to true)
+ ;;    `:page-size` - defaults to 50
+ ;;    `:max-rows`  - how many rows to show ever
+ ;;
+ ;; Currently (2023-10-18) the relevant tables are:
+ ;;   :rems.administration.blacklist/blacklist
+ ;;   :rems.administration.catalogue-items/catalogue
+ ;;   :rems.administration.categories/categories
+ ;;   :rems.administration.change-catalogue-item-form/catalogue
+ ;;   :rems.administration.forms/forms
+ ;;   :rems.administration.licenses/licenses
+ ;;   :rems.administration.organizations/organizations
+ ;;   :rems.administration.resources/resources
+ ;;   :rems.administration.workflows/workflows
+ ;;   :rems.catalogue/catalogue
+ ;;   :rems.catalogue/draft-applications
+ ;;   :rems.actions/todo-applications
+ ;;   :rems.actions/handled-applications
+ ;;   :rems.application/previous-applications-except-current
+ ;;   :rems.applications/my-applications
+ ;;   :rems.applications/all-applications
+ 
+ :tables {}
 
  ;; REMS can be configured to avoid heavy work
  ;; (cache reloading) during pre-defined buzy hours.

@@ -68,18 +68,20 @@
       (extended-logging request)
       (ok (workflow/edit-workflow! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive workflow"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (workflow/set-workflow-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable workflow"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (workflow/set-workflow-enabled! command)))
 
     (GET "/actors" []
