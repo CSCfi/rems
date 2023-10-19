@@ -41,17 +41,19 @@
       (extended-logging request)
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))
 
-    (PUT "/" []
+    (PUT "/" request
       :summary "Update user settings, DEPRECATED, will disappear, use /edit instead"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))
 
     (POST "/generate-ega-api-key" [:as request] ; NB: binding syntax
       :summary "Generates a new EGA API-key for the user."
       :roles #{:handler}
       :return GenerateEGAApiKeyResponse
+      (extended-logging request)
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
@@ -63,6 +65,7 @@
       :summary "Deletes the EGA API-key of the user."
       :roles #{:handler}
       :return DeleteEGAApiKeyResponse
+      (extended-logging request)
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]

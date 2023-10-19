@@ -183,13 +183,19 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
 ### Extended Logging
 
-The config option `:enable-extended-logging` can be toggled to additionally log the content of entity mutations.
+The config option `:enable-extended-logging` can be toggled to additionally log the content of entity mutations. These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
 
-These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
+The extended logging is at `INFO` level and the log messages are prefixed with `> params:`. Use these together with the regular request logging to know the API URL, user etc.
 
-Logging is at `INFO` level and the log messages are prefixed with `extended-logging (:uri request)` e.g. `extended-logging /api/forms/edit`.
+For example, the third line of this log is the extended logging (actual parameters sent by the user).
+```
+2023-10-16 19:54:40,626 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - req > :post /api/resources/create
+2023-10-16 19:54:40,631 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - > :post /api/resources/create lang: :en user: {:userid owner, :name Owner, :email owner@example.com}  roles: #{:logged-in :owner}
+2023-10-16 19:54:40,637 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.api.resources - > params: {:licenses [], :organization #:organization{:id nbn}, :resid my-res-test}
+2023-10-16 19:54:40,640 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - req < :post /api/resources/create 200 14ms
+```
 
-Logging occurs before the mutation is persisted. As such, the logged information is only authoritative about the state of the respective entity iff the request was successful.
+Extended logging occurs before the business logic is executed, i.e. mutation is persisted. As such, the logged information is only authoritative about the state of the respective entity if and only if the request was successful.
 
 ## Application expiration scheduler
 

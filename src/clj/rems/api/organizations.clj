@@ -63,18 +63,20 @@
       (extended-logging request)
       (ok (organizations/edit-organization! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive the organization"
       :roles #{:owner}
       :body [command schema/OrganizationArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (organizations/set-organization-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable the organization"
       :roles #{:owner}
       :body [command schema/OrganizationEnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (organizations/set-organization-enabled! command)))
 
     (GET "/available-owners" []

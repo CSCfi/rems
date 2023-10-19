@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [compojure.api.meta :refer [restructure-param]]
+            [medley.core :refer [map-vals update-existing]]
             [ring.util.http-response :as http-response]
             [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
             [rems.common.roles :refer [has-roles?]]
@@ -52,6 +53,22 @@
     (-> (http-response/unprocessable-entity body)
         (http-response/content-type "application/json"))))
 
-(defn extended-logging [request]
-  (-> (when (:enable-extended-logging env)
-        (log/info "extended-logging" (:uri request) (:params request)))))
+(defn- select-filenames
+  "Helper for printing multipart params.
+
+  Replaces the file object with a filename, else we print a Java object."
+  [param]
+  (update-existing param :tempfile #(some-> % (.getName))))
+
+(defn select-params
+  "Helper for printing request parameters."
+  [request]
+  (->> (:params request)
+       (map-vals #(cond-> % (map? %) select-filenames))))
+
+(defmacro extended-logging
+  "Helper for logging detailed information about requests."
+  [request]
+  `(when (:enable-extended-logging rems.config/env)
+     (let [request# ~request]
+       (log/info "> params:" (select-params request#)))))
