@@ -38,19 +38,10 @@
     (when (> pages 1)
       [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
        [:div (text :t.table.paging/page)]
-       [:div.my-3
-        {:style (if @show-all-page-numbers
-                  {:display :grid
-                   :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
-                   :align-content :start
-                   :align-items :baseline
-                   :justify-items :center
-                   :gap "0 0.5rem"
-                   :max-width "100%"}
-                  {:display :flex
-                   :justify-content :center
-                   :align-items :center
-                   :flex-wrap :wrap})
+       [:div.my-3.paging-numbers
+        {:class (if @show-all-page-numbers
+                  "paging-numbers-grid"
+                  "paging-numbers-flex")
          :id (str id "-pages")}
 
         (if (or @show-all-page-numbers
