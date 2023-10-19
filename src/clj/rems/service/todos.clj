@@ -11,8 +11,8 @@
   (and (some todo-roles (:application/roles application))
        (not= :application.state/draft (:application/state application))))
 
-(defn- get-potential-todos [user-id]
-  (->> (applications/get-all-applications user-id)
+(defn- get-potential-todos [userid]
+  (->> (applications/get-all-applications userid)
        (filter potential-todo?)))
 
 (def ^:private todo-commands
@@ -26,7 +26,7 @@
     :application.command/request-decision
     :application.command/decide})
 
-(defn- todo? [application]
+(defn todo? [application]
   (and (= :application.state/submitted (:application/state application))
        (some todo-commands (:application/permissions application))))
 
@@ -68,10 +68,13 @@
            todo-commands)
         "seems like a new command has been added; is it a todo or handled todo?")))
 
-(defn get-todos [user-id]
-  (->> (get-potential-todos user-id)
+(defn get-todos [userid]
+  (->> (get-potential-todos userid)
        (filter todo?)))
 
-(defn get-handled-todos [user-id]
-  (->> (get-potential-todos user-id)
+(defn get-handled-todos [userid]
+  (->> (get-potential-todos userid)
        (remove todo?)))
+
+(defn get-handled-todos-count [userid]
+  (count (get-handled-todos userid)))

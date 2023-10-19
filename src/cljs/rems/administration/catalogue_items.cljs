@@ -157,34 +157,31 @@
         catalogue)))
 
 (defn- catalogue-list []
-  (let [catalogue-table {:id ::catalogue
-                         :columns [{:key :organization
-                                    :title (text :t.administration/organization)}
-                                   {:key :name
-                                    :title (text :t.administration/title)}
-                                   {:key :resource
-                                    :title (text :t.administration/resource)}
-                                   {:key :form
-                                    :title (text :t.administration/form)}
-                                   {:key :workflow
-                                    :title (text :t.administration/workflow)}
-                                   {:key :created
-                                    :title (text :t.administration/created)}
-                                   {:key :active
-                                    :title (text :t.administration/active)
-                                    :filterable? false}
-                                   {:key :commands
-                                    :sortable? false
-                                    :filterable? false
-                                    :aria-label (text :t.actions/commands)}]
-                         :rows [::catalogue-table-rows]
-                         :default-sort-column :created
-                         :default-sort-order :desc
-                         :selectable? true
-                         :on-select #(rf/dispatch [::set-selected-items-ids %])}]
-    [:div.mt-3
-     [table/search catalogue-table]
-     [table/table catalogue-table]]))
+  [table/standard {:id ::catalogue
+                   :columns [{:key :organization
+                              :title (text :t.administration/organization)}
+                             {:key :name
+                              :title (text :t.administration/title)}
+                             {:key :resource
+                              :title (text :t.administration/resource)}
+                             {:key :form
+                              :title (text :t.administration/form)}
+                             {:key :workflow
+                              :title (text :t.administration/workflow)}
+                             {:key :created
+                              :title (text :t.administration/created)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::catalogue-table-rows]
+                   :default-sort-column :created
+                   :default-sort-order :desc
+                   :selectable? true
+                   :on-select #(rf/dispatch [::set-selected-items-ids %])}])
 
 (defn catalogue-items-page []
   (into [:div

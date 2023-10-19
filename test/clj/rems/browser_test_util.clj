@@ -661,3 +661,10 @@
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
 
+
+(defn wait-for-animation
+  "Waits for a short while for animations to finish.
+  Ideally there would be a more accurate mechanism. Often
+  it helps if there is something to wait to appear."
+  []
+  (Thread/sleep 120))

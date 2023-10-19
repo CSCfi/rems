@@ -30,7 +30,8 @@
             [rems.db.user-settings :as user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :refer [localize-time text with-language]]))
+            [rems.text :refer [localize-time text with-language]]
+            [rems.service.todos :as todos]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -87,6 +88,13 @@
   (btu/wait-page-loaded)
   (btu/screenshot "applications-page")
   (btu/gather-axe-results "applications-page"))
+
+(defn go-to-actions []
+  (click-navigation-menu "Actions")
+  (btu/wait-visible {:tag :h1 :fn/text "Actions"})
+  (btu/wait-page-loaded)
+  (btu/screenshot "actions-page")
+  (btu/gather-axe-results "actions-page"))
 
 (defn go-to-application [application-id]
   (btu/go (str (btu/get-server-url) "application/" application-id))
@@ -928,6 +936,91 @@
                  last
                  (dissoc :event/id :event/time :event/attachments :event/actor-attributes :event/visibility)))))))
 
+(defn- create-processed-application! [start n]
+  (doseq [i (range start (+ start n))]
+    (let [app-id (test-helpers/create-draft! "alice" [(btu/context-getx :catalogue-id)] (str "test-processed-applications-" (inc i)))]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor "alice"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id app-id
+                              :comment "looks good"
+                              :actor "developer"}))))
+
+(deftest test-processed-applications-and-paging
+  (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
+                                                           :organization {:organization/id "nbn"}
+                                                           :form/internal-name "Paging test form"
+                                                           :form/external-title {:en "Paging test form EN"
+                                                                                 :fi "Paging test form FI"
+                                                                                 :sv "Paging test form SV"}
+                                                           :form/fields [{:field/type :description
+                                                                          :field/optional false
+                                                                          :field/title {:en "Application title field"
+                                                                                        :fi "Hakemuksen otsikko -kenttä"
+                                                                                        :sv "Ansökningens rubrikfält"}}]}))
+  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
+
+  (btu/with-postmortem
+    (login-as "developer")
+
+    (testing "with 100+ processed applications"
+      ;; NB: other tests may process applications too
+      ;; the created 100 applications will be the latest
+      (create-processed-application! 0 100)
+      (btu/context-assoc! :todos (todos/get-handled-todos "developer")) ; check against API
+      (btu/reload)
+      (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
+      (btu/screenshot "processed-applications-closed")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "processed-applications-opened")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+      (btu/wait-invisible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "processed-applications-show-all-rows"))
+
+    (btu/with-client-config {:tables {:rems.actions/handled-applications {:page-size 10}}}
+      ;; revisit (reload without reloading config)
+      (click-navigation-menu "Catalogue")
+      (click-navigation-menu "Actions")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/screenshot "processed-applications-paged-opened-page-1")
+      (testing "first page has newest rows"
+        (is (= (for [i (range 100 90 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications)))))
+
+      (testing "5th page"
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "5"}])
+        (btu/wait-visible {:fn/text "test-processed-applications-60"}) ; wait for at least one to appear before checking all
+
+        (is (= (for [i (range 60 50 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "processed-applications-paged-opened-page-5"))
+
+      (testing "visiting another page will reset current page to first"
+        (click-navigation-menu "Catalogue")
+        (click-navigation-menu "Actions")
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+        (btu/wait-for-animation)
+        (btu/screenshot "processed-applications-paged-revisit")
+        (testing "first page still has newest rows"
+          (is (= (for [i (range 100 90 -1)]
+                   (str "test-processed-applications-" i))
+                 (mapv #(get % "description") (slurp-rows :handled-applications))))))
+
+      (testing "load all rows to visit 10th page"
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+        (btu/wait-for-animation)
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
+        (is (= (for [i (range 10 0 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "processed-applications-paged-opened-page-10-visited-admin")))))
+
 (deftest test-invite-decider
   (testing "create test data"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
@@ -1461,8 +1554,11 @@
       (create-category)
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
-      (go-to-catalogue)
-      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-getx :catalogue-item-name)}]))))
+      ;; technically we could check this from
+      ;; the catalogue page but we'd need to search
+      (let [public-catalogue-items-by-name (->> (catalogue/get-catalogue-table {:enabled true})
+                                                (group-by (comp :title :en :localizations)))]
+        (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-getx :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"

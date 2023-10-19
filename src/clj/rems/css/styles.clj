@@ -684,6 +684,9 @@
    [:.event-comment {:white-space :pre-wrap
                      :word-break :break-all}]
 
+   [:.current-page {:font-size (u/percent 120)
+                    :text-underline-offset (u/rem 0.25)}]
+
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
    [:.form-group {:text-align "initial"}
@@ -705,6 +708,19 @@
 
    [:.dashed-group (dashed-form-group)]
    [:.solid-group (solid-form-group)]
+
+   [:.paging-numbers {}]
+   [:.paging-numbers-grid {:display :grid
+                           :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
+                           :align-content :start
+                           :align-items :baseline
+                           :justify-items :center
+                           :gap "0 0.5rem"
+                           :max-width "100%"}]
+   [:.paging-numbers-flex {:display :flex
+                           :justify-content :center
+                           :align-items :baseline
+                           :flex-wrap :wrap}]
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]

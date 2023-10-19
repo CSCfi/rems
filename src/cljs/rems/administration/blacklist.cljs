@@ -218,30 +218,27 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (defn- blacklist-table []
-  (let [table-spec {:id ::blacklist
-                    :columns [{:key :resource
-                               :title (text :t.administration/resource)}
-                              {:key :user
-                               :title (text :t.administration/user)}
-                              {:key :userid
-                               :title (text :t.administration/userid)}
-                              {:key :email
-                               :title (text :t.applicant-info/email)}
-                              {:key :added-at
-                               :title (text :t.administration/added-at)}
-                              {:key :added-by
-                               :title (text :t.administration/added-by)}
-                              {:key :comment
-                               :title (text :t.administration/comment)}
-                              {:key :commands
-                               :sortable? false
-                               :filterable? false
-                               :aria-label (text :t.actions/commands)}]
-                    :rows [::blacklist]
-                    :default-sort-column :resource}]
-    [:div.mt-3
-     [table/search table-spec]
-     [table/table table-spec]]))
+  [table/standard {:id ::blacklist
+                   :columns [{:key :resource
+                              :title (text :t.administration/resource)}
+                             {:key :user
+                              :title (text :t.administration/user)}
+                             {:key :userid
+                              :title (text :t.administration/userid)}
+                             {:key :email
+                              :title (text :t.applicant-info/email)}
+                             {:key :added-at
+                              :title (text :t.administration/added-at)}
+                             {:key :added-by
+                              :title (text :t.administration/added-by)}
+                             {:key :comment
+                              :title (text :t.administration/comment)}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::blacklist]
+                   :default-sort-column :resource}])
 
 (defn blacklist []
   (if @(rf/subscribe [::loading?])

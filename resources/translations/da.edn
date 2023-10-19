@@ -40,6 +40,7 @@
                      :entitlement-end-not-in-future "Udløbsdato for adgangsrettigheder skal være i fremtiden."}
             :generate-ega-api-key-in-profile "Dan en på profilsiden."
             :handled-applications "Processerede ansøgninger"
+            :handled-applications-count nil
             :invite-member "Inviter medlem"
             :licenses-selection "Tilføj brugsvilkår"
             :member "Medlem"
@@ -72,7 +73,9 @@
             :review "Gennemse"
             :revoke "Tilbagekald rettigheder"
             :todo-applications "Aktive ansøgninger"
+            :todo-applications-count nil
             :vote "Stem"}
+
   :administration {:active "Aktiv"
                    :add "Tilføj"
                    :added-at "Tilføjet"
@@ -655,11 +658,12 @@
            :search "Søg"}
   :table {:ascending-order "Stigende rækkefølge"
           :descending-order "Faldende rækkefølge"
+          :first-rows-only nil
           :all-rows-selected "Alle rækker er valgte"
           :no-rows-selected "Ingen rækker er valgte"
+          :show-all-rows nil
           :some-rows-selected "Nogle rækker er valgte"
-          ;; %1 - number
-          :show-all-n-rows "Vis alle %1 rækker"}
+          :paging {:page nil}}
   :unauthorized-page {:unauthorized "Ingen adgang"
                       :you-are-unauthorized "Du er ikke autoriseret til at tilgå denne side."}
   :unknown "Ukendt"

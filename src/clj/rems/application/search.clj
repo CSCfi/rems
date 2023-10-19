@@ -9,7 +9,8 @@
             [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.text :as text]
-            [rems.util :refer [delete-directory-contents-recursively]])
+            [rems.util :refer [delete-directory-contents-recursively]]
+            [clj-time.core :as time-core])
   (:import [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
@@ -70,6 +71,7 @@
                       (text/with-language lang
                         (text/localize-state (:application/state app)))))
                (str/join " "))
+   :year (-> app :application/last-activity time-core/year str)
    :todo (->> (:languages env)
               (map (fn [lang]
                      (text/with-language lang

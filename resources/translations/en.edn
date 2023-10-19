@@ -40,6 +40,7 @@
                      :entitlement-end-not-in-future "The expiration date for access rights must be in the future."}
             :generate-ega-api-key-in-profile "Generate one at the Profile page."
             :handled-applications "Processed applications"
+            :handled-applications-count "There are %:count% processed applications."
             :invite-member "Invite member"
             :licenses-selection "Add terms of use"
             :member "Member"
@@ -72,6 +73,7 @@
             :review "Review"
             :revoke "Revoke entitlement"
             :todo-applications "Open applications"
+            :todo-applications-count "There are %:count% open applications."
             :vote "Vote"}
   :administration {:active "Active"
                    :add "Add"
@@ -657,11 +659,12 @@
            :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
+          :first-rows-only "Showing the first %1 rows only."
           :all-rows-selected "All rows selected"
           :no-rows-selected "No rows selected"
+          :show-all-rows "Show all rows"
           :some-rows-selected "Some rows selected"
-          ;; %1 - number
-          :show-all-n-rows "Show all %1 rows"}
+          :paging {:page "Page"}}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
   :unknown "Unknown"

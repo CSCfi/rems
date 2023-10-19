@@ -42,7 +42,8 @@
                     :show-resources-section
                     :show-attachment-zip-action
                     :show-pdf-action
-                    :enable-voting])
+                    :enable-voting
+                    :tables])
       (update :extra-pages filter-extra-pages)))
 
 (defn get-config-full []

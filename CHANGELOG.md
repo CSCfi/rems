@@ -14,6 +14,7 @@ Changes since v2.33
 ### Changes
 - "Show related events" has been removed from events. (#3156)
 - Handler can now redact other handlers attachments. (#3190)
+- The tables take advantage of a new paging feature. Especially, the handler Actions page and its handled applications table uses paging and only fetches handled applications when so requested. The first 50 rows are only fetched by default. Paging can be also configured per table, if the default is not good (page size 50 rows). (#3191)
 
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
