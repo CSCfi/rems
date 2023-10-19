@@ -719,7 +719,7 @@
                            :max-width "100%"}]
    [:.paging-numbers-flex {:display :flex
                            :justify-content :center
-                           :align-items :center
+                           :align-items :baseline
                            :flex-wrap :wrap}]
 
    ;; form editor
