@@ -204,3 +204,17 @@ REMS can be configured to delete applications after a set period of time has pas
 ## Shopping cart
 
 REMS has a shopping cart feature which allows bundling multiple resources into single application. Shopping cart is enabled by default, and it can be enabled or disabled using the `:enable-cart` key in your `config.edn`. See [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.
+
+## Attachment Malware Scanning
+
+REMS can be configured to automatically scan user uploaded files for malware. 
+
+To enable this feature the configuration option `:malware-scanner-path` must be defined, and must point to an executable. The executable must implement the following behaviour:
+
+> Given a binary stream on `STDIN`, exit with a status-code of zero if and only if the file constituting the binary stream is scanned to be malware free.
+
+In its current implementation, users will be notified with a generic error message if the file they attach does not pass the malware scanner.
+
+Enabling the configuration option `:enable-malware-scanner-logging` will output any message that the malware scanner executable writes to `STDERR` to the application log at `INFO` level.
+
+Output written to `STDOUT` is discarded for now, a future implementation might use this data stream to communicate scan progress to the user.

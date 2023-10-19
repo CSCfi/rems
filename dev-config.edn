@@ -116,4 +116,7 @@
  :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
                     :extension-point/validate-user-data [:plugin/validate-attributes]}
 
+ :malware-scanner-path "test-data/malware-scanner-executables/pass-with-output.sh"
+ :enable-malware-scanner-logging true
+
  :enable-voting true}

@@ -473,6 +473,14 @@
  :extension-points nil ; by default no plugins
  :enable-voting false ; voting (experimental)
 
+ ;; If a `:malware-scanner-path` is defined, it is assumed to be an executable that:
+ ;; can take a binary file from `STDIN` and return a status code of zero if and only if the file passes the scan.
+ :malware-scanner-path nil
+
+ ;; If `:malware-scanner-path` is defined, enabling `:enable-malware-scanner-logging` will make REMS log whatever the
+ ;; malware executable printed to `STDERR` before exiting.
+ :enable-malware-scanner-logging false
+
  ;; REMS can be configured to avoid heavy work
  ;; (cache reloading) during pre-defined buzy hours.
  ;;

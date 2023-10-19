@@ -1,9 +1,12 @@
 (ns rems.db.attachments
-  (:require [rems.common.attachment-util :as attachment-util]
+  (:require [clojure.java.shell :refer [sh]]
+            [clojure.tools.logging :as log]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.util :refer [fix-filename]]
+            [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
-  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
+  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException InvalidRequestException]))
 
 (defn check-size
   [file]
@@ -24,6 +27,18 @@
      :attachment/filename filename
      :attachment/data data
      :attachment/type type}))
+
+(defn contains-malware
+  "Feeds byte-array to STDIN and runs executable at malware-scanner-path returns true if malware executable returns a non-zero status-code, false otherwise, logs STERR of executable"
+  [malware-scanner-path byte-array log-output]
+  (let [scan-output (sh "bash" "-c" malware-scanner-path :in byte-array )]
+    (when (and log-output (seq (:err scan-output))) (log/info (:err scan-output)))
+    (not= (:exit scan-output) 0)))
+
+(defn check-for-malware-if-enabled [byte-array]
+  (when-let [malware-scanner-path (str (:malware-scanner-path env))]
+    (when (contains-malware malware-scanner-path byte-array (:enable-malware-scanner-logging env))
+      (throw (InvalidRequestException. (str "Malware detected"))))))
 
 (defn get-attachments
   "Gets attachments without the data."
@@ -56,15 +71,16 @@
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
   (check-allowed-attachment filename)
-  (let [byte-array (file-to-bytes tempfile)
-        filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
-        id (:id (db/save-attachment! {:application application-id
-                                      :user user-id
-                                      :filename filename
-                                      :type content-type
-                                      :data byte-array}))]
-    {:id id
-     :success true}))
+  (let [byte-array (file-to-bytes tempfile)]
+    (check-for-malware-if-enabled byte-array)
+    (let [filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
+          id (:id (db/save-attachment! {:application application-id
+                                        :user user-id
+                                        :filename filename
+                                        :type content-type
+                                        :data byte-array}))]
+      {:id id
+       :success true})))
 
 (defn update-attachment!
   "Updates the attachment, but does not modify the file data! Also does not \"fix the filename\"."
