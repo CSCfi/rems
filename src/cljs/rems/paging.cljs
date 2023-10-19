@@ -46,7 +46,7 @@
 
         (if (or @show-all-page-numbers
                 (< pages 10))
-          ;; just show them all
+          ;; few pages, just show them all
           [page-numbers opts (range pages)]
 
           ;; show 1 2 3 ... 7 8 9
