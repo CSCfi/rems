@@ -20,7 +20,7 @@ Changes since v2.33
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
 - Added experimental support for named format parameters in translations. (#3183)
-- Added `extended-logging` configuration option, for additionally logging content of mutating operations. (#3184)
+- Added `enable-extended-logging` configuration option, for additionally logging content of mutating operations. (#3184)
 - Cache reloading can be configured using the new `:buzy-hours` config. REMS will then try to avoid reloading during the specified time spans. (#3194)
 - The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
 - Event now shows which attachments were redacted when viewing as handling user. (#3190)
