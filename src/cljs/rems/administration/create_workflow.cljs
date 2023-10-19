@@ -5,7 +5,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [organization-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.atoms :as atoms :refer [enrich-user document-title]]
+            [rems.atoms :as atoms :refer [checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.config :as config]
             [rems.common.application-util :as application-util]
@@ -55,7 +55,8 @@
                                             :licenses (->> (:licenses workflow)
                                                            (mapv #(replace-key % :license/id :id)))
                                             :disable-commands (get workflow :disable-commands)
-                                            :voting (get workflow :voting)})))
+                                            :voting (get workflow :voting)
+                                            :anonymize-handling (:anonymize-handling workflow)})))
 
 (fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
                                                       :on-success #(rf/dispatch [::fetch-workflow-success %])})
@@ -63,6 +64,8 @@
 ;;; form submit
 
 (def workflow-types #{:workflow/default :workflow/decider :workflow/master})
+
+(rf/reg-sub ::workflow-type (fn [db _] (get-in db [::form :type])))
 
 (defn needs-handlers? [type]
   (contains? #{:workflow/default :workflow/decider :workflow/master} type))
@@ -87,9 +90,10 @@
                   :disable-commands (->> (:disable-commands form)
                                          (mapv #(update-existing % :when/state vec))
                                          (mapv #(update-existing % :when/role vec)))
-                  :voting (:voting form)}
+                  :voting (:voting form)
+                  :anonymize-handling (:anonymize-handling form false)}
                  (when (needs-handlers? (:type form))
-                   {:handlers (map :userid (:handlers form))}))]
+                   {:handlers (mapv :userid (:handlers form))}))]
     (when (valid-create-request? request)
       request)))
 
@@ -104,11 +108,12 @@
   (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :id id
                  :title (:title form)
-                 :handlers (map :userid (:handlers form))
+                 :handlers (mapv :userid (:handlers form))
                  :disable-commands (->> (:disable-commands form)
                                         (mapv #(update-existing % :when/state vec))
                                         (mapv #(update-existing % :when/role vec)))
-                 :voting (:voting form)}]
+                 :voting (:voting form)
+                 :anonymize-handling (:anonymize-handling form false)}]
     (when (valid-edit-request? request)
       request)))
 
@@ -155,6 +160,9 @@
                              :application.command/create
                              :application.command/send-expiration-notifications}))))
 
+(rf/reg-sub ::workflow-anonymize-handling (fn [db _] (get-in db [::form :anonymize-handling])))
+(rf/reg-event-db ::toggle-anonymize-handling (fn [db [_]] (update-in db [::form :anonymize-handling] not)))
+
 ;;;; UI
 
 (def ^:private context
@@ -200,18 +208,27 @@
          :on-change #(rf/dispatch [::set-licenses %])}])]))
 
 (defn- workflow-type-field []
-  [radio-button-group context {:id :workflow-type
-                               :keys [:type]
-                               :readonly @(rf/subscribe [::editing?])
-                               :orientation :horizontal
-                               :options (concat
-                                         [{:value :workflow/default
-                                           :label (text :t.create-workflow/default-workflow)}
-                                          {:value :workflow/decider
-                                           :label (text :t.create-workflow/decider-workflow)}]
-                                         (when (config/dev-environment?)
-                                           [{:value :workflow/master
-                                             :label (text :t.create-workflow/master-workflow)}]))}])
+  [:div.form-group
+   [:label.administration-field-label {:for :workflow-type}
+    (text :t.administration/workflow-type)]
+   [radio-button-group context
+    {:id :workflow-type
+     :keys [:type]
+     :readonly @(rf/subscribe [::editing?])
+     :orientation :horizontal
+     :options (concat
+               [{:value :workflow/default
+                 :label (text :t.create-workflow/default-workflow)}
+                {:value :workflow/decider
+                 :label (text :t.create-workflow/decider-workflow)}]
+               (when (config/dev-environment?)
+                 [{:value :workflow/master
+                   :label (text :t.create-workflow/master-workflow)}]))}]
+   [:div.alert.alert-info
+    (case @(rf/subscribe [::workflow-type])
+      :workflow/default (text :t.create-workflow/default-workflow-description)
+      :workflow/decider (text :t.create-workflow/decider-workflow-description)
+      :workflow/master (text :t.create-workflow/master-workflow-description))]])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
@@ -234,9 +251,6 @@
   [atoms/link {:class "btn btn-secondary"}
    (str "/administration/workflows" (andstr "/" @(rf/subscribe [::workflow-id])))
    (text :t.administration/cancel)])
-
-(defn workflow-type-description [description]
-  [:div.alert.alert-info description])
 
 (defn- create-rule [{:keys [db]} [_]]
   {:db (update-in db [::form :disable-commands] conj-vec {})
@@ -400,28 +414,22 @@
          :disabled? @(rf/subscribe [::editing?])
          :on-change #(rf/dispatch [::set-forms %])}])]))
 
-(defn default-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/default-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-forms-field]])
-
-(defn decider-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-forms-field]])
-
-(defn master-workflow-form []
-  [:div
-   [workflow-type-description (text :t.create-workflow/master-workflow-description)]
-   [workflow-handlers-field]
-   [workflow-forms-field]])
+(defn- workflow-anonymize-handling-field []
+  (let [anonymize-handling @(rf/subscribe [::workflow-anonymize-handling])
+        on-change #(rf/dispatch [::toggle-anonymize-handling])]
+    [:div.form-group.anonymize-handling
+     [:div.form-group.form-check.form-check-inline.pointer
+      [checkbox {:id :anonymize-handling
+                 :class :form-check-input
+                 :value anonymize-handling
+                 :on-change on-change}]
+      [:label.form-check-label {:for :anonymize-handling :on-click on-change}
+       (text :t.administration/anonymize-handling)]]
+     (when anonymize-handling
+       [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)])]))
 
 (defn create-workflow-page []
   (let [config @(rf/subscribe [:rems.config/config])
-        form @(rf/subscribe [::form])
-        workflow-type (:type form)
         loading? (or @(rf/subscribe [::actors :fetching?])
                      @(rf/subscribe [::workflow :fetching?]))
         editing? @(rf/subscribe [::editing?])
@@ -440,15 +448,11 @@
                  [:div#workflow-editor.fields
                   [workflow-organization-field]
                   [workflow-title-field]
-
                   [workflow-type-field]
-                  (case workflow-type
-                    :workflow/default [default-workflow-form]
-                    :workflow/decider [decider-workflow-form]
-                    :workflow/master [master-workflow-form])
-
+                  [workflow-anonymize-handling-field]
+                  [workflow-handlers-field]
+                  [workflow-forms-field]
                   [workflow-licenses-field]
-
                   ;; optional extra stuff
                   ;; XXX: could use collapsible too
                   [:div.spaced-vertically-5.mt-5

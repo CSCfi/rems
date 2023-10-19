@@ -110,6 +110,8 @@
     {:id "workflow"
      :title [:span (andstr (get-in workflow [:organization :organization/short-name language]) "/") (:title workflow)]
      :always [:div
+              (when (get-in workflow [:workflow :anonymize-handling])
+                [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)])
               [inline-info-field (text :t.administration/organization) (get-in workflow [:organization :organization/name language])]
               [inline-info-field (text :t.administration/title) (:title workflow)]
               [inline-info-field (text :t.administration/type) (text (get workflow-types
@@ -119,26 +121,27 @@
                                                                          (map enrich-user)
                                                                          (map :display)
                                                                          (str/join ", "))]
+              (when (get-in workflow [:workflow :anonymize-handling])
+                [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]])
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
               [inline-info-field (text :t.administration/forms)
-               (->> (for [form (get-in workflow [:workflow :forms])
-                          :let [uri (str "/administration/forms/" (:form/id form))
-                                title (:form/internal-name form)]]
-                      [atoms/link nil uri title])
-                    (interpose ", ")
-                    (into [:<>]))]
+               (if-some [forms (seq (for [form (get-in workflow [:workflow :forms])
+                                          :let [uri (str "/administration/forms/" (:form/id form))
+                                                title (:form/internal-name form)]]
+                                      [atoms/link nil uri title]))]
+                 (into [:<>] (interpose ", ") forms)
+                 (text :t.administration/no-forms))]
               [inline-info-field (text :t.administration/licenses)
-               (->> (for [license (get-in workflow [:workflow :licenses])
-                          :let [uri (str "/administration/licenses/" (:license/id license))
-                                title (:title (localized (:localizations license)))]]
-                      [atoms/link nil uri title])
-                    (interpose ", ")
-                    (into [:<>]))]
+               (if-some [licenses (seq (for [license (get-in workflow [:workflow :licenses])
+                                             :let [uri (str "/administration/licenses/" (:license/id license))
+                                                   title (:title (localized (:localizations license)))]]
+                                         [atoms/link nil uri title]))]
+                 (into [:<>] (interpose ", ") licenses)
+                 (text :t.administration/no-licenses))]
               (when-let [voting (get-in workflow [:workflow :voting])]
                 [inline-info-field
                  (text :t.administration/voting)
                  (text (keyword (str "t" ".administration") (:type voting)))])]}]
-
    (when (seq (get-in workflow [:workflow :disable-commands]))
      [collapsible/component
       {:id "workflow-disabled-commands"

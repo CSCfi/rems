@@ -181,6 +181,16 @@ REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything 
 
     java -Dlogback.configurationFile=logback-prod.xml -jar rems.jar run
 
+### Extended Logging
+
+The config option `:enable-extended-logging` can be toggled to additionally log the content of entity mutations.
+
+These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
+
+Logging is at `INFO` level and the log messages are prefixed with `extended-logging (:uri request)` e.g. `extended-logging /api/forms/edit`.
+
+Logging occurs before the mutation is persisted. As such, the logged information is only authoritative about the state of the respective entity iff the request was successful.
+
 ## Application expiration scheduler
 
 REMS can be configured to delete applications after a set period of time has passed since last activity. Expiration can be defined for application states with ISO-8601 duration formatting, and optionally email notification can be configured to be sent to applicant and members before deletion. Application expiration scheduler is disabled by default. See `:application-expiration` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn) for details.

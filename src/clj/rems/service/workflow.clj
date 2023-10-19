@@ -34,7 +34,7 @@
      :errors [{:type :invalid-disable-commands
                :commands invalid}]}))
 
-(defn create-workflow! [{:keys [organization handlers licenses forms disable-commands] :as cmd}]
+(defn create-workflow! [{:keys [organization handlers licenses forms disable-commands voting anonymize-handling] :as cmd}]
   (util/check-allowed-organization! organization)
   (or (invalid-users-error handlers)
       (invalid-forms-error forms)
@@ -45,7 +45,7 @@
         {:success (not (nil? id))
          :id id})))
 
-(defn edit-workflow! [{:keys [id organization handlers disable-commands] :as cmd}]
+(defn edit-workflow! [{:keys [id organization handlers disable-commands voting anonymize-handling] :as cmd}]
   (let [workflow (workflow/get-workflow id)]
     (util/check-allowed-organization! (:organization workflow))
     (when organization

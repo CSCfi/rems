@@ -2,11 +2,12 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL transform select]]
-            [medley.core :refer [assoc-some distinct-by find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :as application-util]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user?]]
             [rems.common.form :as form]
+            [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
             [rems.json :as json]
@@ -51,8 +52,7 @@
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
-      (assoc-some-in [:application/duo :duo/codes] (when (:enable-duo rems.config/env)
-                                                     (:application/duo-codes event)))))
+      (assoc-some-in [:application/duo :duo/codes] (:application/duo-codes event))))
 
 (defmethod application-base-view :application.event/licenses-accepted
   [application event]
@@ -511,8 +511,8 @@
                                               :duo/restrictions (:restrictions dataset-code)}]
                nil)}))
 
-(defn- enrich-application-duo-matches [application]
-  (if-not (:enable-duo rems.config/env)
+(defn- enrich-application-duo-matches [application get-config]
+  (if-not (:enable-duo (get-config))
     application
     (let [duos (->> application :application/duo :duo/codes)
           matches (for [resource (:application/resources application)
@@ -557,10 +557,65 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
+(def ^:private sensitive-events #{:application.event/review-requested
+                                  :application.event/reviewed
+                                  :application.event/reviewer-invited
+                                  :application.event/reviewer-joined
+                                  :application.event/decided
+                                  :application.event/decider-invited
+                                  :application.event/decider-joined
+                                  :application.event/decision-requested
+                                  :application.event/voted})
+
+(deftest test-sensitive-events
+  (let [public-events #{:application.event/attachments-redacted
+                        :application.event/applicant-changed
+                        :application.event/approved
+                        :application.event/closed
+                        :application.event/copied-from
+                        :application.event/copied-to
+                        :application.event/created
+                        :application.event/deleted
+                        :application.event/draft-saved
+                        :application.event/external-id-assigned
+                        :application.event/expiration-notifications-sent
+                        :application.event/licenses-accepted
+                        :application.event/licenses-added
+                        :application.event/member-added
+                        :application.event/member-invited
+                        :application.event/member-joined
+                        :application.event/member-removed
+                        :application.event/member-uninvited
+                        :application.event/rejected
+                        :application.event/remarked
+                        :application.event/resources-changed
+                        :application.event/returned
+                        :application.event/revoked
+                        :application.event/submitted}]
+    (is (= #{}
+           (set/intersection sensitive-events public-events)))
+    (is (= #{}
+           (set/difference (set events/event-types)
+                           (set/union public-events sensitive-events)))
+        "seems like a new event has been added; is public or sensitive?")))
+
+(defn get-event-visibility [event]
+  (let [event-public (:event/public event)
+        event-type (:event/type event)]
+    (case event-public
+      true :visibility/public
+      false :visibility/handling-users
+      (cond
+        (contains? sensitive-events event-type)
+        :visibility/handling-users
+
+        :else :visibility/public))))
+
 (defn enrich-event [event get-user get-catalogue-item]
   (let [event-type (:event/type event)]
     (merge event
-           {:event/actor-attributes (get-user (:event/actor event))}
+           {:event/actor-attributes (get-user (:event/actor event))
+            :event/visibility (get-event-visibility event)}
            (case event-type
              :application.event/resources-changed
              {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
@@ -613,7 +668,7 @@
            (classify-attachments application)))))
 
 (defn- get-blacklist [application blacklisted?]
-  (let [all-members (application-util/applicant-and-members application)
+  (let [all-members (applicant-and-members application)
         all-resources (distinct (map :resource/ext-id (:application/resources application)))]
     (vec
      (for [member all-members
@@ -713,26 +768,33 @@
 
       (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/vote}])))))
 
-(defn- get-attachment-redact-roles [attachment application]
-  (when (:attachment/event attachment)
-    (let [attachment-user-roles (->> (getx-in attachment [:attachment/user :userid])
-                                     (permissions/user-roles application))]
-      (cond
-        (some #{:handler} attachment-user-roles)
-        #{}
+(defn- allowed-redact-roles [application attachment]
+  (let [event-id (get-in attachment [:attachment/event :event/id])
+        user (getx-in attachment [:attachment/user :userid])
+        roles (permissions/user-roles application user)
+        workflow (:application/workflow application)]
+    (cond
+      (not event-id) ; e.g. applicant attachment in form
+      #{}
 
-        (and (= :workflow/decider (get-in application [:application/workflow :workflow/type]))
-             (some #{:decider :past-decider} attachment-user-roles))
-        #{}
+      (and (= :workflow/decider (:workflow/type workflow))
+           (some #{:decider :past-decider} roles))
+      #{}
 
-        :else
-        #{:handler}))))
+      :else
+      #{:handler})))
 
 (defn- enrich-attachments [application get-user]
   (->> application
        (transform [:application/attachments ALL] #(update % :attachment/user get-user))
-       (transform [:application/attachments ALL] #(let [roles (get-attachment-redact-roles % application)]
-                                                    (assoc-some % :attachment/redact-roles roles)))))
+       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
+
+(defn- enrich-workflow-anonymize-handling [application get-workflow]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        workflow (get-workflow workflow-id)
+        anonymize-handling (get-in workflow [:workflow :anonymize-handling])]
+    (-> application
+        (assoc-some-in [:application/workflow :workflow/anonymize-handling] anonymize-handling))))
 
 (defn enrich-with-injections
   [application {:keys [blacklisted?
@@ -751,7 +813,7 @@
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
-      enrich-application-duo-matches ; uses enriched resources
+      (enrich-application-duo-matches get-config) ; uses enriched resources
       (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
@@ -761,6 +823,7 @@
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers get-workflow)
+      (enrich-workflow-anonymize-handling get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
@@ -773,54 +836,12 @@
 
 ;;;; Authorization
 
-(def ^:private sensitive-events #{:application.event/review-requested
-                                  :application.event/reviewed
-                                  :application.event/reviewer-invited
-                                  :application.event/reviewer-joined
-                                  :application.event/decided
-                                  :application.event/decider-invited
-                                  :application.event/decider-joined
-                                  :application.event/decision-requested
-                                  :application.event/voted})
-(deftest test-sensitive-events
-  (let [public-events #{:application.event/attachments-redacted
-                        :application.event/applicant-changed
-                        :application.event/approved
-                        :application.event/closed
-                        :application.event/copied-from
-                        :application.event/copied-to
-                        :application.event/created
-                        :application.event/deleted
-                        :application.event/draft-saved
-                        :application.event/external-id-assigned
-                        :application.event/expiration-notifications-sent
-                        :application.event/licenses-accepted
-                        :application.event/licenses-added
-                        :application.event/member-added
-                        :application.event/member-invited
-                        :application.event/member-joined
-                        :application.event/member-removed
-                        :application.event/member-uninvited
-                        :application.event/rejected
-                        :application.event/remarked
-                        :application.event/resources-changed
-                        :application.event/returned
-                        :application.event/revoked
-                        :application.event/submitted}]
-    (is (= #{}
-           (set/intersection sensitive-events public-events)))
-    (is (= #{}
-           (set/difference (set events/event-types)
-                           (set/union public-events sensitive-events)))
-        "seems like a new event has been added; is public or sensitive?")))
-
 (defn- hide-sensitive-events [events]
   (->> events
-       (remove (comp sensitive-events :event/type))
-       (remove (comp false? :application/public)))) ; :application/public might not be set
+       (filterv #(= :visibility/public (:event/visibility %)))))
 
 (defn- censor-user [user]
-  (select-keys user [:userid :name :email :organizations :notification-email]))
+  (select-keys user [:userid :name :email]))
 
 (defn- censor-users-in-event [event]
   (-> event
@@ -844,12 +865,52 @@
       (update :application/events (partial mapv censor-users-in-event))
       (update :application/attachments (partial mapv #(update % :attachment/user censor-user)))))
 
+(def anonymous-handler {:userid "rems-handler"
+                        :name nil
+                        :email nil})
+
+(defn anonymize-users-in-attachments [attachments userids]
+  (vec
+   (for [attachment attachments
+         :let [userid (get-in attachment [:attachment/user :userid])]]
+     (if (some #{userid} userids)
+       (assoc attachment :attachment/user anonymous-handler)
+       attachment))))
+
+(defn anonymize-users-in-events [events userids]
+  (vec
+   (for [event events
+         :let [userid (:event/actor event)]]
+     (if (some #{userid} userids)
+       (-> event
+           (assoc :event/actor (:userid anonymous-handler))
+           (assoc :event/actor-attributes anonymous-handler))
+       event))))
+
+(defn get-handling-users [application]
+  (let [get-handling-roles #(clojure.set/intersection +handling-roles+ (set %))]
+    (set
+     (some->> (:application/user-roles application)
+              (filter-vals (comp seq get-handling-roles))
+              keys))))
+
+(defn apply-workflow-anonymization [application]
+  (if (get-in application [:application/workflow :workflow/anonymize-handling])
+    (let [handling-users (get-handling-users application)]
+      (-> application
+          (update :application/attachments anonymize-users-in-attachments handling-users)
+          (update :application/events anonymize-users-in-events handling-users)))
+    application))
+
 (defn- hide-sensitive-information [application]
   (-> application
       (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)
-      (update :application/workflow dissoc :workflow/voting)
+      (update :application/events (partial mapv #(dissoc % :event/public :event/visibility)))
+      apply-workflow-anonymization
+      (dissoc-in [:application/workflow :workflow.dynamic/handlers]
+                 [:application/workflow :workflow/voting]
+                 [:application/workflow :workflow/anonymize-handling])
       (dissoc :application/votes)
       hide-extra-user-attributes))
 
@@ -882,32 +943,47 @@
   (->> application
        (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles))))
 
-(defn- may-see-redacted-filename [roles]
-  (some #{:handler :reporter}
-        roles))
+(defn- hide-non-accessible-attachments [application]
+  (let [visible-ids (set (keys (classify-attachments application)))
+        visible? (comp visible-ids :attachment/id)]
+    (update application :application/attachments #(filterv visible? %))))
 
-(defn- apply-attachment-privacy [attachment roles userid]
-  (let [see-filename (or (not (:attachment/redacted attachment))
-                         (= userid (get-in attachment [:attachment/user :userid]))
-                         (may-see-redacted-filename roles))]
-    (cond-> attachment
-      (not see-filename) (assoc :attachment/filename :filename/redacted))))
+(defn- hide-redacted-filename [attachment permissions userid]
+  (cond
+    (not (:attachment/redacted attachment))
+    attachment
 
-(defn apply-privacy-by-user [application roles userid]
-  (->> application
-       (transform [:application/attachments ALL] #(apply-attachment-privacy % roles userid))))
+    (= userid (get-in attachment [:attachment/user :userid]))
+    attachment
 
-(defn apply-attachment-permissions [attachment roles userid]
-  (-> attachment
-      (assoc-some :attachment/can-redact (application-util/can-redact-attachment attachment roles userid))
-      (dissoc :attachment/redact-roles)))
+    (contains? permissions :see-everything)
+    attachment
+
+    :else (assoc attachment :attachment/filename :filename/redacted)))
+
+(defn- set-redact-permissions [attachment roles userid]
+  (if (:attachment/redacted attachment)
+    attachment
+    (assoc attachment :attachment/can-redact (can-redact-attachment? attachment roles userid))))
+
+(defn apply-attachments-privacy [application userid]
+  (let [roles (permissions/user-roles application userid)
+        permissions (permissions/user-permissions application userid)
+        see-everything? (contains? permissions :see-everything)]
+    (-> (if see-everything?
+          application
+          ;; applying users do not need to see event redacted attachments, only the latest
+          (update application :application/events (partial mapv #(dissoc % :event/redacted-attachments))))
+        (update :application/attachments (partial mapv #(hide-redacted-filename % permissions userid)))
+        (update :application/attachments (partial mapv #(set-redact-permissions % roles userid))))))
 
 (defn hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
-      (dissoc :application/past-members)))
+      (dissoc :application/past-members)
+      (update :application/attachments (partial mapv #(dissoc % :attachment/redact-roles)))))
 
 (defn- personalize-todo [application userid]
   (cond-> application
@@ -917,39 +993,17 @@
     (contains? (::latest-decision-request-by-user application) userid)
     (assoc :application/todo :waiting-for-your-decision)))
 
-(defn- visible-attachment-ids [application]
-  (->> application
-       classify-attachments
-       keys
-       set))
-
-(deftest test-visible-attachment-ids
-  (let [application {:application/events [{:event/type :application.event/foo
-                                           :event/attachments [{:attachment/id 1}
-                                                               {:attachment/id 3}]}
-                                          {:event/type :application.event/bar}]
-                     :application/forms [{:form/fields [{:field/type :attachment
-                                                         :field/value "5" :field/previous-value "7,15"}]}
-                                         {:form/fields [{:field/type :text
-                                                         :field/value "2" :field/previous-vaule "2"}
-                                                        {:field/type :attachment
-                                                         :field/value "9,11,13"}]}]}]
-    (is (= #{1 3 5 7 9 11 13 15} (visible-attachment-ids application)))))
-
-(defn- hide-attachments [application]
-  (let [visible-ids (visible-attachment-ids application)
-        visible? (comp visible-ids :attachment/id)]
-    (update application :application/attachments #(filterv visible? %))))
-
-(defn user-is-applicant-or-member [roles]
-  (or (contains? roles :applicant)
-      (contains? roles :member)))
-
 (defn see-application? [application userid]
-  (let [roles (permissions/user-roles application userid)]
-    (if (= :application.state/draft (:application/state application))
-      (user-is-applicant-or-member roles)
-      (not= #{:everyone-else} roles))))
+  (let [state (:application/state application)
+        roles (permissions/user-roles application userid)]
+    (cond
+      (= :application.state/draft state)
+      (is-applying-user? {:application/roles roles})
+
+      (= #{:everyone-else} roles)
+      false
+
+      :else true)))
 
 (defn apply-user-permissions [application userid]
   (let [roles (permissions/user-roles application userid)
@@ -961,11 +1015,10 @@
             application
             (hide-sensitive-information application))
           (personalize-todo userid)
-          (hide-non-public-information)
           (apply-privacy-by-roles roles)
-          (apply-privacy-by-user roles userid)
-          (hide-attachments)
-          (update :application/attachments (partial map #(apply-attachment-permissions % roles userid)))
+          (hide-non-accessible-attachments)
+          (apply-attachments-privacy userid)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
+          (hide-non-public-information)
           (permissions/cleanup)))))

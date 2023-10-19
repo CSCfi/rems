@@ -258,7 +258,8 @@
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]
-                          (s/optional-key :workflow/voting) schema-base/WorkflowVoting}
+                          (s/optional-key :workflow/voting) schema-base/WorkflowVoting
+                          (s/optional-key :workflow/anonymize-handling) s/Bool}
    :application/roles #{s/Keyword}
    :application/permissions Permissions
    :application/attachments [ApplicationAttachment]

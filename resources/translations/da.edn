@@ -80,6 +80,7 @@
                    :add "Tilføj"
                    :added-at "Tilføjet"
                    :added-by "Tilføjet af"
+                   :anonymize-handling nil
                    :application-state "Ansøgningsstatus"
                    :archive "Arkiver"
                    :back "Tilbage"
@@ -142,6 +143,7 @@
                    :name "Navn"
                    :no-categories "Ingen kategorier"
                    :no-form "Ingen blanket"
+                   :no-forms nil
                    :no-licenses "Ingen brugsvilkår"
                    :no-voting "Ingen afstemning"
                    :optional "(valgfrit)"
@@ -170,7 +172,9 @@
                    :voting "Afstemning"
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
-                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]}
+                   :workflow-anonymize-handling-explanation nil
+                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]
+                   :workflow-type nil}
   :applicant-info {:applicant "Ansøger"
                    :applicants "Ansøgere"
                    :email "E-mail"
@@ -199,6 +203,8 @@
                  :empty "Ingen ansøgninger."
                  ;; %1 - date
                  :entitlement-end "Udløbsdato for rettighederne: %1."
+                 :event {:not-shown-to-applicant "Skjult for ansøgere"
+                         :shown-to-applicant "Synlig for ansøgere"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
@@ -249,7 +255,6 @@
                           :resources "Ressourcer"
                           :state "Tilstand"}
                  :handlers "Sagsbehandler"
-                 :highlight-related-events "Vis relaterede hændelser."
                  :id "id"
                  :intro [:div.intro [:p "Udfyld og indsend ansøgningen. Du kan invitere andre til at deltage i ansøgningen. Alle deltagere skal acceptere brugsvilkår senest når ansøgningen godkendes."]]
                  :last-activity "Ændret"
@@ -638,7 +643,8 @@
             :settings "Indstillinger"
             :warning-about-missing-email [:<> "Du er nødt til at " [:a {:href "/profile"} "tilføje en e-mailadresse til dine indstillinger"] ", så du kan modtage notifikationer om dine ansøgninger."]
             :your-details "Dine brugerdetaljer"}
-  :roles {:applicant "Ansøger"
+  :roles {:anonymous-handler :da.t.roles/handler
+          :applicant "Ansøger"
           :decider "Beslutningstager"
           :handler "Behandler"
           :member "Deltager"
