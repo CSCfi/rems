@@ -994,6 +994,8 @@
 
       (testing "5th page"
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "5"}])
+        (btu/wait-visible {:fn/text "test-processed-applications-60"}) ; wait for at least one to appear before checking all
+
         (is (= (for [i (range 60 50 -1)]
                  (str "test-processed-applications-" i))
                (mapv #(get % "description") (slurp-rows :handled-applications))))
