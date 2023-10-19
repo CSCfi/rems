@@ -38,7 +38,7 @@
     (when (> pages 1)
       [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
        [:div (text :t.table.paging/page)]
-       [:div.mr-3.my-3
+       [:div.my-3
         {:style (if @show-all-page-numbers
                   {:display :grid
                    :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
