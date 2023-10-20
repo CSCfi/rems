@@ -1,8 +1,9 @@
 (ns rems.common.util
-  (:require [medley.core :refer [map-keys map-vals remove-keys]]
+  (:require [medley.core :refer [map-keys map-vals remove-keys remove-vals]]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]))
+            [clojure.test :refer [deftest is testing]]
+            [clojure.walk]))
 
 ;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
 (def +email-regex+ #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
@@ -510,10 +511,17 @@
 
 (defn remove-empty-keys
   "Given a map, recursively remove keys with empty map or nil values.
+   Keys with empty value are dissoced.
 
   E.g., given {:a {:b {:c nil} :d {:e :f}}}, return {:a {:d {:e :f}}}."
   [m]
-  (into {} (filter (fn [[_ v]] (not ((if (map? v) empty? nil?) v)))
+  (->> m
+       (clojure.walk/postwalk #(when %
+                                 (if (map? %)
+                                   (not-empty (remove-vals nil? %))
+                                   %)))
+       (remove-vals nil?))
+  #_(into {} (filter (fn [[_ v]] (not ((if (map? v) empty? nil?) v)))
                    (mapv (fn [[k v]] [k (if (map? v)
                                           (remove-empty-keys v)
                                           v)])
@@ -680,3 +688,67 @@
   (let [filters (or filters {})]
     (filter #(contains-all-kv-pairs? % filters) coll)))
 
+;; (defn- remove-nil-vals
+;;   "Recursively removes all keys with nil values from a map."
+;;   [obj]
+;;   (assert (not= "" obj))
+;;   (cond
+;;     (record? obj) obj
+;;     (map? obj) (->> obj
+;;                     (map-vals remove-nil-vals)
+;;                     (remove-vals nil?)
+;;                     not-empty)
+;;     (vector? obj) (mapv remove-nil-vals obj)
+;;     (seq? obj) (map remove-nil-vals obj)
+;;     :else obj))
+
+;; (deftest test-remove-nil-vals
+;;   (testing "empty"
+;;     (is (= nil
+;;            (remove-nil-vals {}))))
+;;   (testing "flat"
+;;     (is (= nil
+;;            (remove-nil-vals {:a nil})))
+;;     (is (= {:a 1}
+;;            (remove-nil-vals {:a 1})))
+;;     (is (= {:a false}
+;;            (remove-nil-vals {:a false})))
+;;     (is (= {:a "#fff"}
+;;            (remove-nil-vals {:a "#fff"}))))
+;;   (testing "nested"
+;;     (is (= nil
+;;            (remove-nil-vals {:a {:b nil}})))
+;;     (is (= {:a {:b 1}}
+;;            (remove-nil-vals {:a {:b 1}}))))
+;;   (testing "multiple keys"
+;;     (is (= {:b 2}
+;;            (remove-nil-vals {:a nil
+;;                              :b 2}))))
+;;   (testing "vectors"
+;;     (is (vector? (remove-nil-vals [1])))
+;;     (is (= []
+;;            (remove-nil-vals [])))
+;;     (is (= [:a]
+;;            (remove-nil-vals [:a])))
+;;     (is (= [:a nil]
+;;            (remove-nil-vals [:a {}])))
+;;     (is (= [:a {:b 1}]
+;;            (remove-nil-vals [:a {:b 1}])))
+;;     (is (= [:a nil]
+;;            (remove-nil-vals [:a {:b nil}]))))
+;;   (testing "lists"
+;;     (is (seq? (remove-nil-vals '(1))))
+;;     (is (= '()
+;;            (remove-nil-vals '())))
+;;     (is (= '(:a)
+;;            (remove-nil-vals '(:a))))
+;;     (is (= '(:a nil)
+;;            (remove-nil-vals '(:a {})))))
+;;   (testing "records"
+;;     (is (= (u/px 10)
+;;            (remove-nil-vals (u/px 10)))))
+;;   (testing "empty strings are not supported"
+;;     ;; CSS should not contain empty strings, but to be sure
+;;     ;; that we don't accidentally break stuff, we don't convert
+;;     ;; them to nil but instead throw an error.
+;;     (is (thrown? AssertionError (remove-nil-vals {:a ""})))))

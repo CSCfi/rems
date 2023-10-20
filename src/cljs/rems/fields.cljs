@@ -351,7 +351,7 @@
       [add-symbol]
       " "
       (text :t.form/upload)]
-     [:span.ml-2
+     [:span.ms-2
       (case status
         :pending [spinner/small]
         :success nil ; the new attachment row appearing is confirmation enough

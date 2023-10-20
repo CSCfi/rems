@@ -682,7 +682,7 @@
               :always
               [:div.form-field-header.d-flex
                [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
-               [:div.form-field-controls.text-nowrap.ml-auto
+               [:div.form-field-controls.text-nowrap.ms-auto
                 [move-form-field-up-button index]
                 [move-form-field-down-button index]
                 [remove-form-field-button index]]]
@@ -759,7 +759,7 @@
                                         :border-radius "0.4rem"
                                         :margin "-0.5rem"
                                         :background-color "rgba(230,230,230,0.5)"}}
-                          [:div.pr-4 (text :t.create-form.visibility/hidden)]])]))}]))
+                          [:div.pe-4 (text :t.create-form.visibility/hidden)]])]))}]))
 
 (defn create-form-page []
   (enable-autoscroll!)

@@ -38,7 +38,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :refer [document-title logo]]
+            [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -240,13 +240,13 @@
 
 (defn unauthorized-page []
   [:div
-   [document-title (text :t.unauthorized-page/unauthorized)]
+   [atoms/document-title (text :t.unauthorized-page/unauthorized)]
    [flash-message/component :top]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
 (defn forbidden-page []
   [:div
-   [document-title (text :t.forbidden-page/forbidden)]
+   [atoms/document-title (text :t.forbidden-page/forbidden)]
    [flash-message/component :top]
    [:p (text :t.forbidden-page/you-are-forbidden)]])
 
@@ -255,7 +255,7 @@
   []
   (let [error @(rf/subscribe [:error])]
     [:div
-     [document-title (text :t.error-page/title)]
+     [atoms/document-title (text :t.error-page/title)]
      [flash-message/component :top]
      (let [args (:args error)]
        [:p (text-format
@@ -266,7 +266,7 @@
 
 (defn not-found-page []
   [:div
-   [document-title (text :t.not-found-page/not-found)]
+   [atoms/document-title (text :t.not-found-page/not-found)]
    [flash-message/component :top]
    [:p (text :t.not-found-page/page-was-not-found)]])
 
@@ -375,9 +375,9 @@
      [nav/navigation-widget]
      (when (or (= page-id :home)
                (and lang
-                    (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
-                    (not (:navbar-logo-name theme))))
-       [logo])
+                    (not (get theme (keyword (str "navbar-logo-name-" (name lang)))))
+                    (not (get theme :navbar-logo-name))))
+       [atoms/logo])
      (when page-id
        [main-content page-id grab-focus?])
      [:div#empty-space]

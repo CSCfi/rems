@@ -28,9 +28,9 @@
 
 (defn duo-valid-icon [valid]
   (case valid
-    :duo/compatible [:span.mr-3.fa.fa-check-circle.text-success]
-    :duo/not-compatible [:span.mr-3.fa.fa-times-circle.text-danger]
-    :duo/needs-manual-validation [:span.mr-3.fa.fa-exclamation-circle.text-warning]
+    :duo/compatible [:span.me-3.fa.fa-check-circle.text-success]
+    :duo/not-compatible [:span.me-3.fa.fa-times-circle.text-danger]
+    :duo/needs-manual-validation [:span.me-3.fa.fa-exclamation-circle.text-warning]
     nil))
 
 (defn- duo-error [error]

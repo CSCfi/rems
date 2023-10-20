@@ -146,9 +146,7 @@
                      :form/keys [internal-name external-title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
-        result (with-user actor
-                 (form/create-form!
-                  {:organization (or organization (ensure-default-organization!))
+        form-data {:organization (or organization (ensure-default-organization!))
                    :form/internal-name (or internal-name "FORM")
                    :form/external-title (select-config-langs
                                          (or external-title
@@ -158,8 +156,10 @@
                    :form/fields (->> (or fields [])
                                      (mapv #(update-existing %
                                                              :field/title
-                                                             select-config-langs)))}))]
-    (assert (:success result) {:command command :result result})
+                                                             select-config-langs)))}
+        result (with-user actor
+                 (form/create-form! form-data))]
+    (assert (:success result) {:command command :result result :form-data form-data})
     (:id result)))
 
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]

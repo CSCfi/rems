@@ -2,8 +2,27 @@
   "The namespace contains the helpful style utils that are meant to be kept separate
    the main styles file to keep it cleaner."
   (:require [clojure.string :as str]
-            [rems.config :refer [env]]))
+            [rems.config :refer [env]]
+            [rems.context :as context]))
 
+(defn get-lang []
+  (if (bound? #'context/*lang*)
+    context/*lang*
+    (env :default-language)))
+
+(defn get-lang-name []
+  (some-> (get-lang)
+          name))
+
+(defn css-var
+  ([attr] (str "var(" (name attr) ")"))
+  ([attr fallback] (str "var(" (name attr) ", " fallback ")")))
+
+(defn css-url [uri]
+  (str "url(\"" uri "\")"))
+
+(defn css-calc [& xs]
+  (str "calc(" (str/join " " xs) ")"))
 
 ;; Customizable theme related functions
 
@@ -12,10 +31,10 @@
   ;; config-defaults.edn. Luckily there are only a few so we can just
   ;; have a whitelist.
   #{:logo-name-fi
-    :logo-name-fi-sm
+    :logo-name-sm-fi
     :navbar-logo-name-fi
     :logo-name-sv
-    :logo-name-sv-sm
+    :logo-name-sm-sv
     :navbar-logo-name-sv})
 
 (defn- theme-getx-impl
@@ -39,18 +58,30 @@
                        attr-name)]
       (or attr-value (recur (rest attr-names))))))
 
-(defn resolve-image [path]
-  (when path
-    (let [url (if (str/starts-with? path "http")
-                path
-                (str (theme-getx :img-path) path))]
-      (str "url(\"" url "\")"))))
+(defn theme-get [& attrs]
+  (when (seq attrs)
+    (if-some [v (get-in env [:theme (first attrs)])]
+      v
+      (recur (rest attrs)))))
 
-(defn get-logo-image [lang]
-  (resolve-image (theme-getx (keyword (str "logo-name-" (name lang))) :logo-name)))
+(defn- theme-logo [k]
+  (case k
+    :logo-name (keyword (str "logo-name-" (get-lang-name)))
+    :logo-name-sm (keyword (str "logo-name-sm-" (get-lang-name)))
+    :navbar-logo-name (keyword (str "navbar-logo-name-" (get-lang-name)))))
 
-(defn get-logo-name-sm [lang]
-  (resolve-image (theme-getx (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
+(defn theme-logo-get
+  "Returns localized logo path or fallback `k`."
+  [k]
+  (when-some [path (theme-get (theme-logo k) k)]
+    (if (str/starts-with? path "http")
+      path
+      (str (theme-get :img-path) path))))
 
-(defn get-navbar-logo [lang]
-  (resolve-image (theme-getx (keyword (str "navbar-logo-name-" (name lang))) :navbar-logo-name)))
+(defn theme-logo-getx
+  "Returns localized logo path or fallback `k`."
+  [k]
+  (let [path (theme-getx (theme-logo k) k)]
+    (if (str/starts-with? path "http")
+      path
+      (str (theme-getx :img-path) path))))

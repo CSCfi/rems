@@ -371,17 +371,13 @@
                           (validate-not-present field :field/visibility))))})]
     (apply merge (map-indexed validate-field fields))))
 
-(defn- nil-if-empty [m]
-  (when-not (empty? m)
-    m))
-
 (defn- validate-form-name-fields [form languages]
   (-> (if (:form/title form)
         (validate-text-field form :form/title) ; deprecated
         (merge (validate-text-field form :form/internal-name)
                (validate-localized-text-field form :form/external-title languages)))
       remove-empty-keys
-      nil-if-empty))
+      not-empty))
 
 (deftest test-validate-form-name-fields
   (is (= {:form/internal-name :t.form.validation/required
@@ -405,7 +401,7 @@
              (validate-form-name-fields form languages)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
-      nil-if-empty))
+      not-empty))
 
 (deftest validate-form-template-test
   (let [form {:organization {:organization/id "abc"}

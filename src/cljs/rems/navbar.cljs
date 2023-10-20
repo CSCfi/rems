@@ -45,14 +45,14 @@
     [:div.user-widget.px-2.px-sm-0
      [nav-link {:path "/profile"
                 :title [:span
-                        [:i.fa.fa-user.mr-1]
+                        [:i.fa.fa-user.me-1]
                         [:span.icon-description (:name user)]]
                 :aria-label (str (text :t.navigation/profile) ": " (:name user))}]
      [atoms/link {:id "logout" :class "nav-link"
                   :aria-label (text :t.navigation/logout)}
       "/logout"
       [:span
-       [:i.fa.fa-sign-out-alt.mr-1]
+       [:i.fa.fa-sign-out-alt.me-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
 (defn- extra-page-link [page language]
@@ -82,7 +82,7 @@
   (let [roles (:roles identity)
         config @(rf/subscribe [:rems.config/config])
         catalogue-is-public (:catalogue-is-public config)]
-    [e attrs [:div.navbar-nav.mr-auto
+    [e attrs [:div.navbar-nav.me-auto
               (when-not (:user identity)
                 [nav-link "/" (text :t.navigation/home) :exact])
               (when (or (roles/is-logged-in? roles) catalogue-is-public)
@@ -107,7 +107,7 @@
       (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
                 (:navbar-logo-name theme))
         [atoms/logo-navigation])
-      [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 {} identity]]
+      [navbar-items :div#big-navbar.collapse.navbar-collapse.me-3 {} identity]]
      [:div.navbar [user-widget (:user identity)]]]))
 
 (defn navbar-small [user]

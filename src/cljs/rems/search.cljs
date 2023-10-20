@@ -14,10 +14,10 @@
                on-search (debounce on-search debounce-time)]
     [:<>
      [:div.search-field.mt-3
-      [:label.mr-3 {:for id}
+      [:label.me-3 {:for id}
        (text :t.search/search)]
 
-      [:div.input-group.mr-2.w-50
+      [:div.input-group.me-2.w-50
        [:input.form-control
         {:id id
          :type :text

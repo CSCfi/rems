@@ -189,8 +189,8 @@
 
                                                          (when (seq children)
                                                            (if (:expanded? row)
-                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-up]
-                                                             [:i.pl-1.pr-4.fas.fa-fw.fa-chevron-down]))
+                                                             [:i.ps-1.pe-4.fas.fa-fw.fa-chevron-up]
+                                                             [:i.ps-1.pe-4.fas.fa-fw.fa-chevron-down]))
 
                                                          content]
 

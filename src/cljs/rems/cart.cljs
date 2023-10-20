@@ -73,9 +73,9 @@
                          [item-view item language (not many-items?)])
                        items)
                   (when many-items?
-                    [[:tr [:td.commands.text-right {:col-span 2}
+                    [[:tr [:td.commands.text-end {:col-span 2}
                            (text-format :t.cart/apply-for-bundle (count items))
-                           [:span.mr-3]
+                           [:span.me-3]
                            [apply-button items language]]]])))))
 
 (defn cart-list

@@ -1,53 +1,27 @@
 (ns rems.layout
-  (:require [clojure.string :as str]
+  (:require [cognitect.transit]
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.service.public :as public]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.json :as json]
-            [cognitect.transit]
+            [rems.css.style-utils :refer [get-lang theme-logo-get]]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
-            [ring.util.http-response :as response]))
-
-(defn- css-filename [language]
-  (str "/css/" (name language) "/screen.css"))
+            [ring.util.http-response]))
 
 (defn- cache-bust [filename]
   (str filename "?" (or (:revision git/+version+)
                         ;; cache busting not strictly needed for dev mode, see rems.handler/dev-js-handler
                         (System/currentTimeMillis))))
 
-;; TODO: consider refactoring together with style utils
-(defn- resolve-image [path]
-  (when path
-    (if (str/starts-with? path "http")
-      path
-      (str (get-in env [:theme :img-path]) path))))
-
-(defn- theme-get [& attrs]
-  (when (seq attrs)
-    (if-some [v (get-in env [:theme (first attrs)])]
-      v
-      (recur (rest attrs)))))
-
 (defn- logo-preloads
   "Preload important images so that the paint can happen earlier."
   []
-  (for [href (->>
-              ;; localized logos or fallbacks
-              (let [lang-key (some-> (if (bound? #'context/*lang*)
-                                       context/*lang*
-                                       (env :default-language))
-                                     name)]
-                [(theme-get (keyword (str "logo-name-" lang-key)) :logo-name)
-                 (theme-get (keyword (str "logo-name-sm-" lang-key)) :logo-name-sm)
-                 (theme-get (keyword (str "navbar-logo-name-" lang-key)) :navbar-logo-name)])
-
-              distinct
-              (map resolve-image)
-              (remove nil?))]
+  (for [href (distinct (list (theme-logo-get :logo-name)
+                             (theme-logo-get :logo-name-sm)
+                             (theme-logo-get :navbar-logo-name)))
+        :when href]
     [:link {:rel "preload" :as "image" :href href :type "image/png"}]))
 
 (defn- inline-value [setter value]
@@ -61,11 +35,10 @@
 
 (defn- page-template
   [content & [app-content]]
-  (let [lang (if (bound? #'context/*lang*)
-               context/*lang*
-               (env :default-language))]
+  (let [lang (get-lang)]
     (with-language lang
-      (html5 [:html {:lang "en"}
+      (html5 [:html {:lang "en"
+                     :theme-default true}
               (into [:head
                      [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
                      [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -77,7 +50,9 @@
                      [:title (text :t.header/title)]
                      (include-css "/assets/bootstrap/css/bootstrap.min.css")
                      (include-css "/assets/font-awesome/css/all.css")
-                     (include-css (cache-bust (css-filename context/*lang*)))
+                     (include-css (cache-bust "/css/theme.css")) ; dynamic
+                     (include-css (cache-bust (str "/css/" (name lang) "/screen.css"))) ; dynamic
+                     (include-css (cache-bust "/css/styles.css"))
                      (for [extra-stylesheet (get-in env [:extra-stylesheets :files])]
                        (include-css (cache-bust extra-stylesheet)))]
                     (logo-preloads))
@@ -105,7 +80,7 @@
         ;; references to cache-busted app.js and screen.css
         headers (merge {"Cache-Control" "no-store"}
                        (:headers params))]
-    (response/content-type
+    (ring.util.http-response/content-type
      {:status status
       :headers headers
       :body (page-template content (:app-content params))}

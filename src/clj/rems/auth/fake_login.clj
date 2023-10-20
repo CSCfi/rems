@@ -78,7 +78,7 @@
                                        ;; this isn't a special case but an attribute of
                                        ;; the group data
                                        (when (= "Special Users" group)
-                                         [:div.ml-3
+                                         [:div.ms-3
                                           [:p "Special users with special cases. Not for daily use!"]
                                           [:button#show-special-users.btn.btn-secondary {:data-toggle "collapse" :data-target (str "#" id)}
                                            "Show"]])

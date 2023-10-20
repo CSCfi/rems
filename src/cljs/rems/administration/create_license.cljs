@@ -171,7 +171,7 @@
             (str/upper-case (name language))]
            [:div.col-sm-11.d-flex.flex-wrap.align-items-center {:id id}
             (if (empty? filename)
-              [:div.upload-file.mr-2
+              [:div.upload-file.me-2
                [:input {:style {:display "none"}
                         :type "file"
                         :id input-id
@@ -181,14 +181,14 @@
                                            :on-click #(.click (.getElementById js/document input-id))}
                 (text :t.form/upload)]]
               [:div.d-flex.justify-content-start
-               [:a.attachment-link.btn.btn-secondary.mr-2
+               [:a.attachment-link.btn.btn-secondary.me-2
                 {:href (str "/api/licenses/attachments/" attachment-id)
                  :target :_blank}
                 filename " " [file-download]]
-               [:button.btn.btn-secondary.mr-2 {:type :button
+               [:button.btn.btn-secondary.me-2 {:type :button
                                                 :on-click (remove-attachment-event language attachment-id)}
                 (text :t.form/attachment-remove)]])
-            [:span.ml-2
+            [:span.ms-2
              (case upload-status
                :pending [spinner/small]
                :success nil ; the new attachment row appearing is confirmation enough

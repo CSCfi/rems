@@ -493,7 +493,7 @@
 
 (defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
-   [:div.mr-2 (when show-accepted-licenses?
+   [:div.me-2 (when show-accepted-licenses?
                 (if (:accepted license)
                   (success-symbol)
                   (make-empty-symbol (success-symbol))))]
@@ -1253,7 +1253,7 @@
                  @(rf/subscribe [::autosaving]))
         [:div.alert.alert-info
          [text :t.form/autosave-in-progress]
-         [:span.ml-2 [spinner/small]]])
+         [:span.ms-2 [spinner/small]]])
       [actions-form application config]]]]])
 
 ;;;; Entrypoint
