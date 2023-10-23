@@ -36,7 +36,8 @@
  (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/add]]
      (post! "/api/blacklist/add"
-            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
+            {:rems/request-id ::request-id
+             :params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
                       :comment (or comment "")}
              :handler (flash-message/default-success-handler
@@ -55,7 +56,8 @@
  (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/remove]]
      (post! "/api/blacklist/remove"
-            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
+            {:rems/request-id ::request-id
+             :params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
                       :comment (or comment "")}
              :handler (flash-message/default-success-handler
@@ -175,20 +177,24 @@
      [:div.form-group.row
       [:div.col-sm-1]
       [:div.col-sm-6
-       [:button#blacklist-add.btn.btn-primary
-        {:type :submit}
-        (text :t.administration/add)]]]]))
+       [atoms/rate-limited-button
+        {:id :blacklist-add
+         :class "btn-primary"
+         :type :submit
+         :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+         :text (text :t.administration/add)}]]]]))
 
 (defn add-user-form [resource]
   [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
-  [:button.btn.btn-secondary.button-min-width
-   {:type :button
+  [atoms/rate-limited-button
+   {:class "btn-secondary button-min-width"
+    :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
     :on-click (fn [_event]
                 ;; TODO add form & field for comment
-                (rf/dispatch [::remove-from-blacklist resource user ""]))}
-   (text :t.administration/remove)])
+                (rf/dispatch [::remove-from-blacklist resource user ""]))
+    :text (text :t.administration/remove)}])
 
 (defn- format-rows [rows]
   (doall
