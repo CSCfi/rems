@@ -1,8 +1,7 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
-            [goog.functions]
             [komponentit.autosize :as autosize]
-            [medley.core :refer [assoc-some remove-vals]]
+            [medley.core :refer [remove-vals update-existing]]
             [reagent.core :as r]
             [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
@@ -289,19 +288,25 @@
                         (dissoc props :text))
      (:text props)]))
 
+(defn- wrap-rate-limit [callback ms]
+  (r/with-let [wait (r/atom nil)]
+    (fn rate-limited-callback [& args]
+      (when-not @wait
+        (reset! wait (js/setTimeout #(reset! wait nil) ms))
+        (apply callback args)))
+    (finally
+      (some-> @wait js/clearTimeout))))
+
 (defn rate-limited-button
-  "atoms/button variant that wraps click handler with `goog.functions/rateLimit`:
+  "atoms/button variant that allows click handler to be called, at most,
+   once per interval `:wait`. Only the 1st call will go through if called
+   multiple times.
 
-   \"Wraps a function to allow it to be called, at most, once per interval (specified in milliseconds).
-   If the wrapper function is called N times within that interval, only the 1st call will go through.\"
-
-   * `:rate-limit` interval in milliseconds"
-  [{:keys [rate-limit] :or {rate-limit 2000} :as props}]
-  (r/with-let [click-handler (goog.functions/rateLimit (:on-click props) rate-limit)]
-    [button (-> props
-                (dissoc :on-click :rate-limit)
-                (assoc-some :on-click (when-not (:disabled props)
-                                        click-handler)))]))
+   * `:wait` interval in milliseconds"
+  [{:keys [disabled wait] :or {wait 2000} :as props}]
+  [button (-> props
+              (dissoc :wait (when disabled :on-click))
+              (update-existing :on-click wrap-rate-limit wait))])
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
@@ -463,4 +468,10 @@
        (example "with more commands"
                 [commands-group-button {:label "Group"}
                  example-command
-                 another-command])])))
+                 another-command])
+
+       (component-info rate-limited-button)
+       (example "rate limited button"
+                (r/with-let [n (r/atom 0)]
+                  [rate-limited-button {:on-click #(r/rswap! n inc)
+                                        :text (str "Count: " @n)}]))])))
