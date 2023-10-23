@@ -2,11 +2,11 @@
   (:require [clojure.string :as str]
             [clojure.set :refer [union]]
             [goog.string]
+            [reagent.core :as r]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -244,7 +244,8 @@
 (defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
   (flash-message/clear-message! :actions)
   (post! "/api/applications/save-draft"
-         {:params {:application-id (:application/id application)
+         {:rems/request-id ::save-draft
+          :params {:application-id (:application/id application)
                    :field-values (field-values-to-api application (:field-values edit-application))
                    :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
           :handler handler
@@ -306,7 +307,8 @@
                     (if-not (:success response)
                       (handle-validations! response description application)
                       (post! "/api/applications/submit"
-                             {:params {:application-id (:application/id application)}
+                             {:rems/request-id ::submit
+                              :params {:application-id (:application/id application)}
                               :handler (fn [response]
                                          (handle-validations!
                                           response
@@ -324,7 +326,8 @@
    (let [application-id (get-in db [::application :data :application/id])
          description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
-            {:params {:application-id application-id}
+            {:rems/request-id ::copy-as-new
+             :params {:application-id application-id}
              :handler (flash-message/default-success-handler
                        :top ; the message will be shown on the new application's page
                        description
@@ -504,20 +507,23 @@
      [fields/unsupported-field license])])
 
 (defn- save-button []
-  [button-wrapper {:id "save"
-                   :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
+  [atoms/rate-limited-button {:id "save"
+                              :text (text :t.form/save)
+                              :disabled @(rf/subscribe [:rems.spa/pending-request ::save-draft])
+                              :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
-  [button-wrapper {:id "submit"
-                   :text (text :t.form/submit)
-                   :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
+  [atoms/rate-limited-button {:id "submit"
+                              :text (text :t.form/submit)
+                              :class :btn-primary
+                              :disabled @(rf/subscribe [:rems.spa/pending-request ::submit])
+                              :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
-  [button-wrapper {:id "copy-as-new"
-                   :text (text :t.form/copy-as-new)
-                   :on-click #(rf/dispatch [::copy-as-new-application])}])
+  [atoms/rate-limited-button {:id "copy-as-new"
+                              :text (text :t.form/copy-as-new)
+                              :disabled @(rf/subscribe [:rems.spa/pending-request ::copy-as-new])
+                              :on-click #(rf/dispatch [::copy-as-new-application])}])
 
 (rf/reg-sub
  ::get-field-value
