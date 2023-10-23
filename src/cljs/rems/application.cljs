@@ -1021,7 +1021,7 @@
   (let [app-id (:application/id application)
         show-comment-field? (is-handling-user? application)
         actions (action-buttons application config)
-        reload (partial reload! app-id)
+        reload (r/partial reload! app-id)
         go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
                              (navigate! "/catalogue"))]
     (when (seq actions)
