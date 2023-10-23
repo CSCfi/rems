@@ -1,8 +1,9 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
+            [goog.functions]
             [komponentit.autosize :as autosize]
-            [medley.core :refer [remove-vals]]
-            [reagent.core :as reagent]
+            [medley.core :refer [assoc-some remove-vals]]
+            [reagent.core :as r]
             [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
@@ -231,9 +232,9 @@
 
 (defn document-title [_title & [{:keys [heading?] :or {heading? true}}]]
   (let [on-update (fn [this]
-                    (let [[_ title] (reagent/argv this)]
+                    (let [[_ title] (r/argv this)]
                       (set-document-title! title)))]
-    (reagent/create-class
+    (r/create-class
      {:component-did-mount on-update
       :component-did-update on-update
       :display-name "document-title"
@@ -258,7 +259,7 @@
    * `expanded?` initial expanded state
    * `title` content which is always displayed together with animated chevron"
   [{:keys [expanded?] :or {expanded? false}}]
-  (let [expanded (reagent/atom expanded?)]
+  (let [expanded (r/atom expanded?)]
     (fn [{:keys [id content title]}]
       (let [id (escape-element-id id)]
         [:<>
@@ -276,6 +277,31 @@
                          :ref focus-when-collapse-opened
                          :tab-index "-1"}
           content]]))))
+
+(defn button
+  "Plain button with defaults. `props` are passed to button, except for following keys:
+
+   * `:text` text to display in button"
+  [props]
+  (let [button-defaults {:type :button
+                         :class ["btn-secondary"]}]
+    [:button.btn (merge button-defaults
+                        (dissoc props :text))
+     (:text props)]))
+
+(defn rate-limited-button
+  "atoms/button variant that wraps click handler with `goog.functions/rateLimit`:
+
+   \"Wraps a function to allow it to be called, at most, once per interval (specified in milliseconds).
+   If the wrapper function is called N times within that interval, only the 1st call will go through.\"
+
+   * `:rate-limit` interval in milliseconds"
+  [{:keys [rate-limit] :or {rate-limit 2000} :as props}]
+  (r/with-let [click-handler (goog.functions/rateLimit (:on-click props) rate-limit)]
+    [button (-> props
+                (dissoc :on-click :rate-limit)
+                (assoc-some :on-click (when-not (:disabled props)
+                                        click-handler)))]))
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
@@ -339,7 +365,7 @@
                  [action-link action]]))]])))
 
 (defn guide []
-  (let [state (reagent/atom false)
+  (let [state (r/atom false)
         on-change #(swap! state not)]
     (fn []
       [:div

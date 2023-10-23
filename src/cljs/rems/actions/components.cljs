@@ -1,6 +1,6 @@
 (ns rems.actions.components
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [attachment-link checkbox enrich-user textarea]]
+            [rems.atoms :as atoms :refer [attachment-link checkbox enrich-user textarea]]
             [rems.common.attachment-util :as attachment-util]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
@@ -14,13 +14,6 @@
 
 (defn- action-button-id [action-id]
   (str action-id "-action-button"))
-
-(defn button-wrapper [{:keys [text class] :as props}]
-  [:button.btn
-   (merge {:type :button
-           :class (or class :btn-secondary)}
-          (dissoc props :class :text))
-   text])
 
 (defn collapse-action-form [id]
   (.collapse (js/$ (str "#" (action-collapse-id id))) "hide"))
