@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
+            [medley.core :refer [dissoc-in]]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [reagent.dom :as rd]
@@ -57,7 +58,7 @@
             [rems.profile :refer [profile-page missing-email-warning]]
             [rems.text :refer [text text-format]]
             [rems.user-settings]
-            [rems.util :refer [navigate! fetch replace-url! set-location!]]
+            [rems.util :refer [fetch navigate! replace-url! set-location!]]
             [secretary.core :as secretary])
   (:import goog.history.Html5History))
 
@@ -209,6 +210,21 @@
      (on-loaded)
      (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
    {}))
+
+(rf/reg-sub
+ :rems.spa/pending-request
+ (fn [db [_ k]]
+   (get-in db [:rems.spa/request k])))
+
+(rf/reg-event-db
+ :rems.spa/on-request
+ (fn [db [_ k]]
+   (assoc-in db [:rems.spa/request k] true)))
+
+(rf/reg-event-db
+ :rems.spa/on-request-finished
+ (fn [db [_ k]]
+   (dissoc-in db [:rems.spa/request k])))
 
 ;;;; Pages
 (defn login-intro []

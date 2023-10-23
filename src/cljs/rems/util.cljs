@@ -2,9 +2,10 @@
   (:require [accountant.core :as accountant]
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
+            [clojure.test :refer [deftest are testing]]
             [goog.string :refer [format]]
-            [re-frame.core :as rf]
-            [clojure.test :refer [deftest are testing]]))
+            [medley.core :refer [update-existing]]
+            [re-frame.core :as rf]))
 
 ;; TODO move to cljc
 (defn getx
@@ -58,53 +59,90 @@
             true)
       false)))
 
-(defn- wrap-default-error-handler [handler]
-  (fn [err]
-    (when-not (redirect-when-unauthorized-or-forbidden! err)
+(defn- wrap-default-error-handler [handler opts]
+  (cond
+    (:custom-error-handler? opts)
+    handler
+
+    :else
+    (fn [err]
+      (when-not (redirect-when-unauthorized-or-forbidden! err)
+        (when handler
+          (handler err))))))
+
+(defn- wrap-default-finally-handler [handler opts]
+  (cond
+    (:rems/request-id opts)
+    (fn []
+      (rf/dispatch [:rems.spa/on-request-finished (:rems/request-id opts)])
       (when handler
-        (handler err)))))
+        (handler)))
+
+    :else
+    handler))
+
+(defn- wrap-default-handlers [opts]
+  (-> opts
+      (update :error-handler wrap-default-error-handler opts)
+      (update :finally wrap-default-finally-handler opts)))
+
+(defn- save-request-id [opts]
+  (when-some [id (:rems/request-id opts)]
+    (rf/dispatch [:rems.spa/on-request id])))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
 
   Has sensible defaults with error handler, JSON and keywords.
-  You can use :custom-error-handler? to decide weather you would like use wrapper for the error handling.
+
+  Default error handler redirects when request was unauthorized or forbidden, and only calls
+  given error handler if neither is the case. This behaviour can be omitted by passing
+  `:custom-error-handler? true` in `opts`.
 
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
-  (GET url (-> (merge {:response-format :transit
-                       :handler (fn [])}
-                      opts
-                      (if (:custom-error-handler? opts)
-                        {:error-handler (:error-handler opts)}
-                        {:error-handler (wrap-default-error-handler (:error-handler opts))})))))
+  (save-request-id opts)
+  (let [fetch-defaults {:response-format :transit
+                        :handler (constantly nil)}]
+    (GET url (merge fetch-defaults
+                    (wrap-default-handlers opts)))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.
 
   Has sensible defaults with error handler, JSON and keywords.
 
+  Default error handler redirects when request was unauthorized or forbidden, and only calls
+  given error handler if neither is the case. This behaviour can be omitted by passing
+  `:custom-error-handler? true` in `opts`.
+
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
-  (PUT url (merge {:format :transit
-                   :response-format :transit}
-                  opts
-                  {:error-handler (wrap-default-error-handler (:error-handler opts))})))
+  (save-request-id opts)
+  (let [put-defaults {:format :transit
+                      :response-format :transit}]
+    (PUT url (merge put-defaults
+                    (wrap-default-handlers opts)))))
 
 (defn post!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/POST.
 
   Has sensible defaults with error handler, JSON and keywords.
 
+  Default error handler redirects when request was unauthorized or forbidden, and only calls
+  given error handler if neither is the case. This behaviour can be omitted by passing
+  `:custom-error-handler? true` in `opts`.
+
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
-  (POST url (merge {:format :transit
-                    :response-format :transit}
-                   opts
-                   {:error-handler (wrap-default-error-handler (:error-handler opts))})))
+  (save-request-id opts)
+  (let [post-defaults {:format :transit
+                       :response-format :transit}]
+    (POST url (merge post-defaults
+                     (wrap-default-handlers opts)))))
 
 ;; String manipulation
 
