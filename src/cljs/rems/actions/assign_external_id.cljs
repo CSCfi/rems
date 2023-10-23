@@ -1,7 +1,8 @@
 (ns rems.actions.assign-external-id
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-button action-form-view command!]]
+            [rems.atoms :as atoms]
             [rems.text :refer [text]]))
 
 (rf/reg-event-fx
@@ -34,10 +35,11 @@
   [{:keys [external-id on-set-external-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/assign-external-id)
-   [[button-wrapper {:id "assign-external-id-button"
-                     :text (text :t.actions/assign-external-id)
-                     :class "btn-primary"
-                     :on-click on-send}]]
+   [[atoms/rate-limited-button {:id "assign-external-id-button"
+                                :text (text :t.actions/assign-external-id)
+                                :class "btn-primary"
+                                :disabled @(rf/subscribe [:rems.spa/pending-request :application.command/assign-external-id])
+                                :on-click on-send}]]
    (let [id (str action-form-id "-field")]
      [:div.form-group
       [:label {:for id}

@@ -1,13 +1,11 @@
 (ns rems.actions.add-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view collapse-action-form]]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
-
-
 
 (rf/reg-fx
  ::fetch-potential-members
@@ -43,7 +41,8 @@
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (let [description [text :t.actions/add-member]]
      (post! "/api/applications/add-member"
-            {:params {:application-id application-id
+            {:rems/request-id ::request-id
+             :params {:application-id application-id
                       :member (select-keys member [:userid])}
              :handler (flash-message/default-success-handler
                        :change-members
@@ -63,10 +62,11 @@
   [{:keys [selected-member potential-members on-set-member on-send]}]
   [action-form-view action-form-id
    (text :t.actions/add-member)
-   [[button-wrapper {:id "add-member-submit"
-                     :text (text :t.actions/add-member)
-                     :class "btn-primary"
-                     :on-click on-send}]]
+   [[atoms/rate-limited-button {:id "add-member-submit"
+                                :text (text :t.actions/add-member)
+                                :class "btn-primary"
+                                :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                :on-click on-send}]]
    [:div
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/member)]

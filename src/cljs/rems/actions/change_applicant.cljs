@@ -1,6 +1,7 @@
 (ns rems.actions.change-applicant
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form]]
+            [rems.atoms :as atoms]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -17,7 +18,8 @@
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
    (let [description [text :t.actions/change-applicant]]
      (post! "/api/applications/change-applicant"
-            {:params {:application-id application-id
+            {:rems/request-id ::request-id
+             :params {:application-id application-id
                       :member (select-keys member [:userid])
                       :comment comment}
              :handler (flash-message/default-success-handler
@@ -43,10 +45,11 @@
   (let [element-id (qualify-parent-id parent-id)]
     [action-form-view element-id
      (text :t.actions/change-applicant)
-     [[button-wrapper {:id (str element-id "-submit")
-                       :text (text :t.actions/change-applicant)
-                       :class "btn-primary"
-                       :on-click on-send}]]
+     [[atoms/rate-limited-button {:id (str element-id "-submit")
+                                  :text (text :t.actions/change-applicant)
+                                  :class "btn-primary"
+                                  :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                  :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]
      {:collapse-id parent-id}]))

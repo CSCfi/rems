@@ -1,6 +1,7 @@
 (ns rems.actions.change-resources
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form]]
+            [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [medley.core :refer [distinct-by]]
@@ -52,7 +53,8 @@
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]
    (let [description [text :t.actions/change-resources]]
      (post! "/api/applications/change-resources"
-            {:params (merge {:application-id application-id
+            {:rems/request-id ::request-id
+             :params (merge {:application-id application-id
                              :catalogue-item-ids (vec resources)}
                             (when comment
                               {:comment comment}))
@@ -83,12 +85,13 @@
         config @(rf/subscribe [:rems.config/config])]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
-     [[button-wrapper {:id "change-resources"
-                       :text (text :t.actions/change-resources)
-                       :class "btn-primary"
-                       :disabled (or (empty? selected-resources)
-                                     (= selected-resources initial-resources))
-                       :on-click on-send}]]
+     [[atoms/rate-limited-button {:id "change-resources"
+                                  :text (text :t.actions/change-resources)
+                                  :class "btn-primary"
+                                  :disabled (or (empty? selected-resources)
+                                                (= selected-resources initial-resources)
+                                                @(rf/subscribe [:rems.spa/pending-request ::request-id]))
+                                  :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]
        ;; TODO: Nowadays the user cannot select resources that have an

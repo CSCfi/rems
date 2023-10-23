@@ -1,6 +1,7 @@
 (ns rems.actions.return-action
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command!]]
+            [rems.atoms :as atoms]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "return")
@@ -32,10 +33,11 @@
   [{:keys [application-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/return)
-   [[button-wrapper {:id "return"
-                     :text (text :t.actions/return)
-                     :class "btn-primary"
-                     :on-click on-send}]]
+   [[atoms/rate-limited-button {:id "return"
+                                :text (text :t.actions/return)
+                                :class "btn-primary"
+                                :disabled @(rf/subscribe [:rems.spa/pending-request :application.command/return])
+                                :on-click on-send}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]
