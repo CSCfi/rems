@@ -607,10 +607,9 @@ button {
     margin-bottom: 1em;
     padding: 0 20px;
 
-    /* XXX: url function cannot interpolate (use) variables */
-    /* & .img {
-        background-image: url(var(--theme-logo-name));
-    } */
+    & .img {
+        background-image: var(--theme-logo-name);
+    }
 }
 
 .logo-menu {
@@ -620,10 +619,9 @@ button {
     padding-top: 0;
     padding-bottom: 0;
 
-    /* XXX: url function cannot interpolate (use) variables */
-    /* & .img {
-        background-image: url(var(--theme-navbar-logo-name));
-    } */
+    & .img {
+        background-image: var(--theme-navbar-logo-name);
+    }
 }
 
 .logo .img,
@@ -646,7 +644,7 @@ button {
 
         .img {
             background-color: var(--theme-logo-bgcolor);
-            /* background-image: url(var(--theme-logo-name-sm)) */
+            background-image: var(--theme-logo-name-sm);
             background-size: contain;
             -webkit-background-size: contain;
             -moz-background-size: contain;

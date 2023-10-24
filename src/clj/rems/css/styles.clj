@@ -56,14 +56,13 @@
    :--theme-bg-secondary (theme-getx :bg-secondary)
    :--theme-bg-success (theme-getx :bg-success)
    :--theme-bg-warning (theme-getx :bg-warning)
-
    :--theme-bg-white (theme-getx :bg-white)
    :--theme-big-navbar-text-transform (theme-getx :big-navbar-text-transform)
    :--theme-button-navbar-font-weight (theme-getx :button-navbar-font-weight)
+
    :--theme-collapse-bgcolor (theme-getx :collapse-bgcolor)
    :--theme-collapse-color (theme-getx :collapse-color)
    :--theme-collapse-shadow (theme-getx :collapse-shadow)
-
    :--theme-color1 (theme-getx :color1)
    :--theme-color2 (theme-getx :color2)
    :--theme-color3 (theme-getx :color3)
@@ -72,16 +71,22 @@
    :--theme-font-family (theme-getx :font-family)
    :--theme-footer-bgcolor (theme-getx :footer-bgcolor)
    :--theme-footer-color (theme-getx :footer-color)
+
    :--theme-header-border (theme-getx :header-border)
    :--theme-header-shadow (theme-getx :header-shadow)
+
    :--theme-link-color (theme-getx :link-color)
    :--theme-link-hover-color (theme-getx :link-hover-color)
    :--theme-logo-bgcolor (theme-getx :logo-bgcolor)
    :--theme-logo-content-origin (theme-getx :logo-content-origin)
+   :--theme-logo-name (css-url (theme-logo-getx :logo-name))
+   :--theme-logo-name-sm (css-url (theme-logo-getx :logo-name-sm))
+
    :--theme-nav-active-color (theme-getx :nav-active-color :color4)
    :--theme-nav-color (theme-getx :nav-color :link-color)
    :--theme-nav-hover-color (theme-getx :nav-hover-color :color4)
    :--theme-navbar-color (theme-getx :navbar-color)
+   :--theme-navbar-logo-name (css-url (theme-logo-getx :navbar-logo-name))
 
    :--theme-phase-bgcolor (theme-getx :phase-bgcolor)
    :--theme-phase-bgcolor-active (theme-getx :phase-bgcolor-active)
@@ -89,11 +94,11 @@
    :--theme-phase-color (theme-getx :phase-color)
    :--theme-phase-color-active (theme-getx :phase-color-active)
    :--theme-phase-color-completed (theme-getx :phase-color-completed)
-
    :--theme-primary-button-bgcolor (theme-getx :primary-button-bgcolor :color4)
    :--theme-primary-button-color (theme-getx :primary-button-color)
    :--theme-primary-button-hover-bgcolor (theme-getx :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
    :--theme-primary-button-hover-color (theme-getx :primary-button-hover-color :primary-button-color)
+
    :--theme-secondary-button-bgcolor (theme-getx :secondary-button-bgcolor :color4)
    :--theme-secondary-button-color (theme-getx :secondary-button-color)
    :--theme-secondary-button-hover-bgcolor (theme-getx :secondary-button-hover-bgcolor :secondary-button-bgcolor :color4)
