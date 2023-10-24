@@ -1536,7 +1536,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
 /* logo styles */
 
 .logo-menu {
-    height: var(--theme-logo-height-menu);
+    height: var(--rems-logo-height-menu);
     background-color: var(--theme-logo-bgcolor);
     width: 100px;
     padding-top: 0;
@@ -1544,7 +1544,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
 }
 
 .logo {
-    height: var(--theme-logo-height);
+    height: var(--rems-logo-height);
     background-color: var(--theme-logo-bgcolor);
     width: 100%;
     margin: 0 auto;
@@ -1588,7 +1588,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
     }
 
     .logo {
-        height: var(--theme-logo-height);
+        height: var(--rems-logo-height);
     }
 
     .logo-menu {
