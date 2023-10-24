@@ -374,10 +374,9 @@
     [:div
      [nav/navigation-widget]
      (when (or (= page-id :home)
-               (and lang
-                    (not (get theme (keyword (str "navbar-logo-name-" (name lang)))))
-                    (not (get theme :navbar-logo-name))))
-       [atoms/logo])
+               (not (nav/theme-navbar-logo theme lang)))
+       [:div.logo
+        [:div.img]])
      (when page-id
        [main-content page-id grab-focus?])
      [:div#empty-space]

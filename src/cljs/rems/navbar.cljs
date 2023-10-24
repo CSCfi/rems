@@ -96,6 +96,11 @@
               [navbar-extra-pages]]
      [language-switcher]]))
 
+(defn theme-navbar-logo [theme lang]
+  (let [language (some-> lang name)]
+    (or (get theme (keyword (str "navbar-logo-name-" language)))
+        (get theme :navbar-logo-name))))
+
 (defn navbar-normal [identity]
   (let [theme @(rf/subscribe [:theme])
         lang @(rf/subscribe [:language])]
@@ -104,9 +109,9 @@
       [:button.navbar-toggler
        {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
        "\u2630"]
-      (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
-                (:navbar-logo-name theme))
-        [atoms/logo-navigation])
+      (when (theme-navbar-logo theme lang)
+        [:div.navbar-brand.logo-menu
+         [:div.img]])
       [navbar-items :div#big-navbar.collapse.navbar-collapse.me-3 {} identity]]
      [:div.navbar [user-widget (:user identity)]]]))
 
