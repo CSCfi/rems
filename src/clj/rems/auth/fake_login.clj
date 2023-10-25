@@ -80,7 +80,7 @@
                                        (when (= "Special Users" group)
                                          [:div.ms-3
                                           [:p "Special users with special cases. Not for daily use!"]
-                                          [:button#show-special-users.btn.btn-secondary {:data-toggle "collapse" :data-target (str "#" id)}
+                                          [:button#show-special-users.btn.btn-secondary {:data-bs-toggle "collapse" :data-bs-target (str "#" id)}
                                            "Show"]])
 
                                        [:div.collapse {:id id
@@ -90,11 +90,9 @@
                                            (user-selection userid)
                                            [:div.m-3 description]])]])]]]})))
 
-
 (defn- fake-logout [{session :session}]
   (assoc (redirect "/") :session (dissoc session :identity)))
 
 (defroutes routes
   (GET (login-url) req (fake-login-screen req))
   (GET (logout-url) req (fake-logout req)))
-

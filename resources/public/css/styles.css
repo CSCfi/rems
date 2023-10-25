@@ -66,10 +66,12 @@ body {
    [:h1 {:margin-bottom (u/rem 2)
          :margin-top (u/rem 2)}] */
 h1 {
+    --bs-gutter-y: 2rem;
     font-weight: 400;
     margin: 2rem 0;
 }
 
+/* [:h2 {:margin [[(u/rem 3) 0 (u/rem 2) 0]]}] */
 h2 {
     font-weight: 400;
     margin: 3rem 0 2rem 0;
@@ -90,27 +92,22 @@ p:last-child {
     {:cursor :pointer
      :color (theme-getx :link-color)}
     [:&:hover {:color (theme-getx :link-hover-color :color4)}]] */
-a {
+a,
+button {
+    --bs-link-color-rgb: var(--theme-link-color);
+    --bs-btn-hover-color: var(--theme-link-hover-color);
     cursor: pointer;
-    color: var(--theme-link-color);
+    
+    /* color: var(--theme-link-color);
 
     &:hover {
-        color: var(--theme-link-hover-color, var(--theme-color4));
-    }
+        color: var(--theme-link-hover-color);
+    } */
 }
 
 /* ["a:not(.nav-link):not(.btn)" {:text-decoration :underline}] */
 a:not(.nav-link):not(.btn) {
     text-decoration: underline;
-}
-
-button {
-    cursor: pointer;
-    color: var(--theme-link-color);
-
-    &:hover {
-        color: var(--theme-link-hover-color, var(--theme-color4));
-    }
 }
 
 /* [:#app {:min-height (u/percent 100)
@@ -165,15 +162,19 @@ button {
         min-width: 512px;
     }
 
-    &.page-actions {
+    .page-actions {
         max-width: 100%;
     }
 }
 
+/* ;; form editor
+   [:#main-content.page-create-form {:max-width :unset}] */
 #main-content.page-create-form {
     max-width: unset;
 }
 
+/* [:#actions {:position :sticky
+               :top "85px"}] */
 #actions {
     position: sticky;
     top: 85px;
@@ -191,7 +192,7 @@ button {
 .fixed-top {
     background-color: #fff;
     border-bottom: var(--theme-header-border);
-    box-shadow: var(--theme-header-shadow, var(--theme-table-shadow));
+    box-shadow: var(--theme-header-shadow);
     min-height: var(--rems-menu-height);
 }
 
@@ -205,8 +206,7 @@ button {
     position: absolute;
     left: -1000em;
 
-    &:active,
-    &:focus {
+    &:is(:active, :focus) {
         left: 0;
     }
 }
@@ -239,6 +239,30 @@ button {
 .btn {
     white-space: nowrap;
     font-weight: var(--theme-button-navbar-font-weight);
+}
+
+/* ;; override Bootstrap blue active color with its hover color
+   [".dropdown-item.active"
+    ".dropdown-item:active"
+    {:background-color "#e9ecef"}] */
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #e9ecef;
+}
+
+/* ;; Bootstrap has inaccessible focus indicators in particular
+   ;; for .btn-link and .btn-secondary, so we define our own.
+   [:a:focus :button:focus :.btn.focus :.btn:focus
+    "h1[tabindex]:focus-within"
+    {:outline 0
+     :box-shadow "0 0 0 0.2rem rgba(38,143,255,.5) !important"}] */
+a:focus,
+button:focus,
+.btn.focus,
+.btn:focus,
+h1[tabindex]:focus-within {
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, .5) !important;
 }
 
 /* [:.btn-primary
@@ -364,8 +388,14 @@ button {
   --#{$prefix}card-img-overlay-padding: #{$card-img-overlay-padding};
   --#{$prefix}card-group-margin: #{$card-group-margin};
 */
+/* [(s/descendant :.card-header :a) {:color :inherit}] */
 .card-header {
     --bs-card-cap-color: inherit;
+
+    /* TODO: is this needed? */
+    a {
+        color: inherit;
+    }
 }
 
 /* TODO: why is this so heavily customized */
@@ -379,14 +409,17 @@ button {
     color: var(--theme-collapse-color);
 }
 
-/* TODO: could this be removed */
+/* TODO: could this be removed? */
+/* [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border */
 .rems-card-margin-fix {
     margin: -1px;
 }
 
+/* [:.rems-card-header {:color (theme-getx :table-heading-color)
+                        :background-color (theme-getx :table-heading-bgcolor :color3)}] */
 .rems-card-header {
     color: var(--theme-table-heading-color);
-    background-color: var(--theme-table-heading-bgcolor, var(--theme-color3));
+    background-color: var(--theme-table-heading-bgcolor);
 }
 
 /* [:.flash-message-title {:font-weight :bold}] */
@@ -534,14 +567,13 @@ button {
 .alert-primary {
     color: var(--theme-alert-primary-color);
     background-color: var(--theme-alert-primary-bgcolor);
-    /* border-color: var(--theme-alert-primary-bordercolor, var(--theme-alert-primary-color)); */
     border-color: var(--theme-alert-primary-bordercolor);
 }
 
 .alert-secondary {
     color: var(--theme-alert-secondary-color);
     background-color: var(--theme-alert-secondary-bgcolor);
-    border-color: var(--theme-alert-secondary-bordercolor, var(--theme-alert-secondary-color));
+    border-color: var(--theme-alert-secondary-bordercolor);
 }
 
 /* animating opacity instead of box-shadow for smooth performance
@@ -580,10 +612,10 @@ button {
     & .state-submitted.phases .phase.completed {
         color: var(--theme-alert-success-color);
         background-color: var(--theme-alert-success-bgcolor);
-        border-color: var(--theme-alert-success-bordercolor, var(--theme-alert-success-color));
+        border-color: var(--theme-alert-success-bordercolor);
     }
 
-    &.flash-message::after {
+    .flash-message::after {
         content: "";
         position: absolute;
         border-radius: 0.25rem;
@@ -604,7 +636,7 @@ button {
     & .state-revoked.phases .phase.completed {
         color: var(--theme-alert-danger-color);
         background-color: var(--theme-alert-danger-bgcolor);
-        border-color: var(--theme-alert-danger-bordercolor, var(--theme-alert-danger-color));
+        border-color: var(--theme-alert-danger-bordercolor);
     }
 }
 
@@ -646,7 +678,7 @@ button {
 .alert-warning {
     color: var(--theme-alert-warning-color);
     background-color: var(--theme-alert-warning-bgcolor);
-    border-color: var(--theme-alert-warning-bordercolor, var(--theme-alert-warning-color));
+    border-color: var(--theme-alert-warning-bordercolor);
 
     &.flash-message {
         animation: shake 0.6s cubic-bezier(.36, .07, .19, .97) both;
@@ -656,21 +688,31 @@ button {
 .alert-info {
     color: var(--theme-alert-info-color);
     background-color: var(--theme-alert-info-bgcolor);
-    border-color: var(--theme-alert-info-bordercolor, var(--theme-alert-info-color));
+    border-color: var(--theme-alert-info-bordercolor);
 }
 
 .alert-light {
     color: var(--theme-alert-light-color);
     background-color: var(--theme-alert-light-bgcolor);
-    border-color: var(--theme-alert-light-bordercolor, var(--theme-alert-light-color));
+    border-color: var(--theme-alert-light-bordercolor);
 }
 
 .alert-dark {
     color: var(--theme-alert-dark-color);
     background-color: var(--theme-alert-dark-bgcolor);
-    border-color: var(--theme-alert-dark-bordercolor, var(--theme-alert-dark-color));
+    border-color: var(--theme-alert-dark-bordercolor);
 }
 
+/* [:#administration-menu
+    [:.nav-link
+     {:padding ".5rem 0"}]
+    {:display :flex
+     :flex-direction :row
+     :align-items :center
+     :justify-content :center
+     :gap [[(u/rem 0) (u/rem 1)]]
+     :flex-wrap :wrap
+     :max-width navbar-max-width}] */
 #administration-menu {
     display: flex;
     flex-direction: row;
@@ -685,10 +727,22 @@ button {
     }
 }
 
+/* [:.navbar-wrapper
+    {:max-width navbar-max-width}] */
 .navbar-wrapper {
     max-width: var(--rems-navbar-max-width);
 }
 
+/* [:.navbar
+    {:font-size (u/px 19)
+     :letter-spacing (u/rem 0.015)
+     :padding-left 0
+     :padding-right 0
+     :color (theme-getx :navbar-color)
+     :justify-content "space-between"}
+    [:.nav-link :.btn-link
+     {:background-color :inherit}]] */
+/* [:.navbar {:white-space "nowrap"}] */
 .navbar {
     /* font-size: 19px; */
     /* font-size: 1.25rem; */
@@ -708,6 +762,10 @@ button {
     } */
 }
 
+/* [:.navbar-top-bar {:width (u/percent 100)
+                      :height (u/px 4)
+                      :display :flex
+                      :flex-direction :row}] */
 .navbar-top-bar {
     width: 100%;
     height: 4px;
@@ -715,16 +773,25 @@ button {
     flex-direction: row;
 }
 
+/* [:.navbar-top-left {:flex 1
+                       :background-color (theme-getx :color4)}] */
 .navbar-top-left {
     flex: 1;
     background-color: var(--theme-color4);
 }
 
+/* [:.navbar-top-right {:flex 1
+                        :background-color (theme-getx :color2)}] */
 .navbar-top-right {
     flex: 1;
     background-color: var(--theme-color2);
 }
 
+/* [:.language-switcher {:padding ".5em 0"}] */
+/* [(s/+
+     (s/descendant :.language-switcher :form)
+     :form)
+    {:margin-left (u/rem 0.5)}] */
 .language-switcher {
     padding: 0.5em 0;
 
@@ -733,19 +800,33 @@ button {
     }
 }
 
+/* [(s/descendant :.navbar-text :.language-switcher)
+    {:margin-right (u/rem 1)}] */
 .navbar-text .language-switcher {
     margin-right: 1rem;
 }
 
+/* [:.navbar-text {:font-size (u/px 19)
+                   :font-weight (button-navbar-font-weight)}] */
 .navbar-text {
     font-size: 19px;
     font-weight: var(--theme-button-navbar-font-weight);
 }
 
+/* [:.navbar-toggler {:border-color (theme-getx :color1)}] */
 .navbar-toggler {
     border-color: var(--theme-color1);
 }
 
+/* [:.nav-link
+    :.btn-link
+    {:color (theme-getx :nav-color :link-color)
+     :font-weight (button-navbar-font-weight)
+     :border 0} ; for button links
+    [:&.active
+     {:color (theme-getx :nav-active-color :color4)}]
+    [:&:hover
+     {:color (theme-getx :nav-hover-color :color4)}]] */
 .btn-link {
     --bs-btn-color: var(--theme-nav-color);
     --bs-btn-active-color: var(--theme-nav-active-color);
@@ -770,18 +851,25 @@ button {
     border: 0;
 }
 
+/* [(s/descendant :.user-widget :.nav-link) {:display :inline-block}] */
 .user-widget .nav-link {
     display: inline-block;
 }
 
+/* [:.user-name {:text-transform :none}] */
 .user-name {
     text-transform: none;
 }
 
+/* [:#big-navbar {:text-transform (theme-getx :big-navbar-text-transform)}] */
 #big-navbar {
     text-transform: var(--theme-big-navbar-text-transform);
 }
 
+/* [:.navbar-flex {:display "flex"
+                   :flex-direction "row"
+                   :justify-content "space-between"
+                   :min-width "100%"}] */
 .navbar-flex {
     display: flex;
     flex-direction: row;
@@ -790,6 +878,46 @@ button {
 }
 
 /* logo styles */
+/* 
+(list
+   [:.logo-menu {:height logo-height-menu
+                 :background-color (theme-getx :logo-bgcolor)
+                 :width "100px"
+                 :padding-top "0px"
+                 :padding-bottom "0px"}]
+   [:.logo {:height logo-height
+            :background-color (theme-getx :logo-bgcolor)
+            :width "100%"
+            :margin "0 auto"
+            :padding "0 20px"
+            :margin-bottom (u/em 1)}]
+   [(s/descendant :.logo :.img)
+    (s/descendant :.logo-menu :.img)
+    {:height "100%"
+     :background-color (theme-getx :logo-bgcolor)
+     :-webkit-background-size :contain
+     :-moz-o-background-size :contain
+     :-o-background-size :contain
+     :background-size :contain
+     :background-repeat :no-repeat
+     :background-position [[:center :center]]
+     :background-origin (theme-getx :logo-content-origin)}]
+   [(s/descendant :.logo :.img) {:background-image (get-logo-image context/*lang*)}]
+   [(s/descendant :.logo-menu :.img) {:background-image (get-navbar-logo context/*lang*)}]
+   (stylesheet/at-media {:max-width (:sm bootstrap-media-breakpoints)}
+                        (list
+                         [(s/descendant :.logo :.img)
+                          {:background-color (theme-getx :logo-bgcolor)
+                           :background-image (get-logo-name-sm context/*lang*)
+                           :-webkit-background-size :contain
+                           :-moz-background-size :contain
+                           :-o-background-size :contain
+                           :background-size :contain
+                           :background-repeat :no-repeat
+                           :background-position [[:center :center]]}]
+                         [:.logo {:height logo-height}]
+                         [:.logo-menu {:display "none"}])))
+*/
 
 .logo {
     height: var(--rems-logo-height);
@@ -851,21 +979,37 @@ button {
     }
 }
 
+/* 
+(let [footer-text-color (theme-getx :footer-color :table-heading-color)]
+     [:footer {:width "100%"
+               :min-height (u/px 53.6)
+               :color footer-text-color
+               :font-size (u/px 19) ;; same as navbar
+               :padding-top "1rem"
+               :padding-bottom "1rem"
+               :background-color (theme-getx :footer-bgcolor :table-heading-bgcolor :color3)
+               :position :relative}
+      [:a :a:hover :.nav-link {:color footer-text-color
+                               :font-weight (button-navbar-font-weight)}]
+      [:.dev-reload-button {:position :absolute
+                            :bottom (u/rem 1.5)
+                            :right (u/rem 1.5)}]])
+*/
 footer {
     width: 100%;
     /* XXX: refactor magic number */
     min-height: 53.6px;
-    color: var(--theme-footer-color, var(--theme-table-heading-color));
+    color: var(--theme-footer-color);
     font-size: 19px;
     padding-top: 1rem;
     padding-bottom: 1rem;
-    background-color: var(--theme-footer-bgcolor, var(--theme-table-heading-bgcolor, var(--theme-color3)));
+    background-color: var(--theme-footer-bgcolor);
     position: relative;
 
     a,
     a:hover,
     .nav-link {
-        color: var(--theme-footer-color, var(--theme-table-heading-color));
+        color: var(--theme-footer-color);
         font-weight: var(--theme-button-navbar-font-weight);
     }
 
@@ -876,6 +1020,15 @@ footer {
     }
 }
 
+/* [:.jumbotron
+    {:background-color "#fff"
+     :text-align "center"
+     :color "#000"
+     :margin-top (u/rem 2)
+     :border-style "solid"
+     :border-width (u/px 1)
+     :box-shadow (theme-getx :collapse-shadow :table-shadow)}
+    [:h1 {:margin-bottom (u/px 20)}]] */
 .jumbotron {
     background-color: #fff;
     text-align: center;
@@ -883,13 +1036,16 @@ footer {
     margin-top: 2rem;
     border-style: solid;
     border-width: 1px;
-    box-shadow: var(--theme-collapse-shadow, var(--theme-table-shadow));
+    box-shadow: var(--theme-collapse-shadow);
 
     h1 {
         margin-bottom: 20px;
     }
 }
 
+/* [:.login-btn {:max-height (u/px 70)
+                 :margin-bottom (u/px 20)}
+    [:&:hover {:filter "brightness(80%)"}]] */
 .login-btn {
     max-height: 70px;
     margin-bottom: 20px;
@@ -899,22 +1055,93 @@ footer {
     }
 }
 
+/* table styles */
+/* 
+(list
+   [:.rems-table.cart {:background "#fff"
+                       :color "#000"
+                       :margin 0}
+    [".cart-bundle:not(:last-child)" {:border-bottom [[(u/px 1) :solid (theme-getx :color1)]]}]
+    [:td:before {:content "initial"}]
+    [:th
+     :td:before
+     {:color "#000"}]
+    [:tr
+     [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
+   [:.table-border {:padding 0
+                    :margin "1rem 0"
+                    :border (theme-getx :table-border)
+                    :border-radius (u/rem 0.4)}]
+   [:.rems-table {:min-width "100%"
+                  :word-break :break-word
+                  :background-color (theme-getx :table-bgcolor :color1)
+                  :box-shadow (theme-getx :table-shadow)
+                  :color (theme-getx :table-text-color)}
+    [:th {:white-space :nowrap
+          :color (theme-getx :table-heading-color)
+          :background-color (theme-getx :table-heading-bgcolor :color3)}]
+    [:th
+     :td {:text-align "left"
+          :padding "0.5rem 1rem"}]
+    [:.selection {:width (u/rem 2)
+                  :padding-right 0}]
+    [:td:before
+     {:color (theme-getx :table-text-color)}]
+    [:tr
+     [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                :background-color (theme-getx :table-hover-bgcolor :color2)}]
+     [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]
+     (when (theme-getx :table-stripe-color nil)
+       [(s/& (s/nth-child "2n"))
+        [:&:hover {:color (theme-getx :table-hover-color :table-text-color)
+                   :background-color (theme-getx :table-hover-bgcolor :color2)}]
+        {:background-color (theme-getx :table-stripe-color :table-bgcolor)}
+        [:&.selected {:background-color (theme-getx :table-selection-bgcolor (table-selection-bgcolor))}]])]
+
+    (for [i (range 10)]
+      [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
+    (for [i (range 10)]
+      [(str ".fs-depth-" i) {:font-size (str (format "%.2f" (+ 0.75 (Math/pow 2 (- i)))) "rem")}])
+    (for [i (range 10)]
+      [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
+
+   [:.rems-table.cart {:box-shadow :none}]
+   [:.inner-cart {:margin [[(u/rem 1) 0]]}]
+   [:.outer-cart {:margin [[(u/rem 1) 0]]
+                  :border [[(u/px 1) :solid (theme-getx :color1)]]
+                  :border-radius (u/rem 0.4)}]
+   [:.cart-title {:margin (u/rem 1)}]
+   [:.fa-shopping-cart {:margin-right (u/em 0.5)}]
+   [:.cart-item {:padding-right (u/em 1)}
+    [:>span {:display :inline-block :vertical-align :middle}]]
+   ;; TODO: Change naming of :color3? It is used as text color here,
+   ;;   which means that it should have a good contrast with light background.
+   ;;   This could be made explicit by changing the name accordingly.
+   [:.text-highlight {:color (theme-getx :color3)
+                      :font-weight "bold"}])
+*/
+/* ;; application list
+   [:.rems-table
+    [:.resource {:max-width (u/rem 30)}]
+    [:.description {:min-width (u/rem 6)
+                    :max-width (u/rem 30)}]
+    [:.applicant {:max-width (u/rem 10)}]] */
 .rems-table {
     min-width: 100%;
     word-break: break-word;
-    background-color: var(--theme-table-bgcolor, var(--theme-color1));
+    background-color: var(--theme-table-bgcolor);
     box-shadow: var(--theme-table-shadow);
     color: var(--theme-table-text-color);
 
-    th {
+    & th {
         white-space: nowrap;
         color: var(--theme-table-heading-color);
-        background-color: var(--theme-table-heading-bgcolor, var(--theme-color3));
+        background-color: var(--theme-table-heading-bgcolor);
         text-align: left;
         padding: 0.5rem 1rem;
     }
 
-    td {
+    & td {
         text-align: left;
         padding: 0.5rem 1rem;
 
@@ -923,20 +1150,34 @@ footer {
         }
     }
 
-    tr {
+    & tr:hover {
+        color: var(--theme-table-hover-color);
+        background-color: var(--theme-table-hover-bgcolor);
+    }
+
+    /* TODO: fix issue with hover override */
+    /* & tr:is(:hover, :nth-child(2n)) {
+        background-color: var(--theme-table-stripe-color);
+    } */
+
+    & tr.selected {
+        background-color: var(--theme-table-selection-bgcolor);
+    }
+
+    /* & tr {
         &:hover {
             color: var(--theme-table-hover-color);
             background-color: var(--theme-table-hover-bgcolor);
         }
 
-        &:hover:nth-child(2n) {
+        &:is(:hover, :nth-child(2n)) {
             background-color: var(--theme-table-stripe-color);
         }
 
         &.selected {
             background-color: var(--theme-table-selection-bgcolor);
         }
-    }
+    } */
 
     .selection {
         width: 2rem;
@@ -1029,11 +1270,23 @@ This could be made explicit by changing the name accordingly.
     font-weight: bold;
 }
 
+/* [:.catalogue-item-link {:color "#fff"
+                           :text-decoration "underline"}] */
 .catalogue-item-link {
     color: #fff;
     text-decoration: underline;
 }
 
+/*
+[:.example-page {:margin (u/rem 2)}]
+   [(s/> :.example-page :h1) {:margin "4rem 0"}]
+   [(s/> :.example-page :h2) {:margin-top (u/rem 8)
+                              :margin-bottom (u/rem 2)}]
+   [(s/> :.example-page :h3) {:margin-bottom (u/rem 1)}]
+   [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
+   [:.example-content {:border "1px dashed black"}]
+   [:.example-content-end {:clear "both"}]
+*/
 .example-page {
     margin: 2rem;
 }
@@ -1063,6 +1316,14 @@ This could be made explicit by changing the name accordingly.
     clear: both;
 }
 
+/* [:textarea.form-control {:overflow "hidden"}
+    ;; XXX: Override the browser's default validation for textarea that has
+    ;;   the attribute 'required': If a required element is invalid, do not
+    ;;   show the box shadow, which is used at least by Firefox to highlight
+    ;;   the invalid element. If the element is also in focus, show
+    ;;   Bootstrap's default box shadow instead.
+    [:&:required:invalid {:-webkit-box-shadow :none}
+     [:&:focus {:-webkit-box-shadow "0 0 0 .2rem rgba(0,123,255,.25)"}]]] */
 textarea.form-control {
     overflow: hidden;
 
@@ -1082,6 +1343,9 @@ textarea.form-control {
     }
 }
 
+/* [:div.form-control {:height :auto
+                       :white-space "pre-wrap"}
+    [:&:empty {:height (u/rem 2.25)}]] */
 div.form-control {
     height: auto;
     white-space: pre-wrap;
@@ -1091,6 +1355,12 @@ div.form-control {
     }
 }
 
+/* [:.group {:position "relative"
+             :border "1px solid #ccc"
+             :border-radius (u/rem 0.4)
+             :padding (u/px 10)
+             :margin-top 0
+             :margin-bottom (u/px 16)}] */
 .group {
     position: relative;
     border: 1px solid #ccc;
@@ -1100,10 +1370,14 @@ div.form-control {
     margin-bottom: 16px;
 }
 
+/* [:.toggle-diff {:float "right"}] */
 .toggle-diff {
     float: right;
 }
 
+/* [:.diff
+    [:ins {:background-color "#acf2bd"}]
+    [:del {:background-color "#fdb8c0"}]] */
 .diff ins {
     /* XXX: refactor magic number */
     background-color: #acf2bd;
@@ -1114,6 +1388,11 @@ div.form-control {
     background-color: #fdb8c0;
 }
 
+/* [:form.inline
+    {:display :inline-block}
+    [:.btn-link
+     {:border :none
+      :padding 0}]] */
 form.inline {
     display: inline-block;
 
@@ -1123,10 +1402,18 @@ form.inline {
     }
 }
 
+/* [:.modal-title {:color "#292b2c"}] */
 .modal-title {
     color: #292b2c;
 }
 
+/* [:div.commands {:cursor :auto
+                   :display :flex
+                   :flex-direction :row
+                   :flex-wrap :wrap
+                   :gap (u/rem 0.5)
+                   :align-items :center
+                   :justify-content :flex-end}] */
 div.commands {
     cursor: auto;
     display: flex;
@@ -1137,48 +1424,66 @@ div.commands {
     justify-content: flex-end;
 }
 
+/* [:td.more-info {:display :flex
+                   :justify-content :flex-end}] */
 td.more-info {
     display: flex;
     justify-content: flex-end;
 }
 
+/* [:td.commands {:width "1rem"}] ; anything smaller than actual results */
 td.commands {
     width: 1rem;
 }
 
+/* [:td [:div.commands {:justify-content :flex-start
+                        :flex-wrap :wrap}]] */
 td div.commands {
     justify-content: flex-start;
     flex-wrap: wrap;
 }
 
+/* [:th.organization {:white-space :normal
+                      :min-width (u/rem 5.5)}] */
 th.organization {
     white-space: normal;
     min-width: 5.5rem;
 }
 
+/* [:th.active {:white-space :normal
+                :min-width (u/rem 5.5)}] */
 th.active {
     white-space: normal;
     min-width: 5.5rem;
 }
 
+/* [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}] */
 .spaced-vertically > *:not(:first-child) {
     margin-top: 0.5rem;
 }
 
+/* [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}] */
 .spaced-vertically-3 > *:not(:first-child) {
     margin-top: 1.5rem;
 }
 
+/* [".spaced-vertically-5 > *:not(:first-child)" {:margin-top (u/rem 3)}] */
 .spaced-vertically-5 > *:not(:first-child) {
     margin-top: 3rem;
 }
 
-/* continue here */
-
+/* [".btn-opens-more::after" {:content "'...'"}] */
 .btn-opens-more::after {
     content: '...';
 }
 
+/* [:#action-commands {:display "flex"
+                       :flex-flow "row wrap"
+                       :margin-bottom (u/em -0.5)}
+    ["> *"
+     {:margin-bottom (u/em 0.5)}]
+    ["> *:not(:last-child)"
+     {:margin-right (u/em 0.5)}]] */
 #action-commands {
     display: flex;
     flex-flow: row wrap;
@@ -1193,15 +1498,28 @@ th.active {
     }
 }
 
+/* [:.event-comment {:white-space :pre-wrap
+                     :word-break :break-all}] */
 .event-comment {
     white-space: pre-wrap;
     word-break: break-all;
 }
 
+/* [:.current-page {:font-size (u/percent 120)
+                    :text-underline-offset (u/rem 0.25)}] */
+.current-page {
+    font-size: 120%;
+    text-underline-offset: 0.25rem;
+}
+
+/* ["input[type=date].form-control" {:width (u/em 12)}] */
 input[type=date].form-control {
     width: 12em;
 }
 
+/* [:.form-group {:text-align "initial"}
+    ;; make fieldset legends look the same as normal labels
+    [:legend {:font-size "inherit"}]] */
 .form-group {
     text-align: initial;
 }
@@ -1210,28 +1528,46 @@ input[type=date].form-control {
     font-size: inherit;
 }
 
+/* [:.application-field-label {:font-weight "bold"}] */
 .application-field-label {
     font-weight: bold;
 }
 
+/* [:.administration-field-label {:font-weight "bold"}] */
 .administration-field-label {
     font-weight: bold;
 }
 
+/* [:div.info-collapse {:font-weight "400"
+                        :white-space :pre-wrap}] */
 .info-collapse {
     font-weight: 400;
     white-space: pre-wrap;
 }
 
+/* ;; Bootstrap's has "display: none" on .invalid-feedback by default
+   ;; and overrides that for example when there is a sibling .form-control.is-invalid,
+   ;; but that doesn't work with checkbox groups, dropdowns, etc., and we anyways
+   ;; don't need the feature of hiding this div with CSS when it has no content.
+   [:div.invalid-feedback {:display :block
+                           :font-size :inherit}] */
 .invalid-feedback {
     display: block;
     font-size: inherit;
 }
 
+/* ;; custom checkbox
+   [:.readonly-checkbox {:background-color "#ccc"}] */
 .readonly-checkbox {
     background-color: #ccc;
 }
 
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px dashed #ccc"} */
 .dashed-group {
     position: relative;
     border-radius: 0.4rem;
@@ -1241,6 +1577,12 @@ input[type=date].form-control {
     border: 2px dashed #ccc;
 }
 
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px solid #eee"} */
 .solid-group {
     position: relative;
     border-radius: 0.4rem;
@@ -1250,6 +1592,44 @@ input[type=date].form-control {
     border: 2px solid #eee;
 }
 
+/* TODO: empty styles not needed? */
+/* [:.paging-numbers {}] */
+
+/* [:.paging-numbers-grid {:display :grid
+                           :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
+                           :align-content :start
+                           :align-items :baseline
+                           :justify-items :center
+                           :gap "0 0.5rem"
+                           :max-width "100%"}] */
+.paging-numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(2rem, 1fr));
+    align-content: start;
+    align-items: baseline;
+    justify-items: center;
+    gap: 0 0.5rem;
+    max-width: 100%;
+}
+
+/* [:.paging-numbers-flex {:display :flex
+                           :justify-content :center
+                           :align-items :baseline
+                           :flex-wrap :wrap}] */
+.paging-numbers-flex {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+/* [:.form-field (solid-form-group)] */
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px solid #eee"} */
 .form-field {
     position: relative;
     border-radius: 0.4rem;
@@ -1259,6 +1639,10 @@ input[type=date].form-control {
     border: 2px solid #eee;
 }
 
+/* [:.form-field-header {:margin-bottom (u/rem 0.5)}
+    [:h4 {:display "inline"
+          :font-weight "bold"
+          :font-size (u/rem 1.1)}]] */
 .form-field-header {
     margin-bottom: 0.5rem;
 }
@@ -1269,6 +1653,10 @@ input[type=date].form-control {
     font-size: 1.1rem;
 }
 
+/* [:.form-field-controls
+    {:float "right"
+     :font-size (u/rem 1.2)}
+    [:* {:margin-left (u/em 0.25)}]] */
 .form-field-controls {
     float: right;
     font-size: 1.2rem;
@@ -1278,6 +1666,14 @@ input[type=date].form-control {
     }
 }
 
+/* [:.new-form-field (assoc (dashed-form-group)
+                            :text-align "center")] */
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px dashed #ccc"} */
 .new-form-field {
     position: relative;
     border-radius: 0.4rem;
@@ -1288,6 +1684,15 @@ input[type=date].form-control {
     text-align: center;
 }
 
+/* [:.form-field-visibility (assoc (solid-form-group)
+                                   :margin-left 0
+                                   :margin-right 0)] */
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px solid #eee"} */
 .form-field-visibility {
     position: relative;
     border-radius: 0.4rem;
@@ -1299,6 +1704,15 @@ input[type=date].form-control {
     margin-right: 0;
 }
 
+/* [:.form-field-option (assoc (solid-form-group)
+                               :margin-left 0
+                               :margin-right 0)] */
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px solid #eee"} */
 .form-field-option {
     position: relative;
     border-radius: 0.4rem;
@@ -1310,6 +1724,14 @@ input[type=date].form-control {
     margin-right: 0;
 }
 
+/* [:.new-form-field-option (assoc (dashed-form-group)
+                                   :text-align "center")] */
+/* {:position "relative"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)
+   :border "2px dashed #ccc"} */
 .new-form-field-option {
     position: relative;
     border-radius: 0.4rem;
@@ -1320,6 +1742,13 @@ input[type=date].form-control {
     text-align: center;
 }
 
+/* [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
+                    :top "100px"}
+    [:.collapse-content {:margin-left 0}]
+    [:#preview-form-contents {:overflow-y :scroll
+                              :overflow-x :hidden
+                              ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
+                              :max-height "calc(100vh - 220px)"}]] */
 #preview-form {
     position: sticky;
     top: 100px;
@@ -1335,64 +1764,91 @@ input[type=date].form-control {
     }
 }
 
+/* [:.field-preview {:position :relative
+                     :margin-left (u/rem 1)}] */
 .field-preview {
     position: relative;
     margin-left: 1rem;
 }
 
+/* TODO: this should be replaced with w-100 */
+/* [:.full {:width "100%"}] */
 .full {
     width: 100%;
 }
 
+/* [:.intro {:margin-bottom (u/rem 2)}] */
 .intro {
     margin-bottom: 2rem;
 }
 
+/* [:.rectangle {:width (u/px 50)
+                 :height (u/px 50)}] */
 .rectangle {
     width: 50px;
     height: 50px;
 }
 
+/* TODO: remove unnecessary classes? */
+/* [:.color-1 {:background-color (theme-getx :color1)}] */
 .color-1 {
     background-color: var(--theme-color1);
 }
 
+/* TODO: these are not used? */
+/* [:.color1 {:color (theme-getx :color1)}] */
+/* [:.color1-faint {:color (when (theme-getx :color1)
+                             (-> (theme-getx :color1)
+                                 (c/saturate -50)
+                                 (c/lighten 33)))}] */
+
+/* [:.color-2 {:background-color (theme-getx :color2)}] */
 .color-2 {
     background-color: var(--theme-color2);
 }
 
+/* [:.color-3 {:background-color (theme-getx :color3)}] */
 .color-3 {
     background-color: var(--theme-color3);
 }
 
+/* [:.color-4 {:background-color (theme-getx :color4)}] */
 .color-4 {
     background-color: var(--theme-color4);
 }
 
+/* [:.color-title {:padding-top (u/rem 0.8)}] */
 .color-title {
     padding-top: 0.8rem;
 }
 
+/* [(s/descendant :.alert :ul) {:margin-bottom 0}] */
 .alert ul {
     margin-bottom: 0;
 }
 
+/* [:ul.comments {:list-style-type :none}] */
 ul.comments {
     list-style-type: none;
 }
 
+/* [:.inline-comment {:font-size (u/rem 1)}] */
 .inline-comment {
     font-size: 1rem;
 }
 
+/* [(s/& :p.inline-comment ":last-child") {:margin-bottom 0}] */
 p.inline-comment:last-child {
     margin-bottom: 0;
 }
 
+/* [:.inline-comment-content {:display :inline-block}] */
 .inline-comment-content {
     display: inline-block;
 }
 
+/* [:.license-panel {:display :inline-block
+                     :width "inherit"}] */
 .license-panel {
     display: inline-block;
     width: inherit;
@@ -1409,17 +1865,35 @@ p.inline-comment:last-child {
     }
 }
 
+/* [:.disabled (make-important {:opacity 1})] ; XXX: bootstrap default has too low contrast for accessibility */
+/* TODO: should remove? */
+.disabled {
+    opacity: 1;
+}
+
 /* XXX: unify .pointer and .clickable classes */
+/* [:.clickable {:cursor :pointer}] */
 .clickable {
     cursor: pointer;
 }
 
+/* [:.application-resources
+    [:.application-resource {:margin-bottom (u/rem 1)
+                             :line-height (u/rem 1)
+                             :font-size (u/rem 1)}]] */
 .application-resources .application-resource {
     margin-bottom: 1rem;
     line-height: 1rem;
     font-size: 1rem;
 }
 
+/* [:.license {:margin-bottom (u/rem 1)}
+    [:.license-block {:color "#000"
+                      :white-space "pre-wrap"}]
+    [:.license-title {;; hax for opening misalignment
+                      :margin-top (u/px 3)
+                      :line-height (u/rem 1)
+                      :font-size (u/rem 1)}]] */
 .license {
     margin-bottom: 1rem;
 }
@@ -1435,68 +1909,117 @@ p.inline-comment:last-child {
     font-size: 1rem;
 }
 
+/* [:.collapsing {:-webkit-transition "height 0.1s linear"
+                  :-o-transition "height 0.1s linear"
+                  :transition "height 0.1s linear"}] */
 .collapsing {
     -webkit-transition: height 0.1s linear;
     -o-transition: height 0.1s linear;
     transition: height 0.1s linear;
 }
 
+/* [:.collapse-toggle {:text-align :center}] */
 .collapse-toggle {
     text-align: center;
 }
 
+/* [:.collapse-wrapper {:border-radius (u/rem 0.4)
+                        :border "1px solid #ccc"
+                        :background-color (theme-getx :collapse-bgcolor)
+                        :box-shadow (theme-getx :collapse-shadow :table-shadow)}
+    [:.card-header {:border-bottom "none"
+                    :border-radius (u/rem 0.4)
+                    :font-weight 400
+                    :font-size (u/rem 1.5)
+                    :line-height 1.1
+                    :font-family (theme-getx :font-family)
+                    :color (theme-getx :collapse-color)}]] */
 .collapse-wrapper {
     border-radius: 0.4rem;
     border: 1px solid #ccc;
     background-color: var(--theme-collapse-bgcolor);
-    box-shadow: var(--theme-collapse-shadow, var(--theme-table-shadow));
+    box-shadow: var(--theme-collapse-shadow);
+
+    .card-header {
+        border-bottom: none;
+        border-radius: 0.4rem;
+        font-weight: 400;
+        font-size: 1.5rem;
+        line-height: 1.1;
+        font-family: var(--theme-font-family);
+        color: var(--theme-collapse-color);
+    }
 }
 
+/* [:.collapse-content {:margin (u/rem 1.25)}] */
 .collapse-content {
     margin: 1.25rem;
 }
 
+/* [:.collapse-wrapper.slow
+    [:.collapsing {:-webkit-transition "height 0.25s linear"
+                   :-o-transition "height 0.25s linear"
+                   :transition "height 0.25s linear"}]] */
 .collapse-wrapper.slow .collapsing {
     -webkit-transition: height 0.25s linear;
     -o-transition: height 0.25s linear;
     transition: height 0.25s linear;
 }
 
+/* [:.page-application {:max-width (u/px application-page-max-width)}] */
 .page-application {
     max-width: var(--rems-application-page-max-width);
 }
 
+/* [:.reload-indicator {:position :fixed
+                        :bottom "15px"
+                        :right "15px"}] */
 .reload-indicator {
     position: fixed;
     bottom: 15px;
     right: 15px;
 }
 
+/* [:.search-field {:display :flex
+                    :flex-wrap :nowrap
+                    :align-items :center}
+    [:label {:margin-bottom 0}] ; override the default from Bootstrap
+    [:div.input-group {:width "17em"}]] */
 .search-field {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+
+    label {
+        margin-bottom: 0;
+    }
+
+    div.input-group {
+        width: 17em;
+    }
 }
 
-.search-field label {
-    margin-bottom: 0;
-}
-
-.search-field div.input-group {
-    width: 17em;
-}
-
+/* [:.search-tips {:font-size "0.9rem"
+                   :margin "0.4rem 0"}
+    [:.example-search {:background-color "#eef"
+                       :padding "0.2rem"
+                       :border-radius "0.25rem"}]] */
 .search-tips {
     font-size: 0.9rem;
     margin: 0.4rem 0;
+
+    .example-search {
+        background-color: #eef;
+        padding: 0.2rem;
+        border-radius: 0.25rem;
+    }
 }
 
-.search-tips .example-search {
-    background-color: #eef;
-    padding: 0.2rem;
-    border-radius: 0.25rem;
-}
-
+/* ;; special case for previous applications
+   [:#previous-applications-except-current [:.resource {:overflow :hidden
+                                                        :text-overflow :ellipsis
+                                                        :white-space :nowrap
+                                                        :max-width "10em"}]] */
 #previous-applications-except-current .resource {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1504,12 +2027,25 @@ p.inline-comment:last-child {
     max-width: 10em;
 }
 
-/* !important is needed here, otherwise these attributes are overridden by more specific styles by react-select. */
+/* ;; !important is needed here, otherwise these attributes are overridden
+   ;; by more specific styles by react-select.
+   [:.dropdown-select__option--is-focused
+    (make-important
+     {:color (theme-getx :table-heading-color)
+      :background-color (theme-getx :table-heading-bgcolor :color3)})] */
 .dropdown-select__option--is-focused {
     color: var(--theme-table-heading-color) !important;
-    background-color: var(--theme-table-heading-bgcolor, var(--theme-color3)) !important;
+    background-color: var(--theme-table-heading-bgcolor) !important;
 }
 
+/* [:.dropdown-select__control--is-focused
+    (make-important
+     {:color "#495057"
+      :background-color "#fff"
+      :border-color "#80bdff"
+      :outline "0"
+      :outline-offset "-2px"
+      :box-shadow "0 0 0 0.2rem rgba(0,123,255,.25)"})] */
 .dropdown-select__control--is-focused {
     color: #495057 !important;
     background-color: #fff !important;
@@ -1519,10 +2055,50 @@ p.inline-comment:last-child {
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25) !important;
 }
 
+/* [:.dropdown-select__placeholder
+    (make-important
+     {:color "#555"})] */
 .dropdown-select__placeholder {
     color: #555 !important;
 }
 
+/* [:.phases {:width "100%"
+             :height (u/px 40)
+             :display "flex"
+             :flex-direction "row"
+             :justify-content "stretch"
+             :align-items "center"}
+   [:.phase {:background-color (theme-getx :phase-bgcolor)
+             :color (theme-getx :phase-color)
+             :flex-grow 1
+             :height (u/px 40)
+             :display "flex"
+             :flex-direction "row"
+             :justify-content "stretch"
+             :align-items "center"}
+    [:span {:flex-grow 1
+            :text-align "center"
+            :min-width (u/px 100)}]
+    [(s/& ":not(:last-of-type):after") {:content "\"\""
+                                        :border-top [[(u/px 20) :solid :white]]
+                                        :border-left [[(u/px 10) :solid :transparent]]
+                                        :border-bottom [[(u/px 20) :solid :white]]
+                                        :border-right "none"}]
+    [(s/& ":first-of-type") {:border-top-left-radius (u/px 4)
+                             :border-bottom-left-radius (u/px 4)}]
+    [(s/& ":last-of-type") {:border-top-right-radius (u/px 4)
+                            :border-bottom-right-radius (u/px 4)}]
+    [(s/& ":not(:first-of-type):before") {:content "\"\""
+                                          :border-top [[(u/px 20) :solid :transparent]]
+                                          :border-left [[(u/px 10) :solid :white]]
+                                          :border-bottom [[(u/px 20) :solid :transparent]]
+                                          :border-right "none"}]
+    [:&.active {:color (theme-getx :phase-color-active)
+                :background-color (theme-getx :phase-bgcolor-active)
+                :border-color (theme-getx :phase-bgcolor-active)}]
+    [:&.completed {:color (theme-getx :phase-color-completed)
+                   :background-color (theme-getx :phase-bgcolor-completed)
+                   :border-color (theme-getx :phase-bgcolor-completed)}]]] */
 .phases {
     width: 100%;
     height: 40px;
@@ -1587,6 +2163,25 @@ p.inline-comment:last-child {
     border-color: var(--theme-phase-bgcolor-completed);
 }
 
+/* "The #actions floating menu can be too long for some screens. There is no clean solution for this in pure CSS
+  and to avoid yet another random JS-library we make the element scrollable with a dynamic max-height. This can
+  break if the 105px space is not enough anymore but works for now.
+
+  We also do not want these styles to affect the mobile layout (i.e. more narrow than 992) where the actions
+  is at the bottom of everything and has any height available."
+  []
+  (list
+   (stylesheet/at-media {:min-width (u/px 992)
+                         :max-height (u/px 1080)}
+                        [:#actions ; make buttons here smaller on small screens
+                         [:.btn {:font-size "0.875rem" ; duplicates bootstrap style btn-sm
+                                 :padding "0.25rem 0.5rem"
+                                 :line-height 1.5
+                                 :border-radius "0.2rem"}]])
+   (stylesheet/at-media {:min-width (u/px 992)}
+                        [:#actions {:overflow-x :hidden
+                                    :overflow-y :auto
+                                    :max-height "calc(100vh - 105px)"}])) */
 /* XXX: refactor magic number */
 @media (min-width: var(--bs-breakpoint-lg)) and (max-height: 1080px) {
     #actions .btn {
@@ -1605,12 +2200,15 @@ p.inline-comment:last-child {
     }
 }
 
-/* cont */
-
+/* [:.break-newline {:white-space :pre-wrap}] */
 .break-newline {
     white-space: pre-wrap;
 }
 
+/* [:.attachments {:display :flex
+                   :flex-direction :column
+                   :flex-wrap :nowrap
+                   :gap (u/rem 0.5)}] */
 .attachments {
     display: flex;
     flex-direction: column;
@@ -1618,6 +2216,10 @@ p.inline-comment:last-child {
     gap: 0.5rem;
 }
 
+/* [:.attachment-link {:width (u/percent 100)
+                       :display :inline-flex
+                       :flex-wrap :nowrap
+                       :align-items :center}] */
 .attachment-link {
     width: 100%;
     display: inline-flex;
@@ -1625,19 +2227,40 @@ p.inline-comment:last-child {
     align-items: center;
 }
 
+/* [:.download.disabled {:border-style :dashed}] */
 .download.disabled {
     border-style: dashed;
 }
 
+/* [(s/> :.download ":not(:first-child)") {:margin-left (u/rem 0.5)}] */
 .download > *:not(:first-child) {
     margin-left: 0.5rem;
 }
 
-/*
-workaround for firefox only printing one page of flex elements
-https://github.com/twbs/bootstrap/issues/23489
-https://bugzilla.mozilla.org/show_bug.cgi?id=939897
-*/
+/* ;; print styling
+   (stylesheet/at-media
+    {:print true}
+    ;; workaround for firefox only printing one page of flex elements
+    ;; https://github.com/twbs/bootstrap/issues/23489
+    ;; https://bugzilla.mozilla.org/show_bug.cgi?id=939897
+    [:.row {:display :block}]
+    [:#app {:display :block}]
+    [(s/> :#app :div) {:display :block}]
+    [:#main-content {:display :block}]
+    [:body {:display :block}]
+
+    ;; hide some unnecessary elements
+    ;; TODO: consider a hide-print class?
+    [:.fixed-top {:display :none}]
+    [:#actions {:display :none}]
+    [:.commands {:display :none}]
+    [:#member-action-forms {:display :none}]
+    [:#resource-action-forms {:display :none}]
+    [:.flash-message {:display :none}]
+
+    ;; open "show more" drawers
+    [".collapse:not(.show)" {:display :block}]
+    [:.collapse-toggle.collapse {:display :none}]) */
 @media print {
 
     :is(#app,
@@ -1666,20 +2289,35 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
     }
 }
 
+/* [:.animate-transform {:-webkit-transition "transform 0.2s ease-in-out"
+                         :-o-transition "transform 0.2s ease-in-out"
+                         :transition "transform 0.2s ease-in-out"}] */
 .animate-transform {
     -webkit-transition: transform 0.2s ease-in-out;
     -o-transition: transform 0.2s ease-in-out;
     transition: transform 0.2s ease-in-out;
 }
 
+/* [:.rotate-180 {:transform "rotate(180deg)"}] */
 .rotate-180 {
     transform: rotate(180deg);
 }
 
+/* [:.mt-2rem {:margin-top (u/rem 2)}] */
 .mt-2rem {
     margin-top: 2rem;
 }
 
+/* [:.select-attachments {:display :flex
+                          :flex-direction :column
+                          :align-items :flex-start
+                          :gap (u/rem 0.5)}
+    [:.select-attachments-row {:display :grid
+                               :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
+                               :column-gap (u/rem 0.5)
+                               :align-items :center}
+     [(s/> ":first-child") {:grid-column :checkbox}]
+     [(s/> ":not(:first-child)") {:grid-column :content}]]] */
 .select-attachments {
     display: flex;
     flex-direction: column;
@@ -1699,6 +2337,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
     }
 }
 
+/* [:.color-pre {:color "#212529"}] ; same color as bootstrap's default for [:pre] */
 .color-pre {
     color: #212529;
 }
@@ -1743,8 +2382,20 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
     background-size: contain;
 }
 
-/* Media queries must be almost last so they override */
-
+/* ;; Media queries must be almost last so they override
+   (media-queries) */
+/* (list
+   (stylesheet/at-media {:max-width (:xs bootstrap-media-breakpoints)}
+                        [(s/descendant :.rems-table.cart :tr)
+                         {:border-bottom :none}])
+   (stylesheet/at-media {:min-width (:md bootstrap-media-breakpoints)}
+                        [:td [:div.commands {:flex-wrap "nowrap"}]])
+   (stylesheet/at-media {:max-width (:xl bootstrap-media-breakpoints)}
+                        [:.lg-fs70pct {:font-size (u/percent 70)}])
+   (stylesheet/at-media {:max-width (u/px 870)}
+                        [:.user-widget [:.icon-description {:display "none"}]])
+   (stylesheet/at-media {:prefers-reduced-motion :reduce}
+                        [:body {:scroll-behavior :auto}])) */
 @media (max-width: calc(var(--bs-breakpoint-md) - 1px)) {
     .logo .img {
         background-color: var(--theme-logo-bgcolor);
@@ -1800,7 +2451,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=939897
 }
 
 
-/* These must be last as the parsing fails when the first non-standard element is met */
+/* ;; These must be last as the parsing fails when the first non-standard element is met
+   (form-placeholder-styles) */
+/* (list
+   [".form-control::placeholder" {:color "#555"}] ; Standard
+   [".form-control::-webkit-input-placeholder" {:color "#555"}] ; WebKit, Blink, Edge
+   [".form-control:-moz-placeholder" {:color "#555"
+                                      :opacity 1}] ; Mozilla Firefox 4 to 18
+   [".form-control::-moz-placeholder" {:color "#555"
+                                       :opacity 1}] ; Mozilla Firefox 19+
+   [".form-control:-ms-input-placeholder" {:color "#555"}]) */
 
 /* Standard */
 .form-control::placeholder {
