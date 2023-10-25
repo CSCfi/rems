@@ -36,8 +36,7 @@
  (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/add]]
      (post! "/api/blacklist/add"
-            {:rems/request-id ::request-id
-             :params {:blacklist/resource (select-keys resource [:resource/ext-id])
+            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
                       :comment (or comment "")}
              :handler (flash-message/default-success-handler
@@ -56,8 +55,7 @@
  (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/remove]]
      (post! "/api/blacklist/remove"
-            {:rems/request-id ::request-id
-             :params {:blacklist/resource (select-keys resource [:resource/ext-id])
+            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
                       :comment (or comment "")}
              :handler (flash-message/default-success-handler
@@ -181,7 +179,8 @@
         {:id :blacklist-add
          :class "btn-primary"
          :type :submit
-         :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+         :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/blacklist/add"
+                                                                   "/api/blacklist/remove"}])
          :text (text :t.administration/add)}]]]]))
 
 (defn add-user-form [resource]
@@ -190,7 +189,8 @@
 (defn- remove-button [resource user]
   [atoms/rate-limited-button
    {:class "btn-secondary button-min-width"
-    :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+    :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/blacklist/add"
+                                                              "/api/blacklist/remove"}])
     :on-click (fn [_event]
                 ;; TODO add form & field for comment
                 (rf/dispatch [::remove-from-blacklist resource user ""]))

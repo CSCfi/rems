@@ -225,7 +225,7 @@
   (assert (qualified-keyword? command)
           (pr-str command))
   (post! (str "/api/applications/" (name command))
-         {:rems/request-id command
+         {:request-id command
           :params params
           :handler (flash-message/default-success-handler
                     :actions

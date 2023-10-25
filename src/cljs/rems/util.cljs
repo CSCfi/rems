@@ -4,7 +4,6 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest are testing]]
             [goog.string :refer [format]]
-            [medley.core :refer [update-existing]]
             [re-frame.core :as rf]))
 
 ;; TODO move to cljc
@@ -70,25 +69,16 @@
         (when handler
           (handler err))))))
 
-(defn- wrap-default-finally-handler [handler opts]
-  (cond
-    (:rems/request-id opts)
-    (fn []
-      (rf/dispatch [:rems.spa/on-request-finished (:rems/request-id opts)])
-      (when handler
-        (handler)))
-
-    :else
-    handler))
+(defn- wrap-default-finally-handler [handler {:keys [request-id]}]
+  (fn []
+    (rf/dispatch [:rems.spa/on-request-finished request-id])
+    (when handler
+      (handler))))
 
 (defn- wrap-default-handlers [opts]
   (-> opts
       (update :error-handler wrap-default-error-handler opts)
       (update :finally wrap-default-finally-handler opts)))
-
-(defn- save-request-id [opts]
-  (when-some [id (:rems/request-id opts)]
-    (rf/dispatch [:rems.spa/on-request id])))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
@@ -101,10 +91,11 @@
 
   Additionally calls event hooks."
   [url opts]
-  (js/window.rems.hooks.get url (clj->js opts))
-  (save-request-id opts)
   (let [fetch-defaults {:response-format :transit
-                        :handler (constantly nil)}]
+                        :handler (constantly nil)}
+        opts (update opts :request-id (fnil identity url))]
+    (js/window.rems.hooks.get url (clj->js opts))
+    (rf/dispatch [:rems.spa/on-request (:request-id opts)])
     (GET url (merge fetch-defaults
                     (wrap-default-handlers opts)))))
 
@@ -119,10 +110,11 @@
 
   Additionally calls event hooks."
   [url opts]
-  (js/window.rems.hooks.put url (clj->js opts))
-  (save-request-id opts)
   (let [put-defaults {:format :transit
-                      :response-format :transit}]
+                      :response-format :transit}
+        opts (update opts :request-id (fnil identity url))]
+    (js/window.rems.hooks.put url (clj->js opts))
+    (rf/dispatch [:rems.spa/on-request (:request-id opts)])
     (PUT url (merge put-defaults
                     (wrap-default-handlers opts)))))
 
@@ -137,10 +129,11 @@
 
   Additionally calls event hooks."
   [url opts]
-  (js/window.rems.hooks.put url (clj->js opts))
-  (save-request-id opts)
   (let [post-defaults {:format :transit
-                       :response-format :transit}]
+                       :response-format :transit}
+        opts (update opts :request-id (fnil identity url))]
+    (js/window.rems.hooks.put url (clj->js opts))
+    (rf/dispatch [:rems.spa/on-request (:request-id opts)])
     (POST url (merge post-defaults
                      (wrap-default-handlers opts)))))
 

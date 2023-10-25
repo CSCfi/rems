@@ -18,8 +18,7 @@
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
    (let [description [text :t.actions/change-applicant]]
      (post! "/api/applications/change-applicant"
-            {:rems/request-id ::request-id
-             :params {:application-id application-id
+            {:params {:application-id application-id
                       :member (select-keys member [:userid])
                       :comment comment}
              :handler (flash-message/default-success-handler
@@ -48,7 +47,7 @@
      [[atoms/rate-limited-button {:id (str element-id "-submit")
                                   :text (text :t.actions/change-applicant)
                                   :class "btn-primary"
-                                  :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                  :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/change-applicant"])
                                   :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]

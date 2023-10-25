@@ -64,18 +64,18 @@
   [{:keys [application-id end on-set-entitlement-end on-approve on-reject]}]
   [action-form-view action-form-id
    (text :t.actions/approve-reject)
-   (let [pending-approve-or-reject (or @(rf/subscribe [:rems.spa/pending-request :application.command/approve])
-                                       @(rf/subscribe [:rems.spa/pending-request :application.command/reject]))]
-     [[atoms/rate-limited-button {:id "reject"
-                                  :text (text :t.actions/reject)
-                                  :class "btn-danger"
-                                  :disabled pending-approve-or-reject
-                                  :on-click on-reject}]
-      [atoms/rate-limited-button {:id "approve"
-                                  :text (text :t.actions/approve)
-                                  :class "btn-success"
-                                  :disabled pending-approve-or-reject
-                                  :on-click on-approve}]])
+   [[atoms/rate-limited-button {:id "reject"
+                                :text (text :t.actions/reject)
+                                :class "btn-danger"
+                                :disabled @(rf/subscribe [:rems.spa/any-pending-request #{:application.command/approve
+                                                                                          :application.command/reject}])
+                                :on-click on-reject}]
+    [atoms/rate-limited-button {:id "approve"
+                                :text (text :t.actions/approve)
+                                :class "btn-success"
+                                :disabled @(rf/subscribe [:rems.spa/any-pending-request #{:application.command/approve
+                                                                                          :application.command/reject}])
+                                :on-click on-approve}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]

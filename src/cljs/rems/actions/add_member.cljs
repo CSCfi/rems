@@ -41,8 +41,7 @@
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (let [description [text :t.actions/add-member]]
      (post! "/api/applications/add-member"
-            {:rems/request-id ::request-id
-             :params {:application-id application-id
+            {:params {:application-id application-id
                       :member (select-keys member [:userid])}
              :handler (flash-message/default-success-handler
                        :change-members
@@ -65,7 +64,7 @@
    [[atoms/rate-limited-button {:id "add-member-submit"
                                 :text (text :t.actions/add-member)
                                 :class "btn-primary"
-                                :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/add-member"])
                                 :on-click on-send}]]
    [:div
     [:div.form-group

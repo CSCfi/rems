@@ -41,7 +41,8 @@
                                 :text (text :t.actions/request-review)
                                 :class "btn-primary"
                                 :on-click on-send
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/request-review]))}]]
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/request-review]))}]]
    [:div
     [user-selection {:field-key action-form-id
                      :subscription [:rems.actions.components/reviewers]}]

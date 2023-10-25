@@ -53,8 +53,7 @@
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]
    (let [description [text :t.actions/change-resources]]
      (post! "/api/applications/change-resources"
-            {:rems/request-id ::request-id
-             :params (merge {:application-id application-id
+            {:params (merge {:application-id application-id
                              :catalogue-item-ids (vec resources)}
                             (when comment
                               {:comment comment}))
@@ -90,7 +89,7 @@
                                   :class "btn-primary"
                                   :disabled (or (empty? selected-resources)
                                                 (= selected-resources initial-resources)
-                                                @(rf/subscribe [:rems.spa/pending-request ::request-id]))
+                                                @(rf/subscribe [:rems.spa/pending-request "/api/applications/change-resources"]))
                                   :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]

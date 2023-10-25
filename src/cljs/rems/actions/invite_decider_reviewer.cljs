@@ -74,7 +74,8 @@
                                 :text (text :t.actions/request-decision)
                                 :class "btn-primary"
                                 :on-click on-send
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/invite-decider]))}]]
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/invite-decider]))}]]
    [:<>
     [name-field {:field-key decider-form-id}]
     [email-field {:field-key decider-form-id}]
@@ -92,7 +93,8 @@
                                 :text (text :t.actions/request-review)
                                 :class "btn-primary"
                                 :on-click on-send
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/invite-reviewer]))}]]
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/invite-reviewer]))}]]
    [:<>
     [name-field {:field-key reviewer-form-id}]
     [email-field {:field-key reviewer-form-id}]

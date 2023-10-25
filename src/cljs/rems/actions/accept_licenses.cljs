@@ -10,8 +10,7 @@
  (fn [_ [_ {:keys [application-id licenses on-finished]}]]
    (let [description [text :t.actions/accept-licenses]]
      (post! "/api/applications/accept-licenses"
-            {:rems/request-id ::request-id
-             :params {:application-id application-id
+            {:params {:application-id application-id
                       :accepted-licenses licenses}
              :handler (flash-message/default-success-handler
                        :accept-licenses description (fn [_] (on-finished)))
@@ -22,7 +21,7 @@
   [atoms/rate-limited-button {:id "accept-licenses-button"
                               :text (text :t.actions/accept-licenses)
                               :class "btn-primary"
-                              :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                              :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/accept-licenses"])
                               :on-click #(rf/dispatch [::send-accept-licenses {:application-id application-id
                                                                                :licenses licenses
                                                                                :on-finished on-finished}])}])

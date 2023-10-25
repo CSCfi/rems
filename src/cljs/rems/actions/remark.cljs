@@ -38,7 +38,8 @@
    [[atoms/rate-limited-button {:id action-form-id
                                 :text (text :t.actions/remark)
                                 :class "btn-primary"
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/remark]))
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/remark]))
                                 :on-click on-send}]]
    [:div
     [comment-field {:field-key action-form-id

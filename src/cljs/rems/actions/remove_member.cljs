@@ -20,8 +20,7 @@
      (post! (if (:userid member)
               "/api/applications/remove-member"
               "/api/applications/uninvite-member")
-            {:rems/request-id ::request-id
-             :params {:application-id application-id
+            {:params {:application-id application-id
                       :member (if (:userid member)
                                 (select-keys member [:userid])
                                 (select-keys member [:name :email]))
@@ -52,7 +51,8 @@
      [[atoms/rate-limited-button {:id (str element-id "-submit")
                                   :text (text :t.actions/remove-member)
                                   :class "btn-primary"
-                                  :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                  :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/applications/remove-member"
+                                                                                            "/api/applications/uninvite-member"}])
                                   :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]

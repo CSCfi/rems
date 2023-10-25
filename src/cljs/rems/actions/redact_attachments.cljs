@@ -54,7 +54,8 @@
                                         (text :t.actions/replace-attachments)
                                         (text :t.actions/remove-attachments))
                                 :class :btn-danger
-                                :disabled (or (nil? on-submit) @(rf/subscribe [:rems.spa/pending-request :application.command/redact-attachments]))
+                                :disabled (or (nil? on-submit)
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/redact-attachments]))
                                 :on-click on-submit}]]
    [:<>
     [select-attachments-field {:field-key action-form-id

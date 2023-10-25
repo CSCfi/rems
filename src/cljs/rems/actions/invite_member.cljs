@@ -26,8 +26,7 @@
      (if-let [errors (validate-member member)]
        (flash-message/show-error! :invite-member-errors (flash-message/format-errors errors))
        (post! "/api/applications/invite-member"
-              {:rems/request-id ::request-id
-               :params {:application-id application-id
+              {:params {:application-id application-id
                         :member member}
                :handler (flash-message/default-success-handler
                          :change-members
@@ -50,7 +49,7 @@
    [[atoms/rate-limited-button {:id "invite-member"
                                 :text (text :t.actions/invite-member)
                                 :class "btn-primary"
-                                :disabled @(rf/subscribe [:rems.spa/pending-request ::request-id])
+                                :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/invite-member"])
                                 :on-click on-send}]]
    [:div
     [flash-message/component :invite-member-errors]

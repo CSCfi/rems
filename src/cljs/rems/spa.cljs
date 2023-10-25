@@ -216,6 +216,11 @@
  (fn [db [_ k]]
    (get-in db [:rems.spa/request k])))
 
+(rf/reg-sub
+ :rems.spa/any-pending-request
+ (fn [db [_ ks]]
+   (some #(get-in db [:rems.spa/request %]) ks)))
+
 (rf/reg-event-db
  :rems.spa/on-request
  (fn [db [_ k]]

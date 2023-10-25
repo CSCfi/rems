@@ -40,7 +40,8 @@
                                 :text (text :t.actions/request-decision)
                                 :class "btn-primary"
                                 :on-click on-send
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/request-decision]))}]]
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/request-decision]))}]]
    [:div
     [user-selection {:field-key action-form-id
                      :subscription [:rems.actions.components/deciders]}]

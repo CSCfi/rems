@@ -36,7 +36,8 @@
    [[atoms/rate-limited-button {:id "review-button"
                                 :text (text :t.actions/review)
                                 :class "btn-primary"
-                                :disabled (or disabled @(rf/subscribe [:rems.spa/pending-request :application.command/review]))
+                                :disabled (or disabled
+                                              @(rf/subscribe [:rems.spa/pending-request :application.command/review]))
                                 :on-click on-send}]]
    [:<>
     [comment-field {:field-key action-form-id
