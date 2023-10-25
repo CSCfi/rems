@@ -21,9 +21,6 @@
 (defn css-url [uri]
   (str "url(\"" uri "\")"))
 
-(defn css-calc [& xs]
-  (str "calc(" (str/join " " xs) ")"))
-
 ;; Customizable theme related functions
 
 (def ^:private ignore-theme-var-error?
@@ -70,17 +67,13 @@
     :logo-name-sm (keyword (str "logo-name-sm-" (get-lang-name)))
     :navbar-logo-name (keyword (str "navbar-logo-name-" (get-lang-name)))))
 
-(defn theme-logo-get
-  "Returns localized logo path or fallback `k`."
-  [k]
+(defn theme-logo-get [k]
   (when-some [path (theme-get (theme-logo k) k)]
     (if (str/starts-with? path "http")
       path
       (str (theme-get :img-path) path))))
 
-(defn theme-logo-getx
-  "Returns localized logo path or fallback `k`."
-  [k]
+(defn theme-logo-getx [k]
   (let [path (theme-getx (theme-logo k) k)]
     (if (str/starts-with? path "http")
       path

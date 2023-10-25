@@ -15,13 +15,13 @@
             [garden.units :as u]
             [medley.core :refer [map-vals remove-vals]]
             [mount.core :as mount]
-            [rems.css.bootstrap :as bootstrap]
+            #_[rems.css.bootstrap :as bootstrap]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.css.style-utils :refer [css-var css-url theme-getx theme-logo-getx]]
             [ring.util.response :as response]))
 
-(defn- theme-styles []
+(defn- theme-variables []
   {:--theme-alert-danger-bgcolor (theme-getx :alert-danger-bgcolor)
    :--theme-alert-danger-bordercolor (theme-getx :alert-danger-bordercolor)
    :--theme-alert-danger-color (theme-getx :alert-danger-color)
@@ -81,12 +81,12 @@
    :--theme-logo-content-origin (theme-getx :logo-content-origin)
    :--theme-logo-name (css-url (theme-logo-getx :logo-name))
    :--theme-logo-name-sm (css-url (theme-logo-getx :logo-name-sm))
+   :--theme-navbar-logo-name (css-url (theme-logo-getx :navbar-logo-name))
 
    :--theme-nav-active-color (theme-getx :nav-active-color :color4)
    :--theme-nav-color (theme-getx :nav-color :link-color)
    :--theme-nav-hover-color (theme-getx :nav-hover-color :color4)
    :--theme-navbar-color (theme-getx :navbar-color)
-   :--theme-navbar-logo-name (css-url (theme-logo-getx :navbar-logo-name))
 
    :--theme-phase-bgcolor (theme-getx :phase-bgcolor)
    :--theme-phase-bgcolor-active (theme-getx :phase-bgcolor-active)
@@ -126,7 +126,20 @@
    :--theme-text-secondary (theme-getx :text-secondary)
    :--theme-text-success (theme-getx :text-success)
    :--theme-text-warning (theme-getx :text-warning)
-   :--theme-text-white (theme-getx :text-white)})
+   :--theme-text-white (theme-getx :text-white)
+
+   ;; duplicate test
+  ;;  :--theme-img-path nil
+  ;;  :--theme-logo-name-en nil
+  ;;  :--theme-logo-name-fi nil
+  ;;  :--theme-logo-name-sm-en nil
+  ;;  :--theme-logo-name-sm-fi nil
+  ;;  :--theme-logo-name-sm-sv nil
+  ;;  :--theme-logo-name-sv nil
+  ;;  :--theme-navbar-logo-name-en nil
+  ;;  :--theme-navbar-logo-name-fi nil
+  ;;  :--theme-navbar-logo-name-sv nil
+   })
 
 #_(defn localized-styles []
     {:--theme-logo-name (theme-logo-getx :logo-name)
@@ -246,19 +259,12 @@
     ;; them to nil but instead throw an error.
     (is (thrown? AssertionError (remove-nil-vals {:a ""})))))
 
-(defn build-variables []
-  ;; TODO: set theme using some html attribute
-  #_[(s/root (str "html[" :theme-default "]"))
-     (->> (theme-styles)
-          (into (sorted-map)))]
-  [(s/root) (->> (theme-styles)
-                 (into (sorted-map)))])
-
 (defn build-screen []
   (list
-   #_(bootstrap/reset-styles)
-
-   ;; TODO: cannot be css-ified (yet)
+   ;; TODO: set theme using some html attribute?
+   [(s/root) (theme-variables)]
+   (for [i (range 1 4)]
+     [(str ".gap-" i) {:gap (u/rem (* 0.5 i))}])
    [:.rems-table
     (for [i (range 10)]
       [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
@@ -280,9 +286,6 @@
 (defn screen-css []
   (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
 
-(defn theme-css []
-  (g/css {:pretty-print? false} (remove-nil-vals (build-variables))))
-
 ;; For development use and live reload, render all configured CSS
 ;; files so that the devtools will notice this change and force our app
 ;; to reload CSS files from the usual route.
@@ -291,11 +294,10 @@
   rendered-css-files
   :start
   (when (env :dev)
-    (render-css-file (theme-css) {:filename "theme.css"})
     (doseq [language (env :languages)]
       (binding [context/*lang* language]
-        (render-css-file (screen-css) {:language language
-                                       :filename "screen.css"})))))
+        (render-css-file (screen-css) {:filename "screen.css"
+                                       :language language})))))
 
 (defn render-screen-css
   "Helper function for rendering styles that has parameters for
@@ -306,21 +308,10 @@
       (response/response)
       (response/content-type "text/css")))
 
-(defn render-theme-css []
-  (log/info (str "Rendering theme variables stylesheet"))
-  (-> (theme-css)
-      (response/response)
-      (response/content-type "text/css")))
-
 (mount/defstate memoized-render-screen-css
   :start (memoize render-screen-css))
-
-(mount/defstate memoized-render-theme-css
-  :start (memoize render-theme-css))
 
 (defroutes css-routes
   (GET "/css/:language/screen.css" [language]
     (binding [context/*lang* (keyword language)]
-      (memoized-render-screen-css context/*lang*)))
-  (GET "/css/theme.css" []
-    (memoized-render-theme-css)))
+      (memoized-render-screen-css context/*lang*))))

@@ -50,8 +50,8 @@
                      [:title (text :t.header/title)]
                      (include-css "/assets/bootstrap/css/bootstrap.min.css")
                      (include-css "/assets/font-awesome/css/all.css")
-                     (include-css (cache-bust "/css/theme.css")) ; dynamic
-                     (include-css (cache-bust (str "/css/" (name lang) "/screen.css"))) ; dynamic
+                     #_(include-css (cache-bust (str "/css/" (name lang) "/theme.css")))
+                     (include-css (cache-bust (str "/css/" (name lang) "/screen.css")))
                      (include-css (cache-bust "/css/styles.css"))
                      (for [extra-stylesheet (get-in env [:extra-stylesheets :files])]
                        (include-css (cache-bust extra-stylesheet)))]
