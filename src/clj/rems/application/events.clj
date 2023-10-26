@@ -84,8 +84,7 @@
 (s/defschema ExpirationNotificationsSentEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/expiration-notifications-sent)
-         :last-activity DateTime
-         :expires-on DateTime))
+         :application/expires-on DateTime))
 (s/defschema LicensesAcceptedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/licenses-accepted)
