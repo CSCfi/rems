@@ -30,7 +30,7 @@
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?
 (s/defschema CreateCatalogueItemCommand
-  {:form (s/maybe s/Int)
+  {(s/optional-key :form) (s/maybe s/Int)
    :resid s/Int
    :wfid s/Int
    :organization schema-base/OrganizationId

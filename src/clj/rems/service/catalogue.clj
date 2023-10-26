@@ -13,7 +13,8 @@
 ;; TODO move catalogue item localizations into the catalogueitemdata
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
-  (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
+  (let [id (:id (db/create-catalogue-item! (merge {:form nil} ; SQL requires, API doesn't
+                                                  {:organization (:organization/id organization "default")}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start])
                                                   {:catalogueitemdata (catalogue/catalogueitemdata->json command)})))
         loc-ids
