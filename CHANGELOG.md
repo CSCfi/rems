@@ -18,6 +18,7 @@ Changes since v2.33
 - Handler can now redact other handlers attachments. (#3190)
 - The tables take advantage of a new paging feature. Especially, the handler Actions page and its handled applications table uses paging and only fetches handled applications when so requested. The first 50 rows are only fetched by default. Paging can be also configured per table, if the default is not good (page size 50 rows). (#3191)
 - If reminder email is configured for the, expirer bot, it will delete an old draft application if and only if the reminder email is sent and the specified amount of time has passed. Previously it would just delete if the application was very old (esp. when enabling expiry for the first time).
+- Allow leaving `:form` field away from catalogue item creation API calls. Previously the value was optional but now the key too.
 
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
