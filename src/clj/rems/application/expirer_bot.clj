@@ -68,7 +68,7 @@
                                    (calculate-expiration-time expiration application))]
       (when (time/before? expiration-time now)
         {:type :application.command/delete
-         :time (time/now)
+         :time now
          :actor bot-userid
          :application-id (:application/id application)}))))
 
@@ -192,7 +192,7 @@
 (defn- send-expiration-notifications [expiration application now]
   (when (should-send-notification-email? expiration application now)
     {:type :application.command/send-expiration-notifications
-     :time (time/now)
+     :time now
      :actor bot-userid
      :application-id (:application/id application)
      :expires-on (calculate-expiration-time expiration application)}))
