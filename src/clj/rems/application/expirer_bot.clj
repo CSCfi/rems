@@ -107,11 +107,12 @@
                                      :reminder-before "P7D"}
                                     {:application/state :application.state/draft
                                      :application/last-activity over-90d-ago
-                                     :application/events [{:type :application.command/send-expiration-notifications
-                                                           :time over-1d-ago
-                                                           :expires-on now}]}
-                                    now))
+                                     :application/events [{:event/type :application.event/expiration-notifications-sent
+                                                           :event/time over-1d-ago
+                                                           :application/expires-on now}]}
+                                    (time/plus now (time/seconds 1))))
           "reminder sent but time not passed")
+
       (is (some? (expire-application {:delete-after "P90D"
                                       :reminder-before "P7D"}
                                      {:application/state :application.state/draft
