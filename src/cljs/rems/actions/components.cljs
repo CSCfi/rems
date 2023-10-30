@@ -235,5 +235,11 @@
                       (on-finished)))
           :error-handler (flash-message/default-error-handler :actions description)}))
 
+(defn perform-action-button [{:keys [loading?] :as props}]
+  [atoms/rate-limited-button
+   (-> props
+       (dissoc (when (or loading? @(rf/subscribe [:rems.spa/any-pending-request?]))
+                 :on-click)))])
+
 (defn guide []
   [:div])

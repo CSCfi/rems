@@ -212,14 +212,9 @@
    {}))
 
 (rf/reg-sub
- :rems.spa/pending-request
- (fn [db [_ k]]
-   (get-in db [:rems.spa/request k])))
-
-(rf/reg-sub
- :rems.spa/any-pending-request
- (fn [db [_ ks]]
-   (some #(get-in db [:rems.spa/request %]) ks)))
+ :rems.spa/any-pending-request?
+ (fn [db _]
+   (some? (not-empty (:rems.spa/request db)))))
 
 (rf/reg-event-db
  :rems.spa/on-request
