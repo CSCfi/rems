@@ -180,7 +180,8 @@
         {:id :blacklist-add
          :class "btn-primary"
          :type :submit
-         :text (text :t.administration/add)}]]]]))
+         :text (text :t.administration/add)
+         :disabled @(rf/subscribe [:rems.spa/any-pending-request?])}]]]]))
 
 (defn add-user-form [resource]
   [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
